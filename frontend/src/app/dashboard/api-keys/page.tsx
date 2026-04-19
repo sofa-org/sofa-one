@@ -1,0 +1,202 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import {
+  listApiKeys,
+  createApiKey,
+  revokeApiKey,
+  refreshApiKey as refreshApiKeyApi,
+  setApiKey,
+} from '@/lib/api';
+
+interface ApiKeyRecord {
+  id: string;
+  keyPrefix: string;
+  name: string | null;
+  revoked: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export default function ApiKeysPage() {
+  const { getToken } = useAuth();
+  const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newRawKey, setNewRawKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchKeys() {
+    try {
+      const data = await listApiKeys();
+      setKeys(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchKeys();
+  }, []);
+
+  async function handleCreate() {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const result = await createApiKey(newKeyName || undefined);
+      setNewRawKey(result.rawKey);
+      setApiKey(result.rawKey);
+      setNewKeyName('');
+      await fetchKeys();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleRevoke(id: string) {
+    if (!confirm('Revoke this API key? This cannot be undone.')) return;
+    setActionLoading(true);
+    try {
+      await revokeApiKey(id);
+      await fetchKeys();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleRefresh() {
+    if (!confirm('This will revoke ALL existing keys and create a new one.')) return;
+    setActionLoading(true);
+    setError(null);
+    try {
+      const result = await refreshApiKeyApi(getToken);
+      setNewRawKey(result.apiKey);
+      setApiKey(result.apiKey);
+      await fetchKeys();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">API Keys</h1>
+        <button
+          onClick={handleRefresh}
+          disabled={actionLoading}
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+        >
+          Rotate All Keys
+        </button>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* New key alert */}
+      {newRawKey && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-800">
+            New API key created — save it now (shown only once):
+          </p>
+          <code className="mt-1 block break-all rounded bg-amber-100 px-3 py-2 font-mono text-sm text-amber-900">
+            {newRawKey}
+          </code>
+          <button
+            onClick={() => setNewRawKey(null)}
+            className="mt-2 text-xs text-amber-700 underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Create new key */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-base font-semibold">Create New Key</h2>
+        <div className="mt-3 flex gap-3">
+          <input
+            type="text"
+            placeholder="Key name (optional)"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <button
+            onClick={handleCreate}
+            disabled={actionLoading}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            Create
+          </button>
+        </div>
+      </div>
+
+      {/* Key list */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-base font-semibold">Your Keys</h2>
+        </div>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+          </div>
+        ) : keys.length === 0 ? (
+          <p className="px-6 py-8 text-center text-sm text-gray-500">No API keys yet.</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {keys.map((key) => (
+              <div key={key.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm text-gray-900">{key.keyPrefix}...</span>
+                    {key.name && (
+                      <span className="text-sm text-gray-500">({key.name})</span>
+                    )}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        key.revoked
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}
+                    >
+                      {key.revoked ? 'Revoked' : 'Active'}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Created {new Date(key.createdAt).toLocaleDateString()}
+                    {key.expiresAt &&
+                      ` · Expires ${new Date(key.expiresAt).toLocaleDateString()}`}
+                  </p>
+                </div>
+                {!key.revoked && (
+                  <button
+                    onClick={() => handleRevoke(key.id)}
+                    disabled={actionLoading}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Revoke
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

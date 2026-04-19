@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*.md
+!README.md
