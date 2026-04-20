@@ -85,6 +85,15 @@ export class OpenfortService {
     }
   }
 
+  /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
+  async signData(accountId: string, data: string): Promise<string> {
+    try {
+      return await this.client.accounts.evm.backend.sign({ id: accountId, data });
+    } catch (error: any) {
+      throw new BadGatewayException(`Openfort error: ${error.message}`);
+    }
+  }
+
   /** Attach an allowed-function rule to a policy. */
   async createPolicyRule(params: {
     policy: string;

@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { hashTypedData } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import type { SignDto } from './dto/sign.dto';
 
 /** Well-known USDC contract addresses by chainId. */
 const USDC_ADDRESSES: Record<number, string> = {
@@ -26,6 +28,37 @@ export class WalletService {
       chainId: Number(wallet.chainId),
       status: wallet.status,
       supportedTokens: ['USDC', 'ETH'],
+    };
+  }
+
+  /** Sign data with the user's backend wallet (no transaction broadcast). */
+  async sign(userId: string, params: SignDto) {
+    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+
+    let data: string;
+    switch (params.type) {
+      case 'message':
+        // Convert plain-text message to hex-encoded bytes
+        data = '0x' + Buffer.from(params.message!, 'utf-8').toString('hex');
+        break;
+      case 'typed_data': {
+        // Compute EIP-712 struct hash → raw ECDSA sign
+        const { domain, types, primaryType, message } = params.typedData!;
+        data = hashTypedData({ domain, types, primaryType, message } as any);
+        break;
+      }
+      case 'hash':
+        data = params.hash!;
+        break;
+    }
+
+    const signature = await this.openfort.signData(wallet.openfortAccountId, data);
+
+    return {
+      signature,
+      walletAddress: wallet.walletAddress,
+      type: params.type,
     };
   }
 
