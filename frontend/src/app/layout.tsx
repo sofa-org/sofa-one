@@ -49,8 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }
       }}
     >
-      <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
-        <body className="min-h-screen bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-accent selection:text-white">
+      <html lang="en" className={`${inter.variable} ${newsreader.variable}`} suppressHydrationWarning>
+        <body className="min-h-screen bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-accent selection:text-white" suppressHydrationWarning>
           {children}
         </body>
       </html>
