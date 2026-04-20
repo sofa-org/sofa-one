@@ -11,7 +11,7 @@ export default function SignUpPage() {
         SOFA Agent Wallet
       </Link>
       <div className="w-full max-w-md">
-        <SignUp afterSignUpUrl="/dashboard" />
+        <SignUp forceRedirectUrl="/dashboard" />
       </div>
       <p className="mt-8 text-center text-xs text-brand-muted">
         By continuing, you acknowledge our Terms of Service and Privacy Policy.

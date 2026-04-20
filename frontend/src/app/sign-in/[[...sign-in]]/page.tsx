@@ -11,7 +11,7 @@ export default function SignInPage() {
         SOFA Agent Wallet
       </Link>
       <div className="w-full max-w-md">
-        <SignIn afterSignInUrl="/dashboard" />
+        <SignIn forceRedirectUrl="/dashboard" />
       </div>
       <p className="mt-8 text-center text-xs text-brand-muted">
         By continuing, you acknowledge our Terms of Service and Privacy Policy.

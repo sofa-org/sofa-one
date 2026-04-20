@@ -23,19 +23,19 @@ export class AuthService {
 
   /**
    * Handle social login: upsert user, provision wallet, generate API key.
-   * Returns { userId, walletAddress, apiKey? }.
+   * Returns { userId, wallet: { walletAddress, chainId, status, supportedTokens }, apiKey? }.
    * The apiKey field is only present on first login (one-time display).
    */
   async handleSocialLogin(clerkUserId: string) {
     // 1. Fetch Clerk user profile
     const clerkUser = await this.clerkClient.users.getUser(clerkUserId);
     const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
-    const socialAccount = clerkUser.externalAccounts?.[0];
-    const socialProvider = socialAccount?.provider || 'unknown';
+    const socialProvider =
+      clerkUser.externalAccounts?.[0]?.provider || 'unknown';
     const socialId = clerkUserId;
 
-    // 2. Upsert platform user
-    let user = await this.prisma.user.findUnique({
+    // 2. Look up existing user
+    const existing = await this.prisma.user.findUnique({
       where: { socialId },
       include: {
         wallet: true,
@@ -43,48 +43,79 @@ export class AuthService {
       },
     });
 
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          socialProvider,
-          socialId,
-          email: primaryEmail,
-        },
-        include: {
-          wallet: true,
-          apiKeys: { where: { revoked: false } },
-        },
-      });
-      this.logger.log(`Created user ${user.id} via ${socialProvider}`);
-    }
+    let userId: string;
+    let wallet = existing?.wallet ?? null;
+    let hasApiKeys = (existing?.apiKeys.length ?? 0) > 0;
 
-    // 3. Provision Openfort backend wallet if absent
-    let wallet = user.wallet;
-    if (!wallet) {
-      const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
+    if (!existing) {
+      // 3a. New user — call Openfort first, then atomically create user + wallet
+      const chainId = this.configService.get<number>(
+        'chain.defaultChainId',
+        84532,
+      );
+      const account = await this.openfort.createBackendWallet();
+
+      const result = await this.prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: { socialProvider, socialId, email: primaryEmail },
+        });
+        const newWallet = await tx.userWallet.create({
+          data: {
+            userId: newUser.id,
+            openfortAccountId: account.id,
+            walletAddress: account.address,
+            chainId: BigInt(chainId),
+          },
+        });
+        return { userId: newUser.id, wallet: newWallet };
+      });
+
+      userId = result.userId;
+      wallet = result.wallet;
+      hasApiKeys = false;
+      this.logger.log(
+        `Created user ${userId} via ${socialProvider} with wallet ${wallet.walletAddress}`,
+      );
+    } else if (!wallet) {
+      // 3b. Existing user missing wallet — provision one
+      userId = existing.id;
+      const chainId = this.configService.get<number>(
+        'chain.defaultChainId',
+        84532,
+      );
       const account = await this.openfort.createBackendWallet();
 
       wallet = await this.prisma.userWallet.create({
         data: {
-          userId: user.id,
+          userId,
           openfortAccountId: account.id,
           walletAddress: account.address,
           chainId: BigInt(chainId),
         },
       });
-      this.logger.log(`Created wallet ${wallet.walletAddress} for user ${user.id}`);
+      this.logger.log(
+        `Created wallet ${wallet.walletAddress} for existing user ${userId}`,
+      );
+    } else {
+      // 3c. Returning user with wallet — nothing to provision
+      userId = existing.id;
     }
 
     // 4. Generate API key if user has none
     let rawApiKey: string | undefined;
-    if (user.apiKeys.length === 0) {
-      const result = await this.apiKeyService.createApiKey(user.id, 'Default');
+    if (!hasApiKeys) {
+      const result = await this.apiKeyService.createApiKey(userId, 'Default');
       rawApiKey = result.rawKey;
     }
 
     return {
-      userId: user.id,
-      walletAddress: wallet.walletAddress,
+      userId,
+      wallet: {
+        walletAddress: wallet!.walletAddress,
+        chainId: Number(wallet!.chainId),
+        status: wallet!.status,
+        supportedTokens: ['USDC', 'ETH'],
+      },
       ...(rawApiKey && { apiKey: rawApiKey }),
     };
   }

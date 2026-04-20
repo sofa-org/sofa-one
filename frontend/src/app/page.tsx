@@ -13,8 +13,8 @@ export default function LandingPage() {
 
         {/* Main Heading */}
         <h1 className="mb-6 font-serif text-5xl font-normal leading-tight tracking-tight text-brand-text md:text-6xl">
-          Automated Blockchain <br className="hidden md:block" />
-          <span className="italic text-brand-accent">Signing for Agents</span>
+          Automated Blockchain Signing <br className="hidden md:block" />
+          <span className="italic text-brand-accent">for Agents</span>
         </h1>
 
         {/* Subtitle */}

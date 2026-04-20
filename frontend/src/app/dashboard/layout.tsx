@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, useClerk } from '@clerk/nextjs';
+import { clearApiKey } from '@/lib/api';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet' },
@@ -12,6 +13,12 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { signOut } = useClerk();
+
+  const handleSignOut = async () => {
+    clearApiKey();
+    await signOut({ redirectUrl: '/' });
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -41,8 +48,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="border-t border-gray-200 px-6 py-4">
-          <UserButton afterSignOutUrl="/" />
+        <div className="border-t border-gray-200 px-4 py-4">
+          <div className="flex items-center justify-between">
+            <UserButton />
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </aside>
 

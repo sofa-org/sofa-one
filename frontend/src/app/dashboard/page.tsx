@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { socialLogin, getDepositInfo, setApiKey, getApiKey } from '@/lib/api';
+import { socialLogin, setApiKey } from '@/lib/api';
 
 export default function DashboardPage() {
-  const { getToken } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [wallet, setWallet] = useState<{
     walletAddress: string;
     chainId: number;
@@ -17,21 +17,21 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait until Clerk has loaded and confirmed the user is signed in,
+    // otherwise getToken() returns null and the backend rejects with 401.
+    if (!isLoaded || !isSignedIn) return;
+
     async function init() {
       try {
-        // Register / login with backend
+        // Register / login with backend — response includes wallet info directly
         const result = await socialLogin(getToken);
         if (result.apiKey) {
           setApiKey(result.apiKey);
           setApiKeyDisplay(result.apiKey);
         }
 
-        // getApiKey() reads from localStorage which socialLogin() may have just written;
-        // use result.apiKey as the authoritative signal to avoid the async write race.
-        if (result.apiKey || getApiKey()) {
-          const info = await getDepositInfo();
-          setWallet(info);
-        }
+        // Use wallet info returned by socialLogin — no separate API call needed
+        setWallet(result.wallet);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -39,7 +39,7 @@ export default function DashboardPage() {
       }
     }
     init();
-  }, [getToken]);
+  }, [isLoaded, isSignedIn, getToken]);
 
   if (loading) {
     return (
