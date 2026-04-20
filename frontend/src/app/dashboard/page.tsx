@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { socialLogin, setApiKey } from '@/lib/api';
+import { socialLogin } from '@/lib/api';
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -26,7 +26,6 @@ export default function DashboardPage() {
         // Register / login with backend — response includes wallet info directly
         const result = await socialLogin(getToken);
         if (result.apiKey) {
-          setApiKey(result.apiKey);
           setApiKeyDisplay(result.apiKey);
         }
 

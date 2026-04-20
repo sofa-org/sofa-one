@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton, useClerk } from '@clerk/nextjs';
-import { clearApiKey } from '@/lib/api';
+
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet' },
@@ -16,7 +16,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { signOut } = useClerk();
 
   const handleSignOut = async () => {
-    clearApiKey();
     await signOut({ redirectUrl: '/' });
   };
 

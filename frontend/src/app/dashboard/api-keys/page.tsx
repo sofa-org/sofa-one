@@ -7,7 +7,6 @@ import {
   createApiKeyAuth,
   revokeApiKeyAuth,
   refreshApiKey as refreshApiKeyApi,
-  setApiKey,
 } from '@/lib/api';
 
 interface ApiKeyRecord {
@@ -49,7 +48,6 @@ export default function ApiKeysPage() {
     try {
       const result = await createApiKeyAuth(getToken, newKeyName || undefined);
       setNewRawKey(result.rawKey);
-      setApiKey(result.rawKey);
       setNewKeyName('');
       await fetchKeys();
     } catch (err: any) {
@@ -79,7 +77,6 @@ export default function ApiKeysPage() {
     try {
       const result = await refreshApiKeyApi(getToken);
       setNewRawKey(result.apiKey);
-      setApiKey(result.apiKey);
       await fetchKeys();
     } catch (err: any) {
       setError(err.message);

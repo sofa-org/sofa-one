@@ -1,21 +1,5 @@
 const API_BASE = '/api';
 
-/** Get stored API key from localStorage. */
-export function getApiKey(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('agent_wallet_api_key');
-}
-
-/** Store API key in localStorage. */
-export function setApiKey(key: string): void {
-  localStorage.setItem('agent_wallet_api_key', key);
-}
-
-/** Clear stored API key. */
-export function clearApiKey(): void {
-  localStorage.removeItem('agent_wallet_api_key');
-}
-
 /**
  * Call an auth endpoint (uses Clerk JWT from getToken).
  */
@@ -41,10 +25,9 @@ export async function authFetch(
 }
 
 /**
- * Call a v1 endpoint (uses stored API key).
+ * Call a v1 endpoint (uses explicit API key — never stored in browser storage).
  */
-export async function apiFetch(path: string, options?: RequestInit) {
-  const apiKey = getApiKey();
+export async function apiFetch(path: string, apiKey: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -72,12 +55,12 @@ export async function refreshApiKey(getToken: () => Promise<string | null>) {
 
 // --- Wallets ---
 
-export async function getDepositInfo() {
-  return apiFetch('/v1/wallets/deposit-info', { method: 'POST' });
+export async function getDepositInfo(apiKey: string) {
+  return apiFetch('/v1/wallets/deposit-info', apiKey, { method: 'POST' });
 }
 
-export async function withdraw(to: string, amount: string, token: string) {
-  return apiFetch('/v1/wallets/withdraw', {
+export async function withdraw(apiKey: string, to: string, amount: string, token: string) {
+  return apiFetch('/v1/wallets/withdraw', apiKey, {
     method: 'POST',
     body: JSON.stringify({ to, amount, token }),
   });
@@ -85,28 +68,28 @@ export async function withdraw(to: string, amount: string, token: string) {
 
 // --- API Keys ---
 
-export async function listApiKeys() {
-  return apiFetch('/v1/api-keys');
+export async function listApiKeys(apiKey: string) {
+  return apiFetch('/v1/api-keys', apiKey);
 }
 
-export async function createApiKey(name?: string) {
-  return apiFetch('/v1/api-keys', {
+export async function createApiKey(apiKey: string, name?: string) {
+  return apiFetch('/v1/api-keys', apiKey, {
     method: 'POST',
     body: JSON.stringify({ name }),
   });
 }
 
-export async function revokeApiKey(id: string) {
-  return apiFetch(`/v1/api-keys/${id}`, { method: 'DELETE' });
+export async function revokeApiKey(apiKey: string, id: string) {
+  return apiFetch(`/v1/api-keys/${id}`, apiKey, { method: 'DELETE' });
 }
 
 // --- Transactions ---
 
-export async function getTransactionHistory(limit = 50, offset = 0) {
-  return apiFetch(`/v1/transactions/history?limit=${limit}&offset=${offset}`);
+export async function getTransactionHistory(apiKey: string, limit = 50, offset = 0) {
+  return apiFetch(`/v1/transactions/history?limit=${limit}&offset=${offset}`, apiKey);
 }
 
-export async function createTransactionIntent(params: {
+export async function createTransactionIntent(apiKey: string, params: {
   chainId: number;
   policyId?: string;
   interactions: Array<{
@@ -115,7 +98,7 @@ export async function createTransactionIntent(params: {
     functionArgs?: string[];
   }>;
 }) {
-  return apiFetch('/v1/transactions/intent', {
+  return apiFetch('/v1/transactions/intent', apiKey, {
     method: 'POST',
     body: JSON.stringify(params),
   });
