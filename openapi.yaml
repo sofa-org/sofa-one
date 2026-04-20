@@ -1,0 +1,544 @@
+openapi: 3.0.3
+info:
+  title: Agent Wallet API
+  version: 1.0.0
+  description: |
+    Agent Wallet 为用户提供服务器端自动化区块链交易和签名能力。
+
+    ## 认证
+
+    所有端点均需要 `X-API-Key` Header 认证：
+
+    ```
+    X-API-Key: sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+
+    API Key 在首次社交登录时由平台颁发，格式为 `sk_` + 64 位十六进制字符。
+
+    ## 支持的链
+
+    | Chain ID | 网络 |
+    |----------|------|
+    | `84532` | Base Sepolia（测试网） |
+    | `8453` | Base Mainnet |
+    | `1` | Ethereum Mainnet |
+
+    ## 快速开始
+
+    ```bash
+    # 1. 发送一笔 USDC 转账
+    curl -X POST https://api.example.com/v1/transactions/intent \
+      -H "X-API-Key: sk_your_key_here" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "chainId": 84532,
+        "interactions": [{
+          "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+          "functionName": "transfer",
+          "functionArgs": ["0xRecipientAddress", "1000000"]
+        }]
+      }'
+
+    # 2. 签名一条消息
+    curl -X POST https://api.example.com/v1/wallets/sign \
+      -H "X-API-Key: sk_your_key_here" \
+      -H "Content-Type: application/json" \
+      -d '{"type": "message", "message": "Hello from Agent Wallet"}'
+    ```
+
+  contact:
+    name: Agent Wallet Team
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: 本地开发环境
+  - url: https://api.example.com
+    description: 生产环境（待配置）
+
+tags:
+  - name: Signing
+    description: 数据签名 — 支持 EIP-191 / EIP-712 / 原始哈希
+  - name: Transactions
+    description: 交易 — 提交 Intent、查询历史、批量操作
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # ──────────────────────────── Signing ────────────────────────────
+  /v1/wallets/sign:
+    post:
+      tags: [Signing]
+      summary: 签名数据
+      description: |
+        使用用户的 Backend Wallet 对数据进行离线签名（不广播交易）。
+
+        支持三种签名类型：
+
+        | type | 说明 | 必填字段 |
+        |------|------|----------|
+        | `message` | EIP-191 个人消息签名 | `message` |
+        | `typed_data` | EIP-712 结构化数据签名 | `typedData` |
+        | `hash` | 原始 32 字节哈希签名 | `hash` |
+      operationId: signData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignRequest'
+            examples:
+              message:
+                summary: 签名纯文本消息
+                value:
+                  type: message
+                  message: "Hello, Agent Wallet!"
+              typedData:
+                summary: 签名 EIP-712 结构化数据
+                value:
+                  type: typed_data
+                  typedData:
+                    domain:
+                      name: "MyDApp"
+                      version: "1"
+                      chainId: 84532
+                    types:
+                      Person:
+                        - { name: "name", type: "string" }
+                        - { name: "wallet", type: "address" }
+                    primaryType: "Person"
+                    message:
+                      name: "Alice"
+                      wallet: "0x1234567890abcdef1234567890abcdef12345678"
+              hash:
+                summary: 签名原始哈希
+                value:
+                  type: hash
+                  hash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+      responses:
+        '200':
+          description: 签名成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignResponse'
+              example:
+                signature: "0x1a2b3c4d5e6f..."
+                walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
+                type: "message"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ──────────────────────────── Transactions ────────────────────────────
+  /v1/transactions/intent:
+    post:
+      tags: [Transactions]
+      summary: 提交交易 Intent
+      description: |
+        提交一个交易 Intent，包含一组合约交互。  
+        服务端自动完成签名、UserOperation 打包和 Gas 处理。
+
+        可选 `policyId` 字段用于指定 USDC Gas 代付策略（使 USDC 支付 Gas，无需持有 ETH）。
+      operationId: createTransactionIntent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIntentRequest'
+            examples:
+              usdcTransfer:
+                summary: USDC 转账
+                value:
+                  chainId: 84532
+                  interactions:
+                    - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                      functionName: "transfer"
+                      functionArgs:
+                        - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
+                        - "1000000"
+              withGasPolicy:
+                summary: 使用 USDC Gas 代付策略
+                value:
+                  chainId: 84532
+                  policyId: "pol_usdc-gas-policy"
+                  interactions:
+                    - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                      functionName: "approve"
+                      functionArgs:
+                        - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
+                        - "1000000"
+      responses:
+        '201':
+          description: 交易 Intent 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionIntentResponse'
+              example:
+                transactionId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                intentId: "tin_abc123"
+                status: "pending"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /v1/transactions/batch:
+    post:
+      tags: [Transactions]
+      summary: 批量交易（EIP-7702）
+      description: |
+        与 `POST /v1/transactions/intent` 相同的请求格式，
+        但通过 EIP-7702 委托将多个交互合并为一次链上交易。
+
+        **典型场景**：approve + swap、批量转账、多步 DeFi 操作。
+      operationId: batchTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIntentRequest'
+            example:
+              chainId: 84532
+              policyId: "pol_usdc-gas-policy"
+              interactions:
+                - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                  functionName: "approve"
+                  functionArgs:
+                    - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
+                    - "1000000"
+                - contract: "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
+                  functionName: "swapExactTokensForTokens"
+                  functionArgs:
+                    - "1000000"
+                    - "0"
+                    - '["0x036CbD53842c5426634e7929541eC2318f3dCF7e","0x4200000000000000000000000000000000000006"]'
+                    - "0x1234567890abcdef1234567890abcdef12345678"
+                    - "1714000000"
+      responses:
+        '201':
+          description: 批量交易 Intent 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionIntentResponse'
+              example:
+                transactionId: "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                intentId: "tin_def456"
+                status: "pending"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /v1/transactions/history:
+    get:
+      tags: [Transactions]
+      summary: 查询交易历史
+      description: 分页查询交易记录，按创建时间倒序排列。
+      operationId: getTransactionHistory
+      parameters:
+        - name: limit
+          in: query
+          description: 每页数量
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: 偏移量
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: 交易历史
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionHistoryResponse'
+              example:
+                transactions:
+                  - id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                    intentId: "tin_abc123"
+                    status: "confirmed"
+                    txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+                    chainId: 84532
+                    createdAt: "2026-04-20T10:30:00.000Z"
+                  - id: "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                    intentId: "tin_def456"
+                    status: "pending"
+                    txHash: null
+                    chainId: 84532
+                    createdAt: "2026-04-20T10:25:00.000Z"
+                total: 42
+                limit: 50
+                offset: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+# ════════════════════════════ Components ════════════════════════════
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API Key，格式：`sk_<64位十六进制字符>`。  
+        首次社交登录时由平台颁发。
+
+  schemas:
+    # ──────────── Signing ────────────
+    SignRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [message, typed_data, hash]
+          description: |
+            签名类型：
+            - `message` — 纯文本消息（EIP-191）
+            - `typed_data` — 结构化数据（EIP-712）
+            - `hash` — 原始 32 字节哈希
+        message:
+          type: string
+          description: 纯文本消息（`type=message` 时必填）
+        typedData:
+          $ref: '#/components/schemas/EIP712TypedData'
+        hash:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{64}$'
+          description: 32 字节哈希（`type=hash` 时必填）
+
+    EIP712TypedData:
+      type: object
+      required: [domain, types, primaryType, message]
+      description: EIP-712 结构化数据（`type=typed_data` 时必填）
+      properties:
+        domain:
+          type: object
+          additionalProperties: true
+          description: EIP-712 domain 数据
+        types:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              required: [name, type]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+          description: EIP-712 类型定义
+        primaryType:
+          type: string
+          description: 主类型名称
+        message:
+          type: object
+          additionalProperties: true
+          description: 待签名的数据
+
+    SignResponse:
+      type: object
+      required: [signature, walletAddress, type]
+      properties:
+        signature:
+          type: string
+          description: 十六进制编码的 ECDSA 签名
+        walletAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: 签名所用的钱包地址
+        type:
+          type: string
+          enum: [message, typed_data, hash]
+
+    # ──────────── Transactions ────────────
+    CreateIntentRequest:
+      type: object
+      required: [chainId, interactions]
+      properties:
+        chainId:
+          type: integer
+          description: "目标链 ID（84532 = Base Sepolia, 8453 = Base, 1 = Ethereum）"
+          example: 84532
+        policyId:
+          type: string
+          description: Gas 代付策略 ID（可选，启用后使用 USDC 支付 Gas）
+          example: "pol_usdc-gas-policy"
+        interactions:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Interaction'
+          description: 合约交互列表（至少一个）
+
+    Interaction:
+      type: object
+      required: [contract, functionName]
+      properties:
+        contract:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: 目标合约地址
+        functionName:
+          type: string
+          description: 合约函数名
+          example: "transfer"
+        functionArgs:
+          type: array
+          items:
+            type: string
+          description: 函数参数（字符串数组）
+          example: ["0xAbCdEf1234567890aBcDeF1234567890AbCdEf12", "1000000"]
+
+    TransactionIntentResponse:
+      type: object
+      required: [transactionId, intentId, status]
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: 平台内部交易 ID
+        intentId:
+          type: string
+          description: Openfort Transaction Intent ID
+        status:
+          type: string
+          enum: [pending, confirmed, failed]
+
+    TransactionHistoryResponse:
+      type: object
+      required: [transactions, total, limit, offset]
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionRecord'
+        total:
+          type: integer
+          description: 总记录数
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    TransactionRecord:
+      type: object
+      required: [id, intentId, status, chainId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        intentId:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, failed]
+        txHash:
+          type: string
+          nullable: true
+          pattern: '^0x[a-fA-F0-9]{64}$'
+          description: 链上交易哈希（pending 时为 null）
+        chainId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ──────────── Error ────────────
+    ErrorResponse:
+      type: object
+      required: [statusCode, timestamp, path, message]
+      properties:
+        statusCode:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        message:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      required: [statusCode, timestamp, path, message]
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        message:
+          type: array
+          items:
+            type: string
+          description: 验证错误列表
+        error:
+          type: string
+          example: "Bad Request"
+
+  responses:
+    Unauthorized:
+      description: 认证失败 — 缺少或无效的 API Key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 401
+            timestamp: "2026-04-20T10:00:00.000Z"
+            path: "/v1/transactions/intent"
+            message: "Unauthorized"
+
+    NotFound:
+      description: 钱包未找到
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 404
+            timestamp: "2026-04-20T10:00:00.000Z"
+            path: "/v1/transactions/intent"
+            message: "Wallet not found"
+
+    ValidationError:
+      description: 请求参数验证失败
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+          example:
+            statusCode: 400
+            timestamp: "2026-04-20T10:00:00.000Z"
+            path: "/v1/transactions/intent"
+            message:
+              - "chainId must be a number"
+              - "interactions must contain at least 1 elements"
+            error: "Bad Request"
