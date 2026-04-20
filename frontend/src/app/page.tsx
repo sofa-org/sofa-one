@@ -2,78 +2,80 @@ import Link from 'next/link';
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Nav */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-xl font-bold tracking-tight">Agent Wallet</span>
-          <div className="flex gap-3">
-            <Link
-              href="/sign-in"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              Get Started
-            </Link>
-          </div>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 selection:bg-brand-accent selection:text-white">
+      <div className="w-full max-w-3xl text-center">
+        {/* Brand / Logo Area */}
+        <div className="mb-16">
+          <span className="font-serif text-3xl font-medium tracking-tight text-brand-text">
+            SOFA Agent Wallet
+          </span>
         </div>
-      </header>
 
-      {/* Hero */}
-      <main className="flex flex-1 items-center justify-center px-6">
-        <div className="max-w-2xl text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-gray-900">
-            Automated Blockchain
-            <br />
-            <span className="text-indigo-600">Signing for Agents</span>
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
-            Sign in with your social account, get a wallet and API key instantly.
-            Let your AI agents execute on-chain transactions — swap, transfer,
-            mint — without ever touching a private key.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Link
-              href="/sign-up"
-              className="rounded-lg bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700"
+        {/* Main Heading */}
+        <h1 className="mb-6 font-serif text-5xl font-normal leading-tight tracking-tight text-brand-text md:text-6xl">
+          Automated Blockchain <br className="hidden md:block" />
+          <span className="italic text-brand-accent">Signing for Agents</span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="mx-auto mb-12 max-w-2xl text-lg font-light leading-relaxed text-brand-muted md:text-xl">
+          Sign in with your social account, get a wallet and API key instantly.
+          Let your AI agents execute on-chain transactions — swap, transfer,
+          mint — without ever touching a private key.
+        </p>
+
+        {/* CTA */}
+        <div className="mb-16 flex items-center justify-center">
+          <Link
+            href="/sign-up"
+            className="rounded-full bg-brand-text px-10 py-3.5 text-sm font-medium tracking-widest text-white transition-colors hover:bg-black/90"
+          >
+            GET STARTED
+          </Link>
+        </div>
+
+        {/* Features */}
+        <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
+          {[
+            'Social OAuth Login',
+            'TEE-Secured Keys',
+            'EIP-7702 Delegation',
+            'USDC Gas Payments',
+            'Batch Transactions',
+            'API Key Auth',
+          ].map((feature) => (
+            <span
+              key={feature}
+              className="rounded-full border border-brand-border bg-brand-surface/60 px-4 py-1.5 text-xs font-medium tracking-wide text-brand-muted backdrop-blur-sm"
             >
-              Create Wallet
-            </Link>
+              {feature}
+            </span>
+          ))}
+        </div>
+
+        {/* Footer link */}
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <a
+            href="https://www.openfort.io/blog/how-to-build-an-agent-wallet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-brand-muted transition-colors hover:text-brand-text underline underline-offset-4 decoration-brand-border hover:decoration-brand-text"
+          >
+            Learn more about the architecture
+          </a>
+          <span className="text-xs text-brand-muted">
+            Powered by{' '}
             <a
-              href="https://www.openfort.io/blog/how-to-build-an-agent-wallet"
+              href="https://sofa.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-base font-semibold text-gray-700 hover:text-gray-900"
+              className="underline underline-offset-2 decoration-brand-border hover:text-brand-text transition-colors"
             >
-              Learn more &rarr;
+              SOFA.org
             </a>
-          </div>
-
-          {/* Feature pills */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
-            {[
-              'Social OAuth Login',
-              'TEE-Secured Keys',
-              'EIP-7702 Delegation',
-              'USDC Gas Payments',
-              'Batch Transactions',
-              'API Key Auth',
-            ].map((f) => (
-              <span
-                key={f}
-                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-gray-600"
-              >
-                {f}
-              </span>
-            ))}
-          </div>
+          </span>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
