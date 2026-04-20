@@ -1,11 +1,11 @@
-import { SignIn } from '@clerk/nextjs';
-import Link from 'next/link';
+import { SignIn } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
 
 export default function SignInPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-brand-bg px-4 py-12">
-      <Link 
-        href="/" 
+      <Link
+        to="/"
         className="mb-10 font-serif text-3xl font-medium tracking-tight text-brand-text transition-opacity hover:opacity-80"
       >
         SOFA Agent Wallet

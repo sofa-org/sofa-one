@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Call an auth endpoint (uses Clerk JWT from getToken).

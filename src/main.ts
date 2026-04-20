@@ -11,7 +11,10 @@ async function bootstrap() {
 
   app.set('trust proxy', 1);
   app.use(helmet());
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -1,9 +1,5 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { UserButton, useClerk } from '@clerk/nextjs';
-
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { UserButton, useClerk } from '@clerk/clerk-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet' },
@@ -12,12 +8,13 @@ const NAV_ITEMS = [
   { href: '/dashboard/docs', label: 'API Docs' },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+export default function DashboardLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { signOut } = useClerk();
 
   const handleSignOut = async () => {
-    await signOut({ redirectUrl: '/' });
+    await signOut(() => navigate('/'));
   };
 
   return (
@@ -25,18 +22,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside className="flex w-60 flex-col border-r border-brand-border bg-brand-surface">
         <div className="flex items-center gap-2 border-b border-brand-border px-6 py-4">
-          <span className="text-lg font-bold font-serif tracking-tight text-brand-text">SOFA Agent Wallet</span>
+          <span className="text-lg font-bold font-serif tracking-tight text-brand-text">
+            SOFA Agent Wallet
+          </span>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === '/dashboard'
-                ? pathname === '/dashboard'
-                : pathname.startsWith(item.href);
+                ? location.pathname === '/dashboard'
+                : location.pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-brand-accent/10 text-brand-accent'
@@ -62,7 +61,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto bg-brand-bg p-8">{children}</main>
+      <main className="flex-1 overflow-auto bg-brand-bg p-8">
+        <Outlet />
+      </main>
     </div>
   );
 }

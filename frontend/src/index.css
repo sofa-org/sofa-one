@@ -9,8 +9,8 @@
   --color-brand-accent-hover: #B38459;
   --color-brand-border: #E8E2D9;
 
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-newsreader);
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Newsreader', serif;
 }
 
 body {

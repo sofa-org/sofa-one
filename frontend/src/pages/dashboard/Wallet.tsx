@@ -1,10 +1,8 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/clerk-react';
 import { socialLogin } from '@/lib/api';
 
-export default function DashboardPage() {
+export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [wallet, setWallet] = useState<{
     walletAddress: string;
@@ -17,19 +15,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait until Clerk has loaded and confirmed the user is signed in,
-    // otherwise getToken() returns null and the backend rejects with 401.
     if (!isLoaded || !isSignedIn) return;
 
     async function init() {
       try {
-        // Register / login with backend — response includes wallet info directly
         const result = await socialLogin(getToken);
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
-
-        // Use wallet info returned by socialLogin — no separate API call needed
         setWallet(result.wallet);
       } catch (err: any) {
         setError(err.message);
@@ -58,7 +51,6 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold font-serif text-brand-text">Wallet Overview</h1>
 
-      {/* New API key alert */}
       {apiKeyDisplay && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-medium text-amber-800">
@@ -70,7 +62,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Wallet card */}
       {wallet && (
         <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
@@ -122,11 +113,10 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick start */}
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-lg font-semibold font-serif text-brand-text">Quick Start</h2>
         <pre className="mt-4 overflow-x-auto rounded-lg bg-brand-text p-4 text-sm text-brand-bg">
-{`curl -X POST ${typeof window !== 'undefined' ? window.location.origin : ''}/api/v1/transactions/intent \\
+{`curl -X POST ${window.location.origin}/api/v1/transactions/intent \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{

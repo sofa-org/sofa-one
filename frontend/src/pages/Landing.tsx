@@ -1,40 +1,35 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 selection:bg-brand-accent selection:text-white">
       <div className="w-full max-w-3xl text-center">
-        {/* Brand / Logo Area */}
         <div className="mb-16">
           <span className="font-serif text-3xl font-medium tracking-tight text-brand-text">
             SOFA Agent Wallet
           </span>
         </div>
 
-        {/* Main Heading */}
         <h1 className="mb-6 font-serif text-5xl font-normal leading-tight tracking-tight text-brand-text md:text-6xl">
           Automated Blockchain Signing <br className="hidden md:block" />
           <span className="italic text-brand-accent">for Agents</span>
         </h1>
 
-        {/* Subtitle */}
         <p className="mx-auto mb-12 max-w-2xl text-lg font-light leading-relaxed text-brand-muted md:text-xl">
           Sign in with your social account, get a wallet and API key instantly.
           Let your AI agents execute on-chain transactions — swap, transfer,
           mint — without ever touching a private key.
         </p>
 
-        {/* CTA */}
         <div className="mb-16 flex items-center justify-center">
           <Link
-            href="/sign-up"
+            to="/sign-up"
             className="rounded-full bg-brand-text px-10 py-3.5 text-sm font-medium tracking-widest text-white transition-colors hover:bg-black/90"
           >
             GET STARTED
           </Link>
         </div>
 
-        {/* Features */}
         <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
           {[
             'Social OAuth Login',
@@ -53,7 +48,6 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Footer link */}
         <div className="mt-8 flex flex-col items-center gap-3">
           <a
             href="https://www.openfort.io/blog/how-to-build-an-agent-wallet"

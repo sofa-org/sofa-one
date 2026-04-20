@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/clerk-react';
 import { getTransactionHistoryAuth, withdrawAuth } from '@/lib/api';
 
 interface Transaction {

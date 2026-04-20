@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/clerk-react';
 import {
   listApiKeysAuth,
   createApiKeyAuth,
@@ -104,7 +102,6 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      {/* New key alert */}
       {newRawKey && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-medium text-amber-800">
@@ -122,7 +119,6 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      {/* Create new key */}
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-base font-semibold font-serif text-brand-text">Create New Key</h2>
         <div className="mt-3 flex gap-3">
@@ -143,7 +139,6 @@ export default function ApiKeysPage() {
         </div>
       </div>
 
-      {/* Key list */}
       <div className="rounded-xl border border-brand-border bg-brand-surface shadow-sm">
         <div className="border-b border-brand-border px-6 py-4">
           <h2 className="text-base font-semibold font-serif text-brand-text">Your Keys</h2>
