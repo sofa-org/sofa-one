@@ -20,11 +20,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-brand-bg">
       {/* Sidebar */}
-      <aside className="flex w-60 flex-col border-r border-gray-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-gray-200 px-6 py-4">
-          <span className="text-lg font-bold tracking-tight">Agent Wallet</span>
+      <aside className="flex w-60 flex-col border-r border-brand-border bg-brand-surface">
+        <div className="flex items-center gap-2 border-b border-brand-border px-6 py-4">
+          <span className="text-lg font-bold font-serif tracking-tight text-brand-text">SOFA Agent Wallet</span>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV_ITEMS.map((item) => {
@@ -38,8 +38,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-brand-accent/10 text-brand-accent'
+                    : 'text-brand-muted hover:bg-brand-bg hover:text-brand-text'
                 }`}
               >
                 {item.label}
@@ -47,12 +47,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="border-t border-gray-200 px-4 py-4">
+        <div className="border-t border-brand-border px-4 py-4">
           <div className="flex items-center justify-between">
             <UserButton />
             <button
               onClick={handleSignOut}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
             >
               Sign out
             </button>
@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto bg-gray-50 p-8">{children}</main>
+      <main className="flex-1 overflow-auto bg-brand-bg p-8">{children}</main>
     </div>
   );
 }
