@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import {
-  listApiKeys,
-  createApiKey,
-  revokeApiKey,
+  listApiKeysAuth,
+  createApiKeyAuth,
+  revokeApiKeyAuth,
   refreshApiKey as refreshApiKeyApi,
   setApiKey,
 } from '@/lib/api';
@@ -30,7 +30,7 @@ export default function ApiKeysPage() {
 
   async function fetchKeys() {
     try {
-      const data = await listApiKeys();
+      const data = await listApiKeysAuth(getToken);
       setKeys(data);
     } catch (err: any) {
       setError(err.message);
@@ -47,7 +47,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setError(null);
     try {
-      const result = await createApiKey(newKeyName || undefined);
+      const result = await createApiKeyAuth(getToken, newKeyName || undefined);
       setNewRawKey(result.rawKey);
       setApiKey(result.rawKey);
       setNewKeyName('');
@@ -63,7 +63,7 @@ export default function ApiKeysPage() {
     if (!confirm('Revoke this API key? This cannot be undone.')) return;
     setActionLoading(true);
     try {
-      await revokeApiKey(id);
+      await revokeApiKeyAuth(getToken, id);
       await fetchKeys();
     } catch (err: any) {
       setError(err.message);

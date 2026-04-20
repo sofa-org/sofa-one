@@ -1,11 +1,11 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { ApiKeyGuard } from '../../common/guards/api-key.guard';
+import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { WithdrawDto } from './dto/withdraw.dto';
 
 @Controller('v1/wallets')
-@UseGuards(ApiKeyGuard)
+@UseGuards(EitherAuthGuard)
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 

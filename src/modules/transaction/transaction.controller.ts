@@ -1,11 +1,11 @@
 import { Controller, Post, Get, Body, Query, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
-import { ApiKeyGuard } from '../../common/guards/api-key.guard';
+import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateIntentDto } from './dto/create-intent.dto';
 
 @Controller('v1/transactions')
-@UseGuards(ApiKeyGuard)
+@UseGuards(EitherAuthGuard)
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 

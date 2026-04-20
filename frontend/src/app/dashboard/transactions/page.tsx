@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTransactionHistory, withdraw } from '@/lib/api';
+import { useAuth } from '@clerk/nextjs';
+import { getTransactionHistoryAuth, withdrawAuth } from '@/lib/api';
 
 interface Transaction {
   id: string;
@@ -13,6 +14,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const { getToken } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function TransactionsPage() {
 
   async function fetchHistory() {
     try {
-      const data = await getTransactionHistory();
+      const data = await getTransactionHistoryAuth(getToken);
       setTransactions(data.transactions);
       setTotal(data.total);
     } catch (err: any) {
@@ -47,7 +49,7 @@ export default function TransactionsPage() {
     setWithdrawResult(null);
     setError(null);
     try {
-      const result = await withdraw(to, amount, token);
+      const result = await withdrawAuth(getToken, to, amount, token);
       setWithdrawResult(`Transaction submitted: ${result.intentId}`);
       setTo('');
       setAmount('');

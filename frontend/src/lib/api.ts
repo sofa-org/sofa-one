@@ -120,3 +120,40 @@ export async function createTransactionIntent(params: {
     body: JSON.stringify(params),
   });
 }
+
+// --- Dashboard API (JWT-authenticated) ---
+
+export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
+  return authFetch('/v1/api-keys', getToken);
+}
+
+export async function createApiKeyAuth(getToken: () => Promise<string | null>, name?: string) {
+  return authFetch('/v1/api-keys', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, id: string) {
+  return authFetch(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
+}
+
+export async function getTransactionHistoryAuth(
+  getToken: () => Promise<string | null>,
+  limit = 50,
+  offset = 0,
+) {
+  return authFetch(`/v1/transactions/history?limit=${limit}&offset=${offset}`, getToken);
+}
+
+export async function withdrawAuth(
+  getToken: () => Promise<string | null>,
+  to: string,
+  amount: string,
+  token: string,
+) {
+  return authFetch('/v1/wallets/withdraw', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ to, amount, token }),
+  });
+}

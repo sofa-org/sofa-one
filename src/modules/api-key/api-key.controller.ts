@@ -1,11 +1,11 @@
 import { Controller, Post, Delete, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiKeyService } from './api-key.service';
-import { ApiKeyGuard } from '../../common/guards/api-key.guard';
+import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 
 @Controller('v1/api-keys')
-@UseGuards(ApiKeyGuard)
+@UseGuards(EitherAuthGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
