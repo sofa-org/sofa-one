@@ -7,7 +7,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 ```
 [User Client]
    ↓ Social OAuth (Google, Twitter/X, Discord, Apple)
-[Frontend — Next.js 15 + Clerk]
+[Frontend — Vite + React SPA + Clerk]
    ↓ HTTPS + JWT
 [Backend — NestJS]
    ├── Auth Module        (Clerk social login + user provisioning)
@@ -30,7 +30,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 15, React 19, Tailwind CSS 4, Clerk |
+| Frontend | Vite 6, React 19, React Router 7, Tailwind CSS 4, Clerk |
 | Backend | NestJS 10, TypeScript 5 |
 | Wallet Core | Openfort Node SDK |
 | Database | PostgreSQL 16, Prisma 5 |
@@ -74,11 +74,13 @@ Required variables:
 | Variable | Description |
 |----------|-------------|
 | `CLERK_SECRET_KEY` | Clerk backend secret key |
-| `CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key (Vite-prefixed) |
 | `OPENFORT_API_KEY` | Openfort API secret key |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
 | `DEFAULT_CHAIN_ID` | Default chain (84532 for Base Sepolia) |
+| `VITE_API_URL` | Backend URL for production (leave empty in dev — Vite proxy handles it) |
+| `CORS_ORIGIN` | Allowed frontend origin(s) for CORS, comma-separated (defaults to `*`) |
 
 ### 4. Run database migrations
 
@@ -98,6 +100,8 @@ cd frontend && npm run dev
 
 ## Scripts
 
+### Backend
+
 | Command | Description |
 |---------|-------------|
 | `npm run start:dev` | Start backend in watch mode |
@@ -111,6 +115,14 @@ cd frontend && npm run dev
 | `npm run prisma:generate` | Regenerate Prisma client |
 | `npm run prisma:migrate:dev` | Create / apply migrations |
 | `npm run prisma:studio` | Open Prisma Studio GUI |
+
+### Frontend (`cd frontend`)
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server (port 3000, proxies `/api` to backend) |
+| `npm run build` | Production build → `dist/` (static files, deployable to S3) |
+| `npm run preview` | Preview production build locally |
 
 ## API Overview
 
@@ -167,7 +179,7 @@ sofa-agent-wallet/
 │       └── api-key/             # Key generation, validation, rotation
 ├── prisma/
 │   └── schema.prisma            # Database schema (4 models)
-├── frontend/                    # Next.js 15 frontend
+├── frontend/                    # Vite + React SPA (static, deployable to S3/CloudFront)
 ├── test/                        # E2E tests
 ├── docker-compose.yml           # PostgreSQL + Redis
 ├── openapi.yaml                 # API specification
@@ -202,6 +214,18 @@ npm run test          # Unit tests
 npm run test:e2e      # E2E tests
 npm run test:cov      # Coverage report
 ```
+
+## Deployment
+
+The frontend is a **pure static SPA** — `npm run build` in `frontend/` produces a `dist/` folder that can be served from any static host:
+
+| Host | Notes |
+|------|-------|
+| **S3 + CloudFront** | Upload `dist/` to S3, set `VITE_API_URL` at build time, configure CloudFront to redirect 404s to `index.html` for SPA routing |
+| **Vercel / Netlify** | Zero-config; add `_redirects` or `vercel.json` for SPA fallback |
+| **Nginx** | `try_files $uri /index.html;` |
+
+Set `CORS_ORIGIN` on the NestJS backend to match the frontend's domain.
 
 ## License
 
