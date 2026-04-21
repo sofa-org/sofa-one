@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { createHash, timingSafeEqual } from 'crypto';
+import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
- * Validates the X-API-Key header against stored SHA-256 hashes.
+ * Validates the X-API-Key header against stored argon2id hashes.
  * On success, attaches `user` and `apiKeyRecord` to the request.
  */
 @Injectable()
@@ -50,27 +50,16 @@ export class ApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // Verify SHA-256(salt + rawKey) matches stored hash
-    const hash = createHash('sha256')
-      .update(keyRecord.salt + apiKey)
-      .digest('hex');
-
-    const hashBuf = Buffer.from(hash);
-    const storedBuf = Buffer.from(keyRecord.apiKeyHash);
-    if (
-      hashBuf.length !== storedBuf.length ||
-      !timingSafeEqual(hashBuf, storedBuf)
-    ) {
+    // Verify argon2id hash matches stored hash
+    const isValid = await argon2.verify(keyRecord.apiKeyHash, apiKey);
+    if (!isValid) {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // Optional IP whitelist enforcement
+    // Use request.ip which is correctly set by Express after trust-proxy processing.
+    // Never read X-Forwarded-For directly — it can be forged by the client.
     if (keyRecord.allowedIps.length > 0) {
-      const forwarded = request.headers['x-forwarded-for'] as string;
-      const clientIp: string =
-        forwarded?.split(',')[0]?.trim() ??
-        request.ip ??
-        request.connection?.remoteAddress;
+      const clientIp: string = request.ip ?? '';
       if (!keyRecord.allowedIps.includes(clientIp)) {
         throw new UnauthorizedException('IP address not allowed for this API key');
       }

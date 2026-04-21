@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { randomBytes, createHash } from 'crypto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
+import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 
 @Injectable()
@@ -11,20 +12,28 @@ export class ApiKeyService {
    * Returns the raw key **once** — it cannot be recovered after this call.
    */
   async createApiKey(userId: string, name?: string) {
+    const activeCount = await this.prisma.apiKey.count({
+      where: { userId, revoked: false },
+    });
+    if (activeCount >= 10) {
+      throw new BadRequestException('Maximum of 10 active API keys per user');
+    }
+
     const secret = randomBytes(32).toString('hex');
     const rawKey = `sk_${secret}`;
     const keyPrefix = rawKey.substring(0, 11); // "sk_" + 8 hex chars
 
-    const salt = randomBytes(16).toString('hex');
-    const hash = createHash('sha256')
-      .update(salt + rawKey)
-      .digest('hex');
+    const hash = await argon2.hash(rawKey, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 1,
+    });
 
     const apiKey = await this.prisma.apiKey.create({
       data: {
         userId,
         apiKeyHash: hash,
-        salt,
         keyPrefix,
         name: name || 'Default',
         allowedIps: [],

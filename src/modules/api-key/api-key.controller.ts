@@ -1,4 +1,5 @@
 import { Controller, Post, Delete, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiKeyService } from './api-key.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -10,6 +11,7 @@ export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
   /** POST /v1/api-keys — create a new API key (returns raw key once). */
+  @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post()
   async create(@CurrentUser('id') userId: string, @Body() dto: CreateApiKeyDto) {
     return this.apiKeyService.createApiKey(userId, dto.name);

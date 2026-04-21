@@ -22,11 +22,9 @@ export class TransactionController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    return this.transactionService.getHistory(
-      userId,
-      limit ? parseInt(limit, 10) : 50,
-      offset ? parseInt(offset, 10) : 0,
-    );
+    const parsedLimit = Math.min(Math.max(limit ? parseInt(limit, 10) : 50, 1), 100);
+    const parsedOffset = Math.max(offset ? parseInt(offset, 10) : 0, 0);
+    return this.transactionService.getHistory(userId, parsedLimit, parsedOffset);
   }
 
   /** POST /v1/transactions/batch — batch multiple interactions (EIP-7702). */

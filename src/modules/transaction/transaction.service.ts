@@ -41,6 +41,12 @@ export class TransactionService {
         intentId: txIntent.id,
         status: 'pending',
         chainId: BigInt(params.chainId),
+        walletAddress: wallet.walletAddress,
+        details: {
+          type: 'intent',
+          policyId: params.policyId ?? null,
+          interactions: params.interactions,
+        },
       },
     });
 
@@ -70,6 +76,7 @@ export class TransactionService {
         status: tx.status,
         txHash: tx.txHash,
         chainId: tx.chainId ? Number(tx.chainId) : null,
+        walletAddress: tx.walletAddress,
         createdAt: tx.createdAt,
       })),
       total,

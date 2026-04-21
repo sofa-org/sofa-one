@@ -26,7 +26,11 @@ export class AuthService {
    * Returns { userId, wallet: { walletAddress, chainId, status, supportedTokens }, apiKey? }.
    * The apiKey field is only present on first login (one-time display).
    */
-  async handleSocialLogin(clerkUserId: string) {
+  async handleSocialLogin(clerkUserId: string): Promise<{
+    userId: string;
+    wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
+    apiKey?: string;
+  }> {
     // 1. Fetch Clerk user profile
     const clerkUser = await this.clerkClient.users.getUser(clerkUserId);
     const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
@@ -48,34 +52,37 @@ export class AuthService {
     let hasApiKeys = (existing?.apiKeys.length ?? 0) > 0;
 
     if (!existing) {
-      // 3a. New user — call Openfort first, then atomically create user + wallet
-      const chainId = this.configService.get<number>(
-        'chain.defaultChainId',
-        84532,
-      );
-      const account = await this.openfort.createBackendWallet();
+      try {
+        const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
+        const account = await this.openfort.createBackendWallet();
 
-      const result = await this.prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: { socialProvider, socialId, email: primaryEmail },
+        const result = await this.prisma.$transaction(async (tx) => {
+          const newUser = await tx.user.create({
+            data: { socialProvider, socialId, email: primaryEmail },
+          });
+          const newWallet = await tx.userWallet.create({
+            data: {
+              userId: newUser.id,
+              openfortAccountId: account.id,
+              walletAddress: account.address,
+              chainId: BigInt(chainId),
+            },
+          });
+          return { userId: newUser.id, wallet: newWallet };
         });
-        const newWallet = await tx.userWallet.create({
-          data: {
-            userId: newUser.id,
-            openfortAccountId: account.id,
-            walletAddress: account.address,
-            chainId: BigInt(chainId),
-          },
-        });
-        return { userId: newUser.id, wallet: newWallet };
-      });
 
-      userId = result.userId;
-      wallet = result.wallet;
-      hasApiKeys = false;
-      this.logger.log(
-        `Created user ${userId} via ${socialProvider} with wallet ${wallet.walletAddress}`,
-      );
+        userId = result.userId;
+        wallet = result.wallet;
+        hasApiKeys = false;
+        this.logger.log(`Created user ${userId} via ${socialProvider}`);
+      } catch (err: any) {
+        if (err?.code === 'P2002') {
+          // Race condition: concurrent request already created the user — retry as returning user
+          this.logger.warn(`Race condition on user creation for ${socialProvider}, retrying as existing user`);
+          return this.handleSocialLogin(clerkUserId);
+        }
+        throw err;
+      }
     } else if (!wallet) {
       // 3b. Existing user missing wallet — provision one
       userId = existing.id;
@@ -93,9 +100,7 @@ export class AuthService {
           chainId: BigInt(chainId),
         },
       });
-      this.logger.log(
-        `Created wallet ${wallet.walletAddress} for existing user ${userId}`,
-      );
+      this.logger.log(`Provisioned wallet for existing user ${userId}`);
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;

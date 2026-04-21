@@ -5,12 +5,12 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: agent_wallet
-    ports:
-      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
@@ -19,10 +19,11 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - '6379:6379'
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
     volumes:
       - redis_data:/data
+    networks:
+      - internal
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -32,3 +33,8 @@ services:
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true

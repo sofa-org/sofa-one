@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort, {
   type SponsorSchema,
@@ -8,6 +8,7 @@ import Openfort, {
 @Injectable()
 export class OpenfortService {
   private readonly client: Openfort;
+  private readonly logger = new Logger(OpenfortService.name);
 
   constructor(private readonly configService: ConfigService) {
     this.client = new Openfort(this.configService.getOrThrow<string>('openfort.apiKey'), {
@@ -21,7 +22,8 @@ export class OpenfortService {
       const account = await this.client.accounts.evm.backend.create();
       return { id: account.id, address: account.address };
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('createBackendWallet failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -46,7 +48,8 @@ export class OpenfortService {
         interactions: params.interactions,
       });
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('createTransactionIntent failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -55,7 +58,8 @@ export class OpenfortService {
     try {
       return await this.client.transactionIntents.get(intentId);
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('getTransactionIntent failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -64,7 +68,8 @@ export class OpenfortService {
     try {
       return await this.client.contracts.create(params);
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('createContract failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -81,7 +86,8 @@ export class OpenfortService {
     try {
       return await this.client.policies.create(params);
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('createPolicy failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -90,7 +96,8 @@ export class OpenfortService {
     try {
       return await this.client.accounts.evm.backend.sign({ id: accountId, data });
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('signData failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 
@@ -104,7 +111,8 @@ export class OpenfortService {
     try {
       return await this.client.policyRules.create(params);
     } catch (error: any) {
-      throw new BadGatewayException(`Openfort error: ${error.message}`);
+      this.logger.error('createPolicyRule failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
 }

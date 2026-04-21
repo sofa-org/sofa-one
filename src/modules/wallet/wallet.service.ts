@@ -88,6 +88,14 @@ export class WalletService {
         intentId: txIntent.id,
         status: 'pending',
         chainId: BigInt(chainId),
+        walletAddress: wallet.walletAddress,
+        details: {
+          type: 'withdraw',
+          to: params.to,
+          amount: params.amount,
+          token: params.token,
+          contractAddress: usdcAddress,
+        },
       },
     });
 

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { PrismaModule } from './core/database/prisma.module';
@@ -16,12 +18,22 @@ import { TransactionModule } from './modules/transaction/transaction.module';
       load: [configuration],
       validate,
     }),
+    ThrottlerModule.forRoot([
+      { name: 'short', ttl: 10000, limit: 20 },
+      { name: 'medium', ttl: 60000, limit: 100 },
+    ]),
     PrismaModule,
     OpenfortModule,
     AuthModule,
     ApiKeyModule,
     WalletModule,
     TransactionModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
