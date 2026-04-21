@@ -22,6 +22,9 @@ info:
     | `84532` | Base Sepolia（测试网） |
     | `8453` | Base Mainnet |
     | `1` | Ethereum Mainnet |
+    | `11155111` | Ethereum Sepolia（测试网） |
+    | `137` | Polygon Mainnet（Polymarket） |
+    | `80002` | Polygon Amoy（Polymarket 测试网） |
 
     ## 快速开始
 

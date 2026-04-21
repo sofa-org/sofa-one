@@ -9,6 +9,9 @@ const USDC_ADDRESSES: Record<number, string> = {
   84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Base Sepolia
   8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base Mainnet
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Ethereum Mainnet
+  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ethereum Sepolia
+  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon Mainnet (Polymarket)
+  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582', // Polygon Amoy (Polymarket Testnet)
 };
 
 @Injectable()

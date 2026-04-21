@@ -337,16 +337,28 @@ export default function APIDocsPage() {
               </thead>
               <tbody className="divide-y divide-brand-border text-brand-text bg-brand-surface">
                 <tr>
-                  <td className="px-4 py-3 font-mono text-xs">84532</td>
-                  <td className="px-4 py-3">Base Sepolia (Testnet)</td>
+                  <td className="px-4 py-3 font-mono text-xs">1</td>
+                  <td className="px-4 py-3">Ethereum Mainnet</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono text-xs">11155111</td>
+                  <td className="px-4 py-3">Ethereum Sepolia (Testnet)</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-mono text-xs">8453</td>
                   <td className="px-4 py-3">Base Mainnet</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-mono text-xs">1</td>
-                  <td className="px-4 py-3">Ethereum Mainnet</td>
+                  <td className="px-4 py-3 font-mono text-xs">84532</td>
+                  <td className="px-4 py-3">Base Sepolia (Testnet)</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono text-xs">137</td>
+                  <td className="px-4 py-3">Polygon Mainnet (Polymarket)</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono text-xs">80002</td>
+                  <td className="px-4 py-3">Polygon Amoy (Polymarket Testnet)</td>
                 </tr>
               </tbody>
             </table>

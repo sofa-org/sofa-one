@@ -35,7 +35,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 | Wallet Core | Openfort Node SDK |
 | Database | PostgreSQL 16, Prisma 5 |
 | Cache / Queue | Redis 7, BullMQ (Phase 2) |
-| Chains | Base (8453), Ethereum (1), Base Sepolia (84532) |
+| Chains | Base (8453), Ethereum (1), Base Sepolia (84532), Ethereum Sepolia (11155111), Polygon (137), Polygon Amoy (80002) |
 
 ## Prerequisites
 
