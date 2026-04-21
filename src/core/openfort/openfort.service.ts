@@ -1,9 +1,6 @@
 import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Openfort, {
-  type SponsorSchema,
-  type PolicyRuleType,
-} from '@openfort/openfort-node';
+import Openfort from '@openfort/openfort-node';
 
 @Injectable()
 export class OpenfortService {
@@ -53,65 +50,12 @@ export class OpenfortService {
     }
   }
 
-  /** Look up status of an existing transaction intent. */
-  async getTransactionIntent(intentId: string) {
-    try {
-      return await this.client.transactionIntents.get(intentId);
-    } catch (error: any) {
-      this.logger.error('getTransactionIntent failed: ' + (error.message ?? error), { stack: error.stack });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
-  /** Register a smart-contract address with Openfort. */
-  async createContract(params: { name: string; chainId: number; address: string }) {
-    try {
-      return await this.client.contracts.create(params);
-    } catch (error: any) {
-      this.logger.error('createContract failed: ' + (error.message ?? error), { stack: error.stack });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
-  /** Create a gas-sponsorship / charge_custom_tokens policy. */
-  async createPolicy(params: {
-    name: string;
-    chainId: number;
-    strategy: {
-      sponsorSchema: SponsorSchema;
-      tokenContract: string;
-      tokenContractAmount: string;
-    };
-  }) {
-    try {
-      return await this.client.policies.create(params);
-    } catch (error: any) {
-      this.logger.error('createPolicy failed: ' + (error.message ?? error), { stack: error.stack });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {
       return await this.client.accounts.evm.backend.sign({ id: accountId, data });
     } catch (error: any) {
       this.logger.error('signData failed: ' + (error.message ?? error), { stack: error.stack });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
-  /** Attach an allowed-function rule to a policy. */
-  async createPolicyRule(params: {
-    policy: string;
-    type: PolicyRuleType;
-    contract: string;
-    functionName: string;
-  }) {
-    try {
-      return await this.client.policyRules.create(params);
-    } catch (error: any) {
-      this.logger.error('createPolicyRule failed: ' + (error.message ?? error), { stack: error.stack });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

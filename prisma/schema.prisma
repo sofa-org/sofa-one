@@ -44,7 +44,6 @@ model ApiKey {
   expiresAt        DateTime? @map("expires_at") @db.Timestamptz()
   revoked          Boolean   @default(false)
   allowedIps       String[]  @map("allowed_ips")
-  allowedContracts String[]  @map("allowed_contracts")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])

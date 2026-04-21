@@ -36,13 +36,6 @@ const mockOpenfortService = {
     id: 'tin_test_intent_456',
     status: 'pending',
   }),
-  getTransactionIntent: jest.fn().mockResolvedValue({
-    id: 'tin_test_intent_456',
-    status: 'completed',
-  }),
-  createContract: jest.fn().mockResolvedValue({ id: 'con_test_123' }),
-  createPolicy: jest.fn().mockResolvedValue({ id: 'pol_test_123' }),
-  createPolicyRule: jest.fn().mockResolvedValue({ id: 'plr_test_123' }),
 };
 
 // ── Test constants ─────────────────────────────────────────────────────

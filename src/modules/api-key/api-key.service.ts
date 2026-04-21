@@ -37,7 +37,6 @@ export class ApiKeyService {
         keyPrefix,
         name: name || 'Default',
         allowedIps: [],
-        allowedContracts: [],
       },
     });
 
@@ -77,7 +76,6 @@ export class ApiKeyService {
         revoked: true,
         expiresAt: true,
         allowedIps: true,
-        allowedContracts: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },

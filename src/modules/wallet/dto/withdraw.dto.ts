@@ -11,6 +11,6 @@ export class WithdrawDto {
   @Matches(/^\d+$/, { message: 'Amount must be a numeric string' })
   amount: string;
 
-  @IsIn(['USDC', 'ETH'], { message: 'Token must be USDC or ETH' })
+  @IsIn(['USDC'], { message: 'Token must be USDC' })
   token: string;
 }
