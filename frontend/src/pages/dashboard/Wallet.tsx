@@ -6,9 +6,7 @@ export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [wallet, setWallet] = useState<{
     walletAddress: string;
-    chainId: number;
     status: string;
-    supportedTokens: string[];
   } | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,32 +82,9 @@ export default function WalletPage() {
                 {wallet.walletAddress}
               </p>
             </div>
-            <div className="flex gap-6">
-              <div>
-                <label className="text-xs font-medium text-brand-muted">Chain ID</label>
-                <p className="mt-0.5 text-sm text-brand-text">{wallet.chainId}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-brand-muted">Supported Tokens</label>
-                <p className="mt-0.5 text-sm text-brand-text">
-                  {wallet.supportedTokens.join(', ')}
-                </p>
-              </div>
-            </div>
+            
           </div>
 
-          <div className="mt-5 rounded-lg bg-brand-bg p-4 text-sm text-brand-muted">
-            Send USDC or ETH to the address above to fund your agent wallet. Use the{' '}
-            <a
-              href="https://faucet.circle.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-accent hover:text-brand-accent-hover underline"
-            >
-              Circle Faucet
-            </a>{' '}
-            for Base Sepolia test USDC.
-          </div>
         </div>
       )}
 

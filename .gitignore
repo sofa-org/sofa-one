@@ -11,3 +11,4 @@ coverage/
 *.swo
 *.md
 !README.md
+/.agent-shell/
