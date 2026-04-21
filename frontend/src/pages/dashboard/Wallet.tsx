@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { socialLogin } from '@/lib/api';
+import { socialLogin, withdrawAuth } from '@/lib/api';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -11,6 +11,12 @@ export default function WalletPage() {
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [to, setTo] = useState('');
+  const [amount, setAmount] = useState('');
+  const [token, setToken] = useState('USDC');
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawResult, setWithdrawResult] = useState<string | null>(null);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -30,6 +36,23 @@ export default function WalletPage() {
     }
     init();
   }, [isLoaded, isSignedIn, getToken]);
+
+  async function handleWithdraw(e: React.FormEvent) {
+    e.preventDefault();
+    setWithdrawLoading(true);
+    setWithdrawResult(null);
+    setWithdrawError(null);
+    try {
+      const result = await withdrawAuth(getToken, to, amount, token);
+      setWithdrawResult(`Transaction submitted: ${result.intentId}`);
+      setTo('');
+      setAmount('');
+    } catch (err: any) {
+      setWithdrawError(err.message);
+    } finally {
+      setWithdrawLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -87,6 +110,64 @@ export default function WalletPage() {
 
         </div>
       )}
+
+      {/* Withdraw */}
+      <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
+        <h2 className="text-base font-semibold font-serif text-brand-text">Withdraw</h2>
+        {withdrawError && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {withdrawError}
+          </div>
+        )}
+        <form onSubmit={handleWithdraw} className="mt-4 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-brand-muted">Recipient Address</label>
+            <input
+              type="text"
+              placeholder="0x..."
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              required
+              pattern="^0x[a-fA-F0-9]{40}$"
+              className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted"
+            />
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-medium text-brand-muted">Amount (base units)</label>
+              <input
+                type="text"
+                placeholder="1000000 (= 1 USDC)"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted"
+              />
+            </div>
+            <div className="w-32">
+              <label className="text-xs font-medium text-brand-muted">Token</label>
+              <select
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+              >
+                <option value="USDC">USDC</option>
+                <option value="ETH">ETH</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={withdrawLoading}
+            className="rounded-full bg-brand-text px-4 py-2 text-sm font-medium text-white hover:bg-brand-text/90 disabled:opacity-50"
+          >
+            {withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}
+          </button>
+        </form>
+        {withdrawResult && (
+          <p className="mt-3 text-sm text-green-600">{withdrawResult}</p>
+        )}
+      </div>
 
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-lg font-semibold font-serif text-brand-text">Quick Start</h2>
