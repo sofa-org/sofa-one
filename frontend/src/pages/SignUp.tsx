@@ -10,7 +10,7 @@ export default function SignUpPage() {
       >
         SOFA ONE
       </Link>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md flex justify-center">
         <SignUp forceRedirectUrl="/dashboard" />
       </div>
       <p className="mt-8 text-center text-xs text-brand-muted">
