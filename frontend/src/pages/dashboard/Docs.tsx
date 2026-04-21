@@ -7,7 +7,7 @@ export default function APIDocsPage() {
           API Documentation
         </h1>
         <p className="text-base text-brand-muted max-w-2xl">
-          Welcome to the Agent Wallet API. This reference provides all the endpoints needed to programmatically sign data and submit transactions via your TEE-secured backend wallet.
+          Welcome to the SOFA ONE API. This reference provides all the endpoints needed to programmatically sign data and submit transactions via your TEE-secured backend wallet.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export default function APIDocsPage() {
                 <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
-  -d '{"type":"message", "message":"Hello, Agent Wallet!"}'`}</code>
+  -d '{"type":"message", "message":"Hello, SOFA ONE!"}'`}</code>
               </pre>
             </div>
             <div className="space-y-2">

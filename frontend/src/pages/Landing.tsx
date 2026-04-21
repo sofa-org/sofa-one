@@ -6,7 +6,7 @@ export default function LandingPage() {
       <div className="w-full max-w-3xl text-center">
         <div className="mb-16">
           <span className="font-serif text-3xl font-medium tracking-tight text-brand-text">
-            SOFA Agent Wallet
+            SOFA ONE
           </span>
         </div>
 

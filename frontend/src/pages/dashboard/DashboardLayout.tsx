@@ -22,7 +22,7 @@ export default function DashboardLayout() {
       <aside className="flex w-60 flex-col border-r border-brand-border bg-brand-surface">
         <div className="flex items-center gap-2 border-b border-brand-border px-6 py-4">
           <span className="text-lg font-bold font-serif tracking-tight text-brand-text">
-            SOFA Agent Wallet
+            SOFA ONE
           </span>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">

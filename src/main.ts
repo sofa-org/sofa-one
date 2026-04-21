@@ -46,7 +46,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  logger.log(`Agent Wallet API running on port ${port}`);
+  logger.log(`SOFA ONE API running on port ${port}`);
 }
 
 bootstrap();

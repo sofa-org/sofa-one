@@ -8,7 +8,7 @@ export default function SignUpPage() {
         to="/"
         className="mb-10 font-serif text-3xl font-medium tracking-tight text-brand-text transition-opacity hover:opacity-80"
       >
-        SOFA Agent Wallet
+        SOFA ONE
       </Link>
       <div className="w-full max-w-md">
         <SignUp forceRedirectUrl="/dashboard" />

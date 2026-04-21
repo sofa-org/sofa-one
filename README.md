@@ -1,4 +1,4 @@
-# Agent Wallet
+# SOFA ONE
 
 Server-side automated blockchain signing for users authenticated via social OAuth. Users receive a Backend Wallet (managed in TEE via [Openfort](https://www.openfort.io/)) and an API Key for programmatic transaction submission.
 

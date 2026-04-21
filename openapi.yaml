@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Agent Wallet API
+  title: SOFA ONE API
   version: 1.0.0
   description: |
-    Agent Wallet 为用户提供服务器端自动化区块链交易和签名能力。
+    SOFA ONE 为用户提供服务器端自动化区块链交易和签名能力。
 
     ## 认证
 
@@ -46,11 +46,11 @@ info:
     curl -X POST https://api.example.com/v1/wallets/sign \
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
-      -d '{"type": "message", "message": "Hello from Agent Wallet"}'
+      -d '{"type": "message", "message": "Hello from SOFA ONE"}'
     ```
 
   contact:
-    name: Agent Wallet Team
+    name: SOFA ONE Team
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -98,7 +98,7 @@ paths:
                 summary: 签名纯文本消息
                 value:
                   type: message
-                  message: "Hello, Agent Wallet!"
+                  message: "Hello, SOFA ONE!"
               typedData:
                 summary: 签名 EIP-712 结构化数据
                 value:

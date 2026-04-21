@@ -1,7 +1,7 @@
 {
   "name": "sofa-agent-wallet",
   "version": "0.1.0",
-  "description": "Agent Wallet service — server-side automated blockchain signing for users authenticated via social OAuth",
+  "description": "SOFA ONE service — server-side automated blockchain signing for users authenticated via social OAuth",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
