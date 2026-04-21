@@ -80,10 +80,10 @@ export default function APIDocsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[120px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
@@ -92,7 +92,7 @@ export default function APIDocsPage() {
             </div>
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[120px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`{
   "signature": "0x5d99b6f7f6d1f73d1a...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -169,10 +169,10 @@ export default function APIDocsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[160px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`curl -X POST https://api.agentwallet.com/v1/transactions/intent \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
@@ -188,7 +188,7 @@ export default function APIDocsPage() {
             </div>
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[160px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`{
   "transactionId": "550e8400-e29b-41d4-a716-446655440000",
   "intentId": "tin_abc123def456",
@@ -211,10 +211,10 @@ export default function APIDocsPage() {
             Batch multiple interactions into one on-chain transaction via EIP-7702. The request and response format are identical to the intent endpoint.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[220px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`curl -X POST https://api.agentwallet.com/v1/transactions/batch \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
@@ -237,7 +237,7 @@ export default function APIDocsPage() {
             </div>
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[220px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`{
   "transactionId": "9d7e52a1-b8f4-4a29-8f9c-1234567890ab",
   "intentId": "tin_batch789xyz",
@@ -290,17 +290,17 @@ export default function APIDocsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[200px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`curl -X GET "https://api.agentwallet.com/v1/transactions/history?limit=10&offset=0" \\
   -H "X-API-Key: sk_live_..."`}</code>
               </pre>
             </div>
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto h-[200px]">
+              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
                 <code>{`{
   "transactions": [
     {
