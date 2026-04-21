@@ -7,7 +7,6 @@ import SignUpPage from './pages/SignUp';
 import DashboardLayout from './pages/dashboard/DashboardLayout';
 import WalletPage from './pages/dashboard/Wallet';
 import ApiKeysPage from './pages/dashboard/ApiKeys';
-import TransactionsPage from './pages/dashboard/Transactions';
 import APIDocsPage from './pages/dashboard/Docs';
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
@@ -41,7 +40,6 @@ export default function App() {
         >
           <Route index element={<WalletPage />} />
           <Route path="api-keys" element={<ApiKeysPage />} />
-          <Route path="transactions" element={<TransactionsPage />} />
           <Route path="docs" element={<APIDocsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,7 +9,6 @@ import { OpenfortModule } from './core/openfort/openfort.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ApiKeyModule } from './modules/api-key/api-key.module';
 import { WalletModule } from './modules/wallet/wallet.module';
-import { TransactionModule } from './modules/transaction/transaction.module';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { TransactionModule } from './modules/transaction/transaction.module';
     AuthModule,
     ApiKeyModule,
     WalletModule,
-    TransactionModule,
   ],
   providers: [
     {

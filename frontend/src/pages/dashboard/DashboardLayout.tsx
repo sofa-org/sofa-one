@@ -5,7 +5,6 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet' },
   { href: '/dashboard/api-keys', label: 'API Keys' },
   { href: '/dashboard/docs', label: 'API Docs' },
-  { href: '/dashboard/transactions', label: 'Transactions' },
 ];
 
 export default function DashboardLayout() {

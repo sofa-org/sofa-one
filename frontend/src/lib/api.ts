@@ -83,27 +83,6 @@ export async function revokeApiKey(apiKey: string, id: string) {
   return apiFetch(`/v1/api-keys/${id}`, apiKey, { method: 'DELETE' });
 }
 
-// --- Transactions ---
-
-export async function getTransactionHistory(apiKey: string, limit = 50, offset = 0) {
-  return apiFetch(`/v1/transactions/history?limit=${limit}&offset=${offset}`, apiKey);
-}
-
-export async function createTransactionIntent(apiKey: string, params: {
-  chainId: number;
-  policyId?: string;
-  interactions: Array<{
-    contract: string;
-    functionName: string;
-    functionArgs?: string[];
-  }>;
-}) {
-  return apiFetch('/v1/transactions/intent', apiKey, {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
-}
-
 // --- Dashboard API (JWT-authenticated) ---
 
 export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
@@ -119,14 +98,6 @@ export async function createApiKeyAuth(getToken: () => Promise<string | null>, n
 
 export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, id: string) {
   return authFetch(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
-}
-
-export async function getTransactionHistoryAuth(
-  getToken: () => Promise<string | null>,
-  limit = 50,
-  offset = 0,
-) {
-  return authFetch(`/v1/transactions/history?limit=${limit}&offset=${offset}`, getToken);
 }
 
 export async function withdrawAuth(
