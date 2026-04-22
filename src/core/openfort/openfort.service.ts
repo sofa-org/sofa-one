@@ -136,6 +136,28 @@ export class OpenfortService {
     return await this.client.policyRules.delete(ruleId);
   }
 
+  /** Send a raw transaction via a backend wallet (EIP-7702 auto-delegation). */
+  async sendTransaction(params: {
+    accountId: string;
+    chainId: number;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+    policyId?: string;
+  }): Promise<{ transactionHash: string | null }> {
+    try {
+      const account = await this.client.accounts.evm.backend.get({ id: params.accountId });
+      const result = await this.client.accounts.evm.backend.sendTransaction({
+        account,
+        chainId: params.chainId,
+        interactions: params.interactions as any,
+        ...(params.policyId && { policy: params.policyId }),
+      });
+      return { transactionHash: result.response?.transactionHash ?? null };
+    } catch (error: any) {
+      this.logger.error('sendTransaction failed: ' + (error.message ?? error), { stack: error.stack });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {
