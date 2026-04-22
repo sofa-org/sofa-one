@@ -77,6 +77,7 @@ export class ApiKeyService {
         expiresAt: true,
         allowedIps: true,
         createdAt: true,
+        lastUsedAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });

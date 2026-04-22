@@ -45,6 +45,7 @@ model ApiKey {
   revoked          Boolean   @default(false)
   allowedIps       String[]  @map("allowed_ips")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])
 

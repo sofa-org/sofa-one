@@ -14,6 +14,7 @@ interface ApiKeyRecord {
   revoked: boolean;
   expiresAt: string | null;
   createdAt: string;
+  lastUsedAt: string | null;
 }
 
 export default function ApiKeysPage() {
@@ -173,6 +174,9 @@ export default function ApiKeysPage() {
                     Created {new Date(key.createdAt).toLocaleDateString()}
                     {key.expiresAt &&
                       ` · Expires ${new Date(key.expiresAt).toLocaleDateString()}`}
+                    {key.lastUsedAt
+                      ? ` · Last used ${new Date(key.lastUsedAt).toLocaleString()}`
+                      : ' · Never used'}
                   </p>
                 </div>
                 {!key.revoked && (

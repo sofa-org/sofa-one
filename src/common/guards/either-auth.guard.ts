@@ -114,6 +114,13 @@ export class EitherAuthGuard implements CanActivate {
 
     request.user = keyRecord.user;
     request.apiKeyRecord = keyRecord;
+
+    // Fire-and-forget: update lastUsedAt without blocking the request
+    void this.prisma.apiKey.update({
+      where: { id: keyRecord.id },
+      data: { lastUsedAt: new Date() },
+    });
+
     return true;
   }
 
