@@ -19,7 +19,13 @@ export class PolicyService {
 
   async createPolicy(dto: CreatePolicyDto) {
     try {
-      return await this.openfortService.createPolicy(dto);
+      return await this.openfortService.createPolicy({
+        scope: dto.scope,
+        description: dto.description,
+        enabled: dto.enabled,
+        priority: dto.priority,
+        rules: dto.rules,
+      });
     } catch (error: any) {
       this.logger.error('createPolicy failed: ' + error.message);
       throw new BadGatewayException('Policy service temporarily unavailable');
@@ -38,9 +44,10 @@ export class PolicyService {
   async updatePolicy(id: string, dto: UpdatePolicyDto) {
     try {
       return await this.openfortService.updatePolicy(id, {
-        name: dto.name,
-        chainId: dto.chainId,
-        sponsorSchema: dto.sponsorSchema,
+        description: dto.description,
+        enabled: dto.enabled,
+        priority: dto.priority,
+        rules: dto.rules,
       });
     } catch (error: any) {
       this.logger.error('updatePolicy failed: ' + error.message);

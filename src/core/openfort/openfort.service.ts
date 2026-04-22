@@ -57,20 +57,18 @@ export class OpenfortService {
   }
 
   async createPolicy(params: {
-    name: string;
-    chainId: number;
-    sponsorSchema: string;
-    tokenContract?: string;
-    tokenContractAmount?: string;
+    scope: string;
+    description?: string;
+    enabled?: boolean;
+    priority?: number;
+    rules?: any[];
   }) {
     return await this.client.policies.create({
-      name: params.name,
-      chainId: params.chainId,
-      strategy: {
-        sponsorSchema: params.sponsorSchema as any,
-        ...(params.tokenContract && { tokenContract: params.tokenContract }),
-        ...(params.tokenContractAmount && { tokenContractAmount: params.tokenContractAmount }),
-      },
+      scope: params.scope as any,
+      description: params.description,
+      enabled: params.enabled,
+      priority: params.priority,
+      rules: (params.rules ?? []) as any,
     });
   }
 
@@ -78,13 +76,12 @@ export class OpenfortService {
     return await this.client.policies.get(id);
   }
 
-  async updatePolicy(id: string, params: { name?: string; chainId?: number; sponsorSchema?: string }) {
+  async updatePolicy(id: string, params: { description?: string; enabled?: boolean; priority?: number; rules?: any[] }) {
     return await this.client.policies.update(id, {
-      ...(params.name !== undefined && { name: params.name }),
-      ...(params.chainId !== undefined && { chainId: params.chainId }),
-      ...(params.sponsorSchema !== undefined && {
-        strategy: { sponsorSchema: params.sponsorSchema as any },
-      }),
+      description: params.description,
+      enabled: params.enabled,
+      priority: params.priority,
+      ...(params.rules !== undefined && { rules: params.rules as any }),
     });
   }
 
@@ -93,17 +90,18 @@ export class OpenfortService {
   }
 
   async enablePolicy(id: string) {
-    return await this.client.policies.enable(id);
+    return await this.client.policies.update(id, { enabled: true });
   }
 
   async disablePolicy(id: string) {
-    return await this.client.policies.disable(id);
+    return await this.client.policies.update(id, { enabled: false });
   }
 
   // ─── Policy rules management ──────────────────────────────────────────────
 
-  async listPolicyRules(policyId: string) {
-    return await this.client.policyRules.list({ policy: policyId });
+  async listPolicyRules(policyId: string): Promise<any> {
+    const policy = await this.client.policies.get(policyId);
+    return (policy as any).rules ?? [];
   }
 
   async createPolicyRule(
@@ -118,22 +116,27 @@ export class OpenfortService {
       timeIntervalType?: string;
       timeIntervalValue?: number;
     },
-  ) {
-    return await this.client.policyRules.create({
-      policy: policyId,
-      type: params.type as any,
+  ): Promise<any> {
+    const policy = await this.client.policies.get(policyId);
+    const existingRules: any[] = (policy as any).rules ?? [];
+    const newRule: any = {
+      type: params.type,
       ...(params.contract && { contract: params.contract }),
       ...(params.functionName && { functionName: params.functionName }),
       ...(params.wildcard !== undefined && { wildcard: params.wildcard }),
       ...(params.gasLimit && { gasLimit: params.gasLimit }),
       ...(params.countLimit !== undefined && { countLimit: params.countLimit }),
-      ...(params.timeIntervalType && { timeIntervalType: params.timeIntervalType as any }),
+      ...(params.timeIntervalType && { timeIntervalType: params.timeIntervalType }),
       ...(params.timeIntervalValue !== undefined && { timeIntervalValue: params.timeIntervalValue }),
-    });
+    };
+    return await this.client.policies.update(policyId, { rules: [...existingRules, newRule] as any });
   }
 
-  async deletePolicyRule(_policyId: string, ruleId: string) {
-    return await this.client.policyRules.delete(ruleId);
+  async deletePolicyRule(policyId: string, ruleId: string): Promise<any> {
+    const policy = await this.client.policies.get(policyId);
+    const existingRules: any[] = (policy as any).rules ?? [];
+    const filteredRules = existingRules.filter((r: any) => r.id !== ruleId);
+    return await this.client.policies.update(policyId, { rules: filteredRules as any });
   }
 
   /** Send a raw transaction via a backend wallet (EIP-7702 auto-delegation). */

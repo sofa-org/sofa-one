@@ -1,10 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-
-export enum SponsorSchemaEnum {
-  PAY_FOR_USER = 'pay_for_user',
-  CHARGE_CUSTOM_TOKENS = 'charge_custom_tokens',
-  FIXED_RATE = 'fixed_rate',
-}
+import { IsString, IsNumber, IsOptional, IsEnum, IsBoolean, IsArray } from 'class-validator';
 
 export enum PolicyRuleTypeEnum {
   CONTRACT_FUNCTIONS = 'contract_functions',
@@ -22,35 +16,41 @@ export enum TimeIntervalTypeEnum {
 
 export class CreatePolicyDto {
   @IsString()
-  name: string;
+  scope: string; // 'project' | 'account' | 'transaction'
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional()
   @IsNumber()
-  chainId: number;
-
-  @IsEnum(SponsorSchemaEnum)
-  sponsorSchema: SponsorSchemaEnum;
+  priority?: number;
 
   @IsOptional()
-  @IsString()
-  tokenContract?: string;
-
-  @IsOptional()
-  @IsString()
-  tokenContractAmount?: string;
+  @IsArray()
+  rules?: any[];
 }
 
 export class UpdatePolicyDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
 
   @IsOptional()
   @IsNumber()
-  chainId?: number;
+  priority?: number;
 
   @IsOptional()
-  @IsEnum(SponsorSchemaEnum)
-  sponsorSchema?: SponsorSchemaEnum;
+  @IsArray()
+  rules?: any[];
 }
 
 export class CreatePolicyRuleDto {
