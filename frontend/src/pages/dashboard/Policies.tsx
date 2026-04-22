@@ -15,11 +15,10 @@ import {
 
 interface Policy {
   id: string;
-  name: string | null;
+  scope: string;
+  description?: string;
   enabled: boolean;
   deleted: boolean;
-  chainId: number;
-  strategy: { sponsorSchema: 'pay_for_user' | 'charge_custom_tokens' | 'fixed_rate' };
   policyRules: { id: string }[];
   createdAt: number;
 }
@@ -75,17 +74,8 @@ type PolicyRule =
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SPONSOR_SCHEMAS: Policy['strategy']['sponsorSchema'][] = [
-  'pay_for_user',
-  'charge_custom_tokens',
-  'fixed_rate',
-];
-
-const SPONSOR_SCHEMA_LABELS: Record<Policy['strategy']['sponsorSchema'], string> = {
-  pay_for_user: 'Pay for User',
-  charge_custom_tokens: 'Charge Custom Tokens',
-  fixed_rate: 'Fixed Rate',
-};
+type PolicyScope = 'project' | 'account' | 'transaction';
+const POLICY_SCOPES: PolicyScope[] = ['project', 'account', 'transaction'];
 
 const RULE_TYPES: RuleType[] = ['contract_functions', 'account_functions', 'rate_limit'];
 
@@ -364,10 +354,9 @@ export default function PoliciesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Create policy form
-  const [newName, setNewName] = useState('');
-  const [newChainId, setNewChainId] = useState(84532);
-  const [newSponsorSchema, setNewSponsorSchema] =
-    useState<Policy['strategy']['sponsorSchema']>('pay_for_user');
+  const [newScope, setNewScope] = useState<PolicyScope>('project');
+  const [newDescription, setNewDescription] = useState('');
+  const [newEnabled, setNewEnabled] = useState(true);
 
   // Pending rules for create policy form
   const [pendingRules, setPendingRules] = useState<RuleFormState[]>([]);
@@ -424,14 +413,13 @@ export default function PoliciesPage() {
   }
 
   async function handleCreate() {
-    if (!newName.trim()) return;
     setActionLoading(true);
     setError(null);
     try {
       const result = await createPolicyAuth(getToken, {
-        name: newName.trim(),
-        chainId: newChainId,
-        sponsorSchema: newSponsorSchema,
+        scope: newScope,
+        description: newDescription.trim() || undefined,
+        enabled: newEnabled,
       });
 
       // result.id is returned based on the API response structure
@@ -467,9 +455,9 @@ export default function PoliciesPage() {
         }
       }
 
-      setNewName('');
-      setNewChainId(84532);
-      setNewSponsorSchema('pay_for_user');
+      setNewScope('project');
+      setNewDescription('');
+      setNewEnabled(true);
       setPendingRules([]);
       setNewRuleForm(DEFAULT_RULE_FORM);
       setShowNewRuleForm(false);
@@ -609,33 +597,33 @@ export default function PoliciesPage() {
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-base font-semibold font-serif text-brand-text">Create New Policy</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <input
-            type="text"
-            placeholder="Policy name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className={inputCls}
-          />
-          <input
-            type="number"
-            placeholder="Chain ID"
-            value={newChainId}
-            onChange={(e) => setNewChainId(Number(e.target.value))}
-            className={inputCls}
-          />
           <select
-            value={newSponsorSchema}
-            onChange={(e) =>
-              setNewSponsorSchema(e.target.value as Policy['strategy']['sponsorSchema'])
-            }
+            value={newScope}
+            onChange={(e) => setNewScope(e.target.value as PolicyScope)}
             className={selectCls}
           >
-            {SPONSOR_SCHEMAS.map((s) => (
+            {POLICY_SCOPES.map((s) => (
               <option key={s} value={s}>
-                {SPONSOR_SCHEMA_LABELS[s]}
+                {s.charAt(0).toUpperCase() + s.slice(1)}
               </option>
             ))}
           </select>
+          <input
+            type="text"
+            placeholder="Description (optional)"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            className={`${inputCls} sm:col-span-2`}
+          />
+          <label className="flex items-center gap-2 px-1 py-2 text-sm text-brand-text cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newEnabled}
+              onChange={(e) => setNewEnabled(e.target.checked)}
+              className="rounded border-brand-border accent-brand-accent"
+            />
+            Enabled
+          </label>
         </div>
 
         <div className="mt-6 border-t border-brand-border pt-4">
@@ -720,7 +708,7 @@ export default function PoliciesPage() {
         <div className="mt-4 flex justify-end border-t border-brand-border pt-4">
           <button
             onClick={handleCreate}
-            disabled={actionLoading || !newName.trim()}
+            disabled={actionLoading}
             className="rounded-full bg-brand-text px-4 py-2 text-sm font-medium text-white hover:bg-brand-text/90 disabled:opacity-50"
           >
             Create
@@ -753,17 +741,12 @@ export default function PoliciesPage() {
                   <div className="flex items-center justify-between px-6 py-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-sm text-brand-text">
-                          {policy.name ?? (
-                            <span className="text-brand-muted italic">Unnamed</span>
-                          )}
+                        <span className="font-medium text-sm text-brand-text capitalize">
+                          {policy.scope}
                         </span>
-                        <span className="rounded-full bg-brand-bg px-2 py-0.5 text-xs text-brand-muted border border-brand-border">
-                          Chain {policy.chainId}
-                        </span>
-                        <span className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent">
-                          {SPONSOR_SCHEMA_LABELS[policy.strategy?.sponsorSchema]}
-                        </span>
+                        {policy.description && (
+                          <span className="text-xs text-brand-muted">{policy.description}</span>
+                        )}
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                             policy.enabled

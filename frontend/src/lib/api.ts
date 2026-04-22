@@ -120,7 +120,7 @@ export async function getBalancesAuth(getToken: () => Promise<string | null>) {
 export async function listPoliciesAuth(getToken: () => Promise<string | null>) {
   return authFetch('/v1/policies', getToken);
 }
-export async function createPolicyAuth(getToken: () => Promise<string | null>, body: { name: string; chainId: number; sponsorSchema: string }) {
+export async function createPolicyAuth(getToken: () => Promise<string | null>, body: { scope: string; description?: string; enabled?: boolean; rules?: any[] }) {
   return authFetch('/v1/policies', getToken, { method: 'POST', body: JSON.stringify(body) });
 }
 export async function deletePolicyAuth(getToken: () => Promise<string | null>, id: string) {
