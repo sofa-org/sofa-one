@@ -184,7 +184,7 @@ export default function WalletPage() {
               className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-end gap-3">
             <div className="flex-1">
               <label className="text-xs font-medium text-brand-muted">Amount (base units)</label>
               <input
@@ -197,9 +197,7 @@ export default function WalletPage() {
               />
             </div>
             <div className="w-32">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-brand-muted">Token</label>
-              </div>
+              <label className="text-xs font-medium text-brand-muted">Token</label>
               <select
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
