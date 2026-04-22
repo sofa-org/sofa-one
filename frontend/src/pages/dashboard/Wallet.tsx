@@ -157,12 +157,21 @@ export default function WalletPage() {
       {/* Withdraw */}
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-base font-semibold font-serif text-brand-text">Withdraw</h2>
+
         {withdrawError && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {withdrawError}
           </div>
         )}
-        <form onSubmit={handleWithdraw} className="mt-4 space-y-3">
+
+        {withdrawResult && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span className="font-medium">{withdrawResult}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleWithdraw} className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-medium text-brand-muted">Recipient Address</label>
             <input
@@ -180,7 +189,7 @@ export default function WalletPage() {
               <label className="text-xs font-medium text-brand-muted">Amount (base units)</label>
               <input
                 type="text"
-                placeholder="1000000 (= 1 USDC)"
+                placeholder="1000000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
@@ -188,11 +197,13 @@ export default function WalletPage() {
               />
             </div>
             <div className="w-32">
-              <label className="text-xs font-medium text-brand-muted">Token</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-brand-muted">Token</label>
+              </div>
               <select
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                className="mt-1 block w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-transparent"
               >
                 <option value="USDC">USDC</option>
                 <option value="ETH">ETH</option>
@@ -202,32 +213,19 @@ export default function WalletPage() {
           <button
             type="submit"
             disabled={withdrawLoading}
-            className="rounded-full bg-brand-text px-4 py-2 text-sm font-medium text-white hover:bg-brand-text/90 disabled:opacity-50"
+            className="mt-6 mb-2 mx-auto flex items-center justify-center gap-2 rounded-lg bg-brand-text px-4 py-2.5 text-sm font-medium text-brand-surface shadow-sm transition-all hover:bg-brand-text/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
           >
-            {withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}
+            {withdrawLoading && (
+              <svg className="h-4 w-4 animate-spin text-brand-surface" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            <span>{withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}</span>
           </button>
         </form>
-        {withdrawResult && (
-          <p className="mt-3 text-sm text-green-600">{withdrawResult}</p>
-        )}
       </div>
 
-      <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
-        <h2 className="text-lg font-semibold font-serif text-brand-text">Quick Start</h2>
-        <pre className="mt-4 overflow-x-auto rounded-lg bg-brand-text p-4 text-sm text-brand-bg">
-{`curl -X POST ${window.location.origin}/api/v1/transactions/intent \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "chainId": 84532,
-    "interactions": [{
-      "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "functionName": "transfer",
-      "functionArgs": ["0xRECIPIENT", "1000000"]
-    }]
-  }'`}
-        </pre>
-      </div>
     </div>
   );
 }

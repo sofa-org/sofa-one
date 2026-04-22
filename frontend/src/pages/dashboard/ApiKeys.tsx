@@ -189,6 +189,23 @@ export default function ApiKeysPage() {
           </div>
         )}
       </div>
+
+      <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
+        <h2 className="text-lg font-semibold font-serif text-brand-text">Quick Start</h2>
+        <pre className="mt-4 overflow-x-auto rounded-lg bg-brand-text p-4 text-sm text-brand-bg">
+{`curl -X POST ${window.location.origin}/api/v1/transactions/intent \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "chainId": 84532,
+    "interactions": [{
+      "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "functionName": "transfer",
+      "functionArgs": ["0xRECIPIENT", "1000000"]
+    }]
+  }'`}
+        </pre>
+      </div>
     </div>
   );
 }
