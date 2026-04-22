@@ -3,6 +3,7 @@ import { UserButton, useClerk } from '@clerk/clerk-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet' },
+  { href: '/dashboard/policies', label: 'Policies' },
   { href: '/dashboard/api-keys', label: 'API Keys' },
   { href: '/dashboard/docs', label: 'API Docs' },
 ];

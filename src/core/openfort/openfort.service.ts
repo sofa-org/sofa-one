@@ -50,6 +50,92 @@ export class OpenfortService {
     }
   }
 
+  // ─── Policy management ────────────────────────────────────────────────────
+
+  async listPolicies() {
+    return await this.client.policies.list();
+  }
+
+  async createPolicy(params: {
+    name: string;
+    chainId: number;
+    sponsorSchema: string;
+    tokenContract?: string;
+    tokenContractAmount?: string;
+  }) {
+    return await this.client.policies.create({
+      name: params.name,
+      chainId: params.chainId,
+      strategy: {
+        sponsorSchema: params.sponsorSchema as any,
+        ...(params.tokenContract && { tokenContract: params.tokenContract }),
+        ...(params.tokenContractAmount && { tokenContractAmount: params.tokenContractAmount }),
+      },
+    });
+  }
+
+  async getPolicy(id: string) {
+    return await this.client.policies.get(id);
+  }
+
+  async updatePolicy(id: string, params: { name?: string; chainId?: number; sponsorSchema?: string }) {
+    return await this.client.policies.update(id, {
+      ...(params.name !== undefined && { name: params.name }),
+      ...(params.chainId !== undefined && { chainId: params.chainId }),
+      ...(params.sponsorSchema !== undefined && {
+        strategy: { sponsorSchema: params.sponsorSchema as any },
+      }),
+    });
+  }
+
+  async deletePolicy(id: string) {
+    return await this.client.policies.delete(id);
+  }
+
+  async enablePolicy(id: string) {
+    return await this.client.policies.enable(id);
+  }
+
+  async disablePolicy(id: string) {
+    return await this.client.policies.disable(id);
+  }
+
+  // ─── Policy rules management ──────────────────────────────────────────────
+
+  async listPolicyRules(policyId: string) {
+    return await this.client.policyRules.list({ policy: policyId });
+  }
+
+  async createPolicyRule(
+    policyId: string,
+    params: {
+      type: string;
+      contract?: string;
+      functionName?: string;
+      wildcard?: boolean;
+      gasLimit?: string;
+      countLimit?: number;
+      timeIntervalType?: string;
+      timeIntervalValue?: number;
+    },
+  ) {
+    return await this.client.policyRules.create({
+      policy: policyId,
+      type: params.type as any,
+      ...(params.contract && { contract: params.contract }),
+      ...(params.functionName && { functionName: params.functionName }),
+      ...(params.wildcard !== undefined && { wildcard: params.wildcard }),
+      ...(params.gasLimit && { gasLimit: params.gasLimit }),
+      ...(params.countLimit !== undefined && { countLimit: params.countLimit }),
+      ...(params.timeIntervalType && { timeIntervalType: params.timeIntervalType as any }),
+      ...(params.timeIntervalValue !== undefined && { timeIntervalValue: params.timeIntervalValue }),
+    });
+  }
+
+  async deletePolicyRule(_policyId: string, ruleId: string) {
+    return await this.client.policyRules.delete(ruleId);
+  }
+
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {

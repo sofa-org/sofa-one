@@ -115,3 +115,29 @@ export async function withdrawAuth(
 export async function getBalancesAuth(getToken: () => Promise<string | null>) {
   return authFetch('/v1/wallets/balances', getToken);
 }
+
+// --- Policies ---
+export async function listPoliciesAuth(getToken: () => Promise<string | null>) {
+  return authFetch('/v1/policies', getToken);
+}
+export async function createPolicyAuth(getToken: () => Promise<string | null>, body: { name: string; chainId: number; sponsorSchema: string }) {
+  return authFetch('/v1/policies', getToken, { method: 'POST', body: JSON.stringify(body) });
+}
+export async function deletePolicyAuth(getToken: () => Promise<string | null>, id: string) {
+  return authFetch(`/v1/policies/${id}`, getToken, { method: 'DELETE' });
+}
+export async function enablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
+  return authFetch(`/v1/policies/${id}/enable`, getToken, { method: 'POST' });
+}
+export async function disablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
+  return authFetch(`/v1/policies/${id}/disable`, getToken, { method: 'POST' });
+}
+export async function listPolicyRulesAuth(getToken: () => Promise<string | null>, policyId: string) {
+  return authFetch(`/v1/policies/${policyId}/rules`, getToken);
+}
+export async function createPolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, body: { type: string; contract?: string; functionName?: string; wildcard?: boolean; gasLimit?: string; countLimit?: number }) {
+  return authFetch(`/v1/policies/${policyId}/rules`, getToken, { method: 'POST', body: JSON.stringify(body) });
+}
+export async function deletePolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, ruleId: string) {
+  return authFetch(`/v1/policies/${policyId}/rules/${ruleId}`, getToken, { method: 'DELETE' });
+}
