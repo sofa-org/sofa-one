@@ -1,8 +1,35 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { hashTypedData } from 'viem';
+import { createPublicClient, formatEther, hashTypedData, http } from 'viem';
+import {
+  base,
+  baseSepolia,
+  mainnet,
+  polygon,
+  polygonAmoy,
+  sepolia,
+} from 'viem/chains';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import type { SignDto } from './dto/sign.dto';
+
+const CHAIN_MAP: Record<number, Parameters<typeof createPublicClient>[0]['chain']> = {
+  84532: baseSepolia,
+  8453: base,
+  1: mainnet,
+  11155111: sepolia,
+  137: polygon,
+  80002: polygonAmoy,
+};
+
+const ERC20_BALANCE_ABI = [
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
 /** Well-known USDC contract addresses by chainId. */
 const USDC_ADDRESSES: Record<number, string> = {
@@ -63,6 +90,59 @@ export class WalletService {
       walletAddress: wallet.walletAddress,
       type: params.type,
     };
+  }
+
+  /** Return ETH and USDC balances for the user's wallet. */
+  async getBalances(userId: string) {
+    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+
+    const chainId = Number(wallet.chainId);
+    const walletAddress = wallet.walletAddress as `0x${string}`;
+    const usdcAddress = (USDC_ADDRESSES[chainId] ?? USDC_ADDRESSES[84532]) as `0x${string}`;
+    const chain = CHAIN_MAP[chainId];
+
+    const publicClient = createPublicClient({ chain, transport: http() });
+
+    type BalanceEntry =
+      | { token: string; raw: string; formatted: string; contractAddress?: string }
+      | { token: string; raw: null; formatted: null; error: string; contractAddress?: string };
+
+    const balances: BalanceEntry[] = [];
+
+    // ETH balance
+    try {
+      const raw = await publicClient.getBalance({ address: walletAddress });
+      balances.push({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) });
+    } catch {
+      balances.push({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' });
+    }
+
+    // USDC balance
+    try {
+      const raw = await publicClient.readContract({
+        address: usdcAddress,
+        abi: ERC20_BALANCE_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+      });
+      balances.push({
+        token: 'USDC',
+        raw: raw.toString(),
+        formatted: (Number(raw) / 1e6).toFixed(2),
+        contractAddress: usdcAddress,
+      });
+    } catch {
+      balances.push({
+        token: 'USDC',
+        raw: null,
+        formatted: null,
+        error: 'fetch failed',
+        contractAddress: usdcAddress,
+      });
+    }
+
+    return { walletAddress, chainId, balances };
   }
 
   /** Create a withdrawal transaction intent. */

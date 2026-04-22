@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { socialLogin, withdrawAuth } from '@/lib/api';
+import { socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -11,6 +11,16 @@ export default function WalletPage() {
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [balances, setBalances] = useState<Array<{
+    token: string;
+    raw: string | null;
+    formatted: string | null;
+    contractAddress?: string;
+    error?: string;
+  }> | null>(null);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+  
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [token, setToken] = useState('USDC');
@@ -28,6 +38,17 @@ export default function WalletPage() {
           setApiKeyDisplay(result.apiKey);
         }
         setWallet(result.wallet);
+
+        // 加载余额（非阻塞）
+        setBalancesLoading(true);
+        getBalancesAuth(getToken)
+          .then((data) => {
+            setBalances(data.balances);
+          })
+          .catch(() => {
+            // 静默失败
+          })
+          .finally(() => setBalancesLoading(false));
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -106,6 +127,28 @@ export default function WalletPage() {
               </p>
             </div>
             
+            <div className="pt-4 border-t border-brand-border">
+              <label className="text-xs font-medium text-brand-muted block mb-2">Assets</label>
+              <div className="space-y-2">
+                {balancesLoading ? (
+                  <>
+                    <div className="h-5 bg-brand-border/50 rounded animate-pulse w-1/3"></div>
+                    <div className="h-5 bg-brand-border/50 rounded animate-pulse w-1/4"></div>
+                  </>
+                ) : balances ? (
+                  balances.map((b) => (
+                    <div key={b.token} className="flex justify-between items-center text-sm font-mono text-brand-text">
+                      <div className="flex items-center gap-1.5">
+                        {b.token === 'USDC' && <span className="text-green-600 font-sans">$</span>}
+                        {b.token === 'ETH' && <span className="text-blue-500 font-sans">Ξ</span>}
+                        <span>{b.token}</span>
+                      </div>
+                      <span>{b.error ? '—' : b.formatted}</span>
+                    </div>
+                  ))
+                ) : null}
+              </div>
+            </div>
           </div>
 
         </div>

@@ -111,3 +111,7 @@ export async function withdrawAuth(
     body: JSON.stringify({ to, amount, token }),
   });
 }
+
+export async function getBalancesAuth(getToken: () => Promise<string | null>) {
+  return authFetch('/v1/wallets/balances', getToken);
+}

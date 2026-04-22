@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -9,6 +9,12 @@ import { WithdrawDto } from './dto/withdraw.dto';
 @UseGuards(EitherAuthGuard)
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
+
+  /** GET /v1/wallets/balances — return ETH and USDC balances. */
+  @Get('balances')
+  async getBalances(@CurrentUser('id') userId: string) {
+    return this.walletService.getBalances(userId);
+  }
 
   /** POST /v1/wallets/deposit-info — get wallet address for deposits. */
   @Post('deposit-info')
