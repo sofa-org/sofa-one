@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -30,6 +31,7 @@ export class WalletController {
 
   /** POST /v1/wallets/withdraw — create a withdrawal intent. */
   @Post('withdraw')
+  @Throttle({ short: { limit: 3, ttl: 60000 }, medium: { limit: 10, ttl: 3600000 } })
   async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto) {
     return this.walletService.withdraw(userId, dto);
   }

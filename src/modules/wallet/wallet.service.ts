@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { createPublicClient, formatEther, hashTypedData, http } from 'viem';
 import {
   base,
@@ -11,6 +16,7 @@ import {
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import type { SignDto } from './dto/sign.dto';
+import type { WithdrawDto } from './dto/withdraw.dto';
 
 const CHAIN_MAP: Record<number, Parameters<typeof createPublicClient>[0]['chain']> = {
   84532: baseSepolia,
@@ -146,12 +152,63 @@ export class WalletService {
   }
 
   /** Create a withdrawal transaction intent. */
-  async withdraw(userId: string, params: { to: string; amount: string; token: string }) {
+  async withdraw(userId: string, params: WithdrawDto) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
+    // Guard: wallet must be active before any outbound transfer
+    if (wallet.status !== 'active') {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+
+    // Guard: prevent self-withdrawal (sending to own wallet address)
+    if (params.to.toLowerCase() === wallet.walletAddress.toLowerCase()) {
+      throw new BadRequestException('Cannot withdraw to your own wallet address');
+    }
+
     const chainId = Number(wallet.chainId);
-    const usdcAddress = USDC_ADDRESSES[chainId] || USDC_ADDRESSES[84532];
+    const usdcAddress = (USDC_ADDRESSES[chainId] ?? USDC_ADDRESSES[84532]) as `0x${string}`;
+    const walletAddress = wallet.walletAddress as `0x${string}`;
+
+    // Guard: idempotency — reject duplicate pending withdrawal with same key
+    if (params.idempotencyKey) {
+      const duplicate = await this.prisma.transaction.findFirst({
+        where: {
+          userId,
+          status: 'pending',
+          details: { path: ['idempotencyKey'], equals: params.idempotencyKey },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(
+          `A pending withdrawal with idempotencyKey "${params.idempotencyKey}" already exists (transactionId: ${duplicate.id})`,
+        );
+      }
+    }
+
+    // Guard: verify on-chain USDC balance is sufficient before submitting intent
+    const chain = CHAIN_MAP[chainId];
+    if (chain) {
+      const publicClient = createPublicClient({ chain, transport: http() });
+      let usdcBalance: bigint;
+      try {
+        usdcBalance = await publicClient.readContract({
+          address: usdcAddress,
+          abi: ERC20_BALANCE_ABI,
+          functionName: 'balanceOf',
+          args: [walletAddress],
+        });
+      } catch {
+        throw new BadRequestException('Unable to verify USDC balance — please retry');
+      }
+
+      const requestedAmount = BigInt(params.amount);
+      if (usdcBalance < requestedAmount) {
+        throw new BadRequestException(
+          `Insufficient USDC balance: have ${usdcBalance.toString()} units, requested ${params.amount} units`,
+        );
+      }
+    }
 
     const txIntent = await this.openfort.createTransactionIntent({
       chainId,
@@ -178,6 +235,7 @@ export class WalletService {
           amount: params.amount,
           token: params.token,
           contractAddress: usdcAddress,
+          ...(params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : {}),
         },
       },
     });
