@@ -18,7 +18,7 @@ interface ApiKeyRecord {
 }
 
 export default function ApiKeysPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
@@ -38,8 +38,10 @@ export default function ApiKeysPage() {
   }
 
   useEffect(() => {
-    fetchKeys();
-  }, []);
+    if (isLoaded && isSignedIn) {
+      fetchKeys();
+    }
+  }, [isLoaded, isSignedIn]);
 
   async function handleCreate() {
     setActionLoading(true);

@@ -74,12 +74,12 @@ export class PolicyController {
     return this.policyService.createPolicyRule(policyId, dto);
   }
 
-  /** DELETE /v1/policies/:id/rules/:ruleId — delete a policy rule */
-  @Delete(':id/rules/:ruleId')
+  /** DELETE /v1/policies/:id/rules/:ruleIndex — delete a policy rule by index */
+  @Delete(':id/rules/:ruleIndex')
   async deleteRule(
     @Param('id') policyId: string,
-    @Param('ruleId') ruleId: string,
+    @Param('ruleIndex') ruleIndex: string,
   ) {
-    return this.policyService.deletePolicyRule(policyId, ruleId);
+    return this.policyService.deletePolicyRule(policyId, parseInt(ruleIndex, 10));
   }
 }

@@ -60,14 +60,12 @@ export class OpenfortService {
     scope: string;
     description?: string;
     enabled?: boolean;
-    priority?: number;
-    rules?: any[];
+    rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
   }) {
     return await this.client.policies.create({
       scope: params.scope as any,
       description: params.description,
       enabled: params.enabled,
-      priority: params.priority,
       rules: (params.rules ?? []) as any,
     });
   }
@@ -76,11 +74,17 @@ export class OpenfortService {
     return await this.client.policies.get(id);
   }
 
-  async updatePolicy(id: string, params: { description?: string; enabled?: boolean; priority?: number; rules?: any[] }) {
+  async updatePolicy(
+    id: string,
+    params: {
+      description?: string;
+      enabled?: boolean;
+      rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
+    },
+  ) {
     return await this.client.policies.update(id, {
       description: params.description,
       enabled: params.enabled,
-      priority: params.priority,
       ...(params.rules !== undefined && { rules: params.rules as any }),
     });
   }
@@ -106,36 +110,19 @@ export class OpenfortService {
 
   async createPolicyRule(
     policyId: string,
-    params: {
-      type: string;
-      contract?: string;
-      functionName?: string;
-      wildcard?: boolean;
-      gasLimit?: string;
-      countLimit?: number;
-      timeIntervalType?: string;
-      timeIntervalValue?: number;
-    },
+    rule: { action: string; operation: string; criteria?: Record<string, unknown>[] },
   ): Promise<any> {
     const policy = await this.client.policies.get(policyId);
     const existingRules: any[] = (policy as any).rules ?? [];
-    const newRule: any = {
-      type: params.type,
-      ...(params.contract && { contract: params.contract }),
-      ...(params.functionName && { functionName: params.functionName }),
-      ...(params.wildcard !== undefined && { wildcard: params.wildcard }),
-      ...(params.gasLimit && { gasLimit: params.gasLimit }),
-      ...(params.countLimit !== undefined && { countLimit: params.countLimit }),
-      ...(params.timeIntervalType && { timeIntervalType: params.timeIntervalType }),
-      ...(params.timeIntervalValue !== undefined && { timeIntervalValue: params.timeIntervalValue }),
-    };
-    return await this.client.policies.update(policyId, { rules: [...existingRules, newRule] as any });
+    return await this.client.policies.update(policyId, {
+      rules: [...existingRules, rule] as any,
+    });
   }
 
-  async deletePolicyRule(policyId: string, ruleId: string): Promise<any> {
+  async deletePolicyRule(policyId: string, ruleIndex: number): Promise<any> {
     const policy = await this.client.policies.get(policyId);
     const existingRules: any[] = (policy as any).rules ?? [];
-    const filteredRules = existingRules.filter((r: any) => r.id !== ruleId);
+    const filteredRules = existingRules.filter((_: any, i: number) => i !== ruleIndex);
     return await this.client.policies.update(policyId, { rules: filteredRules as any });
   }
 

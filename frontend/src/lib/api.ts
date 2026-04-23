@@ -135,9 +135,13 @@ export async function disablePolicyAuth(getToken: () => Promise<string | null>, 
 export async function listPolicyRulesAuth(getToken: () => Promise<string | null>, policyId: string) {
   return authFetch(`/v1/policies/${policyId}/rules`, getToken);
 }
-export async function createPolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, body: { type: string; contract?: string; functionName?: string; wildcard?: boolean; gasLimit?: string; countLimit?: number }) {
+export async function createPolicyRuleAuth(
+  getToken: () => Promise<string | null>,
+  policyId: string,
+  body: { action: 'accept' | 'reject'; operation: string; criteria?: Record<string, unknown>[] },
+) {
   return authFetch(`/v1/policies/${policyId}/rules`, getToken, { method: 'POST', body: JSON.stringify(body) });
 }
-export async function deletePolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, ruleId: string) {
-  return authFetch(`/v1/policies/${policyId}/rules/${ruleId}`, getToken, { method: 'DELETE' });
+export async function deletePolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, ruleIndex: number) {
+  return authFetch(`/v1/policies/${policyId}/rules/${ruleIndex}`, getToken, { method: 'DELETE' });
 }

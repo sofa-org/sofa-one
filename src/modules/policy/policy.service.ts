@@ -1,6 +1,7 @@
 import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { CreatePolicyDto, UpdatePolicyDto, CreatePolicyRuleDto } from './dto/policy.dto';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class PolicyService {
@@ -23,7 +24,6 @@ export class PolicyService {
         scope: dto.scope,
         description: dto.description,
         enabled: dto.enabled,
-        priority: dto.priority,
         rules: dto.rules,
       });
     } catch (error: any) {
@@ -46,7 +46,6 @@ export class PolicyService {
       return await this.openfortService.updatePolicy(id, {
         description: dto.description,
         enabled: dto.enabled,
-        priority: dto.priority,
         rules: dto.rules,
       });
     } catch (error: any) {
@@ -94,14 +93,9 @@ export class PolicyService {
   async createPolicyRule(policyId: string, dto: CreatePolicyRuleDto) {
     try {
       return await this.openfortService.createPolicyRule(policyId, {
-        type: dto.type,
-        contract: dto.contract,
-        functionName: dto.functionName,
-        wildcard: dto.wildcard,
-        gasLimit: dto.gasLimit,
-        countLimit: dto.countLimit,
-        timeIntervalType: dto.timeIntervalType,
-        timeIntervalValue: dto.timeIntervalValue,
+        action: dto.action,
+        operation: dto.operation,
+        criteria: dto.criteria,
       });
     } catch (error: any) {
       this.logger.error('createPolicyRule failed: ' + error.message);
@@ -109,9 +103,12 @@ export class PolicyService {
     }
   }
 
-  async deletePolicyRule(policyId: string, ruleId: string) {
+  async deletePolicyRule(policyId: string, ruleIndex: number) {
+    if (isNaN(ruleIndex) || ruleIndex < 0) {
+      throw new BadRequestException('ruleIndex must be a non-negative integer');
+    }
     try {
-      return await this.openfortService.deletePolicyRule(policyId, ruleId);
+      return await this.openfortService.deletePolicyRule(policyId, ruleIndex);
     } catch (error: any) {
       this.logger.error('deletePolicyRule failed: ' + error.message);
       throw new BadGatewayException('Policy service temporarily unavailable');

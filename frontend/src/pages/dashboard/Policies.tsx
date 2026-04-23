@@ -13,192 +13,513 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type PolicyRuleAction = 'accept' | 'reject';
+type PolicyRuleOperation =
+  | 'signEvmTransaction'
+  | 'sendEvmTransaction'
+  | 'signEvmMessage'
+  | 'signEvmTypedData'
+  | 'signEvmHash'
+  | 'sponsorEvmTransaction';
+
+type CriterionType =
+  | 'ethValue'
+  | 'evmAddress'
+  | 'evmNetwork'
+  | 'evmData'
+  | 'evmMessage'
+  | 'evmTypedDataVerifyingContract'
+  | 'evmTypedDataField';
+
+interface CriterionDraft {
+  type: CriterionType;
+  // ethValue
+  ethValueOperator?: '<=' | '>=' | '<' | '>';
+  ethValue?: string;
+  // evmAddress / evmTypedDataVerifyingContract
+  addressOperator?: 'in' | 'not in';
+  addresses?: string; // newline-separated
+  // evmNetwork
+  networkOperator?: 'in' | 'not in';
+  chainIds?: string; // comma-separated
+  // evmData
+  dataOperator?: '==' | 'in' | 'not in' | '<' | '<=' | '>' | '>=' | 'match';
+  abi?: string;
+  functionName?: string;
+  argsJson?: string;
+  // evmMessage
+  messagePattern?: string;
+  // evmTypedDataField
+  fieldOperator?: 'in' | '<=' | 'match';
+  fieldPath?: string;
+  fieldValues?: string; // newline-separated for 'in', single value otherwise
+}
+
+interface PolicyRule {
+  action: PolicyRuleAction;
+  operation: PolicyRuleOperation;
+  criteria?: Record<string, unknown>[];
+}
+
 interface Policy {
   id: string;
   scope: string;
   description?: string;
   enabled: boolean;
   deleted: boolean;
-  policyRules: { id: string }[];
+  rules?: PolicyRule[];
   createdAt: number;
 }
-
-type RuleType = 'contract_functions' | 'account_functions' | 'rate_limit';
-type RateLimitFn = 'gas_per_transaction' | 'gas_per_interval' | 'count_per_interval';
-type TimeIntervalType = 'minute' | 'hour' | 'day' | 'week' | 'month';
-
-interface ContractFunctionsRule {
-  id: string;
-  type: 'contract_functions';
-  contract?: { id: string; name?: string; address?: string };
-  functionName?: string;
-  wildcard: boolean;
-  createdAt: number;
-}
-interface AccountFunctionsRule {
-  id: string;
-  type: 'account_functions';
-  createdAt: number;
-}
-interface RateLimitGasPerTx {
-  id: string;
-  type: 'rate_limit';
-  functionName: 'gas_per_transaction';
-  gasLimit: string;
-  createdAt: number;
-}
-interface RateLimitGasPerInterval {
-  id: string;
-  type: 'rate_limit';
-  functionName: 'gas_per_interval';
-  gasLimit: string;
-  timeIntervalType: string;
-  timeIntervalValue: number;
-  createdAt: number;
-}
-interface RateLimitCountPerInterval {
-  id: string;
-  type: 'rate_limit';
-  functionName: 'count_per_interval';
-  countLimit: number;
-  timeIntervalType: string;
-  timeIntervalValue: number;
-  createdAt: number;
-}
-type PolicyRule =
-  | ContractFunctionsRule
-  | AccountFunctionsRule
-  | RateLimitGasPerTx
-  | RateLimitGasPerInterval
-  | RateLimitCountPerInterval;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 type PolicyScope = 'project' | 'account' | 'transaction';
 const POLICY_SCOPES: PolicyScope[] = ['project', 'account', 'transaction'];
 
-const RULE_TYPES: RuleType[] = ['contract_functions', 'account_functions', 'rate_limit'];
-
-const RULE_TYPE_LABELS: Record<RuleType, string> = {
-  contract_functions: 'Contract Functions',
-  account_functions: 'Account Functions',
-  rate_limit: 'Rate Limit',
-};
-
-const RATE_LIMIT_FNS: RateLimitFn[] = [
-  'gas_per_transaction',
-  'gas_per_interval',
-  'count_per_interval',
+const POLICY_RULE_OPERATIONS: PolicyRuleOperation[] = [
+  'signEvmTransaction',
+  'sendEvmTransaction',
+  'signEvmMessage',
+  'signEvmTypedData',
+  'signEvmHash',
+  'sponsorEvmTransaction',
 ];
 
-const RATE_LIMIT_FN_LABELS: Record<RateLimitFn, string> = {
-  gas_per_transaction: 'Gas per Transaction',
-  gas_per_interval: 'Gas per Interval',
-  count_per_interval: 'Count per Interval',
-};
+const CRITERION_TYPES: CriterionType[] = [
+  'ethValue',
+  'evmAddress',
+  'evmNetwork',
+  'evmData',
+  'evmMessage',
+  'evmTypedDataVerifyingContract',
+  'evmTypedDataField',
+];
 
-const TIME_INTERVAL_TYPES: TimeIntervalType[] = ['minute', 'hour', 'day', 'week', 'month'];
+const DEFAULT_CRITERION: CriterionDraft = {
+  type: 'ethValue',
+  ethValueOperator: '<=',
+  ethValue: '',
+  addressOperator: 'in',
+  addresses: '',
+  networkOperator: 'in',
+  chainIds: '',
+  dataOperator: '==',
+  abi: '',
+  functionName: '',
+  argsJson: '',
+  messagePattern: '',
+  fieldOperator: 'in',
+  fieldPath: '',
+  fieldValues: '',
+};
 
 // ─── Rule form state ───────────────────────────────────────────────────────────
 
 interface RuleFormState {
-  type: RuleType;
-  // contract_functions
-  contractId: string;
-  functionName: string;
-  wildcard: boolean;
-  // rate_limit
-  rateLimitFn: RateLimitFn;
-  gasLimit: string;
-  countLimit: string;
-  timeIntervalType: TimeIntervalType;
-  timeIntervalValue: string;
+  action: PolicyRuleAction;
+  operation: PolicyRuleOperation;
+  criteria: CriterionDraft[];
 }
 
 const DEFAULT_RULE_FORM: RuleFormState = {
-  type: 'contract_functions',
-  contractId: '',
-  functionName: '',
-  wildcard: false,
-  rateLimitFn: 'gas_per_transaction',
-  gasLimit: '',
-  countLimit: '',
-  timeIntervalType: 'day',
-  timeIntervalValue: '1',
+  action: 'accept',
+  operation: 'signEvmTransaction',
+  criteria: [],
 };
+
+// ─── Criterion → API object ────────────────────────────────────────────────────
+
+function criterionDraftToApi(c: CriterionDraft): Record<string, unknown> | null {
+  switch (c.type) {
+    case 'ethValue':
+      if (!c.ethValue?.trim()) return null;
+      return { type: 'ethValue', operator: c.ethValueOperator ?? '<=', ethValue: c.ethValue.trim() };
+    case 'evmAddress': {
+      const addrs = (c.addresses ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
+      if (!addrs.length) return null;
+      return { type: 'evmAddress', operator: c.addressOperator ?? 'in', addresses: addrs };
+    }
+    case 'evmNetwork': {
+      const ids = (c.chainIds ?? '').split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
+      if (!ids.length) return null;
+      return { type: 'evmNetwork', operator: c.networkOperator ?? 'in', chainIds: ids };
+    }
+    case 'evmData': {
+      if (!c.abi?.trim() || !c.functionName?.trim()) return null;
+      const obj: Record<string, unknown> = {
+        type: 'evmData',
+        operator: c.dataOperator ?? '==',
+        abi: c.abi.trim(),
+        functionName: c.functionName.trim(),
+      };
+      if (c.argsJson?.trim()) {
+        try { obj.args = JSON.parse(c.argsJson.trim()); } catch { return null; }
+      }
+      return obj;
+    }
+    case 'evmMessage':
+      if (!c.messagePattern?.trim()) return null;
+      return { type: 'evmMessage', operator: 'match', pattern: c.messagePattern.trim() };
+    case 'evmTypedDataVerifyingContract': {
+      const addrs = (c.addresses ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
+      if (!addrs.length) return null;
+      return { type: 'evmTypedDataVerifyingContract', operator: c.addressOperator ?? 'in', addresses: addrs };
+    }
+    case 'evmTypedDataField': {
+      if (!c.fieldPath?.trim()) return null;
+      const op = c.fieldOperator ?? 'in';
+      const base: Record<string, unknown> = { type: 'evmTypedDataField', operator: op, fieldPath: c.fieldPath.trim() };
+      if (op === 'in') {
+        base.values = (c.fieldValues ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
+      } else {
+        base.value = c.fieldValues?.trim() ?? '';
+      }
+      return base;
+    }
+    default:
+      return null;
+  }
+}
+
+function criterionSummary(c: CriterionDraft): string {
+  switch (c.type) {
+    case 'ethValue': {
+      const wei = c.ethValue?.trim() ?? '';
+      const eth = wei ? (Number(BigInt(wei)) / 1e18).toFixed(4).replace(/\.?0+$/, '') : '?';
+      return `ethValue ${c.ethValueOperator ?? '<='} ${eth} ETH`;
+    }
+    case 'evmAddress': {
+      const addrs = (c.addresses ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
+      return `address ${c.addressOperator ?? 'in'} [${addrs.map((a) => a.slice(0, 6) + '…').join(', ')}]`;
+    }
+    case 'evmNetwork': {
+      const ids = (c.chainIds ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+      return `network ${c.networkOperator ?? 'in'} [${ids.join(', ')}]`;
+    }
+    case 'evmData':
+      return `data ${c.dataOperator ?? '=='} ${c.functionName?.trim() ?? '?'}()`;
+    case 'evmMessage':
+      return `message match "${c.messagePattern?.trim() ?? ''}"`;
+    case 'evmTypedDataVerifyingContract': {
+      const addrs = (c.addresses ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
+      return `verifyingContract ${c.addressOperator ?? 'in'} [${addrs.map((a) => a.slice(0, 6) + '…').join(', ')}]`;
+    }
+    case 'evmTypedDataField':
+      return `field ${c.fieldPath?.trim() ?? '?'} ${c.fieldOperator ?? 'in'} ${c.fieldValues?.trim() ? '"' + c.fieldValues.trim().slice(0, 20) + '"' : '[]'}`;
+    default:
+      return c.type;
+  }
+}
+
+// ─── Criterion form fields ─────────────────────────────────────────────────────
+
+function CriterionFields({
+  draft,
+  onChange,
+  inputCls,
+  selectCls,
+  textareaCls,
+}: {
+  draft: CriterionDraft;
+  onChange: (patch: Partial<CriterionDraft>) => void;
+  inputCls: string;
+  selectCls: string;
+  textareaCls: string;
+}) {
+  switch (draft.type) {
+    case 'ethValue':
+      return (
+        <div className="flex gap-2">
+          <select
+            value={draft.ethValueOperator ?? '<='}
+            onChange={(e) => onChange({ ethValueOperator: e.target.value as CriterionDraft['ethValueOperator'] })}
+            className={`${selectCls} w-24 shrink-0`}
+          >
+            {(['<=', '>=', '<', '>'] as const).map((op) => <option key={op} value={op}>{op}</option>)}
+          </select>
+          <input
+            type="text"
+            placeholder="wei, e.g. 1000000000000000000 = 1 ETH"
+            value={draft.ethValue ?? ''}
+            onChange={(e) => onChange({ ethValue: e.target.value })}
+            className={`${inputCls} flex-1`}
+          />
+        </div>
+      );
+
+    case 'evmAddress':
+    case 'evmTypedDataVerifyingContract':
+      return (
+        <div className="space-y-2">
+          <select
+            value={draft.addressOperator ?? 'in'}
+            onChange={(e) => onChange({ addressOperator: e.target.value as 'in' | 'not in' })}
+            className={selectCls}
+          >
+            <option value="in">in (allowlist)</option>
+            <option value="not in">not in (denylist)</option>
+          </select>
+          <textarea
+            rows={3}
+            placeholder="One address per line&#10;0x1234…&#10;0xabcd…"
+            value={draft.addresses ?? ''}
+            onChange={(e) => onChange({ addresses: e.target.value })}
+            className={textareaCls}
+          />
+        </div>
+      );
+
+    case 'evmNetwork':
+      return (
+        <div className="space-y-2">
+          <select
+            value={draft.networkOperator ?? 'in'}
+            onChange={(e) => onChange({ networkOperator: e.target.value as 'in' | 'not in' })}
+            className={selectCls}
+          >
+            <option value="in">in (allowlist)</option>
+            <option value="not in">not in (denylist)</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Comma-separated chain IDs, e.g. 1,137,8453"
+            value={draft.chainIds ?? ''}
+            onChange={(e) => onChange({ chainIds: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+      );
+
+    case 'evmData':
+      return (
+        <div className="space-y-2">
+          <select
+            value={draft.dataOperator ?? '=='}
+            onChange={(e) => onChange({ dataOperator: e.target.value as CriterionDraft['dataOperator'] })}
+            className={selectCls}
+          >
+            {(['==', 'in', 'not in', '<', '<=', '>', '>=', 'match'] as const).map((op) => (
+              <option key={op} value={op}>{op}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="Function name, e.g. transfer"
+            value={draft.functionName ?? ''}
+            onChange={(e) => onChange({ functionName: e.target.value })}
+            className={inputCls}
+          />
+          <textarea
+            rows={3}
+            placeholder='Contract ABI JSON, e.g. [{"type":"function","name":"transfer",...}]'
+            value={draft.abi ?? ''}
+            onChange={(e) => onChange({ abi: e.target.value })}
+            className={textareaCls}
+          />
+          <textarea
+            rows={2}
+            placeholder='Args constraints (optional), e.g. {"amount": "1000000"}'
+            value={draft.argsJson ?? ''}
+            onChange={(e) => onChange({ argsJson: e.target.value })}
+            className={textareaCls}
+          />
+        </div>
+      );
+
+    case 'evmMessage':
+      return (
+        <input
+          type="text"
+          placeholder='RE2 regex pattern, e.g. ^Sign in to MyApp:'
+          value={draft.messagePattern ?? ''}
+          onChange={(e) => onChange({ messagePattern: e.target.value })}
+          className={inputCls}
+        />
+      );
+
+    case 'evmTypedDataField':
+      return (
+        <div className="space-y-2">
+          <select
+            value={draft.fieldOperator ?? 'in'}
+            onChange={(e) => onChange({ fieldOperator: e.target.value as 'in' | '<=' | 'match' })}
+            className={selectCls}
+          >
+            <option value="in">in (allowlist)</option>
+            <option value="<=">{'<='} (max value)</option>
+            <option value="match">match (regex)</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Field path, e.g. order.buyer"
+            value={draft.fieldPath ?? ''}
+            onChange={(e) => onChange({ fieldPath: e.target.value })}
+            className={inputCls}
+          />
+          <textarea
+            rows={3}
+            placeholder={
+              draft.fieldOperator === 'in'
+                ? 'One value per line'
+                : draft.fieldOperator === 'match'
+                ? 'RE2 regex pattern'
+                : 'Max value, e.g. 1000000'
+            }
+            value={draft.fieldValues ?? ''}
+            onChange={(e) => onChange({ fieldValues: e.target.value })}
+            className={textareaCls}
+          />
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
+
+// ─── Criteria builder ──────────────────────────────────────────────────────────
+
+function CriteriaBuilder({
+  criteria,
+  onChange,
+}: {
+  criteria: CriterionDraft[];
+  onChange: (criteria: CriterionDraft[]) => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [draft, setDraft] = useState<CriterionDraft>({ ...DEFAULT_CRITERION });
+
+  const inputCls =
+    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white';
+  const selectCls =
+    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white';
+  const textareaCls =
+    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white font-mono';
+
+  function handleAdd() {
+    const api = criterionDraftToApi(draft);
+    if (!api) return; // incomplete
+    onChange([...criteria, draft]);
+    setDraft({ ...DEFAULT_CRITERION });
+    setShowForm(false);
+  }
+
+  function handleRemove(idx: number) {
+    onChange(criteria.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-brand-muted">Criteria</span>
+        {!showForm && (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="rounded-full border border-brand-border px-2 py-0.5 text-xs text-brand-text hover:bg-brand-bg"
+          >
+            + Add Criterion
+          </button>
+        )}
+      </div>
+
+      {/* Existing criteria chips */}
+      {criteria.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {criteria.map((c, idx) => (
+            <span
+              key={idx}
+              className="flex items-center gap-1 rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent"
+            >
+              {criterionSummary(c)}
+              <button
+                type="button"
+                onClick={() => handleRemove(idx)}
+                className="ml-0.5 text-brand-muted hover:text-red-500 leading-none"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Add criterion form */}
+      {showForm && (
+        <div className="rounded-lg border border-brand-border bg-brand-bg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-brand-text">New Criterion</span>
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setDraft({ ...DEFAULT_CRITERION }); }}
+              className="text-brand-muted hover:text-brand-text text-sm leading-none"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Type selector */}
+          <select
+            value={draft.type}
+            onChange={(e) => setDraft({ ...DEFAULT_CRITERION, type: e.target.value as CriterionType })}
+            className={selectCls}
+          >
+            {CRITERION_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          {/* Type-specific fields */}
+          <CriterionFields
+            draft={draft}
+            onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+            inputCls={inputCls}
+            selectCls={selectCls}
+            textareaCls={textareaCls}
+          />
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="rounded-full bg-brand-text px-3 py-1 text-xs font-medium text-white hover:bg-brand-text/90"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Rule display helper ───────────────────────────────────────────────────────
 
 function RuleDetails({ rule }: { rule: PolicyRule }) {
-  if (rule.type === 'contract_functions') {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-brand-text">Contract Functions</span>
-        {rule.contract && (
-          <span className="font-mono text-xs text-brand-muted">
-            {rule.contract.name ?? rule.contract.address ?? rule.contract.id}
-          </span>
-        )}
-        {rule.functionName && (
-          <span className="text-xs text-brand-muted">.{rule.functionName}</span>
-        )}
-        {rule.wildcard && (
-          <span className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent">
-            wildcard
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  if (rule.type === 'account_functions') {
-    return <span className="text-xs font-medium text-brand-text">Account Functions</span>;
-  }
-
-  // rate_limit
-  if (rule.functionName === 'gas_per_transaction') {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-brand-text">Rate Limit</span>
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-          Gas / Transaction
-        </span>
-        <span className="font-mono text-xs text-brand-muted">{rule.gasLimit} wei</span>
-      </div>
-    );
-  }
-
-  if (rule.functionName === 'gas_per_interval') {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-brand-text">Rate Limit</span>
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-          Gas / Interval
-        </span>
-        <span className="font-mono text-xs text-brand-muted">{rule.gasLimit} wei</span>
-        <span className="text-xs text-brand-muted">
-          per {rule.timeIntervalValue} {rule.timeIntervalType}
-        </span>
-      </div>
-    );
-  }
-
-  if (rule.functionName === 'count_per_interval') {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-brand-text">Rate Limit</span>
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-          Count / Interval
-        </span>
-        <span className="font-mono text-xs text-brand-muted">{rule.countLimit} txns</span>
-        <span className="text-xs text-brand-muted">
-          per {rule.timeIntervalValue} {rule.timeIntervalType}
-        </span>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span
+        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+          rule.action === 'accept'
+            ? 'bg-green-100 text-green-700'
+            : 'bg-red-100 text-red-700'
+        }`}
+      >
+        {rule.action}
+      </span>
+      <span className="font-mono text-xs text-brand-text">{rule.operation}</span>
+      {rule.criteria && rule.criteria.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {rule.criteria.map((c, i) => (
+            <span key={i} className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent font-mono">
+              {String(c.type)}
+              {c.operator ? ` ${String(c.operator)}` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Add rule form ─────────────────────────────────────────────────────────────
@@ -212,8 +533,6 @@ interface AddRuleFormProps {
 }
 
 function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading }: AddRuleFormProps) {
-  const inputCls =
-    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white';
   const selectCls =
     'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white';
 
@@ -221,115 +540,36 @@ function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading }:
     <div className="rounded-lg border border-brand-border bg-brand-surface p-4 space-y-3">
       <p className="text-xs font-semibold text-brand-text">Add Rule</p>
 
-      {/* Rule type selector */}
-      <select
-        value={form.type}
-        onChange={(e) => onChange({ type: e.target.value as RuleType })}
-        className={selectCls}
-      >
-        {RULE_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {RULE_TYPE_LABELS[t]}
-          </option>
-        ))}
-      </select>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {/* Action selector */}
+        <select
+          value={form.action}
+          onChange={(e) => onChange({ action: e.target.value as PolicyRuleAction })}
+          className={selectCls}
+        >
+          <option value="accept">accept</option>
+          <option value="reject">reject</option>
+        </select>
 
-      {/* contract_functions fields */}
-      {form.type === 'contract_functions' && (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Contract ID (con_...) — optional"
-            value={form.contractId}
-            onChange={(e) => onChange({ contractId: e.target.value })}
-            className={inputCls}
-          />
-          <input
-            type="text"
-            placeholder="Function name — optional"
-            value={form.functionName}
-            onChange={(e) => onChange({ functionName: e.target.value })}
-            className={inputCls}
-          />
-          <label className="flex items-center gap-2 px-1 py-2 text-sm text-brand-text cursor-pointer col-span-full">
-            <input
-              type="checkbox"
-              checked={form.wildcard}
-              onChange={(e) => onChange({ wildcard: e.target.checked })}
-              className="rounded border-brand-border accent-brand-accent"
-            />
-            Wildcard (match all functions)
-          </label>
-        </div>
-      )}
+        {/* Operation selector */}
+        <select
+          value={form.operation}
+          onChange={(e) => onChange({ operation: e.target.value as PolicyRuleOperation })}
+          className={selectCls}
+        >
+          {POLICY_RULE_OPERATIONS.map((op) => (
+            <option key={op} value={op}>
+              {op}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {/* account_functions: no extra fields */}
-      {form.type === 'account_functions' && (
-        <p className="text-xs text-brand-muted">No additional configuration required.</p>
-      )}
-
-      {/* rate_limit fields */}
-      {form.type === 'rate_limit' && (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <select
-            value={form.rateLimitFn}
-            onChange={(e) => onChange({ rateLimitFn: e.target.value as RateLimitFn })}
-            className={`${selectCls} col-span-full`}
-          >
-            {RATE_LIMIT_FNS.map((fn) => (
-              <option key={fn} value={fn}>
-                {RATE_LIMIT_FN_LABELS[fn]}
-              </option>
-            ))}
-          </select>
-
-          {(form.rateLimitFn === 'gas_per_transaction' ||
-            form.rateLimitFn === 'gas_per_interval') && (
-            <input
-              type="text"
-              placeholder="Gas limit (WEI)"
-              value={form.gasLimit}
-              onChange={(e) => onChange({ gasLimit: e.target.value })}
-              className={inputCls}
-            />
-          )}
-
-          {form.rateLimitFn === 'count_per_interval' && (
-            <input
-              type="number"
-              placeholder="Count limit"
-              value={form.countLimit}
-              onChange={(e) => onChange({ countLimit: e.target.value })}
-              className={inputCls}
-            />
-          )}
-
-          {(form.rateLimitFn === 'gas_per_interval' ||
-            form.rateLimitFn === 'count_per_interval') && (
-            <>
-              <select
-                value={form.timeIntervalType}
-                onChange={(e) => onChange({ timeIntervalType: e.target.value as TimeIntervalType })}
-                className={selectCls}
-              >
-                {TIME_INTERVAL_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                placeholder="Interval value"
-                value={form.timeIntervalValue}
-                onChange={(e) => onChange({ timeIntervalValue: e.target.value })}
-                className={inputCls}
-                min={1}
-              />
-            </>
-          )}
-        </div>
-      )}
+      {/* Criteria builder */}
+      <CriteriaBuilder
+        criteria={form.criteria}
+        onChange={(criteria) => onChange({ criteria })}
+      />
 
       <div className="flex justify-end">
         <button
@@ -342,6 +582,31 @@ function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading }:
       </div>
     </div>
   );
+}
+
+// ─── Rule body builder ─────────────────────────────────────────────────────────
+
+function buildRuleBody(
+  form: RuleFormState,
+  setError: (msg: string) => void,
+): { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] } | null {
+  const body: { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] } = {
+    action: form.action,
+    operation: form.operation,
+  };
+  if (form.criteria.length > 0) {
+    const apiCriteria: Record<string, unknown>[] = [];
+    for (const c of form.criteria) {
+      const api = criterionDraftToApi(c);
+      if (!api) {
+        setError(`Invalid or incomplete criterion: ${c.type}`);
+        return null;
+      }
+      apiCriteria.push(api);
+    }
+    body.criteria = apiCriteria;
+  }
+  return body;
 }
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
@@ -403,6 +668,8 @@ export default function PoliciesPage() {
   // ── Action handlers ──────────────────────────────────────────────────────────
 
   function handleAddPendingRule() {
+    const body = buildRuleBody(newRuleForm, (msg) => setError(msg));
+    if (!body) return;
     setPendingRules((prev) => [...prev, newRuleForm]);
     setNewRuleForm(DEFAULT_RULE_FORM);
     setShowNewRuleForm(false);
@@ -422,35 +689,15 @@ export default function PoliciesPage() {
         enabled: newEnabled,
       });
 
-      // result.id is returned based on the API response structure
-      // or result.data.id if wrapped in axios data
       const newPolicyId = (result as any)?.data?.id ?? (result as any)?.id;
 
       if (newPolicyId && pendingRules.length > 0) {
         for (const form of pendingRules) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const body: Parameters<typeof createPolicyRuleAuth>[2] & Record<string, any> = { type: form.type };
-
-          if (form.type === 'contract_functions') {
-            if (form.contractId.trim()) body.contract = form.contractId.trim();
-            if (form.functionName.trim()) body.functionName = form.functionName.trim();
-            body.wildcard = form.wildcard;
+          const body = buildRuleBody(form, (msg) => setError(msg));
+          if (!body) {
+            setActionLoading(false);
+            return;
           }
-
-          if (form.type === 'rate_limit') {
-            body.functionName = form.rateLimitFn;
-            if (form.rateLimitFn === 'gas_per_transaction' || form.rateLimitFn === 'gas_per_interval') {
-              body.gasLimit = form.gasLimit.trim();
-            }
-            if (form.rateLimitFn === 'count_per_interval') {
-              body.countLimit = Number(form.countLimit);
-            }
-            if (form.rateLimitFn === 'gas_per_interval' || form.rateLimitFn === 'count_per_interval') {
-              body.timeIntervalType = form.timeIntervalType;
-              body.timeIntervalValue = Number(form.timeIntervalValue);
-            }
-          }
-
           await createPolicyRuleAuth(getToken, newPolicyId, body);
         }
       }
@@ -522,32 +769,11 @@ export default function PoliciesPage() {
 
   async function handleAddRule(policyId: string) {
     const form = getRuleForm(policyId);
+    const body = buildRuleBody(form, (msg) => setError(msg));
+    if (!body) return;
     setActionLoading(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: Parameters<typeof createPolicyRuleAuth>[2] & Record<string, any> = { type: form.type };
-
-      if (form.type === 'contract_functions') {
-        if (form.contractId.trim()) body.contract = form.contractId.trim();
-        if (form.functionName.trim()) body.functionName = form.functionName.trim();
-        body.wildcard = form.wildcard;
-      }
-
-      if (form.type === 'rate_limit') {
-        body.functionName = form.rateLimitFn;
-        if (form.rateLimitFn === 'gas_per_transaction' || form.rateLimitFn === 'gas_per_interval') {
-          body.gasLimit = form.gasLimit.trim();
-        }
-        if (form.rateLimitFn === 'count_per_interval') {
-          body.countLimit = Number(form.countLimit);
-        }
-        if (form.rateLimitFn === 'gas_per_interval' || form.rateLimitFn === 'count_per_interval') {
-          body.timeIntervalType = form.timeIntervalType;
-          body.timeIntervalValue = Number(form.timeIntervalValue);
-        }
-      }
-
       await createPolicyRuleAuth(getToken, policyId, body);
       await fetchRules(policyId);
       setRuleFormMap((prev) => ({ ...prev, [policyId]: DEFAULT_RULE_FORM }));
@@ -559,12 +785,12 @@ export default function PoliciesPage() {
     }
   }
 
-  async function handleDeleteRule(policyId: string, ruleId: string) {
+  async function handleDeleteRule(policyId: string, ruleIndex: number) {
     if (!confirm('Delete this rule?')) return;
     setActionLoading(true);
     setError(null);
     try {
-      await deletePolicyRuleAuth(getToken, policyId, ruleId);
+      await deletePolicyRuleAuth(getToken, policyId, ruleIndex);
       await fetchRules(policyId);
       await fetchPolicies();
     } catch (err: unknown) {
@@ -644,35 +870,18 @@ export default function PoliciesPage() {
               {pendingRules.map((rule, idx) => (
                 <div key={idx} className="flex items-center justify-between px-4 py-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    {rule.type === 'contract_functions' && (
-                      <>
-                        <span className="text-xs font-medium text-brand-text">Contract Functions</span>
-                        {rule.contractId && <span className="font-mono text-xs text-brand-muted">{rule.contractId}</span>}
-                        {rule.functionName && <span className="text-xs text-brand-muted">.{rule.functionName}</span>}
-                        {rule.wildcard && <span className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent">wildcard</span>}
-                      </>
-                    )}
-                    {rule.type === 'account_functions' && (
-                      <span className="text-xs font-medium text-brand-text">Account Functions</span>
-                    )}
-                    {rule.type === 'rate_limit' && (
-                      <>
-                        <span className="text-xs font-medium text-brand-text">Rate Limit</span>
-                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                          {RATE_LIMIT_FN_LABELS[rule.rateLimitFn] || rule.rateLimitFn}
-                        </span>
-                        {rule.rateLimitFn !== 'count_per_interval' && rule.gasLimit && (
-                          <span className="font-mono text-xs text-brand-muted">{rule.gasLimit} wei</span>
-                        )}
-                        {rule.rateLimitFn === 'count_per_interval' && rule.countLimit && (
-                          <span className="font-mono text-xs text-brand-muted">{rule.countLimit} txns</span>
-                        )}
-                        {rule.rateLimitFn !== 'gas_per_transaction' && (
-                          <span className="text-xs text-brand-muted">
-                            per {rule.timeIntervalValue} {rule.timeIntervalType}
-                          </span>
-                        )}
-                      </>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        rule.action === 'accept'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {rule.action}
+                    </span>
+                    <span className="font-mono text-xs text-brand-text">{rule.operation}</span>
+                    {rule.criteria.length > 0 && (
+                      <span className="text-xs text-brand-muted">{rule.criteria.length} criterion{rule.criteria.length !== 1 ? 'a' : ''}</span>
                     )}
                   </div>
                   <button
@@ -733,7 +942,7 @@ export default function PoliciesPage() {
             {policies.map((policy) => {
               const isExpanded = expandedId === policy.id;
               const rules = rulesMap[policy.id] ?? [];
-              const ruleCount = policy.policyRules?.length ?? 0;
+              const ruleCount = policy.rules?.length ?? 0;
 
               return (
                 <div key={policy.id}>
@@ -805,14 +1014,14 @@ export default function PoliciesPage() {
                         <p className="text-xs text-brand-muted">No rules yet.</p>
                       ) : (
                         <div className="rounded-lg border border-brand-border bg-brand-surface divide-y divide-brand-border">
-                          {rules.map((rule) => (
+                          {rules.map((rule, ruleIndex) => (
                             <div
-                              key={rule.id}
+                              key={ruleIndex}
                               className="flex items-center justify-between px-4 py-3"
                             >
                               <RuleDetails rule={rule} />
                               <button
-                                onClick={() => handleDeleteRule(policy.id, rule.id)}
+                                onClick={() => handleDeleteRule(policy.id, ruleIndex)}
                                 disabled={actionLoading}
                                 className="ml-4 shrink-0 rounded-full border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                               >
