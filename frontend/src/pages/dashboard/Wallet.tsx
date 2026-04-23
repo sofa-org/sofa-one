@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import { getMe, withdrawAuth, getBalancesAuth } from '@/lib/api';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -13,11 +13,14 @@ export default function WalletPage() {
   const [error, setError] = useState<string | null>(null);
   
   const [balances, setBalances] = useState<Array<{
-    token: string;
-    raw: string | null;
-    formatted: string | null;
-    contractAddress?: string;
-    error?: string;
+    chainId: number;
+    balances: Array<{
+      token: string;
+      raw: string | null;
+      formatted: string | null;
+      contractAddress?: string;
+      error?: string;
+    }>;
   }> | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   
@@ -33,7 +36,7 @@ export default function WalletPage() {
 
     async function init() {
       try {
-        const result = await socialLogin(getToken);
+        const result = await getMe(getToken);
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
@@ -43,7 +46,7 @@ export default function WalletPage() {
         setBalancesLoading(true);
         getBalancesAuth(getToken)
           .then((data) => {
-            setBalances(data.balances);
+            setBalances(data.chains);
           })
           .catch(() => {
             // 静默失败
@@ -136,14 +139,19 @@ export default function WalletPage() {
                     <div className="h-5 bg-brand-border/50 rounded animate-pulse w-1/4"></div>
                   </>
                 ) : balances ? (
-                  balances.map((b) => (
-                    <div key={b.token} className="flex justify-between items-center text-sm font-mono text-brand-text">
-                      <div className="flex items-center gap-1.5">
-                        {b.token === 'USDC' && <span className="text-green-600 font-sans">$</span>}
-                        {b.token === 'ETH' && <span className="text-blue-500 font-sans">Ξ</span>}
-                        <span>{b.token}</span>
-                      </div>
-                      <span>{b.error ? '—' : b.formatted}</span>
+                  balances.map((chain) => (
+                    <div key={chain.chainId}>
+                      <p className="text-xs font-medium text-brand-muted mb-1">Chain {chain.chainId}</p>
+                      {chain.balances.map((b) => (
+                        <div key={b.token} className="flex justify-between items-center text-sm font-mono text-brand-text">
+                          <div className="flex items-center gap-1.5">
+                            {b.token === 'USDC' && <span className="text-green-600 font-sans">$</span>}
+                            {b.token === 'ETH' && <span className="text-blue-500 font-sans">Ξ</span>}
+                            <span>{b.token}</span>
+                          </div>
+                          <span>{b.error ? '—' : b.formatted}</span>
+                        </div>
+                      ))}
                     </div>
                   ))
                 ) : null}

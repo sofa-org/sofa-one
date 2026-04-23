@@ -126,6 +126,31 @@ export class AuthService {
   }
 
   /**
+   * Return the current user's wallet info from DB (no Openfort calls).
+   */
+  async getMe(clerkUserId: string): Promise<{
+    userId: string;
+    wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { socialId: clerkUserId },
+      include: { wallet: true },
+    });
+
+    if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
+
+    return {
+      userId: user.id,
+      wallet: {
+        walletAddress: user.wallet.walletAddress,
+        chainId: Number(user.wallet.chainId),
+        status: user.wallet.status,
+        supportedTokens: ['USDC', 'ETH'],
+      },
+    };
+  }
+
+  /**
    * Revoke all existing keys and issue a fresh one.
    */
   async refreshApiKey(clerkUserId: string) {

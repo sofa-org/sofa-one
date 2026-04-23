@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
@@ -33,5 +33,15 @@ export class AuthController {
   @Post('refresh-api-key')
   async refreshApiKey(@Req() req: any) {
     return this.authService.refreshApiKey(req.clerkUserId);
+  }
+
+  /**
+   * GET /auth/me
+   * Returns the current user's wallet info from DB.
+   * Protected by ClerkAuthGuard (global defaults apply — no custom throttle).
+   */
+  @Get('me')
+  async getMe(@Req() req: any) {
+    return this.authService.getMe(req.clerkUserId);
   }
 }

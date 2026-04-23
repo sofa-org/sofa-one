@@ -49,6 +49,10 @@ export async function socialLogin(getToken: () => Promise<string | null>) {
   return authFetch('/auth/social', getToken, { method: 'POST' });
 }
 
+export async function getMe(getToken: () => Promise<string | null>) {
+  return authFetch('/auth/me', getToken);
+}
+
 export async function refreshApiKey(getToken: () => Promise<string | null>) {
   return authFetch('/auth/refresh-api-key', getToken, { method: 'POST' });
 }
