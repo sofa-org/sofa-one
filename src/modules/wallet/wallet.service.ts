@@ -106,60 +106,57 @@ export class WalletService {
 
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
+    const walletChainId = Number(wallet.chainId);
+    const chain = CHAIN_MAP[walletChainId];
+    if (!chain) throw new NotFoundException(`Chain ${walletChainId} is not supported`);
+
+    const publicClient = createPublicClient({ chain, transport: http() });
+    const usdcAddress = USDC_ADDRESSES[walletChainId] as `0x${string}` | undefined;
+
     type BalanceEntry =
       | { token: string; raw: string; formatted: string; contractAddress?: string }
       | { token: string; raw: null; formatted: null; error: string; contractAddress?: string };
 
-    const chains = await Promise.all(
-      Object.entries(CHAIN_MAP).map(async ([chainIdStr, chain]) => {
-        const chainId = Number(chainIdStr);
-        const publicClient = createPublicClient({ chain, transport: http() });
-        const usdcAddress = USDC_ADDRESSES[chainId] as `0x${string}` | undefined;
+    const [ethResult, usdcResult] = await Promise.all([
+      publicClient
+        .getBalance({ address: walletAddress })
+        .then(
+          (raw): BalanceEntry => ({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) }),
+        )
+        .catch((): BalanceEntry => ({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' })),
 
-        const [ethResult, usdcResult] = await Promise.all([
-          // ETH balance
-          publicClient
-            .getBalance({ address: walletAddress })
+      usdcAddress
+        ? publicClient
+            .readContract({
+              address: usdcAddress,
+              abi: ERC20_BALANCE_ABI,
+              functionName: 'balanceOf',
+              args: [walletAddress],
+            })
             .then(
-              (raw): BalanceEntry => ({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) }),
+              (raw): BalanceEntry => ({
+                token: 'USDC',
+                raw: raw.toString(),
+                formatted: (Number(raw) / 1e6).toFixed(2),
+                contractAddress: usdcAddress,
+              }),
             )
-            .catch((): BalanceEntry => ({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' })),
+            .catch(
+              (): BalanceEntry => ({
+                token: 'USDC',
+                raw: null,
+                formatted: null,
+                error: 'fetch failed',
+                contractAddress: usdcAddress,
+              }),
+            )
+        : Promise.resolve(null),
+    ]);
 
-          // USDC balance — skip if no address for this chain
-          usdcAddress
-            ? publicClient
-                .readContract({
-                  address: usdcAddress,
-                  abi: ERC20_BALANCE_ABI,
-                  functionName: 'balanceOf',
-                  args: [walletAddress],
-                })
-                .then(
-                  (raw): BalanceEntry => ({
-                    token: 'USDC',
-                    raw: raw.toString(),
-                    formatted: (Number(raw) / 1e6).toFixed(2),
-                    contractAddress: usdcAddress,
-                  }),
-                )
-                .catch(
-                  (): BalanceEntry => ({
-                    token: 'USDC',
-                    raw: null,
-                    formatted: null,
-                    error: 'fetch failed',
-                    contractAddress: usdcAddress,
-                  }),
-                )
-            : Promise.resolve(null),
-        ]);
+    const balances: BalanceEntry[] = [ethResult];
+    if (usdcResult !== null) balances.push(usdcResult);
 
-        const balances: BalanceEntry[] = [ethResult];
-        if (usdcResult !== null) balances.push(usdcResult);
-
-        return { chainId, balances };
-      }),
-    );
+    const chains = [{ chainId: walletChainId, balances }];
 
     return { walletAddress, chains };
   }
