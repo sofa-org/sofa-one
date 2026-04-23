@@ -29,16 +29,15 @@ info:
     ## 快速开始
 
     ```bash
-    # 1. 发送一笔 USDC 转账
-    curl -X POST https://api.example.com/v1/transactions/intent \
+    # 1. 发送一笔原始交易
+    curl -X POST https://api.example.com/v1/transactions/send \
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
       -d '{
-        "chainId": 84532,
         "interactions": [{
-          "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-          "functionName": "transfer",
-          "functionArgs": ["0xRecipientAddress", "1000000"]
+          "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+          "data": "0xa9059cbb000000000000000000000000RecipientAddr0000000000000000000000000000000000000000000000000000000000000f4240",
+          "value": "0"
         }]
       }'
 
@@ -65,7 +64,7 @@ tags:
   - name: Signing
     description: 数据签名 — 支持 EIP-191 / EIP-712 / 原始哈希
   - name: Transactions
-    description: 交易 — 提交 Intent、查询历史、批量操作
+    description: 交易 — 提交原始交易
 
 security:
   - ApiKeyAuth: []
@@ -140,161 +139,62 @@ paths:
           $ref: '#/components/responses/ValidationError'
 
   # ──────────────────────────── Transactions ────────────────────────────
-  /v1/transactions/intent:
+  /v1/transactions/send:
     post:
       tags: [Transactions]
-      summary: 提交交易 Intent
+      summary: 发送交易
       description: |
-        提交一个交易 Intent，包含一组合约交互。  
-        服务端自动完成签名、UserOperation 打包和 Gas 处理。
+        提交一组原始合约交互，服务端自动完成签名和 Gas 处理。
 
-        可选 `policyId` 字段用于指定 USDC Gas 代付策略（使 USDC 支付 Gas，无需持有 ETH）。
-      operationId: createTransactionIntent
+        每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
+        可选 `policyId` 用于 Gas 代付策略；`idempotencyKey` 用于防止重复提交。
+      operationId: sendTransaction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateIntentRequest'
+              $ref: '#/components/schemas/SendTransactionRequest'
             examples:
               usdcTransfer:
-                summary: USDC 转账
+                summary: USDC transfer（ABI-encoded）
                 value:
-                  chainId: 84532
                   interactions:
-                    - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                      functionName: "transfer"
-                      functionArgs:
-                        - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
-                        - "1000000"
-              withGasPolicy:
-                summary: 使用 USDC Gas 代付策略
+                    - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                      data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
+                      value: "0"
+              withPolicy:
+                summary: 使用 Gas 代付策略 + 幂等键
                 value:
-                  chainId: 84532
                   policyId: "pol_usdc-gas-policy"
+                  idempotencyKey: "order-abc-123"
                   interactions:
-                    - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                      functionName: "approve"
-                      functionArgs:
-                        - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
-                        - "1000000"
+                    - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                      data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
+                      value: "0"
       responses:
         '201':
-          description: 交易 Intent 已创建
+          description: 交易已提交
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionIntentResponse'
+                $ref: '#/components/schemas/SendTransactionResponse'
               example:
                 transactionId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-                intentId: "tin_abc123"
-                status: "pending"
+                transactionHash: "0xabc123def456..."
+                status: "confirmed"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /v1/transactions/batch:
-    post:
-      tags: [Transactions]
-      summary: 批量交易（EIP-7702）
-      description: |
-        与 `POST /v1/transactions/intent` 相同的请求格式，
-        但通过 EIP-7702 委托将多个交互合并为一次链上交易。
-
-        **典型场景**：approve + swap、批量转账、多步 DeFi 操作。
-      operationId: batchTransaction
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateIntentRequest'
-            example:
-              chainId: 84532
-              policyId: "pol_usdc-gas-policy"
-              interactions:
-                - contract: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                  functionName: "approve"
-                  functionArgs:
-                    - "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
-                    - "1000000"
-                - contract: "0xAbCdEf1234567890aBcDeF1234567890AbCdEf12"
-                  functionName: "swapExactTokensForTokens"
-                  functionArgs:
-                    - "1000000"
-                    - "0"
-                    - '["0x036CbD53842c5426634e7929541eC2318f3dCF7e","0x4200000000000000000000000000000000000006"]'
-                    - "0x1234567890abcdef1234567890abcdef12345678"
-                    - "1714000000"
-      responses:
-        '201':
-          description: 批量交易 Intent 已创建
+        '409':
+          description: 幂等键冲突 — 相同 idempotencyKey 的 pending 交易已存在
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionIntentResponse'
-              example:
-                transactionId: "c3d4e5f6-a7b8-9012-cdef-123456789012"
-                intentId: "tin_def456"
-                status: "pending"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           $ref: '#/components/responses/ValidationError'
-
-  /v1/transactions/history:
-    get:
-      tags: [Transactions]
-      summary: 查询交易历史
-      description: 分页查询交易记录，按创建时间倒序排列。
-      operationId: getTransactionHistory
-      parameters:
-        - name: limit
-          in: query
-          description: 每页数量
-          schema:
-            type: integer
-            default: 50
-            minimum: 1
-            maximum: 100
-        - name: offset
-          in: query
-          description: 偏移量
-          schema:
-            type: integer
-            default: 0
-            minimum: 0
-      responses:
-        '200':
-          description: 交易历史
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionHistoryResponse'
-              example:
-                transactions:
-                  - id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-                    intentId: "tin_abc123"
-                    status: "confirmed"
-                    txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-                    chainId: 84532
-                    createdAt: "2026-04-20T10:30:00.000Z"
-                  - id: "c3d4e5f6-a7b8-9012-cdef-123456789012"
-                    intentId: "tin_def456"
-                    status: "pending"
-                    txHash: null
-                    chainId: 84532
-                    createdAt: "2026-04-20T10:25:00.000Z"
-                total: 42
-                limit: 50
-                offset: 0
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
 # ════════════════════════════ Components ════════════════════════════
 components:
@@ -377,98 +277,59 @@ components:
           enum: [message, typed_data, hash]
 
     # ──────────── Transactions ────────────
-    CreateIntentRequest:
+    SendTransactionRequest:
       type: object
-      required: [chainId, interactions]
+      required: [interactions]
       properties:
-        chainId:
-          type: integer
-          description: "目标链 ID（84532 = Base Sepolia, 8453 = Base, 1 = Ethereum）"
-          example: 84532
-        policyId:
-          type: string
-          description: Gas 代付策略 ID（可选，启用后使用 USDC 支付 Gas）
-          example: "pol_usdc-gas-policy"
         interactions:
           type: array
           minItems: 1
           items:
-            $ref: '#/components/schemas/Interaction'
+            $ref: '#/components/schemas/RawInteraction'
           description: 合约交互列表（至少一个）
+        policyId:
+          type: string
+          description: Gas 代付策略 ID（可选）
+          example: "pol_usdc-gas-policy"
+        idempotencyKey:
+          type: string
+          description: 幂等键，防止重复提交（可选）
+          example: "order-abc-123"
 
-    Interaction:
+    RawInteraction:
       type: object
-      required: [contract, functionName]
+      required: [to, data]
       properties:
-        contract:
+        to:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
           description: 目标合约地址
-        functionName:
+        data:
           type: string
-          description: 合约函数名
-          example: "transfer"
-        functionArgs:
-          type: array
-          items:
-            type: string
-          description: 函数参数（字符串数组）
-          example: ["0xAbCdEf1234567890aBcDeF1234567890AbCdEf12", "1000000"]
+          pattern: '^0x[a-fA-F0-9]*$'
+          description: ABI-encoded calldata（0x 前缀十六进制）
+        value:
+          type: string
+          pattern: '^\d+$'
+          description: 转账金额（wei，十进制字符串，默认 "0"）
+          example: "0"
 
-    TransactionIntentResponse:
+    SendTransactionResponse:
       type: object
-      required: [transactionId, intentId, status]
+      required: [transactionId, status]
       properties:
         transactionId:
           type: string
           format: uuid
           description: 平台内部交易 ID
-        intentId:
-          type: string
-          description: Openfort Transaction Intent ID
-        status:
-          type: string
-          enum: [pending, confirmed, failed]
-
-    TransactionHistoryResponse:
-      type: object
-      required: [transactions, total, limit, offset]
-      properties:
-        transactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/TransactionRecord'
-        total:
-          type: integer
-          description: 总记录数
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    TransactionRecord:
-      type: object
-      required: [id, intentId, status, chainId, createdAt]
-      properties:
-        id:
-          type: string
-          format: uuid
-        intentId:
-          type: string
-        status:
-          type: string
-          enum: [pending, confirmed, failed]
-        txHash:
+        transactionHash:
           type: string
           nullable: true
           pattern: '^0x[a-fA-F0-9]{64}$'
           description: 链上交易哈希（pending 时为 null）
-        chainId:
-          type: integer
-          nullable: true
-        createdAt:
+        status:
           type: string
-          format: date-time
+          enum: [pending, confirmed, failed]
 
     # ──────────── Error ────────────
     ErrorResponse:
@@ -516,7 +377,7 @@ components:
           example:
             statusCode: 401
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/intent"
+            path: "/v1/transactions/send"
             message: "Unauthorized"
 
     NotFound:
@@ -528,7 +389,7 @@ components:
           example:
             statusCode: 404
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/intent"
+            path: "/v1/transactions/send"
             message: "Wallet not found"
 
     ValidationError:
@@ -540,8 +401,8 @@ components:
           example:
             statusCode: 400
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/intent"
+            path: "/v1/transactions/send"
             message:
-              - "chainId must be a number"
               - "interactions must contain at least 1 elements"
+              - "interactions.0.to must be a valid Ethereum address"
             error: "Bad Request"

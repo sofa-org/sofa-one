@@ -10,7 +10,7 @@ import { SendTransactionDto } from './dto/send-transaction.dto';
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
-  /** POST /v1/transactions/send — send a raw transaction from the user's backend wallet. */
+  /** POST /v1/transactions/send — public API: send a raw transaction from the user's backend wallet. */
   @Post('send')
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async send(@CurrentUser('id') userId: string, @Body() dto: SendTransactionDto) {

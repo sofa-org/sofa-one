@@ -2,11 +2,14 @@ import { Controller, Post, Delete, Get, Body, Param, UseGuards } from '@nestjs/c
 import { Throttle } from '@nestjs/throttler';
 import { ApiKeyService } from './api-key.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
+import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
+import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 
 @Controller('v1/api-keys')
-@UseGuards(EitherAuthGuard)
+@FrontendOnly()
+@UseGuards(EitherAuthGuard, FrontendOnlyGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
