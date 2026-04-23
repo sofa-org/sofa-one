@@ -58,6 +58,12 @@ export default function APIDocsPage() {
                     <td className="px-4 py-3"><code className="text-xs">"message"</code> | <code className="text-xs">"typed_data"</code> | <code className="text-xs">"hash"</code></td>
                   </tr>
                   <tr>
+                    <td className="px-4 py-3 font-mono text-xs">chainId</td>
+                    <td className="px-4 py-3">integer</td>
+                    <td className="px-4 py-3 text-brand-accent">Yes</td>
+                    <td className="px-4 py-3">Target chain ID (e.g. 84532 for Base Sepolia)</td>
+                  </tr>
+                  <tr>
                     <td className="px-4 py-3 font-mono text-xs">message</td>
                     <td className="px-4 py-3">string</td>
                     <td className="px-4 py-3 text-brand-muted">Cond.</td>
@@ -87,7 +93,7 @@ export default function APIDocsPage() {
                 <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
-  -d '{"type":"message", "message":"Hello, SOFA ONE!"}'`}</code>
+  -d '{"type":"message","chainId":84532,"message":"Hello, SOFA ONE!"}'`}</code>
               </pre>
             </div>
             <div className="space-y-2">
@@ -96,7 +102,8 @@ export default function APIDocsPage() {
                 <code>{`{
   "signature": "0x5d99b6f7f6d1f73d1a...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  "type": "message"
+  "type": "message",
+  "chainId": 84532
 }`}</code>
               </pre>
             </div>
@@ -128,6 +135,12 @@ export default function APIDocsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-border text-brand-text bg-brand-surface">
+                  <tr>
+                    <td className="px-4 py-3 font-mono text-xs">chainId</td>
+                    <td className="px-4 py-3">integer</td>
+                    <td className="px-4 py-3 text-brand-accent">Yes</td>
+                    <td className="px-4 py-3">Target chain ID (e.g. 84532 for Base Sepolia)</td>
+                  </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-xs">interactions</td>
                     <td className="px-4 py-3">array</td>
@@ -177,6 +190,7 @@ export default function APIDocsPage() {
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
+    "chainId": 84532,
     "interactions": [{
       "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "data": "0xa9059cbb000000000000000000000000RecipientAddr00000000000000000000000000000000000000000000000000000000000f4240",
