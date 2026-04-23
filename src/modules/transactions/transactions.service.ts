@@ -24,7 +24,7 @@ export class TransactionsService {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
-    const chainId = Number(wallet.chainId);
+    const chainId = dto.chainId;
 
     // Idempotency guard
     if (dto.idempotencyKey) {

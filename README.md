@@ -12,7 +12,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 [Backend — NestJS]
    ├── Auth Module        (Clerk social login + user provisioning)
    ├── Wallet Module      (Openfort SDK — backend wallet lifecycle)
-   ├── Transaction Module (transaction intents, signing, history)
+   ├── Transaction Module (raw transaction submission + signing)
    └── API Key Module     (generation, validation, rotation, revocation)
    ↓
 [Openfort SDK → TEE]     [PostgreSQL + Redis]     [EVM Chains]
@@ -23,7 +23,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 
 - **Private keys never leave the TEE** — all signing happens inside Openfort / AWS Nitro Enclaves.
 - **Dual auth** — every wallet operation requires both a platform JWT _and_ a user `X-API-Key` header.
-- **API keys stored as SHA-256 + salt hashes** — never plaintext.
+- **API keys hashed with Argon2** — never stored in plaintext; the first 11 characters (`keyPrefix`) are stored for fast DB lookup before hash comparison.
 - **Gas paid in USDC** — via Openfort `charge_custom_tokens` policy; users don't need native tokens.
 
 ## Tech Stack
@@ -135,32 +135,37 @@ X-API-Key: sk_<64-hex-chars>
 ### Quick example — send USDC on Base Sepolia
 
 ```bash
-curl -X POST http://localhost:3001/v1/transactions/intent \
+curl -X POST http://localhost:3001/v1/transactions/send \
   -H "X-API-Key: sk_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "chainId": 84532,
     "interactions": [{
-      "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "functionName": "transfer",
-      "functionArgs": ["0xRecipientAddress", "1000000"]
+      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "data": "0xa9059cbb000000000000000000000000<recipient>0000000000000000000000000000000000000000000000000000000000000f4240",
+      "value": "0"
     }]
   }'
 ```
 
+The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the example above). `value` is wei as a decimal string and defaults to `"0"` if omitted.
+
 ### Core Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/auth/social` | Social login → returns `userId`, `walletAddress`, `apiKey` |
-| `POST` | `/auth/refresh-api-key` | Rotate API key |
-| `POST` | `/v1/wallets/deposit-info` | Get wallet address for deposits |
-| `POST` | `/v1/wallets/withdraw` | Withdraw funds to external address |
-| `POST` | `/v1/transactions/intent` | Submit a transaction intent |
-| `GET`  | `/v1/transactions/history` | Query transaction history |
-| `POST` | `/v1/transactions/batch` | Batch transactions (EIP-7702) |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/auth/social` | Public | Social login → returns `userId`, `walletAddress`, `apiKey` |
+| `POST` | `/auth/refresh-api-key` | JWT | Rotate API key |
+| `POST` | `/v1/transactions/send` | API Key | Submit raw transaction (ABI-encoded calldata) |
+| `POST` | `/v1/wallets/sign` | API Key | Sign a message, typed data, or hash without broadcasting |
+| `GET`  | `/v1/wallets/balances` | JWT + Frontend | ETH + USDC balances across **all** supported chains simultaneously |
+| `POST` | `/v1/wallets/deposit-info` | JWT + Frontend | Get wallet address for deposits |
+| `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |
+| `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
 
-Full OpenAPI spec: [`openapi.yaml`](./openapi.yaml)
+> **Access control split**: `POST /v1/transactions/send` and `POST /v1/wallets/sign` are public API endpoints — an `X-API-Key` alone is sufficient. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
+
+Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 
 ## Project Structure
 
@@ -175,14 +180,14 @@ sofa-agent-wallet/
 │   └── modules/
 │       ├── auth/                # Clerk social OAuth
 │       ├── wallet/              # Openfort wallet operations
-│       ├── transaction/         # Transaction intents & history
+│       ├── transaction/         # Raw transaction submission & signing
 │       └── api-key/             # Key generation, validation, rotation
 ├── prisma/
 │   └── schema.prisma            # Database schema (4 models)
 ├── frontend/                    # Vite + React SPA (static, deployable to S3/CloudFront)
 ├── test/                        # E2E tests
 ├── docker-compose.yml           # PostgreSQL + Redis
-├── openapi.yaml                 # API specification
+├── openapi.yaml                 # API specification (public endpoints only)
 └── DESIGN.md                    # Full design document
 ```
 
@@ -192,8 +197,8 @@ Four core tables managed by Prisma:
 
 - **users** — social provider, social ID, email
 - **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
-- **api_keys** — SHA-256 hashed keys with salt, optional IP/contract allowlists
-- **transactions** — Openfort intent ID, tx hash, status
+- **api_keys** — Argon2-hashed keys; `keyPrefix` (first 11 chars) used for fast DB lookup; optional IP/expiry allowlists
+- **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address
 
 ## Development Phases
 
@@ -211,7 +216,7 @@ Four core tables managed by Prisma:
 
 ```bash
 npm run test          # Unit tests
-npm run test:e2e      # E2E tests
+npm run test:e2e      # E2E tests (requires docker compose up -d)
 npm run test:cov      # Coverage report
 ```
 

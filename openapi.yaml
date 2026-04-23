@@ -34,6 +34,7 @@ info:
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
       -d '{
+        "chainId": 84532,
         "interactions": [{
           "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
           "data": "0xa9059cbb000000000000000000000000RecipientAddr0000000000000000000000000000000000000000000000000000000000000f4240",
@@ -45,7 +46,7 @@ info:
     curl -X POST https://api.example.com/v1/wallets/sign \
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
-      -d '{"type": "message", "message": "Hello from SOFA ONE"}'
+      -d '{"chainId": 84532, "type": "message", "message": "Hello from SOFA ONE"}'
     ```
 
   contact:
@@ -65,6 +66,8 @@ tags:
     description: 数据签名 — 支持 EIP-191 / EIP-712 / 原始哈希
   - name: Transactions
     description: 交易 — 提交原始交易
+  - name: Wallet
+    description: 钱包余额查询与提现
 
 security:
   - ApiKeyAuth: []
@@ -96,11 +99,13 @@ paths:
               message:
                 summary: 签名纯文本消息
                 value:
+                  chainId: 84532
                   type: message
                   message: "Hello, SOFA ONE!"
               typedData:
                 summary: 签名 EIP-712 结构化数据
                 value:
+                  chainId: 84532
                   type: typed_data
                   typedData:
                     domain:
@@ -118,6 +123,7 @@ paths:
               hash:
                 summary: 签名原始哈希
                 value:
+                  chainId: 84532
                   type: hash
                   hash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
       responses:
@@ -159,6 +165,7 @@ paths:
               usdcTransfer:
                 summary: USDC transfer（ABI-encoded）
                 value:
+                  chainId: 84532
                   interactions:
                     - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
                       data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
@@ -166,6 +173,7 @@ paths:
               withPolicy:
                 summary: 使用 Gas 代付策略 + 幂等键
                 value:
+                  chainId: 84532
                   policyId: "pol_usdc-gas-policy"
                   idempotencyKey: "order-abc-123"
                   interactions:
@@ -196,6 +204,113 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  # ──────────────────────────── Wallet ────────────────────────────
+  /v1/wallets/balances:
+    get:
+      tags: [Wallet]
+      summary: 查询多链余额
+      description: |
+        查询用户钱包在所有支持链上的 ETH 和 USDC 余额（并行查询）。
+
+        **仅限前端调用** — 需要 Clerk JWT 认证，且请求须来自允许的 Origin。
+      operationId: getBalances
+      responses:
+        '200':
+          description: 余额查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalancesResponse'
+              example:
+                walletAddress: "0xad4e8162773402c3d58e95f540efdfd29110303f"
+                chains:
+                  - chainId: 84532
+                    balances:
+                      - token: "ETH"
+                        raw: "1000000000000000"
+                        formatted: "0.001"
+                      - token: "USDC"
+                        raw: "5000000"
+                        formatted: "5.00"
+                        contractAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+                  - chainId: 8453
+                    balances:
+                      - token: "ETH"
+                        raw: "0"
+                        formatted: "0.000000000000000000"
+                      - token: "USDC"
+                        raw: "0"
+                        formatted: "0.00"
+                        contractAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 非前端来源请求被拒绝
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/wallets/withdraw:
+    post:
+      tags: [Wallet]
+      summary: 提现 USDC
+      description: |
+        从用户的 Backend Wallet 向外部地址发起 USDC 提现。
+
+        **仅限前端调用** — 需要 Clerk JWT 认证，且请求须来自允许的 Origin。
+
+        提交前会自动校验链上 USDC 余额是否充足。
+      operationId: withdraw
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+            example:
+              chainId: 84532
+              to: "0x3b38c9bb0a24a5d46f3aebce11d855e84dca43db"
+              amount: "1000000"
+              token: "USDC"
+      responses:
+        '201':
+          description: 提现意图已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawResponse'
+              example:
+                transactionId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                intentId: "intent_abc123"
+                status: "pending"
+        '400':
+          description: 余额不足 / 链不支持 / 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 非前端来源请求被拒绝
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 幂等键冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
 # ════════════════════════════ Components ════════════════════════════
 components:
   securitySchemes:
@@ -211,8 +326,13 @@ components:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [type]
+      required: [chainId, type]
       properties:
+        chainId:
+          type: integer
+          minimum: 1
+          description: 目标链 ID（如 84532 = Base Sepolia）
+          example: 84532
         type:
           type: string
           enum: [message, typed_data, hash]
@@ -263,7 +383,7 @@ components:
 
     SignResponse:
       type: object
-      required: [signature, walletAddress, type]
+      required: [signature, walletAddress, chainId, type]
       properties:
         signature:
           type: string
@@ -272,6 +392,9 @@ components:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
           description: 签名所用的钱包地址
+        chainId:
+          type: integer
+          description: 签名所用的链 ID
         type:
           type: string
           enum: [message, typed_data, hash]
@@ -279,8 +402,13 @@ components:
     # ──────────── Transactions ────────────
     SendTransactionRequest:
       type: object
-      required: [interactions]
+      required: [chainId, interactions]
       properties:
+        chainId:
+          type: integer
+          minimum: 1
+          description: 目标链 ID（如 84532 = Base Sepolia）
+          example: 84532
         interactions:
           type: array
           minItems: 1
@@ -330,6 +458,92 @@ components:
         status:
           type: string
           enum: [pending, confirmed, failed]
+
+    # ──────────── Wallet ────────────
+    BalancesResponse:
+      type: object
+      required: [walletAddress, chains]
+      properties:
+        walletAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+        chains:
+          type: array
+          items:
+            type: object
+            required: [chainId, balances]
+            properties:
+              chainId:
+                type: integer
+              balances:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BalanceEntry'
+
+    BalanceEntry:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          example: "USDC"
+        raw:
+          type: string
+          nullable: true
+          description: 原始余额（最小单位字符串），查询失败时为 null
+        formatted:
+          type: string
+          nullable: true
+          description: 格式化余额，查询失败时为 null
+        contractAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: 代币合约地址（ETH 无此字段）
+        error:
+          type: string
+          description: 查询失败时的错误描述
+
+    WithdrawRequest:
+      type: object
+      required: [chainId, to, amount, token]
+      properties:
+        chainId:
+          type: integer
+          minimum: 1
+          description: 目标链 ID
+          example: 84532
+        to:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: 收款地址
+        amount:
+          type: string
+          pattern: '^\d+$'
+          description: 提现金额（USDC micro-units，最小 10000 = 0.01 USDC，最大 1000000000000 = 1M USDC）
+          example: "1000000"
+        token:
+          type: string
+          enum: [USDC]
+          description: 代币类型（当前仅支持 USDC）
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          description: 幂等键（可选）
+          example: "withdraw-order-001"
+
+    WithdrawResponse:
+      type: object
+      required: [transactionId, intentId, status]
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        intentId:
+          type: string
+          description: Openfort 交易意图 ID
+        status:
+          type: string
+          enum: [pending]
 
     # ──────────── Error ────────────
     ErrorResponse:

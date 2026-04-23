@@ -1,11 +1,12 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsHexadecimal,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -28,6 +29,10 @@ export class InteractionDto {
 }
 
 export class SendTransactionDto {
+  @IsInt()
+  @Min(1)
+  chainId: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InteractionDto)

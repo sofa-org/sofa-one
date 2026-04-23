@@ -94,61 +94,74 @@ export class WalletService {
     return {
       signature,
       walletAddress: wallet.walletAddress,
+      chainId: params.chainId,
       type: params.type,
     };
   }
 
-  /** Return ETH and USDC balances for the user's wallet. */
+  /** Return ETH and USDC balances for the user's wallet across all supported chains. */
   async getBalances(userId: string) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    const chainId = Number(wallet.chainId);
     const walletAddress = wallet.walletAddress as `0x${string}`;
-    const usdcAddress = (USDC_ADDRESSES[chainId] ?? USDC_ADDRESSES[84532]) as `0x${string}`;
-    const chain = CHAIN_MAP[chainId];
-
-    const publicClient = createPublicClient({ chain, transport: http() });
 
     type BalanceEntry =
       | { token: string; raw: string; formatted: string; contractAddress?: string }
       | { token: string; raw: null; formatted: null; error: string; contractAddress?: string };
 
-    const balances: BalanceEntry[] = [];
+    const chains = await Promise.all(
+      Object.entries(CHAIN_MAP).map(async ([chainIdStr, chain]) => {
+        const chainId = Number(chainIdStr);
+        const publicClient = createPublicClient({ chain, transport: http() });
+        const usdcAddress = USDC_ADDRESSES[chainId] as `0x${string}` | undefined;
 
-    // ETH balance
-    try {
-      const raw = await publicClient.getBalance({ address: walletAddress });
-      balances.push({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) });
-    } catch {
-      balances.push({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' });
-    }
+        const [ethResult, usdcResult] = await Promise.all([
+          // ETH balance
+          publicClient
+            .getBalance({ address: walletAddress })
+            .then(
+              (raw): BalanceEntry => ({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) }),
+            )
+            .catch((): BalanceEntry => ({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' })),
 
-    // USDC balance
-    try {
-      const raw = await publicClient.readContract({
-        address: usdcAddress,
-        abi: ERC20_BALANCE_ABI,
-        functionName: 'balanceOf',
-        args: [walletAddress],
-      });
-      balances.push({
-        token: 'USDC',
-        raw: raw.toString(),
-        formatted: (Number(raw) / 1e6).toFixed(2),
-        contractAddress: usdcAddress,
-      });
-    } catch {
-      balances.push({
-        token: 'USDC',
-        raw: null,
-        formatted: null,
-        error: 'fetch failed',
-        contractAddress: usdcAddress,
-      });
-    }
+          // USDC balance — skip if no address for this chain
+          usdcAddress
+            ? publicClient
+                .readContract({
+                  address: usdcAddress,
+                  abi: ERC20_BALANCE_ABI,
+                  functionName: 'balanceOf',
+                  args: [walletAddress],
+                })
+                .then(
+                  (raw): BalanceEntry => ({
+                    token: 'USDC',
+                    raw: raw.toString(),
+                    formatted: (Number(raw) / 1e6).toFixed(2),
+                    contractAddress: usdcAddress,
+                  }),
+                )
+                .catch(
+                  (): BalanceEntry => ({
+                    token: 'USDC',
+                    raw: null,
+                    formatted: null,
+                    error: 'fetch failed',
+                    contractAddress: usdcAddress,
+                  }),
+                )
+            : Promise.resolve(null),
+        ]);
 
-    return { walletAddress, chainId, balances };
+        const balances: BalanceEntry[] = [ethResult];
+        if (usdcResult !== null) balances.push(usdcResult);
+
+        return { chainId, balances };
+      }),
+    );
+
+    return { walletAddress, chains };
   }
 
   /** Create a withdrawal transaction intent. */
@@ -166,8 +179,12 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    const chainId = Number(wallet.chainId);
-    const usdcAddress = (USDC_ADDRESSES[chainId] ?? USDC_ADDRESSES[84532]) as `0x${string}`;
+    const chainId = params.chainId;
+    const usdcAddress = USDC_ADDRESSES[chainId];
+    if (!usdcAddress) {
+      throw new BadRequestException(`Chain ${chainId} is not supported for USDC withdrawals`);
+    }
+    const usdcAddressHex = usdcAddress as `0x${string}`;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
     // Guard: idempotency — reject duplicate pending withdrawal with same key
@@ -193,7 +210,7 @@ export class WalletService {
       let usdcBalance: bigint;
       try {
         usdcBalance = await publicClient.readContract({
-          address: usdcAddress,
+          address: usdcAddressHex,
           abi: ERC20_BALANCE_ABI,
           functionName: 'balanceOf',
           args: [walletAddress],
@@ -215,7 +232,7 @@ export class WalletService {
       accountId: wallet.openfortAccountId,
       interactions: [
         {
-          contract: usdcAddress,
+          contract: usdcAddressHex,
           functionName: 'transfer',
           functionArgs: [params.to, params.amount],
         },
@@ -234,7 +251,7 @@ export class WalletService {
           to: params.to,
           amount: params.amount,
           token: params.token,
-          contractAddress: usdcAddress,
+          contractAddress: usdcAddressHex,
           ...(params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : {}),
         },
       },

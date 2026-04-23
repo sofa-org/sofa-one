@@ -53,14 +53,14 @@ model ApiKey {
 }
 
 model Transaction {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  intentId  String?  @map("intent_id") @db.VarChar(255)
-  status    String   @db.VarChar(20)
-  txHash    String?  @map("tx_hash") @db.VarChar(66)
-  chainId   BigInt?  @map("chain_id")
-  walletAddress String?  @map("wallet_address") @db.VarChar(42)
-  details   Json?
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  intentId      String?  @map("intent_id") @db.VarChar(255)
+  status        String   @db.VarChar(20)
+  txHash        String?  @map("tx_hash") @db.VarChar(66)
+  chainId       BigInt   @map("chain_id")
+  walletAddress String   @map("wallet_address") @db.VarChar(42)
+  details       Json?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])
