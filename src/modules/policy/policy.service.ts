@@ -1,13 +1,17 @@
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { CreatePolicyDto, UpdatePolicyDto, CreatePolicyRuleDto } from './dto/policy.dto';
 import { BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../core/database/prisma.service';
 
 @Injectable()
 export class PolicyService {
   private readonly logger = new Logger(PolicyService.name);
 
-  constructor(private readonly openfortService: OpenfortService) {}
+  constructor(
+    private readonly openfortService: OpenfortService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async listPolicies() {
     try {
@@ -18,10 +22,22 @@ export class PolicyService {
     }
   }
 
-  async createPolicy(dto: CreatePolicyDto) {
+  async createPolicy(userId: string, dto: CreatePolicyDto) {
+    if (!dto.rules || dto.rules.length === 0) {
+      throw new BadRequestException('At least one rule is required');
+    }
+    let accountId: string | undefined;
+    if (dto.scope === 'account') {
+      const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+      accountId = wallet.openfortAccountId;
+    }
     try {
       return await this.openfortService.createPolicy({
         scope: dto.scope,
+        accountId,
         description: dto.description,
         enabled: dto.enabled,
         rules: dto.rules,

@@ -769,7 +769,7 @@ export default function PoliciesPage() {
     setRulesLoading(policyId);
     try {
       const res = await listPolicyRulesAuth(getToken, policyId);
-      setRulesMap((prev) => ({ ...prev, [policyId]: res?.data ?? [] }));
+      setRulesMap((prev) => ({ ...prev, [policyId]: Array.isArray(res) ? res : (res?.data ?? []) }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -795,24 +795,23 @@ export default function PoliciesPage() {
     setActionLoading(true);
     setError(null);
     try {
-      const result = await createPolicyAuth(getToken, {
+      // Build all rule bodies first — Openfort requires at least one rule on create
+      const builtRules: { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] }[] = [];
+      for (const form of pendingRules) {
+        const body = buildRuleBody(form, (msg) => setError(msg));
+        if (!body) {
+          setActionLoading(false);
+          return;
+        }
+        builtRules.push(body);
+      }
+
+      const created = await createPolicyAuth(getToken, {
         scope: newScope,
         description: newDescription.trim() || undefined,
         enabled: newEnabled,
+        rules: builtRules,
       });
-
-      const newPolicyId = (result as any)?.data?.id ?? (result as any)?.id;
-
-      if (newPolicyId && pendingRules.length > 0) {
-        for (const form of pendingRules) {
-          const body = buildRuleBody(form, (msg) => setError(msg));
-          if (!body) {
-            setActionLoading(false);
-            return;
-          }
-          await createPolicyRuleAuth(getToken, newPolicyId, body);
-        }
-      }
 
       // scope is always 'account', no reset needed
       setNewDescription('');
@@ -826,6 +825,10 @@ export default function PoliciesPage() {
       if (detailsEl) detailsEl.open = false;
 
       await fetchPolicies();
+      if (created?.id) {
+        await fetchRules(created.id);
+        setExpandedId(created.id);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -934,6 +937,15 @@ export default function PoliciesPage() {
           <h1 className="text-3xl font-bold font-serif text-brand-text">Policies</h1>
           <p className="mt-2 text-sm text-brand-muted">Control authentication, signing, and transaction logic via strict rulesets.</p>
         </div>
+        <button
+          onClick={() => {
+            const el = document.getElementById('new-policy-details') as HTMLDetailsElement;
+            if (el) el.open = true;
+          }}
+          className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-semibold text-brand-text shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent"
+        >
+          + New Policy
+        </button>
       </div>
 
       {error && (
@@ -944,7 +956,7 @@ export default function PoliciesPage() {
       )}
 
       {/* ── Create policy form ─────────────────────────────────────────────── */}
-      <details id="new-policy-details" open className="group [&_summary::-webkit-details-marker]:hidden">
+      <details id="new-policy-details" className="group [&_summary::-webkit-details-marker]:hidden">
         <summary className="list-none cursor-default hidden" />
         <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
@@ -1085,55 +1097,38 @@ export default function PoliciesPage() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="rounded-2xl border border-brand-border bg-white shadow-sm overflow-hidden divide-y divide-brand-border">
             {policies.map((policy) => {
               const isExpanded = expandedId === policy.id;
               const rules = rulesMap[policy.id] ?? [];
-              const ruleCount = policy.rules?.length ?? 0;
+              const ruleCount = rulesMap[policy.id]?.length ?? policy.rules?.length ?? 0;
 
               return (
-                <div key={policy.id} className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-                  isExpanded ? 'border-brand-border bg-white shadow-xl ring-1 ring-black/5' : 'border-brand-border bg-white shadow-sm hover:shadow-md hover:border-brand-accent/50'
-                }`}>
+                <div key={policy.id} className={`transition-all duration-300 ${isExpanded ? 'bg-brand-surface' : 'bg-white'}`}>
                   {/* Policy row */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-6 relative">
-                    {policy.enabled && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400" />}
-                    {!policy.enabled && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-border" />}
-                    
-                    <div className="min-w-0 flex-1 pl-2">
-                      <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <span className="font-bold text-sm text-brand-text uppercase tracking-wider">
-                          {policy.scope}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${
-                            policy.enabled
-                              ? 'bg-green-100 text-green-700 shadow-sm'
-                              : 'bg-brand-surface text-brand-muted border border-brand-border shadow-sm'
-                          }`}
-                        >
-                          {policy.enabled ? 'Active' : 'Disabled'}
-                        </span>
-                        <span className="inline-flex items-center rounded-md bg-brand-bg border border-brand-border px-2.5 py-0.5 text-[10px] font-bold text-brand-muted shadow-sm">
-                          {ruleCount} rule{ruleCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      
+                  <div className="flex items-center justify-between px-7 py-4 gap-4 hover:bg-brand-surface transition-colors">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0 ${
+                          policy.enabled
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-brand-surface border border-brand-border text-brand-muted'
+                        }`}
+                      >
+                        {policy.enabled ? 'Active' : 'Disabled'}
+                      </span>
+
                       {policy.description ? (
-                        <p className="text-sm text-brand-text/90 font-medium leading-relaxed">{policy.description}</p>
+                        <span className="text-sm text-brand-text truncate">{policy.description}</span>
                       ) : (
-                        <p className="text-sm text-brand-muted italic">No description provided</p>
+                        <span className="text-sm text-brand-muted italic truncate">No description</span>
                       )}
-                      
-                      <p className="mt-3 text-[10px] font-bold text-brand-muted/70 uppercase tracking-widest">
-                        Created on {new Date(policy.createdAt * 1000).toLocaleDateString()}
-                      </p>
                     </div>
                     
-                    <div className="flex flex-wrap shrink-0 items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <button
                         onClick={() => handleExpand(policy.id)}
-                        className={`rounded-full border px-5 py-2 text-xs font-semibold transition-all shadow-sm ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all shadow-sm ${
                           isExpanded 
                             ? 'bg-brand-text border-brand-text text-white' 
                             : 'bg-white border-brand-border text-brand-text hover:border-brand-accent hover:text-brand-accent'
@@ -1144,7 +1139,7 @@ export default function PoliciesPage() {
                       <button
                         onClick={() => handleToggleEnabled(policy)}
                         disabled={actionLoading}
-                        className={`rounded-full border px-5 py-2 text-xs font-semibold transition-all shadow-sm disabled:opacity-50 ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all shadow-sm disabled:opacity-50 ${
                           policy.enabled
                             ? 'bg-white border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300'
                             : 'bg-white border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
@@ -1155,7 +1150,7 @@ export default function PoliciesPage() {
                       <button
                         onClick={() => handleDelete(policy.id)}
                         disabled={actionLoading}
-                        className="rounded-full bg-white border border-red-200 px-5 py-2 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50"
+                        className="rounded-full bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -1164,7 +1159,7 @@ export default function PoliciesPage() {
 
                   {/* Expandable rules section */}
                   {isExpanded && (
-                    <div className="border-t border-brand-border bg-brand-surface/40 px-6 py-8 shadow-inner animate-in slide-in-from-top-2 duration-300">
+                    <div className="border-t border-brand-border px-6 py-8 shadow-inner animate-in slide-in-from-top-2 duration-300">
                       <div className="flex flex-col gap-6 max-w-4xl mx-auto">
                         <div className="flex items-center justify-between border-b border-brand-border pb-4">
                           <div>

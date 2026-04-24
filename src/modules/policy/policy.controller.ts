@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PolicyService } from './policy.service';
 import { CreatePolicyDto, UpdatePolicyDto, CreatePolicyRuleDto } from './dto/policy.dto';
 
@@ -25,8 +26,8 @@ export class PolicyController {
 
   /** POST /v1/policies — create a policy */
   @Post()
-  async create(@Body() dto: CreatePolicyDto) {
-    return this.policyService.createPolicy(dto);
+  async create(@CurrentUser('id') userId: string, @Body() dto: CreatePolicyDto) {
+    return this.policyService.createPolicy(userId, dto);
   }
 
   /** GET /v1/policies/:id — get a policy */

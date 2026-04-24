@@ -58,12 +58,14 @@ export class OpenfortService {
 
   async createPolicy(params: {
     scope: string;
+    accountId?: string;
     description?: string;
     enabled?: boolean;
     rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
   }) {
     return await this.client.policies.create({
       scope: params.scope as any,
+      ...(params.accountId !== undefined && { accountId: params.accountId }),
       description: params.description,
       enabled: params.enabled,
       rules: (params.rules ?? []) as any,
