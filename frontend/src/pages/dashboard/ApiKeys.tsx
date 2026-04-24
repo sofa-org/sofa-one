@@ -173,26 +173,26 @@ export default function ApiKeysPage() {
         ) : (
           <div className="divide-y divide-brand-border">
             {keys.map((key) => (
-              <div key={key.id} className="flex items-center justify-between px-7 py-4 gap-4 hover:bg-brand-surface transition-colors">
-                <div className="flex items-center gap-4 min-w-0">
+              <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-7 py-4 gap-4 hover:bg-brand-surface transition-colors">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 min-w-0">
                   <span className="font-mono text-sm text-brand-text shrink-0">{key.keyPrefix}...</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0 ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
                   </span>
-                  {key.name && <span className="text-sm text-brand-muted truncate">{key.name}</span>}
+                  {key.name && <span className="text-sm text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">{key.name}</span>}
                 </div>
-                <div className="flex items-center gap-6 shrink-0">
-                  <span className="text-xs text-brand-muted hidden sm:block">
+                <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 w-full sm:w-auto">
+                  <span className="text-xs text-brand-muted block sm:hidden md:block">
                     {key.lastUsedAt ? `Used ${new Date(key.lastUsedAt).toLocaleDateString()}` : 'Never used'}
                   </span>
-                  <span className="text-xs text-brand-muted hidden md:block">
+                  <span className="text-xs text-brand-muted hidden sm:block">
                     Created {new Date(key.createdAt).toLocaleDateString()}
                   </span>
                   {!key.revoked && (
                     <button
                       onClick={() => handleRevoke(key.id)}
                       disabled={actionLoading}
-                      className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50"
+                      className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 ml-auto sm:ml-0"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

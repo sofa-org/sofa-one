@@ -42,8 +42,8 @@ export default function APIDocsPage() {
           
           <div className="space-y-3">
             <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
-            <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
+              <table className="w-full min-w-[500px] text-left text-sm">
                 <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
                   <tr>
                     <th className="px-4 py-3 font-medium">Parameter</th>
@@ -120,8 +120,8 @@ export default function APIDocsPage() {
           
           <div className="space-y-3">
             <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
-            <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
+              <table className="w-full min-w-[500px] text-left text-sm">
                 <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
                   <tr>
                     <th className="px-4 py-3 font-medium">Parameter</th>
@@ -216,8 +216,8 @@ export default function APIDocsPage() {
         {/* Supported Chains */}
         <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-4">
           <h2 className="text-xl font-bold font-serif text-brand-text">Supported Chains</h2>
-          <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
+            <table className="w-full min-w-[400px] text-left text-sm">
               <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3 font-medium">Chain ID</th>

@@ -193,7 +193,7 @@ export default function WalletPage() {
                       className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
                     />
                   </div>
-                  <div className="flex items-end gap-4">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
                     <div className="flex-1">
                       <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (base units)</label>
                       <input
@@ -205,7 +205,7 @@ export default function WalletPage() {
                         className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
                       />
                     </div>
-                    <div className="w-32">
+                    <div className="w-full sm:w-32">
                       <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Token</label>
                       <select
                         value={token}
