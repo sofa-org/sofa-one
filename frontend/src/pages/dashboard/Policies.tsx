@@ -95,6 +95,15 @@ const CRITERION_TYPES: CriterionType[] = [
   'evmTypedDataField',
 ];
 
+const OPERATION_CRITERIA: Record<PolicyRuleOperation, CriterionType[]> = {
+  signEvmTransaction: ['ethValue', 'evmAddress', 'evmData'],
+  sendEvmTransaction: ['ethValue', 'evmAddress', 'evmNetwork', 'evmData'],
+  signEvmMessage: ['evmMessage'],
+  signEvmTypedData: ['evmTypedDataVerifyingContract', 'evmTypedDataField'],
+  signEvmHash: [],
+  sponsorEvmTransaction: ['ethValue', 'evmAddress', 'evmNetwork', 'evmData'],
+};
+
 const DEFAULT_CRITERION: CriterionDraft = {
   type: 'ethValue',
   ethValueOperator: '<=',
@@ -430,12 +439,25 @@ function CriterionFields({
 function CriteriaBuilder({
   criteria,
   onChange,
+  operation,
 }: {
   criteria: CriterionDraft[];
   onChange: (criteria: CriterionDraft[]) => void;
+  operation: PolicyRuleOperation;
 }) {
+  const availableCriterionTypes = OPERATION_CRITERIA[operation];
   const [showForm, setShowForm] = useState(false);
-  const [draft, setDraft] = useState<CriterionDraft>({ ...DEFAULT_CRITERION });
+  const [draft, setDraft] = useState<CriterionDraft>({
+    ...DEFAULT_CRITERION,
+    type: availableCriterionTypes[0] ?? 'ethValue',
+  });
+
+  // Reset draft when operation changes
+  useEffect(() => {
+    setShowForm(false);
+    setDraft({ ...DEFAULT_CRITERION, type: availableCriterionTypes[0] ?? 'ethValue' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [operation]);
 
   const inputCls =
     'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted/50 bg-white shadow-sm';
@@ -463,7 +485,7 @@ function CriteriaBuilder({
           <h4 className="text-sm font-semibold font-serif text-brand-text">Criteria</h4>
           <p className="text-[11px] text-brand-muted mt-0.5">Define conditions for this rule to trigger</p>
         </div>
-        {!showForm && (
+        {!showForm && availableCriterionTypes.length > 0 && (
           <button
             type="button"
             onClick={() => setShowForm(true)}
@@ -474,8 +496,12 @@ function CriteriaBuilder({
         )}
       </div>
 
-      {/* Existing criteria chips */}
-      {criteria.length > 0 && (
+      {availableCriterionTypes.length === 0 ? (
+        <p className="text-[11px] text-brand-muted italic">This operation has no configurable criteria — the rule will accept or reject all matching requests.</p>
+      ) : (
+        <>
+        {/* Existing criteria chips */}
+        {criteria.length > 0 && (
         <div className="flex flex-wrap gap-2 p-4 bg-brand-surface border border-brand-border rounded-xl">
           {criteria.map((c, idx) => (
             <span
@@ -520,7 +546,7 @@ function CriteriaBuilder({
                 onChange={(e) => setDraft({ ...DEFAULT_CRITERION, type: e.target.value as CriterionType })}
                 className={`${selectCls} w-full sm:w-64`}
               >
-                {CRITERION_TYPES.map((t) => (
+                {availableCriterionTypes.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
@@ -547,6 +573,8 @@ function CriteriaBuilder({
             </button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
@@ -656,7 +684,7 @@ function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading, o
           <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand-muted">Target Operation</label>
           <select
             value={form.operation}
-            onChange={(e) => onChange({ operation: e.target.value as PolicyRuleOperation })}
+            onChange={(e) => onChange({ operation: e.target.value as PolicyRuleOperation, criteria: [] })}
             className={`${selectCls} w-full`}
           >
             {POLICY_RULE_OPERATIONS.map((op) => (
@@ -672,6 +700,7 @@ function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading, o
         <CriteriaBuilder
           criteria={form.criteria}
           onChange={(criteria) => onChange({ criteria })}
+          operation={form.operation}
         />
       </div>
 

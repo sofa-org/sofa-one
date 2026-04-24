@@ -12,7 +12,7 @@ export default function LandingPage() {
 
         <h1 className="mb-6 font-serif text-5xl font-normal leading-tight tracking-tight text-brand-text md:text-6xl">
           Automated Blockchain Signing <br className="hidden md:block" />
-          <span className="italic text-brand-accent">for Agents</span>
+          <span className="italic text-brand-accent">for AI Agents</span>
         </h1>
 
         <p className="mx-auto mb-12 max-w-2xl text-lg font-light leading-relaxed text-brand-muted md:text-xl">
