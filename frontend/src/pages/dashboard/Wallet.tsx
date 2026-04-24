@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { getMe, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import { socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function WalletPage() {
@@ -39,7 +39,7 @@ export default function WalletPage() {
 
     async function init() {
       try {
-        const result = await getMe(getToken);
+        const result = await socialLogin(getToken);
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
