@@ -20,8 +20,8 @@ export class PolicyController {
 
   /** GET /v1/policies — list all policies */
   @Get()
-  async list() {
-    return this.policyService.listPolicies();
+  async list(@CurrentUser('id') userId: string) {
+    return this.policyService.listPolicies(userId);
   }
 
   /** POST /v1/policies — create a policy */

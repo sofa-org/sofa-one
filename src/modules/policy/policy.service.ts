@@ -13,9 +13,17 @@ export class PolicyService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async listPolicies() {
+  async listPolicies(userId: string) {
     try {
-      return await this.openfortService.listPolicies();
+      const userPolicies = await this.prisma.userPolicy.findMany({
+        where: { userId },
+        select: { openfortPolicyId: true },
+      });
+      const policyIds = userPolicies.map((p) => p.openfortPolicyId);
+      if (policyIds.length === 0) return { data: [] };
+      const all = await this.openfortService.listPolicies();
+      const data = (all.data ?? []).filter((p: any) => policyIds.includes(p.id));
+      return { data };
     } catch (error: any) {
       this.logger.error('listPolicies failed: ' + error.message);
       throw new BadGatewayException('Policy service temporarily unavailable');
@@ -35,13 +43,17 @@ export class PolicyService {
       accountId = wallet.openfortAccountId;
     }
     try {
-      return await this.openfortService.createPolicy({
+      const policy = await this.openfortService.createPolicy({
         scope: dto.scope,
         accountId,
         description: dto.description,
         enabled: dto.enabled,
         rules: dto.rules,
       });
+      await this.prisma.userPolicy.create({
+        data: { userId, openfortPolicyId: policy.id },
+      });
+      return policy;
     } catch (error: any) {
       this.logger.error('createPolicy failed: ' + error.message);
       throw new BadGatewayException('Policy service temporarily unavailable');
