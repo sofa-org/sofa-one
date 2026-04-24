@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { getMe, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -23,6 +24,8 @@ export default function WalletPage() {
     }>;
   }> | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
+
+  const [showWithdraw, setShowWithdraw] = useState(false);
   
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
@@ -86,7 +89,7 @@ export default function WalletPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-6xl flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-        <svg className="h-5 w-5 shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+        <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
         {error}
       </div>
     );
@@ -113,27 +116,24 @@ export default function WalletPage() {
       {wallet && (
         <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-serif text-brand-text">Deposit Address</h2>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                wallet.status === 'active'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
-            >
-              {wallet.status}
-            </span>
-          </div>
 
-          <div className="mt-6 space-y-6">
+          <div className="mt-0 space-y-6">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Address</label>
-              <p className="mt-1 break-all font-mono text-sm text-brand-text">
-                {wallet.walletAddress}
-              </p>
+              <div className="mt-1 flex items-center gap-3">
+                <p className="break-all font-mono text-sm text-brand-text flex-1">
+                  {wallet.walletAddress}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowWithdraw((v) => !v)}
+                  className="shrink-0 rounded-full border border-brand-border p-1.5 text-brand-text hover:bg-brand-bg transition-colors"
+                >
+                  {showWithdraw ? <X className="h-4 w-4" /> : <BanknoteArrowUp className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-            
+
             <div className="pt-6 border-t border-brand-border">
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block mb-4">Assets</label>
               <div className="space-y-4">
@@ -161,79 +161,80 @@ export default function WalletPage() {
                 ) : null}
               </div>
             </div>
+
+            {showWithdraw && (
+              <div className="pt-6 border-t border-brand-border">
+                <h3 className="text-base font-bold font-serif text-brand-text mb-6">Withdraw</h3>
+
+                {withdrawError && (
+                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+                    {withdrawError}
+                  </div>
+                )}
+
+                {withdrawResult && (
+                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                    <span>{withdrawResult}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleWithdraw} className="space-y-6">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Recipient Address</label>
+                    <input
+                      type="text"
+                      placeholder="0x..."
+                      value={to}
+                      onChange={(e) => setTo(e.target.value)}
+                      required
+                      pattern="^0x[a-fA-F0-9]{40}$"
+                      className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
+                    />
+                  </div>
+                  <div className="flex items-end gap-4">
+                    <div className="flex-1">
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (base units)</label>
+                      <input
+                        type="text"
+                        placeholder="1000000"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        required
+                        className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
+                      />
+                    </div>
+                    <div className="w-32">
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Token</label>
+                      <select
+                        value={token}
+                        onChange={(e) => setToken(e.target.value)}
+                        className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
+                      >
+                        <option value="USDC">USDC</option>
+                        <option value="ETH">ETH</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={withdrawLoading}
+                      className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                    >
+                      {withdrawLoading && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      <span>{withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      {/* Withdraw */}
-      <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
-        <h2 className="text-xl font-bold font-serif text-brand-text">Withdraw</h2>
-
-        {withdrawError && (
-          <div className="mt-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-            <svg className="h-5 w-5 shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
-            {withdrawError}
-          </div>
-        )}
-
-        {withdrawResult && (
-          <div className="mt-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            <span>{withdrawResult}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleWithdraw} className="mt-8 space-y-6">
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Recipient Address</label>
-            <input
-              type="text"
-              placeholder="0x..."
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              required
-              pattern="^0x[a-fA-F0-9]{40}$"
-              className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
-            />
-          </div>
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (base units)</label>
-              <input
-                type="text"
-                placeholder="1000000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
-              />
-            </div>
-            <div className="w-32">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Token</label>
-              <select
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
-              >
-                <option value="USDC">USDC</option>
-                <option value="ETH">ETH</option>
-              </select>
-            </div>
-          </div>
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={withdrawLoading}
-              className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
-            >
-              {withdrawLoading && (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              )}
-              <span>{withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}</span>
-            </button>
-          </div>
-        </form>
-      </div>
 
     </div>
   );

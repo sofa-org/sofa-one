@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { Plus, X, AlertCircle, Loader2 } from 'lucide-react';
 import {
   listPoliciesAuth,
   createPolicyAuth,
@@ -488,7 +489,7 @@ function CriteriaBuilder({
                 className="flex h-[18px] w-[18px] items-center justify-center rounded-full text-brand-muted hover:bg-red-100 hover:text-red-600 transition-colors"
                 title="Remove criterion"
               >
-                ×
+                <X className="h-3 w-3" />
               </button>
             </span>
           ))}
@@ -507,7 +508,7 @@ function CriteriaBuilder({
               onClick={() => { setShowForm(false); setDraft({ ...DEFAULT_CRITERION }); }}
               className="flex h-7 w-7 items-center justify-center rounded-full text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors"
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           </div>
 
@@ -615,7 +616,7 @@ function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading, o
             onClick={onCancel}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-surface text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors shadow-sm"
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -942,15 +943,15 @@ export default function PoliciesPage() {
             const el = document.getElementById('new-policy-details') as HTMLDetailsElement;
             if (el) el.open = true;
           }}
-          className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-semibold text-brand-text shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent"
+          className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-semibold text-brand-text shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent flex items-center gap-1.5"
         >
-          + New Policy
+          <Plus className="h-3.5 w-3.5" /> Create Policy
         </button>
       </div>
 
       {error && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-          <svg className="h-5 w-5 shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
           <p>{error}</p>
         </div>
       )}
@@ -963,7 +964,7 @@ export default function PoliciesPage() {
           
           <div className="flex items-center justify-between mb-8 pt-2">
             <div>
-              <h2 className="text-xl font-bold font-serif text-brand-text">New Policy</h2>
+              <h2 className="text-xl font-bold font-serif text-brand-text">Create Policy</h2>
               <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted mt-1">Configure high-level settings and attach rules to govern operations.</p>
             </div>
             <button
@@ -973,7 +974,7 @@ export default function PoliciesPage() {
               }}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-surface text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors"
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           </div>
 
@@ -1073,7 +1074,7 @@ export default function PoliciesPage() {
       <div className="space-y-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-brand-muted">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-accent mb-4" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-accent mb-4" />
             <p className="text-sm font-medium">Loading policies...</p>
           </div>
         ) : policies.length === 0 ? (
@@ -1179,7 +1180,7 @@ export default function PoliciesPage() {
 
                         {rulesLoading === policy.id ? (
                           <div className="flex items-center justify-center py-10">
-                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-border border-t-brand-accent" />
+                            <Loader2 className="h-6 w-6 animate-spin text-brand-accent" />
                           </div>
                         ) : rules.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-brand-border bg-white p-8 text-center shadow-sm">

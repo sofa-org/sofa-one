@@ -1,11 +1,12 @@
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { UserButton, useClerk } from '@clerk/clerk-react';
+import { LogOut, Wallet, ShieldCheck, KeyRound, BookOpen } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Wallet' },
-  { href: '/dashboard/policies', label: 'Policies' },
-  { href: '/dashboard/api-keys', label: 'API Keys' },
-  { href: '/dashboard/docs', label: 'API Docs' },
+  { href: '/dashboard', label: 'Wallet', icon: Wallet },
+  { href: '/dashboard/policies', label: 'Policies', icon: ShieldCheck },
+  { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
+  { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 
 export default function DashboardLayout() {
@@ -36,12 +37,13 @@ export default function DashboardLayout() {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-brand-accent/10 text-brand-accent'
                     : 'text-brand-muted hover:bg-brand-bg hover:text-brand-text'
                 }`}
               >
+                <item.icon className="h-4 w-4 shrink-0" />
                 {item.label}
               </Link>
             );
@@ -52,9 +54,9 @@ export default function DashboardLayout() {
             <UserButton />
             <button
               onClick={handleSignOut}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
+              className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
             >
-              Sign out
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
