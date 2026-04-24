@@ -1,23 +1,24 @@
 export default function APIDocsPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-12 pb-24 pt-8">
+    <div className="mx-auto max-w-6xl space-y-10 pb-16">
       {/* Header */}
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold font-serif text-brand-text">
+      <div className="border-b border-brand-border pb-6">
+        <h1 className="text-3xl font-bold font-serif text-brand-text mb-2">
           API Documentation
         </h1>
-        <p className="text-base text-brand-muted max-w-2xl">
+        <p className="text-sm text-brand-muted max-w-2xl">
           Welcome to the SOFA ONE API. This reference provides the 2 public endpoints needed to programmatically sign data and submit transaction intents via your TEE-secured backend wallet.
         </p>
       </div>
 
       {/* Authentication */}
-      <section className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
-        <h2 className="text-lg font-semibold font-serif text-brand-text mb-4">Authentication</h2>
+      <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
+        <h2 className="text-xl font-bold font-serif text-brand-text mb-4">Authentication</h2>
         <p className="text-sm text-brand-muted mb-4">
-          All API requests must be authenticated using your API Key. Include it in the headers of your requests as <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded">X-API-Key</code>.
+          All API requests must be authenticated using your API Key. Include it in the headers of your requests as <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">X-API-Key</code>.
         </p>
-        <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
+        <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
           <code>X-API-Key: sk_live_...</code>
         </pre>
       </section>
@@ -27,20 +28,21 @@ export default function APIDocsPage() {
         <h2 className="text-2xl font-bold font-serif text-brand-text border-b border-brand-border pb-4">Endpoints</h2>
 
         {/* Endpoint 1 */}
-        <section className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm space-y-6">
+        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-6">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
           <div className="flex items-center gap-3">
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
+            <span className="rounded-full px-3 py-1 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
               POST
             </span>
-            <h3 className="text-lg font-mono font-semibold text-brand-text">/v1/wallets/sign</h3>
+            <h3 className="font-mono font-semibold text-brand-text text-lg">/v1/wallets/sign</h3>
           </div>
           <p className="text-sm text-brand-muted">
             Sign data with your wallet (no transaction broadcast). Supports EIP-191 messages, EIP-712 typed data, and raw hashes.
           </p>
           
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Request Body</h4>
-            <div className="overflow-hidden border border-brand-border rounded-lg">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
+            <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
               <table className="w-full text-left text-sm">
                 <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
                   <tr>
@@ -50,12 +52,12 @@ export default function APIDocsPage() {
                     <th className="px-4 py-3 font-medium">Description</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-brand-border text-brand-text bg-brand-surface">
+                <tbody className="divide-y divide-brand-border text-brand-text bg-white">
                   <tr>
                     <td className="px-4 py-3 font-mono text-xs">type</td>
                     <td className="px-4 py-3">string</td>
                     <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3"><code className="text-xs">"message"</code> | <code className="text-xs">"typed_data"</code> | <code className="text-xs">"hash"</code></td>
+                    <td className="px-4 py-3"><code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"message"</code> | <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"typed_data"</code> | <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"hash"</code></td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-xs">message</td>
@@ -82,8 +84,8 @@ export default function APIDocsPage() {
 
           <div className="flex flex-col gap-4">
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">cURL Example</h4>
+              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
                 <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
@@ -91,8 +93,8 @@ export default function APIDocsPage() {
               </pre>
             </div>
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Response Example</h4>
+              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
                 <code>{`{
   "signature": "0x5d99b6f7f6d1f73d1a...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -104,20 +106,21 @@ export default function APIDocsPage() {
         </section>
 
         {/* Endpoint 2 */}
-        <section className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm space-y-6">
+        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-6">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
           <div className="flex items-center gap-3">
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
+            <span className="rounded-full px-3 py-1 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
               POST
             </span>
-            <h3 className="text-lg font-mono font-semibold text-brand-text">/v1/transactions/send</h3>
+            <h3 className="font-mono font-semibold text-brand-text text-lg">/v1/transactions/send</h3>
           </div>
           <p className="text-sm text-brand-muted">
             Submit one or more raw contract interactions from your TEE-secured backend wallet. Server handles signing and gas.
           </p>
           
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Request Body</h4>
-            <div className="overflow-hidden border border-brand-border rounded-lg">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
+            <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
               <table className="w-full text-left text-sm">
                 <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
                   <tr>
@@ -127,7 +130,7 @@ export default function APIDocsPage() {
                     <th className="px-4 py-3 font-medium">Description</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-brand-border text-brand-text bg-brand-surface">
+                <tbody className="divide-y divide-brand-border text-brand-text bg-white">
                   <tr>
                     <td className="px-4 py-3 font-mono text-xs">chainId</td>
                     <td className="px-4 py-3">integer</td>
@@ -177,8 +180,8 @@ export default function APIDocsPage() {
 
           <div className="flex flex-col gap-4">
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">cURL Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">cURL Example</h4>
+              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
                 <code>{`curl -X POST https://api.agentwallet.com/v1/transactions/send \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
@@ -194,8 +197,8 @@ export default function APIDocsPage() {
               </pre>
             </div>
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-brand-muted uppercase tracking-wider">Response Example</h4>
-              <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Response Example</h4>
+              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
                 <code>{`{
   "transactionId": "550e8400-e29b-41d4-a716-446655440000",
   "transactionHash": "0xabc123...",
@@ -211,8 +214,8 @@ export default function APIDocsPage() {
       {/* Grid of smaller reference tables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Supported Chains */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold font-serif text-brand-text">Supported Chains</h2>
+        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-4">
+          <h2 className="text-xl font-bold font-serif text-brand-text">Supported Chains</h2>
           <div className="overflow-hidden border border-brand-border rounded-xl shadow-sm">
             <table className="w-full text-left text-sm">
               <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
@@ -221,7 +224,7 @@ export default function APIDocsPage() {
                   <th className="px-4 py-3 font-medium">Network</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-brand-border text-brand-text bg-brand-surface">
+              <tbody className="divide-y divide-brand-border text-brand-text bg-white">
                 <tr>
                   <td className="px-4 py-3 font-mono text-xs">1</td>
                   <td className="px-4 py-3">Ethereum Mainnet</td>
@@ -252,12 +255,12 @@ export default function APIDocsPage() {
         </section>
 
         {/* Error Responses */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold font-serif text-brand-text">Error Responses</h2>
+        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-4">
+          <h2 className="text-xl font-bold font-serif text-brand-text">Error Responses</h2>
           <p className="text-sm text-brand-muted">
             All API errors follow a standardized format to make programmatic handling easier.
           </p>
-          <pre className="rounded-lg bg-brand-text p-4 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
+          <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
             <code>{`{
   "statusCode": 401,
   "timestamp": "2026-04-20T10:35:00.000Z",
