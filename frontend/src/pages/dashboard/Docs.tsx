@@ -58,12 +58,6 @@ export default function APIDocsPage() {
                     <td className="px-4 py-3"><code className="text-xs">"message"</code> | <code className="text-xs">"typed_data"</code> | <code className="text-xs">"hash"</code></td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 font-mono text-xs">chainId</td>
-                    <td className="px-4 py-3">integer</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">Target chain ID (e.g. 84532 for Base Sepolia)</td>
-                  </tr>
-                  <tr>
                     <td className="px-4 py-3 font-mono text-xs">message</td>
                     <td className="px-4 py-3">string</td>
                     <td className="px-4 py-3 text-brand-muted">Cond.</td>
@@ -93,7 +87,7 @@ export default function APIDocsPage() {
                 <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
-  -d '{"type":"message","chainId":84532,"message":"Hello, SOFA ONE!"}'`}</code>
+  -d '{"type":"message","message":"Hello, SOFA ONE!"}'`}</code>
               </pre>
             </div>
             <div className="space-y-2">
@@ -102,8 +96,7 @@ export default function APIDocsPage() {
                 <code>{`{
   "signature": "0x5d99b6f7f6d1f73d1a...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  "type": "message",
-  "chainId": 84532
+  "type": "message"
 }`}</code>
               </pre>
             </div>

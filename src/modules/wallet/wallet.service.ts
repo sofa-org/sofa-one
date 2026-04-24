@@ -94,7 +94,6 @@ export class WalletService {
     return {
       signature,
       walletAddress: wallet.walletAddress,
-      chainId: params.chainId,
       type: params.type,
     };
   }

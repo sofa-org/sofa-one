@@ -326,13 +326,8 @@ components:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [chainId, type]
+      required: [type]
       properties:
-        chainId:
-          type: integer
-          minimum: 1
-          description: 目标链 ID（如 84532 = Base Sepolia）
-          example: 84532
         type:
           type: string
           enum: [message, typed_data, hash]
