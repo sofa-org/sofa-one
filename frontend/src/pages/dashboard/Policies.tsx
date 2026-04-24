@@ -73,8 +73,7 @@ interface Policy {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-type PolicyScope = 'project' | 'account' | 'transaction';
-const POLICY_SCOPES: PolicyScope[] = ['project', 'account', 'transaction'];
+type PolicyScope = 'account';
 
 const POLICY_RULE_OPERATIONS: PolicyRuleOperation[] = [
   'signEvmTransaction',
@@ -619,7 +618,7 @@ export default function PoliciesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Create policy form
-  const [newScope, setNewScope] = useState<PolicyScope>('project');
+  const newScope: PolicyScope = 'account';
   const [newDescription, setNewDescription] = useState('');
   const [newEnabled, setNewEnabled] = useState(true);
 
@@ -702,7 +701,7 @@ export default function PoliciesPage() {
         }
       }
 
-      setNewScope('project');
+      // scope is always 'account', no reset needed
       setNewDescription('');
       setNewEnabled(true);
       setPendingRules([]);
@@ -823,17 +822,6 @@ export default function PoliciesPage() {
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
         <h2 className="text-base font-semibold font-serif text-brand-text">Create New Policy</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <select
-            value={newScope}
-            onChange={(e) => setNewScope(e.target.value as PolicyScope)}
-            className={selectCls}
-          >
-            {POLICY_SCOPES.map((s) => (
-              <option key={s} value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </option>
-            ))}
-          </select>
           <input
             type="text"
             placeholder="Description (optional)"
