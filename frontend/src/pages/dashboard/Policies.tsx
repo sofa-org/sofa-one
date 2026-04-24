@@ -228,146 +228,194 @@ function CriterionFields({
   switch (draft.type) {
     case 'ethValue':
       return (
-        <div className="flex gap-2">
-          <select
-            value={draft.ethValueOperator ?? '<='}
-            onChange={(e) => onChange({ ethValueOperator: e.target.value as CriterionDraft['ethValueOperator'] })}
-            className={`${selectCls} w-24 shrink-0`}
-          >
-            {(['<=', '>=', '<', '>'] as const).map((op) => <option key={op} value={op}>{op}</option>)}
-          </select>
-          <input
-            type="text"
-            placeholder="wei, e.g. 1000000000000000000 = 1 ETH"
-            value={draft.ethValue ?? ''}
-            onChange={(e) => onChange({ ethValue: e.target.value })}
-            className={`${inputCls} flex-1`}
-          />
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="w-full sm:w-32 shrink-0">
+            <label className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Operator</label>
+            <select
+              value={draft.ethValueOperator ?? '<='}
+              onChange={(e) => onChange({ ethValueOperator: e.target.value as CriterionDraft['ethValueOperator'] })}
+              className={`${selectCls} w-full`}
+            >
+              {(['<=', '>=', '<', '>'] as const).map((op) => <option key={op} value={op}>{op}</option>)}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Wei Amount</label>
+            <input
+              type="text"
+              placeholder="e.g. 1000000000000000000 (1 ETH)"
+              value={draft.ethValue ?? ''}
+              onChange={(e) => onChange({ ethValue: e.target.value })}
+              className={`${inputCls} w-full`}
+            />
+          </div>
         </div>
       );
 
     case 'evmAddress':
     case 'evmTypedDataVerifyingContract':
       return (
-        <div className="space-y-2">
-          <select
-            value={draft.addressOperator ?? 'in'}
-            onChange={(e) => onChange({ addressOperator: e.target.value as 'in' | 'not in' })}
-            className={selectCls}
-          >
-            <option value="in">in (allowlist)</option>
-            <option value="not in">not in (denylist)</option>
-          </select>
-          <textarea
-            rows={3}
-            placeholder="One address per line&#10;0x1234…&#10;0xabcd…"
-            value={draft.addresses ?? ''}
-            onChange={(e) => onChange({ addresses: e.target.value })}
-            className={textareaCls}
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">List Type</label>
+            <select
+              value={draft.addressOperator ?? 'in'}
+              onChange={(e) => onChange({ addressOperator: e.target.value as 'in' | 'not in' })}
+              className={`${selectCls} w-full sm:w-48`}
+            >
+              <option value="in">Allowlist (in)</option>
+              <option value="not in">Denylist (not in)</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Addresses (One per line)</label>
+            <textarea
+              rows={3}
+              placeholder="0x1234...&#10;0xabcd..."
+              value={draft.addresses ?? ''}
+              onChange={(e) => onChange({ addresses: e.target.value })}
+              className={textareaCls}
+            />
+          </div>
         </div>
       );
 
     case 'evmNetwork':
       return (
-        <div className="space-y-2">
-          <select
-            value={draft.networkOperator ?? 'in'}
-            onChange={(e) => onChange({ networkOperator: e.target.value as 'in' | 'not in' })}
-            className={selectCls}
-          >
-            <option value="in">in (allowlist)</option>
-            <option value="not in">not in (denylist)</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Comma-separated chain IDs, e.g. 1,137,8453"
-            value={draft.chainIds ?? ''}
-            onChange={(e) => onChange({ chainIds: e.target.value })}
-            className={inputCls}
-          />
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="sm:w-48 shrink-0">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">List Type</label>
+            <select
+              value={draft.networkOperator ?? 'in'}
+              onChange={(e) => onChange({ networkOperator: e.target.value as 'in' | 'not in' })}
+              className={`${selectCls} w-full`}
+            >
+              <option value="in">Allowlist (in)</option>
+              <option value="not in">Denylist (not in)</option>
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Chain IDs</label>
+            <input
+              type="text"
+              placeholder="Comma-separated, e.g. 1, 137, 8453"
+              value={draft.chainIds ?? ''}
+              onChange={(e) => onChange({ chainIds: e.target.value })}
+              className={`${inputCls} w-full`}
+            />
+          </div>
         </div>
       );
 
     case 'evmData':
       return (
-        <div className="space-y-2">
-          <select
-            value={draft.dataOperator ?? '=='}
-            onChange={(e) => onChange({ dataOperator: e.target.value as CriterionDraft['dataOperator'] })}
-            className={selectCls}
-          >
-            {(['==', 'in', 'not in', '<', '<=', '>', '>=', 'match'] as const).map((op) => (
-              <option key={op} value={op}>{op}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Function name, e.g. transfer"
-            value={draft.functionName ?? ''}
-            onChange={(e) => onChange({ functionName: e.target.value })}
-            className={inputCls}
-          />
-          <textarea
-            rows={3}
-            placeholder='Contract ABI JSON, e.g. [{"type":"function","name":"transfer",...}]'
-            value={draft.abi ?? ''}
-            onChange={(e) => onChange({ abi: e.target.value })}
-            className={textareaCls}
-          />
-          <textarea
-            rows={2}
-            placeholder='Args constraints (optional), e.g. {"amount": "1000000"}'
-            value={draft.argsJson ?? ''}
-            onChange={(e) => onChange({ argsJson: e.target.value })}
-            className={textareaCls}
-          />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="sm:w-48 shrink-0">
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Operator</label>
+              <select
+                value={draft.dataOperator ?? '=='}
+                onChange={(e) => onChange({ dataOperator: e.target.value as CriterionDraft['dataOperator'] })}
+                className={`${selectCls} w-full`}
+              >
+                {(['==', 'in', 'not in', '<', '<=', '>', '>=', 'match'] as const).map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Function Name</label>
+              <input
+                type="text"
+                placeholder="e.g. transfer"
+                value={draft.functionName ?? ''}
+                onChange={(e) => onChange({ functionName: e.target.value })}
+                className={`${inputCls} w-full`}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Contract ABI (JSON Array)</label>
+            <textarea
+              rows={3}
+              placeholder='[{"type":"function","name":"transfer",...}]'
+              value={draft.abi ?? ''}
+              onChange={(e) => onChange({ abi: e.target.value })}
+              className={textareaCls}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Args Constraints (Optional JSON)</label>
+            <textarea
+              rows={2}
+              placeholder='{"amount": "1000000"}'
+              value={draft.argsJson ?? ''}
+              onChange={(e) => onChange({ argsJson: e.target.value })}
+              className={textareaCls}
+            />
+          </div>
         </div>
       );
 
     case 'evmMessage':
       return (
-        <input
-          type="text"
-          placeholder='RE2 regex pattern, e.g. ^Sign in to MyApp:'
-          value={draft.messagePattern ?? ''}
-          onChange={(e) => onChange({ messagePattern: e.target.value })}
-          className={inputCls}
-        />
+        <div>
+          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">RE2 Regex Pattern</label>
+          <input
+            type="text"
+            placeholder="e.g. ^Sign in to MyApp:"
+            value={draft.messagePattern ?? ''}
+            onChange={(e) => onChange({ messagePattern: e.target.value })}
+            className={`${inputCls} w-full`}
+          />
+        </div>
       );
 
     case 'evmTypedDataField':
       return (
-        <div className="space-y-2">
-          <select
-            value={draft.fieldOperator ?? 'in'}
-            onChange={(e) => onChange({ fieldOperator: e.target.value as 'in' | '<=' | 'match' })}
-            className={selectCls}
-          >
-            <option value="in">in (allowlist)</option>
-            <option value="<=">{'<='} (max value)</option>
-            <option value="match">match (regex)</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Field path, e.g. order.buyer"
-            value={draft.fieldPath ?? ''}
-            onChange={(e) => onChange({ fieldPath: e.target.value })}
-            className={inputCls}
-          />
-          <textarea
-            rows={3}
-            placeholder={
-              draft.fieldOperator === 'in'
-                ? 'One value per line'
-                : draft.fieldOperator === 'match'
-                ? 'RE2 regex pattern'
-                : 'Max value, e.g. 1000000'
-            }
-            value={draft.fieldValues ?? ''}
-            onChange={(e) => onChange({ fieldValues: e.target.value })}
-            className={textareaCls}
-          />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="sm:w-48 shrink-0">
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Operator</label>
+              <select
+                value={draft.fieldOperator ?? 'in'}
+                onChange={(e) => onChange({ fieldOperator: e.target.value as 'in' | '<=' | 'match' })}
+                className={`${selectCls} w-full`}
+              >
+                <option value="in">Allowlist (in)</option>
+                <option value="<=">Max value {'(<='})</option>
+                <option value="match">Regex Match (match)</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Field Path</label>
+              <input
+                type="text"
+                placeholder="e.g. order.buyer"
+                value={draft.fieldPath ?? ''}
+                onChange={(e) => onChange({ fieldPath: e.target.value })}
+                className={`${inputCls} w-full`}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">
+              {draft.fieldOperator === 'in' ? 'Values (One per line)' : 'Value Constraint'}
+            </label>
+            <textarea
+              rows={3}
+              placeholder={
+                draft.fieldOperator === 'in'
+                  ? 'value1\nvalue2'
+                  : draft.fieldOperator === 'match'
+                  ? '^expected string$'
+                  : '1000000'
+              }
+              value={draft.fieldValues ?? ''}
+              onChange={(e) => onChange({ fieldValues: e.target.value })}
+              className={textareaCls}
+            />
+          </div>
         </div>
       );
 
@@ -389,11 +437,11 @@ function CriteriaBuilder({
   const [draft, setDraft] = useState<CriterionDraft>({ ...DEFAULT_CRITERION });
 
   const inputCls =
-    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white';
+    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted/50 bg-white shadow-sm';
   const selectCls =
-    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white';
+    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm';
   const textareaCls =
-    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white font-mono';
+    'w-full rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted/50 bg-white shadow-sm font-mono';
 
   function handleAdd() {
     const api = criterionDraftToApi(draft);
@@ -408,14 +456,17 @@ function CriteriaBuilder({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-brand-muted">Criteria</span>
+        <div>
+          <h4 className="text-sm font-semibold font-serif text-brand-text">Criteria</h4>
+          <p className="text-[11px] text-brand-muted mt-0.5">Define conditions for this rule to trigger</p>
+        </div>
         {!showForm && (
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="rounded-full border border-brand-border px-2 py-0.5 text-xs text-brand-text hover:bg-brand-bg"
+            className="rounded-full border border-dashed border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-medium text-brand-text hover:border-brand-accent hover:text-brand-accent transition-colors shadow-sm"
           >
             + Add Criterion
           </button>
@@ -424,17 +475,18 @@ function CriteriaBuilder({
 
       {/* Existing criteria chips */}
       {criteria.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2 p-4 bg-brand-surface border border-brand-border rounded-xl">
           {criteria.map((c, idx) => (
             <span
               key={idx}
-              className="flex items-center gap-1 rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent"
+              className="group flex items-center gap-2 rounded-full border border-brand-accent/20 bg-brand-accent/5 pl-3 pr-1 py-1 text-[11px] text-brand-text font-mono shadow-sm transition-colors hover:border-brand-accent/40 hover:bg-brand-accent/10"
             >
-              {criterionSummary(c)}
+              <span className="opacity-90">{criterionSummary(c)}</span>
               <button
                 type="button"
                 onClick={() => handleRemove(idx)}
-                className="ml-0.5 text-brand-muted hover:text-red-500 leading-none"
+                className="flex h-[18px] w-[18px] items-center justify-center rounded-full text-brand-muted hover:bg-red-100 hover:text-red-600 transition-colors"
+                title="Remove criterion"
               >
                 ×
               </button>
@@ -445,45 +497,52 @@ function CriteriaBuilder({
 
       {/* Add criterion form */}
       {showForm && (
-        <div className="rounded-lg border border-brand-border bg-brand-bg p-3 space-y-2">
+        <div className="rounded-xl border border-brand-border bg-brand-surface/50 p-5 space-y-5 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-accent/40" />
+          
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-brand-text">New Criterion</span>
+            <span className="text-sm font-semibold font-serif text-brand-text">New Criterion Definition</span>
             <button
               type="button"
               onClick={() => { setShowForm(false); setDraft({ ...DEFAULT_CRITERION }); }}
-              className="text-brand-muted hover:text-brand-text text-sm leading-none"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors"
             >
               ×
             </button>
           </div>
 
-          {/* Type selector */}
-          <select
-            value={draft.type}
-            onChange={(e) => setDraft({ ...DEFAULT_CRITERION, type: e.target.value as CriterionType })}
-            className={selectCls}
-          >
-            {CRITERION_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          <div className="space-y-5">
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-brand-muted">Criterion Type</label>
+              <select
+                value={draft.type}
+                onChange={(e) => setDraft({ ...DEFAULT_CRITERION, type: e.target.value as CriterionType })}
+                className={`${selectCls} w-full sm:w-64`}
+              >
+                {CRITERION_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Type-specific fields */}
-          <CriterionFields
-            draft={draft}
-            onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
-            inputCls={inputCls}
-            selectCls={selectCls}
-            textareaCls={textareaCls}
-          />
+            <div className="border-t border-brand-border pt-5">
+              <CriterionFields
+                draft={draft}
+                onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+                inputCls={inputCls}
+                selectCls={selectCls}
+                textareaCls={textareaCls}
+              />
+            </div>
+          </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-3">
             <button
               type="button"
               onClick={handleAdd}
-              className="rounded-full bg-brand-text px-3 py-1 text-xs font-medium text-white hover:bg-brand-text/90"
+              className="rounded-full bg-brand-text px-6 py-2 text-xs font-semibold text-white shadow-md hover:bg-brand-text/90 hover:shadow-lg transition-all"
             >
-              Add
+              Confirm Criterion
             </button>
           </div>
         </div>
@@ -496,26 +555,31 @@ function CriteriaBuilder({
 
 function RuleDetails({ rule }: { rule: PolicyRule }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-          rule.action === 'accept'
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
-        }`}
-      >
-        {rule.action}
-      </span>
-      <span className="font-mono text-xs text-brand-text">{rule.operation}</span>
-      {rule.criteria && rule.criteria.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
+      <div className="flex items-center gap-3 shrink-0 sm:w-64">
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
+            rule.action === 'accept'
+              ? 'bg-green-100 text-green-700 border border-green-200/60 shadow-sm'
+              : 'bg-red-100 text-red-700 border border-red-200/60 shadow-sm'
+          }`}
+        >
+          {rule.action}
+        </span>
+        <span className="font-mono text-sm font-medium text-brand-text">{rule.operation}</span>
+      </div>
+      
+      {rule.criteria && rule.criteria.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 sm:border-l sm:border-brand-border sm:pl-4">
           {rule.criteria.map((c, i) => (
-            <span key={i} className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-xs text-brand-accent font-mono">
-              {String(c.type)}
-              {c.operator ? ` ${String(c.operator)}` : ''}
+            <span key={i} className="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-2.5 py-1.5 text-[10px] text-brand-muted font-mono shadow-sm">
+              <span className="font-bold text-brand-text">{String(c.type)}</span>
+              {('operator' in c && c.operator) ? <span className="opacity-80">{String((c as Record<string, unknown>).operator)}</span> : null}
             </span>
           ))}
         </div>
+      ) : (
+        <span className="text-[11px] font-medium text-brand-muted italic sm:border-l sm:border-brand-border sm:pl-4">No conditions (applies to all)</span>
       )}
     </div>
   );
@@ -529,54 +593,103 @@ interface AddRuleFormProps {
   onChange: (patch: Partial<RuleFormState>) => void;
   onSubmit: () => void;
   loading: boolean;
+  onCancel?: () => void;
 }
 
-function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading }: AddRuleFormProps) {
+function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading, onCancel }: AddRuleFormProps) {
   const selectCls =
-    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white';
+    'rounded-lg border border-brand-border px-3 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm';
 
   return (
-    <div className="rounded-lg border border-brand-border bg-brand-surface p-4 space-y-3">
-      <p className="text-xs font-semibold text-brand-text">Add Rule</p>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {/* Action selector */}
-        <select
-          value={form.action}
-          onChange={(e) => onChange({ action: e.target.value as PolicyRuleAction })}
-          className={selectCls}
-        >
-          <option value="accept">accept</option>
-          <option value="reject">reject</option>
-        </select>
-
-        {/* Operation selector */}
-        <select
-          value={form.operation}
-          onChange={(e) => onChange({ operation: e.target.value as PolicyRuleOperation })}
-          className={selectCls}
-        >
-          {POLICY_RULE_OPERATIONS.map((op) => (
-            <option key={op} value={op}>
-              {op}
-            </option>
-          ))}
-        </select>
+    <div className="rounded-2xl border border-brand-border bg-brand-bg p-6 space-y-6 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-text" />
+      
+      <div className="flex items-center justify-between border-b border-brand-border pb-4">
+        <div>
+          <h3 className="text-base font-bold font-serif text-brand-text">Configure Rule</h3>
+          <p className="text-[11px] text-brand-muted mt-1 uppercase tracking-wider font-semibold">Define actions and triggers</p>
+        </div>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-surface text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors shadow-sm"
+          >
+            ×
+          </button>
+        )}
       </div>
 
-      {/* Criteria builder */}
-      <CriteriaBuilder
-        criteria={form.criteria}
-        onChange={(criteria) => onChange({ criteria })}
-      />
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Action selector */}
+        <div>
+          <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand-muted">Action to Take</label>
+          <div className="flex rounded-lg bg-brand-surface p-1 border border-brand-border shadow-inner h-[42px]">
+            <button
+              type="button"
+              onClick={() => onChange({ action: 'accept' })}
+              className={`flex-1 rounded-md text-sm font-medium transition-all duration-200 ${
+                form.action === 'accept' 
+                  ? 'bg-green-100 text-green-700 shadow-sm border border-green-200/50' 
+                  : 'text-brand-muted hover:text-brand-text hover:bg-white/50'
+              }`}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange({ action: 'reject' })}
+              className={`flex-1 rounded-md text-sm font-medium transition-all duration-200 ${
+                form.action === 'reject' 
+                  ? 'bg-red-100 text-red-700 shadow-sm border border-red-200/50' 
+                  : 'text-brand-muted hover:text-brand-text hover:bg-white/50'
+              }`}
+            >
+              Reject
+            </button>
+          </div>
+        </div>
 
-      <div className="flex justify-end">
+        {/* Operation selector */}
+        <div>
+          <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand-muted">Target Operation</label>
+          <select
+            value={form.operation}
+            onChange={(e) => onChange({ operation: e.target.value as PolicyRuleOperation })}
+            className={`${selectCls} w-full`}
+          >
+            {POLICY_RULE_OPERATIONS.map((op) => (
+              <option key={op} value={op}>
+                {op}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="border-t border-brand-border pt-4">
+        <CriteriaBuilder
+          criteria={form.criteria}
+          onChange={(criteria) => onChange({ criteria })}
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 pt-6 border-t border-brand-border">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full bg-brand-surface border border-brand-border px-5 py-2.5 text-sm font-medium text-brand-text hover:bg-white transition-colors shadow-sm"
+          >
+            Cancel
+          </button>
+        )}
         <button
           onClick={onSubmit}
           disabled={loading}
-          className="rounded-full bg-brand-text px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-text/90 disabled:opacity-50"
+          className="rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-brand-text/90 hover:shadow-lg transition-all disabled:opacity-50 disabled:shadow-none"
         >
-          Add Rule
+          {loading ? 'Saving...' : 'Save Rule'}
         </button>
       </div>
     </div>
@@ -707,6 +820,11 @@ export default function PoliciesPage() {
       setPendingRules([]);
       setNewRuleForm(DEFAULT_RULE_FORM);
       setShowNewRuleForm(false);
+      
+      // Close the native details element programmatically 
+      const detailsEl = document.getElementById('new-policy-details') as HTMLDetailsElement;
+      if (detailsEl) detailsEl.open = false;
+
       await fetchPolicies();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -777,6 +895,11 @@ export default function PoliciesPage() {
       await fetchRules(policyId);
       setRuleFormMap((prev) => ({ ...prev, [policyId]: DEFAULT_RULE_FORM }));
       await fetchPolicies();
+      
+      // Close the native details element programmatically
+      const detailsEl = document.getElementById(`add-rule-details-${policyId}`) as HTMLDetailsElement;
+      if (detailsEl) detailsEl.open = false;
+      
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -802,179 +925,229 @@ export default function PoliciesPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   const inputCls =
-    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted bg-white';
-  const selectCls =
-    'rounded-lg border border-brand-border px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white';
+    'rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder-brand-muted/50 bg-brand-surface shadow-sm transition-shadow';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-serif text-brand-text">Policies</h1>
+    <div className="mx-auto max-w-6xl space-y-10 pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 border-b border-brand-border pb-6">
+        <div>
+          <h1 className="text-3xl font-bold font-serif text-brand-text">Policies</h1>
+          <p className="mt-2 text-sm text-brand-muted">Control authentication, signing, and transaction logic via strict rulesets.</p>
+        </div>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+          <svg className="h-5 w-5 shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+          <p>{error}</p>
         </div>
       )}
 
       {/* ── Create policy form ─────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm">
-        <h2 className="text-base font-semibold font-serif text-brand-text">Create New Policy</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <input
-            type="text"
-            placeholder="Description (optional)"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            className={`${inputCls} sm:col-span-2`}
-          />
-          <label className="flex items-center gap-2 px-1 py-2 text-sm text-brand-text cursor-pointer">
-            <input
-              type="checkbox"
-              checked={newEnabled}
-              onChange={(e) => setNewEnabled(e.target.checked)}
-              className="rounded border-brand-border accent-brand-accent"
-            />
-            Enabled
-          </label>
-        </div>
+      <details id="new-policy-details" open className="group [&_summary::-webkit-details-marker]:hidden">
+        <summary className="list-none cursor-default hidden" />
+        <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
+          
+          <div className="flex items-center justify-between mb-8 pt-2">
+            <div>
+              <h2 className="text-xl font-bold font-serif text-brand-text">New Policy</h2>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted mt-1">Configure high-level settings and attach rules to govern operations.</p>
+            </div>
+            <button
+              onClick={() => {
+                const el = document.getElementById('new-policy-details') as HTMLDetailsElement;
+                if (el) el.open = false;
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-surface text-brand-muted hover:bg-brand-border hover:text-brand-text transition-colors"
+            >
+              ×
+            </button>
+          </div>
 
-        <div className="mt-6 border-t border-brand-border pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold font-serif text-brand-text">Rules (optional)</h3>
-            {!showNewRuleForm && (
-              <button
-                onClick={() => setShowNewRuleForm(true)}
-                className="rounded-full border border-brand-border px-3 py-1 text-xs font-medium text-brand-text hover:bg-brand-bg"
-              >
-                Add Rule
-              </button>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-4 items-start">
+            <div className="sm:col-span-3">
+              <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">Description</label>
+              <input
+                type="text"
+                placeholder="e.g. Reject all large transactions above 10 ETH"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                className={`${inputCls} w-full`}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">Initial Status</label>
+              <label className="flex h-[44px] items-center gap-3 px-4 py-2 text-sm font-medium text-brand-text border border-brand-border rounded-lg bg-brand-surface cursor-pointer hover:bg-brand-bg transition-colors shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={newEnabled}
+                  onChange={(e) => setNewEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent transition-colors"
+                />
+                Enabled Active
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-10 border-t border-brand-border pt-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-brand-text">Policy Rules</h3>
+                <p className="text-xs text-brand-muted mt-1">Rules are evaluated sequentially. The first matching rule applies.</p>
+              </div>
+              {!showNewRuleForm && (
+                <button
+                  onClick={() => setShowNewRuleForm(true)}
+                  className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-semibold text-brand-text hover:border-brand-accent hover:text-brand-accent hover:shadow-sm transition-all"
+                >
+                  + Add Rule
+                </button>
+              )}
+            </div>
+
+            {pendingRules.length > 0 && (
+              <div className="mb-6 rounded-2xl border border-brand-border bg-brand-surface divide-y divide-brand-border shadow-sm overflow-hidden">
+                {pendingRules.map((rule, idx) => (
+                  <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-5 hover:bg-white transition-colors">
+                    <RuleDetails rule={rule as unknown as PolicyRule} />
+                    <button
+                      onClick={() => handleRemovePendingRule(idx)}
+                      className="shrink-0 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors shadow-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showNewRuleForm && (
+              <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                <AddRuleForm
+                  policyId="new-policy"
+                  form={newRuleForm}
+                  onChange={(patch) => setNewRuleForm({ ...newRuleForm, ...patch })}
+                  onSubmit={handleAddPendingRule}
+                  loading={false}
+                  onCancel={() => setShowNewRuleForm(false)}
+                />
+              </div>
             )}
           </div>
 
-          {pendingRules.length > 0 && (
-            <div className="mb-4 rounded-lg border border-brand-border bg-brand-surface divide-y divide-brand-border">
-              {pendingRules.map((rule, idx) => (
-                <div key={idx} className="flex items-center justify-between px-4 py-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        rule.action === 'accept'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {rule.action}
-                    </span>
-                    <span className="font-mono text-xs text-brand-text">{rule.operation}</span>
-                    {rule.criteria.length > 0 && (
-                      <span className="text-xs text-brand-muted">{rule.criteria.length} criterion{rule.criteria.length !== 1 ? 'a' : ''}</span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleRemovePendingRule(idx)}
-                    className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-brand-muted hover:bg-red-50 hover:text-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {showNewRuleForm && (
-            <div className="mb-4 relative">
-              <button
-                onClick={() => setShowNewRuleForm(false)}
-                className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-brand-muted hover:bg-brand-bg hover:text-brand-text"
-              >
-                ×
-              </button>
-              <AddRuleForm
-                policyId="new-policy"
-                form={newRuleForm}
-                onChange={(patch) => setNewRuleForm({ ...newRuleForm, ...patch })}
-                onSubmit={handleAddPendingRule}
-                loading={false}
-              />
-            </div>
-          )}
+          <div className="mt-8 flex justify-end gap-3 border-t border-brand-border pt-6 bg-brand-surface -mx-7 -mb-7 px-7 pb-7 rounded-b-2xl">
+            <button
+              onClick={() => {
+                const el = document.getElementById('new-policy-details') as HTMLDetailsElement;
+                if (el) el.open = false;
+              }}
+              className="rounded-full bg-white border border-brand-border px-6 py-2.5 text-sm font-medium text-brand-text hover:bg-brand-bg transition-colors shadow-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={actionLoading}
+              className="rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:transform-none"
+            >
+              Save Policy
+            </button>
+          </div>
         </div>
-
-        <div className="mt-4 flex justify-end border-t border-brand-border pt-4">
-          <button
-            onClick={handleCreate}
-            disabled={actionLoading}
-            className="rounded-full bg-brand-text px-4 py-2 text-sm font-medium text-white hover:bg-brand-text/90 disabled:opacity-50"
-          >
-            Create
-          </button>
-        </div>
-      </div>
+      </details>
 
       {/* ── Policy list ────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-brand-border bg-brand-surface shadow-sm">
-        <div className="border-b border-brand-border px-6 py-4">
-          <h2 className="text-base font-semibold font-serif text-brand-text">Your Policies</h2>
-        </div>
-
+      <div className="space-y-6">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+          <div className="flex flex-col items-center justify-center py-20 text-brand-muted">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-accent mb-4" />
+            <p className="text-sm font-medium">Loading policies...</p>
           </div>
         ) : policies.length === 0 ? (
-          <p className="px-6 py-8 text-center text-sm text-brand-muted">No policies yet.</p>
+          <div className="flex flex-col items-center justify-center py-24 px-6 text-center border border-dashed border-brand-border rounded-2xl bg-brand-surface/30">
+            <div className="mb-5 rounded-full bg-white p-5 border border-brand-border shadow-sm">
+              <svg className="w-8 h-8 text-brand-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold font-serif text-brand-text mb-2">No policies configured</h3>
+            <p className="text-sm text-brand-muted max-w-md mb-8 leading-relaxed">Create your first policy to strictly define the capabilities and limits of your agent wallet and operations.</p>
+            <button
+              onClick={() => {
+                const el = document.getElementById('new-policy-details') as HTMLDetailsElement;
+                if (el) el.open = true;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+            >
+              Create Policy
+            </button>
+          </div>
         ) : (
-          <div className="divide-y divide-brand-border">
+          <div className="grid gap-6">
             {policies.map((policy) => {
               const isExpanded = expandedId === policy.id;
               const rules = rulesMap[policy.id] ?? [];
               const ruleCount = policy.rules?.length ?? 0;
 
               return (
-                <div key={policy.id}>
+                <div key={policy.id} className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                  isExpanded ? 'border-brand-border bg-white shadow-xl ring-1 ring-black/5' : 'border-brand-border bg-white shadow-sm hover:shadow-md hover:border-brand-accent/50'
+                }`}>
                   {/* Policy row */}
-                  <div className="flex items-center justify-between px-6 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-sm text-brand-text capitalize">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-6 relative">
+                    {policy.enabled && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400" />}
+                    {!policy.enabled && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-border" />}
+                    
+                    <div className="min-w-0 flex-1 pl-2">
+                      <div className="flex flex-wrap items-center gap-3 mb-3">
+                        <span className="font-bold text-sm text-brand-text uppercase tracking-wider">
                           {policy.scope}
                         </span>
-                        {policy.description && (
-                          <span className="text-xs text-brand-muted">{policy.description}</span>
-                        )}
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${
                             policy.enabled
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-green-100 text-green-700 shadow-sm'
+                              : 'bg-brand-surface text-brand-muted border border-brand-border shadow-sm'
                           }`}
                         >
-                          {policy.enabled ? 'Enabled' : 'Disabled'}
+                          {policy.enabled ? 'Active' : 'Disabled'}
                         </span>
-                        <span className="text-xs text-brand-muted">
+                        <span className="inline-flex items-center rounded-md bg-brand-bg border border-brand-border px-2.5 py-0.5 text-[10px] font-bold text-brand-muted shadow-sm">
                           {ruleCount} rule{ruleCount !== 1 ? 's' : ''}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-brand-muted">
-                        Created {new Date(policy.createdAt * 1000).toLocaleDateString()}
+                      
+                      {policy.description ? (
+                        <p className="text-sm text-brand-text/90 font-medium leading-relaxed">{policy.description}</p>
+                      ) : (
+                        <p className="text-sm text-brand-muted italic">No description provided</p>
+                      )}
+                      
+                      <p className="mt-3 text-[10px] font-bold text-brand-muted/70 uppercase tracking-widest">
+                        Created on {new Date(policy.createdAt * 1000).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="ml-4 flex shrink-0 items-center gap-2">
+                    
+                    <div className="flex flex-wrap shrink-0 items-center gap-3">
                       <button
                         onClick={() => handleExpand(policy.id)}
-                        className="rounded-full border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-text hover:bg-brand-bg"
+                        className={`rounded-full border px-5 py-2 text-xs font-semibold transition-all shadow-sm ${
+                          isExpanded 
+                            ? 'bg-brand-text border-brand-text text-white' 
+                            : 'bg-white border-brand-border text-brand-text hover:border-brand-accent hover:text-brand-accent'
+                        }`}
                       >
                         {isExpanded ? 'Hide Rules' : 'Manage Rules'}
                       </button>
                       <button
                         onClick={() => handleToggleEnabled(policy)}
                         disabled={actionLoading}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
+                        className={`rounded-full border px-5 py-2 text-xs font-semibold transition-all shadow-sm disabled:opacity-50 ${
                           policy.enabled
-                            ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                            : 'border-green-200 text-green-700 hover:bg-green-50'
+                            ? 'bg-white border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300'
+                            : 'bg-white border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
                         }`}
                       >
                         {policy.enabled ? 'Disable' : 'Enable'}
@@ -982,7 +1155,7 @@ export default function PoliciesPage() {
                       <button
                         onClick={() => handleDelete(policy.id)}
                         disabled={actionLoading}
-                        className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        className="rounded-full bg-white border border-red-200 px-5 py-2 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -991,42 +1164,74 @@ export default function PoliciesPage() {
 
                   {/* Expandable rules section */}
                   {isExpanded && (
-                    <div className="border-t border-brand-border bg-brand-bg px-6 py-4 space-y-4">
-                      <h3 className="text-sm font-semibold font-serif text-brand-text">Rules</h3>
-
-                      {rulesLoading === policy.id ? (
-                        <div className="flex justify-center py-4">
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+                    <div className="border-t border-brand-border bg-brand-surface/40 px-6 py-8 shadow-inner animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+                        <div className="flex items-center justify-between border-b border-brand-border pb-4">
+                          <div>
+                            <h3 className="text-base font-bold font-serif text-brand-text">Policy Rule Chain</h3>
+                            <p className="text-[11px] text-brand-muted mt-1 uppercase tracking-wider font-semibold">Execution sequence for {policy.scope}</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const el = document.getElementById(`add-rule-details-${policy.id}`) as HTMLDetailsElement;
+                              if (el) el.open = true;
+                            }}
+                            className="rounded-full bg-white border border-dashed border-brand-border px-4 py-2 text-xs font-semibold text-brand-text shadow-sm hover:border-brand-accent hover:text-brand-accent hover:-translate-y-0.5 transition-all"
+                          >
+                            + Add Rule
+                          </button>
                         </div>
-                      ) : rules.length === 0 ? (
-                        <p className="text-xs text-brand-muted">No rules yet.</p>
-                      ) : (
-                        <div className="rounded-lg border border-brand-border bg-brand-surface divide-y divide-brand-border">
-                          {rules.map((rule, ruleIndex) => (
-                            <div
-                              key={ruleIndex}
-                              className="flex items-center justify-between px-4 py-3"
-                            >
-                              <RuleDetails rule={rule} />
-                              <button
-                                onClick={() => handleDeleteRule(policy.id, ruleIndex)}
-                                disabled={actionLoading}
-                                className="ml-4 shrink-0 rounded-full border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+
+                        {rulesLoading === policy.id ? (
+                          <div className="flex items-center justify-center py-10">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-border border-t-brand-accent" />
+                          </div>
+                        ) : rules.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-brand-border bg-white p-8 text-center shadow-sm">
+                            <p className="text-sm font-semibold text-brand-text">This policy has no rules yet.</p>
+                            <p className="text-xs text-brand-muted mt-2">Add rules to start enforcing operational logic.</p>
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-brand-border bg-white shadow-sm overflow-hidden divide-y divide-brand-border">
+                            {rules.map((rule, ruleIndex) => (
+                              <div
+                                key={ruleIndex}
+                                className="flex flex-col lg:flex-row lg:items-center justify-between p-5 gap-5 hover:bg-brand-surface/30 transition-colors relative group"
                               >
-                                Delete
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                                <div className="absolute top-1/2 -left-[3px] w-[6px] h-[6px] rounded-full bg-brand-border -translate-y-1/2 hidden lg:block group-hover:bg-brand-accent transition-colors" />
+                                
+                    <RuleDetails rule={rule as unknown as PolicyRule} />
+                                
+                                <button
+                                  onClick={() => handleDeleteRule(policy.id, ruleIndex)}
+                                  disabled={actionLoading}
+                                  className="shrink-0 rounded-full border border-red-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                  Remove Rule
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                      <AddRuleForm
-                        policyId={policy.id}
-                        form={getRuleForm(policy.id)}
-                        onChange={(patch) => patchRuleForm(policy.id, patch)}
-                        onSubmit={() => handleAddRule(policy.id)}
-                        loading={actionLoading}
-                      />
+                        <details id={`add-rule-details-${policy.id}`} className="group [&_summary::-webkit-details-marker]:hidden">
+                          <summary className="list-none hidden" />
+                          <div className="mt-2 animate-in fade-in slide-in-from-top-4 duration-300">
+                            <AddRuleForm
+                              policyId={policy.id}
+                              form={getRuleForm(policy.id)}
+                              onChange={(patch) => patchRuleForm(policy.id, patch)}
+                              onSubmit={() => handleAddRule(policy.id)}
+                              loading={actionLoading}
+                              onCancel={() => {
+                                const el = document.getElementById(`add-rule-details-${policy.id}`) as HTMLDetailsElement;
+                                if (el) el.open = false;
+                                setRuleFormMap((prev) => ({ ...prev, [policy.id]: DEFAULT_RULE_FORM }));
+                              }}
+                            />
+                          </div>
+                        </details>
+                      </div>
                     </div>
                   )}
                 </div>
