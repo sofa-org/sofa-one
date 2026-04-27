@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { DEFAULT_CHAIN_ID, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
-import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, CircleDollarSign, Coins } from 'lucide-react';
+import { DEFAULT_CHAIN_ID, getMe, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -39,29 +39,54 @@ export default function WalletPage() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
+    let cancelled = false;
+
     async function init() {
       try {
-        const result = await socialLogin(getToken);
+        let result;
+        try {
+          result = await getMe(getToken);
+        } catch (err: any) {
+          if (!err.message?.includes('not found')) throw err;
+          result = await socialLogin(getToken);
+        }
+
+        if (cancelled) return;
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
         setWallet(result.wallet);
-
-        setBalancesLoading(true);
-        getBalancesAuth(getToken, selectedChainId)
-          .then((data) => {
-            setBalances(data.chains);
-          })
-          .catch(() => {})
-          .finally(() => setBalancesLoading(false));
       } catch (err: any) {
-        setError(err.message);
+        if (!cancelled) setError(err.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     init();
-  }, [isLoaded, isSignedIn, getToken, selectedChainId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isSignedIn, getToken]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !wallet) return;
+
+    let cancelled = false;
+    setBalancesLoading(true);
+    getBalancesAuth(getToken, selectedChainId)
+      .then((data) => {
+        if (!cancelled) setBalances(data.chains);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setBalancesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isSignedIn, getToken, selectedChainId, wallet]);
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -167,8 +192,8 @@ export default function WalletPage() {
                         className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-brand-border/60 bg-white p-3.5 transition-all hover:border-brand-accent/40 hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)]"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${b.token === 'USDC' ? 'bg-blue-50 text-blue-600' : 'bg-brand-bg text-brand-muted'}`}>
-                            {b.token === 'USDC' ? <CircleDollarSign className="h-4 w-4" /> : <Coins className="h-4 w-4" />}
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-serif text-base font-bold ${b.token === 'USDC' ? 'bg-blue-50 text-blue-600' : 'bg-brand-bg text-brand-muted'}`}>
+                            {b.token === 'USDC' ? '$' : 'Ξ'}
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-brand-text">{b.token}</p>
