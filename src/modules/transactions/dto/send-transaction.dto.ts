@@ -19,12 +19,14 @@ export class InteractionDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(131074, { message: 'data must not exceed 64 KB' })
   @Matches(/^0x[0-9a-fA-F]*$/, { message: 'data must be hex-encoded (0x...)' })
   data: string;
 
-  /** Value in wei (optional, defaults to '0'). */
+  /** Value in wei (optional, defaults to '0'). Max uint256 = 78 digits. */
   @IsOptional()
   @IsString()
+  @MaxLength(78, { message: 'value exceeds maximum uint256' })
   @Matches(/^\d+$/, { message: 'value must be a decimal string (wei)' })
   value?: string;
 }

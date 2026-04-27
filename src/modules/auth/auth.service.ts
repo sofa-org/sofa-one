@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient } from '@clerk/backend';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -26,7 +26,7 @@ export class AuthService {
    * Returns { userId, wallet: { walletAddress, chainId, status, supportedTokens }, apiKey? }.
    * The apiKey field is only present on first login (one-time display).
    */
-  async handleSocialLogin(clerkUserId: string): Promise<{
+  async handleSocialLogin(clerkUserId: string, _depth = 0): Promise<{
     userId: string;
     wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
     apiKey?: string;
@@ -77,9 +77,11 @@ export class AuthService {
         this.logger.log(`Created user ${userId} via ${socialProvider}`);
       } catch (err: any) {
         if (err?.code === 'P2002') {
-          // Race condition: concurrent request already created the user — retry as returning user
+          if (_depth >= 3) {
+            throw new InternalServerErrorException('User creation conflict could not be resolved');
+          }
           this.logger.warn(`Race condition on user creation for ${socialProvider}, retrying as existing user`);
-          return this.handleSocialLogin(clerkUserId);
+          return this.handleSocialLogin(clerkUserId, _depth + 1);
         }
         throw err;
       }
@@ -92,14 +94,23 @@ export class AuthService {
       );
       const account = await this.openfort.createBackendWallet();
 
-      wallet = await this.prisma.userWallet.create({
-        data: {
-          userId,
-          openfortAccountId: account.id,
-          walletAddress: account.address,
-          chainId: BigInt(chainId),
-        },
-      });
+      try {
+        wallet = await this.prisma.userWallet.create({
+          data: {
+            userId,
+            openfortAccountId: account.id,
+            walletAddress: account.address,
+            chainId: BigInt(chainId),
+          },
+        });
+      } catch (dbErr: any) {
+        // Openfort wallet created but DB write failed — log for manual recovery
+        this.logger.error(
+          `Orphaned Openfort wallet: accountId=${account.id} address=${account.address} userId=${userId}`,
+          dbErr,
+        );
+        throw dbErr;
+      }
       this.logger.log(`Provisioned wallet for existing user ${userId}`);
     } else {
       // 3c. Returning user with wallet — nothing to provision
