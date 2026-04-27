@@ -80,7 +80,7 @@ export async function listApiKeys(apiKey: string) {
   return apiFetch('/v1/api-keys', apiKey);
 }
 
-export async function createApiKey(apiKey: string, name?: string) {
+export async function createApiKey(apiKey: string, name: string) {
   return apiFetch('/v1/api-keys', apiKey, {
     method: 'POST',
     body: JSON.stringify({ name }),
@@ -97,7 +97,7 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
   return authFetch('/v1/api-keys', getToken);
 }
 
-export async function createApiKeyAuth(getToken: () => Promise<string | null>, name?: string, allowedChains?: number[]) {
+export async function createApiKeyAuth(getToken: () => Promise<string | null>, name: string, allowedChains?: number[]) {
   return authFetch('/v1/api-keys', getToken, {
     method: 'POST',
     body: JSON.stringify({ name, allowedChains }),

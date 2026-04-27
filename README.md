@@ -164,6 +164,8 @@ The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the exa
 | `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
 
 > **Access control split**: `POST /v1/wallets/sign` and `POST /v1/transactions/send` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
+>
+> API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates allowed chains/expiry, and returns raw secrets only once on creation/rotation.
 
 Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 
@@ -193,11 +195,12 @@ sofa-agent-wallet/
 
 ## Data Models
 
-Four core tables managed by Prisma:
+Core tables managed by Prisma:
 
 - **users** — social provider, social ID, email
 - **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
-- **api_keys** — Argon2-hashed keys; `keyPrefix` (27 chars for new keys, legacy 11 chars supported) used for lookup before full hash verification; optional IP/expiry allowlists
+- **api_keys** — Argon2-hashed keys; `keyPrefix` (27 chars for new keys, legacy 11 chars supported) used for lookup before full hash verification; optional IP/expiry allowlists; active key names are unique per user
+- **api_key_events** — immutable audit events for key creation, revocation, and rotation with key prefix/name snapshots
 - **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address, request/interactions hashes, and API-key attribution snapshot
 
 ## Development Phases

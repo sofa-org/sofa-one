@@ -120,7 +120,7 @@ export class AuthService {
     // 4. Generate API key if user has none
     let rawApiKey: string | undefined;
     if (!hasApiKeys) {
-      const result = await this.apiKeyService.createApiKey(userId, 'Default');
+      const result = await this.apiKeyService.createApiKey(userId, { name: 'Default' });
       rawApiKey = result.rawKey;
     }
 
@@ -170,8 +170,7 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.apiKeyService.revokeAllKeys(user.id);
-    const result = await this.apiKeyService.createApiKey(user.id, 'Refreshed');
+    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed');
 
     return { apiKey: result.rawKey };
   }

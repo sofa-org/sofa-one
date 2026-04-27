@@ -65,6 +65,12 @@ export default function ApiKeysPage() {
   }, [isLoaded, isSignedIn]);
 
   async function handleCreate() {
+    const trimmedName = newKeyName.trim();
+    if (!trimmedName) {
+      setError('Enter a unique name for this API key.');
+      return;
+    }
+
     if (selectedChains.length === 0) {
       setError('Select at least one chain for this API key.');
       return;
@@ -73,7 +79,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setError(null);
     try {
-      const result = await createApiKeyAuth(getToken, newKeyName || undefined, selectedChains);
+      const result = await createApiKeyAuth(getToken, trimmedName, selectedChains);
       setNewRawKey(result.rawKey);
       setNewKeyName('');
       setSelectedChains(DEFAULT_ALLOWED_CHAINS);
@@ -174,6 +180,7 @@ export default function ApiKeysPage() {
               placeholder="e.g. Production Backend"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
+              required
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
           </div>
@@ -205,7 +212,7 @@ export default function ApiKeysPage() {
           <div className="pt-6 lg:pt-0 lg:mt-7">
             <button
               onClick={handleCreate}
-              disabled={actionLoading || selectedChains.length === 0}
+              disabled={actionLoading || selectedChains.length === 0 || !newKeyName.trim()}
               className="flex items-center justify-center gap-2 w-full rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 lg:w-auto"
             >
               <Plus className="h-4 w-4" />

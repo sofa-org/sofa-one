@@ -98,7 +98,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
     testUserId = user.id;
 
     // Generate a real API key through the service (exercises hash + salt logic)
-    const keyResult = await apiKeyService.createApiKey(user.id, 'E2E Test Key');
+    const keyResult = await apiKeyService.createApiKey(user.id, { name: 'E2E Test Key' });
     testApiKey = keyResult.rawKey;
   });
 
@@ -387,6 +387,19 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
   });
 
   describe('Invalid API Key → 401', () => {
+    it('does not allow an API key to manage API keys', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/api-keys')
+        .set('X-API-Key', testApiKey)
+        .expect(401);
+
+      await request(app.getHttpServer())
+        .post('/v1/api-keys')
+        .set('X-API-Key', testApiKey)
+        .send({ name: 'Illegitimate child key', allowedChains: [TEST_CHAIN_ID] })
+        .expect(401);
+    });
+
     it('rejects a completely fabricated key', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/wallets/deposit-info')
@@ -457,7 +470,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
       await apiKeyService.revokeAllKeys(testUserId);
 
       // Generate a new key
-      const newKeyResult = await apiKeyService.createApiKey(testUserId, 'Refreshed Key');
+      const newKeyResult = await apiKeyService.createApiKey(testUserId, { name: 'Refreshed Key' });
 
       // Old key fails
       await request(app.getHttpServer())
@@ -545,7 +558,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
         },
       });
 
-      const user2Key = await apiKeyService.createApiKey(user2.id, 'User2 Key');
+      const user2Key = await apiKeyService.createApiKey(user2.id, { name: 'User2 Key' });
 
       // User 1 sees their own wallet
       const res1 = await request(app.getHttpServer())
@@ -595,7 +608,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
           chainId: BigInt(TEST_CHAIN_ID),
         },
       });
-      const user2Key = await apiKeyService.createApiKey(user2.id, 'U2');
+      const user2Key = await apiKeyService.createApiKey(user2.id, { name: 'U2' });
 
       // User 2 sees empty history
       const res = await request(app.getHttpServer())

@@ -17,7 +17,11 @@ export class ApiKeyController {
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post()
   async create(@CurrentUser('id') userId: string, @Body() dto: CreateApiKeyDto) {
-    return this.apiKeyService.createApiKey(userId, dto.name, dto.allowedChains);
+    return this.apiKeyService.createApiKey(userId, {
+      name: dto.name,
+      allowedChains: dto.allowedChains,
+      expiresAt: dto.expiresAt,
+    });
   }
 
   /** GET /v1/api-keys — list all keys (metadata only). */
