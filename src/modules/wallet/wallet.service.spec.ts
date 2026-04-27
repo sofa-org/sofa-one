@@ -140,6 +140,16 @@ describe('WalletService.withdraw()', () => {
     expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
   });
 
+  it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+    mockFindFirst.mockResolvedValue({ id: 'tx-existing', intentId: null, status: 'submitting' });
+
+    const result = await service.withdraw('user-1', VALID_DTO);
+
+    expect(result).toEqual({ transactionId: 'tx-existing', intentId: null, status: 'submitting' });
+    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+  });
+
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────
 
   it('throws BadRequestException when USDC balance is insufficient', async () => {

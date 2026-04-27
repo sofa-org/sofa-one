@@ -3,6 +3,40 @@ import { useAuth } from '@clerk/clerk-react';
 import { DEFAULT_CHAIN_ID, getMe, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
+function EthIcon() {
+  return (
+    <svg viewBox="0 0 256 417" className="h-5 w-5" aria-hidden="true">
+      <path fill="#343434" d="M127.9 0 125.1 9.5v275.2l2.8 2.8 127.8-75.5z" />
+      <path fill="#8C8C8C" d="M127.9 0 0 212l127.9 75.5V154z" />
+      <path fill="#3C3C3B" d="m127.9 311.7-1.6 2v98.1l1.6 4.7L255.8 236z" />
+      <path fill="#8C8C8C" d="M127.9 416.5V311.7L0 236z" />
+      <path fill="#141414" d="m127.9 287.5 127.8-75.5-127.8-58z" />
+      <path fill="#393939" d="m0 212 127.9 75.5V154z" />
+    </svg>
+  );
+}
+
+function UsdcIcon() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <circle cx="16" cy="16" r="16" fill="#2775CA" />
+      <path
+        fill="#fff"
+        d="M20.02 18.53c0-2.13-1.28-2.86-3.83-3.16-1.82-.24-2.19-.73-2.19-1.58s.6-1.4 1.82-1.4c1.09 0 1.7.37 2 1.28a.46.46 0 0 0 .43.3h.97a.41.41 0 0 0 .42-.43v-.06a3.05 3.05 0 0 0-2.74-2.5V9.51a.43.43 0 0 0-.42-.43h-.91a.43.43 0 0 0-.43.43v1.4c-1.82.24-3.01 1.46-3.01 3.01 0 2 1.21 2.8 3.76 3.1 1.7.3 2.25.67 2.25 1.65s-.85 1.64-2 1.64c-1.58 0-2.13-.67-2.31-1.58a.44.44 0 0 0-.43-.37h-1.03a.42.42 0 0 0-.43.43v.06c.24 1.52 1.22 2.62 3.22 2.92v1.46a.43.43 0 0 0 .43.43h.91a.43.43 0 0 0 .42-.43v-1.46c1.83-.3 3.13-1.58 3.13-3.24z"
+      />
+      <path
+        fill="#fff"
+        d="M11.83 24.93a10 10 0 0 1 0-17.86.47.47 0 0 0 .24-.61l-.43-.85a.43.43 0 0 0-.55-.24 12 12 0 0 0 0 21.26.43.43 0 0 0 .55-.24l.43-.85a.47.47 0 0 0-.24-.61zm9.08-19.56a.43.43 0 0 0-.55.24l-.43.85a.47.47 0 0 0 .24.61 10 10 0 0 1 0 17.86.47.47 0 0 0-.24.61l.43.85a.43.43 0 0 0 .55.24 12 12 0 0 0 0-21.26z"
+      />
+    </svg>
+  );
+}
+
+function TokenIcon({ token }: { token: string }) {
+  if (token.toUpperCase() === 'USDC') return <UsdcIcon />;
+  return <EthIcon />;
+}
+
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [wallet, setWallet] = useState<{
@@ -192,8 +226,8 @@ export default function WalletPage() {
                         className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-brand-border/60 bg-white p-3.5 transition-all hover:border-brand-accent/40 hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)]"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-serif text-base font-bold ${b.token === 'USDC' ? 'bg-blue-50 text-blue-600' : 'bg-brand-bg text-brand-muted'}`}>
-                            {b.token === 'USDC' ? '$' : 'Ξ'}
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-bg ring-1 ring-brand-border/60">
+                            <TokenIcon token={b.token} />
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-brand-text">{b.token}</p>

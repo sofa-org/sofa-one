@@ -202,7 +202,7 @@ export class WalletService {
       contractAddress: usdcAddressHex,
     });
 
-    const tx = await this.createPendingWithdrawalOrReturnExisting(userId, {
+    const { tx, created } = await this.createPendingWithdrawalOrReturnExisting(userId, {
       idempotencyKey: params.idempotencyKey!,
       chainId,
       requestHash,
@@ -218,7 +218,7 @@ export class WalletService {
       },
     });
 
-    if (tx.intentId || tx.status !== 'submitting') {
+    if (!created || tx.intentId || tx.status !== 'submitting') {
       return {
         transactionId: tx.id,
         intentId: tx.intentId,
@@ -272,7 +272,7 @@ export class WalletService {
     },
   ) {
     try {
-      return await this.prisma.transaction.create({
+      const tx = await this.prisma.transaction.create({
         data: {
           userId,
           intentId: null,
@@ -285,6 +285,7 @@ export class WalletService {
           details: params.details as any,
         },
       });
+      return { tx, created: true };
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
@@ -300,7 +301,7 @@ export class WalletService {
       if (existing.requestHash && existing.requestHash !== params.requestHash) {
         throw new BadRequestException('Idempotency key was already used for a different request');
       }
-      return existing;
+      return { tx: existing, created: false };
     }
   }
 

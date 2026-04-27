@@ -48,7 +48,7 @@ export class TransactionsService {
       policyId: dto.policyId ?? null,
     });
 
-    const tx = await this.createPendingOrReturnExisting(userId, {
+    const { tx, created } = await this.createPendingOrReturnExisting(userId, {
       operationType: 'send',
       idempotencyKey: dto.idempotencyKey!,
       chainId,
@@ -63,7 +63,7 @@ export class TransactionsService {
       },
     });
 
-    if (tx.intentId || tx.txHash || tx.status !== 'submitting') {
+    if (!created || tx.intentId || tx.txHash || tx.status !== 'submitting') {
       return {
         transactionId: tx.id,
         transactionHash: tx.txHash ?? tx.intentId,
@@ -114,7 +114,7 @@ export class TransactionsService {
     },
   ) {
     try {
-      return await this.prisma.transaction.create({
+      const tx = await this.prisma.transaction.create({
         data: {
           userId,
           intentId: null,
@@ -127,6 +127,7 @@ export class TransactionsService {
           details: params.details as any,
         },
       });
+      return { tx, created: true };
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
@@ -142,7 +143,7 @@ export class TransactionsService {
       if (existing.requestHash && existing.requestHash !== params.requestHash) {
         throw new BadRequestException('Idempotency key was already used for a different request');
       }
-      return existing;
+      return { tx: existing, created: false };
     }
   }
 }

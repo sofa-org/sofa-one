@@ -66,6 +66,21 @@ describe('TransactionsService.send()', () => {
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
+  it('returns an in-progress transaction on idempotency collision without resending', async () => {
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-existing',
+      status: 'submitting',
+      intentId: null,
+      txHash: null,
+    });
+
+    const result = await service.send('user-1', dto as any);
+
+    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
+    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+  });
+
   it('rejects API keys that are not allowed to use the requested chain', async () => {
     await expect(service.send('user-1', dto as any, { allowedChains: [84532] })).rejects.toThrow(
       BadRequestException,
