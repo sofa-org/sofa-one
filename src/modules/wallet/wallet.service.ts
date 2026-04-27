@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
@@ -21,8 +22,12 @@ const ERC20_BALANCE_ABI = [
   },
 ] as const;
 
+type ApiKeySigningContext = { id?: string; allowedChains: number[] };
+
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
@@ -44,7 +49,7 @@ export class WalletService {
   }
 
   /** Sign data with the user's backend wallet (no transaction broadcast). */
-  async sign(userId: string, params: SignDto, apiKeyRecord?: { allowedChains: number[] }) {
+  async sign(userId: string, params: SignDto, apiKeyRecord?: ApiKeySigningContext) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
@@ -71,13 +76,45 @@ export class WalletService {
         break;
     }
 
-    const signature = await this.openfort.signData(wallet.openfortAccountId, data);
+    const signingRequest = await this.prisma.signingRequest.create({
+      data: {
+        userId,
+        apiKeyId: apiKeyRecord?.id,
+        type: params.type,
+        chainId: chainId === undefined ? undefined : BigInt(chainId),
+        walletAddress: wallet.walletAddress,
+        requestHash: hashRequest({ type: params.type, chainId, digest: data }),
+        digest: data,
+        status: 'submitting',
+      },
+    });
+
+    let signature: string;
+    try {
+      signature = await this.openfort.signData(wallet.openfortAccountId, data);
+    } catch (err) {
+      await this.updateSigningRequestStatus(signingRequest.id, 'failed');
+      throw err;
+    }
+
+    await this.updateSigningRequestStatus(signingRequest.id, 'signed');
 
     return {
       signature,
       walletAddress: wallet.walletAddress,
       type: params.type,
     };
+  }
+
+  private async updateSigningRequestStatus(id: string, status: 'signed' | 'failed'): Promise<void> {
+    try {
+      await this.prisma.signingRequest.update({
+        where: { id },
+        data: { status, completedAt: new Date() },
+      });
+    } catch (err) {
+      this.logger.error(`Failed to mark signing request ${id} as ${status}`, err instanceof Error ? err.stack : err);
+    }
   }
 
   /** Return native token and USDC balances for the user's wallet on the requested chain. */

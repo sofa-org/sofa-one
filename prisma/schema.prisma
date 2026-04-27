@@ -14,10 +14,11 @@ model User {
   email          String?  @db.VarChar(255)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  wallet       UserWallet?
-  apiKeys      ApiKey[]
-  transactions Transaction[]
-  policies     UserPolicy[]
+  wallet          UserWallet?
+  apiKeys         ApiKey[]
+  transactions    Transaction[]
+  policies        UserPolicy[]
+  signingRequests SigningRequest[]
 
   @@map("users")
 }
@@ -37,42 +38,65 @@ model UserWallet {
 }
 
 model ApiKey {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  apiKeyHash       String    @map("api_key_hash") @db.Text
-  keyPrefix        String    @map("key_prefix") @db.VarChar(12)
-  name             String?   @db.VarChar(100)
-  expiresAt        DateTime? @map("expires_at") @db.Timestamptz()
-  revoked          Boolean   @default(false)
-  allowedIps       String[]  @map("allowed_ips")
-  allowedChains    Int[]     @default([84532]) @map("allowed_chains")
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz()
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  apiKeyHash    String    @map("api_key_hash") @db.Text
+  keyPrefix     String    @map("key_prefix") @db.VarChar(12)
+  name          String?   @db.VarChar(100)
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
+  revoked       Boolean   @default(false)
+  allowedIps    String[]  @map("allowed_ips")
+  allowedChains Int[]     @default([84532]) @map("allowed_chains")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz()
 
-  user User @relation(fields: [userId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  signingRequests SigningRequest[]
 
   @@index([keyPrefix])
   @@map("api_keys")
 }
 
 model Transaction {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  intentId      String?  @map("intent_id") @db.VarChar(255)
-  status        String   @db.VarChar(20)
-  txHash        String?  @map("tx_hash") @db.VarChar(66)
-  chainId       BigInt   @map("chain_id")
-  walletAddress String   @map("wallet_address") @db.VarChar(42)
-  operationType String?  @map("operation_type") @db.VarChar(30)
-  idempotencyKey String? @map("idempotency_key") @db.VarChar(64)
-  requestHash   String?  @map("request_hash") @db.VarChar(64)
-  details       Json?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  intentId       String?  @map("intent_id") @db.VarChar(255)
+  status         String   @db.VarChar(20)
+  txHash         String?  @map("tx_hash") @db.VarChar(66)
+  chainId        BigInt   @map("chain_id")
+  walletAddress  String   @map("wallet_address") @db.VarChar(42)
+  operationType  String?  @map("operation_type") @db.VarChar(30)
+  idempotencyKey String?  @map("idempotency_key") @db.VarChar(64)
+  requestHash    String?  @map("request_hash") @db.VarChar(64)
+  details        Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, operationType, chainId, idempotencyKey])
   @@map("transactions")
+}
+
+model SigningRequest {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  apiKeyId      String?   @map("api_key_id") @db.Uuid
+  type          String    @db.VarChar(20)
+  chainId       BigInt?   @map("chain_id")
+  walletAddress String    @map("wallet_address") @db.VarChar(42)
+  requestHash   String    @map("request_hash") @db.VarChar(64)
+  digest        String    @db.VarChar(66)
+  status        String    @default("submitting") @db.VarChar(20)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz()
+
+  user   User    @relation(fields: [userId], references: [id])
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([requestHash])
+  @@map("signing_requests")
 }
 
 model UserPolicy {

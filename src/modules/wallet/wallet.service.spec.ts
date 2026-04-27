@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { hashMessage } from 'viem';
 
@@ -230,18 +230,27 @@ describe('WalletService.sign()', () => {
 
   const mockFindUnique = jest.fn();
   const mockSignData = jest.fn();
+  const mockSigningRequestCreate = jest.fn();
+  const mockSigningRequestUpdate = jest.fn();
+  let loggerErrorSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockSignData.mockResolvedValue('0xsigned');
+    mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
+    mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletService,
         {
           provide: PrismaService,
-          useValue: { userWallet: { findUnique: mockFindUnique } },
+          useValue: {
+            userWallet: { findUnique: mockFindUnique },
+            signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate },
+          },
         },
         {
           provide: OpenfortService,
@@ -253,11 +262,79 @@ describe('WalletService.sign()', () => {
     service = module.get<WalletService>(WalletService);
   });
 
+  afterEach(() => {
+    loggerErrorSpy.mockRestore();
+  });
+
   it('uses EIP-191 hash for message signing', async () => {
     const result = await service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any);
 
     expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage('Hello, SOFA ONE!'));
     expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+  });
+
+  it('audits a successful signing request without storing the plaintext message', async () => {
+    await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      { id: 'api-key-1', allowedChains: [84532] },
+    );
+
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        apiKeyId: 'api-key-1',
+        type: 'message',
+        chainId: BigInt(84532),
+        walletAddress: WALLET.walletAddress,
+        digest: hashMessage('Hello, SOFA ONE!'),
+        status: 'submitting',
+      }),
+    });
+    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(
+      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    ).not.toContain('Hello, SOFA ONE!');
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
+      where: { id: 'signing-request-1' },
+      data: { status: 'signed', completedAt: expect.any(Date) },
+    });
+  });
+
+  it('marks the signing request failed when Openfort signing fails', async () => {
+    mockSignData.mockRejectedValue(new Error('Openfort down'));
+
+    await expect(service.sign('user-1', { type: 'message', message: 'Hello' } as any)).rejects.toThrow(
+      'Openfort down',
+    );
+
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
+      where: { id: 'signing-request-1' },
+      data: { status: 'failed', completedAt: expect.any(Date) },
+    });
+  });
+
+  it('returns the signature when the post-sign audit update fails', async () => {
+    mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
+
+    const result = await service.sign('user-1', { type: 'message', message: 'Hello' } as any);
+
+    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
+      where: { id: 'signing-request-1' },
+      data: { status: 'signed', completedAt: expect.any(Date) },
+    });
+  });
+
+  it('preserves the Openfort error when the failed audit update also fails', async () => {
+    mockSignData.mockRejectedValue(new Error('Openfort down'));
+    mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
+
+    await expect(service.sign('user-1', { type: 'message', message: 'Hello' } as any)).rejects.toThrow(
+      'Openfort down',
+    );
   });
 
   it('uses EIP-191 hash for raw hex message data', async () => {
