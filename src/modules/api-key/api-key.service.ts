@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
+import { DEFAULT_CHAIN_ID, getSupportedChain } from '../../common/chains/supported-chains';
 
 @Injectable()
 export class ApiKeyService {
@@ -11,7 +12,7 @@ export class ApiKeyService {
    * Generate a new API key for the given user.
    * Returns the raw key **once** — it cannot be recovered after this call.
    */
-  async createApiKey(userId: string, name?: string) {
+  async createApiKey(userId: string, name?: string, allowedChains?: number[]) {
     const activeCount = await this.prisma.apiKey.count({
       where: { userId, revoked: false },
     });
@@ -30,6 +31,9 @@ export class ApiKeyService {
       parallelism: 1,
     });
 
+    const chainIds = allowedChains?.length ? [...new Set(allowedChains)] : [DEFAULT_CHAIN_ID];
+    chainIds.forEach(getSupportedChain);
+
     const apiKey = await this.prisma.apiKey.create({
       data: {
         userId,
@@ -37,6 +41,7 @@ export class ApiKeyService {
         keyPrefix,
         name: name || 'Default',
         allowedIps: [],
+        allowedChains: chainIds,
       },
     });
 
@@ -45,6 +50,7 @@ export class ApiKeyService {
       rawKey,
       keyPrefix,
       name: apiKey.name,
+      allowedChains: apiKey.allowedChains,
       createdAt: apiKey.createdAt,
     };
   }
@@ -76,6 +82,7 @@ export class ApiKeyService {
         revoked: true,
         expiresAt: true,
         allowedIps: true,
+        allowedChains: true,
         createdAt: true,
         lastUsedAt: true,
       },

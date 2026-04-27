@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -15,6 +15,7 @@ describe('TransactionsService.send()', () => {
   };
 
   const dto = {
+    chainId: 8453,
     interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
     idempotencyKey: 'idem-1',
   };
@@ -39,19 +40,20 @@ describe('TransactionsService.send()', () => {
     service = new TransactionsService(prisma, openfort);
   });
 
-  it('derives chainId from wallet and creates idempotency record before sending', async () => {
+  it('uses requested chainId and creates idempotency record before sending', async () => {
     await service.send('user-1', dto as any);
 
     expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: 'user-1',
         status: 'submitting',
-        chainId: BigInt(84532),
+        chainId: BigInt(8453),
         operationType: 'send',
         idempotencyKey: 'idem-1',
+        requestHash: expect.any(String),
       }),
     });
-    expect(openfort.sendTransaction).toHaveBeenCalledWith(expect.objectContaining({ chainId: 84532 }));
+    expect(openfort.sendTransaction).toHaveBeenCalledWith(expect.objectContaining({ chainId: 8453 }));
   });
 
   it('returns existing transaction on idempotency collision without resending', async () => {
@@ -61,6 +63,27 @@ describe('TransactionsService.send()', () => {
     const result = await service.send('user-1', dto as any);
 
     expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'pending' });
+    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects API keys that are not allowed to use the requested chain', async () => {
+    await expect(service.send('user-1', dto as any, { allowedChains: [84532] })).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects idempotency key reuse with a different request on the same chain', async () => {
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-existing',
+      status: 'pending',
+      intentId: null,
+      txHash: null,
+      requestHash: 'different-request',
+    });
+
+    await expect(service.send('user-1', dto as any)).rejects.toThrow(BadRequestException);
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 

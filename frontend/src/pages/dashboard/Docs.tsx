@@ -170,8 +170,8 @@ export default function APIDocsPage() {
                   <tr>
                     <td className="px-4 py-3 font-mono text-xs">idempotencyKey</td>
                     <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-muted">No</td>
-                    <td className="px-4 py-3">Unique key to prevent duplicate submissions</td>
+                    <td className="px-4 py-3 text-brand-accent">Yes</td>
+                    <td className="px-4 py-3">Unique key to prevent duplicate submissions on this chain/request</td>
                   </tr>
                 </tbody>
               </table>
@@ -188,7 +188,7 @@ export default function APIDocsPage() {
   -d '{
     "chainId": 84532,
     "interactions": [{
-      "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "data": "0xa9059cbb000000000000000000000000RecipientAddr00000000000000000000000000000000000000000000000000000000000f4240",
       "value": "0"
     }],
@@ -264,7 +264,7 @@ export default function APIDocsPage() {
             <code>{`{
   "statusCode": 401,
   "timestamp": "2026-04-20T10:35:00.000Z",
-  "path": "/v1/transactions/intent",
+  "path": "/v1/transactions/send",
   "message": "Invalid API Key provided"
 }`}</code>
           </pre>

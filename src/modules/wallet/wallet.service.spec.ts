@@ -39,6 +39,7 @@ const WALLET = {
 };
 
 const VALID_DTO: WithdrawDto = {
+  chainId: 84532,
   to: '0x1111111111111111111111111111111111111111',
   amount: '1000000', // 1 USDC
   token: 'USDC',
@@ -173,7 +174,7 @@ describe('WalletService.withdraw()', () => {
     expect(mockCreateTransactionIntent).toHaveBeenCalledTimes(1);
     expect(mockCreateTransactionIntent).toHaveBeenCalledWith(
       expect.objectContaining({
-        chainId: Number(WALLET.chainId),
+        chainId: VALID_DTO.chainId,
         accountId: WALLET.openfortAccountId,
       }),
     );
@@ -209,7 +210,7 @@ describe('WalletService.withdraw()', () => {
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: 'tx-1' },
-      data: { status: 'failed' },
+      data: { status: 'unknown' },
     });
   });
 });

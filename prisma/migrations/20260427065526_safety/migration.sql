@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "transactions_user_id_operation_type_chain_id_idempotency_key_ke" RENAME TO "transactions_user_id_operation_type_chain_id_idempotency_ke_key";

@@ -45,6 +45,7 @@ model ApiKey {
   expiresAt        DateTime? @map("expires_at") @db.Timestamptz()
   revoked          Boolean   @default(false)
   allowedIps       String[]  @map("allowed_ips")
+  allowedChains    Int[]     @default([84532]) @map("allowed_chains")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz()
 
@@ -64,12 +65,13 @@ model Transaction {
   walletAddress String   @map("wallet_address") @db.VarChar(42)
   operationType String?  @map("operation_type") @db.VarChar(30)
   idempotencyKey String? @map("idempotency_key") @db.VarChar(64)
+  requestHash   String?  @map("request_hash") @db.VarChar(64)
   details       Json?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])
 
-  @@unique([userId, operationType, idempotencyKey])
+  @@unique([userId, operationType, chainId, idempotencyKey])
   @@map("transactions")
 }
 

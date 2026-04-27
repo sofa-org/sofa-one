@@ -5,6 +5,8 @@ import {
   IsString,
   Matches,
   IsOptional,
+  IsInt,
+  Min,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -28,6 +30,11 @@ export class InteractionDto {
 }
 
 export class SendTransactionDto {
+  /** Execution chain ID. Required for multi-chain safety. */
+  @IsInt()
+  @Min(1)
+  chainId: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InteractionDto)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import { DEFAULT_CHAIN_ID, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function WalletPage() {
@@ -10,11 +10,13 @@ export default function WalletPage() {
     status: string;
   } | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
+  const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const [balances, setBalances] = useState<Array<{
     chainId: number;
+    chainName?: string;
     balances: Array<{
       token: string;
       raw: string | null;
@@ -46,7 +48,7 @@ export default function WalletPage() {
         setWallet(result.wallet);
 
         setBalancesLoading(true);
-        getBalancesAuth(getToken)
+        getBalancesAuth(getToken, selectedChainId)
           .then((data) => {
             setBalances(data.chains);
           })
@@ -59,7 +61,7 @@ export default function WalletPage() {
       }
     }
     init();
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, getToken, selectedChainId]);
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +69,7 @@ export default function WalletPage() {
     setWithdrawResult(null);
     setWithdrawError(null);
     try {
-      const result = await withdrawAuth(getToken, to, amount, token);
+      const result = await withdrawAuth(getToken, to, amount, token, selectedChainId);
       setWithdrawResult(`Transaction submitted: ${result.intentId}`);
       setTo('');
       setAmount('');
@@ -136,6 +138,18 @@ export default function WalletPage() {
 
             <div className="pt-6 border-t border-brand-border">
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block mb-4">Assets</label>
+              <select
+                value={selectedChainId}
+                onChange={(e) => setSelectedChainId(Number(e.target.value))}
+                className="mb-4 block w-full max-w-xs rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
+              >
+                <option value={84532}>Base Sepolia</option>
+                <option value={8453}>Base</option>
+                <option value={1}>Ethereum</option>
+                <option value={11155111}>Ethereum Sepolia</option>
+                <option value={137}>Polygon</option>
+                <option value={80002}>Polygon Amoy</option>
+              </select>
               <div className="space-y-4">
                 {balancesLoading ? (
                   <>
@@ -145,12 +159,12 @@ export default function WalletPage() {
                 ) : balances ? (
                   balances.map((chain) => (
                     <div key={chain.chainId} className="space-y-3">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Chain {chain.chainId}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">{chain.chainName || `Chain ${chain.chainId}`}</p>
                       {chain.balances.map((b) => (
                         <div key={b.token} className="flex justify-between items-center text-sm font-mono text-brand-text bg-brand-bg/50 p-3 rounded-lg border border-brand-border/50">
                           <div className="flex items-center gap-2">
                             {b.token === 'USDC' && <span className="text-green-600 font-sans font-bold">$</span>}
-                            {b.token === 'ETH' && <span className="text-blue-500 font-sans font-bold">Ξ</span>}
+                            {b.token !== 'USDC' && <span className="text-blue-500 font-sans font-bold">◇</span>}
                             <span className="font-semibold">{b.token}</span>
                           </div>
                           <span>{b.error ? '—' : b.formatted}</span>
@@ -194,6 +208,21 @@ export default function WalletPage() {
                     />
                   </div>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                    <div className="w-full sm:w-48">
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Chain</label>
+                      <select
+                        value={selectedChainId}
+                        onChange={(e) => setSelectedChainId(Number(e.target.value))}
+                        className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
+                      >
+                        <option value={84532}>Base Sepolia</option>
+                        <option value={8453}>Base</option>
+                        <option value={1}>Ethereum</option>
+                        <option value={11155111}>Ethereum Sepolia</option>
+                        <option value={137}>Polygon</option>
+                        <option value={80002}>Polygon Amoy</option>
+                      </select>
+                    </div>
                     <div className="flex-1">
                       <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (base units)</label>
                       <input
@@ -213,7 +242,6 @@ export default function WalletPage() {
                         className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
                       >
                         <option value="USDC">USDC</option>
-                        <option value="ETH">ETH</option>
                       </select>
                     </div>
                   </div>

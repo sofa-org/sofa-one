@@ -34,6 +34,7 @@ info:
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
       -d '{
+        "chainId": 84532,
         "idempotencyKey": "order-abc-123",
         "interactions": [{
           "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
@@ -46,7 +47,7 @@ info:
     curl -X POST https://api.example.com/v1/wallets/sign \
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
-      -d '{"type": "message", "message": "Hello from SOFA ONE"}'
+      -d '{"type": "message", "chainId": 84532, "message": "Hello from SOFA ONE"}'
     ```
 
   contact:
@@ -148,7 +149,7 @@ paths:
         提交一组原始合约交互，服务端自动完成签名和 Gas 处理。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
-        可选 `policyId` 用于 Gas 代付策略；必填 `idempotencyKey` 用于防止重复提交。
+        必填 `chainId` 指定执行链；可选 `policyId` 用于 Gas 代付策略；必填 `idempotencyKey` 用于防止重复提交。
       operationId: sendTransaction
       requestBody:
         required: true
@@ -160,6 +161,7 @@ paths:
               usdcTransfer:
                 summary: USDC transfer（ABI-encoded）
                 value:
+                  chainId: 84532
                   idempotencyKey: "order-abc-123"
                   interactions:
                     - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
@@ -168,6 +170,7 @@ paths:
               withPolicy:
                 summary: 使用 Gas 代付策略 + 幂等键
                 value:
+                  chainId: 84532
                   policyId: "pol_usdc-gas-policy"
                   idempotencyKey: "order-abc-123"
                   interactions:
@@ -190,7 +193,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: 幂等键冲突 — 相同 idempotencyKey 的 pending 交易已存在
+          description: 幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
           content:
             application/json:
               schema:
@@ -226,6 +229,10 @@ components:
         message:
           type: string
           description: 纯文本消息（`type=message` 时必填）
+        chainId:
+          type: integer
+          minimum: 1
+          description: API Key 签名时的链上下文；`typed_data` 可由 `domain.chainId` 提供
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
         hash:
@@ -281,8 +288,13 @@ components:
     # ──────────── Transactions ────────────
     SendTransactionRequest:
       type: object
-      required: [interactions, idempotencyKey]
+      required: [chainId, interactions, idempotencyKey]
       properties:
+        chainId:
+          type: integer
+          minimum: 1
+          description: 执行链 ID，必须是平台支持的链
+          example: 84532
         interactions:
           type: array
           minItems: 1
@@ -333,7 +345,7 @@ components:
           description: 链上交易哈希（pending 时为 null）
         status:
           type: string
-          enum: [pending, confirmed, failed]
+          enum: [pending, confirmed, failed, submitting, unknown]
 
     # ──────────── Error ────────────
     ErrorResponse:

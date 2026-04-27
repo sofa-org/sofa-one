@@ -4,27 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
-import {
-  base,
-  baseSepolia,
-  mainnet,
-  polygon,
-  polygonAmoy,
-  sepolia,
-} from 'viem/chains';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
+import { hashRequest } from '../../common/utils/request-hash';
 import type { SignDto } from './dto/sign.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
-
-const CHAIN_MAP: Record<number, Parameters<typeof createPublicClient>[0]['chain']> = {
-  84532: baseSepolia,
-  8453: base,
-  1: mainnet,
-  11155111: sepolia,
-  137: polygon,
-  80002: polygonAmoy,
-};
 
 const ERC20_BALANCE_ABI = [
   {
@@ -36,16 +21,6 @@ const ERC20_BALANCE_ABI = [
   },
 ] as const;
 
-/** Well-known USDC contract addresses by chainId. */
-const USDC_ADDRESSES: Record<number, string> = {
-  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Base Sepolia
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base Mainnet
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Ethereum Mainnet
-  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ethereum Sepolia
-  137: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon Mainnet (Polymarket)
-  80002: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582', // Polygon Amoy (Polymarket Testnet)
-};
-
 @Injectable()
 export class WalletService {
   constructor(
@@ -54,22 +29,30 @@ export class WalletService {
   ) {}
 
   /** Return the user's wallet address and supported deposit tokens. */
-  async getDepositInfo(userId: string) {
+  async getDepositInfo(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    const supportedChain = getSupportedChain(chainId);
 
     return {
       walletAddress: wallet.walletAddress,
-      chainId: Number(wallet.chainId),
+      chainId,
+      chainName: supportedChain.name,
       status: wallet.status,
-      supportedTokens: ['USDC', 'ETH'],
+      supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
     };
   }
 
   /** Sign data with the user's backend wallet (no transaction broadcast). */
-  async sign(userId: string, params: SignDto) {
+  async sign(userId: string, params: SignDto, apiKeyRecord?: { allowedChains: number[] }) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+
+    const chainId = this.resolveSigningChainId(params, Boolean(apiKeyRecord));
+    if (chainId !== undefined) {
+      getSupportedChain(chainId);
+      assertAllowedApiKeyChain(apiKeyRecord, chainId);
+    }
 
     let data: string;
     switch (params.type) {
@@ -97,19 +80,16 @@ export class WalletService {
     };
   }
 
-  /** Return ETH and USDC balances for the user's wallet across all supported chains. */
-  async getBalances(userId: string) {
+  /** Return native token and USDC balances for the user's wallet on the requested chain. */
+  async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
-    const walletChainId = Number(wallet.chainId);
-    const chain = CHAIN_MAP[walletChainId];
-    if (!chain) throw new NotFoundException(`Chain ${walletChainId} is not supported`);
-
-    const publicClient = createPublicClient({ chain, transport: http() });
-    const usdcAddress = USDC_ADDRESSES[walletChainId] as `0x${string}` | undefined;
+    const supportedChain = getSupportedChain(chainId);
+    const publicClient = createPublicClient({ chain: supportedChain.chain, transport: http() });
+    const usdcAddress = supportedChain.usdcAddress;
 
     type BalanceEntry =
       | { token: string; raw: string; formatted: string; contractAddress?: string }
@@ -119,9 +99,20 @@ export class WalletService {
       publicClient
         .getBalance({ address: walletAddress })
         .then(
-          (raw): BalanceEntry => ({ token: 'ETH', raw: raw.toString(), formatted: formatEther(raw) }),
+          (raw): BalanceEntry => ({
+            token: supportedChain.nativeCurrencySymbol,
+            raw: raw.toString(),
+            formatted: formatEther(raw),
+          }),
         )
-        .catch((): BalanceEntry => ({ token: 'ETH', raw: null, formatted: null, error: 'fetch failed' })),
+        .catch(
+          (): BalanceEntry => ({
+            token: supportedChain.nativeCurrencySymbol,
+            raw: null,
+            formatted: null,
+            error: 'fetch failed',
+          }),
+        ),
 
       usdcAddress
         ? publicClient
@@ -154,7 +145,7 @@ export class WalletService {
     const balances: BalanceEntry[] = [ethResult];
     if (usdcResult !== null) balances.push(usdcResult);
 
-    const chains = [{ chainId: walletChainId, balances }];
+    const chains = [{ chainId, chainName: supportedChain.name, balances }];
 
     return { walletAddress, chains };
   }
@@ -174,18 +165,14 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    const chainId = Number(wallet.chainId);
-    const usdcAddress = USDC_ADDRESSES[chainId];
-    if (!usdcAddress) {
-      throw new BadRequestException(`Chain ${chainId} is not supported for USDC withdrawals`);
-    }
-    const usdcAddressHex = usdcAddress as `0x${string}`;
+    const chainId = params.chainId;
+    const supportedChain = getSupportedChain(chainId);
+    const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
     // Guard: verify on-chain USDC balance is sufficient before submitting intent
-    const chain = CHAIN_MAP[chainId];
-    if (chain) {
-      const publicClient = createPublicClient({ chain, transport: http() });
+    {
+      const publicClient = createPublicClient({ chain: supportedChain.chain, transport: http() });
       let usdcBalance: bigint;
       try {
         usdcBalance = await publicClient.readContract({
@@ -206,9 +193,19 @@ export class WalletService {
       }
     }
 
+    const requestHash = hashRequest({
+      operationType: 'withdraw',
+      chainId,
+      to: params.to,
+      amount: params.amount,
+      token: params.token,
+      contractAddress: usdcAddressHex,
+    });
+
     const tx = await this.createPendingWithdrawalOrReturnExisting(userId, {
       idempotencyKey: params.idempotencyKey!,
       chainId,
+      requestHash,
       walletAddress: wallet.walletAddress,
       details: {
         type: 'withdraw',
@@ -217,6 +214,7 @@ export class WalletService {
         token: params.token,
         contractAddress: usdcAddressHex,
         idempotencyKey: params.idempotencyKey,
+        requestHash,
       },
     });
 
@@ -257,7 +255,7 @@ export class WalletService {
     } catch (error) {
       await this.prisma.transaction.update({
         where: { id: tx.id },
-        data: { status: 'failed' },
+        data: { status: 'unknown' },
       });
       throw error;
     }
@@ -268,6 +266,7 @@ export class WalletService {
     params: {
       idempotencyKey: string;
       chainId: number;
+      requestHash: string;
       walletAddress: string;
       details: Record<string, unknown>;
     },
@@ -282,6 +281,7 @@ export class WalletService {
           walletAddress: params.walletAddress,
           operationType: 'withdraw',
           idempotencyKey: params.idempotencyKey,
+          requestHash: params.requestHash,
           details: params.details as any,
         },
       });
@@ -292,11 +292,24 @@ export class WalletService {
         where: {
           userId,
           operationType: 'withdraw',
+          chainId: BigInt(params.chainId),
           idempotencyKey: params.idempotencyKey,
         },
       });
       if (!existing) throw error;
+      if (existing.requestHash && existing.requestHash !== params.requestHash) {
+        throw new BadRequestException('Idempotency key was already used for a different request');
+      }
       return existing;
     }
+  }
+
+  private resolveSigningChainId(params: SignDto, apiKeyAuth: boolean): number | undefined {
+    const typedDataChainId = params.typedData?.domain?.chainId;
+    const chainId = params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
+    if (apiKeyAuth && chainId === undefined) {
+      throw new BadRequestException('chainId is required when signing with an API key');
+    }
+    return chainId;
   }
 }

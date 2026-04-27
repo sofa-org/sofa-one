@@ -4,6 +4,8 @@ import {
   IsIn,
   Matches,
   MaxLength,
+  IsInt,
+  Min,
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
@@ -40,6 +42,11 @@ function IsUsdcAmount(validationOptions?: ValidationOptions) {
 }
 
 export class WithdrawDto {
+  /** Chain to withdraw from. Required so users explicitly choose the source chain. */
+  @IsInt()
+  @Min(1)
+  chainId: number;
+
   @IsString()
   @IsNotEmpty()
   @Matches(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid Ethereum address' })

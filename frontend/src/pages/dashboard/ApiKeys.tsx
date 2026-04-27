@@ -16,6 +16,7 @@ interface ApiKeyRecord {
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
+  allowedChains: number[];
 }
 
 export default function ApiKeysPage() {
@@ -48,7 +49,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setError(null);
     try {
-      const result = await createApiKeyAuth(getToken, newKeyName || undefined);
+      const result = await createApiKeyAuth(getToken, newKeyName || undefined, [84532]);
       setNewRawKey(result.rawKey);
       setNewKeyName('');
       await fetchKeys();
@@ -180,6 +181,9 @@ export default function ApiKeysPage() {
                     {key.revoked ? 'Revoked' : 'Active'}
                   </span>
                   {key.name && <span className="text-sm text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">{key.name}</span>}
+                  <span className="text-xs text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">
+                    Chains: {key.allowedChains?.join(', ') || '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 w-full sm:w-auto">
                   <span className="text-xs text-brand-muted block sm:hidden md:block">
@@ -208,15 +212,16 @@ export default function ApiKeysPage() {
         <h2 className="text-xl font-bold font-serif text-brand-text">Quick Start</h2>
         <div className="mt-5">
           <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-{`curl -X POST ${window.location.origin}/api/v1/transactions/intent \\
+{`curl -X POST ${window.location.origin}/api/v1/transactions/send \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "chainId": 84532,
+    "idempotencyKey": "order-abc-123",
     "interactions": [{
-      "contract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "functionName": "transfer",
-      "functionArgs": ["0xRECIPIENT", "1000000"]
+      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "data": "0xa9059cbb...",
+      "value": "0"
     }]
   }'`}
           </pre>

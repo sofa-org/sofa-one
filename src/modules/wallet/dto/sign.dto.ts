@@ -3,11 +3,20 @@ import {
   IsNotEmpty,
   IsIn,
   IsObject,
+  IsOptional,
+  IsInt,
+  Min,
   ValidateIf,
   Matches,
 } from 'class-validator';
 
 export class SignDto {
+  /** Chain context for API-key authorization. Required for API-key message/hash signing. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  chainId?: number;
+
   /** Signing method: 'message' (EIP-191), 'typed_data' (EIP-712), or 'hash' (raw). */
   @IsIn(['message', 'typed_data', 'hash'], {
     message: 'type must be message, typed_data, or hash',

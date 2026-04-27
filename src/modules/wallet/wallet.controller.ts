@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
@@ -17,23 +17,23 @@ export class WalletController {
   @Get('balances')
   @FrontendOnly()
   @UseGuards(ClerkUserGuard, FrontendOnlyGuard)
-  async getBalances(@CurrentUser('id') userId: string) {
-    return this.walletService.getBalances(userId);
+  async getBalances(@CurrentUser('id') userId: string, @Query('chainId') chainId: string) {
+    return this.walletService.getBalances(userId, Number(chainId));
   }
 
   /** POST /v1/wallets/deposit-info — frontend only: get wallet address for deposits. */
   @Post('deposit-info')
   @FrontendOnly()
   @UseGuards(ClerkUserGuard, FrontendOnlyGuard)
-  async getDepositInfo(@CurrentUser('id') userId: string) {
-    return this.walletService.getDepositInfo(userId);
+  async getDepositInfo(@CurrentUser('id') userId: string, @Body('chainId') chainId: number) {
+    return this.walletService.getDepositInfo(userId, Number(chainId));
   }
 
   /** POST /v1/wallets/sign — public API: sign data without sending a transaction. */
   @Post('sign')
   @UseGuards(EitherAuthGuard)
-  async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto) {
-    return this.walletService.sign(userId, dto);
+  async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto, @Req() req: any) {
+    return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }
 
   /** POST /v1/wallets/withdraw — frontend only: create a withdrawal intent. */

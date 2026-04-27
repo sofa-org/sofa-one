@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+export const DEFAULT_CHAIN_ID = 84532;
 
 /**
  * Call an auth endpoint (uses Clerk JWT from getToken).
@@ -59,14 +60,17 @@ export async function refreshApiKey(getToken: () => Promise<string | null>) {
 
 // --- Wallets ---
 
-export async function getDepositInfo(apiKey: string) {
-  return apiFetch('/v1/wallets/deposit-info', apiKey, { method: 'POST' });
+export async function getDepositInfo(apiKey: string, chainId = DEFAULT_CHAIN_ID) {
+  return apiFetch('/v1/wallets/deposit-info', apiKey, {
+    method: 'POST',
+    body: JSON.stringify({ chainId }),
+  });
 }
 
-export async function withdraw(apiKey: string, to: string, amount: string, token: string) {
+export async function withdraw(apiKey: string, to: string, amount: string, token: string, chainId = DEFAULT_CHAIN_ID) {
   return apiFetch('/v1/wallets/withdraw', apiKey, {
     method: 'POST',
-    body: JSON.stringify({ to, amount, token, idempotencyKey: crypto.randomUUID() }),
+    body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }
 
@@ -93,10 +97,10 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
   return authFetch('/v1/api-keys', getToken);
 }
 
-export async function createApiKeyAuth(getToken: () => Promise<string | null>, name?: string) {
+export async function createApiKeyAuth(getToken: () => Promise<string | null>, name?: string, allowedChains?: number[]) {
   return authFetch('/v1/api-keys', getToken, {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, allowedChains }),
   });
 }
 
@@ -109,15 +113,16 @@ export async function withdrawAuth(
   to: string,
   amount: string,
   token: string,
+  chainId = DEFAULT_CHAIN_ID,
 ) {
   return authFetch('/v1/wallets/withdraw', getToken, {
     method: 'POST',
-    body: JSON.stringify({ to, amount, token, idempotencyKey: crypto.randomUUID() }),
+    body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }
 
-export async function getBalancesAuth(getToken: () => Promise<string | null>) {
-  return authFetch('/v1/wallets/balances', getToken);
+export async function getBalancesAuth(getToken: () => Promise<string | null>, chainId = DEFAULT_CHAIN_ID) {
+  return authFetch(`/v1/wallets/balances?chainId=${chainId}`, getToken);
 }
 
 // --- Policies ---
