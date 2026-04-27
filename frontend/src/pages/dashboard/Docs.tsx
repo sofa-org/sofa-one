@@ -1,275 +1,223 @@
+const codeClass =
+  "rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm";
+
+const tagClass =
+  "inline-flex rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-800";
+
+const fieldRows = {
+  sign: [
+    ["type", "string", "Yes", "message | typed_data | hash"],
+    ["chainId", "integer", "No", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
+    ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
+    ["typedData", "object", "Cond.", "Required for typed_data. Must include domain, types, primaryType, and message."],
+    ["hash", "string", "Cond.", "Required for hash. 0x-prefixed 32-byte hash."],
+  ],
+  send: [
+    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
+    ["interactions", "array", "Yes", "At least one contract interaction."],
+    ["└ to", "string", "Yes", "Target Ethereum address."],
+    ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
+    ["└ value", "string", "No", "Wei amount as a decimal string. Defaults to \"0\"."],
+    ["policyId", "string", "No", "User-owned Openfort policy ID."],
+    ["idempotencyKey", "string", "Yes", "Max 64 characters: letters, numbers, _ and -."],
+  ],
+};
+
+function CodeBlock({ children }: { children: string }) {
+  return (
+    <pre className={codeClass}>
+      <code>{children}</code>
+    </pre>
+  );
+}
+
+function FieldTable({ rows }: { rows: string[][] }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-brand-border shadow-sm">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead className="bg-brand-bg text-xs uppercase text-brand-muted">
+          <tr>
+            <th className="px-4 py-3 font-medium">Field</th>
+            <th className="px-4 py-3 font-medium">Type</th>
+            <th className="px-4 py-3 font-medium">Required</th>
+            <th className="px-4 py-3 font-medium">Notes</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-brand-border bg-white text-brand-text">
+          {rows.map(([field, type, required, notes]) => (
+            <tr key={field}>
+              <td className="px-4 py-3 font-mono text-xs">{field}</td>
+              <td className="px-4 py-3 text-brand-muted">{type}</td>
+              <td
+                className={`px-4 py-3 font-medium ${
+                  required === "Yes" ? "text-brand-accent" : "text-brand-muted"
+                }`}
+              >
+                {required}
+              </td>
+              <td className="px-4 py-3">{notes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EndpointCard({
+  path,
+  children,
+}: {
+  path: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-brand-border bg-white p-7 shadow-xl ring-1 ring-black/5">
+      <div className="absolute left-0 top-0 h-1.5 w-full bg-brand-text" />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className={tagClass}>POST</span>
+        <h3 className="font-mono text-lg font-semibold text-brand-text">{path}</h3>
+      </div>
+      <div className="space-y-6">{children}</div>
+    </section>
+  );
+}
+
 export default function APIDocsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      {/* Header */}
-      <div className="border-b border-brand-border pb-6">
-        <h1 className="text-3xl font-bold font-serif text-brand-text mb-2">
+      <header className="rounded-3xl border border-brand-border bg-white p-8 shadow-xl ring-1 ring-black/5">
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-accent">
+            Public API
+          </span>
+          <span className="rounded-full bg-brand-bg px-3 py-1 text-xs font-medium text-brand-muted">
+            TEE-managed wallet signing
+          </span>
+        </div>
+        <h1 className="mb-3 font-serif text-3xl font-bold text-brand-text">
           API Documentation
         </h1>
-        <p className="text-sm text-brand-muted max-w-2xl">
-          Welcome to the SOFA ONE API. This reference provides the 2 public endpoints needed to programmatically sign data and submit transaction intents via your TEE-secured backend wallet.
+        <p className="max-w-3xl text-sm leading-6 text-brand-muted">
+          Sign messages and submit contract interactions from your SOFA ONE backend wallet. Private keys stay inside Openfort TEE infrastructure and are never returned to clients.
         </p>
-      </div>
+      </header>
 
-      {/* Authentication */}
-      <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-        <h2 className="text-xl font-bold font-serif text-brand-text mb-4">Authentication</h2>
-        <p className="text-sm text-brand-muted mb-4">
-          All API requests must be authenticated using your API Key. Include it in the headers of your requests as <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">X-API-Key</code>.
-        </p>
-        <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-          <code>X-API-Key: sk_live_...</code>
-        </pre>
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
+          <p className="mt-2 font-mono text-sm text-brand-text">https://api.agentwallet.com</p>
+        </div>
+        <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
+          <p className="mt-2 text-sm leading-6 text-brand-muted">
+            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for programmatic requests. Clerk bearer tokens are also accepted for authenticated frontend sessions.
+          </p>
+        </div>
       </section>
 
-      {/* Endpoints */}
+      <CodeBlock>{`X-API-Key: sk_live_...
+# or
+Authorization: Bearer <Clerk JWT>`}</CodeBlock>
+
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold font-serif text-brand-text border-b border-brand-border pb-4">Endpoints</h2>
-
-        {/* Endpoint 1 */}
-        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-6">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-          <div className="flex items-center gap-3">
-            <span className="rounded-full px-3 py-1 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
-              POST
-            </span>
-            <h3 className="font-mono font-semibold text-brand-text text-lg">/v1/wallets/sign</h3>
-          </div>
-          <p className="text-sm text-brand-muted">
-            Sign data with your wallet (no transaction broadcast). Supports EIP-191 messages, EIP-712 typed data, and raw hashes.
+        <EndpointCard path="/v1/wallets/sign">
+          <p className="text-sm leading-6 text-brand-muted">
+            Sign a message, EIP-712 typed data, or a raw hash with your TEE-secured backend wallet. This endpoint only returns a signature; it does not broadcast a transaction.
           </p>
-          
+
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
-            <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
-              <table className="w-full min-w-[500px] text-left text-sm">
-                <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Parameter</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Required</th>
-                    <th className="px-4 py-3 font-medium">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-border text-brand-text bg-white">
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">type</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3"><code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"message"</code> | <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"typed_data"</code> | <code className="font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded text-xs">"hash"</code></td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">message</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-muted">Cond.</td>
-                    <td className="px-4 py-3">Plain text to sign (if type=message)</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">typedData</td>
-                    <td className="px-4 py-3">object</td>
-                    <td className="px-4 py-3 text-brand-muted">Cond.</td>
-                    <td className="px-4 py-3">EIP-712 struct with domain, types, primaryType, message</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">hash</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-muted">Cond.</td>
-                    <td className="px-4 py-3">0x-prefixed 32-byte hash (if type=hash)</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request body</h4>
+            <FieldTable rows={fieldRows.sign} />
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">cURL Example</h4>
-              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-                <code>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
+              <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
-  -d '{"type":"message","message":"Hello, SOFA ONE!"}'`}</code>
-              </pre>
+  -d '{
+    "type": "message",
+    "chainId": 84532,
+    "message": "Hello, SOFA ONE!"
+  }'`}</CodeBlock>
             </div>
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Response Example</h4>
-              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-                <code>{`{
-  "signature": "0x5d99b6f7f6d1f73d1a...",
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">200 response</h4>
+              <CodeBlock>{`{
+  "signature": "0x5d99b6f7...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
   "type": "message"
-}`}</code>
-              </pre>
+}`}</CodeBlock>
             </div>
           </div>
-        </section>
+        </EndpointCard>
 
-        {/* Endpoint 2 */}
-        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-6">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-          <div className="flex items-center gap-3">
-            <span className="rounded-full px-3 py-1 text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
-              POST
-            </span>
-            <h3 className="font-mono font-semibold text-brand-text text-lg">/v1/transactions/send</h3>
-          </div>
-          <p className="text-sm text-brand-muted">
-            Submit one or more raw contract interactions from your TEE-secured backend wallet. Server handles signing and gas.
+        <EndpointCard path="/v1/transactions/send">
+          <p className="text-sm leading-6 text-brand-muted">
+            Submit one or more contract interactions from the user&apos;s active backend wallet. The server handles wallet signing and policy checks.
           </p>
-          
+
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request Body</h4>
-            <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
-              <table className="w-full min-w-[500px] text-left text-sm">
-                <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Parameter</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Required</th>
-                    <th className="px-4 py-3 font-medium">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-border text-brand-text bg-white">
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">chainId</td>
-                    <td className="px-4 py-3">integer</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">Target chain ID (e.g. 84532 for Base Sepolia)</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">interactions</td>
-                    <td className="px-4 py-3">array</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">Array of interaction objects (min 1)</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">└ to</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">0x-prefixed target contract address</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">└ data</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">ABI-encoded calldata (0x-prefixed hex)</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">└ value</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-muted">No</td>
-                    <td className="px-4 py-3">Value in wei as decimal string (default "0")</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">policyId</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-muted">No</td>
-                    <td className="px-4 py-3">Openfort gas sponsorship policy ID</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-xs">idempotencyKey</td>
-                    <td className="px-4 py-3">string</td>
-                    <td className="px-4 py-3 text-brand-accent">Yes</td>
-                    <td className="px-4 py-3">Unique key to prevent duplicate submissions on this chain/request</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Request body</h4>
+            <FieldTable rows={fieldRows.send} />
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="rounded-xl border border-brand-border bg-brand-bg/60 p-4 text-sm leading-6 text-brand-muted">
+            Idempotency is required: reusing the same key with the same request returns the existing transaction; reusing it with a different request returns <span className="font-mono text-brand-text">400</span>.
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">cURL Example</h4>
-              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-                <code>{`curl -X POST https://api.agentwallet.com/v1/transactions/send \\
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
+              <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/transactions/send \\
   -H "X-API-Key: sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
     "chainId": 84532,
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb000000000000000000000000RecipientAddr00000000000000000000000000000000000000000000000000000000000f4240",
+      "data": "0xa9059cbb...",
       "value": "0"
     }],
     "idempotencyKey": "order-123"
-  }'`}</code>
-              </pre>
+  }'`}</CodeBlock>
             </div>
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Response Example</h4>
-              <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-                <code>{`{
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">201 response</h4>
+              <CodeBlock>{`{
   "transactionId": "550e8400-e29b-41d4-a716-446655440000",
   "transactionHash": "0xabc123...",
-  "status": "confirmed"
-}`}</code>
-              </pre>
+  "status": "pending"
+}`}</CodeBlock>
+              <p className="text-xs leading-5 text-brand-muted">
+                Status may be pending, submitting, confirmed, failed, or unknown. The transaction hash can be empty while submission is pending.
+              </p>
             </div>
           </div>
-        </section>
-
+        </EndpointCard>
       </div>
 
-      {/* Grid of smaller reference tables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Supported Chains */}
-        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-4">
-          <h2 className="text-xl font-bold font-serif text-brand-text">Supported Chains</h2>
-          <div className="overflow-x-auto border border-brand-border rounded-xl shadow-sm">
-            <table className="w-full min-w-[400px] text-left text-sm">
-              <thead className="bg-brand-bg text-brand-muted text-xs uppercase">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Chain ID</th>
-                  <th className="px-4 py-3 font-medium">Network</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-border text-brand-text bg-white">
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">1</td>
-                  <td className="px-4 py-3">Ethereum Mainnet</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">11155111</td>
-                  <td className="px-4 py-3">Ethereum Sepolia (Testnet)</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">8453</td>
-                  <td className="px-4 py-3">Base Mainnet</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">84532</td>
-                  <td className="px-4 py-3">Base Sepolia (Testnet)</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">137</td>
-                  <td className="px-4 py-3">Polygon Mainnet (Polymarket)</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 font-mono text-xs">80002</td>
-                  <td className="px-4 py-3">Polygon Amoy (Polymarket Testnet)</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Error Responses */}
-        <section className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5 space-y-4">
-          <h2 className="text-xl font-bold font-serif text-brand-text">Error Responses</h2>
-          <p className="text-sm text-brand-muted">
-            All API errors follow a standardized format to make programmatic handling easier.
-          </p>
-          <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-            <code>{`{
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+          <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Validation</h2>
+          <ul className="space-y-2 text-sm leading-6 text-brand-muted">
+            <li>• Unknown request properties are rejected.</li>
+            <li>• Chain IDs must be supported and allowed for the API key.</li>
+            <li>• Wallets must exist and be active before sending transactions.</li>
+          </ul>
+        </div>
+        <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+          <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Error format</h2>
+          <CodeBlock>{`{
   "statusCode": 401,
   "timestamp": "2026-04-20T10:35:00.000Z",
   "path": "/v1/transactions/send",
   "message": "Invalid API Key provided"
-}`}</code>
-          </pre>
-        </section>
-      </div>
+}`}</CodeBlock>
+        </div>
+      </section>
     </div>
   );
 }
