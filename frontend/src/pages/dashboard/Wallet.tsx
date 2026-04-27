@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { DEFAULT_CHAIN_ID, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
-import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, CircleDollarSign, Coins } from 'lucide-react';
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -137,40 +137,51 @@ export default function WalletPage() {
             </div>
 
             <div className="pt-6 border-t border-brand-border">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block mb-4">Assets</label>
-              <select
-                value={selectedChainId}
-                onChange={(e) => setSelectedChainId(Number(e.target.value))}
-                className="mb-4 block w-full max-w-xs rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
-              >
-                <option value={84532}>Base Sepolia</option>
-                <option value={8453}>Base</option>
-                <option value={1}>Ethereum</option>
-                <option value={11155111}>Ethereum Sepolia</option>
-                <option value={137}>Polygon</option>
-                <option value={80002}>Polygon Amoy</option>
-              </select>
-              <div className="space-y-4">
+              <div className="mb-5 flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Assets</label>
+                <select
+                  value={selectedChainId}
+                  onChange={(e) => setSelectedChainId(Number(e.target.value))}
+                  className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors cursor-pointer hover:bg-brand-bg/50"
+                >
+                  <option value={84532}>Base Sepolia</option>
+                  <option value={8453}>Base</option>
+                  <option value={1}>Ethereum</option>
+                  <option value={11155111}>Ethereum Sepolia</option>
+                  <option value={137}>Polygon</option>
+                  <option value={80002}>Polygon Amoy</option>
+                </select>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
                 {balancesLoading ? (
                   <>
-                    <div className="h-5 bg-brand-border/50 rounded animate-pulse w-1/3"></div>
-                    <div className="h-5 bg-brand-border/50 rounded animate-pulse w-1/4"></div>
+                    <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
+                    <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
                   </>
-                ) : balances ? (
+                ) : balances && balances.length > 0 ? (
                   balances.map((chain) => (
-                    <div key={chain.chainId} className="space-y-3">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">{chain.chainName || `Chain ${chain.chainId}`}</p>
-                      {chain.balances.map((b) => (
-                        <div key={b.token} className="flex justify-between items-center text-sm font-mono text-brand-text bg-brand-bg/50 p-3 rounded-lg border border-brand-border/50">
-                          <div className="flex items-center gap-2">
-                            {b.token === 'USDC' && <span className="text-green-600 font-sans font-bold">$</span>}
-                            {b.token !== 'USDC' && <span className="text-blue-500 font-sans font-bold">◇</span>}
-                            <span className="font-semibold">{b.token}</span>
+                    chain.balances.map((b) => (
+                      <div
+                        key={`${chain.chainId}-${b.token}`}
+                        className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-brand-border/60 bg-white p-3.5 transition-all hover:border-brand-accent/40 hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${b.token === 'USDC' ? 'bg-blue-50 text-blue-600' : 'bg-brand-bg text-brand-muted'}`}>
+                            {b.token === 'USDC' ? <CircleDollarSign className="h-4 w-4" /> : <Coins className="h-4 w-4" />}
                           </div>
-                          <span>{b.error ? '—' : b.formatted}</span>
+                          <div>
+                            <p className="text-sm font-semibold text-brand-text">{b.token}</p>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-brand-muted">{chain.chainName || `Chain ${chain.chainId}`}</p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right">
+                          <p className="font-mono text-[13px] font-medium text-brand-text">
+                            {b.error ? '—' : b.formatted}
+                          </p>
+                        </div>
+                      </div>
+                    ))
                   ))
                 ) : null}
               </div>
