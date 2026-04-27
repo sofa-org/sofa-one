@@ -157,7 +157,7 @@ The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the exa
 | `POST` | `/auth/social` | Public | Social login → returns `userId`, `walletAddress`, `apiKey` |
 | `POST` | `/auth/refresh-api-key` | JWT | Rotate API key |
 | `POST` | `/v1/transactions/send` | API Key | Submit raw transaction (ABI-encoded calldata) |
-| `POST` | `/v1/wallets/sign` | API Key | Sign a message, typed data, or hash without broadcasting |
+| `POST` | `/v1/wallets/sign` | API Key | Sign a message or typed data without broadcasting |
 | `GET`  | `/v1/wallets/balances` | JWT + Frontend | ETH + USDC balances across **all** supported chains simultaneously |
 | `POST` | `/v1/wallets/deposit-info` | JWT + Frontend | Get wallet address for deposits |
 | `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |

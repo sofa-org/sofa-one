@@ -6,11 +6,10 @@ const tagClass =
 
 const fieldRows = {
   sign: [
-    ["type", "string", "Yes", "message | typed_data | hash"],
+    ["type", "string", "Yes", "message | typed_data"],
     ["chainId", "integer", "No", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
     ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain, types, primaryType, and message."],
-    ["hash", "string", "Cond.", "Required for hash. 0x-prefixed 32-byte hash."],
   ],
   send: [
     ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
@@ -123,7 +122,7 @@ Authorization: Bearer <Clerk JWT>`}</CodeBlock>
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message, EIP-712 typed data, or a raw hash with your TEE-secured backend wallet. This endpoint only returns a signature; it does not broadcast a transaction.
+            Sign a message or EIP-712 typed data with your TEE-secured backend wallet. Raw hash signing is disabled for safety. This endpoint only returns a signature; it does not broadcast a transaction.
           </p>
 
           <div className="space-y-3">

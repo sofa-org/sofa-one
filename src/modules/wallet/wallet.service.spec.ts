@@ -345,6 +345,68 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
   });
 
+  it('rejects Clerk-authenticated hash signing before creating an audit record', async () => {
+    const hash = '0x'.padEnd(66, '1');
+
+    await expect(service.sign('user-1', { type: 'hash', hash } as any)).rejects.toThrow('hash signing is not allowed');
+
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects API-key hash signing before creating an audit record', async () => {
+    const hash = '0x'.padEnd(66, '1');
+
+    await expect(
+      service.sign('user-1', { type: 'hash', hash, chainId: 84532 } as any, { id: 'api-key-1', allowedChains: [84532] }),
+    ).rejects.toThrow('hash signing is not allowed');
+
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('requires explicit chainId for API-key typed data signing', async () => {
+    const typedData = createTypedData(84532);
+
+    await expect(
+      service.sign('user-1', { type: 'typed_data', typedData } as any, { id: 'api-key-1', allowedChains: [84532] }),
+    ).rejects.toThrow('chainId is required when signing typed data with an API key');
+  });
+
+  it('requires typedData.domain.chainId for API-key typed data signing', async () => {
+    const typedData = createTypedData(undefined);
+
+    await expect(
+      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
+        id: 'api-key-1',
+        allowedChains: [84532],
+      }),
+    ).rejects.toThrow('typedData.domain.chainId is required when signing typed data with an API key');
+  });
+
+  it('requires typedData.domain.chainId to match chainId for API-key typed data signing', async () => {
+    const typedData = createTypedData(84531);
+
+    await expect(
+      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
+        id: 'api-key-1',
+        allowedChains: [84532],
+      }),
+    ).rejects.toThrow('typedData.domain.chainId must match chainId');
+  });
+
+  it('allows API-key typed data signing when chainId matches and is allowed', async () => {
+    const typedData = createTypedData(84532);
+
+    const result = await service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
+      id: 'api-key-1',
+      allowedChains: [84532],
+    });
+
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, expect.stringMatching(/^0x[a-f0-9]{64}$/));
+    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'typed_data' });
+  });
+
   it('throws NotFoundException when wallet not found', async () => {
     mockFindUnique.mockResolvedValue(null);
 
@@ -353,3 +415,18 @@ describe('WalletService.sign()', () => {
     );
   });
 });
+
+function createTypedData(chainId: number | undefined) {
+  return {
+    domain: {
+      name: 'SOFA ONE',
+      version: '1',
+      ...(chainId === undefined ? {} : { chainId }),
+    },
+    types: {
+      Mail: [{ name: 'message', type: 'string' }],
+    },
+    primaryType: 'Mail',
+    message: { message: 'Hello' },
+  };
+}

@@ -71,9 +71,6 @@ export class WalletService {
         data = hashTypedData({ domain, types, primaryType, message } as any);
         break;
       }
-      case 'hash':
-        data = params.hash!;
-        break;
     }
 
     const signingRequest = await this.prisma.signingRequest.create({
@@ -343,7 +340,24 @@ export class WalletService {
   }
 
   private resolveSigningChainId(params: SignDto, apiKeyAuth: boolean): number | undefined {
+    if ((params as { type: string }).type === 'hash') {
+      throw new BadRequestException('hash signing is not allowed');
+    }
+
     const typedDataChainId = params.typedData?.domain?.chainId;
+
+    if (apiKeyAuth && params.type === 'typed_data') {
+      if (params.chainId === undefined) {
+        throw new BadRequestException('chainId is required when signing typed data with an API key');
+      }
+      if (typeof typedDataChainId !== 'number') {
+        throw new BadRequestException('typedData.domain.chainId is required when signing typed data with an API key');
+      }
+      if (typedDataChainId !== params.chainId) {
+        throw new BadRequestException('typedData.domain.chainId must match chainId');
+      }
+    }
+
     const chainId = params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
     if (apiKeyAuth && chainId === undefined) {
       throw new BadRequestException('chainId is required when signing with an API key');

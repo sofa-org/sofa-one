@@ -7,7 +7,6 @@ import {
   IsInt,
   Min,
   ValidateIf,
-  Matches,
   ValidateBy,
   type ValidationOptions,
 } from 'class-validator';
@@ -40,17 +39,17 @@ function IsSignMessage(validationOptions?: ValidationOptions) {
 }
 
 export class SignDto {
-  /** Chain context for API-key authorization. Required for API-key message/hash signing. */
+  /** Chain context for API-key authorization. Required for API-key message signing. */
   @IsOptional()
   @IsInt()
   @Min(1)
   chainId?: number;
 
-  /** Signing method: 'message' (EIP-191), 'typed_data' (EIP-712), or 'hash' (raw). */
-  @IsIn(['message', 'typed_data', 'hash'], {
-    message: 'type must be message, typed_data, or hash',
+  /** Signing method: 'message' (EIP-191) or 'typed_data' (EIP-712). Raw hash signing is intentionally disabled. */
+  @IsIn(['message', 'typed_data'], {
+    message: 'type must be message or typed_data',
   })
-  type: 'message' | 'typed_data' | 'hash';
+  type: 'message' | 'typed_data';
 
   /** Plain-text message or hex data to sign (required when type = 'message'). */
   @ValidateIf((o) => o.type === 'message')
@@ -79,13 +78,4 @@ export class SignDto {
     primaryType: string;
     message: Record<string, unknown>;
   };
-
-  /** 32-byte hex hash to sign (required when type = 'hash'). */
-  @ValidateIf((o) => o.type === 'hash')
-  @IsString()
-  @IsNotEmpty({ message: 'hash is required when type is hash' })
-  @Matches(/^0x[a-fA-F0-9]{64}$/, {
-    message: 'hash must be a 32-byte hex string (0x + 64 hex chars)',
-  })
-  hash?: string;
 }
