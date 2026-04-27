@@ -1,12 +1,9 @@
 import {
-  IsInt,
   IsString,
   IsNotEmpty,
   IsIn,
   Matches,
-  IsOptional,
   MaxLength,
-  Min,
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
@@ -43,10 +40,6 @@ function IsUsdcAmount(validationOptions?: ValidationOptions) {
 }
 
 export class WithdrawDto {
-  @IsInt()
-  @Min(1)
-  chainId: number;
-
   @IsString()
   @IsNotEmpty()
   @Matches(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid Ethereum address' })
@@ -61,10 +54,10 @@ export class WithdrawDto {
   @IsIn(['USDC'], { message: 'Token must be USDC' })
   token: string;
 
-  /** Optional client-supplied idempotency key (UUID or similar, max 64 chars). */
-  @IsOptional()
+  /** Required client-supplied idempotency key (UUID or similar, max 64 chars). */
   @IsString()
+  @IsNotEmpty()
   @MaxLength(64)
   @Matches(/^[a-zA-Z0-9_\-]+$/, { message: 'idempotencyKey must be alphanumeric' })
-  idempotencyKey?: string;
+  idempotencyKey: string;
 }

@@ -56,9 +56,21 @@ export class FrontendOnlyGuard implements CanActivate {
   }
 
   private isAllowed(origin: string): boolean {
-    return this.allowedOrigins.some((allowed) =>
-      origin.startsWith(allowed),
-    );
+    const candidate = this.normalizeOrigin(origin);
+    if (!candidate) return false;
+
+    return this.allowedOrigins.some((allowed) => {
+      const allowedOrigin = this.normalizeOrigin(allowed);
+      return allowedOrigin === candidate;
+    });
+  }
+
+  private normalizeOrigin(value: string): string | undefined {
+    try {
+      return new URL(value).origin;
+    } catch {
+      return undefined;
+    }
   }
 
   private extractOriginFromReferer(referer: string | undefined): string | undefined {

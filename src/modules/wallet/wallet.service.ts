@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -175,29 +174,13 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    const chainId = params.chainId;
+    const chainId = Number(wallet.chainId);
     const usdcAddress = USDC_ADDRESSES[chainId];
     if (!usdcAddress) {
       throw new BadRequestException(`Chain ${chainId} is not supported for USDC withdrawals`);
     }
     const usdcAddressHex = usdcAddress as `0x${string}`;
     const walletAddress = wallet.walletAddress as `0x${string}`;
-
-    // Guard: idempotency — reject duplicate pending withdrawal with same key
-    if (params.idempotencyKey) {
-      const duplicate = await this.prisma.transaction.findFirst({
-        where: {
-          userId,
-          status: 'pending',
-          details: { path: ['idempotencyKey'], equals: params.idempotencyKey },
-        },
-      });
-      if (duplicate) {
-        throw new ConflictException(
-          `A pending withdrawal with idempotencyKey "${params.idempotencyKey}" already exists (transactionId: ${duplicate.id})`,
-        );
-      }
-    }
 
     // Guard: verify on-chain USDC balance is sufficient before submitting intent
     const chain = CHAIN_MAP[chainId];
@@ -223,40 +206,97 @@ export class WalletService {
       }
     }
 
-    const txIntent = await this.openfort.createTransactionIntent({
+    const tx = await this.createPendingWithdrawalOrReturnExisting(userId, {
+      idempotencyKey: params.idempotencyKey!,
       chainId,
-      accountId: wallet.openfortAccountId,
-      interactions: [
-        {
-          contract: usdcAddressHex,
-          functionName: 'transfer',
-          functionArgs: [params.to, params.amount],
-        },
-      ],
-    });
-
-    const tx = await this.prisma.transaction.create({
-      data: {
-        userId,
-        intentId: txIntent.id,
-        status: 'pending',
-        chainId: BigInt(chainId),
-        walletAddress: wallet.walletAddress,
-        details: {
-          type: 'withdraw',
-          to: params.to,
-          amount: params.amount,
-          token: params.token,
-          contractAddress: usdcAddressHex,
-          ...(params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : {}),
-        },
+      walletAddress: wallet.walletAddress,
+      details: {
+        type: 'withdraw',
+        to: params.to,
+        amount: params.amount,
+        token: params.token,
+        contractAddress: usdcAddressHex,
+        idempotencyKey: params.idempotencyKey,
       },
     });
 
-    return {
-      transactionId: tx.id,
-      intentId: txIntent.id,
-      status: 'pending',
-    };
+    if (tx.intentId || tx.status !== 'submitting') {
+      return {
+        transactionId: tx.id,
+        intentId: tx.intentId,
+        status: tx.status,
+      };
+    }
+
+    try {
+      const txIntent = await this.openfort.createTransactionIntent({
+        chainId,
+        accountId: wallet.openfortAccountId,
+        interactions: [
+          {
+            contract: usdcAddressHex,
+            functionName: 'transfer',
+            functionArgs: [params.to, params.amount],
+          },
+        ],
+      });
+
+      const updated = await this.prisma.transaction.update({
+        where: { id: tx.id },
+        data: {
+          intentId: txIntent.id,
+          status: 'pending',
+        },
+      });
+
+      return {
+        transactionId: updated.id,
+        intentId: updated.intentId,
+        status: updated.status,
+      };
+    } catch (error) {
+      await this.prisma.transaction.update({
+        where: { id: tx.id },
+        data: { status: 'failed' },
+      });
+      throw error;
+    }
+  }
+
+  private async createPendingWithdrawalOrReturnExisting(
+    userId: string,
+    params: {
+      idempotencyKey: string;
+      chainId: number;
+      walletAddress: string;
+      details: Record<string, unknown>;
+    },
+  ) {
+    try {
+      return await this.prisma.transaction.create({
+        data: {
+          userId,
+          intentId: null,
+          status: 'submitting',
+          chainId: BigInt(params.chainId),
+          walletAddress: params.walletAddress,
+          operationType: 'withdraw',
+          idempotencyKey: params.idempotencyKey,
+          details: params.details as any,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code !== 'P2002') throw error;
+
+      const existing = await this.prisma.transaction.findFirst({
+        where: {
+          userId,
+          operationType: 'withdraw',
+          idempotencyKey: params.idempotencyKey,
+        },
+      });
+      if (!existing) throw error;
+      return existing;
+    }
   }
 }

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,51 +23,107 @@ export class TransactionsService {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
-    const chainId = dto.chainId;
+    const chainId = Number(wallet.chainId);
 
-    // Idempotency guard
-    if (dto.idempotencyKey) {
-      const duplicate = await this.prisma.transaction.findFirst({
+    if (dto.policyId) {
+      const policy = await this.prisma.userPolicy.findUnique({
         where: {
-          userId,
-          status: 'pending',
-          details: { path: ['idempotencyKey'], equals: dto.idempotencyKey },
+          userId_openfortPolicyId: {
+            userId,
+            openfortPolicyId: dto.policyId,
+          },
         },
       });
-      if (duplicate) {
-        throw new ConflictException(
-          `A pending transaction with idempotencyKey "${dto.idempotencyKey}" already exists (transactionId: ${duplicate.id})`,
-        );
-      }
+      if (!policy) throw new NotFoundException('Policy not found');
     }
 
-    const { transactionHash } = await this.openfort.sendTransaction({
-      accountId: wallet.openfortAccountId,
+    const tx = await this.createPendingOrReturnExisting(userId, {
+      operationType: 'send',
+      idempotencyKey: dto.idempotencyKey!,
       chainId,
-      interactions: dto.interactions,
-      policyId: dto.policyId,
-    });
-
-    const tx = await this.prisma.transaction.create({
-      data: {
-        userId,
-        intentId: transactionHash ?? '',
-        status: transactionHash ? 'confirmed' : 'pending',
-        chainId: BigInt(chainId),
-        walletAddress: wallet.walletAddress,
-        details: {
-          type: 'send',
-          interactions: dto.interactions as unknown as Record<string, unknown>[],
-          ...(dto.policyId ? { policyId: dto.policyId } : {}),
-          ...(dto.idempotencyKey ? { idempotencyKey: dto.idempotencyKey } : {}),
-        } as any,
+      walletAddress: wallet.walletAddress,
+      details: {
+        type: 'send',
+        interactions: dto.interactions as unknown as Record<string, unknown>[],
+        ...(dto.policyId ? { policyId: dto.policyId } : {}),
+        idempotencyKey: dto.idempotencyKey,
       },
     });
 
-    return {
-      transactionId: tx.id,
-      transactionHash,
-      status: tx.status,
-    };
+    if (tx.intentId || tx.txHash || tx.status !== 'submitting') {
+      return {
+        transactionId: tx.id,
+        transactionHash: tx.txHash ?? tx.intentId,
+        status: tx.status,
+      };
+    }
+
+    try {
+      const { transactionHash } = await this.openfort.sendTransaction({
+        accountId: wallet.openfortAccountId,
+        chainId,
+        interactions: dto.interactions,
+        policyId: dto.policyId,
+      });
+
+      const updated = await this.prisma.transaction.update({
+        where: { id: tx.id },
+        data: {
+          intentId: transactionHash ?? null,
+          txHash: transactionHash ?? null,
+          status: transactionHash ? 'confirmed' : 'pending',
+        },
+      });
+
+      return {
+        transactionId: updated.id,
+        transactionHash,
+        status: updated.status,
+      };
+    } catch (error) {
+      await this.prisma.transaction.update({
+        where: { id: tx.id },
+        data: { status: 'failed' },
+      });
+      throw error;
+    }
+  }
+
+  private async createPendingOrReturnExisting(
+    userId: string,
+    params: {
+      operationType: string;
+      idempotencyKey: string;
+      chainId: number;
+      walletAddress: string;
+      details: Record<string, unknown>;
+    },
+  ) {
+    try {
+      return await this.prisma.transaction.create({
+        data: {
+          userId,
+          intentId: null,
+          status: 'submitting',
+          chainId: BigInt(params.chainId),
+          walletAddress: params.walletAddress,
+          operationType: params.operationType,
+          idempotencyKey: params.idempotencyKey,
+          details: params.details as any,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code !== 'P2002') throw error;
+
+      const existing = await this.prisma.transaction.findFirst({
+        where: {
+          userId,
+          operationType: params.operationType,
+          idempotencyKey: params.idempotencyKey,
+        },
+      });
+      if (!existing) throw error;
+      return existing;
+    }
   }
 }

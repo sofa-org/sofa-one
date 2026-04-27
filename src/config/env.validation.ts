@@ -34,6 +34,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   DEFAULT_CHAIN_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  TRUST_PROXY?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

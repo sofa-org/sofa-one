@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { hashMessage } from 'viem';
 
@@ -39,10 +39,10 @@ const WALLET = {
 };
 
 const VALID_DTO: WithdrawDto = {
-  chainId: 84532,
   to: '0x1111111111111111111111111111111111111111',
   amount: '1000000', // 1 USDC
   token: 'USDC',
+  idempotencyKey: 'idem-key-123',
 };
 
 // Sufficient balance (2 USDC in micro-units)
@@ -57,6 +57,7 @@ describe('WalletService.withdraw()', () => {
   const mockFindUnique = jest.fn();
   const mockFindFirst = jest.fn();
   const mockCreate = jest.fn();
+  const mockUpdate = jest.fn();
 
   // Openfort mock handle
   const mockCreateTransactionIntent = jest.fn();
@@ -69,7 +70,8 @@ describe('WalletService.withdraw()', () => {
     mockFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
     mockCreateTransactionIntent.mockResolvedValue({ id: 'intent-1' });
-    mockCreate.mockResolvedValue({ id: 'tx-1', intentId: 'intent-1', status: 'pending' });
+    mockCreate.mockResolvedValue({ id: 'tx-1', intentId: null, status: 'submitting' });
+    mockUpdate.mockResolvedValue({ id: 'tx-1', intentId: 'intent-1', status: 'pending' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -78,7 +80,7 @@ describe('WalletService.withdraw()', () => {
           provide: PrismaService,
           useValue: {
             userWallet: { findUnique: mockFindUnique },
-            transaction: { findFirst: mockFindFirst, create: mockCreate },
+            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
           },
         },
         {
@@ -125,14 +127,16 @@ describe('WalletService.withdraw()', () => {
     );
   });
 
-  // ── 4. Idempotency conflict ──────────────────────────────────────────────────
+  // ── 4. Idempotency duplicate ─────────────────────────────────────────────────
 
-  it('throws ConflictException when idempotencyKey matches an existing pending tx', async () => {
-    mockFindFirst.mockResolvedValue({ id: 'tx-existing' });
+  it('returns the existing withdrawal when idempotencyKey was already submitted', async () => {
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+    mockFindFirst.mockResolvedValue({ id: 'tx-existing', intentId: 'intent-existing', status: 'pending' });
 
-    const dto: WithdrawDto = { ...VALID_DTO, idempotencyKey: 'idem-key-123' };
+    const result = await service.withdraw('user-1', VALID_DTO);
 
-    await expect(service.withdraw('user-1', dto)).rejects.toThrow(ConflictException);
+    expect(result).toEqual({ transactionId: 'tx-existing', intentId: 'intent-existing', status: 'pending' });
+    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
   });
 
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────
@@ -169,7 +173,7 @@ describe('WalletService.withdraw()', () => {
     expect(mockCreateTransactionIntent).toHaveBeenCalledTimes(1);
     expect(mockCreateTransactionIntent).toHaveBeenCalledWith(
       expect.objectContaining({
-        chainId: VALID_DTO.chainId,
+        chainId: Number(WALLET.chainId),
         accountId: WALLET.openfortAccountId,
       }),
     );
@@ -187,29 +191,26 @@ describe('WalletService.withdraw()', () => {
 
   // ── 8. Happy path with idempotencyKey ────────────────────────────────────────
 
-  it('stores idempotencyKey in transaction details and succeeds when no duplicate exists', async () => {
+  it('stores idempotencyKey in dedicated columns and details', async () => {
     const dto: WithdrawDto = { ...VALID_DTO, idempotencyKey: 'unique-key-abc' };
-
-    // No duplicate pending tx
-    mockFindFirst.mockResolvedValue(null);
-
     await service.withdraw('user-1', dto);
 
-    // idempotency check was performed
-    expect(mockFindFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          userId: 'user-1',
-          status: 'pending',
-        }),
-      }),
-    );
-
-    // idempotencyKey stored in details
     const createCall = mockCreate.mock.calls[0][0] as {
-      data: { details: Record<string, unknown> };
+      data: { idempotencyKey: string; operationType: string; details: Record<string, unknown> };
     };
+    expect(createCall.data.operationType).toBe('withdraw');
+    expect(createCall.data.idempotencyKey).toBe('unique-key-abc');
     expect(createCall.data.details).toMatchObject({ idempotencyKey: 'unique-key-abc' });
+  });
+
+  it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
+    mockCreateTransactionIntent.mockRejectedValue(new Error('Openfort down'));
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: 'tx-1' },
+      data: { status: 'failed' },
+    });
   });
 });
 

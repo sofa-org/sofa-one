@@ -136,8 +136,8 @@ export class CreatePolicyRuleDto {
 // ─── Policy DTOs ──────────────────────────────────────────────────────────────
 
 export class CreatePolicyDto {
-  @IsString()
-  scope: string; // 'project' | 'account' | 'transaction'
+  @IsIn(['account'])
+  scope: 'account';
 
   @IsOptional()
   @IsString()

@@ -50,6 +50,7 @@ model ApiKey {
 
   user User @relation(fields: [userId], references: [id])
 
+  @@index([keyPrefix])
   @@map("api_keys")
 }
 
@@ -61,11 +62,14 @@ model Transaction {
   txHash        String?  @map("tx_hash") @db.VarChar(66)
   chainId       BigInt   @map("chain_id")
   walletAddress String   @map("wallet_address") @db.VarChar(42)
+  operationType String?  @map("operation_type") @db.VarChar(30)
+  idempotencyKey String? @map("idempotency_key") @db.VarChar(64)
   details       Json?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id])
 
+  @@unique([userId, operationType, idempotencyKey])
   @@map("transactions")
 }
 

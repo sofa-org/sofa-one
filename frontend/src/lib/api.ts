@@ -66,7 +66,7 @@ export async function getDepositInfo(apiKey: string) {
 export async function withdraw(apiKey: string, to: string, amount: string, token: string) {
   return apiFetch('/v1/wallets/withdraw', apiKey, {
     method: 'POST',
-    body: JSON.stringify({ to, amount, token }),
+    body: JSON.stringify({ to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }
 
@@ -112,7 +112,7 @@ export async function withdrawAuth(
 ) {
   return authFetch('/v1/wallets/withdraw', getToken, {
     method: 'POST',
-    body: JSON.stringify({ to, amount, token }),
+    body: JSON.stringify({ to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }
 

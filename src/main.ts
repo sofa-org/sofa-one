@@ -6,13 +6,28 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import * as express from 'express';
 
+function parseTrustProxy(value: string | undefined, nodeEnv: string | undefined): string | string[] | false {
+  if (!value || value.trim() === '') {
+    if (nodeEnv === 'production') {
+      throw new Error('TRUST_PROXY must be set in production to trusted proxy IP/CIDR values');
+    }
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['false', '0', 'off'].includes(normalized)) return false;
+  if (['true', '1'].includes(normalized)) {
+    throw new Error('TRUST_PROXY must name trusted proxy IP/CIDR values, not a boolean or hop count');
+  }
+
+  return value.split(',').map((entry) => entry.trim()).filter(Boolean);
+}
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
 
-  // NOTE: trust proxy 1 assumes exactly one trusted reverse proxy (nginx/ALB) sits in front.
-  // Adjust the count if your deployment topology differs — incorrect values allow IP spoofing.
-  app.set('trust proxy', 1);
+  app.set('trust proxy', parseTrustProxy(process.env.TRUST_PROXY, process.env.NODE_ENV));
   app.use(
     helmet({
       contentSecurityPolicy: {

@@ -1,12 +1,11 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
-  Min,
+  IsOptional,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 
@@ -29,10 +28,6 @@ export class InteractionDto {
 }
 
 export class SendTransactionDto {
-  @IsInt()
-  @Min(1)
-  chainId: number;
-
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InteractionDto)
@@ -44,9 +39,10 @@ export class SendTransactionDto {
   @IsNotEmpty()
   policyId?: string;
 
-  /** Optional idempotency key to prevent duplicate submissions. */
-  @IsOptional()
+  /** Required idempotency key to prevent duplicate transaction submissions. */
   @IsString()
   @IsNotEmpty()
-  idempotencyKey?: string;
+  @MaxLength(64)
+  @Matches(/^[a-zA-Z0-9_\-]+$/, { message: 'idempotencyKey must be alphanumeric' })
+  idempotencyKey: string;
 }

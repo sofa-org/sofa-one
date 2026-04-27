@@ -8,13 +8,13 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
-import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
+import { ClerkUserGuard } from '../../common/guards/clerk-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PolicyService } from './policy.service';
 import { CreatePolicyDto, UpdatePolicyDto, CreatePolicyRuleDto } from './dto/policy.dto';
 
 @Controller('v1/policies')
-@UseGuards(EitherAuthGuard)
+@UseGuards(ClerkUserGuard)
 export class PolicyController {
   constructor(private readonly policyService: PolicyService) {}
 
@@ -32,55 +32,57 @@ export class PolicyController {
 
   /** GET /v1/policies/:id — get a policy */
   @Get(':id')
-  async get(@Param('id') id: string) {
-    return this.policyService.getPolicy(id);
+  async get(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.policyService.getPolicy(userId, id);
   }
 
   /** PATCH /v1/policies/:id — update a policy */
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdatePolicyDto) {
-    return this.policyService.updatePolicy(id, dto);
+  async update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: UpdatePolicyDto) {
+    return this.policyService.updatePolicy(userId, id, dto);
   }
 
   /** DELETE /v1/policies/:id — delete a policy */
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.policyService.deletePolicy(id);
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.policyService.deletePolicy(userId, id);
   }
 
   /** POST /v1/policies/:id/enable — enable a policy */
   @Post(':id/enable')
-  async enable(@Param('id') id: string) {
-    return this.policyService.enablePolicy(id);
+  async enable(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.policyService.enablePolicy(userId, id);
   }
 
   /** POST /v1/policies/:id/disable — disable a policy */
   @Post(':id/disable')
-  async disable(@Param('id') id: string) {
-    return this.policyService.disablePolicy(id);
+  async disable(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.policyService.disablePolicy(userId, id);
   }
 
   /** GET /v1/policies/:id/rules — list policy rules */
   @Get(':id/rules')
-  async listRules(@Param('id') policyId: string) {
-    return this.policyService.listPolicyRules(policyId);
+  async listRules(@CurrentUser('id') userId: string, @Param('id') policyId: string) {
+    return this.policyService.listPolicyRules(userId, policyId);
   }
 
   /** POST /v1/policies/:id/rules — create a policy rule */
   @Post(':id/rules')
   async createRule(
+    @CurrentUser('id') userId: string,
     @Param('id') policyId: string,
     @Body() dto: CreatePolicyRuleDto,
   ) {
-    return this.policyService.createPolicyRule(policyId, dto);
+    return this.policyService.createPolicyRule(userId, policyId, dto);
   }
 
   /** DELETE /v1/policies/:id/rules/:ruleIndex — delete a policy rule by index */
   @Delete(':id/rules/:ruleIndex')
   async deleteRule(
+    @CurrentUser('id') userId: string,
     @Param('id') policyId: string,
     @Param('ruleIndex') ruleIndex: string,
   ) {
-    return this.policyService.deletePolicyRule(policyId, parseInt(ruleIndex, 10));
+    return this.policyService.deletePolicyRule(userId, policyId, parseInt(ruleIndex, 10));
   }
 }

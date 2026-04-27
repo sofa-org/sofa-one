@@ -11,6 +11,9 @@ export default () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
+  security: {
+    trustProxy: process.env.TRUST_PROXY,
+  },
   chain: {
     defaultChainId: parseInt(process.env.DEFAULT_CHAIN_ID || '84532', 10),
   },
