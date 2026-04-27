@@ -19,10 +19,28 @@ interface ApiKeyRecord {
   allowedChains: number[];
 }
 
+const SUPPORTED_CHAINS = [
+  { id: 84532, name: 'Base Sepolia' },
+  { id: 8453, name: 'Base' },
+  { id: 1, name: 'Ethereum' },
+  { id: 11155111, name: 'Ethereum Sepolia' },
+  { id: 137, name: 'Polygon' },
+  { id: 80002, name: 'Polygon Amoy' },
+];
+
+const DEFAULT_ALLOWED_CHAINS = [84532];
+
+function formatChains(chainIds: number[]) {
+  return chainIds
+    .map((chainId) => SUPPORTED_CHAINS.find((chain) => chain.id === chainId)?.name || String(chainId))
+    .join(', ');
+}
+
 export default function ApiKeysPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
+  const [selectedChains, setSelectedChains] = useState<number[]>(DEFAULT_ALLOWED_CHAINS);
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -46,18 +64,30 @@ export default function ApiKeysPage() {
   }, [isLoaded, isSignedIn]);
 
   async function handleCreate() {
+    if (selectedChains.length === 0) {
+      setError('Select at least one chain for this API key.');
+      return;
+    }
+
     setActionLoading(true);
     setError(null);
     try {
-      const result = await createApiKeyAuth(getToken, newKeyName || undefined, [84532]);
+      const result = await createApiKeyAuth(getToken, newKeyName || undefined, selectedChains);
       setNewRawKey(result.rawKey);
       setNewKeyName('');
+      setSelectedChains(DEFAULT_ALLOWED_CHAINS);
       await fetchKeys();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setActionLoading(false);
     }
+  }
+
+  function handleToggleChain(chainId: number) {
+    setSelectedChains((current) =>
+      current.includes(chainId) ? current.filter((id) => id !== chainId) : [...current, chainId],
+    );
   }
 
   async function handleRevoke(id: string) {
@@ -136,22 +166,47 @@ export default function ApiKeysPage() {
       <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
         <h2 className="text-xl font-bold font-serif text-brand-text">Create New Key</h2>
-        <div className="mt-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 space-y-2">
+        <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-start">
+          <div className="space-y-2 lg:w-1/3">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
             <input
               type="text"
               placeholder="e.g. Production Backend"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
+              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
           </div>
-          <div className="flex items-end">
+          <div className="space-y-2 lg:flex-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Allowed Chains</label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {SUPPORTED_CHAINS.map((chain) => {
+                const isSelected = selectedChains.includes(chain.id);
+                return (
+                  <button
+                    type="button"
+                    key={chain.id}
+                    onClick={() => handleToggleChain(chain.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-brand-text text-white border-brand-text shadow-md ring-2 ring-brand-text/20 ring-offset-1'
+                        : 'bg-brand-surface/30 text-brand-text border-brand-border hover:border-brand-accent hover:bg-white hover:shadow-sm'
+                    }`}
+                  >
+                    {chain.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-brand-muted pt-1">API requests using this key will be limited to selected chains.</p>
+          </div>
+          <div className="pt-6 lg:pt-0 lg:mt-7">
             <button
               onClick={handleCreate}
-              disabled={actionLoading}
-              className="flex items-center gap-2 w-full sm:w-auto rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              disabled={actionLoading || selectedChains.length === 0}
+              className="flex items-center justify-center gap-2 w-full rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 lg:w-auto"
             >
               <Plus className="h-4 w-4" />
               Create Key
@@ -182,7 +237,7 @@ export default function ApiKeysPage() {
                   </span>
                   {key.name && <span className="text-sm text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">{key.name}</span>}
                   <span className="text-xs text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">
-                    Chains: {key.allowedChains?.join(', ') || '—'}
+                    Chains: {key.allowedChains?.length ? formatChains(key.allowedChains) : '—'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 w-full sm:w-auto">
