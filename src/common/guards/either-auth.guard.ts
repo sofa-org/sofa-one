@@ -1,15 +1,11 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { verifyToken } from '@clerk/backend';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 
 /**
  * Accepts either Clerk JWT (Authorization: Bearer) or X-API-Key header.
@@ -52,10 +48,7 @@ export class EitherAuthGuard implements CanActivate {
     );
   }
 
-  private async authenticateWithJwt(
-    request: any,
-    token: string,
-  ): Promise<boolean> {
+  private async authenticateWithJwt(request: any, token: string): Promise<boolean> {
     try {
       const payload = await verifyToken(token, {
         secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
@@ -78,28 +71,32 @@ export class EitherAuthGuard implements CanActivate {
     }
   }
 
-  private async authenticateWithApiKey(
-    request: any,
-    apiKey: string,
-  ): Promise<boolean> {
-    const prefix = apiKey.substring(0, 11);
+  private async authenticateWithApiKey(request: any, apiKey: string): Promise<boolean> {
+    const prefixes = getApiKeyLookupPrefixes(apiKey);
 
-    const keyRecord = await this.prisma.apiKey.findFirst({
+    const keyRecords = await this.prisma.apiKey.findMany({
       where: {
-        keyPrefix: prefix,
+        keyPrefix: { in: prefixes },
         revoked: false,
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       include: { user: true },
     });
 
-    if (!keyRecord) {
+    if (keyRecords.length === 0) {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // Verify argon2id hash matches stored hash
-    const isValid = await argon2.verify(keyRecord.apiKeyHash, apiKey);
-    if (!isValid) {
+    // Verify every prefix candidate. Prefixes are only a lookup hint and are not unique.
+    let keyRecord: (typeof keyRecords)[number] | undefined;
+    for (const candidate of keyRecords) {
+      if (await argon2.verify(candidate.apiKeyHash, apiKey)) {
+        keyRecord = candidate;
+        break;
+      }
+    }
+
+    if (!keyRecord) {
       throw new UnauthorizedException('Invalid API key');
     }
 
@@ -124,9 +121,7 @@ export class EitherAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractBearerToken(request: {
-    headers: Record<string, string>;
-  }): string | undefined {
+  private extractBearerToken(request: { headers: Record<string, string> }): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

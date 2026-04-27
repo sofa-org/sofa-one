@@ -7,6 +7,7 @@ jest.mock('../../core/openfort/openfort.service', () => ({
 import { TransactionsService } from './transactions.service';
 
 describe('TransactionsService.send()', () => {
+  const apiKeyPrefix = 'sk_1234567890abcdef12345678';
   const wallet = {
     openfortAccountId: 'acc-1',
     walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
@@ -22,7 +23,7 @@ describe('TransactionsService.send()', () => {
 
   const apiKeyContext = {
     id: 'api-key-1',
-    keyPrefix: 'sk_test1234',
+    keyPrefix: apiKeyPrefix,
     name: 'Production key',
     allowedChains: [8453],
   };
@@ -41,8 +42,17 @@ describe('TransactionsService.send()', () => {
     jest.clearAllMocks();
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
     prisma.userPolicy.findUnique.mockResolvedValue({ id: 'link-1' });
-    prisma.transaction.create.mockResolvedValue({ id: 'tx-1', status: 'submitting', intentId: null, txHash: null });
-    prisma.transaction.update.mockResolvedValue({ id: 'tx-1', status: 'confirmed', txHash: '0xhash' });
+    prisma.transaction.create.mockResolvedValue({
+      id: 'tx-1',
+      status: 'submitting',
+      intentId: null,
+      txHash: null,
+    });
+    prisma.transaction.update.mockResolvedValue({
+      id: 'tx-1',
+      status: 'confirmed',
+      txHash: '0xhash',
+    });
     openfort.sendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     service = new TransactionsService(prisma, openfort);
   });
@@ -55,7 +65,7 @@ describe('TransactionsService.send()', () => {
         userId: 'user-1',
         apiKeyId: 'api-key-1',
         authMethod: 'api_key',
-        apiKeyPrefix: 'sk_test1234',
+        apiKeyPrefix,
         apiKeyName: 'Production key',
         status: 'submitting',
         chainId: BigInt(8453),
@@ -71,8 +81,12 @@ describe('TransactionsService.send()', () => {
         }),
       }),
     });
-    expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty('interactions');
-    expect(openfort.sendTransaction).toHaveBeenCalledWith(expect.objectContaining({ chainId: 8453 }));
+    expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty(
+      'interactions',
+    );
+    expect(openfort.sendTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ chainId: 8453 }),
+    );
   });
 
   it('rejects Clerk-authenticated transaction submission before loading the wallet', async () => {
@@ -85,11 +99,20 @@ describe('TransactionsService.send()', () => {
 
   it('returns existing transaction on idempotency collision without resending', async () => {
     prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
-    prisma.transaction.findFirst.mockResolvedValue({ id: 'tx-existing', status: 'pending', intentId: null, txHash: null });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-existing',
+      status: 'pending',
+      intentId: null,
+      txHash: null,
+    });
 
     const result = await service.send('user-1', dto as any, apiKeyContext);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'pending' });
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'pending',
+    });
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
@@ -104,14 +127,18 @@ describe('TransactionsService.send()', () => {
 
     const result = await service.send('user-1', dto as any, apiKeyContext);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'submitting',
+    });
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
   it('rejects API keys that are not allowed to use the requested chain', async () => {
-    await expect(service.send('user-1', dto as any, { ...apiKeyContext, allowedChains: [84532] })).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      service.send('user-1', dto as any, { ...apiKeyContext, allowedChains: [84532] }),
+    ).rejects.toThrow(BadRequestException);
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
@@ -125,21 +152,27 @@ describe('TransactionsService.send()', () => {
       requestHash: 'different-request',
     });
 
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      BadRequestException,
+    );
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
   it('rejects unowned policyId', async () => {
     prisma.userPolicy.findUnique.mockResolvedValue(null);
 
-    await expect(service.send('user-1', { ...dto, policyId: 'pol-2' } as any, apiKeyContext)).rejects.toThrow(NotFoundException);
+    await expect(
+      service.send('user-1', { ...dto, policyId: 'pol-2' } as any, apiKeyContext),
+    ).rejects.toThrow(NotFoundException);
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
   it('marks transaction failed and stores summarized failure reason when Openfort submission fails', async () => {
     openfort.sendTransaction.mockRejectedValue(new Error('Openfort rejected transaction'));
 
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow('Openfort rejected transaction');
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Openfort rejected transaction',
+    );
 
     expect(prisma.transaction.update).toHaveBeenCalledWith({
       where: { id: 'tx-1' },

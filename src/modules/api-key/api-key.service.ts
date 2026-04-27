@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 import { DEFAULT_CHAIN_ID, getSupportedChain } from '../../common/chains/supported-chains';
+import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
 
 @Injectable()
 export class ApiKeyService {
@@ -22,7 +23,7 @@ export class ApiKeyService {
 
     const secret = randomBytes(32).toString('hex');
     const rawKey = `sk_${secret}`;
-    const keyPrefix = rawKey.substring(0, 11); // "sk_" + 8 hex chars
+    const keyPrefix = getApiKeyPrefix(rawKey);
 
     const hash = await argon2.hash(rawKey, {
       type: argon2.argon2id,

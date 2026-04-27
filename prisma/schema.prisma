@@ -41,7 +41,7 @@ model ApiKey {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String    @map("user_id") @db.Uuid
   apiKeyHash    String    @map("api_key_hash") @db.Text
-  keyPrefix     String    @map("key_prefix") @db.VarChar(12)
+  keyPrefix     String    @map("key_prefix") @db.VarChar(32)
   name          String?   @db.VarChar(100)
   expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
   revoked       Boolean   @default(false)
@@ -63,7 +63,7 @@ model Transaction {
   userId           String    @map("user_id") @db.Uuid
   apiKeyId         String?   @map("api_key_id") @db.Uuid
   authMethod       String    @default("api_key") @map("auth_method") @db.VarChar(20)
-  apiKeyPrefix     String?   @map("api_key_prefix") @db.VarChar(12)
+  apiKeyPrefix     String?   @map("api_key_prefix") @db.VarChar(32)
   apiKeyName       String?   @map("api_key_name") @db.VarChar(100)
   intentId         String?   @map("intent_id") @db.VarChar(255)
   status           String    @db.VarChar(20)
@@ -93,7 +93,7 @@ model SigningRequest {
   userId        String    @map("user_id") @db.Uuid
   apiKeyId      String?   @map("api_key_id") @db.Uuid
   authMethod    String    @default("api_key") @map("auth_method") @db.VarChar(20)
-  apiKeyPrefix  String?   @map("api_key_prefix") @db.VarChar(12)
+  apiKeyPrefix  String?   @map("api_key_prefix") @db.VarChar(32)
   apiKeyName    String?   @map("api_key_name") @db.VarChar(100)
   type          String    @db.VarChar(20)
   chainId       BigInt?   @map("chain_id")

@@ -1,4 +1,9 @@
-import { BadRequestException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { hashMessage } from 'viem';
 
@@ -48,9 +53,10 @@ const VALID_DTO: WithdrawDto = {
 
 // Sufficient balance (2 USDC in micro-units)
 const SUFFICIENT_BALANCE = BigInt('2000000');
+const API_KEY_PREFIX = 'sk_1234567890abcdef12345678';
 const API_KEY_CONTEXT = {
   id: 'api-key-1',
-  keyPrefix: 'sk_test1234',
+  keyPrefix: API_KEY_PREFIX,
   name: 'Production key',
   allowedChains: [84532],
 };
@@ -138,11 +144,19 @@ describe('WalletService.withdraw()', () => {
 
   it('returns the existing withdrawal when idempotencyKey was already submitted', async () => {
     mockCreate.mockRejectedValue({ code: 'P2002' });
-    mockFindFirst.mockResolvedValue({ id: 'tx-existing', intentId: 'intent-existing', status: 'pending' });
+    mockFindFirst.mockResolvedValue({
+      id: 'tx-existing',
+      intentId: 'intent-existing',
+      status: 'pending',
+    });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', intentId: 'intent-existing', status: 'pending' });
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      intentId: 'intent-existing',
+      status: 'pending',
+    });
     expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
   });
 
@@ -279,8 +293,15 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage('Hello, SOFA ONE!'));
-    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+    expect(mockSignData).toHaveBeenCalledWith(
+      WALLET.openfortAccountId,
+      hashMessage('Hello, SOFA ONE!'),
+    );
+    expect(result).toEqual({
+      signature: '0xsigned',
+      walletAddress: WALLET.walletAddress,
+      type: 'message',
+    });
   });
 
   it('audits a successful signing request without storing the plaintext message', async () => {
@@ -295,7 +316,7 @@ describe('WalletService.sign()', () => {
         userId: 'user-1',
         apiKeyId: 'api-key-1',
         authMethod: 'api_key',
-        apiKeyPrefix: 'sk_test1234',
+        apiKeyPrefix: API_KEY_PREFIX,
         apiKeyName: 'Production key',
         type: 'message',
         chainId: BigInt(84532),
@@ -317,9 +338,9 @@ describe('WalletService.sign()', () => {
   });
 
   it('rejects Clerk-authenticated signing before loading the wallet or creating an audit record', async () => {
-    await expect(service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any)).rejects.toThrow(
-      UnauthorizedException,
-    );
+    await expect(
+      service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any),
+    ).rejects.toThrow(UnauthorizedException);
 
     expect(mockFindUnique).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
@@ -330,10 +351,12 @@ describe('WalletService.sign()', () => {
     mockSignData.mockRejectedValue(new Error('Openfort down'));
 
     await expect(
-      service.sign('user-1', { type: 'message', message: 'Hello', chainId: 84532 } as any, API_KEY_CONTEXT),
-    ).rejects.toThrow(
-      'Openfort down',
-    );
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('Openfort down');
 
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
       where: { id: 'signing-request-1' },
@@ -344,9 +367,17 @@ describe('WalletService.sign()', () => {
   it('returns the signature when the post-sign audit update fails', async () => {
     mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
 
-    const result = await service.sign('user-1', { type: 'message', message: 'Hello', chainId: 84532 } as any, API_KEY_CONTEXT);
+    const result = await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello', chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
 
-    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+    expect(result).toEqual({
+      signature: '0xsigned',
+      walletAddress: WALLET.walletAddress,
+      type: 'message',
+    });
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
       where: { id: 'signing-request-1' },
       data: { status: 'signed', completedAt: expect.any(Date) },
@@ -358,18 +389,28 @@ describe('WalletService.sign()', () => {
     mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
 
     await expect(
-      service.sign('user-1', { type: 'message', message: 'Hello', chainId: 84532 } as any, API_KEY_CONTEXT),
-    ).rejects.toThrow(
-      'Openfort down',
-    );
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('Openfort down');
   });
 
   it('uses EIP-191 hash for raw hex message data', async () => {
     const raw = '0x68656c6c6f20776f726c64';
-    const result = await service.sign('user-1', { type: 'message', message: { raw }, chainId: 84532 } as any, API_KEY_CONTEXT);
+    const result = await service.sign(
+      'user-1',
+      { type: 'message', message: { raw }, chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
 
     expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage({ raw }));
-    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+    expect(result).toEqual({
+      signature: '0xsigned',
+      walletAddress: WALLET.walletAddress,
+      type: 'message',
+    });
   });
 
   it('rejects API-key hash signing before creating an audit record', async () => {
@@ -399,7 +440,9 @@ describe('WalletService.sign()', () => {
         id: API_KEY_CONTEXT.id,
         allowedChains: [84532],
       }),
-    ).rejects.toThrow('typedData.domain.chainId is required when signing typed data with an API key');
+    ).rejects.toThrow(
+      'typedData.domain.chainId is required when signing typed data with an API key',
+    );
   });
 
   it('requires typedData.domain.chainId to match chainId for API-key typed data signing', async () => {
@@ -416,23 +459,36 @@ describe('WalletService.sign()', () => {
   it('allows API-key typed data signing when chainId matches and is allowed', async () => {
     const typedData = createTypedData(84532);
 
-    const result = await service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
-      id: API_KEY_CONTEXT.id,
-      allowedChains: [84532],
-    });
+    const result = await service.sign(
+      'user-1',
+      { type: 'typed_data', typedData, chainId: 84532 } as any,
+      {
+        id: API_KEY_CONTEXT.id,
+        allowedChains: [84532],
+      },
+    );
 
-    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, expect.stringMatching(/^0x[a-f0-9]{64}$/));
-    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'typed_data' });
+    expect(mockSignData).toHaveBeenCalledWith(
+      WALLET.openfortAccountId,
+      expect.stringMatching(/^0x[a-f0-9]{64}$/),
+    );
+    expect(result).toEqual({
+      signature: '0xsigned',
+      walletAddress: WALLET.walletAddress,
+      type: 'typed_data',
+    });
   });
 
   it('throws NotFoundException when wallet not found', async () => {
     mockFindUnique.mockResolvedValue(null);
 
     await expect(
-      service.sign('user-1', { type: 'message', message: 'Hello', chainId: 84532 } as any, API_KEY_CONTEXT),
-    ).rejects.toThrow(
-      NotFoundException,
-    );
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow(NotFoundException);
   });
 });
 

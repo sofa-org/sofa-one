@@ -16,6 +16,7 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
 import { OpenfortService } from '../src/core/openfort/openfort.service';
+import { API_KEY_PREFIX_LENGTH } from '../src/common/api-key/api-key-prefix';
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
@@ -23,8 +24,7 @@ process.env.CLERK_SECRET_KEY = 'sk_test_fake_clerk_key_for_testing';
 process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres:postgres@localhost:5432/agent_wallet';
+  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/agent_wallet';
 
 // ── Mock OpenfortService ───────────────────────────────────────────────
 const mockOpenfortService = {
@@ -60,9 +60,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
     prisma = app.get(PrismaService);
@@ -323,10 +321,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
             {
               contract: TEST_USDC_CONTRACT,
               functionName: 'transfer',
-              functionArgs: [
-                '0x1111111111111111111111111111111111111111',
-                '200000',
-              ],
+              functionArgs: ['0x1111111111111111111111111111111111111111', '200000'],
             },
           ],
         })
@@ -344,10 +339,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
           interactions: expect.arrayContaining([
             expect.objectContaining({ functionArgs: [TEST_TARGET_ADDRESS, '100000'] }),
             expect.objectContaining({
-              functionArgs: [
-                '0x1111111111111111111111111111111111111111',
-                '200000',
-              ],
+              functionArgs: ['0x1111111111111111111111111111111111111111', '200000'],
             }),
           ]),
         }),
@@ -361,9 +353,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
 
   describe('Missing API Key → 401', () => {
     it('POST /v1/wallets/deposit-info without auth → 401', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .expect(401);
+      const res = await request(app.getHttpServer()).post('/v1/wallets/deposit-info').expect(401);
 
       expect(res.body.message).toMatch(/Missing authentication/i);
     });
@@ -392,9 +382,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
     });
 
     it('GET /v1/transactions/history without auth → 401', async () => {
-      await request(app.getHttpServer())
-        .get('/v1/transactions/history')
-        .expect(401);
+      await request(app.getHttpServer()).get('/v1/transactions/history').expect(401);
     });
   });
 
@@ -410,8 +398,8 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
 
     it('rejects a key with correct prefix but wrong secret', async () => {
       // Use the real prefix but change the rest
-      const prefix = testApiKey.substring(0, 11);
-      const fakeKey = prefix + 'x'.repeat(testApiKey.length - 11);
+      const prefix = testApiKey.substring(0, API_KEY_PREFIX_LENGTH);
+      const fakeKey = prefix + 'x'.repeat(testApiKey.length - API_KEY_PREFIX_LENGTH);
 
       await request(app.getHttpServer())
         .post('/v1/wallets/deposit-info')
@@ -469,10 +457,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
       await apiKeyService.revokeAllKeys(testUserId);
 
       // Generate a new key
-      const newKeyResult = await apiKeyService.createApiKey(
-        testUserId,
-        'Refreshed Key',
-      );
+      const newKeyResult = await apiKeyService.createApiKey(testUserId, 'Refreshed Key');
 
       // Old key fails
       await request(app.getHttpServer())
@@ -574,9 +559,7 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
         .post('/v1/wallets/deposit-info')
         .set('X-API-Key', user2Key.rawKey)
         .expect(201);
-      expect(res2.body.walletAddress).toBe(
-        '0xaaaaaaaabbbbbbbbccccccccddddddddeeeeeeee',
-      );
+      expect(res2.body.walletAddress).toBe('0xaaaaaaaabbbbbbbbccccccccddddddddeeeeeeee');
     });
 
     it('transaction history is isolated per user', async () => {

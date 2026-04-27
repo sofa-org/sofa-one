@@ -52,6 +52,6 @@ export class SendTransactionDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(64)
-  @Matches(/^[a-zA-Z0-9_\-]+$/, { message: 'idempotencyKey must be alphanumeric' })
+  @Matches(/^[a-zA-Z0-9_-]+$/, { message: 'idempotencyKey must be alphanumeric' })
   idempotencyKey: string;
 }

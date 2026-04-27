@@ -22,8 +22,8 @@ Server-side automated blockchain signing for users authenticated via social OAut
 ### Key Properties
 
 - **Private keys never leave the TEE** — all signing happens inside Openfort / AWS Nitro Enclaves.
-- **Dual auth** — every wallet operation requires both a platform JWT _and_ a user `X-API-Key` header.
-- **API keys hashed with Argon2** — never stored in plaintext; the first 11 characters (`keyPrefix`) are stored for fast DB lookup before hash comparison.
+- **Split auth** — public signing/transaction APIs require `X-API-Key`; dashboard-only APIs require Clerk JWT plus frontend-origin checks.
+- **API keys hashed with Argon2** — never stored in plaintext; a 27-character lookup prefix (`sk_` + 24 hex chars) is stored for DB lookup, and every prefix candidate is hash-verified to tolerate collisions/legacy keys.
 - **Gas paid in USDC** — via Openfort `charge_custom_tokens` policy; users don't need native tokens.
 
 ## Tech Stack
@@ -197,7 +197,7 @@ Four core tables managed by Prisma:
 
 - **users** — social provider, social ID, email
 - **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
-- **api_keys** — Argon2-hashed keys; `keyPrefix` (first 11 chars) used for fast DB lookup; optional IP/expiry allowlists
+- **api_keys** — Argon2-hashed keys; `keyPrefix` (27 chars for new keys, legacy 11 chars supported) used for lookup before full hash verification; optional IP/expiry allowlists
 - **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address, request/interactions hashes, and API-key attribution snapshot
 
 ## Development Phases
