@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/comm
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
+import { ApiKeyOnlyGuard } from '../../common/guards/api-key-only.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { ClerkUserGuard } from '../../common/guards/clerk-user.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
@@ -29,9 +30,9 @@ export class WalletController {
     return this.walletService.getDepositInfo(userId, Number(chainId));
   }
 
-  /** POST /v1/wallets/sign — public API: sign data without sending a transaction. */
+  /** POST /v1/wallets/sign — API-key only: sign data without sending a transaction. */
   @Post('sign')
-  @UseGuards(EitherAuthGuard)
+  @UseGuards(EitherAuthGuard, ApiKeyOnlyGuard)
   async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto, @Req() req: any) {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }

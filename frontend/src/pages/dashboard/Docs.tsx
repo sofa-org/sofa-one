@@ -7,7 +7,7 @@ const tagClass =
 const fieldRows = {
   sign: [
     ["type", "string", "Yes", "message | typed_data"],
-    ["chainId", "integer", "No", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
+    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key."],
     ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain, types, primaryType, and message."],
   ],
@@ -110,14 +110,12 @@ export default function APIDocsPage() {
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
           <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for programmatic requests. Clerk bearer tokens are also accepted for authenticated frontend sessions.
+            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Clerk bearer tokens are only accepted by frontend-only dashboard endpoints.
           </p>
         </div>
       </section>
 
-      <CodeBlock>{`X-API-Key: sk_live_...
-# or
-Authorization: Bearer <Clerk JWT>`}</CodeBlock>
+      <CodeBlock>{`X-API-Key: sk_live_...`}</CodeBlock>
 
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">

@@ -78,7 +78,7 @@ paths:
       tags: [Signing]
       summary: 签名数据
       description: |
-        使用用户的 Backend Wallet 对数据进行离线签名（不广播交易）。
+        使用用户的 Backend Wallet 对数据进行离线签名（不广播交易）。此端点只接受 `X-API-Key`，不接受 Clerk Bearer JWT。
 
         支持两种签名类型。出于安全原因，原始 hash 签名不开放：
 
@@ -210,7 +210,7 @@ components:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [type]
+      required: [type, chainId]
       properties:
         type:
           type: string
@@ -225,7 +225,7 @@ components:
         chainId:
           type: integer
           minimum: 1
-          description: API Key 签名时的链上下文；`typed_data` 可由 `domain.chainId` 提供
+          description: 必填链上下文；必须在 API Key 允许的链范围内。`typed_data.domain.chainId` 如存在必须与该值一致。
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:

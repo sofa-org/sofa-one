@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -22,7 +23,12 @@ const ERC20_BALANCE_ABI = [
   },
 ] as const;
 
-type ApiKeySigningContext = { id?: string; allowedChains: number[] };
+type ApiKeySigningContext = {
+  id?: string;
+  keyPrefix?: string;
+  name?: string | null;
+  allowedChains: number[];
+};
 
 @Injectable()
 export class WalletService {
@@ -50,10 +56,14 @@ export class WalletService {
 
   /** Sign data with the user's backend wallet (no transaction broadcast). */
   async sign(userId: string, params: SignDto, apiKeyRecord?: ApiKeySigningContext) {
+    if (!apiKeyRecord) {
+      throw new UnauthorizedException('API key is required for signing');
+    }
+
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    const chainId = this.resolveSigningChainId(params, Boolean(apiKeyRecord));
+    const chainId = this.resolveSigningChainId(params);
     if (chainId !== undefined) {
       getSupportedChain(chainId);
       assertAllowedApiKeyChain(apiKeyRecord, chainId);
@@ -77,6 +87,9 @@ export class WalletService {
       data: {
         userId,
         apiKeyId: apiKeyRecord?.id,
+        authMethod: 'api_key',
+        apiKeyPrefix: apiKeyRecord?.keyPrefix,
+        apiKeyName: apiKeyRecord?.name,
         type: params.type,
         chainId: chainId === undefined ? undefined : BigInt(chainId),
         walletAddress: wallet.walletAddress,
@@ -339,14 +352,14 @@ export class WalletService {
     }
   }
 
-  private resolveSigningChainId(params: SignDto, apiKeyAuth: boolean): number | undefined {
+  private resolveSigningChainId(params: SignDto): number | undefined {
     if ((params as { type: string }).type === 'hash') {
       throw new BadRequestException('hash signing is not allowed');
     }
 
     const typedDataChainId = params.typedData?.domain?.chainId;
 
-    if (apiKeyAuth && params.type === 'typed_data') {
+    if (params.type === 'typed_data') {
       if (params.chainId === undefined) {
         throw new BadRequestException('chainId is required when signing typed data with an API key');
       }
@@ -359,7 +372,7 @@ export class WalletService {
     }
 
     const chainId = params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
-    if (apiKeyAuth && chainId === undefined) {
+    if (chainId === undefined) {
       throw new BadRequestException('chainId is required when signing with an API key');
     }
     return chainId;
