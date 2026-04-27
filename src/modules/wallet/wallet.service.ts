@@ -8,7 +8,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
-import type { SignDto } from './dto/sign.dto';
+import type { SignDto, SignMessage } from './dto/sign.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
 const ERC20_BALANCE_ABI = [
@@ -58,7 +58,7 @@ export class WalletService {
     switch (params.type) {
       case 'message':
         // Compute EIP-191 personal message hash → raw ECDSA sign
-        data = hashMessage(params.message!);
+        data = this.hashSignMessage(params.message!);
         break;
       case 'typed_data': {
         // Compute EIP-712 struct hash → raw ECDSA sign
@@ -311,5 +311,13 @@ export class WalletService {
       throw new BadRequestException('chainId is required when signing with an API key');
     }
     return chainId;
+  }
+
+  private hashSignMessage(message: SignMessage): string {
+    if (typeof message === 'string') {
+      return hashMessage(message);
+    }
+
+    return hashMessage({ raw: message.raw });
   }
 }

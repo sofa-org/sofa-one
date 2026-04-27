@@ -8,7 +8,36 @@ import {
   Min,
   ValidateIf,
   Matches,
+  ValidateBy,
+  type ValidationOptions,
 } from 'class-validator';
+
+export type SignMessage = string | { raw: `0x${string}` };
+
+function isSignMessage(value: unknown): value is SignMessage {
+  if (typeof value === 'string') return value.length > 0;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+
+  const rawMessage = value as { raw?: unknown };
+  return (
+    Object.keys(value).length === 1 &&
+    typeof rawMessage.raw === 'string' &&
+    /^0x(?:[a-fA-F0-9]{2})*$/.test(rawMessage.raw)
+  );
+}
+
+function IsSignMessage(validationOptions?: ValidationOptions) {
+  return ValidateBy(
+    {
+      name: 'isSignMessage',
+      validator: {
+        validate: isSignMessage,
+        defaultMessage: () => 'message must be a non-empty string or { raw: "0x..." } hex data',
+      },
+    },
+    validationOptions,
+  );
+}
 
 export class SignDto {
   /** Chain context for API-key authorization. Required for API-key message/hash signing. */
@@ -23,11 +52,11 @@ export class SignDto {
   })
   type: 'message' | 'typed_data' | 'hash';
 
-  /** Plain-text message to sign (required when type = 'message'). */
+  /** Plain-text message or hex data to sign (required when type = 'message'). */
   @ValidateIf((o) => o.type === 'message')
-  @IsString()
   @IsNotEmpty({ message: 'message is required when type is message' })
-  message?: string;
+  @IsSignMessage()
+  message?: SignMessage;
 
   /**
    * EIP-712 typed data object (required when type = 'typed_data').

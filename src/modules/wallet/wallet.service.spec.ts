@@ -250,6 +250,14 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
   });
 
+  it('uses EIP-191 hash for raw hex message data', async () => {
+    const raw = '0x68656c6c6f20776f726c64';
+    const result = await service.sign('user-1', { type: 'message', message: { raw } } as any);
+
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage({ raw }));
+    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+  });
+
   it('throws NotFoundException when wallet not found', async () => {
     mockFindUnique.mockResolvedValue(null);
 
