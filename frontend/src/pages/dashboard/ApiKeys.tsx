@@ -45,6 +45,7 @@ export default function ApiKeysPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
 
   async function fetchKeys() {
     try {
@@ -236,7 +237,7 @@ export default function ApiKeysPage() {
               <span>Created</span>
               <span className="sr-only">Actions</span>
             </div>
-            {keys.map((key) => (
+            {sortedKeys.map((key) => (
               <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(120px,1fr)_minmax(180px,1.4fr)_100px_110px_36px] md:items-center md:gap-4">
                 <span className="font-mono text-sm text-brand-text">{key.keyPrefix}...</span>
                 <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
