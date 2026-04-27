@@ -6,7 +6,7 @@ export class ApiKeyOnlyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<{ apiKeyRecord?: unknown }>();
     if (!request.apiKeyRecord) {
-      throw new UnauthorizedException('API key is required for signing');
+      throw new UnauthorizedException('API key is required');
     }
     return true;
   }

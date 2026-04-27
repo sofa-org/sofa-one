@@ -163,7 +163,7 @@ The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the exa
 | `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |
 | `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
 
-> **Access control split**: `POST /v1/wallets/sign` is API-key only. `POST /v1/transactions/send` is a public API endpoint where an `X-API-Key` alone is sufficient. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
+> **Access control split**: `POST /v1/wallets/sign` and `POST /v1/transactions/send` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
 
 Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 
@@ -198,7 +198,7 @@ Four core tables managed by Prisma:
 - **users** — social provider, social ID, email
 - **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
 - **api_keys** — Argon2-hashed keys; `keyPrefix` (first 11 chars) used for fast DB lookup; optional IP/expiry allowlists
-- **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address
+- **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address, request/interactions hashes, and API-key attribution snapshot
 
 ## Development Phases
 

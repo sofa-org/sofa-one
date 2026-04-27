@@ -52,28 +52,39 @@ model ApiKey {
 
   user            User             @relation(fields: [userId], references: [id])
   signingRequests SigningRequest[]
+  transactions    Transaction[]
 
   @@index([keyPrefix])
   @@map("api_keys")
 }
 
 model Transaction {
-  id             String   @id @default(uuid()) @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  intentId       String?  @map("intent_id") @db.VarChar(255)
-  status         String   @db.VarChar(20)
-  txHash         String?  @map("tx_hash") @db.VarChar(66)
-  chainId        BigInt   @map("chain_id")
-  walletAddress  String   @map("wallet_address") @db.VarChar(42)
-  operationType  String?  @map("operation_type") @db.VarChar(30)
-  idempotencyKey String?  @map("idempotency_key") @db.VarChar(64)
-  requestHash    String?  @map("request_hash") @db.VarChar(64)
-  details        Json?
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  apiKeyId         String?   @map("api_key_id") @db.Uuid
+  authMethod       String    @default("api_key") @map("auth_method") @db.VarChar(20)
+  apiKeyPrefix     String?   @map("api_key_prefix") @db.VarChar(12)
+  apiKeyName       String?   @map("api_key_name") @db.VarChar(100)
+  intentId         String?   @map("intent_id") @db.VarChar(255)
+  status           String    @db.VarChar(20)
+  txHash           String?   @map("tx_hash") @db.VarChar(66)
+  chainId          BigInt    @map("chain_id")
+  walletAddress    String    @map("wallet_address") @db.VarChar(42)
+  operationType    String?   @map("operation_type") @db.VarChar(30)
+  idempotencyKey   String?   @map("idempotency_key") @db.VarChar(64)
+  requestHash      String?   @map("request_hash") @db.VarChar(64)
+  interactionsHash String?   @map("interactions_hash") @db.VarChar(64)
+  failureReason    String?   @map("failure_reason") @db.VarChar(500)
+  details          Json?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz()
 
-  user User @relation(fields: [userId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
 
   @@unique([userId, operationType, chainId, idempotencyKey])
+  @@index([apiKeyId, createdAt])
+  @@index([requestHash])
   @@map("transactions")
 }
 

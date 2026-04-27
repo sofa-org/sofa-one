@@ -2,12 +2,20 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { SendTransactionDto } from './dto/send-transaction.dto';
+
+type ApiKeyTransactionContext = {
+  id?: string;
+  keyPrefix?: string;
+  name?: string | null;
+  allowedChains: number[];
+};
 
 @Injectable()
 export class TransactionsService {
@@ -17,7 +25,11 @@ export class TransactionsService {
   ) {}
 
   /** Send a raw transaction from the user's backend wallet. */
-  async send(userId: string, dto: SendTransactionDto, apiKeyRecord?: { allowedChains: number[] }) {
+  async send(userId: string, dto: SendTransactionDto, apiKeyRecord?: ApiKeyTransactionContext) {
+    if (!apiKeyRecord) {
+      throw new UnauthorizedException('API key is required');
+    }
+
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
@@ -47,16 +59,22 @@ export class TransactionsService {
       interactions: dto.interactions,
       policyId: dto.policyId ?? null,
     });
+    const interactionsHash = hashRequest(dto.interactions);
 
     const { tx, created } = await this.createPendingOrReturnExisting(userId, {
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      apiKeyName: apiKeyRecord.name,
       operationType: 'send',
       idempotencyKey: dto.idempotencyKey!,
       chainId,
       requestHash,
+      interactionsHash,
       walletAddress: wallet.walletAddress,
       details: {
         type: 'send',
-        interactions: dto.interactions as unknown as Record<string, unknown>[],
+        interactionCount: dto.interactions.length,
+        interactionsHash,
         ...(dto.policyId ? { policyId: dto.policyId } : {}),
         idempotencyKey: dto.idempotencyKey,
         requestHash,
@@ -85,6 +103,7 @@ export class TransactionsService {
           intentId: transactionHash ?? null,
           txHash: transactionHash ?? null,
           status: transactionHash ? 'confirmed' : 'pending',
+          completedAt: transactionHash ? new Date() : null,
         },
       });
 
@@ -96,7 +115,11 @@ export class TransactionsService {
     } catch (error) {
       await this.prisma.transaction.update({
         where: { id: tx.id },
-        data: { status: 'unknown' },
+        data: {
+          status: 'failed',
+          failureReason: this.toFailureReason(error),
+          completedAt: new Date(),
+        },
       });
       throw error;
     }
@@ -105,10 +128,14 @@ export class TransactionsService {
   private async createPendingOrReturnExisting(
     userId: string,
     params: {
+      apiKeyId?: string;
+      apiKeyPrefix?: string;
+      apiKeyName?: string | null;
       operationType: string;
       idempotencyKey: string;
       chainId: number;
       requestHash: string;
+      interactionsHash: string;
       walletAddress: string;
       details: Record<string, unknown>;
     },
@@ -117,6 +144,10 @@ export class TransactionsService {
       const tx = await this.prisma.transaction.create({
         data: {
           userId,
+          apiKeyId: params.apiKeyId,
+          authMethod: 'api_key',
+          apiKeyPrefix: params.apiKeyPrefix,
+          apiKeyName: params.apiKeyName,
           intentId: null,
           status: 'submitting',
           chainId: BigInt(params.chainId),
@@ -124,6 +155,7 @@ export class TransactionsService {
           operationType: params.operationType,
           idempotencyKey: params.idempotencyKey,
           requestHash: params.requestHash,
+          interactionsHash: params.interactionsHash,
           details: params.details as any,
         },
       });
@@ -145,5 +177,10 @@ export class TransactionsService {
       }
       return { tx: existing, created: false };
     }
+  }
+
+  private toFailureReason(error: unknown): string {
+    const message = error instanceof Error ? error.message : 'Transaction submission failed';
+    return message.slice(0, 500);
   }
 }

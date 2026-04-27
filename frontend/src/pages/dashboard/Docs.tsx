@@ -12,7 +12,7 @@ const fieldRows = {
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain, types, primaryType, and message."],
   ],
   send: [
-    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key when using API-key auth."],
+    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -153,7 +153,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions from the user&apos;s active backend wallet. The server handles wallet signing and policy checks.
+            Submit one or more contract interactions from the user&apos;s active backend wallet using an API key. The server handles wallet signing and policy checks; Clerk bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
@@ -189,7 +189,7 @@ export default function APIDocsPage() {
   "status": "pending"
 }`}</CodeBlock>
               <p className="text-xs leading-5 text-brand-muted">
-                Status may be pending, submitting, confirmed, failed, or unknown. The transaction hash can be empty while submission is pending.
+                Status may be pending, submitting, confirmed, or failed. The transaction hash can be empty while submission is pending.
               </p>
             </div>
           </div>
