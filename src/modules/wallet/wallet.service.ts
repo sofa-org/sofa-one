@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { createPublicClient, formatEther, hashTypedData, http } from 'viem';
+import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
 import {
   base,
   baseSepolia,
@@ -75,8 +75,8 @@ export class WalletService {
     let data: string;
     switch (params.type) {
       case 'message':
-        // Convert plain-text message to hex-encoded bytes
-        data = '0x' + Buffer.from(params.message!, 'utf-8').toString('hex');
+        // Compute EIP-191 personal message hash → raw ECDSA sign
+        data = hashMessage(params.message!);
         break;
       case 'typed_data': {
         // Compute EIP-712 struct hash → raw ECDSA sign

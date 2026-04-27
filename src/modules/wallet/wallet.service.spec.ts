@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { hashMessage } from 'viem';
 
 // ── viem mock ──────────────────────────────────────────────────────────────────
 // Must be declared before any imports that pull in viem transitively.
@@ -16,6 +17,10 @@ jest.mock('viem', () => {
     })),
   };
 });
+
+jest.mock('../../core/openfort/openfort.service', () => ({
+  OpenfortService: class OpenfortService {},
+}));
 
 // ── service imports (after mock) ───────────────────────────────────────────────
 import { WalletService } from './wallet.service';
@@ -78,7 +83,7 @@ describe('WalletService.withdraw()', () => {
         },
         {
           provide: OpenfortService,
-          useValue: { createTransactionIntent: mockCreateTransactionIntent },
+          useValue: { createTransactionIntent: mockCreateTransactionIntent, signData: jest.fn() },
         },
       ],
     }).compile();
@@ -205,5 +210,49 @@ describe('WalletService.withdraw()', () => {
       data: { details: Record<string, unknown> };
     };
     expect(createCall.data.details).toMatchObject({ idempotencyKey: 'unique-key-abc' });
+  });
+});
+
+describe('WalletService.sign()', () => {
+  let service: WalletService;
+
+  const mockFindUnique = jest.fn();
+  const mockSignData = jest.fn();
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockSignData.mockResolvedValue('0xsigned');
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WalletService,
+        {
+          provide: PrismaService,
+          useValue: { userWallet: { findUnique: mockFindUnique } },
+        },
+        {
+          provide: OpenfortService,
+          useValue: { signData: mockSignData },
+        },
+      ],
+    }).compile();
+
+    service = module.get<WalletService>(WalletService);
+  });
+
+  it('uses EIP-191 hash for message signing', async () => {
+    const result = await service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any);
+
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage('Hello, SOFA ONE!'));
+    expect(result).toEqual({ signature: '0xsigned', walletAddress: WALLET.walletAddress, type: 'message' });
+  });
+
+  it('throws NotFoundException when wallet not found', async () => {
+    mockFindUnique.mockResolvedValue(null);
+
+    await expect(service.sign('user-1', { type: 'message', message: 'Hello' } as any)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });
