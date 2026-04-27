@@ -145,21 +145,20 @@ export default function ApiKeysPage() {
       )}
 
       {newRawKey && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+        <div className="relative rounded-2xl border border-amber-200 bg-amber-50 p-5 pr-14 shadow-sm">
+          <button
+            onClick={() => setNewRawKey(null)}
+            className="absolute right-4 top-4 inline-flex items-center justify-center rounded-full border border-amber-300 p-1 text-amber-600 hover:bg-amber-100 transition-colors"
+            aria-label="Dismiss new API key notice"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
           <p className="text-sm font-medium text-amber-800">
             New API key created — save it now (shown only once):
           </p>
           <code className="mt-3 block break-all rounded-xl bg-amber-100/50 border border-amber-200/50 px-4 py-3 font-mono text-sm text-amber-900 shadow-sm">
             {newRawKey}
           </code>
-          <div className="mt-4">
-            <button
-              onClick={() => setNewRawKey(null)}
-              className="inline-flex items-center justify-center rounded-full border border-amber-300 p-1 text-amber-600 hover:bg-amber-100 transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
         </div>
       )}
 
@@ -228,35 +227,48 @@ export default function ApiKeysPage() {
           <p className="px-7 py-12 text-center text-sm text-brand-muted">No API keys yet.</p>
         ) : (
           <div className="divide-y divide-brand-border">
+            <div className="hidden grid-cols-[140px_84px_minmax(120px,1fr)_minmax(180px,1.4fr)_100px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+              <span>Key</span>
+              <span>Status</span>
+              <span>Name</span>
+              <span>Chains</span>
+              <span>Last Used</span>
+              <span>Created</span>
+              <span className="sr-only">Actions</span>
+            </div>
             {keys.map((key) => (
-              <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-7 py-4 gap-4 hover:bg-brand-surface transition-colors">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 min-w-0">
-                  <span className="font-mono text-sm text-brand-text shrink-0">{key.keyPrefix}...</span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0 ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+              <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(120px,1fr)_minmax(180px,1.4fr)_100px_110px_36px] md:items-center md:gap-4">
+                <span className="font-mono text-sm text-brand-text">{key.keyPrefix}...</span>
+                <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
-                  </span>
-                  {key.name && <span className="text-sm text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">{key.name}</span>}
-                  <span className="text-xs text-brand-muted truncate w-full sm:w-auto mt-1 sm:mt-0">
-                    Chains: {key.allowedChains?.length ? formatChains(key.allowedChains) : '—'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 w-full sm:w-auto">
-                  <span className="text-xs text-brand-muted block sm:hidden md:block">
-                    {key.lastUsedAt ? `Used ${new Date(key.lastUsedAt).toLocaleDateString()}` : 'Never used'}
-                  </span>
-                  <span className="text-xs text-brand-muted hidden sm:block">
-                    Created {new Date(key.createdAt).toLocaleDateString()}
-                  </span>
-                  {!key.revoked && (
-                    <button
-                      onClick={() => handleRevoke(key.id)}
-                      disabled={actionLoading}
-                      className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 ml-auto sm:ml-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
+                </span>
+                <span className="min-w-0 truncate text-sm text-brand-muted">
+                  <span className="font-semibold text-brand-text md:hidden">Name: </span>
+                  {key.name || '—'}
+                </span>
+                <span className="min-w-0 truncate text-xs text-brand-muted">
+                  <span className="font-semibold text-brand-text md:hidden">Chains: </span>
+                  {key.allowedChains?.length ? formatChains(key.allowedChains) : '—'}
+                </span>
+                <span className="text-xs text-brand-muted">
+                  <span className="font-semibold text-brand-text md:hidden">Last used: </span>
+                  {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
+                </span>
+                <span className="text-xs text-brand-muted">
+                  <span className="font-semibold text-brand-text md:hidden">Created: </span>
+                  {new Date(key.createdAt).toLocaleDateString()}
+                </span>
+                {!key.revoked ? (
+                  <button
+                    onClick={() => handleRevoke(key.id)}
+                    disabled={actionLoading}
+                    className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 md:justify-self-end"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <span className="hidden h-7 w-7 md:block" />
+                )}
               </div>
             ))}
           </div>
