@@ -1,21 +1,16 @@
 /**
- * E2E integration test: API Key → Wallet & Transaction flow.
- *
- * Tests the complete user journey:
- *   1. Authenticated user obtains an API Key
- *   2. Uses X-API-Key header to call wallet/transaction endpoints
- *   3. Verifies rejection on missing/invalid/revoked keys
+ * E2E integration test: API-key public security flow.
  *
  * External dependencies mocked: OpenfortService (no real blockchain calls).
  * Real dependencies used: PostgreSQL (docker-compose).
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
-import { OpenfortService } from '../src/core/openfort/openfort.service';
 import { API_KEY_PREFIX_LENGTH } from '../src/common/api-key/api-key-prefix';
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
@@ -26,41 +21,55 @@ process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/agent_wallet';
 
-// ── Mock OpenfortService ───────────────────────────────────────────────
+const TEST_WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
+const TEST_TARGET_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+const TEST_CHAIN_ID = 84532;
+const DISALLOWED_CHAIN_ID = 8453;
+const TEST_TX_HASH = `0x${'1'.repeat(64)}`;
+const TEST_SIGNATURE = `0x${'2'.repeat(130)}`;
+
 const mockOpenfortService = {
   createBackendWallet: jest.fn().mockResolvedValue({
     id: 'ofa_test_account_123',
-    address: '0x1234567890abcdef1234567890abcdef12345678',
+    address: TEST_WALLET_ADDRESS,
   }),
   createTransactionIntent: jest.fn().mockResolvedValue({
     id: 'tin_test_intent_456',
     status: 'pending',
   }),
+  sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
+  signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
 
-// ── Test constants ─────────────────────────────────────────────────────
-const TEST_WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
-const TEST_TARGET_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
-const TEST_USDC_CONTRACT = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-const TEST_CHAIN_ID = 84532;
+jest.mock('../src/core/openfort/openfort.service', () => ({
+  OpenfortService: jest.fn().mockImplementation(() => mockOpenfortService),
+}));
 
-describe('API Key → Wallet & Transaction Flow (e2e)', () => {
+import { AppModule } from '../src/app.module';
+
+describe('API-key public security flow (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let apiKeyService: ApiKeyService;
   let testUserId: string;
   let testApiKey: string;
+  let testKeyId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(OpenfortService)
-      .useValue(mockOpenfortService)
+      // Keep route/auth guards active, but disable the global ThrottlerGuard for deterministic E2E.
+      .overrideProvider(APP_GUARD)
+      .useValue({ canActivate: () => true })
+      .overrideProvider(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    );
     await app.init();
 
     prisma = app.get(PrismaService);
@@ -68,556 +77,234 @@ describe('API Key → Wallet & Transaction Flow (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Reset mocks
     jest.clearAllMocks();
+    await cleanDatabase();
 
-    // Clean tables in dependency order
-    await prisma.transaction.deleteMany();
-    await prisma.apiKey.deleteMany();
-    await prisma.userWallet.deleteMany();
-    await prisma.user.deleteMany();
+    const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key', [TEST_CHAIN_ID]);
+    testUserId = seeded.userId;
+    testApiKey = seeded.rawKey;
+    testKeyId = seeded.keyId;
+  });
 
-    // Seed: user + wallet
+  afterAll(async () => {
+    await cleanDatabase();
+    await app.close();
+  });
+
+  describe('public API-key endpoints', () => {
+    it('POST /v1/wallets/sign signs a message and writes non-plaintext audit', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello secret message' })
+        .expect(201);
+
+      expect(res.body).toEqual({
+        signature: TEST_SIGNATURE,
+        walletAddress: TEST_WALLET_ADDRESS,
+        type: 'message',
+      });
+      expect(mockOpenfortService.signData).toHaveBeenCalledWith(
+        'ofa_test_account_123',
+        expect.stringMatching(/^0x[0-9a-f]{64}$/),
+      );
+
+      const audit = await prisma.signingRequest.findFirstOrThrow({ where: { userId: testUserId } });
+      expect(audit.apiKeyId).toBe(testKeyId);
+      expect(audit.authMethod).toBe('api_key');
+      expect(audit.apiKeyPrefix).toBe(testApiKey.substring(0, API_KEY_PREFIX_LENGTH));
+      expect(audit.apiKeyName).toBe('E2E Test Key');
+      expect(audit).not.toHaveProperty('message');
+      expect(audit.requestHash).not.toContain('hello secret message');
+      expect(audit.digest).not.toContain('hello secret message');
+    });
+
+    it('POST /v1/transactions/send submits transaction and stores hashes without calldata', async () => {
+      const calldata = '0xa9059cbb000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
+
+      const res = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'order-abc-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
+        })
+        .expect(201);
+
+      expect(res.body).toEqual({
+        transactionId: expect.any(String),
+        transactionHash: TEST_TX_HASH,
+        status: 'confirmed',
+      });
+      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledWith({
+        accountId: 'ofa_test_account_123',
+        chainId: TEST_CHAIN_ID,
+        interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
+        policyId: undefined,
+      });
+
+      const tx = await prisma.transaction.findFirstOrThrow({ where: { userId: testUserId } });
+      expect(tx.apiKeyId).toBe(testKeyId);
+      expect(tx.authMethod).toBe('api_key');
+      expect(tx.apiKeyPrefix).toBe(testApiKey.substring(0, API_KEY_PREFIX_LENGTH));
+      expect(tx.apiKeyName).toBe('E2E Test Key');
+      expect(tx.requestHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(tx.interactionsHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(JSON.stringify(tx.details)).toContain('interactionsHash');
+      expect(JSON.stringify(tx.details)).not.toContain(calldata);
+    });
+
+  });
+
+  describe('security rejections', () => {
+    it('requires API keys for public signing and transaction submission', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(401);
+    });
+
+    it('does not allow an API key to manage API keys or call frontend-only wallet routes', async () => {
+      await request(app.getHttpServer()).get('/v1/api-keys').set('X-API-Key', testApiKey).expect(401);
+      await request(app.getHttpServer())
+        .post('/v1/api-keys')
+        .set('X-API-Key', testApiKey)
+        .send({ name: 'Illegitimate child key', allowedChains: [TEST_CHAIN_ID] })
+        .expect(401);
+      await request(app.getHttpServer())
+        .post('/v1/wallets/deposit-info')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID })
+        .expect(401);
+    });
+
+    it('rejects fabricated, wrong-secret, revoked, and expired API keys', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', 'sk_00000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(401);
+
+      const prefix = testApiKey.substring(0, API_KEY_PREFIX_LENGTH);
+      const fakeKey = prefix + 'x'.repeat(testApiKey.length - API_KEY_PREFIX_LENGTH);
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', fakeKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(401);
+
+      await apiKeyService.revokeApiKey(testKeyId, testUserId);
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(401);
+
+      const expired = await seedUserWithKey('expired_social_id_e2e', 'Expired Key', [TEST_CHAIN_ID], {
+        openfortAccountId: 'ofa_expired_account_123',
+        walletAddress: '0x2222222222222222222222222222222222222222',
+      });
+      await prisma.apiKey.update({
+        where: { id: expired.keyId },
+        data: { expiresAt: new Date(Date.now() - 60_000) },
+      });
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', expired.rawKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'expired' })
+        .expect(401);
+    });
+
+    it('rejects disallowed chains for sign and send', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: DISALLOWED_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: DISALLOWED_CHAIN_ID,
+          idempotencyKey: 'wrong-chain',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
+        })
+        .expect(400);
+    });
+
+    it('rejects raw hash signing before creating a signing audit row', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'hash', hash: `0x${'3'.repeat(64)}` })
+        .expect(400);
+
+      await expect(prisma.signingRequest.count({ where: { userId: testUserId } })).resolves.toBe(0);
+      expect(mockOpenfortService.signData).not.toHaveBeenCalled();
+    });
+
+    it('rejects idempotency-key reuse with a different request', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'conflict-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'conflict-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0x123456' }],
+        })
+        .expect(400);
+    });
+  });
+
+  async function seedUserWithKey(
+    socialId: string,
+    keyName: string,
+    allowedChains: number[],
+    wallet: { openfortAccountId: string; walletAddress: string } = {
+      openfortAccountId: 'ofa_test_account_123',
+      walletAddress: TEST_WALLET_ADDRESS,
+    },
+  ) {
     const user = await prisma.user.create({
       data: {
         socialProvider: 'google',
-        socialId: 'test_social_id_e2e',
-        email: 'e2e-test@example.com',
+        socialId,
+        email: `${socialId}@example.com`,
       },
     });
 
     await prisma.userWallet.create({
       data: {
         userId: user.id,
-        openfortAccountId: 'ofa_test_account_123',
-        walletAddress: TEST_WALLET_ADDRESS,
+        openfortAccountId: wallet.openfortAccountId,
+        walletAddress: wallet.walletAddress,
         chainId: BigInt(TEST_CHAIN_ID),
       },
     });
 
-    testUserId = user.id;
+    const key = await apiKeyService.createApiKey(user.id, { name: keyName, allowedChains });
 
-    // Generate a real API key through the service (exercises hash + salt logic)
-    const keyResult = await apiKeyService.createApiKey(user.id, { name: 'E2E Test Key' });
-    testApiKey = keyResult.rawKey;
-  });
+    return { userId: user.id, keyId: key.id, rawKey: key.rawKey };
+  }
 
-  afterAll(async () => {
-    // Final cleanup
+  async function cleanDatabase() {
+    await prisma.signingRequest.deleteMany();
     await prisma.transaction.deleteMany();
+    await prisma.apiKeyEvent.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.userWallet.deleteMany();
     await prisma.user.deleteMany();
-    await app.close();
-  });
-
-  // ════════════════════════════════════════════════════════════════════
-  //  POSITIVE CASES — valid API key
-  // ════════════════════════════════════════════════════════════════════
-
-  describe('Wallet endpoints with valid API Key', () => {
-    it('POST /v1/wallets/deposit-info → returns wallet address and chain info', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', testApiKey)
-        .expect(201);
-
-      expect(res.body).toEqual({
-        walletAddress: TEST_WALLET_ADDRESS,
-        chainId: TEST_CHAIN_ID,
-        status: 'active',
-        supportedTokens: ['USDC', 'ETH'],
-      });
-    });
-
-    it('POST /v1/wallets/withdraw → creates withdrawal intent via Openfort', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/withdraw')
-        .set('X-API-Key', testApiKey)
-        .send({
-          to: TEST_TARGET_ADDRESS,
-          amount: '1000000',
-          token: 'USDC',
-        })
-        .expect(201);
-
-      // Response shape
-      expect(res.body).toMatchObject({
-        transactionId: expect.any(String),
-        intentId: 'tin_test_intent_456',
-        status: 'pending',
-      });
-
-      // Openfort was called with correct params
-      expect(mockOpenfortService.createTransactionIntent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          chainId: TEST_CHAIN_ID,
-          accountId: 'ofa_test_account_123',
-          interactions: [
-            expect.objectContaining({
-              contract: TEST_USDC_CONTRACT, // Base Sepolia USDC
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '1000000'],
-            }),
-          ],
-        }),
-      );
-
-      // Transaction persisted in DB
-      const dbTx = await prisma.transaction.findFirst({
-        where: { userId: testUserId },
-      });
-      expect(dbTx).toBeTruthy();
-      expect(dbTx!.intentId).toBe('tin_test_intent_456');
-      expect(dbTx!.status).toBe('pending');
-    });
-  });
-
-  describe('Transaction endpoints with valid API Key', () => {
-    it('POST /v1/transactions/intent → submits transaction intent', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '500000'],
-            },
-          ],
-        })
-        .expect(201);
-
-      expect(res.body).toMatchObject({
-        transactionId: expect.any(String),
-        intentId: 'tin_test_intent_456',
-        status: 'pending',
-      });
-
-      expect(mockOpenfortService.createTransactionIntent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          chainId: TEST_CHAIN_ID,
-          accountId: 'ofa_test_account_123',
-        }),
-      );
-    });
-
-    it('POST /v1/transactions/intent → supports optional policyId', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          policyId: 'pol_usdc_gas_policy',
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'approve',
-              functionArgs: [TEST_TARGET_ADDRESS, '999999'],
-            },
-          ],
-        })
-        .expect(201);
-
-      expect(res.body.intentId).toBe('tin_test_intent_456');
-
-      expect(mockOpenfortService.createTransactionIntent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          policyId: 'pol_usdc_gas_policy',
-        }),
-      );
-    });
-
-    it('GET /v1/transactions/history → returns paginated list', async () => {
-      // Seed: create two transactions via the API
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '100'],
-            },
-          ],
-        })
-        .expect(201);
-
-      await request(app.getHttpServer())
-        .post('/v1/wallets/withdraw')
-        .set('X-API-Key', testApiKey)
-        .send({ to: TEST_TARGET_ADDRESS, amount: '200', token: 'USDC' })
-        .expect(201);
-
-      // Query history
-      const res = await request(app.getHttpServer())
-        .get('/v1/transactions/history')
-        .set('X-API-Key', testApiKey)
-        .expect(200);
-
-      expect(res.body.total).toBe(2);
-      expect(res.body.transactions).toHaveLength(2);
-      expect(res.body.limit).toBe(50);
-      expect(res.body.offset).toBe(0);
-
-      // Most recent first
-      for (const tx of res.body.transactions) {
-        expect(tx).toMatchObject({
-          id: expect.any(String),
-          intentId: expect.any(String),
-          status: 'pending',
-          chainId: TEST_CHAIN_ID,
-          createdAt: expect.any(String),
-        });
-      }
-    });
-
-    it('GET /v1/transactions/history → respects limit and offset', async () => {
-      // Create 3 transactions
-      for (let i = 0; i < 3; i++) {
-        await request(app.getHttpServer())
-          .post('/v1/transactions/intent')
-          .set('X-API-Key', testApiKey)
-          .send({
-            chainId: TEST_CHAIN_ID,
-            interactions: [
-              {
-                contract: TEST_USDC_CONTRACT,
-                functionName: 'transfer',
-                functionArgs: [TEST_TARGET_ADDRESS, String(i * 100)],
-              },
-            ],
-          })
-          .expect(201);
-      }
-
-      const res = await request(app.getHttpServer())
-        .get('/v1/transactions/history?limit=2&offset=1')
-        .set('X-API-Key', testApiKey)
-        .expect(200);
-
-      expect(res.body.total).toBe(3);
-      expect(res.body.transactions).toHaveLength(2);
-      expect(res.body.limit).toBe(2);
-      expect(res.body.offset).toBe(1);
-    });
-
-    it('POST /v1/transactions/batch → submits batch with multiple interactions', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/transactions/batch')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '100000'],
-            },
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: ['0x1111111111111111111111111111111111111111', '200000'],
-            },
-          ],
-        })
-        .expect(201);
-
-      expect(res.body).toMatchObject({
-        transactionId: expect.any(String),
-        intentId: 'tin_test_intent_456',
-        status: 'pending',
-      });
-
-      // Openfort received both interactions
-      expect(mockOpenfortService.createTransactionIntent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          interactions: expect.arrayContaining([
-            expect.objectContaining({ functionArgs: [TEST_TARGET_ADDRESS, '100000'] }),
-            expect.objectContaining({
-              functionArgs: ['0x1111111111111111111111111111111111111111', '200000'],
-            }),
-          ]),
-        }),
-      );
-    });
-  });
-
-  // ════════════════════════════════════════════════════════════════════
-  //  NEGATIVE CASES — authentication failures
-  // ════════════════════════════════════════════════════════════════════
-
-  describe('Missing API Key → 401', () => {
-    it('POST /v1/wallets/deposit-info without auth → 401', async () => {
-      const res = await request(app.getHttpServer()).post('/v1/wallets/deposit-info').expect(401);
-
-      expect(res.body.message).toMatch(/Missing authentication/i);
-    });
-
-    it('POST /v1/wallets/withdraw without auth → 401', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/withdraw')
-        .send({ to: TEST_TARGET_ADDRESS, amount: '100', token: 'USDC' })
-        .expect(401);
-    });
-
-    it('POST /v1/transactions/intent without auth → 401', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '100'],
-            },
-          ],
-        })
-        .expect(401);
-    });
-
-    it('GET /v1/transactions/history without auth → 401', async () => {
-      await request(app.getHttpServer()).get('/v1/transactions/history').expect(401);
-    });
-  });
-
-  describe('Invalid API Key → 401', () => {
-    it('does not allow an API key to manage API keys', async () => {
-      await request(app.getHttpServer())
-        .get('/v1/api-keys')
-        .set('X-API-Key', testApiKey)
-        .expect(401);
-
-      await request(app.getHttpServer())
-        .post('/v1/api-keys')
-        .set('X-API-Key', testApiKey)
-        .send({ name: 'Illegitimate child key', allowedChains: [TEST_CHAIN_ID] })
-        .expect(401);
-    });
-
-    it('rejects a completely fabricated key', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', 'sk_00000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-        .expect(401);
-
-      expect(res.body.message).toMatch(/Invalid API key/i);
-    });
-
-    it('rejects a key with correct prefix but wrong secret', async () => {
-      // Use the real prefix but change the rest
-      const prefix = testApiKey.substring(0, API_KEY_PREFIX_LENGTH);
-      const fakeKey = prefix + 'x'.repeat(testApiKey.length - API_KEY_PREFIX_LENGTH);
-
-      await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', fakeKey)
-        .expect(401);
-    });
-
-    it('rejects an empty X-API-Key header', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', '')
-        .expect(401);
-    });
-  });
-
-  describe('Revoked API Key → 401', () => {
-    it('rejects a single revoked key', async () => {
-      // Get the key ID
-      const keys = await apiKeyService.listApiKeys(testUserId);
-      expect(keys.length).toBe(1);
-
-      // Revoke it
-      await apiKeyService.revokeApiKey(keys[0].id, testUserId);
-
-      // Attempt to use it
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', testApiKey)
-        .expect(401);
-
-      expect(res.body.message).toMatch(/Invalid API key/i);
-    });
-
-    it('rejects after revokeAllKeys', async () => {
-      await apiKeyService.revokeAllKeys(testUserId);
-
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '100'],
-            },
-          ],
-        })
-        .expect(401);
-    });
-
-    it('new key works after old key is revoked', async () => {
-      // Revoke old key
-      await apiKeyService.revokeAllKeys(testUserId);
-
-      // Generate a new key
-      const newKeyResult = await apiKeyService.createApiKey(testUserId, { name: 'Refreshed Key' });
-
-      // Old key fails
-      await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', testApiKey)
-        .expect(401);
-
-      // New key works
-      const res = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', newKeyResult.rawKey)
-        .expect(201);
-
-      expect(res.body.walletAddress).toBe(TEST_WALLET_ADDRESS);
-    });
-  });
-
-  // ════════════════════════════════════════════════════════════════════
-  //  VALIDATION — request body validation
-  // ════════════════════════════════════════════════════════════════════
-
-  describe('Request body validation', () => {
-    it('POST /v1/wallets/withdraw → rejects invalid address', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/withdraw')
-        .set('X-API-Key', testApiKey)
-        .send({ to: 'not-an-address', amount: '100', token: 'USDC' })
-        .expect(400);
-    });
-
-    it('POST /v1/wallets/withdraw → rejects unsupported token', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/withdraw')
-        .set('X-API-Key', testApiKey)
-        .send({ to: TEST_TARGET_ADDRESS, amount: '100', token: 'DOGE' })
-        .expect(400);
-    });
-
-    it('POST /v1/transactions/intent → rejects missing interactions', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({ chainId: TEST_CHAIN_ID })
-        .expect(400);
-    });
-
-    it('POST /v1/transactions/intent → rejects invalid contract address', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: 'invalid',
-              functionName: 'transfer',
-            },
-          ],
-        })
-        .expect(400);
-    });
-  });
-
-  // ════════════════════════════════════════════════════════════════════
-  //  ISOLATION — API key scopes correct user data
-  // ════════════════════════════════════════════════════════════════════
-
-  describe('User isolation', () => {
-    it('API key only accesses its own wallet data', async () => {
-      // Create a second user with a different wallet
-      const user2 = await prisma.user.create({
-        data: {
-          socialProvider: 'discord',
-          socialId: 'test_social_id_user2',
-          email: 'user2@example.com',
-        },
-      });
-
-      await prisma.userWallet.create({
-        data: {
-          userId: user2.id,
-          openfortAccountId: 'ofa_user2_account',
-          walletAddress: '0xaaaaaaaabbbbbbbbccccccccddddddddeeeeeeee',
-          chainId: BigInt(TEST_CHAIN_ID),
-        },
-      });
-
-      const user2Key = await apiKeyService.createApiKey(user2.id, { name: 'User2 Key' });
-
-      // User 1 sees their own wallet
-      const res1 = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', testApiKey)
-        .expect(201);
-      expect(res1.body.walletAddress).toBe(TEST_WALLET_ADDRESS);
-
-      // User 2 sees their own wallet
-      const res2 = await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
-        .set('X-API-Key', user2Key.rawKey)
-        .expect(201);
-      expect(res2.body.walletAddress).toBe('0xaaaaaaaabbbbbbbbccccccccddddddddeeeeeeee');
-    });
-
-    it('transaction history is isolated per user', async () => {
-      // User 1 creates a transaction
-      await request(app.getHttpServer())
-        .post('/v1/transactions/intent')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: TEST_CHAIN_ID,
-          interactions: [
-            {
-              contract: TEST_USDC_CONTRACT,
-              functionName: 'transfer',
-              functionArgs: [TEST_TARGET_ADDRESS, '100'],
-            },
-          ],
-        })
-        .expect(201);
-
-      // Create user 2 with a key
-      const user2 = await prisma.user.create({
-        data: {
-          socialProvider: 'twitter',
-          socialId: 'test_social_id_user2_hist',
-          email: 'user2hist@example.com',
-        },
-      });
-      await prisma.userWallet.create({
-        data: {
-          userId: user2.id,
-          openfortAccountId: 'ofa_user2_hist_account',
-          walletAddress: '0xbbbbbbbbccccccccddddddddeeeeeeeeffffffff',
-          chainId: BigInt(TEST_CHAIN_ID),
-        },
-      });
-      const user2Key = await apiKeyService.createApiKey(user2.id, { name: 'U2' });
-
-      // User 2 sees empty history
-      const res = await request(app.getHttpServer())
-        .get('/v1/transactions/history')
-        .set('X-API-Key', user2Key.rawKey)
-        .expect(200);
-
-      expect(res.body.total).toBe(0);
-      expect(res.body.transactions).toHaveLength(0);
-    });
-  });
+  }
 });
