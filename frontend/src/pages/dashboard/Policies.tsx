@@ -85,16 +85,6 @@ const POLICY_RULE_OPERATIONS: PolicyRuleOperation[] = [
   'sponsorEvmTransaction',
 ];
 
-const CRITERION_TYPES: CriterionType[] = [
-  'ethValue',
-  'evmAddress',
-  'evmNetwork',
-  'evmData',
-  'evmMessage',
-  'evmTypedDataVerifyingContract',
-  'evmTypedDataField',
-];
-
 const OPERATION_CRITERIA: Record<PolicyRuleOperation, CriterionType[]> = {
   signEvmTransaction: ['ethValue', 'evmAddress', 'evmData'],
   sendEvmTransaction: ['ethValue', 'evmAddress', 'evmNetwork', 'evmData'],
@@ -456,7 +446,6 @@ function CriteriaBuilder({
   useEffect(() => {
     setShowForm(false);
     setDraft({ ...DEFAULT_CRITERION, type: availableCriterionTypes[0] ?? 'ethValue' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [operation]);
 
   const inputCls =
@@ -617,7 +606,6 @@ function RuleDetails({ rule }: { rule: PolicyRule }) {
 // ─── Add rule form ─────────────────────────────────────────────────────────────
 
 interface AddRuleFormProps {
-  policyId: string;
   form: RuleFormState;
   onChange: (patch: Partial<RuleFormState>) => void;
   onSubmit: () => void;
@@ -625,7 +613,7 @@ interface AddRuleFormProps {
   onCancel?: () => void;
 }
 
-function AddRuleForm({ policyId: _policyId, form, onChange, onSubmit, loading, onCancel }: AddRuleFormProps) {
+function AddRuleForm({ form, onChange, onSubmit, loading, onCancel }: AddRuleFormProps) {
   const selectCls =
     'rounded-lg border border-brand-border px-3 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm';
 
@@ -1067,7 +1055,6 @@ export default function PoliciesPage() {
             {showNewRuleForm && (
               <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
                 <AddRuleForm
-                  policyId="new-policy"
                   form={newRuleForm}
                   onChange={(patch) => setNewRuleForm({ ...newRuleForm, ...patch })}
                   onSubmit={handleAddPendingRule}
@@ -1131,7 +1118,6 @@ export default function PoliciesPage() {
             {policies.map((policy) => {
               const isExpanded = expandedId === policy.id;
               const rules = rulesMap[policy.id] ?? [];
-              const ruleCount = rulesMap[policy.id]?.length ?? policy.rules?.length ?? 0;
 
               return (
                 <div key={policy.id} className={`transition-all duration-300 ${isExpanded ? 'bg-brand-surface' : 'bg-white'}`}>
@@ -1243,7 +1229,6 @@ export default function PoliciesPage() {
                           <summary className="list-none hidden" />
                           <div className="mt-2 animate-in fade-in slide-in-from-top-4 duration-300">
                             <AddRuleForm
-                              policyId={policy.id}
                               form={getRuleForm(policy.id)}
                               onChange={(patch) => patchRuleForm(policy.id, patch)}
                               onSubmit={() => handleAddRule(policy.id)}
