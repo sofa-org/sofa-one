@@ -7,7 +7,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { getStorageToken, ThrottlerGuard } from '@nestjs/throttler';
 import * as request from 'supertest';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
@@ -57,6 +57,7 @@ describe('API-key public security flow (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let apiKeyService: ApiKeyService;
+  let throttlerStorage: { storage?: Map<string, unknown> };
   let testUserId: string;
   let testApiKey: string;
   let testKeyId: string;
@@ -83,10 +84,12 @@ describe('API-key public security flow (e2e)', () => {
 
     prisma = app.get(PrismaService);
     apiKeyService = app.get(ApiKeyService);
+    throttlerStorage = app.get(getStorageToken());
   });
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    throttlerStorage.storage?.clear();
     await cleanDatabase();
 
     const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key', [TEST_CHAIN_ID]);
@@ -98,6 +101,35 @@ describe('API-key public security flow (e2e)', () => {
   afterAll(async () => {
     await cleanDatabase();
     await app.close();
+  });
+
+  describe('health and request correlation', () => {
+    it('GET /health/live is public and returns a request id', async () => {
+      const res = await request(app.getHttpServer()).get('/health/live').expect(200);
+
+      expect(res.headers['x-request-id']).toEqual(expect.any(String));
+      expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
+    });
+
+    it('GET /health/ready is public and checks database readiness', async () => {
+      const res = await request(app.getHttpServer()).get('/health/ready').expect(200);
+
+      expect(res.headers['x-request-id']).toEqual(expect.any(String));
+      expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
+    });
+
+    it('reuses inbound X-Request-Id and includes it in error responses', async () => {
+      const requestId = 'e2e-request-id-123';
+
+      const res = await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-Request-Id', requestId)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
+        .expect(401);
+
+      expect(res.headers['x-request-id']).toBe(requestId);
+      expect(res.body).toEqual(expect.objectContaining({ requestId }));
+    });
   });
 
   describe('public API-key endpoints', () => {
@@ -162,6 +194,38 @@ describe('API-key public security flow (e2e)', () => {
       expect(tx.interactionsHash).toMatch(/^[0-9a-f]{64}$/);
       expect(JSON.stringify(tx.details)).toContain('interactionsHash');
       expect(JSON.stringify(tx.details)).not.toContain(calldata);
+    });
+
+    it('POST /v1/transactions/send returns the existing transaction for duplicate idempotent requests', async () => {
+      const payload = {
+        chainId: TEST_CHAIN_ID,
+        idempotencyKey: 'duplicate-order-123',
+        interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef', value: '0' }],
+      };
+
+      const first = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send(payload)
+        .expect(201);
+
+      const second = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send(payload)
+        .expect(201);
+
+      expect(second.body).toEqual(first.body);
+      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
+      await expect(
+        prisma.transaction.count({
+          where: {
+            userId: testUserId,
+            operationType: 'send',
+            idempotencyKey: 'duplicate-order-123',
+          },
+        }),
+      ).resolves.toBe(1);
     });
 
     it('GET /v1/transactions/:id returns safe transaction status for the API-key user', async () => {
@@ -329,6 +393,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect((res) =>
           expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions/send'),
         );
+      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
     });
 
     it('does not allow an API key to read another user transaction status', async () => {
@@ -381,6 +446,7 @@ describe('API-key public security flow (e2e)', () => {
         message: expect.any(String),
         timestamp: expect.any(String),
         path,
+        requestId: expect.any(String),
       }),
     );
     expect(body).not.toHaveProperty('error');

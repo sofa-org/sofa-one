@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
+
+jest.mock('../src/core/openfort/openfort.service', () => ({
+  OpenfortService: jest.fn().mockImplementation(() => ({})),
+}));
+
 import { AppModule } from '../src/app.module';
 
 describe('AppController (e2e)', () => {

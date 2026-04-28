@@ -167,14 +167,12 @@ describe('TransactionsService', () => {
   });
 
   it('returns the existing transaction after a concurrent idempotency insert race', async () => {
-    prisma.transaction.findFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'tx-existing',
-        status: 'submitting',
-        intentId: null,
-        txHash: null,
-      });
+    prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'tx-existing',
+      status: 'submitting',
+      intentId: null,
+      txHash: null,
+    });
     prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
 
     const result = await service.send('user-1', dto as any, apiKeyContext);
