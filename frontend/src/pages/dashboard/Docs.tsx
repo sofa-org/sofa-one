@@ -246,10 +246,14 @@ export default function APIDocsPage() {
           <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Error format</h2>
           <CodeBlock>{`{
   "statusCode": 401,
+  "code": "INVALID_API_KEY",
+  "message": "Invalid API key",
   "timestamp": "2026-04-20T10:35:00.000Z",
-  "path": "/v1/transactions/send",
-  "message": "Invalid API Key provided"
+  "path": "/v1/transactions/send"
 }`}</CodeBlock>
+          <p className="mt-3 text-sm leading-6 text-brand-muted">
+            Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">CHAIN_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
+          </p>
         </div>
       </section>
     </div>

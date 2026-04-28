@@ -176,6 +176,22 @@ curl http://localhost:3001/v1/transactions/<transactionId> \
 >
 > API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates allowed chains/expiry, and returns raw secrets only once on creation/rotation.
 
+### Public API error contract
+
+Errors use a stable machine-readable `code` plus a human-readable `message`:
+
+```json
+{
+  "statusCode": 401,
+  "code": "INVALID_API_KEY",
+  "message": "Invalid API key",
+  "timestamp": "2026-04-20T10:00:00.000Z",
+  "path": "/v1/transactions/send"
+}
+```
+
+Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `CHAIN_NOT_ALLOWED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
+
 Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 
 ## Project Structure

@@ -12,6 +12,7 @@ import * as request from 'supertest';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
 import { API_KEY_PREFIX_LENGTH } from '../src/common/api-key/api-key-prefix';
+import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
@@ -67,6 +68,8 @@ describe('API-key public security flow (e2e)', () => {
       // Keep route/auth guards active, but disable the global ThrottlerGuard for deterministic E2E.
       .overrideProvider(APP_GUARD)
       .useValue({ canActivate: () => true })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
       .overrideProvider(ThrottlerGuard)
       .useValue({ canActivate: () => true })
       .compile();
@@ -75,6 +78,7 @@ describe('API-key public security flow (e2e)', () => {
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
+    app.useGlobalFilters(new HttpExceptionFilter());
     await app.init();
 
     prisma = app.get(PrismaService);
@@ -197,7 +201,10 @@ describe('API-key public security flow (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/wallets/sign')
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(401);
+        .expect(401)
+        .expect((res) =>
+          expectApiError(res.body, 401, 'AUTHENTICATION_REQUIRED', '/v1/wallets/sign'),
+        );
     });
 
     it('does not allow an API key to manage API keys or call frontend-only wallet routes', async () => {
@@ -222,7 +229,8 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .set('X-API-Key', 'sk_00000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(401);
+        .expect(401)
+        .expect((res) => expectApiError(res.body, 401, 'INVALID_API_KEY', '/v1/wallets/sign'));
 
       const prefix = testApiKey.substring(0, API_KEY_PREFIX_LENGTH);
       const fakeKey = prefix + 'x'.repeat(testApiKey.length - API_KEY_PREFIX_LENGTH);
@@ -230,7 +238,8 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .set('X-API-Key', fakeKey)
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(401);
+        .expect(401)
+        .expect((res) => expectApiError(res.body, 401, 'INVALID_API_KEY', '/v1/wallets/sign'));
 
       await apiKeyService.revokeApiKey(testKeyId, testUserId);
       await request(app.getHttpServer())
@@ -264,7 +273,8 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .set('X-API-Key', testApiKey)
         .send({ chainId: DISALLOWED_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(400);
+        .expect(400)
+        .expect((res) => expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/wallets/sign'));
 
       await request(app.getHttpServer())
         .post('/v1/transactions/send')
@@ -274,7 +284,10 @@ describe('API-key public security flow (e2e)', () => {
           idempotencyKey: 'wrong-chain',
           interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
         })
-        .expect(400);
+        .expect(400)
+        .expect((res) =>
+          expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/transactions/send'),
+        );
     });
 
     it('rejects raw hash signing before creating a signing audit row', async () => {
@@ -282,7 +295,12 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .set('X-API-Key', testApiKey)
         .send({ chainId: TEST_CHAIN_ID, type: 'hash', hash: `0x${'3'.repeat(64)}` })
-        .expect(400);
+        .expect(400)
+        .expect((res) => {
+          expectApiError(res.body, 400, 'VALIDATION_ERROR', '/v1/wallets/sign');
+          expect(res.body.message).toBe('Validation failed');
+          expect(res.body.details).toEqual(expect.arrayContaining([expect.any(String)]));
+        });
 
       await expect(prisma.signingRequest.count({ where: { userId: testUserId } })).resolves.toBe(0);
       expect(mockOpenfortService.signData).not.toHaveBeenCalled();
@@ -307,7 +325,10 @@ describe('API-key public security flow (e2e)', () => {
           idempotencyKey: 'conflict-123',
           interactions: [{ to: TEST_TARGET_ADDRESS, data: '0x123456' }],
         })
-        .expect(400);
+        .expect(400)
+        .expect((res) =>
+          expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions/send'),
+        );
     });
 
     it('does not allow an API key to read another user transaction status', async () => {
@@ -340,9 +361,30 @@ describe('API-key public security flow (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/v1/transactions/${tx.id}`)
         .set('X-API-Key', other.rawKey)
-        .expect(404);
+        .expect(404)
+        .expect((res) =>
+          expectApiError(res.body, 404, 'TRANSACTION_NOT_FOUND', `/v1/transactions/${tx.id}`),
+        );
     });
   });
+
+  function expectApiError(
+    body: Record<string, unknown>,
+    statusCode: number,
+    code: string,
+    path: string,
+  ) {
+    expect(body).toEqual(
+      expect.objectContaining({
+        statusCode,
+        code,
+        message: expect.any(String),
+        timestamp: expect.any(String),
+        path,
+      }),
+    );
+    expect(body).not.toHaveProperty('error');
+  }
 
   async function seedUserWithKey(
     socialId: string,

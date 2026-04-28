@@ -197,6 +197,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 400
+                code: IDEMPOTENCY_CONFLICT
+                message: "Idempotency key already used with different request payload"
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/transactions/send"
 
   /v1/transactions/{transactionId}:
     get:
@@ -413,38 +419,67 @@ components:
     # ──────────── Error ────────────
     ErrorResponse:
       type: object
-      required: [statusCode, timestamp, path, message]
+      required: [statusCode, code, message, timestamp, path]
       properties:
         statusCode:
           type: integer
+        code:
+          type: string
+          description: 稳定机器可读错误码
+          enum:
+            - VALIDATION_ERROR
+            - INVALID_API_KEY
+            - AUTHENTICATION_REQUIRED
+            - API_KEY_REQUIRED
+            - IP_NOT_ALLOWED
+            - WALLET_NOT_FOUND
+            - TRANSACTION_NOT_FOUND
+            - POLICY_NOT_FOUND
+            - CHAIN_NOT_SUPPORTED
+            - CHAIN_NOT_ALLOWED
+            - IDEMPOTENCY_CONFLICT
+            - RAW_HASH_SIGNING_DISABLED
+            - WALLET_NOT_ACTIVE
+            - INTERNAL_ERROR
+            - BAD_REQUEST
+            - NOT_FOUND
+            - UNAUTHORIZED
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+          description: 验证错误详情；仅 validation errors 返回
         timestamp:
           type: string
           format: date-time
         path:
-          type: string
-        message:
           type: string
 
     ValidationErrorResponse:
       type: object
-      required: [statusCode, timestamp, path, message]
+      required: [statusCode, code, message, details, timestamp, path]
       properties:
         statusCode:
           type: integer
           example: 400
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Validation failed
+        details:
+          type: array
+          items:
+            type: string
+          description: 验证错误列表
         timestamp:
           type: string
           format: date-time
         path:
           type: string
-        message:
-          type: array
-          items:
-            type: string
-          description: 验证错误列表
-        error:
-          type: string
-          example: "Bad Request"
 
   responses:
     Unauthorized:
@@ -455,9 +490,10 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             statusCode: 401
+            code: INVALID_API_KEY
+            message: "Invalid API key"
             timestamp: "2026-04-20T10:00:00.000Z"
             path: "/v1/transactions/send"
-            message: "Unauthorized"
 
     NotFound:
       description: 钱包未找到
@@ -467,9 +503,10 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             statusCode: 404
+            code: WALLET_NOT_FOUND
+            message: "Wallet not found"
             timestamp: "2026-04-20T10:00:00.000Z"
             path: "/v1/transactions/send"
-            message: "Wallet not found"
 
     ValidationError:
       description: 请求参数验证失败（Nest ValidationPipe 返回 400）
@@ -479,9 +516,10 @@ components:
             $ref: '#/components/schemas/ValidationErrorResponse'
           example:
             statusCode: 400
-            timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/send"
-            message:
+            code: VALIDATION_ERROR
+            message: "Validation failed"
+            details:
               - "interactions must contain at least 1 elements"
               - "interactions.0.to must be a valid Ethereum address"
-            error: "Bad Request"
+            timestamp: "2026-04-20T10:00:00.000Z"
+            path: "/v1/transactions/send"
