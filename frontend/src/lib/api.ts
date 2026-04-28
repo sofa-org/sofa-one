@@ -1,4 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const _viteApiUrl: string | undefined = import.meta.env.VITE_API_URL;
+if (!_viteApiUrl && import.meta.env.PROD) {
+  throw new Error('VITE_API_URL must be set in production builds');
+}
+const API_BASE = _viteApiUrl ?? '/api';
 export const DEFAULT_CHAIN_ID = 84532;
 
 export interface ApiErrorBody {

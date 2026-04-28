@@ -25,9 +25,9 @@ export class PolicyService {
         where: { userId },
         select: { openfortPolicyId: true },
       });
-      const policyIds = userPolicies.map((p) => p.openfortPolicyId);
+      const policyIds = userPolicies.map((p: { openfortPolicyId: string }) => p.openfortPolicyId);
       if (policyIds.length === 0) return { data: [] };
-      const data = await Promise.all(policyIds.map((id) => this.openfortService.getPolicy(id)));
+      const data = await Promise.all(policyIds.map((id: string) => this.openfortService.getPolicy(id)));
       return { data };
     } catch (error: any) {
       this.logger.error('listPolicies failed', error);
