@@ -43,6 +43,9 @@ export class WalletService {
   async getDepositInfo(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    if (wallet.status !== 'active' || !wallet.walletAddress) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
     const supportedChain = getSupportedChain(chainId);
 
     return {
@@ -62,6 +65,9 @@ export class WalletService {
 
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
 
     const chainId = this.resolveSigningChainId(params);
     if (chainId !== undefined) {
@@ -134,6 +140,9 @@ export class WalletService {
   async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    if (wallet.status !== 'active' || !wallet.walletAddress) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
 
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
@@ -206,7 +215,7 @@ export class WalletService {
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     // Guard: wallet must be active before any outbound transfer
-    if (wallet.status !== 'active') {
+    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 

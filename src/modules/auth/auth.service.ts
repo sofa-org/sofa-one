@@ -3,12 +3,19 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient } from '@clerk/backend';
+import type { UserWallet } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { ApiKeyService } from '../api-key/api-key.service';
+
+type ActiveUserWallet = UserWallet & {
+  openfortAccountId: string;
+  walletAddress: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -57,12 +64,10 @@ export class AuthService {
     let userId: string;
     let wallet = existing?.wallet ?? null;
     let hasApiKeys = (existing?.apiKeys.length ?? 0) > 0;
+    const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
 
     if (!existing) {
       try {
-        const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
-        const account = await this.openfort.createBackendWallet();
-
         const result = await this.prisma.$transaction(async (tx) => {
           const newUser = await tx.user.create({
             data: { socialProvider, socialId, email: primaryEmail },
@@ -70,16 +75,15 @@ export class AuthService {
           const newWallet = await tx.userWallet.create({
             data: {
               userId: newUser.id,
-              openfortAccountId: account.id,
-              walletAddress: account.address,
               chainId: BigInt(chainId),
+              status: 'provisioning',
             },
           });
           return { userId: newUser.id, wallet: newWallet };
         });
 
         userId = result.userId;
-        wallet = result.wallet;
+        wallet = await this.provisionWallet(result.wallet.id, userId);
         hasApiKeys = false;
         this.logger.log(`Created user ${userId} via ${socialProvider}`);
       } catch (err: any) {
@@ -97,31 +101,29 @@ export class AuthService {
     } else if (!wallet) {
       // 3b. Existing user missing wallet — provision one
       userId = existing.id;
-      const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
-      const account = await this.openfort.createBackendWallet();
 
       try {
         wallet = await this.prisma.userWallet.create({
           data: {
             userId,
-            openfortAccountId: account.id,
-            walletAddress: account.address,
             chainId: BigInt(chainId),
+            status: 'provisioning',
           },
         });
       } catch (dbErr: any) {
-        // Openfort wallet created but DB write failed — log for manual recovery
-        this.logger.error(
-          `Orphaned Openfort wallet: accountId=${account.id} address=${account.address} userId=${userId}`,
-          dbErr,
-        );
-        throw dbErr;
+        if (dbErr?.code === 'P2002') {
+          wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+        }
+        if (!wallet) throw dbErr;
       }
+      wallet = await this.provisionWallet(wallet.id, userId);
       this.logger.log(`Provisioned wallet for existing user ${userId}`);
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
     }
+
+    const activeWallet = await this.ensureActiveWallet(wallet, userId);
 
     // 4. Generate API key if user has none
     let rawApiKey: string | undefined;
@@ -133,13 +135,70 @@ export class AuthService {
     return {
       userId,
       wallet: {
-        walletAddress: wallet!.walletAddress,
-        chainId: Number(wallet!.chainId),
-        status: wallet!.status,
+        walletAddress: activeWallet.walletAddress,
+        chainId: Number(activeWallet.chainId),
+        status: activeWallet.status,
         supportedTokens: ['USDC', 'ETH'],
       },
       ...(rawApiKey && { apiKey: rawApiKey }),
     };
+  }
+
+  private async ensureActiveWallet(
+    wallet: UserWallet | null,
+    userId: string,
+  ): Promise<ActiveUserWallet> {
+    if (!wallet) throw new NotFoundException('Wallet not found');
+
+    if (wallet.status === 'active' && wallet.walletAddress && wallet.openfortAccountId) {
+      return wallet as ActiveUserWallet;
+    }
+
+    if (wallet.status === 'provisioning_failed') {
+      return this.provisionWallet(wallet.id, userId);
+    }
+
+    throw new ServiceUnavailableException(`Wallet is not ready (status: ${wallet.status})`);
+  }
+
+  private async provisionWallet(walletId: string, userId: string): Promise<ActiveUserWallet> {
+    try {
+      const account = await this.openfort.createBackendWallet();
+      const wallet = await this.prisma.userWallet.update({
+        where: { id: walletId },
+        data: {
+          openfortAccountId: account.id,
+          walletAddress: account.address,
+          status: 'active',
+        },
+      });
+      if (!wallet.walletAddress || !wallet.openfortAccountId) {
+        throw new InternalServerErrorException('Provisioned wallet is missing identifiers');
+      }
+      return wallet as ActiveUserWallet;
+    } catch (err) {
+      await this.markWalletProvisioningFailed(walletId, userId, err);
+      throw err;
+    }
+  }
+
+  private async markWalletProvisioningFailed(walletId: string, userId: string, err: unknown) {
+    try {
+      await this.prisma.userWallet.update({
+        where: { id: walletId },
+        data: { status: 'provisioning_failed' },
+      });
+    } catch (updateErr) {
+      this.logger.error(
+        `Failed to mark wallet provisioning_failed for walletId=${walletId} userId=${userId}`,
+        updateErr instanceof Error ? updateErr.stack : updateErr,
+      );
+    }
+
+    this.logger.error(
+      `Wallet provisioning failed for walletId=${walletId} userId=${userId}`,
+      err instanceof Error ? err.stack : err,
+    );
   }
 
   /**
@@ -155,6 +214,9 @@ export class AuthService {
     });
 
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
+    if (user.wallet.status !== 'active' || !user.wallet.walletAddress) {
+      throw new ServiceUnavailableException(`Wallet is not ready (status: ${user.wallet.status})`);
+    }
 
     return {
       userId: user.id,

@@ -35,7 +35,7 @@ export class TransactionsService {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    if (wallet.status !== 'active') {
+    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 

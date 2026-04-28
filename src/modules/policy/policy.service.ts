@@ -49,6 +49,9 @@ export class PolicyService {
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }
+    if (wallet.status !== 'active' || !wallet.openfortAccountId) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
 
     try {
       const policy = await this.openfortService.createPolicy({
