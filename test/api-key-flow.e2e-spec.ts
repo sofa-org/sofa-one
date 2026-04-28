@@ -133,7 +133,7 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .set('X-API-Key', testApiKey)
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello secret message' })
-        .expect(201);
+        .expect(200);
 
       expect(res.body).toEqual({
         signature: TEST_SIGNATURE,
