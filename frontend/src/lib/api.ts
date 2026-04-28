@@ -1,6 +1,89 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 export const DEFAULT_CHAIN_ID = 84532;
 
+export interface ApiErrorBody {
+  statusCode?: number;
+  code?: string;
+  message?: string;
+  details?: string[];
+  path?: string;
+}
+
+export class ApiError extends Error {
+  readonly statusCode: number;
+  readonly code: string;
+  readonly details: string[];
+  readonly path?: string;
+
+  constructor(response: Response, body: ApiErrorBody) {
+    super(formatApiErrorMessage(response.status, body));
+    this.name = 'ApiError';
+    this.statusCode = body.statusCode ?? response.status;
+    this.code = body.code ?? `HTTP_${response.status}`;
+    this.details = body.details ?? [];
+    this.path = body.path;
+  }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
+}
+
+export function hasApiErrorCode(error: unknown, ...codes: string[]) {
+  return isApiError(error) && codes.includes(error.code);
+}
+
+export function getApiErrorMessage(error: unknown) {
+  if (isApiError(error)) return error.message;
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function formatApiErrorMessage(status: number, body: ApiErrorBody) {
+  const code = body.code;
+  const fallback = body.message || `Request failed: ${status}`;
+  const details = body.details?.filter(Boolean) ?? [];
+
+  const message = code ? friendlyErrorMessage(code, fallback) : fallback;
+  if (!details.length) return message;
+  return `${message} ${details.join(' ')}`;
+}
+
+function friendlyErrorMessage(code: string, fallback: string) {
+  switch (code) {
+    case 'VALIDATION_ERROR':
+      return 'Please check the request fields.';
+    case 'INVALID_API_KEY':
+      return 'The API key is invalid or no longer active.';
+    case 'API_KEY_REQUIRED':
+    case 'AUTHENTICATION_REQUIRED':
+      return 'Authentication is required. Sign in again or provide a valid API key.';
+    case 'CHAIN_NOT_ALLOWED':
+      return 'This key is not allowed to use the selected chain.';
+    case 'CHAIN_NOT_SUPPORTED':
+      return 'The selected chain is not supported.';
+    case 'IDEMPOTENCY_CONFLICT':
+      return 'This idempotency key was already used with a different request.';
+    case 'WALLET_NOT_FOUND':
+      return 'Wallet not found. Sign in again to finish wallet setup.';
+    case 'TRANSACTION_NOT_FOUND':
+      return 'Transaction not found, or this key does not have access to it.';
+    case 'POLICY_NOT_FOUND':
+      return 'Policy not found.';
+    case 'WALLET_NOT_ACTIVE':
+      return 'Wallet is not active yet. Try again shortly.';
+    case 'IP_NOT_ALLOWED':
+      return 'This request is blocked by the API key IP allowlist.';
+    default:
+      return fallback;
+  }
+}
+
+async function throwApiError(response: Response): Promise<never> {
+  const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
+  throw new ApiError(response, body);
+}
+
 /**
  * Call an auth endpoint (uses Clerk JWT from getToken).
  */
@@ -19,8 +102,7 @@ export async function authFetch(
     },
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Request failed: ${res.status}`);
+    await throwApiError(res);
   }
   return res.json();
 }
@@ -38,8 +120,7 @@ export async function apiFetch(path: string, apiKey: string, options?: RequestIn
     },
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Request failed: ${res.status}`);
+    await throwApiError(res);
   }
   return res.json();
 }

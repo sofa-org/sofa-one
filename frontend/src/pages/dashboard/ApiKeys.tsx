@@ -6,6 +6,7 @@ import {
   createApiKeyAuth,
   revokeApiKeyAuth,
   refreshApiKey as refreshApiKeyApi,
+  getApiErrorMessage,
 } from '@/lib/api';
 
 interface ApiKeyRecord {
@@ -51,8 +52,8 @@ export default function ApiKeysPage() {
     try {
       const data = await listApiKeysAuth(getToken);
       setKeys(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -84,8 +85,8 @@ export default function ApiKeysPage() {
       setNewKeyName('');
       setSelectedChains(DEFAULT_ALLOWED_CHAINS);
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -103,8 +104,8 @@ export default function ApiKeysPage() {
     try {
       await revokeApiKeyAuth(getToken, id);
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -118,8 +119,8 @@ export default function ApiKeysPage() {
       const result = await refreshApiKeyApi(getToken);
       setNewRawKey(result.apiKey);
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }

@@ -10,6 +10,7 @@ import {
   listPolicyRulesAuth,
   createPolicyRuleAuth,
   deletePolicyRuleAuth,
+  getApiErrorMessage,
 } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -773,7 +774,7 @@ export default function PoliciesPage() {
       const res = await listPoliciesAuth(getToken);
       setPolicies(res?.data ?? []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -789,7 +790,7 @@ export default function PoliciesPage() {
       const res = await listPolicyRulesAuth(getToken, policyId);
       setRulesMap((prev) => ({ ...prev, [policyId]: Array.isArray(res) ? res : (res?.data ?? []) }));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setRulesLoading(null);
     }
@@ -848,7 +849,7 @@ export default function PoliciesPage() {
         setExpandedId(created.id);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -863,7 +864,7 @@ export default function PoliciesPage() {
       if (expandedId === id) setExpandedId(null);
       await fetchPolicies();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -880,7 +881,7 @@ export default function PoliciesPage() {
       }
       await fetchPolicies();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -922,7 +923,7 @@ export default function PoliciesPage() {
       if (detailsEl) detailsEl.open = false;
       
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -937,7 +938,7 @@ export default function PoliciesPage() {
       await fetchRules(policyId);
       await fetchPolicies();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }

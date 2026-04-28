@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { DEFAULT_CHAIN_ID, getMe, socialLogin, withdrawAuth, getBalancesAuth } from '@/lib/api';
+import {
+  DEFAULT_CHAIN_ID,
+  getMe,
+  socialLogin,
+  withdrawAuth,
+  getBalancesAuth,
+  getApiErrorMessage,
+  hasApiErrorCode,
+} from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 function EthIcon() {
@@ -60,6 +68,7 @@ export default function WalletPage() {
     }>;
   }> | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
+  const [balancesError, setBalancesError] = useState<string | null>(null);
 
   const [showWithdraw, setShowWithdraw] = useState(false);
   
@@ -80,8 +89,8 @@ export default function WalletPage() {
         let result;
         try {
           result = await getMe(getToken);
-        } catch (err: any) {
-          if (!err.message?.includes('not found')) throw err;
+        } catch (err: unknown) {
+          if (!hasApiErrorCode(err, 'NOT_FOUND', 'WALLET_NOT_FOUND')) throw err;
           result = await socialLogin(getToken);
         }
 
@@ -90,8 +99,8 @@ export default function WalletPage() {
           setApiKeyDisplay(result.apiKey);
         }
         setWallet(result.wallet);
-      } catch (err: any) {
-        if (!cancelled) setError(err.message);
+      } catch (err: unknown) {
+        if (!cancelled) setError(getApiErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -108,11 +117,14 @@ export default function WalletPage() {
 
     let cancelled = false;
     setBalancesLoading(true);
+    setBalancesError(null);
     getBalancesAuth(getToken, selectedChainId)
       .then((data) => {
         if (!cancelled) setBalances(data.chains);
       })
-      .catch(() => {})
+      .catch((err: unknown) => {
+        if (!cancelled) setBalancesError(getApiErrorMessage(err));
+      })
       .finally(() => {
         if (!cancelled) setBalancesLoading(false);
       });
@@ -132,8 +144,8 @@ export default function WalletPage() {
       setWithdrawResult(`Transaction submitted: ${result.intentId}`);
       setTo('');
       setAmount('');
-    } catch (err: any) {
-      setWithdrawError(err.message);
+    } catch (err: unknown) {
+      setWithdrawError(getApiErrorMessage(err));
     } finally {
       setWithdrawLoading(false);
     }
@@ -218,6 +230,10 @@ export default function WalletPage() {
                     <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
                     <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
                   </>
+                ) : balancesError ? (
+                  <div className="sm:col-span-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                    {balancesError}
+                  </div>
                 ) : balances && balances.length > 0 ? (
                   balances.map((chain) => (
                     chain.balances.map((b) => (
