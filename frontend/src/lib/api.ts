@@ -51,6 +51,53 @@ export interface WithdrawResponse {
   status: string;
 }
 
+export interface SignMessageRequest {
+  chainId: number;
+  type: 'message';
+  message: string;
+}
+
+export interface SignTypedDataRequest {
+  chainId: number;
+  type: 'typed_data';
+  typedData: Record<string, unknown>;
+}
+
+export type SignRequest = SignMessageRequest | SignTypedDataRequest;
+
+export interface SignResponse {
+  signature: string;
+  walletAddress: string;
+  type: SignRequest['type'];
+}
+
+export interface TransactionInteraction {
+  to: string;
+  data: string;
+  value?: string;
+}
+
+export interface SendTransactionRequest {
+  chainId: number;
+  interactions: TransactionInteraction[];
+  policyId?: string;
+  idempotencyKey?: string;
+}
+
+export interface SendTransactionResponse {
+  transactionId: string;
+  transactionHash: string | null;
+  status: string;
+}
+
+export interface TransactionStatusResponse extends SendTransactionResponse {
+  chainId: number;
+  walletAddress: string;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
 export interface ApiKeyRecord {
   id: string;
   keyPrefix: string;
@@ -260,43 +307,24 @@ export async function refreshApiKey(getToken: () => Promise<string | null>) {
   return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, { method: 'POST' });
 }
 
-// --- Wallets ---
+// --- Public API-key endpoints ---
 
-export async function getDepositInfo(apiKey: string, chainId = DEFAULT_CHAIN_ID) {
-  return apiFetch<{ walletAddress: string; chainId: number }>('/v1/wallets/deposit-info', apiKey, {
+export async function signWithApiKey(apiKey: string, body: SignRequest) {
+  return apiFetch<SignResponse>('/v1/wallets/sign', apiKey, {
     method: 'POST',
-    body: JSON.stringify({ chainId }),
+    body: JSON.stringify(body),
   });
 }
 
-export async function withdraw(
-  apiKey: string,
-  to: string,
-  amount: string,
-  token: string,
-  chainId = DEFAULT_CHAIN_ID,
-) {
-  return apiFetch<WithdrawResponse>('/v1/wallets/withdraw', apiKey, {
+export async function sendTransactionWithApiKey(apiKey: string, body: SendTransactionRequest) {
+  return apiFetch<SendTransactionResponse>('/v1/transactions/send', apiKey, {
     method: 'POST',
-    body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
+    body: JSON.stringify(body),
   });
 }
 
-// --- API Keys ---
-
-export async function listApiKeys(apiKey: string) {
-  return apiFetch<ApiKeyRecord[]>('/v1/api-keys', apiKey);
-}
-
-export async function createApiKey(apiKey: string, name: string) {
-  return apiFetch<CreateApiKeyResponse>('/v1/api-keys', apiKey, {
-    method: 'POST',
-    body: JSON.stringify({ name }),
-  });
-}
-
-export async function revokeApiKey(apiKey: string, id: string) {
-  return apiFetch<void>(`/v1/api-keys/${id}`, apiKey, { method: 'DELETE' });
+export async function getTransactionStatusWithApiKey(apiKey: string, transactionId: string) {
+  return apiFetch<TransactionStatusResponse>(`/v1/transactions/${transactionId}`, apiKey);
 }
 
 // --- Dashboard API (JWT-authenticated) ---
