@@ -11,6 +11,7 @@ import { ApiKeyModule } from './modules/api-key/api-key.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { PolicyModule } from './modules/policy/policy.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     WalletModule,
     PolicyModule,
     TransactionsModule,
+    HealthModule,
   ],
   providers: [
     {
