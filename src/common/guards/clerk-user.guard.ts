@@ -33,8 +33,10 @@ export class ClerkUserGuard implements CanActivate {
     }
 
     try {
+      const parties = this.configService.get<string[]>('clerk.authorizedParties');
       const payload = await verifyToken(token, {
         secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
+        ...(parties?.length ? { authorizedParties: parties } : {}),
       });
 
       const user = await this.prisma.user.findUnique({

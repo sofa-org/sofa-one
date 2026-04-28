@@ -13,6 +13,18 @@ import {
   type WalletInfo,
 } from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
+
+function parseUsdcAmount(input: string): string {
+  const trimmed = input.trim();
+  if (!/^\d+(\.\d{0,6})?$/.test(trimmed)) {
+    throw new Error('Enter a valid USDC amount (e.g. 1.50)');
+  }
+  const [intPart, fracPart = ''] = trimmed.split('.');
+  const frac = fracPart.padEnd(6, '0');
+  const baseUnits = BigInt(intPart) * 1_000_000n + BigInt(frac);
+  return baseUnits.toString();
+}
 
 function EthIcon() {
   return (
@@ -130,7 +142,8 @@ export default function WalletPage() {
     setWithdrawResult(null);
     setWithdrawError(null);
     try {
-      const result = await withdrawAuth(getToken, to, amount, token, selectedChainId);
+      const baseUnits = parseUsdcAmount(amount);
+      const result = await withdrawAuth(getToken, to, baseUnits, token, selectedChainId);
       setWithdrawResult(`Transaction submitted: ${result.intentId}`);
       setTo('');
       setAmount('');
@@ -170,9 +183,12 @@ export default function WalletPage() {
           <p className="text-sm font-medium text-amber-800 mb-2">
             Your API key (save it — shown only once):
           </p>
-          <code className="block break-all rounded-lg bg-amber-100 px-4 py-3 font-mono text-sm text-amber-900 ring-1 ring-amber-200/50">
-            {apiKeyDisplay}
-          </code>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 break-all rounded-lg bg-amber-100 px-4 py-3 font-mono text-sm text-amber-900 ring-1 ring-amber-200/50">
+              {apiKeyDisplay}
+            </code>
+            <CopyButton text={apiKeyDisplay} className="shrink-0 border-amber-300 text-amber-600 hover:bg-amber-100" />
+          </div>
         </div>
       )}
 
@@ -187,6 +203,7 @@ export default function WalletPage() {
                 <p className="break-all font-mono text-sm text-brand-text flex-1">
                   {wallet.walletAddress}
                 </p>
+                <CopyButton text={wallet.walletAddress} className="shrink-0" />
                 <button
                   type="button"
                   onClick={() => setShowWithdraw((v) => !v)}
@@ -300,10 +317,10 @@ export default function WalletPage() {
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (base units)</label>
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Amount (USDC)</label>
                       <input
                         type="text"
-                        placeholder="1000000"
+                        placeholder="1.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required

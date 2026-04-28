@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import {
   listApiKeysAuth,
   createApiKeyAuth,
@@ -154,9 +155,12 @@ export default function ApiKeysPage() {
           <p className="text-sm font-medium text-amber-800">
             New API key created — save it now (shown only once):
           </p>
-          <code className="mt-3 block break-all rounded-xl bg-amber-100/50 border border-amber-200/50 px-4 py-3 font-mono text-sm text-amber-900 shadow-sm">
-            {newRawKey}
-          </code>
+          <div className="mt-3 flex items-center gap-2">
+            <code className="flex-1 break-all rounded-xl bg-amber-100/50 border border-amber-200/50 px-4 py-3 font-mono text-sm text-amber-900 shadow-sm">
+              {newRawKey}
+            </code>
+            <CopyButton text={newRawKey} className="shrink-0 border-amber-300 text-amber-600 hover:bg-amber-100" />
+          </div>
         </div>
       )}
 

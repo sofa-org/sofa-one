@@ -13,6 +13,7 @@ type ApiKeyCreateOptions = {
   name: string;
   allowedChains?: number[];
   expiresAt?: string | Date;
+  allowedIps?: string[];
 };
 
 type PrismaTransaction = Prisma.TransactionClient;
@@ -39,7 +40,7 @@ export class ApiKeyService {
           keyPrefix: keyMaterial.keyPrefix,
           name: normalized.name,
           expiresAt: normalized.expiresAt,
-          allowedIps: [],
+          allowedIps: normalized.allowedIps,
           allowedChains: normalized.allowedChains,
         },
       });
@@ -49,6 +50,7 @@ export class ApiKeyService {
         keyName: created.name,
         metadata: {
           allowedChains: created.allowedChains,
+          allowedIps: created.allowedIps,
           expiresAt: created.expiresAt?.toISOString() ?? null,
         },
       });
@@ -208,8 +210,9 @@ export class ApiKeyService {
     allowedChains.forEach(getSupportedChain);
 
     const expiresAt = this.normalizeExpiresAt(options.expiresAt);
+    const allowedIps = options.allowedIps ?? [];
 
-    return { name, allowedChains, expiresAt };
+    return { name, allowedChains, expiresAt, allowedIps };
   }
 
   private normalizeExpiresAt(expiresAt?: string | Date) {

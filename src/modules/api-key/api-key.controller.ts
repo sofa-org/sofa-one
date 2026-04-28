@@ -21,6 +21,7 @@ export class ApiKeyController {
       name: dto.name,
       allowedChains: dto.allowedChains,
       expiresAt: dto.expiresAt,
+      allowedIps: dto.allowedIps,
     });
   }
 

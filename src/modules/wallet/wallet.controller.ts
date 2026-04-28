@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
@@ -32,6 +32,7 @@ export class WalletController {
 
   /** POST /v1/wallets/sign — API-key only: sign data without sending a transaction. */
   @Post('sign')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(EitherAuthGuard, ApiKeyOnlyGuard)
   async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto, @Req() req: any) {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);

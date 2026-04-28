@@ -30,8 +30,10 @@ export class ClerkAuthGuard implements CanActivate {
     }
 
     try {
+      const parties = this.configService.get<string[]>('clerk.authorizedParties');
       const payload = await verifyToken(token, {
         secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
+        ...(parties?.length ? { authorizedParties: parties } : {}),
       });
       request.clerkUserId = payload.sub;
       request.clerkPayload = payload;

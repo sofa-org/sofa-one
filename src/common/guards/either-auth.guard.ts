@@ -6,6 +6,7 @@ import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
+import { isIpAllowed } from '../utils/ip-cidr';
 
 /**
  * Accepts either Clerk JWT (Authorization: Bearer) or X-API-Key header.
@@ -50,8 +51,10 @@ export class EitherAuthGuard implements CanActivate {
 
   private async authenticateWithJwt(request: any, token: string): Promise<boolean> {
     try {
+      const parties = this.configService.get<string[]>('clerk.authorizedParties');
       const payload = await verifyToken(token, {
         secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
+        ...(parties?.length ? { authorizedParties: parties } : {}),
       });
 
       const user = await this.prisma.user.findUnique({
@@ -104,7 +107,7 @@ export class EitherAuthGuard implements CanActivate {
     // Never read X-Forwarded-For directly — it can be forged by the client.
     if (keyRecord.allowedIps.length > 0) {
       const clientIp: string = request.ip ?? '';
-      if (!keyRecord.allowedIps.includes(clientIp)) {
+      if (!isIpAllowed(clientIp, keyRecord.allowedIps)) {
         throw new UnauthorizedException('IP address not allowed for this API key');
       }
     }

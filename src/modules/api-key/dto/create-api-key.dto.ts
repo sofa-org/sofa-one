@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -26,4 +27,13 @@ export class CreateApiKeyDto {
   @IsInt({ each: true })
   @Min(1, { each: true })
   allowedChains?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(/^(\d{1,3}\.){3}\d{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/, {
+    each: true,
+    message: 'Each entry must be a valid IPv4 address or CIDR range (e.g. 1.2.3.4 or 10.0.0.0/24)',
+  })
+  allowedIps?: string[];
 }

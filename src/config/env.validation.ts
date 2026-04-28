@@ -54,6 +54,10 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  CLERK_AUTHORIZED_PARTIES?: string;
+
+  @IsString()
+  @IsOptional()
   REDIS_URL?: string;
 
   @IsString()

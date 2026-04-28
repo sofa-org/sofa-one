@@ -6,7 +6,7 @@ import {
   Optional,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
+import { createPublicClient, formatEther, formatUnits, hashMessage, hashTypedData, http, type PublicClient } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
@@ -35,6 +35,7 @@ type ApiKeySigningContext = {
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
+  private readonly publicClients = new Map<number, PublicClient>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -42,6 +43,15 @@ export class WalletService {
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
+
+  private getPublicClient(chainId: number): PublicClient {
+    const existing = this.publicClients.get(chainId);
+    if (existing) return existing;
+    const { chain } = getSupportedChain(chainId);
+    const client = createPublicClient({ chain, transport: http() });
+    this.publicClients.set(chainId, client);
+    return client;
+  }
 
   /** Return the user's wallet address and supported deposit tokens. */
   async getDepositInfo(userId: string, chainId: number) {
@@ -192,7 +202,7 @@ export class WalletService {
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
     const supportedChain = getSupportedChain(chainId);
-    const publicClient = createPublicClient({ chain: supportedChain.chain, transport: http() });
+    const publicClient = this.getPublicClient(chainId);
     const usdcAddress = supportedChain.usdcAddress;
 
     type BalanceEntry =
@@ -230,7 +240,7 @@ export class WalletService {
               (raw): BalanceEntry => ({
                 token: 'USDC',
                 raw: raw.toString(),
-                formatted: (Number(raw) / 1e6).toFixed(2),
+                formatted: formatUnits(raw, 6),
                 contractAddress: usdcAddress,
               }),
             )
@@ -294,7 +304,7 @@ export class WalletService {
 
     // Guard: verify on-chain USDC balance is sufficient before submitting intent
     {
-      const publicClient = createPublicClient({ chain: supportedChain.chain, transport: http() });
+      const publicClient = this.getPublicClient(chainId);
       let usdcBalance: bigint;
       try {
         usdcBalance = await publicClient.readContract({
