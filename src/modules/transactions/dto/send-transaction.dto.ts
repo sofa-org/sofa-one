@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  ArrayMinSize,
   IsNotEmpty,
   IsString,
   Matches,
@@ -38,6 +39,7 @@ export class SendTransactionDto {
   chainId: number;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => InteractionDto)
   interactions: InteractionDto[];

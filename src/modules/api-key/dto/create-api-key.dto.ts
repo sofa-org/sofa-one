@@ -1,5 +1,14 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsISO8601, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsArray,
+  IsISO8601,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateApiKeyDto {
   @IsString()

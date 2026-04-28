@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ClerkUserGuard } from '../../common/guards/clerk-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PolicyService } from './policy.service';
@@ -38,7 +29,11 @@ export class PolicyController {
 
   /** PATCH /v1/policies/:id — update a policy */
   @Patch(':id')
-  async update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: UpdatePolicyDto) {
+  async update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdatePolicyDto,
+  ) {
     return this.policyService.updatePolicy(userId, id, dto);
   }
 

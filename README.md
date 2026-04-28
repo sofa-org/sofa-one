@@ -140,6 +140,7 @@ curl -X POST http://localhost:3001/v1/transactions/send \
   -H "Content-Type: application/json" \
   -d '{
     "chainId": 84532,
+    "idempotencyKey": "order-abc-123",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "data": "0xa9059cbb000000000000000000000000<recipient>0000000000000000000000000000000000000000000000000000000000000f4240",
@@ -150,6 +151,13 @@ curl -X POST http://localhost:3001/v1/transactions/send \
 
 The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the example above). `value` is wei as a decimal string and defaults to `"0"` if omitted.
 
+Query the returned transaction status without exposing calldata or request hashes:
+
+```bash
+curl http://localhost:3001/v1/transactions/<transactionId> \
+  -H "X-API-Key: sk_your_key_here"
+```
+
 ### Core Endpoints
 
 | Method | Path | Auth | Description |
@@ -157,13 +165,14 @@ The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the exa
 | `POST` | `/auth/social` | Public | Social login → returns `userId`, `walletAddress`, `apiKey` |
 | `POST` | `/auth/refresh-api-key` | JWT | Rotate API key |
 | `POST` | `/v1/transactions/send` | API Key | Submit raw transaction (ABI-encoded calldata) |
+| `GET` | `/v1/transactions/:id` | API Key | Query safe transaction status for the API-key user |
 | `POST` | `/v1/wallets/sign` | API Key | Sign a message or typed data without broadcasting |
 | `GET`  | `/v1/wallets/balances` | JWT + Frontend | ETH + USDC balances across **all** supported chains simultaneously |
 | `POST` | `/v1/wallets/deposit-info` | JWT + Frontend | Get wallet address for deposits |
 | `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |
 | `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
 
-> **Access control split**: `POST /v1/wallets/sign` and `POST /v1/transactions/send` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
+> **Access control split**: `POST /v1/wallets/sign`, `POST /v1/transactions/send`, and `GET /v1/transactions/:id` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
 >
 > API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates allowed chains/expiry, and returns raw secrets only once on creation/rotation.
 

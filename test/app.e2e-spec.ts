@@ -21,14 +21,10 @@ describe('AppController (e2e)', () => {
   });
 
   it('/v1/wallets/deposit-info (POST) should require API key', () => {
-    return request(app.getHttpServer())
-      .post('/v1/wallets/deposit-info')
-      .expect(401);
+    return request(app.getHttpServer()).post('/v1/wallets/deposit-info').expect(401);
   });
 
   it('/auth/social (POST) should require authorization', () => {
-    return request(app.getHttpServer())
-      .post('/auth/social')
-      .expect(401);
+    return request(app.getHttpServer()).post('/auth/social').expect(401);
   });
 });

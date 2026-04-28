@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient } from '@clerk/backend';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -26,7 +31,10 @@ export class AuthService {
    * Returns { userId, wallet: { walletAddress, chainId, status, supportedTokens }, apiKey? }.
    * The apiKey field is only present on first login (one-time display).
    */
-  async handleSocialLogin(clerkUserId: string, _depth = 0): Promise<{
+  async handleSocialLogin(
+    clerkUserId: string,
+    _depth = 0,
+  ): Promise<{
     userId: string;
     wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
     apiKey?: string;
@@ -34,8 +42,7 @@ export class AuthService {
     // 1. Fetch Clerk user profile
     const clerkUser = await this.clerkClient.users.getUser(clerkUserId);
     const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
-    const socialProvider =
-      clerkUser.externalAccounts?.[0]?.provider || 'unknown';
+    const socialProvider = clerkUser.externalAccounts?.[0]?.provider || 'unknown';
     const socialId = clerkUserId;
 
     // 2. Look up existing user
@@ -80,7 +87,9 @@ export class AuthService {
           if (_depth >= 3) {
             throw new InternalServerErrorException('User creation conflict could not be resolved');
           }
-          this.logger.warn(`Race condition on user creation for ${socialProvider}, retrying as existing user`);
+          this.logger.warn(
+            `Race condition on user creation for ${socialProvider}, retrying as existing user`,
+          );
           return this.handleSocialLogin(clerkUserId, _depth + 1);
         }
         throw err;
@@ -88,10 +97,7 @@ export class AuthService {
     } else if (!wallet) {
       // 3b. Existing user missing wallet — provision one
       userId = existing.id;
-      const chainId = this.configService.get<number>(
-        'chain.defaultChainId',
-        84532,
-      );
+      const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
       const account = await this.openfort.createBackendWallet();
 
       try {

@@ -6,7 +6,10 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import * as express from 'express';
 
-function parseTrustProxy(value: string | undefined, nodeEnv: string | undefined): string | string[] | false {
+function parseTrustProxy(
+  value: string | undefined,
+  nodeEnv: string | undefined,
+): string | string[] | false {
   if (!value || value.trim() === '') {
     if (nodeEnv === 'production') {
       throw new Error('TRUST_PROXY must be set in production to trusted proxy IP/CIDR values');
@@ -17,10 +20,15 @@ function parseTrustProxy(value: string | undefined, nodeEnv: string | undefined)
   const normalized = value.trim().toLowerCase();
   if (['false', '0', 'off'].includes(normalized)) return false;
   if (['true', '1'].includes(normalized)) {
-    throw new Error('TRUST_PROXY must name trusted proxy IP/CIDR values, not a boolean or hop count');
+    throw new Error(
+      'TRUST_PROXY must name trusted proxy IP/CIDR values, not a boolean or hop count',
+    );
   }
 
-  return value.split(',').map((entry) => entry.trim()).filter(Boolean);
+  return value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 async function bootstrap() {
@@ -38,7 +46,9 @@ async function bootstrap() {
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
   const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+    ? process.env.CORS_ORIGIN.split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
     : [];
   if (process.env.NODE_ENV === 'production' && !allowedOrigins.length) {
     throw new Error('CORS_ORIGIN must be set in production');

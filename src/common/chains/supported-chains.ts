@@ -67,7 +67,10 @@ export function getSupportedChain(chainId: number): SupportedChain {
   return chain;
 }
 
-export function assertAllowedApiKeyChain(apiKeyRecord: { allowedChains?: number[] } | undefined, chainId: number) {
+export function assertAllowedApiKeyChain(
+  apiKeyRecord: { allowedChains?: number[] } | undefined,
+  chainId: number,
+) {
   if (!apiKeyRecord) return;
   if (!apiKeyRecord.allowedChains?.includes(chainId)) {
     throw new BadRequestException(`API key is not allowed to use chain ${chainId}`);

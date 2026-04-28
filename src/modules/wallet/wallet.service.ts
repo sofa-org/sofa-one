@@ -123,7 +123,10 @@ export class WalletService {
         data: { status, completedAt: new Date() },
       });
     } catch (err) {
-      this.logger.error(`Failed to mark signing request ${id} as ${status}`, err instanceof Error ? err.stack : err);
+      this.logger.error(
+        `Failed to mark signing request ${id} as ${status}`,
+        err instanceof Error ? err.stack : err,
+      );
     }
   }
 
@@ -361,17 +364,22 @@ export class WalletService {
 
     if (params.type === 'typed_data') {
       if (params.chainId === undefined) {
-        throw new BadRequestException('chainId is required when signing typed data with an API key');
+        throw new BadRequestException(
+          'chainId is required when signing typed data with an API key',
+        );
       }
       if (typeof typedDataChainId !== 'number') {
-        throw new BadRequestException('typedData.domain.chainId is required when signing typed data with an API key');
+        throw new BadRequestException(
+          'typedData.domain.chainId is required when signing typed data with an API key',
+        );
       }
       if (typedDataChainId !== params.chainId) {
         throw new BadRequestException('typedData.domain.chainId must match chainId');
       }
     }
 
-    const chainId = params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
+    const chainId =
+      params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
     if (chainId === undefined) {
       throw new BadRequestException('chainId is required when signing with an API key');
     }

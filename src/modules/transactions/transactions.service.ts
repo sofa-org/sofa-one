@@ -10,6 +10,8 @@ import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains
 import { hashRequest } from '../../common/utils/request-hash';
 import type { SendTransactionDto } from './dto/send-transaction.dto';
 
+const TERMINAL_TRANSACTION_STATUSES = new Set(['confirmed', 'failed', 'unknown']);
+
 type ApiKeyTransactionContext = {
   id?: string;
   keyPrefix?: string;
@@ -90,7 +92,7 @@ export class TransactionsService {
     }
 
     try {
-      const { transactionHash } = await this.openfort.sendTransaction({
+      const { intentId, transactionHash } = await this.openfort.sendTransaction({
         accountId: wallet.openfortAccountId,
         chainId,
         interactions: dto.interactions,
@@ -100,7 +102,7 @@ export class TransactionsService {
       const updated = await this.prisma.transaction.update({
         where: { id: tx.id },
         data: {
-          intentId: transactionHash ?? null,
+          intentId: intentId ?? transactionHash ?? null,
           txHash: transactionHash ?? null,
           status: transactionHash ? 'confirmed' : 'pending',
           completedAt: transactionHash ? new Date() : null,
@@ -123,6 +125,46 @@ export class TransactionsService {
       });
       throw error;
     }
+  }
+
+  /** Return a safe transaction status view, refreshing Openfort intent state when possible. */
+  async getStatus(userId: string, transactionId: string, apiKeyRecord?: ApiKeyTransactionContext) {
+    if (!apiKeyRecord) {
+      throw new UnauthorizedException('API key is required');
+    }
+
+    const tx = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
+    });
+    if (!tx) throw new NotFoundException('Transaction not found');
+
+    assertAllowedApiKeyChain(apiKeyRecord, Number(tx.chainId));
+
+    const refreshed = await this.refreshTransactionStatusBestEffort(tx);
+    return this.toStatusResponse(refreshed);
+  }
+
+  /** Reconcile stale in-flight transactions that have an Openfort intent id. */
+  async reconcileStaleTransactions(params: { olderThan: Date; limit?: number }) {
+    const stale = await this.prisma.transaction.findMany({
+      where: {
+        status: { in: ['submitting', 'pending'] },
+        intentId: { not: null },
+        createdAt: { lt: params.olderThan },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: params.limit ?? 50,
+    });
+
+    const results = [];
+    for (const tx of stale) {
+      try {
+        results.push(await this.refreshTransactionStatus(tx));
+      } catch {
+        results.push(tx);
+      }
+    }
+    return { checked: stale.length, transactions: results.map((tx) => this.toStatusResponse(tx)) };
   }
 
   private async createPendingOrReturnExisting(
@@ -177,6 +219,91 @@ export class TransactionsService {
       }
       return { tx: existing, created: false };
     }
+  }
+
+  private async refreshTransactionStatus(tx: any) {
+    if (!this.canRefreshFromOpenfort(tx)) return tx;
+
+    const intent = await this.openfort.getTransactionIntent(tx.intentId);
+    const nextStatus = this.toLocalTransactionStatus(intent?.status, tx.status);
+    const transactionHash = this.extractTransactionHash(intent) ?? tx.txHash;
+    const terminal = TERMINAL_TRANSACTION_STATUSES.has(nextStatus);
+
+    if (nextStatus === tx.status && transactionHash === tx.txHash) return tx;
+
+    return this.prisma.transaction.update({
+      where: { id: tx.id },
+      data: {
+        status: nextStatus,
+        txHash: transactionHash,
+        failureReason:
+          nextStatus === 'failed' ? this.extractFailureReason(intent) : tx.failureReason,
+        completedAt: terminal ? (tx.completedAt ?? new Date()) : tx.completedAt,
+      },
+    });
+  }
+
+  private canRefreshFromOpenfort(tx: any) {
+    return Boolean(
+      tx.intentId &&
+      !TERMINAL_TRANSACTION_STATUSES.has(tx.status) &&
+      !this.looksLikeTransactionHash(tx.intentId),
+    );
+  }
+
+  private async refreshTransactionStatusBestEffort(tx: any) {
+    try {
+      return await this.refreshTransactionStatus(tx);
+    } catch {
+      return tx;
+    }
+  }
+
+  private looksLikeTransactionHash(value: string) {
+    return /^0x[a-fA-F0-9]{64}$/.test(value);
+  }
+
+  private toLocalTransactionStatus(openfortStatus: unknown, currentStatus: string) {
+    const status = String(openfortStatus ?? '').toLowerCase();
+    if (['confirmed', 'succeeded', 'successful', 'success', 'completed'].includes(status)) {
+      return 'confirmed';
+    }
+    if (['failed', 'cancelled', 'canceled', 'reverted'].includes(status)) {
+      return 'failed';
+    }
+    if (['pending', 'broadcast', 'broadcasted', 'submitted', 'processing'].includes(status)) {
+      return 'pending';
+    }
+    return currentStatus;
+  }
+
+  private extractTransactionHash(intent: any) {
+    return (
+      intent?.transactionHash ??
+      intent?.response?.transactionHash ??
+      intent?.transaction?.hash ??
+      intent?.receipt?.transactionHash ??
+      null
+    );
+  }
+
+  private extractFailureReason(intent: any) {
+    const reason =
+      intent?.failureReason ?? intent?.error?.message ?? intent?.message ?? 'Transaction failed';
+    return String(reason).slice(0, 500);
+  }
+
+  private toStatusResponse(tx: any) {
+    return {
+      transactionId: tx.id,
+      transactionHash: tx.txHash,
+      status: tx.status,
+      chainId: Number(tx.chainId),
+      walletAddress: tx.walletAddress,
+      failureReason: tx.failureReason ? 'Transaction failed' : null,
+      createdAt: tx.createdAt,
+      completedAt: tx.completedAt,
+    };
   }
 
   private toFailureReason(error: unknown): string {

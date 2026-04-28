@@ -20,6 +20,9 @@ const fieldRows = {
     ["policyId", "string", "No", "User-owned Openfort policy ID."],
     ["idempotencyKey", "string", "Yes", "Max 64 characters: letters, numbers, _ and -."],
   ],
+  status: [
+    ["transactionId", "path", "Yes", "SOFA ONE transaction UUID returned by /v1/transactions/send."],
+  ],
 };
 
 function CodeBlock({ children }: { children: string }) {
@@ -65,16 +68,18 @@ function FieldTable({ rows }: { rows: string[][] }) {
 
 function EndpointCard({
   path,
+  method = "POST",
   children,
 }: {
   path: string;
+  method?: "GET" | "POST";
   children: React.ReactNode;
 }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-brand-border bg-white p-7 shadow-xl ring-1 ring-black/5">
       <div className="absolute left-0 top-0 h-1.5 w-full bg-brand-text" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className={tagClass}>POST</span>
+        <span className={tagClass}>{method}</span>
         <h3 className="font-mono text-lg font-semibold text-brand-text">{path}</h3>
       </div>
       <div className="space-y-6">{children}</div>
@@ -191,6 +196,38 @@ export default function APIDocsPage() {
               <p className="text-xs leading-5 text-brand-muted">
                 Status may be pending, submitting, confirmed, or failed. The transaction hash can be empty while submission is pending.
               </p>
+            </div>
+          </div>
+        </EndpointCard>
+
+        <EndpointCard path="/v1/transactions/:id" method="GET">
+          <p className="text-sm leading-6 text-brand-muted">
+            Query a safe transaction status view for the API-key user. The response excludes calldata, request hashes, and interaction hashes. Pending Openfort intent records may be refreshed during lookup.
+          </p>
+
+          <div className="space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Path params</h4>
+            <FieldTable rows={fieldRows.status} />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
+              <CodeBlock>{`curl https://api.agentwallet.com/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-API-Key: sk_live_..."`}</CodeBlock>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">200 response</h4>
+              <CodeBlock>{`{
+  "transactionId": "550e8400-e29b-41d4-a716-446655440000",
+  "transactionHash": "0xabc123...",
+  "status": "confirmed",
+  "chainId": 84532,
+  "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "failureReason": null,
+  "createdAt": "2026-04-28T10:00:00.000Z",
+  "completedAt": "2026-04-28T10:00:10.000Z"
+}`}</CodeBlock>
             </div>
           </div>
         </EndpointCard>

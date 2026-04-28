@@ -71,7 +71,9 @@ describe('ApiKeyService', () => {
   it('rejects blank API key names', async () => {
     const service = new ApiKeyService(prisma as any);
 
-    await expect(service.createApiKey('user-1', { name: '   ' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.createApiKey('user-1', { name: '   ' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
@@ -121,9 +123,9 @@ describe('ApiKeyService', () => {
   it('rejects unsupported allowed chains', async () => {
     const service = new ApiKeyService(prisma as any);
 
-    await expect(service.createApiKey('user-1', { name: 'Bad chain', allowedChains: [999999] })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.createApiKey('user-1', { name: 'Bad chain', allowedChains: [999999] }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
@@ -149,7 +151,9 @@ describe('ApiKeyService', () => {
     );
 
     prisma.apiKey.findFirst.mockResolvedValue(null);
-    await expect(service.revokeApiKey('missing', 'user-1')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.revokeApiKey('missing', 'user-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {

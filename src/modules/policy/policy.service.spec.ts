@@ -60,7 +60,10 @@ describe('PolicyService ownership', () => {
 
   it('only allows account-scoped policy creation', async () => {
     await expect(
-      service.createPolicy('user-1', { scope: 'project' as any, rules: [{ action: 'accept', operation: 'signEvmMessage' as any }] }),
+      service.createPolicy('user-1', {
+        scope: 'project' as any,
+        rules: [{ action: 'accept', operation: 'signEvmMessage' as any }],
+      }),
     ).rejects.toThrow(ForbiddenException);
   });
 });

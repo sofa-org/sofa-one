@@ -48,6 +48,10 @@ info:
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
       -d '{"type": "message", "chainId": 84532, "message": "Hello from SOFA ONE"}'
+
+    # 3. 查询交易状态
+    curl https://api.example.com/v1/transactions/b2c3d4e5-f6a7-8901-bcde-f12345678901 \
+      -H "X-API-Key: sk_your_key_here"
     ```
 
   contact:
@@ -131,7 +135,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
+        '400':
           $ref: '#/components/responses/ValidationError'
 
   # ──────────────────────────── Transactions ────────────────────────────
@@ -187,14 +191,50 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          description: 幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
+        '400':
+          description: 请求参数错误或幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          $ref: '#/components/responses/ValidationError'
+
+  /v1/transactions/{transactionId}:
+    get:
+      tags: [Transactions]
+      summary: 查询交易状态
+      description: |
+        使用 `X-API-Key` 查询当前用户的交易状态。响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。
+
+        如交易记录仍处于 `submitting` / `pending` 且包含 Openfort intent id，服务会尝试从 Openfort 刷新状态。
+      operationId: getTransactionStatus
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 平台内部交易 ID
+      responses:
+        '200':
+          description: 交易状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+              example:
+                transactionId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                transactionHash: "0xabc123def456..."
+                status: "confirmed"
+                chainId: 84532
+                walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
+                failureReason: null
+                createdAt: "2026-04-28T10:00:00.000Z"
+                completedAt: "2026-04-28T10:00:10.000Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 # ════════════════════════════ Components ════════════════════════════
 components:
@@ -334,7 +374,41 @@ components:
           description: 链上交易哈希（pending 时为 null）
         status:
           type: string
-          enum: [pending, confirmed, failed, submitting]
+          enum: [submitting, pending, confirmed, failed, unknown]
+
+    TransactionStatusResponse:
+      type: object
+      required: [transactionId, transactionHash, status, chainId, walletAddress, failureReason, createdAt, completedAt]
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: 平台内部交易 ID
+        transactionHash:
+          type: string
+          nullable: true
+          pattern: '^0x[a-fA-F0-9]{64}$'
+          description: 链上交易哈希（未广播/未知时为 null）
+        status:
+          type: string
+          enum: [submitting, pending, confirmed, failed, unknown]
+        chainId:
+          type: integer
+          description: 执行链 ID
+        walletAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+        failureReason:
+          type: string
+          nullable: true
+          description: 失败摘要；不包含 calldata 或 secrets
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
 
     # ──────────── Error ────────────
     ErrorResponse:
@@ -398,7 +472,7 @@ components:
             message: "Wallet not found"
 
     ValidationError:
-      description: 请求参数验证失败
+      description: 请求参数验证失败（Nest ValidationPipe 返回 400）
       content:
         application/json:
           schema:

@@ -19,7 +19,9 @@ export class OpenfortService {
       const account = await this.client.accounts.evm.backend.create();
       return { id: account.id, address: account.address };
     } catch (error: any) {
-      this.logger.error('createBackendWallet failed: ' + (error.message ?? error), { stack: error.stack });
+      this.logger.error('createBackendWallet failed: ' + (error.message ?? error), {
+        stack: error.stack,
+      });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
@@ -45,7 +47,9 @@ export class OpenfortService {
         interactions: params.interactions,
       });
     } catch (error: any) {
-      this.logger.error('createTransactionIntent failed: ' + (error.message ?? error), { stack: error.stack });
+      this.logger.error('createTransactionIntent failed: ' + (error.message ?? error), {
+        stack: error.stack,
+      });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
@@ -134,7 +138,7 @@ export class OpenfortService {
     chainId: number;
     interactions: Array<{ to: string; data: string; value?: string }>;
     policyId?: string;
-  }): Promise<{ transactionHash: string | null }> {
+  }): Promise<{ intentId: string | null; transactionHash: string | null }> {
     try {
       const account = await this.client.accounts.evm.backend.get({ id: params.accountId });
       const result = await this.client.accounts.evm.backend.sendTransaction({
@@ -143,9 +147,27 @@ export class OpenfortService {
         interactions: params.interactions as any,
         ...(params.policyId && { policy: params.policyId }),
       });
-      return { transactionHash: result.response?.transactionHash ?? null };
+      const rawResult = result as any;
+      return {
+        intentId: rawResult.id ?? rawResult.intentId ?? rawResult.response?.id ?? null,
+        transactionHash: rawResult.response?.transactionHash ?? rawResult.transactionHash ?? null,
+      };
     } catch (error: any) {
-      this.logger.error('sendTransaction failed: ' + (error.message ?? error), { stack: error.stack });
+      this.logger.error('sendTransaction failed: ' + (error.message ?? error), {
+        stack: error.stack,
+      });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  /** Retrieve a transaction intent for status reconciliation. */
+  async getTransactionIntent(intentId: string): Promise<any> {
+    try {
+      return await this.client.transactionIntents.get(intentId);
+    } catch (error: any) {
+      this.logger.error('getTransactionIntent failed: ' + (error.message ?? error), {
+        stack: error.stack,
+      });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

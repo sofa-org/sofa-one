@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { TransactionsService } from './transactions.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
@@ -17,5 +17,17 @@ export class TransactionsController {
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async send(@CurrentUser('id') userId: string, @Body() dto: SendTransactionDto, @Req() req: any) {
     return this.transactionsService.send(userId, dto, req.apiKeyRecord);
+  }
+
+  /** GET /v1/transactions/:id — public API: API-key-only transaction status lookup. */
+  @Get(':id')
+  @UseGuards(ApiKeyOnlyGuard)
+  @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
+  async getStatus(
+    @CurrentUser('id') userId: string,
+    @Param('id', new ParseUUIDPipe()) transactionId: string,
+    @Req() req: any,
+  ) {
+    return this.transactionsService.getStatus(userId, transactionId, req.apiKeyRecord);
   }
 }

@@ -268,7 +268,11 @@ export class ApiKeyService {
     userId: string,
     apiKeyId: string | null,
     action: string,
-    data: { keyPrefix?: string | null; keyName?: string | null; metadata?: Prisma.InputJsonValue } = {},
+    data: {
+      keyPrefix?: string | null;
+      keyName?: string | null;
+      metadata?: Prisma.InputJsonValue;
+    } = {},
   ) {
     return tx.apiKeyEvent.create({
       data: {

@@ -6,7 +6,7 @@ jest.mock('../../core/openfort/openfort.service', () => ({
 
 import { TransactionsService } from './transactions.service';
 
-describe('TransactionsService.send()', () => {
+describe('TransactionsService', () => {
   const apiKeyPrefix = 'sk_1234567890abcdef12345678';
   const wallet = {
     openfortAccountId: 'acc-1',
@@ -31,10 +31,15 @@ describe('TransactionsService.send()', () => {
   const prisma = {
     userWallet: { findUnique: jest.fn() },
     userPolicy: { findUnique: jest.fn() },
-    transaction: { create: jest.fn(), update: jest.fn(), findFirst: jest.fn() },
+    transaction: {
+      create: jest.fn(),
+      update: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+    },
   } as any;
 
-  const openfort = { sendTransaction: jest.fn() } as any;
+  const openfort = { sendTransaction: jest.fn(), getTransactionIntent: jest.fn() } as any;
 
   let service: TransactionsService;
 
@@ -54,6 +59,7 @@ describe('TransactionsService.send()', () => {
       txHash: '0xhash',
     });
     openfort.sendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    openfort.getTransactionIntent.mockResolvedValue({});
     service = new TransactionsService(prisma, openfort);
   });
 
@@ -182,5 +188,182 @@ describe('TransactionsService.send()', () => {
         completedAt: expect.any(Date),
       }),
     });
+  });
+
+  it('stores Openfort intent id separately when transaction hash is not available yet', async () => {
+    openfort.sendTransaction.mockResolvedValue({ intentId: 'tin_123', transactionHash: null });
+    prisma.transaction.update.mockResolvedValue({
+      id: 'tx-1',
+      status: 'pending',
+      txHash: null,
+      intentId: 'tin_123',
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1',
+      transactionHash: null,
+      status: 'pending',
+    });
+    expect(prisma.transaction.update).toHaveBeenCalledWith({
+      where: { id: 'tx-1' },
+      data: expect.objectContaining({
+        intentId: 'tin_123',
+        txHash: null,
+        status: 'pending',
+      }),
+    });
+  });
+
+  it('returns a safe status response for an owned transaction', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      userId: 'user-1',
+      status: 'confirmed',
+      txHash: '0xhash',
+      intentId: '0xhash',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      failureReason: null,
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: new Date('2026-04-28T00:01:00.000Z'),
+    });
+
+    await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1',
+      transactionHash: '0xhash',
+      status: 'confirmed',
+      chainId: 8453,
+      walletAddress: wallet.walletAddress,
+      failureReason: null,
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: new Date('2026-04-28T00:01:00.000Z'),
+    });
+    expect(openfort.getTransactionIntent).not.toHaveBeenCalled();
+  });
+
+  it('refreshes pending intent status from Openfort on status lookup', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      status: 'pending',
+      txHash: null,
+      intentId: 'tin_123',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      failureReason: null,
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: null,
+    });
+    openfort.getTransactionIntent.mockResolvedValue({
+      status: 'successful',
+      transactionHash: '0xconfirmed',
+    });
+    prisma.transaction.update.mockResolvedValue({
+      id: 'tx-1',
+      status: 'confirmed',
+      txHash: '0xconfirmed',
+      intentId: 'tin_123',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      failureReason: null,
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: new Date('2026-04-28T00:01:00.000Z'),
+    });
+
+    const result = await service.getStatus('user-1', 'tx-1', apiKeyContext);
+
+    expect(openfort.getTransactionIntent).toHaveBeenCalledWith('tin_123');
+    expect(prisma.transaction.update).toHaveBeenCalledWith({
+      where: { id: 'tx-1' },
+      data: expect.objectContaining({
+        status: 'confirmed',
+        txHash: '0xconfirmed',
+        completedAt: expect.any(Date),
+      }),
+    });
+    expect(result).toEqual(
+      expect.objectContaining({ status: 'confirmed', transactionHash: '0xconfirmed' }),
+    );
+  });
+
+  it('returns stored status when Openfort refresh is temporarily unavailable', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      status: 'pending',
+      txHash: null,
+      intentId: 'tin_123',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      failureReason: null,
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: null,
+    });
+    openfort.getTransactionIntent.mockRejectedValue(new Error('Openfort down'));
+
+    await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).resolves.toEqual(
+      expect.objectContaining({ status: 'pending', transactionHash: null }),
+    );
+  });
+
+  it('does not expose transactions owned by another user', async () => {
+    prisma.transaction.findFirst.mockResolvedValue(null);
+
+    await expect(service.getStatus('user-1', 'tx-other', apiKeyContext)).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(openfort.getTransactionIntent).not.toHaveBeenCalled();
+  });
+
+  it('rejects status lookup when the API key is not allowed on the transaction chain', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      status: 'confirmed',
+      txHash: '0xhash',
+      intentId: '0xhash',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+    });
+
+    await expect(
+      service.getStatus('user-1', 'tx-1', { ...apiKeyContext, allowedChains: [84532] }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('reconciles stale pending intent transactions in batches', async () => {
+    prisma.transaction.findMany.mockResolvedValue([
+      {
+        id: 'tx-1',
+        status: 'pending',
+        txHash: null,
+        intentId: 'tin_123',
+        chainId: BigInt(8453),
+        walletAddress: wallet.walletAddress,
+        failureReason: null,
+        createdAt: new Date('2026-04-28T00:00:00.000Z'),
+        completedAt: null,
+      },
+    ]);
+    openfort.getTransactionIntent.mockResolvedValue({ status: 'failed', message: 'reverted' });
+    prisma.transaction.update.mockResolvedValue({
+      id: 'tx-1',
+      status: 'failed',
+      txHash: null,
+      intentId: 'tin_123',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      failureReason: 'reverted',
+      createdAt: new Date('2026-04-28T00:00:00.000Z'),
+      completedAt: new Date('2026-04-28T00:01:00.000Z'),
+    });
+
+    const result = await service.reconcileStaleTransactions({
+      olderThan: new Date('2026-04-28T00:30:00.000Z'),
+      limit: 10,
+    });
+
+    expect(prisma.transaction.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
+    expect(result.checked).toBe(1);
+    expect(result.transactions[0]).toEqual(
+      expect.objectContaining({ status: 'failed', failureReason: 'Transaction failed' }),
+    );
   });
 });

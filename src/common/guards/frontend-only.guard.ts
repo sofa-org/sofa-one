@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { IS_FRONTEND_ONLY_KEY } from '../decorators/frontend-only.decorator';
@@ -25,15 +20,18 @@ export class FrontendOnlyGuard implements CanActivate {
   ) {
     const corsOrigin = this.configService.get<string>('CORS_ORIGIN') ?? '';
     this.allowedOrigins = corsOrigin
-      ? corsOrigin.split(',').map((o) => o.trim()).filter(Boolean)
+      ? corsOrigin
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
       : ['http://localhost:3000', 'http://localhost:3100'];
   }
 
   canActivate(context: ExecutionContext): boolean {
-    const isFrontendOnly = this.reflector.getAllAndOverride<boolean>(
-      IS_FRONTEND_ONLY_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const isFrontendOnly = this.reflector.getAllAndOverride<boolean>(IS_FRONTEND_ONLY_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!isFrontendOnly) return true;
 
@@ -50,9 +48,7 @@ export class FrontendOnlyGuard implements CanActivate {
       return true;
     }
 
-    throw new ForbiddenException(
-      'This endpoint is only accessible from the SOFA ONE frontend',
-    );
+    throw new ForbiddenException('This endpoint is only accessible from the SOFA ONE frontend');
   }
 
   private isAllowed(origin: string): boolean {

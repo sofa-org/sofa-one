@@ -37,6 +37,11 @@ const mockOpenfortService = {
     id: 'tin_test_intent_456',
     status: 'pending',
   }),
+  getTransactionIntent: jest.fn().mockResolvedValue({
+    id: 'tin_test_intent_456',
+    status: 'successful',
+    transactionHash: TEST_TX_HASH,
+  }),
   sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
@@ -155,6 +160,36 @@ describe('API-key public security flow (e2e)', () => {
       expect(JSON.stringify(tx.details)).not.toContain(calldata);
     });
 
+    it('GET /v1/transactions/:id returns safe transaction status for the API-key user', async () => {
+      const created = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'status-abc-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef', value: '0' }],
+        })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get(`/v1/transactions/${created.body.transactionId}`)
+        .set('X-API-Key', testApiKey)
+        .expect(200);
+
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          transactionId: created.body.transactionId,
+          transactionHash: TEST_TX_HASH,
+          status: 'confirmed',
+          chainId: TEST_CHAIN_ID,
+          walletAddress: TEST_WALLET_ADDRESS,
+          failureReason: null,
+        }),
+      );
+      expect(res.body).not.toHaveProperty('details');
+      expect(res.body).not.toHaveProperty('requestHash');
+      expect(res.body).not.toHaveProperty('interactionsHash');
+    });
   });
 
   describe('security rejections', () => {
@@ -166,7 +201,10 @@ describe('API-key public security flow (e2e)', () => {
     });
 
     it('does not allow an API key to manage API keys or call frontend-only wallet routes', async () => {
-      await request(app.getHttpServer()).get('/v1/api-keys').set('X-API-Key', testApiKey).expect(401);
+      await request(app.getHttpServer())
+        .get('/v1/api-keys')
+        .set('X-API-Key', testApiKey)
+        .expect(401);
       await request(app.getHttpServer())
         .post('/v1/api-keys')
         .set('X-API-Key', testApiKey)
@@ -201,10 +239,15 @@ describe('API-key public security flow (e2e)', () => {
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
         .expect(401);
 
-      const expired = await seedUserWithKey('expired_social_id_e2e', 'Expired Key', [TEST_CHAIN_ID], {
-        openfortAccountId: 'ofa_expired_account_123',
-        walletAddress: '0x2222222222222222222222222222222222222222',
-      });
+      const expired = await seedUserWithKey(
+        'expired_social_id_e2e',
+        'Expired Key',
+        [TEST_CHAIN_ID],
+        {
+          openfortAccountId: 'ofa_expired_account_123',
+          walletAddress: '0x2222222222222222222222222222222222222222',
+        },
+      );
       await prisma.apiKey.update({
         where: { id: expired.keyId },
         data: { expiresAt: new Date(Date.now() - 60_000) },
@@ -265,6 +308,39 @@ describe('API-key public security flow (e2e)', () => {
           interactions: [{ to: TEST_TARGET_ADDRESS, data: '0x123456' }],
         })
         .expect(400);
+    });
+
+    it('does not allow an API key to read another user transaction status', async () => {
+      const tx = await prisma.transaction.create({
+        data: {
+          userId: testUserId,
+          apiKeyId: testKeyId,
+          authMethod: 'api_key',
+          apiKeyPrefix: testApiKey.substring(0, API_KEY_PREFIX_LENGTH),
+          apiKeyName: 'E2E Test Key',
+          intentId: TEST_TX_HASH,
+          status: 'confirmed',
+          txHash: TEST_TX_HASH,
+          chainId: BigInt(TEST_CHAIN_ID),
+          walletAddress: TEST_WALLET_ADDRESS,
+          operationType: 'send',
+          idempotencyKey: 'private-status-123',
+          requestHash: 'a'.repeat(64),
+          interactionsHash: 'b'.repeat(64),
+          details: { type: 'send' },
+          completedAt: new Date(),
+        },
+      });
+
+      const other = await seedUserWithKey('other_social_id_e2e', 'Other E2E Key', [TEST_CHAIN_ID], {
+        openfortAccountId: 'ofa_other_account_123',
+        walletAddress: '0x3333333333333333333333333333333333333333',
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/transactions/${tx.id}`)
+        .set('X-API-Key', other.rawKey)
+        .expect(404);
     });
   });
 
