@@ -23,6 +23,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const requestId = request.requestId;
 
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -33,7 +34,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (status >= 500) {
       this.logger.error(
-        `${request.method} ${request.url} — ${status}`,
+        {
+          message: 'HTTP request failed',
+          requestId,
+          method: request.method,
+          path: request.url,
+          statusCode: status,
+        },
         exception instanceof Error ? exception.stack : undefined,
       );
     }
@@ -41,6 +48,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       statusCode: status,
       ...payload,
+      requestId,
       timestamp: new Date().toISOString(),
       path: request.url,
     });

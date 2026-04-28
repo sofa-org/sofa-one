@@ -1,6 +1,7 @@
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 
 @Injectable()
 export class OpenfortService {
@@ -8,7 +9,10 @@ export class OpenfortService {
   private readonly logger = new Logger(OpenfortService.name);
   private readonly timeoutMs: number;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly requestContext?: RequestContextService,
+  ) {
     this.client = new Openfort(this.configService.getOrThrow<string>('openfort.apiKey'), {
       walletSecret: this.configService.getOrThrow<string>('openfort.walletSecret'),
     });
@@ -24,9 +28,7 @@ export class OpenfortService {
       );
       return { id: account.id, address: account.address };
     } catch (error: any) {
-      this.logger.error('createBackendWallet failed: ' + (error.message ?? error), {
-        stack: error.stack,
-      });
+      this.logOpenfortError('createBackendWallet', error);
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
@@ -55,8 +57,10 @@ export class OpenfortService {
         'createTransactionIntent',
       );
     } catch (error: any) {
-      this.logger.error('createTransactionIntent failed: ' + (error.message ?? error), {
-        stack: error.stack,
+      this.logOpenfortError('createTransactionIntent', error, {
+        chainId: params.chainId,
+        interactionCount: params.interactions.length,
+        policyProvided: Boolean(params.policyId),
       });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
@@ -191,8 +195,10 @@ export class OpenfortService {
         transactionHash: rawResult.response?.transactionHash ?? rawResult.transactionHash ?? null,
       };
     } catch (error: any) {
-      this.logger.error('sendTransaction failed: ' + (error.message ?? error), {
-        stack: error.stack,
+      this.logOpenfortError('sendTransaction', error, {
+        chainId: params.chainId,
+        interactionCount: params.interactions.length,
+        policyProvided: Boolean(params.policyId),
       });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
@@ -206,9 +212,7 @@ export class OpenfortService {
         'getTransactionIntent',
       );
     } catch (error: any) {
-      this.logger.error('getTransactionIntent failed: ' + (error.message ?? error), {
-        stack: error.stack,
-      });
+      this.logOpenfortError('getTransactionIntent', error, { intentId });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
@@ -221,9 +225,29 @@ export class OpenfortService {
         'signData',
       );
     } catch (error: any) {
-      this.logger.error('signData failed: ' + (error.message ?? error), { stack: error.stack });
+      this.logOpenfortError('signData', error);
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
+  }
+
+  private logOpenfortError(
+    operation: string,
+    error: any,
+    extra: Record<string, unknown> = {},
+  ): void {
+    this.logger.error(
+      this.logContext({
+        message: 'Openfort operation failed',
+        operation,
+        error: error?.message ?? String(error),
+        ...extra,
+      }),
+      error?.stack,
+    );
+  }
+
+  private logContext(extra: Record<string, unknown>) {
+    return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
   private async withTimeout<T>(operation: Promise<T>, operationName: string): Promise<T> {

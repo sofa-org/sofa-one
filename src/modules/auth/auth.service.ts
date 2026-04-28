@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +11,7 @@ import { createClerkClient } from '@clerk/backend';
 import type { UserWallet } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 import { ApiKeyService } from '../api-key/api-key.service';
 
 type ActiveUserWallet = UserWallet & {
@@ -27,6 +29,8 @@ export class AuthService {
     private readonly openfort: OpenfortService,
     private readonly apiKeyService: ApiKeyService,
     private readonly configService: ConfigService,
+    @Optional()
+    private readonly requestContext?: RequestContextService,
   ) {
     this.clerkClient = createClerkClient({
       secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
@@ -85,14 +89,20 @@ export class AuthService {
         userId = result.userId;
         wallet = await this.provisionWallet(result.wallet.id, userId);
         hasApiKeys = false;
-        this.logger.log(`Created user ${userId} via ${socialProvider}`);
+        this.logger.log(
+          this.logContext({ message: 'Created social login user', userId, socialProvider }),
+        );
       } catch (err: any) {
         if (err?.code === 'P2002') {
           if (_depth >= 3) {
             throw new InternalServerErrorException('User creation conflict could not be resolved');
           }
           this.logger.warn(
-            `Race condition on user creation for ${socialProvider}, retrying as existing user`,
+            this.logContext({
+              message: 'Race condition on user creation, retrying as existing user',
+              socialProvider,
+              depth: _depth,
+            }),
           );
           return this.handleSocialLogin(clerkUserId, _depth + 1);
         }
@@ -117,7 +127,7 @@ export class AuthService {
         if (!wallet) throw dbErr;
       }
       wallet = await this.provisionWallet(wallet.id, userId);
-      this.logger.log(`Provisioned wallet for existing user ${userId}`);
+      this.logger.log(this.logContext({ message: 'Provisioned wallet for existing user', userId }));
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
@@ -175,6 +185,9 @@ export class AuthService {
       if (!wallet.walletAddress || !wallet.openfortAccountId) {
         throw new InternalServerErrorException('Provisioned wallet is missing identifiers');
       }
+      this.logger.log(
+        this.logContext({ message: 'Wallet provisioning completed', walletId, userId }),
+      );
       return wallet as ActiveUserWallet;
     } catch (err) {
       await this.markWalletProvisioningFailed(walletId, userId, err);
@@ -190,15 +203,23 @@ export class AuthService {
       });
     } catch (updateErr) {
       this.logger.error(
-        `Failed to mark wallet provisioning_failed for walletId=${walletId} userId=${userId}`,
+        this.logContext({
+          message: 'Failed to mark wallet provisioning as failed',
+          walletId,
+          userId,
+        }),
         updateErr instanceof Error ? updateErr.stack : updateErr,
       );
     }
 
     this.logger.error(
-      `Wallet provisioning failed for walletId=${walletId} userId=${userId}`,
+      this.logContext({ message: 'Wallet provisioning failed', walletId, userId }),
       err instanceof Error ? err.stack : err,
     );
+  }
+
+  private logContext(extra: Record<string, unknown>) {
+    return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
   /**

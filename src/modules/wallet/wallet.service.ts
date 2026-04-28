@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { createPublicClient, formatEther, hashMessage, hashTypedData, http } from 'viem';
@@ -10,6 +11,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 import type { SignDto, SignMessage } from './dto/sign.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
@@ -37,6 +39,8 @@ export class WalletService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    @Optional()
+    private readonly requestContext?: RequestContextService,
   ) {}
 
   /** Return the user's wallet address and supported deposit tokens. */
@@ -105,15 +109,48 @@ export class WalletService {
       },
     });
 
+    this.logger.log(
+      this.logContext({
+        message: 'Created signing request',
+        signingRequestId: signingRequest.id,
+        userId,
+        chainId,
+        type: params.type,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+      }),
+    );
+
     let signature: string;
     try {
       signature = await this.openfort.signData(wallet.openfortAccountId, data);
     } catch (err) {
+      this.logger.error(
+        this.logContext({
+          message: 'Signing request failed',
+          signingRequestId: signingRequest.id,
+          userId,
+          chainId,
+          type: params.type,
+          apiKeyPrefix: apiKeyRecord.keyPrefix,
+        }),
+        err instanceof Error ? err.stack : undefined,
+      );
       await this.updateSigningRequestStatus(signingRequest.id, 'failed');
       throw err;
     }
 
     await this.updateSigningRequestStatus(signingRequest.id, 'signed');
+
+    this.logger.log(
+      this.logContext({
+        message: 'Signing request completed',
+        signingRequestId: signingRequest.id,
+        userId,
+        chainId,
+        type: params.type,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+      }),
+    );
 
     return {
       signature,
@@ -130,10 +167,18 @@ export class WalletService {
       });
     } catch (err) {
       this.logger.error(
-        `Failed to mark signing request ${id} as ${status}`,
+        this.logContext({
+          message: 'Failed to update signing request status',
+          signingRequestId: id,
+          status,
+        }),
         err instanceof Error ? err.stack : err,
       );
     }
+  }
+
+  private logContext(extra: Record<string, unknown>) {
+    return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
   /** Return native token and USDC balances for the user's wallet on the requested chain. */

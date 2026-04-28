@@ -1,13 +1,16 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 import type { SendTransactionDto } from './dto/send-transaction.dto';
 
 const TERMINAL_TRANSACTION_STATUSES = new Set(['confirmed', 'failed', 'unknown']);
@@ -21,9 +24,13 @@ type ApiKeyTransactionContext = {
 
 @Injectable()
 export class TransactionsService {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    @Optional()
+    private readonly requestContext?: RequestContextService,
   ) {}
 
   /** Send a raw transaction from the user's backend wallet. */
@@ -84,6 +91,15 @@ export class TransactionsService {
     });
 
     if (!created || tx.intentId || tx.txHash || tx.status !== 'submitting') {
+      this.logger.log(
+        this.logContext({
+          message: 'Returning existing transaction request',
+          transactionId: tx.id,
+          status: tx.status,
+          chainId,
+          apiKeyPrefix: apiKeyRecord.keyPrefix,
+        }),
+      );
       return {
         transactionId: tx.id,
         transactionHash: tx.txHash ?? tx.intentId,
@@ -92,6 +108,15 @@ export class TransactionsService {
     }
 
     try {
+      this.logger.log(
+        this.logContext({
+          message: 'Submitting transaction to Openfort',
+          transactionId: tx.id,
+          chainId,
+          interactionCount: dto.interactions.length,
+          apiKeyPrefix: apiKeyRecord.keyPrefix,
+        }),
+      );
       const { intentId, transactionHash } = await this.openfort.sendTransaction({
         accountId: wallet.openfortAccountId,
         chainId,
@@ -109,12 +134,32 @@ export class TransactionsService {
         },
       });
 
+      this.logger.log(
+        this.logContext({
+          message: 'Transaction submission recorded',
+          transactionId: updated.id,
+          status: updated.status,
+          chainId,
+          apiKeyPrefix: apiKeyRecord.keyPrefix,
+          hasTransactionHash: Boolean(transactionHash),
+        }),
+      );
+
       return {
         transactionId: updated.id,
         transactionHash,
         status: updated.status,
       };
     } catch (error) {
+      this.logger.error(
+        this.logContext({
+          message: 'Transaction submission failed',
+          transactionId: tx.id,
+          chainId,
+          apiKeyPrefix: apiKeyRecord.keyPrefix,
+        }),
+        error instanceof Error ? error.stack : undefined,
+      );
       await this.prisma.transaction.update({
         where: { id: tx.id },
         data: {
@@ -254,9 +299,20 @@ export class TransactionsService {
   private async refreshTransactionStatusBestEffort(tx: any) {
     try {
       return await this.refreshTransactionStatus(tx);
-    } catch {
+    } catch (error) {
+      this.logger.warn(
+        this.logContext({
+          message: 'Transaction status refresh failed',
+          transactionId: tx.id,
+          intentId: tx.intentId,
+        }),
+      );
       return tx;
     }
+  }
+
+  private logContext(extra: Record<string, unknown>) {
+    return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
   private looksLikeTransactionHash(value: string) {

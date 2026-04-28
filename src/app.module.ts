@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -12,6 +12,8 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { PolicyModule } from './modules/policy/policy.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { HealthModule } from './modules/health/health.module';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { RequestContextModule } from './common/request-context/request-context.module';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { HealthModule } from './modules/health/health.module';
       { name: 'short', ttl: 10000, limit: 20 },
       { name: 'medium', ttl: 60000, limit: 100 },
     ]),
+    RequestContextModule,
     PrismaModule,
     OpenfortModule,
     AuthModule,
@@ -34,10 +37,15 @@ import { HealthModule } from './modules/health/health.module';
     HealthModule,
   ],
   providers: [
+    RequestIdMiddleware,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}
