@@ -24,6 +24,26 @@ class EnvironmentVariables {
   @IsString()
   OPENFORT_WALLET_SECRET: string;
 
+  @IsNumber()
+  @IsOptional()
+  OPENFORT_TIMEOUT_MS?: number;
+
+  @IsString()
+  @IsOptional()
+  TRANSACTION_RECONCILER_ENABLED?: string;
+
+  @IsNumber()
+  @IsOptional()
+  TRANSACTION_RECONCILER_INTERVAL_MS?: number;
+
+  @IsNumber()
+  @IsOptional()
+  TRANSACTION_RECONCILER_STALE_AFTER_MS?: number;
+
+  @IsNumber()
+  @IsOptional()
+  TRANSACTION_RECONCILER_BATCH_SIZE?: number;
+
   @IsString()
   DATABASE_URL: string;
 
