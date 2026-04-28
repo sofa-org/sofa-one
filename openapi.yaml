@@ -209,7 +209,7 @@ paths:
       tags: [Transactions]
       summary: 查询交易状态
       description: |
-        使用 `X-API-Key` 查询当前用户的交易状态。响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。
+        使用 `X-API-Key` 查询当前用户的交易状态。响应只返回安全状态字段，不返回 calldata 或 requestHash。
 
         如交易记录仍处于 `submitting` / `pending` 且包含 Openfort intent id，服务会尝试从 Openfort 刷新状态。
       operationId: getTransactionStatus

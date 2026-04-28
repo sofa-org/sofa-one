@@ -174,7 +174,7 @@ export class OpenfortService {
     chainId: number;
     interactions: Array<{ to: string; data: string; value?: string }>;
     policyId?: string;
-  }): Promise<{ intentId: string | null; transactionHash: string | null }> {
+  }): Promise<{ transactionHash: string | null }> {
     try {
       const account = await this.withTimeout(
         this.client.accounts.evm.backend.get({ id: params.accountId }),
@@ -191,7 +191,6 @@ export class OpenfortService {
       );
       const rawResult = result as any;
       return {
-        intentId: rawResult.id ?? rawResult.intentId ?? rawResult.response?.id ?? null,
         transactionHash: rawResult.response?.transactionHash ?? rawResult.transactionHash ?? null,
       };
     } catch (error: any) {
@@ -200,19 +199,6 @@ export class OpenfortService {
         interactionCount: params.interactions.length,
         policyProvided: Boolean(params.policyId),
       });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
-  /** Retrieve a transaction intent for status reconciliation. */
-  async getTransactionIntent(intentId: string): Promise<any> {
-    try {
-      return await this.withTimeout(
-        this.client.transactionIntents.get(intentId),
-        'getTransactionIntent',
-      );
-    } catch (error: any) {
-      this.logOpenfortError('getTransactionIntent', error, { intentId });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

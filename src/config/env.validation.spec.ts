@@ -33,17 +33,6 @@ describe('environment validation', () => {
     expect(() => validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '0' })).toThrow();
   });
 
-  it('rejects invalid reconciler numeric values', () => {
-    expect(() => validate({ ...baseConfig, TRANSACTION_RECONCILER_INTERVAL_MS: '999' })).toThrow();
-    expect(() => validate({ ...baseConfig, TRANSACTION_RECONCILER_BATCH_SIZE: '501' })).toThrow();
-  });
-
-  it('rejects non-boolean reconciler enabled values', () => {
-    expect(() => validate({ ...baseConfig, TRANSACTION_RECONCILER_ENABLED: 'sometimes' })).toThrow(
-      'TRANSACTION_RECONCILER_ENABLED must be either "true" or "false"',
-    );
-  });
-
   it('rejects unsupported default chains', () => {
     expect(() => validate({ ...baseConfig, DEFAULT_CHAIN_ID: '999999' })).toThrow(
       'DEFAULT_CHAIN_ID must be one of the supported chains',

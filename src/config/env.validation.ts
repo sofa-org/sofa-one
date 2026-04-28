@@ -45,28 +45,6 @@ class EnvironmentVariables {
   OPENFORT_TIMEOUT_MS?: number;
 
   @IsString()
-  @IsOptional()
-  TRANSACTION_RECONCILER_ENABLED?: string;
-
-  @IsInt()
-  @Min(1000)
-  @Max(86400000)
-  @IsOptional()
-  TRANSACTION_RECONCILER_INTERVAL_MS?: number;
-
-  @IsInt()
-  @Min(1000)
-  @Max(86400000)
-  @IsOptional()
-  TRANSACTION_RECONCILER_STALE_AFTER_MS?: number;
-
-  @IsInt()
-  @Min(1)
-  @Max(500)
-  @IsOptional()
-  TRANSACTION_RECONCILER_BATCH_SIZE?: number;
-
-  @IsString()
   @IsNotEmpty()
   DATABASE_URL: string;
 
@@ -99,10 +77,6 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(errors.toString());
   }
   validateProductionConfig(validatedConfig);
-  validateBooleanString(
-    'TRANSACTION_RECONCILER_ENABLED',
-    validatedConfig.TRANSACTION_RECONCILER_ENABLED,
-  );
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
   return validatedConfig;
 }
@@ -113,13 +87,6 @@ function validateProductionConfig(config: EnvironmentVariables) {
   if (!config.CORS_ORIGIN?.trim()) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
-}
-
-function validateBooleanString(name: string, value: string | undefined) {
-  if (value === undefined) return;
-  if (value === 'true' || value === 'false') return;
-
-  throw new Error(`${name} must be either "true" or "false"`);
 }
 
 function validateDefaultChain(rawChainId: string | undefined) {

@@ -38,11 +38,6 @@ const mockOpenfortService = {
     id: 'tin_test_intent_456',
     status: 'pending',
   }),
-  getTransactionIntent: jest.fn().mockResolvedValue({
-    id: 'tin_test_intent_456',
-    status: 'successful',
-    transactionHash: TEST_TX_HASH,
-  }),
   sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
@@ -191,8 +186,7 @@ describe('API-key public security flow (e2e)', () => {
       expect(tx.apiKeyPrefix).toBe(testApiKey.substring(0, API_KEY_PREFIX_LENGTH));
       expect(tx.apiKeyName).toBe('E2E Test Key');
       expect(tx.requestHash).toMatch(/^[0-9a-f]{64}$/);
-      expect(tx.interactionsHash).toMatch(/^[0-9a-f]{64}$/);
-      expect(JSON.stringify(tx.details)).toContain('interactionsHash');
+      expect(JSON.stringify(tx.details)).toContain('requestHash');
       expect(JSON.stringify(tx.details)).not.toContain(calldata);
     });
 
@@ -256,7 +250,6 @@ describe('API-key public security flow (e2e)', () => {
       );
       expect(res.body).not.toHaveProperty('details');
       expect(res.body).not.toHaveProperty('requestHash');
-      expect(res.body).not.toHaveProperty('interactionsHash');
     });
   });
 
@@ -412,7 +405,6 @@ describe('API-key public security flow (e2e)', () => {
           operationType: 'send',
           idempotencyKey: 'private-status-123',
           requestHash: 'a'.repeat(64),
-          interactionsHash: 'b'.repeat(64),
           details: { type: 'send' },
           completedAt: new Date(),
         },
