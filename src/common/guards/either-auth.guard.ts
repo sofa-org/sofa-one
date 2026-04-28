@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { verifyToken } from '@clerk/backend';
@@ -17,6 +23,8 @@ import { isIpAllowed } from '../utils/ip-cidr';
  */
 @Injectable()
 export class EitherAuthGuard implements CanActivate {
+  private readonly logger = new Logger(EitherAuthGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly configService: ConfigService,
@@ -116,10 +124,12 @@ export class EitherAuthGuard implements CanActivate {
     request.apiKeyRecord = keyRecord;
 
     // Fire-and-forget: update lastUsedAt without blocking the request
-    void this.prisma.apiKey.update({
-      where: { id: keyRecord.id },
-      data: { lastUsedAt: new Date() },
-    });
+    void this.prisma.apiKey
+      .update({
+        where: { id: keyRecord.id },
+        data: { lastUsedAt: new Date() },
+      })
+      .catch((err) => this.logger.warn('lastUsedAt update failed', err));
 
     return true;
   }

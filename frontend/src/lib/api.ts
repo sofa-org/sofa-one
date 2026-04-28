@@ -295,12 +295,15 @@ export async function apiFetch<T>(path: string, apiKey: string, options?: Reques
 
 // --- Auth ---
 
-export async function socialLogin(getToken: () => Promise<string | null>) {
-  return authFetch<AuthSessionResponse>('/auth/social', getToken, { method: 'POST' });
+export async function socialLogin(
+  getToken: () => Promise<string | null>,
+  signal?: AbortSignal,
+) {
+  return authFetch<AuthSessionResponse>('/auth/social', getToken, { method: 'POST', signal });
 }
 
-export async function getMe(getToken: () => Promise<string | null>) {
-  return authFetch<AuthSessionResponse>('/auth/me', getToken);
+export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
+  return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
 export async function refreshApiKey(getToken: () => Promise<string | null>) {
@@ -361,8 +364,14 @@ export async function withdrawAuth(
   });
 }
 
-export async function getBalancesAuth(getToken: () => Promise<string | null>, chainId = DEFAULT_CHAIN_ID) {
-  return authFetch<BalancesResponse>(`/v1/wallets/balances?chainId=${chainId}`, getToken);
+export async function getBalancesAuth(
+  getToken: () => Promise<string | null>,
+  chainId = DEFAULT_CHAIN_ID,
+  signal?: AbortSignal,
+) {
+  return authFetch<BalancesResponse>(`/v1/wallets/balances?chainId=${chainId}`, getToken, {
+    signal,
+  });
 }
 
 // --- Policies ---

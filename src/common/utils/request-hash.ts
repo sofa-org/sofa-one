@@ -15,6 +15,6 @@ function stable(value: unknown): unknown {
 
 export function hashRequest(value: unknown): string {
   return createHash('sha256')
-    .update(JSON.stringify(stable(value)))
+    .update(JSON.stringify(stable(value)) ?? 'undefined')
     .digest('hex');
 }

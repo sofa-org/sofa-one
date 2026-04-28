@@ -58,6 +58,7 @@ model ApiKey {
 
   @@index([keyPrefix])
   @@index([userId, revoked])
+  @@index([userId])
   @@map("api_keys")
 }
 
@@ -105,6 +106,8 @@ model Transaction {
   @@unique([userId, operationType, chainId, idempotencyKey])
   @@index([apiKeyId, createdAt])
   @@index([requestHash])
+  @@index([userId, createdAt])
+  @@index([userId, status])
   @@map("transactions")
 }
 

@@ -27,11 +27,10 @@ export class PolicyService {
       });
       const policyIds = userPolicies.map((p) => p.openfortPolicyId);
       if (policyIds.length === 0) return { data: [] };
-      const all = await this.openfortService.listPolicies();
-      const data = (all.data ?? []).filter((p: any) => policyIds.includes(p.id));
+      const data = await Promise.all(policyIds.map((id) => this.openfortService.getPolicy(id)));
       return { data };
     } catch (error: any) {
-      this.logger.error('listPolicies failed: ' + error.message);
+      this.logger.error('listPolicies failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -66,7 +65,7 @@ export class PolicyService {
       });
       return policy;
     } catch (error: any) {
-      this.logger.error('createPolicy failed: ' + error.message);
+      this.logger.error('createPolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -76,7 +75,7 @@ export class PolicyService {
     try {
       return await this.openfortService.getPolicy(id);
     } catch (error: any) {
-      this.logger.error('getPolicy failed: ' + error.message);
+      this.logger.error('getPolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -90,7 +89,7 @@ export class PolicyService {
         rules: dto.rules,
       });
     } catch (error: any) {
-      this.logger.error('updatePolicy failed: ' + error.message);
+      this.logger.error('updatePolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -104,7 +103,7 @@ export class PolicyService {
       });
       return result;
     } catch (error: any) {
-      this.logger.error('deletePolicy failed: ' + error.message);
+      this.logger.error('deletePolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -114,7 +113,7 @@ export class PolicyService {
     try {
       return await this.openfortService.enablePolicy(id);
     } catch (error: any) {
-      this.logger.error('enablePolicy failed: ' + error.message);
+      this.logger.error('enablePolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -124,7 +123,7 @@ export class PolicyService {
     try {
       return await this.openfortService.disablePolicy(id);
     } catch (error: any) {
-      this.logger.error('disablePolicy failed: ' + error.message);
+      this.logger.error('disablePolicy failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -134,7 +133,7 @@ export class PolicyService {
     try {
       return await this.openfortService.listPolicyRules(policyId);
     } catch (error: any) {
-      this.logger.error('listPolicyRules failed: ' + error.message);
+      this.logger.error('listPolicyRules failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -148,7 +147,7 @@ export class PolicyService {
         criteria: dto.criteria,
       });
     } catch (error: any) {
-      this.logger.error('createPolicyRule failed: ' + error.message);
+      this.logger.error('createPolicyRule failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }
@@ -161,7 +160,7 @@ export class PolicyService {
     try {
       return await this.openfortService.deletePolicyRule(policyId, ruleIndex);
     } catch (error: any) {
-      this.logger.error('deletePolicyRule failed: ' + error.message);
+      this.logger.error('deletePolicyRule failed', error);
       throw new BadGatewayException('Policy service temporarily unavailable');
     }
   }

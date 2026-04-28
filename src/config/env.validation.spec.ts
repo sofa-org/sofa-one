@@ -19,9 +19,24 @@ describe('environment validation', () => {
     );
   });
 
-  it('accepts production when CORS_ORIGIN is configured', () => {
+  it('requires CLERK_AUTHORIZED_PARTIES in production', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        NODE_ENV: 'production',
+        CORS_ORIGIN: 'https://app.example.com',
+      }),
+    ).toThrow('CLERK_AUTHORIZED_PARTIES must be set in production');
+  });
+
+  it('accepts production when CORS_ORIGIN and CLERK_AUTHORIZED_PARTIES are configured', () => {
     expect(
-      validate({ ...baseConfig, NODE_ENV: 'production', CORS_ORIGIN: 'https://app.example.com' }),
+      validate({
+        ...baseConfig,
+        NODE_ENV: 'production',
+        CORS_ORIGIN: 'https://app.example.com',
+        CLERK_AUTHORIZED_PARTIES: 'https://app.example.com',
+      }),
     ).toEqual(expect.objectContaining({ NODE_ENV: 'production' }));
   });
 

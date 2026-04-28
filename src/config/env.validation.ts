@@ -91,6 +91,10 @@ function validateProductionConfig(config: EnvironmentVariables) {
   if (!config.CORS_ORIGIN?.trim()) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
+
+  if (!config.CLERK_AUTHORIZED_PARTIES?.trim()) {
+    throw new Error('CLERK_AUTHORIZED_PARTIES must be set in production');
+  }
 }
 
 function validateDefaultChain(rawChainId: string | undefined) {

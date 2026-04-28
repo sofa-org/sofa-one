@@ -84,55 +84,55 @@ export default function WalletPage() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function init() {
       try {
         let result: AuthSessionResponse;
         try {
-          result = await getMe(getToken);
+          result = await getMe(getToken, controller.signal);
         } catch (err: unknown) {
           if (!hasApiErrorCode(err, 'NOT_FOUND', 'WALLET_NOT_FOUND')) throw err;
-          result = await socialLogin(getToken);
+          result = await socialLogin(getToken, controller.signal);
         }
 
-        if (cancelled) return;
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
         setWallet(result.wallet);
       } catch (err: unknown) {
-        if (!cancelled) setError(getApiErrorMessage(err));
+        if (controller.signal.aborted) return;
+        setError(getApiErrorMessage(err));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
     init();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [isLoaded, isSignedIn, getToken]);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !wallet) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
     setBalancesLoading(true);
     setBalancesError(null);
-    getBalancesAuth(getToken, selectedChainId)
+    getBalancesAuth(getToken, selectedChainId, controller.signal)
       .then((data) => {
-        if (!cancelled) setBalances(data.chains);
+        if (!controller.signal.aborted) setBalances(data.chains);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setBalancesError(getApiErrorMessage(err));
+        if (!controller.signal.aborted) setBalancesError(getApiErrorMessage(err));
       })
       .finally(() => {
-        if (!cancelled) setBalancesLoading(false);
+        if (!controller.signal.aborted) setBalancesLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [isLoaded, isSignedIn, getToken, selectedChainId, wallet]);
 

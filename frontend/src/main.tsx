@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -54,8 +55,10 @@ function AppWithClerk() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AppWithClerk />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppWithClerk />
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 );
