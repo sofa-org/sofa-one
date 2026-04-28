@@ -8,6 +8,9 @@ import {
   getBalancesAuth,
   getApiErrorMessage,
   hasApiErrorCode,
+  type AuthSessionResponse,
+  type BalanceChain,
+  type WalletInfo,
 } from '@/lib/api';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
@@ -47,26 +50,13 @@ function TokenIcon({ token }: { token: string }) {
 
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const [wallet, setWallet] = useState<{
-    walletAddress: string;
-    status: string;
-  } | null>(null);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [balances, setBalances] = useState<Array<{
-    chainId: number;
-    chainName?: string;
-    balances: Array<{
-      token: string;
-      raw: string | null;
-      formatted: string | null;
-      contractAddress?: string;
-      error?: string;
-    }>;
-  }> | null>(null);
+  const [balances, setBalances] = useState<BalanceChain[] | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
 
@@ -86,7 +76,7 @@ export default function WalletPage() {
 
     async function init() {
       try {
-        let result;
+        let result: AuthSessionResponse;
         try {
           result = await getMe(getToken);
         } catch (err: unknown) {

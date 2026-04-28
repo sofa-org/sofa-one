@@ -7,18 +7,8 @@ import {
   revokeApiKeyAuth,
   refreshApiKey as refreshApiKeyApi,
   getApiErrorMessage,
+  type ApiKeyRecord,
 } from '@/lib/api';
-
-interface ApiKeyRecord {
-  id: string;
-  keyPrefix: string;
-  name: string | null;
-  revoked: boolean;
-  expiresAt: string | null;
-  createdAt: string;
-  lastUsedAt: string | null;
-  allowedChains: number[];
-}
 
 const SUPPORTED_CHAINS = [
   { id: 84532, name: 'Base Sepolia' },

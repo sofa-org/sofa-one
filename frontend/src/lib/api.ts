@@ -9,6 +9,115 @@ export interface ApiErrorBody {
   path?: string;
 }
 
+export interface WalletInfo {
+  walletAddress: string;
+  chainId: number;
+  status: string;
+  supportedTokens: string[];
+}
+
+export interface AuthSessionResponse {
+  userId: string;
+  wallet: WalletInfo;
+  apiKey?: string;
+}
+
+export interface RefreshApiKeyResponse {
+  apiKey: string;
+}
+
+export interface BalanceEntry {
+  token: string;
+  raw: string | null;
+  formatted: string | null;
+  contractAddress?: string;
+  error?: string;
+}
+
+export interface BalanceChain {
+  chainId: number;
+  chainName?: string;
+  balances: BalanceEntry[];
+}
+
+export interface BalancesResponse {
+  walletAddress: string;
+  chains: BalanceChain[];
+}
+
+export interface WithdrawResponse {
+  transactionId: string;
+  intentId: string | null;
+  status: string;
+}
+
+export interface ApiKeyRecord {
+  id: string;
+  keyPrefix: string;
+  name: string | null;
+  revoked: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+  lastUsedAt: string | null;
+  allowedChains: number[];
+}
+
+export interface CreateApiKeyResponse {
+  rawKey: string;
+}
+
+export type PolicyRuleAction = 'accept' | 'reject';
+export type PolicyRuleOperation =
+  | 'signEvmTransaction'
+  | 'sendEvmTransaction'
+  | 'signEvmMessage'
+  | 'signEvmTypedData'
+  | 'signEvmHash'
+  | 'sponsorEvmTransaction';
+
+export type CriterionType =
+  | 'ethValue'
+  | 'evmAddress'
+  | 'evmNetwork'
+  | 'evmData'
+  | 'evmMessage'
+  | 'evmTypedDataVerifyingContract'
+  | 'evmTypedDataField';
+
+export type CriterionInput = Record<string, unknown> & { type: CriterionType };
+
+export interface PolicyRuleInput {
+  action: PolicyRuleAction;
+  operation: PolicyRuleOperation;
+  criteria?: CriterionInput[];
+}
+
+export interface PolicyRule extends PolicyRuleInput {}
+
+export interface Policy {
+  id: string;
+  scope: 'account' | string;
+  description?: string;
+  enabled: boolean;
+  deleted: boolean;
+  rules?: PolicyRule[];
+  createdAt: number;
+}
+
+export interface CreatePolicyRequest {
+  scope: 'account';
+  description?: string;
+  enabled?: boolean;
+  rules?: PolicyRuleInput[];
+}
+
+export interface CreatePolicyResponse extends Policy {
+  id: string;
+}
+
+type DataEnvelope<T> = { data: T };
+type MaybeDataEnvelope<T> = T | DataEnvelope<T>;
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -79,19 +188,31 @@ function friendlyErrorMessage(code: string, fallback: string) {
   }
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
 async function throwApiError(response: Response): Promise<never> {
   const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
   throw new ApiError(response, body);
 }
 
+function unwrapData<T>(response: MaybeDataEnvelope<T>): T {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return (response as DataEnvelope<T>).data;
+  }
+  return response as T;
+}
+
 /**
  * Call an auth endpoint (uses Clerk JWT from getToken).
  */
-export async function authFetch(
+export async function authFetch<T>(
   path: string,
   getToken: () => Promise<string | null>,
   options?: RequestInit,
-) {
+): Promise<T> {
   const token = await getToken();
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -104,13 +225,13 @@ export async function authFetch(
   if (!res.ok) {
     await throwApiError(res);
   }
-  return res.json();
+  return readJson<T>(res);
 }
 
 /**
  * Call a v1 endpoint (uses explicit API key — never stored in browser storage).
  */
-export async function apiFetch(path: string, apiKey: string, options?: RequestInit) {
+export async function apiFetch<T>(path: string, apiKey: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -122,34 +243,40 @@ export async function apiFetch(path: string, apiKey: string, options?: RequestIn
   if (!res.ok) {
     await throwApiError(res);
   }
-  return res.json();
+  return readJson<T>(res);
 }
 
 // --- Auth ---
 
 export async function socialLogin(getToken: () => Promise<string | null>) {
-  return authFetch('/auth/social', getToken, { method: 'POST' });
+  return authFetch<AuthSessionResponse>('/auth/social', getToken, { method: 'POST' });
 }
 
 export async function getMe(getToken: () => Promise<string | null>) {
-  return authFetch('/auth/me', getToken);
+  return authFetch<AuthSessionResponse>('/auth/me', getToken);
 }
 
 export async function refreshApiKey(getToken: () => Promise<string | null>) {
-  return authFetch('/auth/refresh-api-key', getToken, { method: 'POST' });
+  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, { method: 'POST' });
 }
 
 // --- Wallets ---
 
 export async function getDepositInfo(apiKey: string, chainId = DEFAULT_CHAIN_ID) {
-  return apiFetch('/v1/wallets/deposit-info', apiKey, {
+  return apiFetch<{ walletAddress: string; chainId: number }>('/v1/wallets/deposit-info', apiKey, {
     method: 'POST',
     body: JSON.stringify({ chainId }),
   });
 }
 
-export async function withdraw(apiKey: string, to: string, amount: string, token: string, chainId = DEFAULT_CHAIN_ID) {
-  return apiFetch('/v1/wallets/withdraw', apiKey, {
+export async function withdraw(
+  apiKey: string,
+  to: string,
+  amount: string,
+  token: string,
+  chainId = DEFAULT_CHAIN_ID,
+) {
+  return apiFetch<WithdrawResponse>('/v1/wallets/withdraw', apiKey, {
     method: 'POST',
     body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
@@ -158,35 +285,39 @@ export async function withdraw(apiKey: string, to: string, amount: string, token
 // --- API Keys ---
 
 export async function listApiKeys(apiKey: string) {
-  return apiFetch('/v1/api-keys', apiKey);
+  return apiFetch<ApiKeyRecord[]>('/v1/api-keys', apiKey);
 }
 
 export async function createApiKey(apiKey: string, name: string) {
-  return apiFetch('/v1/api-keys', apiKey, {
+  return apiFetch<CreateApiKeyResponse>('/v1/api-keys', apiKey, {
     method: 'POST',
     body: JSON.stringify({ name }),
   });
 }
 
 export async function revokeApiKey(apiKey: string, id: string) {
-  return apiFetch(`/v1/api-keys/${id}`, apiKey, { method: 'DELETE' });
+  return apiFetch<void>(`/v1/api-keys/${id}`, apiKey, { method: 'DELETE' });
 }
 
 // --- Dashboard API (JWT-authenticated) ---
 
 export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
-  return authFetch('/v1/api-keys', getToken);
+  return authFetch<ApiKeyRecord[]>('/v1/api-keys', getToken);
 }
 
-export async function createApiKeyAuth(getToken: () => Promise<string | null>, name: string, allowedChains?: number[]) {
-  return authFetch('/v1/api-keys', getToken, {
+export async function createApiKeyAuth(
+  getToken: () => Promise<string | null>,
+  name: string,
+  allowedChains?: number[],
+) {
+  return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
     method: 'POST',
     body: JSON.stringify({ name, allowedChains }),
   });
 }
 
 export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
+  return authFetch<void>(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
 }
 
 export async function withdrawAuth(
@@ -196,42 +327,67 @@ export async function withdrawAuth(
   token: string,
   chainId = DEFAULT_CHAIN_ID,
 ) {
-  return authFetch('/v1/wallets/withdraw', getToken, {
+  return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
     method: 'POST',
     body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }
 
 export async function getBalancesAuth(getToken: () => Promise<string | null>, chainId = DEFAULT_CHAIN_ID) {
-  return authFetch(`/v1/wallets/balances?chainId=${chainId}`, getToken);
+  return authFetch<BalancesResponse>(`/v1/wallets/balances?chainId=${chainId}`, getToken);
 }
 
 // --- Policies ---
+
 export async function listPoliciesAuth(getToken: () => Promise<string | null>) {
-  return authFetch('/v1/policies', getToken);
+  const response = await authFetch<MaybeDataEnvelope<Policy[]>>('/v1/policies', getToken);
+  return unwrapData(response);
 }
-export async function createPolicyAuth(getToken: () => Promise<string | null>, body: { scope: string; description?: string; enabled?: boolean; rules?: any[] }) {
-  return authFetch('/v1/policies', getToken, { method: 'POST', body: JSON.stringify(body) });
+
+export async function createPolicyAuth(getToken: () => Promise<string | null>, body: CreatePolicyRequest) {
+  return authFetch<CreatePolicyResponse>('/v1/policies', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
+
 export async function deletePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch(`/v1/policies/${id}`, getToken, { method: 'DELETE' });
+  return authFetch<void>(`/v1/policies/${id}`, getToken, { method: 'DELETE' });
 }
+
 export async function enablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch(`/v1/policies/${id}/enable`, getToken, { method: 'POST' });
+  return authFetch<Policy>(`/v1/policies/${id}/enable`, getToken, { method: 'POST' });
 }
+
 export async function disablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch(`/v1/policies/${id}/disable`, getToken, { method: 'POST' });
+  return authFetch<Policy>(`/v1/policies/${id}/disable`, getToken, { method: 'POST' });
 }
+
 export async function listPolicyRulesAuth(getToken: () => Promise<string | null>, policyId: string) {
-  return authFetch(`/v1/policies/${policyId}/rules`, getToken);
+  const response = await authFetch<MaybeDataEnvelope<PolicyRule[]>>(
+    `/v1/policies/${policyId}/rules`,
+    getToken,
+  );
+  return unwrapData(response);
 }
+
 export async function createPolicyRuleAuth(
   getToken: () => Promise<string | null>,
   policyId: string,
-  body: { action: 'accept' | 'reject'; operation: string; criteria?: Record<string, unknown>[] },
+  body: PolicyRuleInput,
 ) {
-  return authFetch(`/v1/policies/${policyId}/rules`, getToken, { method: 'POST', body: JSON.stringify(body) });
+  return authFetch<PolicyRule>(`/v1/policies/${policyId}/rules`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
-export async function deletePolicyRuleAuth(getToken: () => Promise<string | null>, policyId: string, ruleIndex: number) {
-  return authFetch(`/v1/policies/${policyId}/rules/${ruleIndex}`, getToken, { method: 'DELETE' });
+
+export async function deletePolicyRuleAuth(
+  getToken: () => Promise<string | null>,
+  policyId: string,
+  ruleIndex: number,
+) {
+  return authFetch<void>(`/v1/policies/${policyId}/rules/${ruleIndex}`, getToken, {
+    method: 'DELETE',
+  });
 }

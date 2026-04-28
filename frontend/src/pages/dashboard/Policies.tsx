@@ -11,27 +11,16 @@ import {
   createPolicyRuleAuth,
   deletePolicyRuleAuth,
   getApiErrorMessage,
+  type CriterionInput,
+  type CriterionType,
+  type Policy,
+  type PolicyRule,
+  type PolicyRuleAction,
+  type PolicyRuleInput,
+  type PolicyRuleOperation,
 } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type PolicyRuleAction = 'accept' | 'reject';
-type PolicyRuleOperation =
-  | 'signEvmTransaction'
-  | 'sendEvmTransaction'
-  | 'signEvmMessage'
-  | 'signEvmTypedData'
-  | 'signEvmHash'
-  | 'sponsorEvmTransaction';
-
-type CriterionType =
-  | 'ethValue'
-  | 'evmAddress'
-  | 'evmNetwork'
-  | 'evmData'
-  | 'evmMessage'
-  | 'evmTypedDataVerifyingContract'
-  | 'evmTypedDataField';
 
 interface CriterionDraft {
   type: CriterionType;
@@ -55,22 +44,6 @@ interface CriterionDraft {
   fieldOperator?: 'in' | '<=' | 'match';
   fieldPath?: string;
   fieldValues?: string; // newline-separated for 'in', single value otherwise
-}
-
-interface PolicyRule {
-  action: PolicyRuleAction;
-  operation: PolicyRuleOperation;
-  criteria?: Record<string, unknown>[];
-}
-
-interface Policy {
-  id: string;
-  scope: string;
-  description?: string;
-  enabled: boolean;
-  deleted: boolean;
-  rules?: PolicyRule[];
-  createdAt: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -129,7 +102,7 @@ const DEFAULT_RULE_FORM: RuleFormState = {
 
 // ─── Criterion → API object ────────────────────────────────────────────────────
 
-function criterionDraftToApi(c: CriterionDraft): Record<string, unknown> | null {
+function criterionDraftToApi(c: CriterionDraft): CriterionInput | null {
   switch (c.type) {
     case 'ethValue':
       if (!c.ethValue?.trim()) return null;
@@ -146,7 +119,7 @@ function criterionDraftToApi(c: CriterionDraft): Record<string, unknown> | null 
     }
     case 'evmData': {
       if (!c.abi?.trim() || !c.functionName?.trim()) return null;
-      const obj: Record<string, unknown> = {
+      const obj: CriterionInput = {
         type: 'evmData',
         operator: c.dataOperator ?? '==',
         abi: c.abi.trim(),
@@ -168,7 +141,7 @@ function criterionDraftToApi(c: CriterionDraft): Record<string, unknown> | null 
     case 'evmTypedDataField': {
       if (!c.fieldPath?.trim()) return null;
       const op = c.fieldOperator ?? 'in';
-      const base: Record<string, unknown> = { type: 'evmTypedDataField', operator: op, fieldPath: c.fieldPath.trim() };
+      const base: CriterionInput = { type: 'evmTypedDataField', operator: op, fieldPath: c.fieldPath.trim() };
       if (op === 'in') {
         base.values = (c.fieldValues ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
       } else {
@@ -720,13 +693,13 @@ function AddRuleForm({ form, onChange, onSubmit, loading, onCancel }: AddRuleFor
 function buildRuleBody(
   form: RuleFormState,
   setError: (msg: string) => void,
-): { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] } | null {
-  const body: { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] } = {
+): PolicyRuleInput | null {
+  const body: PolicyRuleInput = {
     action: form.action,
     operation: form.operation,
   };
   if (form.criteria.length > 0) {
-    const apiCriteria: Record<string, unknown>[] = [];
+    const apiCriteria: CriterionInput[] = [];
     for (const c of form.criteria) {
       const api = criterionDraftToApi(c);
       if (!api) {
@@ -771,8 +744,8 @@ export default function PoliciesPage() {
 
   async function fetchPolicies() {
     try {
-      const res = await listPoliciesAuth(getToken);
-      setPolicies(res?.data ?? []);
+      const policies = await listPoliciesAuth(getToken);
+      setPolicies(policies);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -787,8 +760,8 @@ export default function PoliciesPage() {
   async function fetchRules(policyId: string) {
     setRulesLoading(policyId);
     try {
-      const res = await listPolicyRulesAuth(getToken, policyId);
-      setRulesMap((prev) => ({ ...prev, [policyId]: Array.isArray(res) ? res : (res?.data ?? []) }));
+      const rules = await listPolicyRulesAuth(getToken, policyId);
+      setRulesMap((prev) => ({ ...prev, [policyId]: rules }));
     } catch (err: unknown) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -815,7 +788,7 @@ export default function PoliciesPage() {
     setError(null);
     try {
       // Build all rule bodies first — Openfort requires at least one rule on create
-      const builtRules: { action: PolicyRuleAction; operation: PolicyRuleOperation; criteria?: Record<string, unknown>[] }[] = [];
+      const builtRules: PolicyRuleInput[] = [];
       for (const form of pendingRules) {
         const body = buildRuleBody(form, (msg) => setError(msg));
         if (!body) {
