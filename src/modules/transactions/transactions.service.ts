@@ -50,6 +50,25 @@ export class TransactionsService {
     getSupportedChain(chainId);
     assertAllowedApiKeyChain(apiKeyRecord, chainId);
 
+    const requestHash = hashRequest({
+      operationType: 'send',
+      chainId,
+      interactions: dto.interactions,
+      policyId: dto.policyId ?? null,
+    });
+    const interactionsHash = hashRequest(dto.interactions);
+
+    const existingTransaction = await this.findExistingTransactionRequest(userId, {
+      operationType: 'send',
+      chainId,
+      idempotencyKey: dto.idempotencyKey!,
+      requestHash,
+    });
+    if (existingTransaction) {
+      this.logExistingTransaction(existingTransaction, chainId, apiKeyRecord.keyPrefix);
+      return this.toSendResponse(existingTransaction);
+    }
+
     if (dto.policyId) {
       const policy = await this.prisma.userPolicy.findUnique({
         where: {
@@ -61,14 +80,6 @@ export class TransactionsService {
       });
       if (!policy) throw new NotFoundException('Policy not found');
     }
-
-    const requestHash = hashRequest({
-      operationType: 'send',
-      chainId,
-      interactions: dto.interactions,
-      policyId: dto.policyId ?? null,
-    });
-    const interactionsHash = hashRequest(dto.interactions);
 
     const { tx, created } = await this.createPendingOrReturnExisting(userId, {
       apiKeyId: apiKeyRecord.id,
@@ -91,20 +102,8 @@ export class TransactionsService {
     });
 
     if (!created || tx.intentId || tx.txHash || tx.status !== 'submitting') {
-      this.logger.log(
-        this.logContext({
-          message: 'Returning existing transaction request',
-          transactionId: tx.id,
-          status: tx.status,
-          chainId,
-          apiKeyPrefix: apiKeyRecord.keyPrefix,
-        }),
-      );
-      return {
-        transactionId: tx.id,
-        transactionHash: tx.txHash ?? tx.intentId,
-        status: tx.status,
-      };
+      this.logExistingTransaction(tx, chainId, apiKeyRecord.keyPrefix);
+      return this.toSendResponse(tx);
     }
 
     try {
@@ -250,20 +249,56 @@ export class TransactionsService {
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
-      const existing = await this.prisma.transaction.findFirst({
-        where: {
-          userId,
-          operationType: params.operationType,
-          chainId: BigInt(params.chainId),
-          idempotencyKey: params.idempotencyKey,
-        },
+      const existing = await this.findExistingTransactionRequest(userId, {
+        operationType: params.operationType,
+        chainId: params.chainId,
+        idempotencyKey: params.idempotencyKey,
+        requestHash: params.requestHash,
       });
       if (!existing) throw error;
-      if (existing.requestHash && existing.requestHash !== params.requestHash) {
-        throw new BadRequestException('Idempotency key was already used for a different request');
-      }
       return { tx: existing, created: false };
     }
+  }
+
+  private async findExistingTransactionRequest(
+    userId: string,
+    params: { operationType: string; chainId: number; idempotencyKey: string; requestHash: string },
+  ) {
+    const existing = await this.prisma.transaction.findFirst({
+      where: {
+        userId,
+        operationType: params.operationType,
+        chainId: BigInt(params.chainId),
+        idempotencyKey: params.idempotencyKey,
+      },
+    });
+
+    if (!existing) return null;
+    if (existing.requestHash && existing.requestHash !== params.requestHash) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+
+    return existing;
+  }
+
+  private logExistingTransaction(tx: any, chainId: number, apiKeyPrefix: string | undefined): void {
+    this.logger.log(
+      this.logContext({
+        message: 'Returning existing transaction request',
+        transactionId: tx.id,
+        status: tx.status,
+        chainId,
+        apiKeyPrefix,
+      }),
+    );
+  }
+
+  private toSendResponse(tx: any) {
+    return {
+      transactionId: tx.id,
+      transactionHash: tx.txHash ?? tx.intentId,
+      status: tx.status,
+    };
   }
 
   private async refreshTransactionStatus(tx: any) {

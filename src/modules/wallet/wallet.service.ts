@@ -274,6 +274,24 @@ export class WalletService {
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
+    const requestHash = hashRequest({
+      operationType: 'withdraw',
+      chainId,
+      to: params.to,
+      amount: params.amount,
+      token: params.token,
+      contractAddress: usdcAddressHex,
+    });
+
+    const existingWithdrawal = await this.findExistingWithdrawal(userId, {
+      idempotencyKey: params.idempotencyKey!,
+      chainId,
+      requestHash,
+    });
+    if (existingWithdrawal) {
+      return this.toWithdrawalResponse(existingWithdrawal);
+    }
+
     // Guard: verify on-chain USDC balance is sufficient before submitting intent
     {
       const publicClient = createPublicClient({ chain: supportedChain.chain, transport: http() });
@@ -297,15 +315,6 @@ export class WalletService {
       }
     }
 
-    const requestHash = hashRequest({
-      operationType: 'withdraw',
-      chainId,
-      to: params.to,
-      amount: params.amount,
-      token: params.token,
-      contractAddress: usdcAddressHex,
-    });
-
     const { tx, created } = await this.createPendingWithdrawalOrReturnExisting(userId, {
       idempotencyKey: params.idempotencyKey!,
       chainId,
@@ -323,11 +332,7 @@ export class WalletService {
     });
 
     if (!created || tx.intentId || tx.status !== 'submitting') {
-      return {
-        transactionId: tx.id,
-        intentId: tx.intentId,
-        status: tx.status,
-      };
+      return this.toWithdrawalResponse(tx);
     }
 
     try {
@@ -393,20 +398,43 @@ export class WalletService {
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
-      const existing = await this.prisma.transaction.findFirst({
-        where: {
-          userId,
-          operationType: 'withdraw',
-          chainId: BigInt(params.chainId),
-          idempotencyKey: params.idempotencyKey,
-        },
+      const existing = await this.findExistingWithdrawal(userId, {
+        idempotencyKey: params.idempotencyKey,
+        chainId: params.chainId,
+        requestHash: params.requestHash,
       });
       if (!existing) throw error;
-      if (existing.requestHash && existing.requestHash !== params.requestHash) {
-        throw new BadRequestException('Idempotency key was already used for a different request');
-      }
       return { tx: existing, created: false };
     }
+  }
+
+  private async findExistingWithdrawal(
+    userId: string,
+    params: { idempotencyKey: string; chainId: number; requestHash: string },
+  ) {
+    const existing = await this.prisma.transaction.findFirst({
+      where: {
+        userId,
+        operationType: 'withdraw',
+        chainId: BigInt(params.chainId),
+        idempotencyKey: params.idempotencyKey,
+      },
+    });
+
+    if (!existing) return null;
+    if (existing.requestHash && existing.requestHash !== params.requestHash) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+
+    return existing;
+  }
+
+  private toWithdrawalResponse(tx: any) {
+    return {
+      transactionId: tx.id,
+      intentId: tx.intentId,
+      status: tx.status,
+    };
   }
 
   private resolveSigningChainId(params: SignDto): number | undefined {

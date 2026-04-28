@@ -143,7 +143,6 @@ describe('WalletService.withdraw()', () => {
   // ── 4. Idempotency duplicate ─────────────────────────────────────────────────
 
   it('returns the existing withdrawal when idempotencyKey was already submitted', async () => {
-    mockCreate.mockRejectedValue({ code: 'P2002' });
     mockFindFirst.mockResolvedValue({
       id: 'tx-existing',
       intentId: 'intent-existing',
@@ -157,16 +156,47 @@ describe('WalletService.withdraw()', () => {
       intentId: 'intent-existing',
       status: 'pending',
     });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
   });
 
   it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
-    mockCreate.mockRejectedValue({ code: 'P2002' });
     mockFindFirst.mockResolvedValue({ id: 'tx-existing', intentId: null, status: 'submitting' });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
     expect(result).toEqual({ transactionId: 'tx-existing', intentId: null, status: 'submitting' });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing withdrawal after a concurrent idempotency insert race', async () => {
+    mockFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'tx-existing', intentId: null, status: 'submitting' });
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+
+    const result = await service.withdraw('user-1', VALID_DTO);
+
+    expect(result).toEqual({ transactionId: 'tx-existing', intentId: null, status: 'submitting' });
+    expect(mockReadContract).toHaveBeenCalledTimes(1);
+    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+  });
+
+  it('rejects withdrawal idempotency reuse with a different request before balance checks', async () => {
+    mockFindFirst.mockResolvedValue({
+      id: 'tx-existing',
+      intentId: 'intent-existing',
+      status: 'pending',
+      requestHash: 'different-request',
+    });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
   });
 

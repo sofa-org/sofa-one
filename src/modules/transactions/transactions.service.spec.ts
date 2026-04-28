@@ -47,6 +47,7 @@ describe('TransactionsService', () => {
     jest.clearAllMocks();
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
     prisma.userPolicy.findUnique.mockResolvedValue({ id: 'link-1' });
+    prisma.transaction.findFirst.mockResolvedValue(null);
     prisma.transaction.create.mockResolvedValue({
       id: 'tx-1',
       status: 'submitting',
@@ -104,7 +105,6 @@ describe('TransactionsService', () => {
   });
 
   it('returns existing transaction on idempotency collision without resending', async () => {
-    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
@@ -119,11 +119,11 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'pending',
     });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
   it('returns an in-progress transaction on idempotency collision without resending', async () => {
-    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'submitting',
@@ -138,8 +138,84 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'submitting',
     });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
+
+  it('returns an existing policy transaction before policy lookup or Openfort send', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-existing',
+      status: 'pending',
+      intentId: 'tin_123',
+      txHash: null,
+    });
+
+    const result = await service.send(
+      'user-1',
+      { ...dto, policyId: 'policy-deleted-after-first-submit' } as any,
+      apiKeyContext,
+    );
+
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: 'tin_123',
+      status: 'pending',
+    });
+    expect(prisma.userPolicy.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing transaction after a concurrent idempotency insert race', async () => {
+    prisma.transaction.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'tx-existing',
+        status: 'submitting',
+        intentId: null,
+        txHash: null,
+      });
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+
+    const result = await service.send('user-1', dto as any, apiKeyContext);
+
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'submitting',
+    });
+    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      status: 'confirmed',
+      txHash: '0xconfirmed',
+      intentId: 'tin_123',
+      expectedHash: '0xconfirmed',
+    },
+    { status: 'failed', txHash: null, intentId: 'tin_123', expectedHash: 'tin_123' },
+  ])(
+    'returns existing $status transaction on idempotency collision without resending',
+    async ({ status, txHash, intentId, expectedHash }) => {
+      prisma.transaction.findFirst.mockResolvedValue({
+        id: 'tx-existing',
+        status,
+        intentId,
+        txHash,
+      });
+
+      const result = await service.send('user-1', dto as any, apiKeyContext);
+
+      expect(result).toEqual({
+        transactionId: 'tx-existing',
+        transactionHash: expectedHash,
+        status,
+      });
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects API keys that are not allowed to use the requested chain', async () => {
     await expect(
@@ -149,7 +225,6 @@ describe('TransactionsService', () => {
   });
 
   it('rejects idempotency key reuse with a different request on the same chain', async () => {
-    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
@@ -161,6 +236,7 @@ describe('TransactionsService', () => {
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
       BadRequestException,
     );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendTransaction).not.toHaveBeenCalled();
   });
 
