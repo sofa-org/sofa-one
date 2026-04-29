@@ -33,39 +33,6 @@ export class OpenfortService {
     }
   }
 
-  /** Submit a transaction intent via Openfort bundler + paymaster. */
-  async createTransactionIntent(params: {
-    chainId: number;
-    accountId: string;
-    policyId?: string;
-    interactions: Array<{
-      contract: string;
-      functionName: string;
-      functionArgs?: string[];
-    }>;
-    optimistic?: boolean;
-  }) {
-    try {
-      return await this.withTimeout(
-        this.client.transactionIntents.create({
-          chainId: params.chainId,
-          account: params.accountId,
-          ...(params.policyId && { policy: params.policyId }),
-          optimistic: params.optimistic ?? false,
-          interactions: params.interactions,
-        }),
-        'createTransactionIntent',
-      );
-    } catch (error: any) {
-      this.logOpenfortError('createTransactionIntent', error, {
-        chainId: params.chainId,
-        interactionCount: params.interactions.length,
-        policyProvided: Boolean(params.policyId),
-      });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
   // ─── Policy management ────────────────────────────────────────────────────
 
   async listPolicies() {

@@ -6,7 +6,16 @@ import {
   Optional,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createPublicClient, formatEther, formatUnits, hashMessage, hashTypedData, http, type PublicClient } from 'viem';
+import {
+  createPublicClient,
+  encodeFunctionData,
+  formatEther,
+  formatUnits,
+  hashMessage,
+  hashTypedData,
+  http,
+  type PublicClient,
+} from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
@@ -264,7 +273,7 @@ export class WalletService {
     return { walletAddress, chains };
   }
 
-  /** Create a withdrawal transaction intent. */
+  /** Submit a withdrawal transaction. */
   async withdraw(userId: string, params: WithdrawDto) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
@@ -341,19 +350,35 @@ export class WalletService {
       },
     });
 
-    if (!created || tx.intentId || tx.status !== 'submitting') {
+    if (!created || tx.txHash || tx.status !== 'submitting') {
       return this.toWithdrawalResponse(tx);
     }
 
     try {
-      const txIntent = await this.openfort.createTransactionIntent({
+      const transferData = encodeFunctionData({
+        abi: [
+          {
+            inputs: [
+              { name: 'to', type: 'address' },
+              { name: 'amount', type: 'uint256' },
+            ],
+            name: 'transfer',
+            outputs: [{ type: 'bool' }],
+            type: 'function',
+          },
+        ],
+        functionName: 'transfer',
+        args: [params.to, BigInt(params.amount)],
+      });
+
+      const submission = await this.openfort.sendTransaction({
         chainId,
         accountId: wallet.openfortAccountId,
         interactions: [
           {
-            contract: usdcAddressHex,
-            functionName: 'transfer',
-            functionArgs: [params.to, params.amount],
+            to: usdcAddressHex,
+            data: transferData,
+            value: '0',
           },
         ],
       });
@@ -361,14 +386,14 @@ export class WalletService {
       const updated = await this.prisma.transaction.update({
         where: { id: tx.id },
         data: {
-          intentId: txIntent.id,
+          txHash: submission.transactionHash,
           status: 'pending',
         },
       });
 
       return {
         transactionId: updated.id,
-        intentId: updated.intentId,
+        transactionHash: updated.txHash,
         status: updated.status,
       };
     } catch (error) {
@@ -394,7 +419,6 @@ export class WalletService {
       const tx = await this.prisma.transaction.create({
         data: {
           userId,
-          intentId: null,
           status: 'submitting',
           chainId: BigInt(params.chainId),
           walletAddress: params.walletAddress,
@@ -442,7 +466,7 @@ export class WalletService {
   private toWithdrawalResponse(tx: any) {
     return {
       transactionId: tx.id,
-      intentId: tx.intentId,
+      transactionHash: tx.txHash,
       status: tx.status,
     };
   }

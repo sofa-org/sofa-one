@@ -202,7 +202,6 @@ export class TransactionsService {
           authMethod: 'api_key',
           apiKeyPrefix: params.apiKeyPrefix,
           apiKeyName: params.apiKeyName,
-          intentId: null,
           status: 'submitting',
           chainId: BigInt(params.chainId),
           walletAddress: params.walletAddress,

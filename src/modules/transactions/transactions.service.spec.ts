@@ -51,7 +51,6 @@ describe('TransactionsService', () => {
     prisma.transaction.create.mockResolvedValue({
       id: 'tx-1',
       status: 'submitting',
-      intentId: null,
       txHash: null,
     });
     prisma.transaction.update.mockResolvedValue({
@@ -105,7 +104,6 @@ describe('TransactionsService', () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
-      intentId: null,
       txHash: null,
     });
 
@@ -124,7 +122,6 @@ describe('TransactionsService', () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'submitting',
-      intentId: null,
       txHash: null,
     });
 
@@ -143,7 +140,6 @@ describe('TransactionsService', () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
-      intentId: 'tin_123',
       txHash: null,
     });
 
@@ -167,7 +163,6 @@ describe('TransactionsService', () => {
     prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: 'tx-existing',
       status: 'submitting',
-      intentId: null,
       txHash: null,
     });
     prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
@@ -186,17 +181,15 @@ describe('TransactionsService', () => {
     {
       status: 'confirmed',
       txHash: '0xconfirmed',
-      intentId: 'tin_123',
       expectedHash: '0xconfirmed',
     },
-    { status: 'failed', txHash: null, intentId: 'tin_123', expectedHash: null },
+    { status: 'failed', txHash: null, expectedHash: null },
   ])(
     'returns existing $status transaction on idempotency collision without resending',
-    async ({ status, txHash, intentId, expectedHash }) => {
+    async ({ status, txHash, expectedHash }) => {
       prisma.transaction.findFirst.mockResolvedValue({
         id: 'tx-existing',
         status,
-        intentId,
         txHash,
       });
 
@@ -223,7 +216,6 @@ describe('TransactionsService', () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
-      intentId: null,
       txHash: null,
       requestHash: 'different-request',
     });
@@ -267,7 +259,6 @@ describe('TransactionsService', () => {
       id: 'tx-1',
       status: 'pending',
       txHash: null,
-      intentId: null,
     });
 
     await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
@@ -290,7 +281,6 @@ describe('TransactionsService', () => {
       userId: 'user-1',
       status: 'confirmed',
       txHash: '0xhash',
-      intentId: '0xhash',
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
       failureReason: null,
@@ -315,7 +305,6 @@ describe('TransactionsService', () => {
       id: 'tx-1',
       status: 'pending',
       txHash: null,
-      intentId: 'tin_123',
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
       failureReason: null,
@@ -341,7 +330,6 @@ describe('TransactionsService', () => {
       id: 'tx-1',
       status: 'confirmed',
       txHash: '0xhash',
-      intentId: '0xhash',
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
     });

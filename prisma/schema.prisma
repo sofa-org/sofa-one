@@ -86,7 +86,6 @@ model Transaction {
   authMethod       String    @default("api_key") @map("auth_method") @db.VarChar(20)
   apiKeyPrefix     String?   @map("api_key_prefix") @db.VarChar(32)
   apiKeyName       String?   @map("api_key_name") @db.VarChar(100)
-  intentId         String?   @map("intent_id") @db.VarChar(255)
   status           String    @db.VarChar(20)
   txHash           String?   @map("tx_hash") @db.VarChar(66)
   chainId          BigInt    @map("chain_id")

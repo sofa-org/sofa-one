@@ -73,7 +73,7 @@ describe('WalletService.withdraw()', () => {
   const mockUpdate = jest.fn();
 
   // Openfort mock handle
-  const mockCreateTransactionIntent = jest.fn();
+  const mockSendTransaction = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -82,9 +82,9 @@ describe('WalletService.withdraw()', () => {
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
-    mockCreateTransactionIntent.mockResolvedValue({ id: 'intent-1' });
-    mockCreate.mockResolvedValue({ id: 'tx-1', intentId: null, status: 'submitting' });
-    mockUpdate.mockResolvedValue({ id: 'tx-1', intentId: 'intent-1', status: 'pending' });
+    mockSendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
+    mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -98,7 +98,7 @@ describe('WalletService.withdraw()', () => {
         },
         {
           provide: OpenfortService,
-          useValue: { createTransactionIntent: mockCreateTransactionIntent, signData: jest.fn() },
+          useValue: { sendTransaction: mockSendTransaction, signData: jest.fn() },
         },
       ],
     }).compile();
@@ -145,7 +145,7 @@ describe('WalletService.withdraw()', () => {
   it('returns the existing withdrawal when idempotencyKey was already submitted', async () => {
     mockFindFirst.mockResolvedValue({
       id: 'tx-existing',
-      intentId: 'intent-existing',
+      txHash: '0xhash-existing',
       status: 'pending',
     });
 
@@ -153,42 +153,42 @@ describe('WalletService.withdraw()', () => {
 
     expect(result).toEqual({
       transactionId: 'tx-existing',
-      intentId: 'intent-existing',
+      transactionHash: '0xhash-existing',
       status: 'pending',
     });
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+    expect(mockSendTransaction).not.toHaveBeenCalled();
   });
 
   it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
-    mockFindFirst.mockResolvedValue({ id: 'tx-existing', intentId: null, status: 'submitting' });
+    mockFindFirst.mockResolvedValue({ id: 'tx-existing', txHash: null, status: 'submitting' });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', intentId: null, status: 'submitting' });
+    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+    expect(mockSendTransaction).not.toHaveBeenCalled();
   });
 
   it('returns the existing withdrawal after a concurrent idempotency insert race', async () => {
     mockFindFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'tx-existing', intentId: null, status: 'submitting' });
+      .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting' });
     mockCreate.mockRejectedValue({ code: 'P2002' });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', intentId: null, status: 'submitting' });
+    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
     expect(mockReadContract).toHaveBeenCalledTimes(1);
-    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+    expect(mockSendTransaction).not.toHaveBeenCalled();
   });
 
   it('rejects withdrawal idempotency reuse with a different request before balance checks', async () => {
     mockFindFirst.mockResolvedValue({
       id: 'tx-existing',
-      intentId: 'intent-existing',
+      txHash: '0xhash-existing',
       status: 'pending',
       requestHash: 'different-request',
     });
@@ -197,7 +197,7 @@ describe('WalletService.withdraw()', () => {
 
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockCreateTransactionIntent).not.toHaveBeenCalled();
+    expect(mockSendTransaction).not.toHaveBeenCalled();
   });
 
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────
@@ -231,11 +231,18 @@ describe('WalletService.withdraw()', () => {
     const result = await service.withdraw('user-1', VALID_DTO);
 
     // Openfort intent was created
-    expect(mockCreateTransactionIntent).toHaveBeenCalledTimes(1);
-    expect(mockCreateTransactionIntent).toHaveBeenCalledWith(
+    expect(mockSendTransaction).toHaveBeenCalledTimes(1);
+    expect(mockSendTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         chainId: VALID_DTO.chainId,
         accountId: WALLET.openfortAccountId,
+        interactions: [
+          expect.objectContaining({
+            to: expect.any(String),
+            data: expect.stringMatching(/^0x/),
+            value: '0',
+          }),
+        ],
       }),
     );
 
@@ -245,7 +252,7 @@ describe('WalletService.withdraw()', () => {
     // Return shape
     expect(result).toEqual({
       transactionId: 'tx-1',
-      intentId: 'intent-1',
+      transactionHash: '0xhash',
       status: 'pending',
     });
   });
@@ -265,7 +272,7 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
-    mockCreateTransactionIntent.mockRejectedValue(new Error('Openfort down'));
+    mockSendTransaction.mockRejectedValue(new Error('Openfort down'));
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
     expect(mockUpdate).toHaveBeenCalledWith({

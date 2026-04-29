@@ -15,10 +15,6 @@ jest.mock('@openfort/openfort-node', () => ({
         },
       },
     },
-    transactionIntents: {
-      create: jest.fn(),
-      get: jest.fn(),
-    },
     policies: {},
   })),
 }));

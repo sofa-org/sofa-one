@@ -51,7 +51,7 @@ export interface BalancesResponse {
 
 export interface WithdrawResponse {
   transactionId: string;
-  intentId: string | null;
+  transactionHash: string | null;
   status: string;
 }
 

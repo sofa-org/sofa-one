@@ -144,7 +144,7 @@ export default function WalletPage() {
     try {
       const baseUnits = parseUsdcAmount(amount);
       const result = await withdrawAuth(getToken, to, baseUnits, token, selectedChainId);
-      setWithdrawResult(`Transaction submitted: ${result.intentId}`);
+      setWithdrawResult(`Transaction submitted: ${result.transactionHash || result.transactionId}`);
       setTo('');
       setAmount('');
     } catch (err: unknown) {

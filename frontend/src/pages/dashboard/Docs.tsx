@@ -202,7 +202,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/:id" method="GET">
           <p className="text-sm leading-6 text-brand-muted">
-            Query a safe transaction status view for the API-key user. The response excludes calldata, request hashes, and interaction hashes. Pending Openfort intent records may be refreshed during lookup.
+            Query a safe transaction status view for the API-key user. The response excludes calldata, request hashes, and interaction hashes.
           </p>
 
           <div className="space-y-3">

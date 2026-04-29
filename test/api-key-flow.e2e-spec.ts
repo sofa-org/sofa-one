@@ -34,10 +34,6 @@ const mockOpenfortService = {
     id: 'ofa_test_account_123',
     address: TEST_WALLET_ADDRESS,
   }),
-  createTransactionIntent: jest.fn().mockResolvedValue({
-    id: 'tin_test_intent_456',
-    status: 'pending',
-  }),
   sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
@@ -397,7 +393,6 @@ describe('API-key public security flow (e2e)', () => {
           authMethod: 'api_key',
           apiKeyPrefix: testApiKey.substring(0, API_KEY_PREFIX_LENGTH),
           apiKeyName: 'E2E Test Key',
-          intentId: TEST_TX_HASH,
           status: 'confirmed',
           txHash: TEST_TX_HASH,
           chainId: BigInt(TEST_CHAIN_ID),

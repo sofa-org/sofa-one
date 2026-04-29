@@ -38,7 +38,7 @@ export class WalletController {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }
 
-  /** POST /v1/wallets/withdraw — frontend only: create a withdrawal intent. */
+  /** POST /v1/wallets/withdraw — frontend only: submit a withdrawal transaction. */
   @Post('withdraw')
   @FrontendOnly()
   @UseGuards(ClerkUserGuard, FrontendOnlyGuard)

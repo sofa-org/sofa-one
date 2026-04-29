@@ -58,12 +58,12 @@ describe('WalletController', () => {
   describe('withdraw', () => {
     it('delegates to walletService.withdraw with userId and dto', async () => {
       const dto = { to: '0xrecipient', amount: '10.0', chainId: 84532 };
-      walletService.withdraw.mockResolvedValue({ intentId: 'intent-1' });
+      walletService.withdraw.mockResolvedValue({ transactionHash: '0xhash' });
 
       const result = await controller.withdraw('user-1', dto as any);
 
       expect(walletService.withdraw).toHaveBeenCalledWith('user-1', dto);
-      expect(result).toEqual({ intentId: 'intent-1' });
+      expect(result).toEqual({ transactionHash: '0xhash' });
     });
   });
 });
