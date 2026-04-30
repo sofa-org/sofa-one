@@ -4,7 +4,6 @@ import {
   Logger,
   NotFoundException,
   Optional,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient } from '@clerk/backend';
@@ -15,11 +14,6 @@ import { OpenfortService } from '../../core/openfort/openfort.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { ApiKeyService } from '../api-key/api-key.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
-
-type ActiveUserWallet = UserWallet & {
-  openfortAccountId: string;
-  walletAddress: string;
-};
 
 type WalletResponse = {
   walletAddress: string | null;
@@ -52,8 +46,8 @@ export class AuthService {
   }
 
   /**
-   * Handle social login: upsert user, provision wallet, generate API key.
-   * Returns { userId, wallet: { walletAddress, chainId, status, supportedTokens }, apiKey? }.
+   * Handle social login: upsert user, create a pending embedded-wallet record, generate API key.
+   * Embedded wallet creation/authorization happens client-side through Openfort React SDK.
    * The apiKey field is only present on first login (one-time display).
    */
   async handleSocialLogin(
@@ -123,7 +117,7 @@ export class AuthService {
         throw err;
       }
     } else if (!wallet) {
-      // 3b. Existing user missing wallet — provision one
+      // 3b. Existing user missing wallet — create a pending embedded-wallet record.
       userId = existing.id;
 
       try {
@@ -140,7 +134,7 @@ export class AuthService {
         }
         if (!wallet) throw dbErr;
       }
-      this.logger.log(this.logContext({ message: 'Provisioned wallet for existing user', userId }));
+      this.logger.log(this.logContext({ message: 'Created pending wallet for existing user', userId }));
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
@@ -210,70 +204,6 @@ export class AuthService {
         expiresAt: expiresAt.toISOString(),
       },
     };
-  }
-
-  private async ensureActiveWallet(
-    wallet: UserWallet | null,
-    userId: string,
-  ): Promise<ActiveUserWallet> {
-    if (!wallet) throw new NotFoundException('Wallet not found');
-
-    if (wallet.status === 'active' && wallet.walletAddress && wallet.openfortAccountId) {
-      return wallet as ActiveUserWallet;
-    }
-
-    if (wallet.status === 'provisioning_failed') {
-      return this.provisionWallet(wallet.id, userId);
-    }
-
-    throw new ServiceUnavailableException(`Wallet is not ready (status: ${wallet.status})`);
-  }
-
-  private async provisionWallet(walletId: string, userId: string): Promise<ActiveUserWallet> {
-    try {
-      const account = await this.openfort.createBackendWallet();
-      const wallet = await this.prisma.userWallet.update({
-        where: { id: walletId },
-        data: {
-          openfortAccountId: account.id,
-          walletAddress: account.address,
-          status: 'active',
-        },
-      });
-      if (!wallet.walletAddress || !wallet.openfortAccountId) {
-        throw new InternalServerErrorException('Provisioned wallet is missing identifiers');
-      }
-      this.logger.log(
-        this.logContext({ message: 'Wallet provisioning completed', walletId, userId }),
-      );
-      return wallet as ActiveUserWallet;
-    } catch (err) {
-      await this.markWalletProvisioningFailed(walletId, userId, err);
-      throw err;
-    }
-  }
-
-  private async markWalletProvisioningFailed(walletId: string, userId: string, err: unknown) {
-    try {
-      await this.prisma.userWallet.update({
-        where: { id: walletId },
-        data: { status: 'provisioning_failed' },
-      });
-    } catch (updateErr) {
-      this.logger.error(
-        this.logContext({
-          message: 'Failed to mark wallet provisioning as failed',
-          walletId,
-          userId,
-        }),
-        updateErr instanceof Error ? updateErr.stack : updateErr,
-      );
-    }
-
-    this.logger.error(
-      this.logContext({ message: 'Wallet provisioning failed', walletId, userId }),
-      err instanceof Error ? err.stack : err,
-    );
   }
 
   private logContext(extra: Record<string, unknown>) {

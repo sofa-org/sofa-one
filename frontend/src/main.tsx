@@ -12,7 +12,7 @@ import {
 import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, WagmiProvider } from 'wagmi';
-import { baseSepolia } from 'viem/chains';
+import { base, baseSepolia, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DEFAULT_CHAIN_ID } from './lib/api';
@@ -22,10 +22,11 @@ const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const OPENFORT_KEY = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
 const OPENFORT_SHIELD_KEY = import.meta.env.VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY;
 const queryClient = new QueryClient();
+const supportedChains = [baseSepolia, base, mainnet, sepolia, polygon, polygonAmoy] as const;
 const wagmiConfig = createConfig(
   getDefaultConfig({
     appName: 'SOFA ONE',
-    chains: [baseSepolia],
+    chains: supportedChains,
     ssr: false,
   }),
 );

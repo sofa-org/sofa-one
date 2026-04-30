@@ -202,41 +202,6 @@ export class OpenfortService {
     );
   }
 
-  /** Send a raw transaction via a backend wallet (EIP-7702 auto-delegation). */
-  async sendTransaction(params: {
-    accountId: string;
-    chainId: number;
-    interactions: Array<{ to: string; data: string; value?: string }>;
-    policyId?: string;
-  }): Promise<{ transactionHash: string | null }> {
-    try {
-      const account = await this.withTimeout(
-        this.client.accounts.evm.backend.get({ id: params.accountId }),
-        'getBackendWallet',
-      );
-      const result = await this.withTimeout(
-        this.client.accounts.evm.backend.sendTransaction({
-          account,
-          chainId: params.chainId,
-          interactions: params.interactions as any,
-          ...(params.policyId && { policy: params.policyId }),
-        }),
-        'sendTransaction',
-      );
-      const rawResult = result as any;
-      return {
-        transactionHash: rawResult.response?.transactionHash ?? rawResult.transactionHash ?? null,
-      };
-    } catch (error: any) {
-      this.logOpenfortError('sendTransaction', error, {
-        chainId: params.chainId,
-        interactionCount: params.interactions.length,
-        policyProvided: Boolean(params.policyId),
-      });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
-    }
-  }
-
   /** Execute calls from the user's Calibur account with the registered backend agent key. */
   async sendUserOperation(params: {
     agentAccountId: string;
