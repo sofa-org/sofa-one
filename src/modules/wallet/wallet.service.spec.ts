@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { hashMessage } from 'viem';
+import { encodeAbiParameters, hashMessage, type Hex } from 'viem';
 
 // ── viem mock ──────────────────────────────────────────────────────────────────
 // Must be declared before any imports that pull in viem transitively.
@@ -63,6 +63,15 @@ const API_KEY_CONTEXT = {
   name: 'Production key',
   allowedChains: [84532],
 };
+const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
+const WRAPPED_SIGNATURE = encodeAbiParameters(
+  [
+    { name: 'keyHash', type: 'bytes32' },
+    { name: 'signature', type: 'bytes' },
+    { name: 'hookData', type: 'bytes' },
+  ],
+  [WALLET.agentKeyHash as Hex, RAW_SIGNATURE, '0x'],
+);
 
 // ── test suite ─────────────────────────────────────────────────────────────────
 
@@ -300,7 +309,7 @@ describe('WalletService.sign()', () => {
     jest.clearAllMocks();
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
-    mockSignData.mockResolvedValue('0xsigned');
+    mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
 
@@ -340,7 +349,7 @@ describe('WalletService.sign()', () => {
       hashMessage('Hello, SOFA ONE!'),
     );
     expect(result).toEqual({
-      signature: '0xsigned',
+      signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       signerAddress: WALLET.agentWalletAddress,
       type: 'message',
@@ -417,7 +426,7 @@ describe('WalletService.sign()', () => {
     );
 
     expect(result).toEqual({
-      signature: '0xsigned',
+      signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       signerAddress: WALLET.agentWalletAddress,
       type: 'message',
@@ -451,7 +460,7 @@ describe('WalletService.sign()', () => {
 
     expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, hashMessage({ raw }));
     expect(result).toEqual({
-      signature: '0xsigned',
+      signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       signerAddress: WALLET.agentWalletAddress,
       type: 'message',
@@ -518,7 +527,7 @@ describe('WalletService.sign()', () => {
       expect.stringMatching(/^0x[a-f0-9]{64}$/),
     );
     expect(result).toEqual({
-      signature: '0xsigned',
+      signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       signerAddress: WALLET.agentWalletAddress,
       type: 'typed_data',

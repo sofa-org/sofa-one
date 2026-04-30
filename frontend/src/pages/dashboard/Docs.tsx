@@ -125,7 +125,7 @@ export default function APIDocsPage() {
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message or EIP-712 typed data with your TEE-secured backend wallet. Raw hash signing is disabled for safety. This endpoint only returns a signature; it does not broadcast a transaction.
+            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent wallet/session key. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, so verifiers should call ERC-1271 <code>isValidSignature</code> on the embedded wallet address. Raw hash signing is disabled for safety and no transaction is broadcast.
           </p>
 
           <div className="space-y-3">
@@ -150,6 +150,7 @@ export default function APIDocsPage() {
               <CodeBlock>{`{
   "signature": "0x5d99b6f7...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "signerAddress": "0x1111111111111111111111111111111111111111",
   "type": "message"
 }`}</CodeBlock>
             </div>

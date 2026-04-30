@@ -8,12 +8,14 @@ import {
 } from '@nestjs/common';
 import {
   createPublicClient,
+  encodeAbiParameters,
   encodeFunctionData,
   formatEther,
   formatUnits,
   hashMessage,
   hashTypedData,
   http,
+  type Hex,
   type PublicClient,
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -92,7 +94,8 @@ export class WalletService {
       wallet.status !== 'active' ||
       !wallet.walletAddress ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress
+      !wallet.agentWalletAddress ||
+      !wallet.agentKeyHash
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -146,7 +149,8 @@ export class WalletService {
 
     let signature: string;
     try {
-      signature = await this.openfort.signData(wallet.agentOpenfortAccountId, data);
+      const rawSignature = await this.openfort.signData(wallet.agentOpenfortAccountId, data);
+      signature = this.wrapCaliburSignature(wallet.agentKeyHash, rawSignature);
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -182,6 +186,17 @@ export class WalletService {
       signerAddress: wallet.agentWalletAddress,
       type: params.type,
     };
+  }
+
+  private wrapCaliburSignature(keyHash: string, signature: string): Hex {
+    return encodeAbiParameters(
+      [
+        { name: 'keyHash', type: 'bytes32' },
+        { name: 'signature', type: 'bytes' },
+        { name: 'hookData', type: 'bytes' },
+      ],
+      [keyHash as Hex, signature as Hex, '0x'],
+    );
   }
 
   private async updateSigningRequestStatus(id: string, status: 'signed' | 'failed'): Promise<void> {
