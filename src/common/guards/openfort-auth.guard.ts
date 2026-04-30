@@ -1,18 +1,17 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { verifyToken } from '@clerk/backend';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { OpenfortService } from '../../core/openfort/openfort.service';
 
 /**
- * Verifies the Clerk JWT from the Authorization: Bearer header.
- * On success, attaches `clerkUserId` and `clerkPayload` to the request.
+ * Verifies the Openfort IAM access token from Authorization: Bearer.
+ * On success, attaches `openfortUserId` and `openfortSession` to the request.
  */
 @Injectable()
-export class ClerkAuthGuard implements CanActivate {
+export class OpenfortAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
+    private readonly openfort: OpenfortService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -24,21 +23,16 @@ export class ClerkAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractBearerToken(request);
-
-    if (!token) {
-      throw new UnauthorizedException('Missing authorization token');
-    }
+    if (!token) throw new UnauthorizedException('Missing authorization token');
 
     try {
-      const parties = this.configService.get<string[]>('clerk.authorizedParties');
-      const payload = await verifyToken(token, {
-        secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
-        ...(parties?.length ? { authorizedParties: parties } : {}),
-      });
-      request.clerkUserId = payload.sub;
-      request.clerkPayload = payload;
+      const session = await this.openfort.verifyIamSession(token);
+      request.openfortUserId = session.openfortUserId;
+      request.openfortSession = session.session;
+      request.openfortEmail = session.email;
       return true;
-    } catch {
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Invalid authorization token');
     }
   }

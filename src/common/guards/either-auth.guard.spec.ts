@@ -1,9 +1,12 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { EitherAuthGuard } from './either-auth.guard';
 import { API_KEY_PREFIX_LENGTH } from '../api-key/api-key-prefix';
+
+jest.mock('../../core/openfort/openfort.service', () => ({
+  OpenfortService: class OpenfortService {},
+}));
 
 jest.mock('argon2', () => ({
   verify: jest.fn(),
@@ -37,8 +40,8 @@ describe('EitherAuthGuard API key authentication', () => {
 
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
-      { getOrThrow: jest.fn() } as unknown as ConfigService,
       prisma as any,
+      { verifyIamSession: jest.fn() } as any,
     );
 
     return { guard, prisma };

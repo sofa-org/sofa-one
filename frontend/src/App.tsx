@@ -1,51 +1,60 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
-import ProtectedRoute from './components/ProtectedRoute';
-import LandingPage from './pages/Landing';
-import SignInPage from './pages/SignIn';
-import SignUpPage from './pages/SignUp';
-import DashboardLayout from './pages/dashboard/DashboardLayout';
-import WalletPage from './pages/dashboard/Wallet';
-import ApiKeysPage from './pages/dashboard/ApiKeys';
-import APIDocsPage from './pages/dashboard/Docs';
-import PoliciesPage from './pages/dashboard/Policies';
 
-function AuthRedirect({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return null;
-  if (isSignedIn) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
+const AuthProviders = lazy(() => import('./components/AuthProviders'));
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
+const LandingPage = lazy(() => import('./pages/Landing'));
+const SignInPage = lazy(() => import('./pages/SignIn'));
+const SignUpPage = lazy(() => import('./pages/SignUp'));
+const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
+const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
+const ApiKeysPage = lazy(() => import('./pages/dashboard/ApiKeys'));
+const APIDocsPage = lazy(() => import('./pages/dashboard/Docs'));
+const PoliciesPage = lazy(() => import('./pages/dashboard/Policies'));
+
+function PageFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-brand-bg text-sm text-brand-muted">
+      Loading…
+    </div>
+  );
 }
 
 export default function App() {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-accent selection:text-white">
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <AuthRedirect>
-              <LandingPage />
-            </AuthRedirect>
-          }
-        />
-        <Route path="/sign-in/*" element={<SignInPage />} />
-        <Route path="/sign-up/*" element={<SignUpPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<WalletPage />} />
-          <Route path="api-keys" element={<ApiKeysPage />} />
-          <Route path="policies" element={<PoliciesPage />} />
-          <Route path="docs" element={<APIDocsPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route
+            path="/"
+            element={<LandingPage />}
+          />
+          <Route
+            path="/sign-in/*"
+            element={<SignInPage />}
+          />
+          <Route
+            path="/sign-up/*"
+            element={<SignUpPage />}
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <AuthProviders>
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              </AuthProviders>
+            }
+          >
+            <Route index element={<WalletPage />} />
+            <Route path="api-keys" element={<ApiKeysPage />} />
+            <Route path="policies" element={<PoliciesPage />} />
+            <Route path="docs" element={<APIDocsPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }

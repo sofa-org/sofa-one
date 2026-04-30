@@ -1,12 +1,6 @@
 export default () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  clerk: {
-    secretKey: process.env.CLERK_SECRET_KEY,
-    authorizedParties: process.env.CLERK_AUTHORIZED_PARTIES
-      ? process.env.CLERK_AUTHORIZED_PARTIES.split(',').map((s) => s.trim()).filter(Boolean)
-      : undefined,
-  },
   openfort: {
     apiKey: process.env.OPENFORT_API_KEY,
     publishableKey: process.env.OPENFORT_PUBLISHABLE_KEY,

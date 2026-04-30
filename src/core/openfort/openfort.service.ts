@@ -57,17 +57,40 @@ export class OpenfortService {
     };
   }
 
+  async verifyIamSession(accessToken: string): Promise<{
+    openfortUserId: string;
+    email?: string;
+    session: unknown;
+  }> {
+    try {
+      const session = (await this.withTimeout(
+        (this.client as any).iam.getSession({ accessToken }),
+        'getOpenfortIamSession',
+      )) as any;
+      const openfortUserId = session?.user?.id ?? session?.id;
+      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+
+      const email =
+        session?.user?.email ??
+        session?.user?.emailAddress ??
+        session?.email ??
+        session?.emailAddress ??
+        undefined;
+
+      return { openfortUserId, email, session };
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('verifyIamSession', error);
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
   async authorizeEmbeddedAddress(
     accessToken: string,
     walletAddress: string,
   ): Promise<{ openfortUserId: string; accountId?: string; address: Address }> {
     try {
-      const session = (await this.withTimeout(
-        (this.client as any).iam.getSession({ accessToken }),
-        'getOpenfortIamSession',
-      )) as { user?: { id?: string }; id?: string };
-      const openfortUserId = session.user?.id ?? session.id;
-      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+      const { openfortUserId } = await this.verifyIamSession(accessToken);
 
       const normalizedAddress = getAddress(walletAddress);
       const accountsResult = (await this.withTimeout(

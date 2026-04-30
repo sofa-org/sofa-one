@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useOpenfort } from '@openfort/react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import {
@@ -29,7 +29,8 @@ function formatChains(chainIds: number[]) {
 }
 
 export default function ApiKeysPage() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { client, user } = useOpenfort();
+  const getToken = () => client.getAccessToken();
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [selectedChains, setSelectedChains] = useState<number[]>(DEFAULT_ALLOWED_CHAINS);
@@ -51,10 +52,10 @@ export default function ApiKeysPage() {
   }
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (user) {
       fetchKeys();
     }
-  }, [isLoaded, isSignedIn]);
+  }, [user]);
 
   async function handleCreate() {
     const trimmedName = newKeyName.trim();

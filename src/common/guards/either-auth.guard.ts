@@ -6,16 +6,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { verifyToken } from '@clerk/backend';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
+import { OpenfortService } from '../../core/openfort/openfort.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { isIpAllowed } from '../utils/ip-cidr';
 
 /**
- * Accepts either Clerk JWT (Authorization: Bearer) or X-API-Key header.
+ * Accepts either Openfort IAM JWT (Authorization: Bearer) or X-API-Key header.
  * In both cases, resolves the full user record and attaches it to request.user
  * so @CurrentUser() works uniformly.
  *
@@ -27,8 +26,8 @@ export class EitherAuthGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly openfort: OpenfortService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -40,7 +39,7 @@ export class EitherAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    // 1. Try Clerk JWT
+    // 1. Try Openfort IAM JWT
     const bearerToken = this.extractBearerToken(request);
     if (bearerToken) {
       return this.authenticateWithJwt(request, bearerToken);
@@ -59,14 +58,10 @@ export class EitherAuthGuard implements CanActivate {
 
   private async authenticateWithJwt(request: any, token: string): Promise<boolean> {
     try {
-      const parties = this.configService.get<string[]>('clerk.authorizedParties');
-      const payload = await verifyToken(token, {
-        secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
-        ...(parties?.length ? { authorizedParties: parties } : {}),
-      });
+      const session = await this.openfort.verifyIamSession(token);
 
       const user = await this.prisma.user.findUnique({
-        where: { socialId: payload.sub },
+        where: { socialId: session.openfortUserId },
       });
 
       if (!user) {
@@ -74,7 +69,9 @@ export class EitherAuthGuard implements CanActivate {
       }
 
       request.user = user;
-      request.clerkUserId = payload.sub;
+      request.openfortUserId = session.openfortUserId;
+      request.openfortSession = session.session;
+      request.openfortEmail = session.email;
       return true;
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;

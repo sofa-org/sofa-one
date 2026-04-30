@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { UserButton, useClerk } from '@clerk/clerk-react';
+import { useOpenfort, useSignOut } from '@openfort/react';
 import { LogOut, Wallet, ShieldCheck, KeyRound, BookOpen, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -13,12 +13,20 @@ const NAV_ITEMS = [
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useClerk();
+  const { user } = useOpenfort();
+  const { signOut } = useSignOut();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut(() => navigate('/'));
+    await signOut();
+    navigate('/');
   };
+
+  const UserBadge = () => (
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/10 text-xs font-bold uppercase text-brand-accent">
+      {(user?.email?.[0] ?? 'U').toUpperCase()}
+    </div>
+  );
 
   const NavLinks = () => (
     <>
@@ -54,7 +62,7 @@ export default function DashboardLayout() {
           SOFA ONE
         </span>
         <div className="flex items-center gap-4">
-          <UserButton />
+          <UserBadge />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
@@ -107,7 +115,10 @@ export default function DashboardLayout() {
         </nav>
         <div className="border-t border-brand-border px-4 py-4">
           <div className="flex items-center justify-between">
-            <UserButton />
+            <div className="flex min-w-0 items-center gap-2">
+              <UserBadge />
+              <span className="truncate text-xs font-medium text-brand-muted">{user?.email ?? 'Openfort user'}</span>
+            </div>
             <button
               onClick={handleSignOut}
               className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"

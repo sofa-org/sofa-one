@@ -278,7 +278,7 @@ function unwrapData<T>(response: MaybeDataEnvelope<T>): T {
 }
 
 /**
- * Call an auth endpoint (uses Clerk JWT from getToken).
+ * Call an auth endpoint (uses Openfort IAM access token from getToken).
  */
 export async function authFetch<T>(
   path: string,
@@ -320,12 +320,15 @@ export async function apiFetch<T>(path: string, apiKey: string, options?: Reques
 
 // --- Auth ---
 
-export async function socialLogin(
+export async function syncSession(
   getToken: () => Promise<string | null>,
   signal?: AbortSignal,
 ) {
-  return authFetch<AuthSessionResponse>('/auth/social', getToken, { method: 'POST', signal });
+  return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
 }
+
+/** @deprecated Use syncSession. */
+export const socialLogin = syncSession;
 
 export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });

@@ -115,7 +115,7 @@ export default function APIDocsPage() {
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
           <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Clerk bearer tokens are only accepted by frontend-only dashboard endpoints.
+            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
           </p>
         </div>
       </section>
@@ -159,7 +159,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions from the user&apos;s active backend wallet using an API key. The server handles wallet signing and policy checks; Clerk bearer tokens are not accepted here.
+            Submit one or more contract interactions from the user&apos;s active backend agent wallet using an API key. The server handles UserOp signing and policy checks; Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">

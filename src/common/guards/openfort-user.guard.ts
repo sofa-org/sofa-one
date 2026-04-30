@@ -1,21 +1,17 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { verifyToken } from '@clerk/backend';
 import { PrismaService } from '../../core/database/prisma.service';
+import { OpenfortService } from '../../core/openfort/openfort.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
- * Clerk-only guard for browser/frontend routes.
- *
- * Unlike EitherAuthGuard, this guard never accepts X-API-Key. It resolves the
- * local User row and attaches it to request.user so @CurrentUser() works.
+ * Openfort-only guard for dashboard/frontend routes. It never accepts API keys.
  */
 @Injectable()
-export class ClerkUserGuard implements CanActivate {
+export class OpenfortUserGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
+    private readonly openfort: OpenfortService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -28,27 +24,19 @@ export class ClerkUserGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractBearerToken(request);
-    if (!token) {
-      throw new UnauthorizedException('Missing authorization token');
-    }
+    if (!token) throw new UnauthorizedException('Missing authorization token');
 
     try {
-      const parties = this.configService.get<string[]>('clerk.authorizedParties');
-      const payload = await verifyToken(token, {
-        secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
-        ...(parties?.length ? { authorizedParties: parties } : {}),
-      });
-
+      const session = await this.openfort.verifyIamSession(token);
       const user = await this.prisma.user.findUnique({
-        where: { socialId: payload.sub },
+        where: { socialId: session.openfortUserId },
       });
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
+      if (!user) throw new UnauthorizedException('User not found');
 
       request.user = user;
-      request.clerkUserId = payload.sub;
-      request.clerkPayload = payload;
+      request.openfortUserId = session.openfortUserId;
+      request.openfortSession = session.session;
+      request.openfortEmail = session.email;
       return true;
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;

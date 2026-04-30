@@ -6,10 +6,9 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
-import { ClerkUserGuard } from '../src/common/guards/clerk-user.guard';
+import { OpenfortUserGuard } from '../src/common/guards/openfort-user.guard';
 
 process.env.NODE_ENV = 'test';
-process.env.CLERK_SECRET_KEY = 'sk_test_fake_clerk_key_for_testing';
 process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
@@ -34,12 +33,12 @@ describe('Frontend-only access control (e2e)', () => {
       .useValue({ canActivate: () => true })
       .overrideProvider(ThrottlerGuard)
       .useValue({ canActivate: () => true })
-      .overrideGuard(ClerkUserGuard)
+      .overrideGuard(OpenfortUserGuard)
       .useValue({
         canActivate: (context: any) => {
           const req = context.switchToHttp().getRequest();
           req.user = { id: testUserId };
-          req.clerkUserId = 'frontend_only_social_id_e2e';
+          req.openfortUserId = 'frontend_only_openfort_id_e2e';
           return true;
         },
       })
@@ -59,8 +58,8 @@ describe('Frontend-only access control (e2e)', () => {
     await cleanDatabase();
     const user = await prisma.user.create({
       data: {
-        socialProvider: 'google',
-        socialId: 'frontend_only_social_id_e2e',
+        socialProvider: 'openfort_email_otp',
+        socialId: 'frontend_only_openfort_id_e2e',
         email: 'frontend-only@example.com',
       },
     });
@@ -75,7 +74,7 @@ describe('Frontend-only access control (e2e)', () => {
   it('rejects frontend-only routes when Origin/Referer is absent', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/api-keys')
-      .set('Authorization', 'Bearer fake-clerk-token')
+      .set('Authorization', 'Bearer fake-openfort-token')
       .expect(403);
 
     expect(res.body).toEqual(
@@ -91,7 +90,7 @@ describe('Frontend-only access control (e2e)', () => {
   it('allows frontend-only routes from the configured development frontend origin', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/api-keys')
-      .set('Authorization', 'Bearer fake-clerk-token')
+      .set('Authorization', 'Bearer fake-openfort-token')
       .set('Origin', 'http://localhost:3000')
       .expect(200);
 

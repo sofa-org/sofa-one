@@ -28,10 +28,6 @@ class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  CLERK_SECRET_KEY: string;
-
-  @IsString()
-  @IsNotEmpty()
   OPENFORT_API_KEY: string;
 
   @IsString()
@@ -55,10 +51,6 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   CORS_ORIGIN?: string;
-
-  @IsString()
-  @IsOptional()
-  CLERK_AUTHORIZED_PARTIES?: string;
 
   @IsString()
   @IsOptional()
@@ -96,9 +88,6 @@ function validateProductionConfig(config: EnvironmentVariables) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
 
-  if (!config.CLERK_AUTHORIZED_PARTIES?.trim()) {
-    throw new Error('CLERK_AUTHORIZED_PARTIES must be set in production');
-  }
 }
 
 function validateDefaultChain(rawChainId: string | undefined) {

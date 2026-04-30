@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { useSendTransaction } from 'wagmi';
@@ -8,7 +7,7 @@ import {
   DEFAULT_CHAIN_ID,
   authorizeEmbeddedWallet,
   getMe,
-  socialLogin,
+  syncSession,
   withdrawAuth,
   getBalancesAuth,
   getApiErrorMessage,
@@ -106,8 +105,8 @@ function resolveEmbeddedWallet(
 }
 
 export default function WalletPage() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
   const openfort = useOpenfort();
+  const getToken = () => openfort.client.getAccessToken();
   const { sendTransactionAsync, isPending: registerTxPending } = useSendTransaction();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
@@ -135,7 +134,7 @@ export default function WalletPage() {
   const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!openfort.user) return;
 
     const controller = new AbortController();
 
@@ -146,7 +145,7 @@ export default function WalletPage() {
           result = await getMe(getToken, controller.signal);
         } catch (err: unknown) {
           if (!hasApiErrorCode(err, 'NOT_FOUND', 'WALLET_NOT_FOUND')) throw err;
-          result = await socialLogin(getToken, controller.signal);
+          result = await syncSession(getToken, controller.signal);
         }
 
         if (result.apiKey) {
@@ -165,10 +164,10 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [openfort.user]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !wallet?.walletAddress) {
+    if (!openfort.user || !wallet?.walletAddress) {
       setBalances(null);
       return;
     }
@@ -190,7 +189,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [isLoaded, isSignedIn, getToken, selectedChainId, wallet]);
+  }, [openfort.user, selectedChainId, wallet]);
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();

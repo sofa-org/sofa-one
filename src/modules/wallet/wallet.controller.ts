@@ -4,7 +4,7 @@ import { WalletService } from './wallet.service';
 import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
 import { ApiKeyOnlyGuard } from '../../common/guards/api-key-only.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { ClerkUserGuard } from '../../common/guards/clerk-user.guard';
+import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SignDto } from './dto/sign.dto';
@@ -17,7 +17,7 @@ export class WalletController {
   /** GET /v1/wallets/balances — frontend only: return ETH and USDC balances. */
   @Get('balances')
   @FrontendOnly()
-  @UseGuards(ClerkUserGuard, FrontendOnlyGuard)
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
   async getBalances(@CurrentUser('id') userId: string, @Query('chainId') chainId: string) {
     return this.walletService.getBalances(userId, Number(chainId));
   }
@@ -25,7 +25,7 @@ export class WalletController {
   /** POST /v1/wallets/deposit-info — frontend only: get wallet address for deposits. */
   @Post('deposit-info')
   @FrontendOnly()
-  @UseGuards(ClerkUserGuard, FrontendOnlyGuard)
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
   async getDepositInfo(@CurrentUser('id') userId: string, @Body('chainId') chainId: number) {
     return this.walletService.getDepositInfo(userId, Number(chainId));
   }
@@ -41,7 +41,7 @@ export class WalletController {
   /** POST /v1/wallets/withdraw — frontend only: submit a withdrawal transaction. */
   @Post('withdraw')
   @FrontendOnly()
-  @UseGuards(ClerkUserGuard, FrontendOnlyGuard)
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 3, ttl: 60000 }, medium: { limit: 10, ttl: 3600000 } })
   async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto) {
     return this.walletService.withdraw(userId, dto);

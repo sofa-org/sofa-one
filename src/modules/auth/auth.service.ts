@@ -6,7 +6,6 @@ import {
   Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClerkClient } from '@clerk/backend';
 import type { UserWallet } from '@prisma/client';
 import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -30,7 +29,6 @@ type WalletResponse = {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly clerkClient;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -39,30 +37,24 @@ export class AuthService {
     private readonly configService: ConfigService,
     @Optional()
     private readonly requestContext?: RequestContextService,
-  ) {
-    this.clerkClient = createClerkClient({
-      secretKey: this.configService.getOrThrow<string>('clerk.secretKey'),
-    });
-  }
+  ) {}
 
   /**
-   * Handle social login: upsert user, create a pending embedded-wallet record, generate API key.
+   * Handle Openfort email OTP login: upsert user, create a pending embedded-wallet record, generate API key.
    * Embedded wallet creation/authorization happens client-side through Openfort React SDK.
    * The apiKey field is only present on first login (one-time display).
    */
-  async handleSocialLogin(
-    clerkUserId: string,
+  async syncOpenfortSession(
+    openfortUserId: string,
+    email?: string,
     _depth = 0,
   ): Promise<{
     userId: string;
     wallet: WalletResponse;
     apiKey?: string;
   }> {
-    // 1. Fetch Clerk user profile
-    const clerkUser = await this.clerkClient.users.getUser(clerkUserId);
-    const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
-    const socialProvider = clerkUser.externalAccounts?.[0]?.provider || 'unknown';
-    const socialId = clerkUserId;
+    const socialProvider = 'openfort_email_otp';
+    const socialId = openfortUserId;
 
     // 2. Look up existing user
     const existing = await this.prisma.user.findUnique({
@@ -82,7 +74,7 @@ export class AuthService {
       try {
         const result = await this.prisma.$transaction(async (tx) => {
           const newUser = await tx.user.create({
-            data: { socialProvider, socialId, email: primaryEmail },
+            data: { socialProvider, socialId, email },
           });
           const newWallet = await tx.userWallet.create({
             data: {
@@ -98,7 +90,7 @@ export class AuthService {
         wallet = result.wallet;
         hasApiKeys = false;
         this.logger.log(
-          this.logContext({ message: 'Created social login user', userId, socialProvider }),
+          this.logContext({ message: 'Created Openfort IAM user', userId, socialProvider }),
         );
       } catch (err: any) {
         if (err?.code === 'P2002') {
@@ -112,7 +104,7 @@ export class AuthService {
               depth: _depth,
             }),
           );
-          return this.handleSocialLogin(clerkUserId, _depth + 1);
+          return this.syncOpenfortSession(openfortUserId, email, _depth + 1);
         }
         throw err;
       }
@@ -138,6 +130,9 @@ export class AuthService {
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
+      if (email && existing.email !== email) {
+        await this.prisma.user.update({ where: { id: userId }, data: { email } });
+      }
     }
 
     // 4. Generate API key if user has none
@@ -154,9 +149,14 @@ export class AuthService {
     };
   }
 
-  async authorizeEmbeddedWallet(clerkUserId: string, dto: AuthorizeEmbeddedWalletDto) {
+  /** @deprecated Use syncOpenfortSession. Kept as a compatibility alias for older callers/tests. */
+  async handleSocialLogin(openfortUserId: string, _depth = 0) {
+    return this.syncOpenfortSession(openfortUserId, undefined, _depth);
+  }
+
+  async authorizeEmbeddedWallet(openfortUserId: string, dto: AuthorizeEmbeddedWalletDto) {
     const user = await this.prisma.user.findUnique({
-      where: { socialId: clerkUserId },
+      where: { socialId: openfortUserId },
       include: { wallet: true },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -165,6 +165,9 @@ export class AuthService {
       dto.openfortAccessToken,
       dto.embeddedWalletAddress,
     );
+    if (authorized.openfortUserId !== openfortUserId) {
+      throw new NotFoundException('Openfort session does not match current user');
+    }
     const chainId = dto.chainId ?? this.configService.get<number>('chain.defaultChainId', 84532);
     const agent = await this.ensureAgentWallet(user.wallet);
     const expiresAt = this.agentExpiration();
@@ -213,12 +216,12 @@ export class AuthService {
   /**
    * Return the current user's wallet info from DB (no Openfort calls).
    */
-  async getMe(clerkUserId: string): Promise<{
+  async getMe(openfortUserId: string): Promise<{
     userId: string;
     wallet: WalletResponse;
   }> {
     const user = await this.prisma.user.findUnique({
-      where: { socialId: clerkUserId },
+      where: { socialId: openfortUserId },
       include: { wallet: true },
     });
 
@@ -233,9 +236,9 @@ export class AuthService {
   /**
    * Revoke all existing keys and issue a fresh one.
    */
-  async refreshApiKey(clerkUserId: string) {
+  async refreshApiKey(openfortUserId: string) {
     const user = await this.prisma.user.findUnique({
-      where: { socialId: clerkUserId },
+      where: { socialId: openfortUserId },
     });
     if (!user) throw new NotFoundException('User not found');
 

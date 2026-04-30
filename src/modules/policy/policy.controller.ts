@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { ClerkUserGuard } from '../../common/guards/clerk-user.guard';
+import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PolicyService } from './policy.service';
 import { CreatePolicyDto, UpdatePolicyDto, CreatePolicyRuleDto } from './dto/policy.dto';
 
 @Controller('v1/policies')
-@UseGuards(ClerkUserGuard)
+@UseGuards(OpenfortUserGuard)
 export class PolicyController {
   constructor(private readonly policyService: PolicyService) {}
 

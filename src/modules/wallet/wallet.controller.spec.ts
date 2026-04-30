@@ -1,6 +1,9 @@
 jest.mock('./wallet.service', () => ({
   WalletService: class WalletService {},
 }));
+jest.mock('../../core/openfort/openfort.service', () => ({
+  OpenfortService: class OpenfortService {},
+}));
 
 import { WalletController } from './wallet.controller';
 

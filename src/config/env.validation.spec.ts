@@ -3,7 +3,6 @@ import { validate } from './env.validation';
 describe('environment validation', () => {
   const baseConfig = {
     NODE_ENV: 'development',
-    CLERK_SECRET_KEY: 'sk_test_clerk',
     OPENFORT_API_KEY: 'sk_test_openfort',
     OPENFORT_WALLET_SECRET: 'wallet_secret',
     DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/agent_wallet',
@@ -19,23 +18,12 @@ describe('environment validation', () => {
     );
   });
 
-  it('requires CLERK_AUTHORIZED_PARTIES in production', () => {
-    expect(() =>
-      validate({
-        ...baseConfig,
-        NODE_ENV: 'production',
-        CORS_ORIGIN: 'https://app.example.com',
-      }),
-    ).toThrow('CLERK_AUTHORIZED_PARTIES must be set in production');
-  });
-
-  it('accepts production when CORS_ORIGIN and CLERK_AUTHORIZED_PARTIES are configured', () => {
+  it('accepts production when CORS_ORIGIN is configured', () => {
     expect(
       validate({
         ...baseConfig,
         NODE_ENV: 'production',
         CORS_ORIGIN: 'https://app.example.com',
-        CLERK_AUTHORIZED_PARTIES: 'https://app.example.com',
       }),
     ).toEqual(expect.objectContaining({ NODE_ENV: 'production' }));
   });

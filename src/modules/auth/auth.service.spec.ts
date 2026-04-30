@@ -1,23 +1,11 @@
 import { AuthService } from './auth.service';
 
-const getUser = jest.fn();
-
-jest.mock('@clerk/backend', () => ({
-  createClerkClient: jest.fn(() => ({
-    users: { getUser },
-  })),
-}));
-
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class {},
 }));
 
 describe('AuthService', () => {
   const chainId = 84532;
-  const clerkUser = {
-    emailAddresses: [{ emailAddress: 'user@example.com' }],
-    externalAccounts: [{ provider: 'oauth_google' }],
-  };
   const provisioningWallet = {
     id: 'wallet-1',
     userId: 'user-1',
@@ -34,7 +22,6 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getUser.mockResolvedValue(clerkUser);
 
     const tx = {
       user: {
@@ -77,7 +64,7 @@ describe('AuthService', () => {
   });
 
   it('creates a pending embedded-wallet record without creating a backend wallet', async () => {
-    const result = await service.handleSocialLogin('clerk-user-1');
+    const result = await service.syncOpenfortSession('openfort-user-1', 'user@example.com');
 
     expect(prisma.__tx.userWallet.create).toHaveBeenCalledWith({
       data: {
@@ -106,7 +93,7 @@ describe('AuthService', () => {
   });
 
   it('issues the first API key while embedded wallet binding is pending', async () => {
-    await expect(service.handleSocialLogin('clerk-user-1')).resolves.toMatchObject({
+    await expect(service.syncOpenfortSession('openfort-user-1', 'user@example.com')).resolves.toMatchObject({
       userId: 'user-1',
       apiKey: 'sk_test',
       wallet: { walletAddress: null },

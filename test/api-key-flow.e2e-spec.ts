@@ -16,7 +16,6 @@ import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
-process.env.CLERK_SECRET_KEY = 'sk_test_fake_clerk_key_for_testing';
 process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =

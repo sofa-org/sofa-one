@@ -103,7 +103,7 @@ describe('TransactionsService', () => {
     );
   });
 
-  it('rejects Clerk-authenticated transaction submission before loading the wallet', async () => {
+  it('rejects bearer-token transaction submission before loading the wallet', async () => {
     await expect(service.send('user-1', dto as any)).rejects.toThrow(UnauthorizedException);
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();

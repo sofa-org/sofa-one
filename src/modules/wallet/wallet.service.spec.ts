@@ -389,7 +389,7 @@ describe('WalletService.sign()', () => {
     });
   });
 
-  it('rejects Clerk-authenticated signing before loading the wallet or creating an audit record', async () => {
+  it('rejects bearer-token signing before loading the wallet or creating an audit record', async () => {
     await expect(
       service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any),
     ).rejects.toThrow(UnauthorizedException);
