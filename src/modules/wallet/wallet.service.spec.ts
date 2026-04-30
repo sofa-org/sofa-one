@@ -39,6 +39,9 @@ const WALLET = {
   userId: 'user-1',
   walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
   openfortAccountId: 'acc-1',
+  agentOpenfortAccountId: 'agent-acc-1',
+  agentWalletAddress: '0x2222222222222222222222222222222222222222',
+  agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
   chainId: BigInt(84532),
   status: 'active',
 };
@@ -73,7 +76,7 @@ describe('WalletService.withdraw()', () => {
   const mockUpdate = jest.fn();
 
   // Openfort mock handle
-  const mockSendTransaction = jest.fn();
+  const mockSendUserOperation = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -82,7 +85,7 @@ describe('WalletService.withdraw()', () => {
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
-    mockSendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: '0xhash' });
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
 
@@ -98,7 +101,7 @@ describe('WalletService.withdraw()', () => {
         },
         {
           provide: OpenfortService,
-          useValue: { sendTransaction: mockSendTransaction, signData: jest.fn() },
+          useValue: { sendUserOperation: mockSendUserOperation, signData: jest.fn() },
         },
       ],
     }).compile();
@@ -158,7 +161,7 @@ describe('WalletService.withdraw()', () => {
     });
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockSendTransaction).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
@@ -169,7 +172,7 @@ describe('WalletService.withdraw()', () => {
     expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockSendTransaction).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns the existing withdrawal after a concurrent idempotency insert race', async () => {
@@ -182,7 +185,7 @@ describe('WalletService.withdraw()', () => {
 
     expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
     expect(mockReadContract).toHaveBeenCalledTimes(1);
-    expect(mockSendTransaction).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects withdrawal idempotency reuse with a different request before balance checks', async () => {
@@ -197,7 +200,7 @@ describe('WalletService.withdraw()', () => {
 
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockSendTransaction).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────
@@ -231,11 +234,13 @@ describe('WalletService.withdraw()', () => {
     const result = await service.withdraw('user-1', VALID_DTO);
 
     // Openfort intent was created
-    expect(mockSendTransaction).toHaveBeenCalledTimes(1);
-    expect(mockSendTransaction).toHaveBeenCalledWith(
+    expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
+    expect(mockSendUserOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         chainId: VALID_DTO.chainId,
-        accountId: WALLET.openfortAccountId,
+        accountAddress: WALLET.walletAddress,
+        agentAccountId: WALLET.agentOpenfortAccountId,
+        keyHash: WALLET.agentKeyHash,
         interactions: [
           expect.objectContaining({
             to: expect.any(String),
@@ -272,7 +277,7 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
-    mockSendTransaction.mockRejectedValue(new Error('Openfort down'));
+    mockSendUserOperation.mockRejectedValue(new Error('Openfort down'));
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
     expect(mockUpdate).toHaveBeenCalledWith({
@@ -331,12 +336,13 @@ describe('WalletService.sign()', () => {
     );
 
     expect(mockSignData).toHaveBeenCalledWith(
-      WALLET.openfortAccountId,
+      WALLET.agentOpenfortAccountId,
       hashMessage('Hello, SOFA ONE!'),
     );
     expect(result).toEqual({
       signature: '0xsigned',
       walletAddress: WALLET.walletAddress,
+      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
   });
@@ -413,6 +419,7 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: '0xsigned',
       walletAddress: WALLET.walletAddress,
+      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
@@ -442,10 +449,11 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage({ raw }));
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, hashMessage({ raw }));
     expect(result).toEqual({
       signature: '0xsigned',
       walletAddress: WALLET.walletAddress,
+      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
   });
@@ -506,12 +514,13 @@ describe('WalletService.sign()', () => {
     );
 
     expect(mockSignData).toHaveBeenCalledWith(
-      WALLET.openfortAccountId,
+      WALLET.agentOpenfortAccountId,
       expect.stringMatching(/^0x[a-f0-9]{64}$/),
     );
     expect(result).toEqual({
       signature: '0xsigned',
       walletAddress: WALLET.walletAddress,
+      signerAddress: WALLET.agentWalletAddress,
       type: 'typed_data',
     });
   });

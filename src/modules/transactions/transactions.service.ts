@@ -31,7 +31,7 @@ export class TransactionsService {
     private readonly requestContext?: RequestContextService,
   ) {}
 
-  /** Send a raw transaction from the user's backend wallet. */
+  /** Send a transaction from the user's embedded Calibur account via the backend agent wallet. */
   async send(userId: string, dto: SendTransactionDto, apiKeyRecord?: ApiKeyTransactionContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required');
@@ -40,7 +40,13 @@ export class TransactionsService {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.walletAddress ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress ||
+      !wallet.agentKeyHash
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
@@ -88,7 +94,10 @@ export class TransactionsService {
       walletAddress: wallet.walletAddress,
       details: {
         type: 'send',
+        execution: 'calibur_agent_user_operation',
         interactionCount: dto.interactions.length,
+        agentWalletAddress: wallet.agentWalletAddress,
+        agentKeyHash: wallet.agentKeyHash,
         ...(dto.policyId ? { policyId: dto.policyId } : {}),
         idempotencyKey: dto.idempotencyKey,
         requestHash,
@@ -103,16 +112,18 @@ export class TransactionsService {
     try {
       this.logger.log(
         this.logContext({
-          message: 'Submitting transaction to Openfort',
+          message: 'Submitting UserOperation to Openfort bundler',
           transactionId: tx.id,
           chainId,
           interactionCount: dto.interactions.length,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
-      const { transactionHash } = await this.openfort.sendTransaction({
-        accountId: wallet.openfortAccountId,
+      const { transactionHash, userOpHash } = await this.openfort.sendUserOperation({
+        agentAccountId: wallet.agentOpenfortAccountId,
+        accountAddress: wallet.walletAddress,
         chainId,
+        keyHash: wallet.agentKeyHash,
         interactions: dto.interactions,
         policyId: dto.policyId,
       });
@@ -123,6 +134,10 @@ export class TransactionsService {
           txHash: transactionHash ?? null,
           status: transactionHash ? 'confirmed' : 'pending',
           completedAt: transactionHash ? new Date() : null,
+          details: {
+            ...((tx.details as Record<string, unknown>) ?? {}),
+            userOpHash,
+          } as any,
         },
       });
 

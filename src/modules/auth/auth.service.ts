@@ -9,14 +9,28 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient } from '@clerk/backend';
 import type { UserWallet } from '@prisma/client';
+import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { ApiKeyService } from '../api-key/api-key.service';
+import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
 type ActiveUserWallet = UserWallet & {
   openfortAccountId: string;
   walletAddress: string;
+};
+
+type WalletResponse = {
+  walletAddress: string | null;
+  embeddedWalletAddress: string | null;
+  chainId: number;
+  status: string;
+  supportedTokens: string[];
+  agentWalletAddress?: string | null;
+  agentStatus?: string | null;
+  agentKeyHash?: string | null;
+  agentExpiresAt?: string | null;
 };
 
 @Injectable()
@@ -47,7 +61,7 @@ export class AuthService {
     _depth = 0,
   ): Promise<{
     userId: string;
-    wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
+    wallet: WalletResponse;
     apiKey?: string;
   }> {
     // 1. Fetch Clerk user profile
@@ -80,14 +94,14 @@ export class AuthService {
             data: {
               userId: newUser.id,
               chainId: BigInt(chainId),
-              status: 'provisioning',
+              status: 'pending_embedded_wallet',
             },
           });
           return { userId: newUser.id, wallet: newWallet };
         });
 
         userId = result.userId;
-        wallet = await this.provisionWallet(result.wallet.id, userId);
+        wallet = result.wallet;
         hasApiKeys = false;
         this.logger.log(
           this.logContext({ message: 'Created social login user', userId, socialProvider }),
@@ -117,7 +131,7 @@ export class AuthService {
           data: {
             userId,
             chainId: BigInt(chainId),
-            status: 'provisioning',
+            status: 'pending_embedded_wallet',
           },
         });
       } catch (dbErr: any) {
@@ -126,14 +140,11 @@ export class AuthService {
         }
         if (!wallet) throw dbErr;
       }
-      wallet = await this.provisionWallet(wallet.id, userId);
       this.logger.log(this.logContext({ message: 'Provisioned wallet for existing user', userId }));
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
     }
-
-    const activeWallet = await this.ensureActiveWallet(wallet, userId);
 
     // 4. Generate API key if user has none
     let rawApiKey: string | undefined;
@@ -144,13 +155,60 @@ export class AuthService {
 
     return {
       userId,
-      wallet: {
-        walletAddress: activeWallet.walletAddress,
-        chainId: Number(activeWallet.chainId),
-        status: activeWallet.status,
-        supportedTokens: ['USDC', 'ETH'],
-      },
+      wallet: this.toWalletResponse(wallet),
       ...(rawApiKey && { apiKey: rawApiKey }),
+    };
+  }
+
+  async authorizeEmbeddedWallet(clerkUserId: string, dto: AuthorizeEmbeddedWalletDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { socialId: clerkUserId },
+      include: { wallet: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const authorized = await this.openfort.authorizeEmbeddedAddress(
+      dto.openfortAccessToken,
+      dto.embeddedWalletAddress,
+    );
+    const chainId = dto.chainId ?? this.configService.get<number>('chain.defaultChainId', 84532);
+    const agent = await this.ensureAgentWallet(user.wallet);
+    const expiresAt = this.agentExpiration();
+    const wallet = await this.prisma.userWallet.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
+        walletAddress: authorized.address,
+        chainId: BigInt(chainId),
+        status: 'active',
+        agentOpenfortAccountId: agent.id,
+        agentWalletAddress: agent.address,
+        agentKeyHash: agent.keyHash,
+        agentStatus: 'pending_registration',
+        agentExpiresAt: expiresAt,
+      },
+      update: {
+        openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
+        walletAddress: authorized.address,
+        chainId: BigInt(chainId),
+        status: 'active',
+        agentOpenfortAccountId: agent.id,
+        agentWalletAddress: agent.address,
+        agentKeyHash: agent.keyHash,
+        agentStatus: 'pending_registration',
+        agentExpiresAt: expiresAt,
+      },
+    });
+
+    return {
+      userId: user.id,
+      wallet: this.toWalletResponse(wallet),
+      agentRegistration: {
+        agentAddress: agent.address,
+        keyHash: agent.keyHash,
+        expiresAt: expiresAt.toISOString(),
+      },
     };
   }
 
@@ -227,7 +285,7 @@ export class AuthService {
    */
   async getMe(clerkUserId: string): Promise<{
     userId: string;
-    wallet: { walletAddress: string; chainId: number; status: string; supportedTokens: string[] };
+    wallet: WalletResponse;
   }> {
     const user = await this.prisma.user.findUnique({
       where: { socialId: clerkUserId },
@@ -235,18 +293,10 @@ export class AuthService {
     });
 
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
-    if (user.wallet.status !== 'active' || !user.wallet.walletAddress) {
-      throw new ServiceUnavailableException(`Wallet is not ready (status: ${user.wallet.status})`);
-    }
 
     return {
       userId: user.id,
-      wallet: {
-        walletAddress: user.wallet.walletAddress,
-        chainId: Number(user.wallet.chainId),
-        status: user.wallet.status,
-        supportedTokens: ['USDC', 'ETH'],
-      },
+      wallet: this.toWalletResponse(user.wallet),
     };
   }
 
@@ -262,5 +312,35 @@ export class AuthService {
     const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed');
 
     return { apiKey: result.rawKey };
+  }
+
+  private async ensureAgentWallet(wallet: UserWallet | null) {
+    if (wallet?.agentOpenfortAccountId && wallet.agentWalletAddress && wallet.agentKeyHash) {
+      return {
+        id: wallet.agentOpenfortAccountId,
+        address: getAddress(wallet.agentWalletAddress),
+        keyHash: wallet.agentKeyHash,
+      };
+    }
+
+    return this.openfort.createAgentWallet();
+  }
+
+  private agentExpiration(): Date {
+    return new Date(Date.now() + 5 * 60 * 1000);
+  }
+
+  private toWalletResponse(wallet: UserWallet): WalletResponse {
+    return {
+      walletAddress: wallet.walletAddress,
+      embeddedWalletAddress: wallet.walletAddress,
+      chainId: Number(wallet.chainId),
+      status: wallet.status,
+      supportedTokens: ['USDC', 'ETH'],
+      agentWalletAddress: wallet.agentWalletAddress,
+      agentStatus: wallet.agentStatus,
+      agentKeyHash: wallet.agentKeyHash,
+      agentExpiresAt: wallet.agentExpiresAt?.toISOString() ?? null,
+    };
   }
 }

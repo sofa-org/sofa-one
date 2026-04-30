@@ -80,7 +80,7 @@ export class WalletService {
     };
   }
 
-  /** Sign data with the user's backend wallet (no transaction broadcast). */
+  /** Sign data with the user's backend agent wallet (no transaction broadcast). */
   async sign(userId: string, params: SignDto, apiKeyRecord?: ApiKeySigningContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');
@@ -88,7 +88,12 @@ export class WalletService {
 
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.walletAddress ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
@@ -141,7 +146,7 @@ export class WalletService {
 
     let signature: string;
     try {
-      signature = await this.openfort.signData(wallet.openfortAccountId, data);
+      signature = await this.openfort.signData(wallet.agentOpenfortAccountId, data);
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -174,6 +179,7 @@ export class WalletService {
     return {
       signature,
       walletAddress: wallet.walletAddress,
+      signerAddress: wallet.agentWalletAddress,
       type: params.type,
     };
   }
@@ -279,7 +285,13 @@ export class WalletService {
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     // Guard: wallet must be active before any outbound transfer
-    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.walletAddress ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress ||
+      !wallet.agentKeyHash
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
@@ -341,10 +353,13 @@ export class WalletService {
       walletAddress: wallet.walletAddress,
       details: {
         type: 'withdraw',
+        execution: 'calibur_agent_user_operation',
         to: params.to,
         amount: params.amount,
         token: params.token,
         contractAddress: usdcAddressHex,
+        agentWalletAddress: wallet.agentWalletAddress,
+        agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: params.idempotencyKey,
         requestHash,
       },
@@ -371,9 +386,11 @@ export class WalletService {
         args: [params.to, BigInt(params.amount)],
       });
 
-      const submission = await this.openfort.sendTransaction({
+      const submission = await this.openfort.sendUserOperation({
         chainId,
-        accountId: wallet.openfortAccountId,
+        agentAccountId: wallet.agentOpenfortAccountId,
+        accountAddress: wallet.walletAddress,
+        keyHash: wallet.agentKeyHash,
         interactions: [
           {
             to: usdcAddressHex,
@@ -388,6 +405,10 @@ export class WalletService {
         data: {
           txHash: submission.transactionHash,
           status: 'pending',
+          details: {
+            ...((tx.details as Record<string, unknown>) ?? {}),
+            userOpHash: submission.userOpHash,
+          } as any,
         },
       });
 

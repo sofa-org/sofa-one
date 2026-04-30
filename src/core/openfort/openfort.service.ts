@@ -1,7 +1,19 @@
-import { BadGatewayException, Injectable, Logger, Optional } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
+import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
+import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { getSupportedChain } from '../../common/chains/supported-chains';
+import { createCaliburSessionAccount, hashKey, KeyType } from '../../common/calibur/calibur';
 
 @Injectable()
 export class OpenfortService {
@@ -15,7 +27,10 @@ export class OpenfortService {
   ) {
     this.client = new Openfort(this.configService.getOrThrow<string>('openfort.apiKey'), {
       walletSecret: this.configService.getOrThrow<string>('openfort.walletSecret'),
-    });
+      ...(this.configService.get<string>('openfort.publishableKey') && {
+        publishableKey: this.configService.get<string>('openfort.publishableKey'),
+      }),
+    } as any);
     this.timeoutMs = this.configService.get<number>('openfort.timeoutMs', 15000);
   }
 
@@ -31,6 +46,58 @@ export class OpenfortService {
       this.logOpenfortError('createBackendWallet', error);
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
+  }
+
+  /** Create a backend agent wallet that will act as a Calibur session key. */
+  async createAgentWallet(): Promise<{ id: string; address: string; keyHash: Hex }> {
+    const account = await this.createBackendWallet();
+    return {
+      ...account,
+      keyHash: this.computeSecp256k1KeyHash(account.address),
+    };
+  }
+
+  async authorizeEmbeddedAddress(
+    accessToken: string,
+    walletAddress: string,
+  ): Promise<{ openfortUserId: string; accountId?: string; address: Address }> {
+    try {
+      const session = (await this.withTimeout(
+        (this.client as any).iam.getSession({ accessToken }),
+        'getOpenfortIamSession',
+      )) as { user?: { id?: string }; id?: string };
+      const openfortUserId = session.user?.id ?? session.id;
+      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+
+      const normalizedAddress = getAddress(walletAddress);
+      const accountsResult = (await this.withTimeout(
+        (this.client as any).accounts.list({ user: openfortUserId }),
+        'listOpenfortUserAccounts',
+      )) as { data?: Array<{ id?: string; address?: string }> } | Array<{ id?: string; address?: string }>;
+      const accounts = Array.isArray(accountsResult) ? accountsResult : (accountsResult.data ?? []);
+      const account = accounts.find((candidate) => {
+        if (!candidate.address) return false;
+        try {
+          return getAddress(candidate.address) === normalizedAddress;
+        } catch {
+          return false;
+        }
+      });
+
+      if (!account) throw new ForbiddenException('Embedded wallet is not owned by Openfort user');
+      return { openfortUserId, accountId: account.id, address: normalizedAddress };
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('authorizeEmbeddedAddress', error);
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  computeSecp256k1KeyHash(agentAddress: string): Hex {
+    return hashKey({
+      keyType: KeyType.Secp256k1,
+      publicKey: padHex(getAddress(agentAddress), { size: 32 }),
+    });
   }
 
   // ─── Policy management ────────────────────────────────────────────────────
@@ -162,6 +229,77 @@ export class OpenfortService {
       };
     } catch (error: any) {
       this.logOpenfortError('sendTransaction', error, {
+        chainId: params.chainId,
+        interactionCount: params.interactions.length,
+        policyProvided: Boolean(params.policyId),
+      });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  /** Execute calls from the user's Calibur account with the registered backend agent key. */
+  async sendUserOperation(params: {
+    agentAccountId: string;
+    accountAddress: string;
+    chainId: number;
+    keyHash: string;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+    policyId?: string;
+  }): Promise<{ userOpHash: string; transactionHash: string | null }> {
+    const publishableKey = this.configService.get<string>('openfort.publishableKey');
+    if (!publishableKey) {
+      throw new ServiceUnavailableException('Openfort publishable key is required for UserOps');
+    }
+
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const backendAccount = (await this.withTimeout(
+        this.client.accounts.evm.backend.get({ id: params.agentAccountId }),
+        'getAgentWallet',
+      )) as any;
+      const signer = toAccount({
+        address: getAddress(backendAccount.address),
+        sign: ({ hash }: { hash: Hex }) => backendAccount.sign({ hash }),
+        signMessage: (args) => backendAccount.signMessage(args),
+        signTransaction: (args) => backendAccount.signTransaction(args),
+        signTypedData: (typedData) => backendAccount.signTypedData(typedData),
+      });
+      const client = createClient({ chain, transport: http() });
+      const sessionAccount = await createCaliburSessionAccount({
+        client,
+        signer,
+        accountAddress: getAddress(params.accountAddress),
+        keyHash: params.keyHash as Hex,
+      });
+      const openfortRpcTransport = http(`https://api.openfort.io/rpc/${params.chainId}`, {
+        fetchOptions: {
+          headers: { Authorization: `Bearer ${publishableKey}` },
+        },
+      });
+      const paymaster = createPaymasterClient({ transport: openfortRpcTransport });
+      const bundlerClient = createBundlerClient({
+        account: sessionAccount,
+        chain,
+        client,
+        paymaster,
+        paymasterContext: params.policyId ? { policyId: params.policyId } : undefined,
+        transport: openfortRpcTransport,
+      } as any);
+      const hash = await bundlerClient.sendUserOperation({
+        account: sessionAccount,
+        calls: params.interactions.map((interaction) => ({
+          to: getAddress(interaction.to),
+          data: interaction.data as Hex,
+          value: interaction.value ? BigInt(interaction.value) : 0n,
+        })),
+      } as any);
+      const receipt = (await bundlerClient.waitForUserOperationReceipt({ hash })) as any;
+      return {
+        userOpHash: hash,
+        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
+      };
+    } catch (error: any) {
+      this.logOpenfortError('sendUserOperation', error, {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
         policyProvided: Boolean(params.policyId),

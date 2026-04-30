@@ -11,10 +11,14 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.0.0",
+    "@openfort/react": "^1.0.15",
+    "@tanstack/react-query": "^5.100.6",
     "lucide-react": "^1.9.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0"
+    "react-router-dom": "^7.0.0",
+    "viem": "^2.48.4",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

@@ -35,6 +35,10 @@ class EnvironmentVariables {
   OPENFORT_API_KEY: string;
 
   @IsString()
+  @IsOptional()
+  OPENFORT_PUBLISHABLE_KEY?: string;
+
+  @IsString()
   @IsNotEmpty()
   OPENFORT_WALLET_SECRET: string;
 

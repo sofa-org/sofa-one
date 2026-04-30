@@ -14,10 +14,15 @@ export interface ApiErrorBody {
 }
 
 export interface WalletInfo {
-  walletAddress: string;
+  walletAddress: string | null;
+  embeddedWalletAddress?: string | null;
   chainId: number;
   status: string;
   supportedTokens: string[];
+  agentWalletAddress?: string | null;
+  agentStatus?: string | null;
+  agentKeyHash?: string | null;
+  agentExpiresAt?: string | null;
 }
 
 export interface AuthSessionResponse {
@@ -72,7 +77,23 @@ export type SignRequest = SignMessageRequest | SignTypedDataRequest;
 export interface SignResponse {
   signature: string;
   walletAddress: string;
+  signerAddress?: string;
   type: SignRequest['type'];
+}
+
+export interface AuthorizeEmbeddedWalletRequest {
+  openfortAccessToken: string;
+  embeddedWalletAddress: string;
+  embeddedOpenfortAccountId?: string;
+  chainId?: number;
+}
+
+export interface AuthorizeEmbeddedWalletResponse extends AuthSessionResponse {
+  agentRegistration: {
+    agentAddress: string;
+    keyHash: string;
+    expiresAt: string;
+  };
 }
 
 export interface TransactionInteraction {
@@ -312,6 +333,16 @@ export async function getMe(getToken: () => Promise<string | null>, signal?: Abo
 
 export async function refreshApiKey(getToken: () => Promise<string | null>) {
   return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, { method: 'POST' });
+}
+
+export async function authorizeEmbeddedWallet(
+  getToken: () => Promise<string | null>,
+  body: AuthorizeEmbeddedWalletRequest,
+) {
+  return authFetch<AuthorizeEmbeddedWalletResponse>('/auth/embedded-wallet/authorize', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
 
 // --- Public API-key endpoints ---

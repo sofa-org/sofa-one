@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { AccountTypeEnum, RecoveryMethod, useOpenfort } from '@openfort/react';
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
+import { useSendTransaction } from 'wagmi';
+import { padHex, zeroAddress, type Address, type Hex } from 'viem';
 import {
   DEFAULT_CHAIN_ID,
+  authorizeEmbeddedWallet,
   getMe,
   socialLogin,
   withdrawAuth,
@@ -12,6 +17,14 @@ import {
   type BalanceChain,
   type WalletInfo,
 } from '@/lib/api';
+import {
+  KeyType,
+  encodeExecute,
+  encodeRegisterKey,
+  encodeUpdateKeySettings,
+  hashKey,
+  type CaliburKey,
+} from '@/lib/calibur';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 
@@ -60,11 +73,46 @@ function TokenIcon({ token }: { token: string }) {
   return <EthIcon />;
 }
 
+function resolveEmbeddedWallet(
+  createdAccount: unknown,
+  embeddedWallet: { address?: Address; activeWallet?: unknown; wallets?: unknown[] },
+): { address: Address; accountId?: string } {
+  const created = createdAccount as
+    | { id?: string; address?: Address; accounts?: Array<{ id?: string; address?: Address }> }
+    | undefined;
+  const active = embeddedWallet.activeWallet as
+    | { id?: string; address?: Address; accountId?: string; accounts?: Array<{ id?: string }> }
+    | undefined;
+  const firstWallet = embeddedWallet.wallets?.[0] as
+    | { id?: string; address?: Address; accountId?: string; accounts?: Array<{ id?: string }> }
+    | undefined;
+  const address = embeddedWallet.address ?? active?.address ?? created?.address ?? firstWallet?.address;
+
+  if (!address) {
+    throw new Error('Embedded wallet address was not returned by Openfort.');
+  }
+
+  return {
+    address,
+    accountId:
+      active?.accountId ??
+      active?.accounts?.[0]?.id ??
+      created?.accounts?.[0]?.id ??
+      created?.id ??
+      firstWallet?.accountId ??
+      firstWallet?.accounts?.[0]?.id ??
+      firstWallet?.id,
+  };
+}
+
 export default function WalletPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
+  const openfort = useOpenfort();
+  const { sendTransactionAsync, isPending: registerTxPending } = useSendTransaction();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
+  const embeddedWallet = useEthereumEmbeddedWallet({ chainId: selectedChainId });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -80,6 +128,11 @@ export default function WalletPage() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<string | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+
+  const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [walletSetupLoading, setWalletSetupLoading] = useState(false);
+  const [walletSetupError, setWalletSetupError] = useState<string | null>(null);
+  const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -115,7 +168,10 @@ export default function WalletPage() {
   }, [isLoaded, isSignedIn, getToken]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !wallet) return;
+    if (!isLoaded || !isSignedIn || !wallet?.walletAddress) {
+      setBalances(null);
+      return;
+    }
 
     const controller = new AbortController();
     setBalancesLoading(true);
@@ -151,6 +207,77 @@ export default function WalletPage() {
       setWithdrawError(getApiErrorMessage(err));
     } finally {
       setWithdrawLoading(false);
+    }
+  }
+
+  async function handleSetupEmbeddedWallet(e: React.FormEvent) {
+    e.preventDefault();
+    setWalletSetupLoading(true);
+    setWalletSetupError(null);
+    setWalletSetupSuccess(null);
+
+    try {
+      if (recoveryPassword.length < 8) {
+        throw new Error('Use a wallet recovery password with at least 8 characters.');
+      }
+
+      const openfortAccessToken = await openfort.client.getAccessToken();
+      if (!openfortAccessToken) {
+        throw new Error('Openfort session is not ready. Refresh and sign in again.');
+      }
+
+      let createdAccount: unknown;
+      if (!embeddedWallet.address) {
+        createdAccount = await embeddedWallet.create({
+          chainId: selectedChainId,
+          accountType: AccountTypeEnum.SMART_ACCOUNT,
+          recoveryMethod: RecoveryMethod.PASSWORD,
+          password: recoveryPassword,
+        });
+        await openfort.updateEmbeddedAccounts({ silent: true });
+      }
+
+      const { address, accountId } = resolveEmbeddedWallet(createdAccount, embeddedWallet);
+      await embeddedWallet.setActive({
+        address,
+        chainId: selectedChainId,
+        recoveryMethod: RecoveryMethod.PASSWORD,
+        password: recoveryPassword,
+      });
+
+      const authorized = await authorizeEmbeddedWallet(getToken, {
+        openfortAccessToken,
+        embeddedWalletAddress: address,
+        embeddedOpenfortAccountId: accountId,
+        chainId: selectedChainId,
+      });
+
+      const agentKey: CaliburKey = {
+        keyType: KeyType.Secp256k1,
+        publicKey: padHex(authorized.agentRegistration.agentAddress as Hex, { size: 32 }),
+      };
+      const frontendKeyHash = hashKey(agentKey);
+      if (frontendKeyHash.toLowerCase() !== authorized.agentRegistration.keyHash.toLowerCase()) {
+        throw new Error('Agent key hash mismatch. Please retry wallet setup.');
+      }
+
+      const expiration = Math.floor(new Date(authorized.agentRegistration.expiresAt).getTime() / 1000);
+      const txData = encodeExecute([
+        encodeRegisterKey(agentKey),
+        encodeUpdateKeySettings(frontendKeyHash, {
+          isAdmin: false,
+          expiration,
+          hook: zeroAddress,
+        }),
+      ]);
+      const txHash = await sendTransactionAsync({ to: address, data: txData });
+
+      setWallet(authorized.wallet);
+      setWalletSetupSuccess(`Agent key registration submitted: ${txHash}`);
+    } catch (err: unknown) {
+      setWalletSetupError(getApiErrorMessage(err));
+    } finally {
+      setWalletSetupLoading(false);
     }
   }
 
@@ -201,18 +328,95 @@ export default function WalletPage() {
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Address</label>
               <div className="mt-1 flex items-center gap-3">
                 <p className="break-all font-mono text-sm text-brand-text flex-1">
-                  {wallet.walletAddress}
+                  {wallet.walletAddress ?? 'Connect an embedded wallet to finish setup'}
                 </p>
-                <CopyButton text={wallet.walletAddress} className="shrink-0" />
+                {wallet.walletAddress && <CopyButton text={wallet.walletAddress} className="shrink-0" />}
                 <button
                   type="button"
+                  disabled={!wallet.walletAddress}
                   onClick={() => setShowWithdraw((v) => !v)}
-                  className="shrink-0 rounded-full border border-brand-border p-1.5 text-brand-text hover:bg-brand-bg transition-colors"
+                  className="shrink-0 rounded-full border border-brand-border p-1.5 text-brand-text hover:bg-brand-bg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {showWithdraw ? <X className="h-4 w-4" /> : <BanknoteArrowUp className="h-4 w-4" />}
                 </button>
               </div>
             </div>
+
+            {wallet.agentWalletAddress && (
+              <div className="rounded-xl border border-brand-border/60 bg-brand-bg/30 p-4 text-sm">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                    Backend Agent Wallet
+                  </span>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
+                    {wallet.agentStatus ?? 'not registered'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-brand-text">
+                    {wallet.agentWalletAddress}
+                  </code>
+                  <CopyButton text={wallet.agentWalletAddress} className="shrink-0" />
+                </div>
+              </div>
+            )}
+
+            {!wallet.walletAddress && (
+              <form
+                onSubmit={handleSetupEmbeddedWallet}
+                className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm"
+              >
+                <div className="mb-4">
+                  <h2 className="font-serif text-xl font-bold text-brand-text">
+                    Connect your Openfort embedded wallet
+                  </h2>
+                  <p className="mt-1 text-sm text-amber-800">
+                    This creates or activates your user smart wallet, asks it to register the backend
+                    agent key on Calibur, then uses that key for API-key transaction execution.
+                  </p>
+                </div>
+
+                {walletSetupError && (
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+                    {walletSetupError}
+                  </div>
+                )}
+
+                {walletSetupSuccess && (
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                    <span className="break-all">{walletSetupSuccess}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Recovery Password
+                    </label>
+                    <input
+                      type="password"
+                      minLength={8}
+                      value={recoveryPassword}
+                      onChange={(event) => setRecoveryPassword(event.target.value)}
+                      placeholder="At least 8 characters"
+                      className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={walletSetupLoading || registerTxPending}
+                    className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {(walletSetupLoading || registerTxPending) && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    <span>{registerTxPending ? 'Confirming...' : 'Create & Register Agent'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className="pt-6 border-t border-brand-border">
               <div className="mb-5 flex items-center justify-between">

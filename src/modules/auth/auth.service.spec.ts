@@ -1,4 +1,3 @@
-import { BadGatewayException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 const getUser = jest.fn();
@@ -25,13 +24,7 @@ describe('AuthService', () => {
     openfortAccountId: null,
     walletAddress: null,
     chainId: BigInt(chainId),
-    status: 'provisioning',
-  };
-  const activeWallet = {
-    ...provisioningWallet,
-    openfortAccountId: 'acc-1',
-    walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
-    status: 'active',
+    status: 'pending_embedded_wallet',
   };
 
   let prisma: any;
@@ -59,16 +52,16 @@ describe('AuthService', () => {
       userWallet: {
         create: jest.fn(),
         findUnique: jest.fn(),
-        update: jest.fn().mockResolvedValue(activeWallet),
+        update: jest.fn(),
       },
       $transaction: jest.fn((callback) => callback(tx)),
       __tx: tx,
     };
 
     openfort = {
-      createBackendWallet: jest
-        .fn()
-        .mockResolvedValue({ id: 'acc-1', address: activeWallet.walletAddress }),
+      createBackendWallet: jest.fn(),
+      createAgentWallet: jest.fn(),
+      authorizeEmbeddedAddress: jest.fn(),
     };
 
     apiKeyService = {
@@ -83,57 +76,49 @@ describe('AuthService', () => {
     service = new AuthService(prisma, openfort, apiKeyService, configService as any);
   });
 
-  it('creates a local provisioning wallet before creating an Openfort wallet', async () => {
+  it('creates a pending embedded-wallet record without creating a backend wallet', async () => {
     const result = await service.handleSocialLogin('clerk-user-1');
 
     expect(prisma.__tx.userWallet.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-1',
         chainId: BigInt(chainId),
-        status: 'provisioning',
+        status: 'pending_embedded_wallet',
       },
     });
-    expect(openfort.createBackendWallet).toHaveBeenCalledTimes(1);
-    expect(prisma.userWallet.update).toHaveBeenCalledWith({
-      where: { id: 'wallet-1' },
-      data: {
-        openfortAccountId: 'acc-1',
-        walletAddress: activeWallet.walletAddress,
-        status: 'active',
-      },
-    });
-    expect(prisma.__tx.userWallet.create.mock.invocationCallOrder[0]).toBeLessThan(
-      openfort.createBackendWallet.mock.invocationCallOrder[0],
-    );
+    expect(openfort.createBackendWallet).not.toHaveBeenCalled();
+    expect(prisma.userWallet.update).not.toHaveBeenCalled();
     expect(result).toEqual({
       userId: 'user-1',
       wallet: {
-        walletAddress: activeWallet.walletAddress,
+        walletAddress: null,
+        embeddedWalletAddress: null,
         chainId,
-        status: 'active',
+        status: 'pending_embedded_wallet',
         supportedTokens: ['USDC', 'ETH'],
+        agentWalletAddress: undefined,
+        agentStatus: undefined,
+        agentKeyHash: undefined,
+        agentExpiresAt: null,
       },
       apiKey: 'sk_test',
     });
   });
 
-  it('marks the local wallet provisioning_failed when Openfort creation fails', async () => {
-    const error = new BadGatewayException('Wallet service temporarily unavailable');
-    openfort.createBackendWallet.mockRejectedValue(error);
-
-    await expect(service.handleSocialLogin('clerk-user-1')).rejects.toThrow(error);
+  it('issues the first API key while embedded wallet binding is pending', async () => {
+    await expect(service.handleSocialLogin('clerk-user-1')).resolves.toMatchObject({
+      userId: 'user-1',
+      apiKey: 'sk_test',
+      wallet: { walletAddress: null },
+    });
 
     expect(prisma.__tx.userWallet.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-1',
         chainId: BigInt(chainId),
-        status: 'provisioning',
+        status: 'pending_embedded_wallet',
       },
     });
-    expect(prisma.userWallet.update).toHaveBeenCalledWith({
-      where: { id: 'wallet-1' },
-      data: { status: 'provisioning_failed' },
-    });
-    expect(apiKeyService.createApiKey).not.toHaveBeenCalled();
+    expect(apiKeyService.createApiKey).toHaveBeenCalledWith('user-1', { name: 'Default' });
   });
 });

@@ -11,6 +11,9 @@ describe('TransactionsService', () => {
   const wallet = {
     openfortAccountId: 'acc-1',
     walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
+    agentOpenfortAccountId: 'agent-acc-1',
+    agentWalletAddress: '0x2222222222222222222222222222222222222222',
+    agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
     chainId: BigInt(84532),
     status: 'active',
   };
@@ -39,7 +42,7 @@ describe('TransactionsService', () => {
     },
   } as any;
 
-  const openfort = { sendTransaction: jest.fn() } as any;
+  const openfort = { sendUserOperation: jest.fn() } as any;
 
   let service: TransactionsService;
 
@@ -58,7 +61,10 @@ describe('TransactionsService', () => {
       status: 'confirmed',
       txHash: '0xhash',
     });
-    openfort.sendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    openfort.sendUserOperation.mockResolvedValue({
+      userOpHash: '0xuserop',
+      transactionHash: '0xhash',
+    });
     service = new TransactionsService(prisma, openfort);
   });
 
@@ -87,8 +93,13 @@ describe('TransactionsService', () => {
     expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty(
       'interactions',
     );
-    expect(openfort.sendTransaction).toHaveBeenCalledWith(
-      expect.objectContaining({ chainId: 8453 }),
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chainId: 8453,
+        accountAddress: wallet.walletAddress,
+        agentAccountId: wallet.agentOpenfortAccountId,
+        keyHash: wallet.agentKeyHash,
+      }),
     );
   });
 
@@ -97,7 +108,7 @@ describe('TransactionsService', () => {
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns existing transaction on idempotency collision without resending', async () => {
@@ -115,7 +126,7 @@ describe('TransactionsService', () => {
       status: 'pending',
     });
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns an in-progress transaction on idempotency collision without resending', async () => {
@@ -133,7 +144,7 @@ describe('TransactionsService', () => {
       status: 'submitting',
     });
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns an existing policy transaction before policy lookup or Openfort send', async () => {
@@ -156,7 +167,7 @@ describe('TransactionsService', () => {
     });
     expect(prisma.userPolicy.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('returns the existing transaction after a concurrent idempotency insert race', async () => {
@@ -174,7 +185,7 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'submitting',
     });
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -201,7 +212,7 @@ describe('TransactionsService', () => {
         status,
       });
       expect(prisma.transaction.create).not.toHaveBeenCalled();
-      expect(openfort.sendTransaction).not.toHaveBeenCalled();
+      expect(openfort.sendUserOperation).not.toHaveBeenCalled();
     },
   );
 
@@ -209,7 +220,7 @@ describe('TransactionsService', () => {
     await expect(
       service.send('user-1', dto as any, { ...apiKeyContext, allowedChains: [84532] }),
     ).rejects.toThrow(BadRequestException);
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects idempotency key reuse with a different request on the same chain', async () => {
@@ -224,7 +235,7 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects unowned policyId', async () => {
@@ -233,11 +244,11 @@ describe('TransactionsService', () => {
     await expect(
       service.send('user-1', { ...dto, policyId: 'pol-2' } as any, apiKeyContext),
     ).rejects.toThrow(NotFoundException);
-    expect(openfort.sendTransaction).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
   it('marks transaction failed and stores summarized failure reason when Openfort submission fails', async () => {
-    openfort.sendTransaction.mockRejectedValue(new Error('Openfort rejected transaction'));
+    openfort.sendUserOperation.mockRejectedValue(new Error('Openfort rejected transaction'));
 
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
       'Openfort rejected transaction',
@@ -254,7 +265,7 @@ describe('TransactionsService', () => {
   });
 
   it('stores pending status when transaction hash is not available yet', async () => {
-    openfort.sendTransaction.mockResolvedValue({ transactionHash: null });
+    openfort.sendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: null });
     prisma.transaction.update.mockResolvedValue({
       id: 'tx-1',
       status: 'pending',

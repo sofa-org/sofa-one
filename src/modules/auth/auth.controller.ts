@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
+import { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
 @Controller('auth')
 @UseGuards(ClerkAuthGuard)
@@ -33,6 +34,17 @@ export class AuthController {
   @Post('refresh-api-key')
   async refreshApiKey(@Req() req: any) {
     return this.authService.refreshApiKey(req.clerkUserId);
+  }
+
+  /**
+   * POST /auth/embedded-wallet/authorize
+   * Verifies an Openfort embedded wallet belongs to the Openfort IAM session,
+   * binds it as the user's asset wallet, and creates/returns backend agent registration details.
+   */
+  @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
+  @Post('embedded-wallet/authorize')
+  async authorizeEmbeddedWallet(@Req() req: any, @Body() body: AuthorizeEmbeddedWalletDto) {
+    return this.authService.authorizeEmbeddedWallet(req.clerkUserId, body);
   }
 
   /**

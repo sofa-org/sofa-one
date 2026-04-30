@@ -1,15 +1,78 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, useNavigate } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
+import { ClerkProvider, useAuth } from '@clerk/clerk-react';
+import {
+  AuthProvider,
+  ChainTypeEnum,
+  OpenfortProvider,
+  RecoveryMethod,
+  ThirdPartyOAuthProvider,
+} from '@openfort/react';
+import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createConfig, WagmiProvider } from 'wagmi';
+import { baseSepolia } from 'viem/chains';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { DEFAULT_CHAIN_ID } from './lib/api';
 import './index.css';
 
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const OPENFORT_KEY = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
+const OPENFORT_SHIELD_KEY = import.meta.env.VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY;
+const queryClient = new QueryClient();
+const wagmiConfig = createConfig(
+  getDefaultConfig({
+    appName: 'SOFA ONE',
+    chains: [baseSepolia],
+    ssr: false,
+  }),
+);
 
 if (!CLERK_KEY) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable');
+}
+
+if (!OPENFORT_KEY) {
+  throw new Error('Missing VITE_OPENFORT_PUBLISHABLE_KEY environment variable');
+}
+
+if (!OPENFORT_SHIELD_KEY) {
+  throw new Error('Missing VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY environment variable');
+}
+
+function AppWithOpenfort() {
+  const { getToken } = useAuth();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={wagmiConfig}>
+        <OpenfortWagmiBridge>
+          <OpenfortProvider
+            publishableKey={OPENFORT_KEY}
+            thirdPartyAuth={{
+              provider: ThirdPartyOAuthProvider.CUSTOM,
+              getAccessToken: getToken,
+            }}
+            walletConfig={{
+              chainType: ChainTypeEnum.EVM,
+              shieldPublishableKey: OPENFORT_SHIELD_KEY,
+              ethereum: { chainId: DEFAULT_CHAIN_ID },
+              connectOnLogin: false,
+            }}
+            uiConfig={{
+              appName: 'SOFA ONE',
+              authProviders: [AuthProvider.EMAIL_OTP],
+              walletRecovery: { defaultMethod: RecoveryMethod.PASSWORD },
+            }}
+          >
+            <App />
+          </OpenfortProvider>
+        </OpenfortWagmiBridge>
+      </WagmiProvider>
+    </QueryClientProvider>
+  );
 }
 
 function AppWithClerk() {
@@ -48,7 +111,7 @@ function AppWithClerk() {
         },
       }}
     >
-      <App />
+      <AppWithOpenfort />
     </ClerkProvider>
   );
 }

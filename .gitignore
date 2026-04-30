@@ -13,3 +13,4 @@ coverage/
 !README.md
 /.agent-shell/
 .slim/
+examples/

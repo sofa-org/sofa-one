@@ -9,6 +9,7 @@ export default () => ({
   },
   openfort: {
     apiKey: process.env.OPENFORT_API_KEY,
+    publishableKey: process.env.OPENFORT_PUBLISHABLE_KEY,
     walletSecret: process.env.OPENFORT_WALLET_SECRET,
     timeoutMs: parseInt(process.env.OPENFORT_TIMEOUT_MS || '15000', 10),
   },
