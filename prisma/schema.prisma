@@ -17,7 +17,6 @@ model User {
   apiKeys         ApiKey[]
   apiKeyEvents    ApiKeyEvent[]
   transactions    Transaction[]
-  policies        UserPolicy[]
   signingRequests SigningRequest[]
 
   @@map("users")
@@ -138,16 +137,4 @@ model SigningRequest {
   @@index([apiKeyId, createdAt])
   @@index([requestHash])
   @@map("signing_requests")
-}
-
-model UserPolicy {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @map("user_id") @db.Uuid
-  openfortPolicyId String   @map("openfort_policy_id") @db.VarChar(255)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@unique([userId, openfortPolicyId])
-  @@map("user_policies")
 }

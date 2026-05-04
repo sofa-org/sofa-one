@@ -24,7 +24,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 - **Private keys never leave the TEE** — all signing happens inside Openfort / AWS Nitro Enclaves.
 - **Split auth** — public signing/transaction APIs require `X-API-Key`; dashboard-only APIs require Clerk JWT plus frontend-origin checks.
 - **API keys hashed with Argon2** — never stored in plaintext; a 27-character lookup prefix (`sk_` + 24 hex chars) is stored for DB lookup, and every prefix candidate is hash-verified to tolerate collisions/legacy keys.
-- **Gas paid in USDC** — via Openfort `charge_custom_tokens` policy; users don't need native tokens.
+- **On-chain agent authorization** — Backend Agent Wallet execution is governed by the Calibur key registry rather than an off-chain policy table.
 
 ## Tech Stack
 
@@ -233,7 +233,7 @@ Core tables managed by Prisma:
 | Phase | Scope | Status |
 |-------|-------|--------|
 | **1 — MVP** | Auth + wallet creation + API key middleware + basic transfer/withdraw | In progress |
-| **2** | EIP-7702 delegation, USDC gas policy, batch transactions, webhooks | Planned |
+| **2** | Calibur delegation, UserOperation batching, webhooks | Planned |
 | **3** | Monitoring, rate limiting, multi-chain, frontend demo | Planned |
 
 ## Testing

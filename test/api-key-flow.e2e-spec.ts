@@ -172,7 +172,6 @@ describe('API-key public security flow (e2e)', () => {
         accountId: 'ofa_test_account_123',
         chainId: TEST_CHAIN_ID,
         interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
-        policyId: undefined,
       });
 
       const tx = await prisma.transaction.findFirstOrThrow({ where: { userId: testUserId } });

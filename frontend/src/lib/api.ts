@@ -115,7 +115,6 @@ export interface TransactionInteraction {
 export interface SendTransactionRequest {
   chainId: number;
   interactions: TransactionInteraction[];
-  policyId?: string;
   idempotencyKey?: string;
 }
 
@@ -147,58 +146,6 @@ export interface ApiKeyRecord {
 export interface CreateApiKeyResponse {
   rawKey: string;
 }
-
-export type PolicyRuleAction = 'accept' | 'reject';
-export type PolicyRuleOperation =
-  | 'signEvmTransaction'
-  | 'sendEvmTransaction'
-  | 'signEvmMessage'
-  | 'signEvmTypedData'
-  | 'signEvmHash'
-  | 'sponsorEvmTransaction';
-
-export type CriterionType =
-  | 'ethValue'
-  | 'evmAddress'
-  | 'evmNetwork'
-  | 'evmData'
-  | 'evmMessage'
-  | 'evmTypedDataVerifyingContract'
-  | 'evmTypedDataField';
-
-export type CriterionInput = Record<string, unknown> & { type: CriterionType };
-
-export interface PolicyRuleInput {
-  action: PolicyRuleAction;
-  operation: PolicyRuleOperation;
-  criteria?: CriterionInput[];
-}
-
-export interface PolicyRule extends PolicyRuleInput {}
-
-export interface Policy {
-  id: string;
-  scope: 'account' | string;
-  description?: string;
-  enabled: boolean;
-  deleted: boolean;
-  rules?: PolicyRule[];
-  createdAt: number;
-}
-
-export interface CreatePolicyRequest {
-  scope: 'account';
-  description?: string;
-  enabled?: boolean;
-  rules?: PolicyRuleInput[];
-}
-
-export interface CreatePolicyResponse extends Policy {
-  id: string;
-}
-
-type DataEnvelope<T> = { data: T };
-type MaybeDataEnvelope<T> = T | DataEnvelope<T>;
 
 export class ApiError extends Error {
   readonly statusCode: number;
@@ -259,8 +206,6 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'Wallet not found. Sign in again to finish wallet setup.';
     case 'TRANSACTION_NOT_FOUND':
       return 'Transaction not found, or this key does not have access to it.';
-    case 'POLICY_NOT_FOUND':
-      return 'Policy not found.';
     case 'WALLET_NOT_ACTIVE':
       return 'Wallet is not active yet. Try again shortly.';
     case 'IP_NOT_ALLOWED':
@@ -278,13 +223,6 @@ async function readJson<T>(response: Response): Promise<T> {
 async function throwApiError(response: Response): Promise<never> {
   const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
   throw new ApiError(response, body);
-}
-
-function unwrapData<T>(response: MaybeDataEnvelope<T>): T {
-  if (response && typeof response === 'object' && 'data' in response) {
-    return (response as DataEnvelope<T>).data;
-  }
-  return response as T;
 }
 
 /**
@@ -439,60 +377,5 @@ export async function getBalancesAuth(
 ) {
   return authFetch<BalancesResponse>(`/v1/wallets/balances?chainId=${chainId}`, getToken, {
     signal,
-  });
-}
-
-// --- Policies ---
-
-export async function listPoliciesAuth(getToken: () => Promise<string | null>) {
-  const response = await authFetch<MaybeDataEnvelope<Policy[]>>('/v1/policies', getToken);
-  return unwrapData(response);
-}
-
-export async function createPolicyAuth(getToken: () => Promise<string | null>, body: CreatePolicyRequest) {
-  return authFetch<CreatePolicyResponse>('/v1/policies', getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-}
-
-export async function deletePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<void>(`/v1/policies/${id}`, getToken, { method: 'DELETE' });
-}
-
-export async function enablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<Policy>(`/v1/policies/${id}/enable`, getToken, { method: 'POST' });
-}
-
-export async function disablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<Policy>(`/v1/policies/${id}/disable`, getToken, { method: 'POST' });
-}
-
-export async function listPolicyRulesAuth(getToken: () => Promise<string | null>, policyId: string) {
-  const response = await authFetch<MaybeDataEnvelope<PolicyRule[]>>(
-    `/v1/policies/${policyId}/rules`,
-    getToken,
-  );
-  return unwrapData(response);
-}
-
-export async function createPolicyRuleAuth(
-  getToken: () => Promise<string | null>,
-  policyId: string,
-  body: PolicyRuleInput,
-) {
-  return authFetch<PolicyRule>(`/v1/policies/${policyId}/rules`, getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-}
-
-export async function deletePolicyRuleAuth(
-  getToken: () => Promise<string | null>,
-  policyId: string,
-  ruleIndex: number,
-) {
-  return authFetch<void>(`/v1/policies/${policyId}/rules/${ruleIndex}`, getToken, {
-    method: 'DELETE',
   });
 }

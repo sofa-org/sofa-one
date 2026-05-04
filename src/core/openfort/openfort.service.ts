@@ -123,108 +123,6 @@ export class OpenfortService {
     });
   }
 
-  // ─── Policy management ────────────────────────────────────────────────────
-
-  async listPolicies() {
-    return await this.withTimeout(this.client.policies.list(), 'listPolicies');
-  }
-
-  async createPolicy(params: {
-    scope: string;
-    accountId?: string;
-    description?: string;
-    enabled?: boolean;
-    rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
-  }) {
-    return await this.withTimeout(
-      this.client.policies.create({
-        scope: params.scope as any,
-        ...(params.accountId !== undefined && { accountId: params.accountId }),
-        description: params.description,
-        enabled: params.enabled,
-        rules: (params.rules ?? []) as any,
-      }),
-      'createPolicy',
-    );
-  }
-
-  async getPolicy(id: string) {
-    return await this.withTimeout(this.client.policies.get(id), 'getPolicy');
-  }
-
-  async updatePolicy(
-    id: string,
-    params: {
-      description?: string;
-      enabled?: boolean;
-      rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
-    },
-  ) {
-    return await this.withTimeout(
-      this.client.policies.update(id, {
-        description: params.description,
-        enabled: params.enabled,
-        ...(params.rules !== undefined && { rules: params.rules as any }),
-      }),
-      'updatePolicy',
-    );
-  }
-
-  async deletePolicy(id: string) {
-    return await this.withTimeout(this.client.policies.delete(id), 'deletePolicy');
-  }
-
-  async enablePolicy(id: string) {
-    return await this.withTimeout(
-      this.client.policies.update(id, { enabled: true }),
-      'enablePolicy',
-    );
-  }
-
-  async disablePolicy(id: string) {
-    return await this.withTimeout(
-      this.client.policies.update(id, { enabled: false }),
-      'disablePolicy',
-    );
-  }
-
-  // ─── Policy rules management ──────────────────────────────────────────────
-
-  async listPolicyRules(policyId: string): Promise<any> {
-    const policy = await this.withTimeout(this.client.policies.get(policyId), 'listPolicyRules');
-    return (policy as any).rules ?? [];
-  }
-
-  async createPolicyRule(
-    policyId: string,
-    rule: { action: string; operation: string; criteria?: Record<string, unknown>[] },
-  ): Promise<any> {
-    const policy = await this.withTimeout(
-      this.client.policies.get(policyId),
-      'getPolicyForRuleCreate',
-    );
-    const existingRules: any[] = (policy as any).rules ?? [];
-    return await this.withTimeout(
-      this.client.policies.update(policyId, {
-        rules: [...existingRules, rule] as any,
-      }),
-      'createPolicyRule',
-    );
-  }
-
-  async deletePolicyRule(policyId: string, ruleIndex: number): Promise<any> {
-    const policy = await this.withTimeout(
-      this.client.policies.get(policyId),
-      'getPolicyForRuleDelete',
-    );
-    const existingRules: any[] = (policy as any).rules ?? [];
-    const filteredRules = existingRules.filter((_: any, i: number) => i !== ruleIndex);
-    return await this.withTimeout(
-      this.client.policies.update(policyId, { rules: filteredRules as any }),
-      'deletePolicyRule',
-    );
-  }
-
   /** Execute calls from the user's Calibur account with the registered backend agent key. */
   async sendUserOperation(params: {
     agentAccountId: string;
@@ -232,7 +130,6 @@ export class OpenfortService {
     chainId: number;
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
-    policyId?: string;
   }): Promise<{ userOpHash: string; transactionHash: string | null }> {
     const publishableKey = this.configService.get<string>('openfort.publishableKey');
     if (!publishableKey) {
@@ -270,7 +167,6 @@ export class OpenfortService {
         chain,
         client,
         paymaster,
-        paymasterContext: params.policyId ? { policyId: params.policyId } : undefined,
         transport: openfortRpcTransport,
       } as any);
       const hash = await bundlerClient.sendUserOperation({
@@ -290,7 +186,6 @@ export class OpenfortService {
       this.logOpenfortError('sendUserOperation', error, {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
-        policyProvided: Boolean(params.policyId),
       });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }

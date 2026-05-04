@@ -15,7 +15,6 @@ jest.mock('@openfort/openfort-node', () => ({
         },
       },
     },
-    policies: {},
   })),
 }));
 

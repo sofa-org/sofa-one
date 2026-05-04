@@ -58,7 +58,6 @@ export class TransactionsService {
       operationType: 'send',
       chainId,
       interactions: dto.interactions,
-      policyId: dto.policyId ?? null,
     });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
       operationType: 'send',
@@ -69,18 +68,6 @@ export class TransactionsService {
     if (existingTransaction) {
       this.logExistingTransaction(existingTransaction, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(existingTransaction);
-    }
-
-    if (dto.policyId) {
-      const policy = await this.prisma.userPolicy.findUnique({
-        where: {
-          userId_openfortPolicyId: {
-            userId,
-            openfortPolicyId: dto.policyId,
-          },
-        },
-      });
-      if (!policy) throw new NotFoundException('Policy not found');
     }
 
     const { tx, created } = await this.createPendingOrReturnExisting(userId, {
@@ -98,7 +85,6 @@ export class TransactionsService {
         interactionCount: dto.interactions.length,
         agentWalletAddress: wallet.agentWalletAddress,
         agentKeyHash: wallet.agentKeyHash,
-        ...(dto.policyId ? { policyId: dto.policyId } : {}),
         idempotencyKey: dto.idempotencyKey,
         requestHash,
       },
@@ -125,7 +111,6 @@ export class TransactionsService {
         chainId,
         keyHash: wallet.agentKeyHash,
         interactions: dto.interactions,
-        policyId: dto.policyId,
       });
 
       const updated = await this.prisma.transaction.update({

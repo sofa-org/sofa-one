@@ -33,7 +33,6 @@ describe('TransactionsService', () => {
 
   const prisma = {
     userWallet: { findUnique: jest.fn() },
-    userPolicy: { findUnique: jest.fn() },
     transaction: {
       create: jest.fn(),
       update: jest.fn(),
@@ -49,7 +48,6 @@ describe('TransactionsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
-    prisma.userPolicy.findUnique.mockResolvedValue({ id: 'link-1' });
     prisma.transaction.findFirst.mockResolvedValue(null);
     prisma.transaction.create.mockResolvedValue({
       id: 'tx-1',
@@ -147,25 +145,20 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('returns an existing policy transaction before policy lookup or Openfort send', async () => {
+  it('returns an existing transaction before Openfort send', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
       status: 'pending',
       txHash: null,
     });
 
-    const result = await service.send(
-      'user-1',
-      { ...dto, policyId: 'policy-deleted-after-first-submit' } as any,
-      apiKeyContext,
-    );
+    const result = await service.send('user-1', dto as any, apiKeyContext);
 
     expect(result).toEqual({
       transactionId: 'tx-existing',
       transactionHash: null,
       status: 'pending',
     });
-    expect(prisma.userPolicy.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
@@ -235,15 +228,6 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
-  });
-
-  it('rejects unowned policyId', async () => {
-    prisma.userPolicy.findUnique.mockResolvedValue(null);
-
-    await expect(
-      service.send('user-1', { ...dto, policyId: 'pol-2' } as any, apiKeyContext),
-    ).rejects.toThrow(NotFoundException);
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 

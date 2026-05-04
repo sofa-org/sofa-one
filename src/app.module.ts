@@ -10,7 +10,6 @@ import { OpenfortModule } from './core/openfort/openfort.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ApiKeyModule } from './modules/api-key/api-key.module';
 import { WalletModule } from './modules/wallet/wallet.module';
-import { PolicyModule } from './modules/policy/policy.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { HealthModule } from './modules/health/health.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -33,7 +32,6 @@ import { RequestContextModule } from './common/request-context/request-context.m
     AuthModule,
     ApiKeyModule,
     WalletModule,
-    PolicyModule,
     TransactionsModule,
     HealthModule,
   ],

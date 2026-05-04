@@ -44,12 +44,6 @@ export class SendTransactionDto {
   @Type(() => InteractionDto)
   interactions: InteractionDto[];
 
-  /** Optional Openfort policy ID for gas sponsorship. */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  policyId?: string;
-
   /** Required idempotency key to prevent duplicate transaction submissions. */
   @IsString()
   @IsNotEmpty()

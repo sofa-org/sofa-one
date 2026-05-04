@@ -17,7 +17,6 @@ const fieldRows = {
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
     ["└ value", "string", "No", "Wei amount as a decimal string. Defaults to \"0\"."],
-    ["policyId", "string", "No", "User-owned Openfort policy ID."],
     ["idempotencyKey", "string", "Yes", "Max 64 characters: letters, numbers, _ and -."],
   ],
   status: [
@@ -159,7 +158,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions from the user&apos;s active backend agent wallet using an API key. The server handles UserOp signing and policy checks; Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions from the user&apos;s active backend agent wallet using an API key. The server handles UserOp signing; Calibur verifies the registered agent key on-chain. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">

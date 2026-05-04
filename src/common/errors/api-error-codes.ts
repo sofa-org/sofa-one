@@ -8,7 +8,6 @@ export const API_ERROR_CODES = {
   IP_NOT_ALLOWED: 'IP_NOT_ALLOWED',
   WALLET_NOT_FOUND: 'WALLET_NOT_FOUND',
   TRANSACTION_NOT_FOUND: 'TRANSACTION_NOT_FOUND',
-  POLICY_NOT_FOUND: 'POLICY_NOT_FOUND',
   CHAIN_NOT_SUPPORTED: 'CHAIN_NOT_SUPPORTED',
   CHAIN_NOT_ALLOWED: 'CHAIN_NOT_ALLOWED',
   IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT',
@@ -33,7 +32,6 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   if (normalized.includes('ip address not allowed')) return API_ERROR_CODES.IP_NOT_ALLOWED;
   if (normalized.includes('wallet not found')) return API_ERROR_CODES.WALLET_NOT_FOUND;
   if (normalized.includes('transaction not found')) return API_ERROR_CODES.TRANSACTION_NOT_FOUND;
-  if (normalized.includes('policy not found')) return API_ERROR_CODES.POLICY_NOT_FOUND;
   if (normalized.includes('is not supported')) return API_ERROR_CODES.CHAIN_NOT_SUPPORTED;
   if (normalized.includes('not allowed to use chain')) return API_ERROR_CODES.CHAIN_NOT_ALLOWED;
   if (normalized.includes('idempotency key')) return API_ERROR_CODES.IDEMPOTENCY_CONFLICT;

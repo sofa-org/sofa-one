@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut } from '@openfort/react';
-import { LogOut, Wallet, ShieldCheck, KeyRound, BookOpen, Menu, X } from 'lucide-react';
+import { LogOut, Wallet, KeyRound, BookOpen, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
-  { href: '/dashboard/policies', label: 'Policies', icon: ShieldCheck },
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];

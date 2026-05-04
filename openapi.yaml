@@ -149,7 +149,7 @@ paths:
         此端点不接受 Openfort IAM Bearer token。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
-        必填 `chainId` 指定执行链，且必须被 API key 允许；可选 `policyId` 用于 Gas 代付策略；必填 `idempotencyKey` 用于防止重复提交。
+        必填 `chainId` 指定执行链，且必须被 API key 允许；必填 `idempotencyKey` 用于防止重复提交。
       operationId: sendTransaction
       requestBody:
         required: true
@@ -162,16 +162,6 @@ paths:
                 summary: USDC transfer（ABI-encoded）
                 value:
                   chainId: 84532
-                  idempotencyKey: "order-abc-123"
-                  interactions:
-                    - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                      data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
-                      value: "0"
-              withPolicy:
-                summary: 使用 Gas 代付策略 + 幂等键
-                value:
-                  chainId: 84532
-                  policyId: "pol_usdc-gas-policy"
                   idempotencyKey: "order-abc-123"
                   interactions:
                     - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
@@ -341,10 +331,6 @@ components:
           items:
             $ref: '#/components/schemas/RawInteraction'
           description: 合约交互列表（至少一个）
-        policyId:
-          type: string
-          description: Gas 代付策略 ID（可选）
-          example: "pol_usdc-gas-policy"
         idempotencyKey:
           type: string
           maxLength: 64
@@ -439,7 +425,6 @@ components:
             - IP_NOT_ALLOWED
             - WALLET_NOT_FOUND
             - TRANSACTION_NOT_FOUND
-            - POLICY_NOT_FOUND
             - CHAIN_NOT_SUPPORTED
             - CHAIN_NOT_ALLOWED
             - IDEMPOTENCY_CONFLICT
