@@ -40,9 +40,9 @@ export class AuthService {
   ) {}
 
   /**
-   * Handle Openfort email OTP login: upsert user, create a pending embedded-wallet record, generate API key.
+   * Handle Openfort email OTP login: upsert user and create a pending embedded-wallet record.
    * Embedded wallet creation/authorization happens client-side through Openfort React SDK.
-   * The apiKey field is only present on first login (one-time display).
+   * API keys are created explicitly through the API-key management flow.
    */
   async syncOpenfortSession(
     openfortUserId: string,
@@ -51,7 +51,6 @@ export class AuthService {
   ): Promise<{
     userId: string;
     wallet: WalletResponse;
-    apiKey?: string;
   }> {
     const socialProvider = 'openfort_email_otp';
     const socialId = openfortUserId;
@@ -61,13 +60,11 @@ export class AuthService {
       where: { socialId },
       include: {
         wallet: true,
-        apiKeys: { where: { revoked: false } },
       },
     });
 
     let userId: string;
     let wallet = existing?.wallet ?? null;
-    let hasApiKeys = (existing?.apiKeys.length ?? 0) > 0;
     const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
 
     if (!existing) {
@@ -88,7 +85,6 @@ export class AuthService {
 
         userId = result.userId;
         wallet = result.wallet;
-        hasApiKeys = false;
         this.logger.log(
           this.logContext({ message: 'Created Openfort IAM user', userId, socialProvider }),
         );
@@ -135,17 +131,9 @@ export class AuthService {
       }
     }
 
-    // 4. Generate API key if user has none
-    let rawApiKey: string | undefined;
-    if (!hasApiKeys) {
-      const result = await this.apiKeyService.createApiKey(userId, { name: 'Default' });
-      rawApiKey = result.rawKey;
-    }
-
     return {
       userId,
       wallet: this.toWalletResponse(wallet),
-      ...(rawApiKey && { apiKey: rawApiKey }),
     };
   }
 

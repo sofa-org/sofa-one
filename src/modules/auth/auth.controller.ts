@@ -12,7 +12,7 @@ export class AuthController {
   /**
    * POST /auth/session
    * Requires: Authorization: Bearer <openfort_iam_access_token>
-   * Returns: { userId, walletAddress, apiKey? }
+   * Returns: { userId, wallet }
    */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('session')

@@ -88,14 +88,13 @@ describe('AuthService', () => {
         agentKeyHash: undefined,
         agentExpiresAt: null,
       },
-      apiKey: 'sk_test',
     });
+    expect(apiKeyService.createApiKey).not.toHaveBeenCalled();
   });
 
-  it('issues the first API key while embedded wallet binding is pending', async () => {
+  it('does not issue an API key while embedded wallet binding is pending', async () => {
     await expect(service.syncOpenfortSession('openfort-user-1', 'user@example.com')).resolves.toMatchObject({
       userId: 'user-1',
-      apiKey: 'sk_test',
       wallet: { walletAddress: null },
     });
 
@@ -106,6 +105,6 @@ describe('AuthService', () => {
         status: 'pending_embedded_wallet',
       },
     });
-    expect(apiKeyService.createApiKey).toHaveBeenCalledWith('user-1', { name: 'Default' });
+    expect(apiKeyService.createApiKey).not.toHaveBeenCalled();
   });
 });
