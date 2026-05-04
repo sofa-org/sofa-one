@@ -86,6 +86,7 @@ describe('AuthService', () => {
         agentWalletAddress: undefined,
         agentStatus: undefined,
         agentKeyHash: undefined,
+        agentRegistrationTxHash: undefined,
         agentExpiresAt: null,
       },
     });
@@ -107,4 +108,100 @@ describe('AuthService', () => {
     });
     expect(apiKeyService.createApiKey).not.toHaveBeenCalled();
   });
+
+  it('records the pending agent registration transaction hash for an active wallet', async () => {
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: null,
+      agentExpiresAt: null,
+    };
+    const txHash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    const updatedWallet = { ...wallet, agentRegistrationTxHash: txHash };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    prisma.userWallet.update.mockResolvedValue(updatedWallet);
+
+    await expect(
+      service.markAgentRegistrationTransaction('openfort-user-1', txHash),
+    ).resolves.toMatchObject({
+      userId: 'user-1',
+      wallet: {
+        agentStatus: 'pending_registration',
+        agentRegistrationTxHash: txHash,
+      },
+    });
+
+    expect(prisma.userWallet.update).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      data: {
+        agentStatus: 'pending_registration',
+        agentRegistrationTxHash: txHash,
+      },
+    });
+  });
+
+  it.each(['registered', 'registration_failed'] as const)(
+    'marks agent registration as %s for an active wallet',
+    async (agentStatus) => {
+      const wallet = {
+        id: 'wallet-1',
+        userId: 'user-1',
+        openfortAccountId: 'embedded-account-1',
+        status: 'active',
+        chainId: BigInt(chainId),
+        walletAddress: '0x1111111111111111111111111111111111111111',
+        agentOpenfortAccountId: 'agent-account-1',
+        agentWalletAddress: '0x2222222222222222222222222222222222222222',
+        agentStatus: 'pending_registration',
+        agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+        agentRegistrationTxHash: null,
+        agentExpiresAt: null,
+      };
+      const txHash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      const updatedWallet = { ...wallet, agentStatus, agentRegistrationTxHash: txHash };
+
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+      prisma.userWallet.update.mockResolvedValue(updatedWallet);
+
+      await expect(
+        service.markAgentRegistrationResult(
+          'openfort-user-1',
+          agentStatus,
+          txHash,
+        ),
+      ).resolves.toEqual({
+        userId: 'user-1',
+        wallet: {
+          walletAddress: updatedWallet.walletAddress,
+          embeddedWalletAddress: updatedWallet.walletAddress,
+          chainId,
+          status: 'active',
+          supportedTokens: ['USDC', 'ETH'],
+          agentWalletAddress: updatedWallet.agentWalletAddress,
+          agentStatus,
+          agentKeyHash: updatedWallet.agentKeyHash,
+          agentRegistrationTxHash: updatedWallet.agentRegistrationTxHash,
+          agentExpiresAt: null,
+        },
+      });
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { socialId: 'openfort-user-1' },
+        include: { wallet: true },
+      });
+      expect(prisma.userWallet.update).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        data: { agentStatus, agentRegistrationTxHash: txHash },
+      });
+    },
+  );
 });

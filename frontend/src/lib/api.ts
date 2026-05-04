@@ -22,6 +22,7 @@ export interface WalletInfo {
   agentWalletAddress?: string | null;
   agentStatus?: string | null;
   agentKeyHash?: string | null;
+  agentRegistrationTxHash?: string | null;
   agentExpiresAt?: string | null;
 }
 
@@ -94,6 +95,15 @@ export interface AuthorizeEmbeddedWalletResponse extends AuthSessionResponse {
     keyHash: string;
     expiresAt: string;
   };
+}
+
+export interface AgentRegistrationResultRequest {
+  txHash: string;
+  status: 'registered' | 'registration_failed';
+}
+
+export interface AgentRegistrationTransactionRequest {
+  txHash: string;
 }
 
 export interface TransactionInteraction {
@@ -343,6 +353,26 @@ export async function authorizeEmbeddedWallet(
   body: AuthorizeEmbeddedWalletRequest,
 ) {
   return authFetch<AuthorizeEmbeddedWalletResponse>('/auth/embedded-wallet/authorize', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function markAgentRegistrationResult(
+  getToken: () => Promise<string | null>,
+  body: AgentRegistrationResultRequest,
+) {
+  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-result', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function markAgentRegistrationTransaction(
+  getToken: () => Promise<string | null>,
+  body: AgentRegistrationTransactionRequest,
+) {
+  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-transaction', getToken, {
     method: 'POST',
     body: JSON.stringify(body),
   });

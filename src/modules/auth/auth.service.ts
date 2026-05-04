@@ -23,6 +23,7 @@ type WalletResponse = {
   agentWalletAddress?: string | null;
   agentStatus?: string | null;
   agentKeyHash?: string | null;
+  agentRegistrationTxHash?: string | null;
   agentExpiresAt?: string | null;
 };
 
@@ -171,6 +172,7 @@ export class AuthService {
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
         agentStatus: 'pending_registration',
+        agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
       update: {
@@ -182,6 +184,7 @@ export class AuthService {
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
         agentStatus: 'pending_registration',
+        agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
     });
@@ -197,8 +200,95 @@ export class AuthService {
     };
   }
 
+  async markAgentRegistrationTransaction(
+    openfortUserId: string,
+    txHash: string,
+  ): Promise<{
+    userId: string;
+    wallet: WalletResponse;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { socialId: openfortUserId },
+      include: { wallet: true },
+    });
+    if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
+
+    if (!this.hasAgentRegistrationContext(user.wallet)) {
+      throw new NotFoundException('Agent registration is not pending');
+    }
+
+    const wallet = await this.prisma.userWallet.update({
+      where: { userId: user.id },
+      data: {
+        agentStatus: 'pending_registration',
+        agentRegistrationTxHash: txHash,
+      },
+    });
+
+    this.logger.log(
+      this.logContext({
+        message: 'Agent registration transaction hash recorded',
+        userId: user.id,
+        txHash,
+      }),
+    );
+
+    return {
+      userId: user.id,
+      wallet: this.toWalletResponse(wallet),
+    };
+  }
+
+  async markAgentRegistrationResult(
+    openfortUserId: string,
+    status: 'registered' | 'registration_failed',
+    txHash: string,
+  ): Promise<{
+    userId: string;
+    wallet: WalletResponse;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { socialId: openfortUserId },
+      include: { wallet: true },
+    });
+    if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
+
+    if (!this.hasAgentRegistrationContext(user.wallet)) {
+      throw new NotFoundException('Agent registration is not pending');
+    }
+
+    const wallet = await this.prisma.userWallet.update({
+      where: { userId: user.id },
+      data: { agentStatus: status, agentRegistrationTxHash: txHash },
+    });
+
+    this.logger.log(
+      this.logContext({
+        message: 'Agent registration transaction result recorded',
+        userId: user.id,
+        status,
+        txHash,
+      }),
+    );
+
+    return {
+      userId: user.id,
+      wallet: this.toWalletResponse(wallet),
+    };
+  }
+
   private logContext(extra: Record<string, unknown>) {
     return this.requestContext?.getLogContext(extra) ?? extra;
+  }
+
+  private hasAgentRegistrationContext(wallet: UserWallet) {
+    return Boolean(
+      wallet.status === 'active' &&
+        wallet.walletAddress &&
+        wallet.agentOpenfortAccountId &&
+        wallet.agentWalletAddress &&
+        wallet.agentKeyHash,
+    );
   }
 
   /**
@@ -261,6 +351,7 @@ export class AuthService {
       agentWalletAddress: wallet.agentWalletAddress,
       agentStatus: wallet.agentStatus,
       agentKeyHash: wallet.agentKeyHash,
+      agentRegistrationTxHash: wallet.agentRegistrationTxHash,
       agentExpiresAt: wallet.agentExpiresAt?.toISOString() ?? null,
     };
   }

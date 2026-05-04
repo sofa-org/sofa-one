@@ -34,6 +34,7 @@ model UserWallet {
   agentWalletAddress     String?   @unique @map("agent_wallet_address") @db.VarChar(42)
   agentKeyHash           String?   @map("agent_key_hash") @db.VarChar(66)
   agentStatus            String?   @map("agent_status") @db.VarChar(30)
+  agentRegistrationTxHash String?  @map("agent_registration_tx_hash") @db.VarChar(66)
   agentExpiresAt         DateTime? @map("agent_expires_at") @db.Timestamptz()
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 

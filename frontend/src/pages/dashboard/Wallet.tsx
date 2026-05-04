@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
-import { useSendTransaction } from 'wagmi';
+import { usePublicClient, useSendTransaction } from 'wagmi';
 import { padHex, zeroAddress, type Address, type Hex } from 'viem';
 import {
   DEFAULT_CHAIN_ID,
   authorizeEmbeddedWallet,
   getMe,
+  markAgentRegistrationResult,
+  markAgentRegistrationTransaction,
   syncSession,
   withdrawAuth,
   getBalancesAuth,
@@ -104,6 +106,15 @@ function resolveEmbeddedWallet(
   };
 }
 
+function formatAgentStatus(status?: string | null) {
+  if (status === 'registered') return 'success';
+  if (status === 'registration_failed') return 'failed';
+  if (status === 'pending_registration') return 'checking';
+  return status ?? 'not registered';
+}
+
+const AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS = 60_000;
+
 export default function WalletPage() {
   const openfort = useOpenfort();
   const { getAccessToken, user } = useUser();
@@ -112,6 +123,7 @@ export default function WalletPage() {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
+  const publicClient = usePublicClient({ chainId: wallet?.chainId ?? selectedChainId });
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: selectedChainId });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,6 +204,38 @@ export default function WalletPage() {
     };
   }, [user, selectedChainId, wallet, getToken]);
 
+  useEffect(() => {
+    const txHash = wallet?.agentRegistrationTxHash;
+    if (!user || !publicClient || wallet?.agentStatus !== 'pending_registration' || !txHash) {
+      return;
+    }
+
+    let cancelled = false;
+    const client = publicClient;
+    const savedTxHash = txHash;
+
+    async function resumeAgentRegistrationCheck() {
+      try {
+        const receipt = await client.waitForTransactionReceipt({
+          hash: savedTxHash as Hex,
+          timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
+        });
+        const status: 'registered' | 'registration_failed' =
+          receipt.status === 'success' ? 'registered' : 'registration_failed';
+        const result = await markAgentRegistrationResult(getToken, { txHash: savedTxHash, status });
+        if (!cancelled) setWallet(result.wallet);
+      } catch {
+        // Leave the saved tx hash and pending status intact; the next page visit will retry.
+      }
+    }
+
+    resumeAgentRegistrationCheck();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, publicClient, wallet?.agentStatus, wallet?.agentRegistrationTxHash, getToken]);
+
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
     setWithdrawLoading(true);
@@ -271,9 +315,37 @@ export default function WalletPage() {
         }),
       ]);
       const txHash = await sendTransactionAsync({ to: address, data: txData });
+      const pending = await markAgentRegistrationTransaction(getToken, { txHash });
+      setWallet(pending.wallet);
 
-      setWallet(authorized.wallet);
-      setWalletSetupSuccess(`Agent key registration submitted: ${txHash}`);
+      if (!publicClient) {
+        setWalletSetupSuccess(`Agent key registration pending. We will check again next time: ${txHash}`);
+        return;
+      }
+
+      let receipt: Awaited<ReturnType<typeof publicClient.waitForTransactionReceipt>>;
+      try {
+        receipt = await publicClient.waitForTransactionReceipt({
+          hash: txHash,
+          timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
+        });
+      } catch {
+        setWalletSetupSuccess(`Agent key registration pending. We will check again next time: ${txHash}`);
+        return;
+      }
+
+      const registrationStatus = receipt.status === 'success' ? 'registered' : 'registration_failed';
+      const result = await markAgentRegistrationResult(getToken, {
+        txHash,
+        status: registrationStatus,
+      });
+
+      setWallet(result.wallet);
+      if (registrationStatus === 'registered') {
+        setWalletSetupSuccess(`Agent key registration succeeded: ${txHash}`);
+      } else {
+        setWalletSetupError(`Agent key registration failed: ${txHash}`);
+      }
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
@@ -349,7 +421,7 @@ export default function WalletPage() {
                     Backend Agent Wallet
                   </span>
                   <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
-                    {wallet.agentStatus ?? 'not registered'}
+                    {formatAgentStatus(wallet.agentStatus)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
