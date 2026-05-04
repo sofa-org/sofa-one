@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useOpenfort } from '@openfort/react';
+import { useUser } from '@openfort/react';
 import { Plus, X, AlertCircle, Loader2 } from 'lucide-react';
 import {
   listPoliciesAuth,
@@ -716,8 +716,7 @@ function buildRuleBody(
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 export default function PoliciesPage() {
-  const { client, user } = useOpenfort();
-  const getToken = () => client.getAccessToken();
+  const { getAccessToken: getToken, user } = useUser();
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);

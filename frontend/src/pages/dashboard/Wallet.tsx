@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccountTypeEnum, RecoveryMethod, useOpenfort } from '@openfort/react';
+import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { useSendTransaction } from 'wagmi';
 import { padHex, zeroAddress, type Address, type Hex } from 'viem';
@@ -106,7 +106,8 @@ function resolveEmbeddedWallet(
 
 export default function WalletPage() {
   const openfort = useOpenfort();
-  const getToken = () => openfort.client.getAccessToken();
+  const { getAccessToken, user } = useUser();
+  const getToken = getAccessToken;
   const { sendTransactionAsync, isPending: registerTxPending } = useSendTransaction();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
@@ -134,7 +135,7 @@ export default function WalletPage() {
   const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!openfort.user) return;
+    if (!user) return;
 
     const controller = new AbortController();
 
@@ -164,10 +165,10 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [openfort.user]);
+  }, [user, getToken]);
 
   useEffect(() => {
-    if (!openfort.user || !wallet?.walletAddress) {
+    if (!user || !wallet?.walletAddress) {
       setBalances(null);
       return;
     }
@@ -189,7 +190,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [openfort.user, selectedChainId, wallet]);
+  }, [user, selectedChainId, wallet, getToken]);
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -220,7 +221,7 @@ export default function WalletPage() {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
       }
 
-      const openfortAccessToken = await openfort.client.getAccessToken();
+      const openfortAccessToken = await getAccessToken();
       if (!openfortAccessToken) {
         throw new Error('Openfort session is not ready. Refresh and sign in again.');
       }

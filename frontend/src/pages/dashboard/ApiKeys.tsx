@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useOpenfort } from '@openfort/react';
+import { useUser } from '@openfort/react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import {
@@ -29,8 +29,7 @@ function formatChains(chainIds: number[]) {
 }
 
 export default function ApiKeysPage() {
-  const { client, user } = useOpenfort();
-  const getToken = () => client.getAccessToken();
+  const { getAccessToken: getToken, user } = useUser();
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [selectedChains, setSelectedChains] = useState<number[]>(DEFAULT_ALLOWED_CHAINS);
