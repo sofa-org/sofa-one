@@ -11,6 +11,7 @@ import { OpenfortService } from '../../core/openfort/openfort.service';
 import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { AgentStatus } from '../../common/agent/agent-status';
 import type { SendTransactionDto } from './dto/send-transaction.dto';
 
 type ApiKeyTransactionContext = {
@@ -40,19 +41,18 @@ export class TransactionsService {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    if (
-      wallet.status !== 'active' ||
-      !wallet.walletAddress ||
-      !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress ||
-      !wallet.agentKeyHash
-    ) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
-
     const chainId = dto.chainId;
     getSupportedChain(chainId);
     assertAllowedApiKeyChain(apiKeyRecord, chainId);
+    this.assertAgentWalletReady(wallet);
+    const accountAddress = wallet.walletAddress!;
+    const agentAccountId = wallet.agentOpenfortAccountId!;
+    const agentKeyHash = wallet.agentKeyHash!;
+    await this.openfort.verifyAgentKeyRegistration({
+      accountAddress,
+      chainId,
+      keyHash: agentKeyHash,
+    });
 
     const requestHash = hashRequest({
       operationType: 'send',
@@ -78,13 +78,13 @@ export class TransactionsService {
       idempotencyKey: dto.idempotencyKey!,
       chainId,
       requestHash,
-      walletAddress: wallet.walletAddress,
+      walletAddress: accountAddress,
       details: {
         type: 'send',
         execution: 'calibur_agent_user_operation',
         interactionCount: dto.interactions.length,
         agentWalletAddress: wallet.agentWalletAddress,
-        agentKeyHash: wallet.agentKeyHash,
+        agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
         requestHash,
       },
@@ -106,10 +106,10 @@ export class TransactionsService {
         }),
       );
       const { transactionHash, userOpHash } = await this.openfort.sendUserOperation({
-        agentAccountId: wallet.agentOpenfortAccountId,
-        accountAddress: wallet.walletAddress,
+        agentAccountId,
+        accountAddress,
         chainId,
-        keyHash: wallet.agentKeyHash,
+        keyHash: agentKeyHash,
         interactions: dto.interactions,
       });
 
@@ -161,6 +161,35 @@ export class TransactionsService {
         },
       });
       throw error;
+    }
+  }
+
+  private assertAgentWalletReady(wallet: {
+    status: string;
+    walletAddress?: string | null;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+    agentKeyHash?: string | null;
+    agentStatus?: string | null;
+    agentExpiresAt?: Date | string | null;
+  }): void {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.walletAddress ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress ||
+      !wallet.agentKeyHash
+    ) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+
+    if (wallet.agentStatus !== AgentStatus.Registered) {
+      throw new BadRequestException('Agent wallet is not registered');
+    }
+
+    const expiresAt = wallet.agentExpiresAt ? new Date(wallet.agentExpiresAt) : null;
+    if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      throw new BadRequestException('Agent key is expired');
     }
   }
 

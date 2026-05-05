@@ -14,6 +14,8 @@ describe('TransactionsService', () => {
     agentOpenfortAccountId: 'agent-acc-1',
     agentWalletAddress: '0x2222222222222222222222222222222222222222',
     agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+    agentStatus: 'registered',
+    agentExpiresAt: new Date('2026-05-06T00:00:00.000Z'),
     chainId: BigInt(84532),
     status: 'active',
   };
@@ -41,7 +43,7 @@ describe('TransactionsService', () => {
     },
   } as any;
 
-  const openfort = { sendUserOperation: jest.fn() } as any;
+  const openfort = { verifyAgentKeyRegistration: jest.fn(), sendUserOperation: jest.fn() } as any;
 
   let service: TransactionsService;
 
@@ -63,11 +65,18 @@ describe('TransactionsService', () => {
       userOpHash: '0xuserop',
       transactionHash: '0xhash',
     });
+    openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     service = new TransactionsService(prisma, openfort);
   });
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
     await service.send('user-1', dto as any, apiKeyContext);
+
+    expect(openfort.verifyAgentKeyRegistration).toHaveBeenCalledWith({
+      accountAddress: wallet.walletAddress,
+      chainId: 8453,
+      keyHash: wallet.agentKeyHash,
+    });
 
     expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -106,6 +115,27 @@ describe('TransactionsService', () => {
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects pending agent status before sending', async () => {
+    prisma.userWallet.findUnique.mockResolvedValue({ ...wallet, agentStatus: 'pending_registration' });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects expired agent registration before sending', async () => {
+    prisma.userWallet.findUnique.mockResolvedValue({
+      ...wallet,
+      agentExpiresAt: new Date('2026-05-04T00:00:00.000Z'),
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 

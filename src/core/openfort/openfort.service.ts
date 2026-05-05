@@ -13,7 +13,14 @@ import { createBundlerClient, createPaymasterClient } from 'viem/account-abstrac
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
-import { createCaliburSessionAccount, hashKey, KeyType } from '../../common/calibur/calibur';
+import {
+  createCaliburSessionAccount,
+  getAgentKeyUsabilityFailure,
+  getCaliburKeySettings,
+  hashKey,
+  isCaliburKeyRegistered,
+  KeyType,
+} from '../../common/calibur/calibur';
 
 @Injectable()
 export class OpenfortService {
@@ -121,6 +128,34 @@ export class OpenfortService {
       keyType: KeyType.Secp256k1,
       publicKey: padHex(getAddress(agentAddress), { size: 32 }),
     });
+  }
+
+  async verifyAgentKeyRegistration(params: {
+    accountAddress: string;
+    chainId: number;
+    keyHash: string;
+  }): Promise<void> {
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const client = createClient({ chain, transport: http() });
+      const accountAddress = getAddress(params.accountAddress);
+      const keyHash = params.keyHash as Hex;
+
+      const registered = await isCaliburKeyRegistered(client, accountAddress, keyHash);
+      if (!registered) {
+        throw new ForbiddenException('Agent key is not registered on Calibur account');
+      }
+
+      const settings = await getCaliburKeySettings(client, accountAddress, keyHash);
+      const failure = getAgentKeyUsabilityFailure(settings);
+      if (failure) throw new ForbiddenException(failure);
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('verifyAgentKeyRegistration', error, {
+        chainId: params.chainId,
+      });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
   }
 
   /** Execute calls from the user's Calibur account with the registered backend agent key. */

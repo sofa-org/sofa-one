@@ -10,6 +10,7 @@ import type { UserWallet } from '@prisma/client';
 import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import { AgentStatus, type AgentStatusValue } from '../../common/agent/agent-status';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { ApiKeyService } from '../api-key/api-key.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
@@ -171,7 +172,7 @@ export class AuthService {
         agentOpenfortAccountId: agent.id,
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
-        agentStatus: 'pending_registration',
+        agentStatus: AgentStatus.PendingRegistration,
         agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
@@ -183,7 +184,7 @@ export class AuthService {
         agentOpenfortAccountId: agent.id,
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
-        agentStatus: 'pending_registration',
+        agentStatus: AgentStatus.PendingRegistration,
         agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
@@ -220,7 +221,7 @@ export class AuthService {
     const wallet = await this.prisma.userWallet.update({
       where: { userId: user.id },
       data: {
-        agentStatus: 'pending_registration',
+        agentStatus: AgentStatus.PendingRegistration,
         agentRegistrationTxHash: txHash,
       },
     });
@@ -241,7 +242,7 @@ export class AuthService {
 
   async markAgentRegistrationResult(
     openfortUserId: string,
-    status: 'registered' | 'registration_failed',
+    reportedStatus: 'registered' | 'registration_failed',
     txHash: string,
   ): Promise<{
     userId: string;
@@ -255,6 +256,16 @@ export class AuthService {
 
     if (!this.hasAgentRegistrationContext(user.wallet)) {
       throw new NotFoundException('Agent registration is not pending');
+    }
+
+    let status: AgentStatusValue = AgentStatus.RegistrationFailed;
+    if (reportedStatus === AgentStatus.Registered) {
+      await this.openfort.verifyAgentKeyRegistration({
+        accountAddress: user.wallet.walletAddress!,
+        chainId: Number(user.wallet.chainId),
+        keyHash: user.wallet.agentKeyHash!,
+      });
+      status = AgentStatus.Registered;
     }
 
     const wallet = await this.prisma.userWallet.update({

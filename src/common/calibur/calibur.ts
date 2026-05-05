@@ -1,13 +1,18 @@
 import {
   encodeAbiParameters,
   encodeFunctionData,
+  getAddress,
   keccak256,
+  numberToHex,
   serializeSignature,
   type Address,
+  type Chain,
   type Client,
   type Hex,
+  type Transport,
 } from 'viem';
 import { entryPoint08Abi, getUserOperationTypedData, toSmartAccount } from 'viem/account-abstraction';
+import { readContract } from 'viem/actions';
 import type { Account } from 'viem/accounts';
 
 export const CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
@@ -24,6 +29,12 @@ export type CaliburKey = {
   publicKey: Hex;
 };
 
+export type CaliburKeySettings = {
+  isAdmin: boolean;
+  expiration: number;
+  hook: Address;
+};
+
 export type CaliburSessionAccountParams = {
   client: Client;
   signer: Account;
@@ -33,6 +44,25 @@ export type CaliburSessionAccountParams = {
 
 const STUB_SIGNATURE =
   '0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c' as const;
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+
+const CALIBUR_KEY_ABI = [
+  {
+    type: 'function',
+    name: 'getKeySettings',
+    inputs: [{ name: 'keyHash', type: 'bytes32' }],
+    outputs: [{ name: 'settings', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'isRegistered',
+    inputs: [{ name: 'keyHash', type: 'bytes32' }],
+    outputs: [{ name: 'registered', type: 'bool' }],
+    stateMutability: 'view',
+  },
+] as const;
 
 export function hashKey(key: CaliburKey): Hex {
   return keccak256(
@@ -44,6 +74,55 @@ export function hashKey(key: CaliburKey): Hex {
       [key.keyType, keccak256(key.publicKey)],
     ),
   );
+}
+
+export function unpackSettings(packed: bigint): CaliburKeySettings {
+  const hookMask = (1n << 160n) - 1n;
+  const expirationMask = (1n << 40n) - 1n;
+  const hook = getAddress(numberToHex(packed & hookMask, { size: 20 }));
+  const expiration = Number((packed >> 160n) & expirationMask);
+  const isAdmin = ((packed >> 200n) & 1n) === 1n;
+
+  return { isAdmin, expiration, hook };
+}
+
+export async function isCaliburKeyRegistered(
+  client: Client<Transport, Chain | undefined>,
+  account: Address,
+  keyHash: Hex,
+): Promise<boolean> {
+  return readContract(client, {
+    abi: CALIBUR_KEY_ABI,
+    address: account,
+    functionName: 'isRegistered',
+    args: [keyHash],
+  });
+}
+
+export async function getCaliburKeySettings(
+  client: Client<Transport, Chain | undefined>,
+  account: Address,
+  keyHash: Hex,
+): Promise<CaliburKeySettings> {
+  const packed = await readContract(client, {
+    abi: CALIBUR_KEY_ABI,
+    address: account,
+    functionName: 'getKeySettings',
+    args: [keyHash],
+  });
+
+  return unpackSettings(packed);
+}
+
+export function getAgentKeyUsabilityFailure(
+  settings: CaliburKeySettings,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): string | null {
+  if (settings.isAdmin) return 'Agent key must not be an admin key';
+  if (settings.expiration <= nowSeconds) return 'Agent key is expired';
+  if (settings.hook !== ZERO_ADDRESS) return 'Agent key hook is not supported';
+
+  return null;
 }
 
 export function encodeRegisterKey(key: CaliburKey): Hex {
