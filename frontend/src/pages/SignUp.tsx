@@ -51,6 +51,16 @@ export default function SignUpPage() {
           </Suspense>
         </div>
 
+        <p className="mt-6 text-center text-sm text-brand-muted">
+          Already have an account?{' '}
+          <Link
+            to="/sign-in"
+            className="font-medium text-brand-text underline underline-offset-4 decoration-brand-border transition-colors hover:text-brand-accent hover:decoration-brand-accent"
+          >
+            Sign in
+          </Link>
+        </p>
+
         <p className="mt-8 text-center text-xs text-brand-muted">
           By continuing, you agree to our{' '}
           <span className="underline underline-offset-2 decoration-brand-border cursor-pointer hover:text-brand-text transition-colors">Terms</span>
