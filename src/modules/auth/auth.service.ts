@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -31,6 +32,7 @@ type WalletResponse = {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private static readonly agentRegistrationGraceMs = 5 * 60 * 1000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -160,7 +162,7 @@ export class AuthService {
     }
     const chainId = dto.chainId ?? this.configService.get<number>('chain.defaultChainId', 84532);
     const agent = await this.ensureAgentWallet(user.wallet);
-    const expiresAt = this.agentExpiration();
+    const expiresAt = this.agentExpiration(dto.agentExpiresAt);
     const wallet = await this.prisma.userWallet.upsert({
       where: { userId: user.id },
       create: {
@@ -348,8 +350,20 @@ export class AuthService {
     return this.openfort.createAgentWallet();
   }
 
-  private agentExpiration(): Date {
-    return new Date(Date.now() + 5 * 60 * 1000);
+  private agentExpiration(requestedExpiresAt?: string): Date {
+    if (!requestedExpiresAt) {
+      return new Date(Date.now() + AuthService.agentRegistrationGraceMs);
+    }
+
+    const expiresAt = new Date(requestedExpiresAt);
+    if (Number.isNaN(expiresAt.getTime())) {
+      throw new BadRequestException('Agent expiry time must be a valid ISO date');
+    }
+    if (expiresAt <= new Date()) {
+      throw new BadRequestException('Agent expiry time must be in the future');
+    }
+
+    return expiresAt;
   }
 
   private toWalletResponse(wallet: UserWallet): WalletResponse {

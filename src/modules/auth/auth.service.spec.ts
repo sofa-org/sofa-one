@@ -40,6 +40,7 @@ describe('AuthService', () => {
         create: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        upsert: jest.fn(),
       },
       $transaction: jest.fn((callback) => callback(tx)),
       __tx: tx,
@@ -108,6 +109,81 @@ describe('AuthService', () => {
       },
     });
     expect(apiKeyService.createApiKey).not.toHaveBeenCalled();
+  });
+
+  it('uses the requested Calibur agent expiry when authorizing an embedded wallet', async () => {
+    const expiresAt = '2026-06-06T00:00:00.000Z';
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: null,
+      agentExpiresAt: new Date(expiresAt),
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet: null });
+    prisma.userWallet.upsert = jest.fn().mockResolvedValue(wallet);
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({
+      openfortUserId: 'openfort-user-1',
+      accountId: 'embedded-account-1',
+      address: wallet.walletAddress,
+    });
+    openfort.createAgentWallet.mockResolvedValue({
+      id: wallet.agentOpenfortAccountId,
+      address: wallet.agentWalletAddress,
+      keyHash: wallet.agentKeyHash,
+    });
+
+    await expect(
+      service.authorizeEmbeddedWallet('openfort-user-1', {
+        openfortAccessToken: 'openfort-token',
+        embeddedWalletAddress: wallet.walletAddress,
+        chainId,
+        agentExpiresAt: expiresAt,
+      }),
+    ).resolves.toMatchObject({
+      agentRegistration: { expiresAt },
+      wallet: { agentExpiresAt: expiresAt },
+    });
+
+    expect(prisma.userWallet.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ agentExpiresAt: new Date(expiresAt) }),
+        update: expect.objectContaining({ agentExpiresAt: new Date(expiresAt) }),
+      }),
+    );
+  });
+
+  it('rejects past Calibur agent expiry times', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet: null });
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({
+      openfortUserId: 'openfort-user-1',
+      accountId: 'embedded-account-1',
+      address: '0x1111111111111111111111111111111111111111',
+    });
+    openfort.createAgentWallet.mockResolvedValue({
+      id: 'agent-account-1',
+      address: '0x2222222222222222222222222222222222222222',
+      keyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+    });
+
+    await expect(
+      service.authorizeEmbeddedWallet('openfort-user-1', {
+        openfortAccessToken: 'openfort-token',
+        embeddedWalletAddress: '0x1111111111111111111111111111111111111111',
+        chainId,
+        agentExpiresAt: '2020-01-01T00:00:00.000Z',
+      }),
+    ).rejects.toThrow('Agent expiry time must be in the future');
+
+    expect(prisma.userWallet.upsert).not.toHaveBeenCalled();
   });
 
   it('records the pending agent registration transaction hash for an active wallet', async () => {

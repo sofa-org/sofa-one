@@ -87,6 +87,7 @@ export interface AuthorizeEmbeddedWalletRequest {
   embeddedWalletAddress: string;
   embeddedOpenfortAccountId?: string;
   chainId?: number;
+  agentExpiresAt?: string;
 }
 
 export interface AuthorizeEmbeddedWalletResponse extends AuthSessionResponse {

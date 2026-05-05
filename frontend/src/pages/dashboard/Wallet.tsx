@@ -115,6 +115,15 @@ function formatAgentStatus(status?: string | null) {
 
 const AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS = 60_000;
 
+function formatDateTimeLocal(date: Date) {
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function getDefaultAgentExpiryLocal() {
+  return formatDateTimeLocal(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+}
+
 export default function WalletPage() {
   const openfort = useOpenfort();
   const { getAccessToken, user } = useUser();
@@ -142,6 +151,7 @@ export default function WalletPage() {
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
   const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [agentExpiryLocal, setAgentExpiryLocal] = useState(getDefaultAgentExpiryLocal);
   const [walletSetupLoading, setWalletSetupLoading] = useState(false);
   const [walletSetupError, setWalletSetupError] = useState<string | null>(null);
   const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
@@ -264,6 +274,10 @@ export default function WalletPage() {
       if (recoveryPassword.length < 8) {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
       }
+      const agentExpiresAt = new Date(agentExpiryLocal);
+      if (Number.isNaN(agentExpiresAt.getTime()) || agentExpiresAt <= new Date()) {
+        throw new Error('Choose an agent key expiry time in the future.');
+      }
 
       const openfortAccessToken = await getAccessToken();
       if (!openfortAccessToken) {
@@ -294,6 +308,7 @@ export default function WalletPage() {
         embeddedWalletAddress: address,
         embeddedOpenfortAccountId: accountId,
         chainId: selectedChainId,
+        agentExpiresAt: agentExpiresAt.toISOString(),
       });
 
       const agentKey: CaliburKey = {
@@ -475,6 +490,22 @@ export default function WalletPage() {
                       placeholder="At least 8 characters"
                       className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Agent Key Expiry
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={agentExpiryLocal}
+                      min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
+                      onChange={(event) => setAgentExpiryLocal(event.target.value)}
+                      required
+                      className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                    />
+                    <p className="mt-1 text-xs text-amber-800">
+                      API-key transactions stop when this Calibur agent key expires.
+                    </p>
                   </div>
                   <button
                     type="submit"

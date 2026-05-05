@@ -1,4 +1,4 @@
-import { IsEthereumAddress, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsEthereumAddress, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class AuthorizeEmbeddedWalletDto {
   @IsString()
@@ -15,4 +15,8 @@ export class AuthorizeEmbeddedWalletDto {
   @Min(1)
   @IsOptional()
   chainId?: number;
+
+  @IsDateString()
+  @IsOptional()
+  agentExpiresAt?: string;
 }
