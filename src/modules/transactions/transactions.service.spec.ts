@@ -14,10 +14,17 @@ describe('TransactionsService', () => {
     agentOpenfortAccountId: 'agent-acc-1',
     agentWalletAddress: '0x2222222222222222222222222222222222222222',
     agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
-    agentStatus: 'registered',
-    agentExpiresAt: new Date('2027-05-06T00:00:00.000Z'),
     chainId: BigInt(84532),
     status: 'active',
+    chainAuthorizations: [
+      {
+        chainId: BigInt(84532),
+        status: 'registered',
+        expiresAt: new Date('2027-05-06T00:00:00.000Z'),
+        registrationTxHash: null,
+        updatedAt: new Date('2026-05-06T00:00:00.000Z'),
+      },
+    ],
   };
 
   const dto = {
@@ -118,7 +125,10 @@ describe('TransactionsService', () => {
   });
 
   it('rejects pending agent status before sending', async () => {
-    prisma.userWallet.findUnique.mockResolvedValue({ ...wallet, agentStatus: 'pending_registration' });
+    prisma.userWallet.findUnique.mockResolvedValue({
+      ...wallet,
+      chainAuthorizations: [{ ...wallet.chainAuthorizations[0], status: 'pending_registration' }],
+    });
 
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
 
@@ -129,7 +139,7 @@ describe('TransactionsService', () => {
   it('rejects expired agent registration before sending', async () => {
     prisma.userWallet.findUnique.mockResolvedValue({
       ...wallet,
-      agentExpiresAt: new Date('2026-05-04T00:00:00.000Z'),
+      chainAuthorizations: [{ ...wallet.chainAuthorizations[0], expiresAt: new Date('2026-05-04T00:00:00.000Z') }],
     });
 
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);

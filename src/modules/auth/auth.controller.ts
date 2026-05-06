@@ -66,7 +66,7 @@ export class AuthController {
     @Req() req: any,
     @Body() body: AgentRegistrationTransactionDto,
   ) {
-    return this.authService.markAgentRegistrationTransaction(req.openfortUserId, body.txHash);
+    return this.authService.markAgentRegistrationTransaction(req.openfortUserId, body.chainId, body.txHash);
   }
 
   /**
@@ -79,7 +79,7 @@ export class AuthController {
     @Req() req: any,
     @Body() body: AgentRegistrationResultDto,
   ) {
-    return this.authService.markAgentRegistrationResult(req.openfortUserId, body.status, body.txHash);
+    return this.authService.markAgentRegistrationResult(req.openfortUserId, body.chainId, body.status, body.txHash);
   }
 
   /**

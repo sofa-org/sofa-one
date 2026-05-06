@@ -37,12 +37,17 @@ export class TransactionsService {
       throw new UnauthorizedException('API key is required');
     }
 
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-
     const chainId = dto.chainId;
     getSupportedChain(chainId);
-    this.assertAgentWalletReady(wallet);
+    const wallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+
+    this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
     const accountAddress = wallet.walletAddress!;
     const agentAccountId = wallet.agentOpenfortAccountId!;
     const agentKeyHash = wallet.agentKeyHash!;
@@ -168,9 +173,7 @@ export class TransactionsService {
     agentOpenfortAccountId?: string | null;
     agentWalletAddress?: string | null;
     agentKeyHash?: string | null;
-    agentStatus?: string | null;
-    agentExpiresAt?: Date | string | null;
-  }): void {
+  }, authorization?: { status: string; expiresAt?: Date | string | null } | null): void {
     if (
       wallet.status !== 'active' ||
       !wallet.walletAddress ||
@@ -181,13 +184,13 @@ export class TransactionsService {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
-    if (wallet.agentStatus !== AgentStatus.Registered) {
-      throw new BadRequestException('Agent wallet is not registered');
+    if (authorization?.status !== AgentStatus.Registered) {
+      throw new BadRequestException('API access is not authorized for this chain');
     }
 
-    const expiresAt = wallet.agentExpiresAt ? new Date(wallet.agentExpiresAt) : null;
+    const expiresAt = authorization.expiresAt ? new Date(authorization.expiresAt) : null;
     if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
-      throw new BadRequestException('Agent key is expired');
+      throw new BadRequestException('API access authorization is expired for this chain');
     }
   }
 

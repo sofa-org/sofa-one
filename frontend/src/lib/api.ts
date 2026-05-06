@@ -16,14 +16,17 @@ export interface ApiErrorBody {
 export interface WalletInfo {
   walletAddress: string | null;
   embeddedWalletAddress?: string | null;
-  chainId: number;
   status: string;
   supportedTokens: string[];
   agentWalletAddress?: string | null;
-  agentStatus?: string | null;
   agentKeyHash?: string | null;
-  agentRegistrationTxHash?: string | null;
-  agentExpiresAt?: string | null;
+  chainAuthorizations: Array<{
+    chainId: number;
+    status: string;
+    registrationTxHash: string | null;
+    expiresAt: string | null;
+    updatedAt: string;
+  }>;
 }
 
 export interface AuthSessionResponse {
@@ -91,19 +94,22 @@ export interface AuthorizeEmbeddedWalletRequest {
 }
 
 export interface AuthorizeEmbeddedWalletResponse extends AuthSessionResponse {
-  agentRegistration: {
+  agentRegistration?: {
     agentAddress: string;
     keyHash: string;
+    chainId: number;
     expiresAt: string;
   };
 }
 
 export interface AgentRegistrationResultRequest {
+  chainId: number;
   txHash: string;
   status: 'registered' | 'registration_failed';
 }
 
 export interface AgentRegistrationTransactionRequest {
+  chainId: number;
   txHash: string;
 }
 

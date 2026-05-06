@@ -1,6 +1,10 @@
-import { IsIn, Matches } from 'class-validator';
+import { IsIn, IsInt, Matches, Min } from 'class-validator';
 
 export class AgentRegistrationResultDto {
+  @IsInt()
+  @Min(1)
+  chainId: number;
+
   @Matches(/^0x[a-fA-F0-9]{64}$/, { message: 'txHash must be a valid transaction hash' })
   txHash: string;
 

@@ -27,19 +27,30 @@ model UserWallet {
   userId                 String    @unique @map("user_id") @db.Uuid
   openfortAccountId      String?   @unique @map("openfort_account_id") @db.VarChar(255)
   walletAddress          String?   @unique @map("wallet_address") @db.VarChar(42)
-  chainId                BigInt    @map("chain_id")
   status                 String    @default("active") @db.VarChar(30)
   agentOpenfortAccountId String?   @unique @map("agent_openfort_account_id") @db.VarChar(255)
   agentWalletAddress     String?   @unique @map("agent_wallet_address") @db.VarChar(42)
   agentKeyHash           String?   @map("agent_key_hash") @db.VarChar(66)
-  agentStatus            String?   @map("agent_status") @db.VarChar(30)
-  agentRegistrationTxHash String?  @map("agent_registration_tx_hash") @db.VarChar(66)
-  agentExpiresAt         DateTime? @map("agent_expires_at") @db.Timestamptz()
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
-  user User @relation(fields: [userId], references: [id])
+  user                User                       @relation(fields: [userId], references: [id])
+  chainAuthorizations WalletChainAuthorization[]
 
   @@map("user_wallets")
+}
+
+model WalletChainAuthorization {
+  walletId           String    @map("wallet_id") @db.Uuid
+  chainId            BigInt    @map("chain_id")
+  status             String    @db.VarChar(30)
+  registrationTxHash String?   @map("registration_tx_hash") @db.VarChar(66)
+  expiresAt          DateTime? @map("expires_at") @db.Timestamptz()
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  wallet UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@id([walletId, chainId])
+  @@map("wallet_chain_authorizations")
 }
 
 model ApiKey {

@@ -23,6 +23,7 @@ import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { AgentStatus } from '../../common/agent/agent-status';
 import type { SignDto, SignMessage } from './dto/sign.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
@@ -87,7 +88,18 @@ export class WalletService {
       throw new UnauthorizedException('API key is required for signing');
     }
 
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+    const chainId = this.resolveSigningChainId(params);
+    if (chainId === undefined) {
+      throw new BadRequestException('chainId is required for API-key signing');
+    }
+    getSupportedChain(chainId);
+
+    const wallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
     if (!wallet) throw new NotFoundException('Wallet not found');
     if (
       wallet.status !== 'active' ||
@@ -98,11 +110,7 @@ export class WalletService {
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
-
-    const chainId = this.resolveSigningChainId(params);
-    if (chainId !== undefined) {
-      getSupportedChain(chainId);
-    }
+    this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
 
     let data: string;
     switch (params.type) {
@@ -219,6 +227,19 @@ export class WalletService {
     return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
+  private assertChainAuthorizationReady(
+    authorization?: { status: string; expiresAt?: Date | string | null } | null,
+  ) {
+    if (authorization?.status !== AgentStatus.Registered) {
+      throw new BadRequestException('API access is not authorized for this chain');
+    }
+
+    const expiresAt = authorization.expiresAt ? new Date(authorization.expiresAt) : null;
+    if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      throw new BadRequestException('API access authorization is expired for this chain');
+    }
+  }
+
   /** Return native token and USDC balances for the user's wallet on the requested chain. */
   async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
@@ -294,7 +315,14 @@ export class WalletService {
 
   /** Submit a withdrawal transaction. */
   async withdraw(userId: string, params: WithdrawDto) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+    const chainId = params.chainId;
+    const supportedChain = getSupportedChain(chainId);
+    const wallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     // Guard: wallet must be active before any outbound transfer
@@ -307,14 +335,13 @@ export class WalletService {
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
+    this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
 
     // Guard: prevent self-withdrawal (sending to own wallet address)
     if (params.to.toLowerCase() === wallet.walletAddress.toLowerCase()) {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    const chainId = params.chainId;
-    const supportedChain = getSupportedChain(chainId);
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 

@@ -44,6 +44,15 @@ const WALLET = {
   agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
   chainId: BigInt(84532),
   status: 'active',
+  chainAuthorizations: [
+    {
+      chainId: BigInt(84532),
+      status: 'registered',
+      expiresAt: new Date('2027-05-06T00:00:00.000Z'),
+      registrationTxHash: null,
+      updatedAt: new Date('2026-05-06T00:00:00.000Z'),
+    },
+  ],
 };
 
 const VALID_DTO: WithdrawDto = {

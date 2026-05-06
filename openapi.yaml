@@ -149,7 +149,7 @@ paths:
         此端点不接受 Openfort IAM Bearer token。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
-        必填 `chainId` 指定执行链，且必须被 API key 允许；必填 `idempotencyKey` 用于防止重复提交。
+        必填 `chainId` 指定执行链，且该链必须已在开发者钱包中完成 API access authorization；必填 `idempotencyKey` 用于防止重复提交。
       operationId: sendTransaction
       requestBody:
         required: true
@@ -263,7 +263,7 @@ components:
         chainId:
           type: integer
           minimum: 1
-          description: 必填链上下文；必须在 API Key 允许的链范围内。`typed_data.domain.chainId` 如存在必须与该值一致。
+          description: 必填链上下文；该链必须已在开发者钱包中完成 API access authorization。`typed_data.domain.chainId` 如存在必须与该值一致。
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:
@@ -323,7 +323,7 @@ components:
         chainId:
           type: integer
           minimum: 1
-          description: 执行链 ID，必须是平台支持且被 API key 允许的链
+          description: 执行链 ID，必须是平台支持且已在开发者钱包中完成 API access authorization 的链
           example: 84532
         interactions:
           type: array

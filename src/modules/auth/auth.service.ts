@@ -7,7 +7,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { UserWallet } from '@prisma/client';
+import type { UserWallet, WalletChainAuthorization } from '@prisma/client';
 import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
@@ -19,14 +19,21 @@ import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet
 type WalletResponse = {
   walletAddress: string | null;
   embeddedWalletAddress: string | null;
-  chainId: number;
   status: string;
   supportedTokens: string[];
   agentWalletAddress?: string | null;
-  agentStatus?: string | null;
   agentKeyHash?: string | null;
-  agentRegistrationTxHash?: string | null;
-  agentExpiresAt?: string | null;
+  chainAuthorizations: Array<{
+    chainId: number;
+    status: string;
+    registrationTxHash: string | null;
+    expiresAt: string | null;
+    updatedAt: string;
+  }>;
+};
+
+type WalletWithAuthorizations = UserWallet & {
+  chainAuthorizations?: WalletChainAuthorization[];
 };
 
 @Injectable()
@@ -63,13 +70,12 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({
       where: { socialId },
       include: {
-        wallet: true,
+        wallet: { include: { chainAuthorizations: true } },
       },
     });
 
     let userId: string;
     let wallet = existing?.wallet ?? null;
-    const chainId = this.configService.get<number>('chain.defaultChainId', 84532);
 
     if (!existing) {
       try {
@@ -80,9 +86,9 @@ export class AuthService {
           const newWallet = await tx.userWallet.create({
             data: {
               userId: newUser.id,
-              chainId: BigInt(chainId),
               status: 'pending_embedded_wallet',
             },
+            include: { chainAuthorizations: true },
           });
           return { userId: newUser.id, wallet: newWallet };
         });
@@ -116,13 +122,16 @@ export class AuthService {
         wallet = await this.prisma.userWallet.create({
           data: {
             userId,
-            chainId: BigInt(chainId),
             status: 'pending_embedded_wallet',
           },
+          include: { chainAuthorizations: true },
         });
       } catch (dbErr: any) {
         if (dbErr?.code === 'P2002') {
-          wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+          wallet = await this.prisma.userWallet.findUnique({
+            where: { userId },
+            include: { chainAuthorizations: true },
+          });
         }
         if (!wallet) throw dbErr;
       }
@@ -149,7 +158,7 @@ export class AuthService {
   async authorizeEmbeddedWallet(openfortUserId: string, dto: AuthorizeEmbeddedWalletDto) {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
-      include: { wallet: true },
+      include: { wallet: { include: { chainAuthorizations: true } } },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -160,51 +169,81 @@ export class AuthService {
     if (authorized.openfortUserId !== openfortUserId) {
       throw new NotFoundException('Openfort session does not match current user');
     }
-    const chainId = dto.chainId ?? this.configService.get<number>('chain.defaultChainId', 84532);
+    const chainId = dto.chainId;
     const agent = await this.ensureAgentWallet(user.wallet);
-    const expiresAt = this.agentExpiration(dto.agentExpiresAt);
-    const wallet = await this.prisma.userWallet.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
-        walletAddress: authorized.address,
-        chainId: BigInt(chainId),
-        status: 'active',
-        agentOpenfortAccountId: agent.id,
-        agentWalletAddress: agent.address,
-        agentKeyHash: agent.keyHash,
-        agentStatus: AgentStatus.RegistrationRequired,
-        agentRegistrationTxHash: null,
-        agentExpiresAt: expiresAt,
-      },
-      update: {
-        openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
-        walletAddress: authorized.address,
-        chainId: BigInt(chainId),
-        status: 'active',
-        agentOpenfortAccountId: agent.id,
-        agentWalletAddress: agent.address,
-        agentKeyHash: agent.keyHash,
-        agentStatus: AgentStatus.RegistrationRequired,
-        agentRegistrationTxHash: null,
-        agentExpiresAt: expiresAt,
-      },
+    const expiresAt = chainId ? this.agentExpiration(dto.agentExpiresAt) : null;
+    const wallet = await this.prisma.$transaction(async (tx) => {
+      const walletAddressChanged = Boolean(
+        user.wallet?.walletAddress && user.wallet.walletAddress.toLowerCase() !== authorized.address.toLowerCase(),
+      );
+
+      const updatedWallet = await tx.userWallet.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
+          walletAddress: authorized.address,
+          status: 'active',
+          agentOpenfortAccountId: agent.id,
+          agentWalletAddress: agent.address,
+          agentKeyHash: agent.keyHash,
+        },
+        update: {
+          openfortAccountId: dto.embeddedOpenfortAccountId ?? authorized.accountId,
+          walletAddress: authorized.address,
+          status: 'active',
+          agentOpenfortAccountId: agent.id,
+          agentWalletAddress: agent.address,
+          agentKeyHash: agent.keyHash,
+        },
+      });
+
+      if (walletAddressChanged) {
+        await tx.walletChainAuthorization.deleteMany({ where: { walletId: updatedWallet.id } });
+      }
+
+      if (chainId && expiresAt) {
+        await tx.walletChainAuthorization.upsert({
+          where: { walletId_chainId: { walletId: updatedWallet.id, chainId: BigInt(chainId) } },
+          create: {
+            walletId: updatedWallet.id,
+            chainId: BigInt(chainId),
+            status: AgentStatus.RegistrationRequired,
+            registrationTxHash: null,
+            expiresAt,
+          },
+          update: {
+            status: AgentStatus.RegistrationRequired,
+            registrationTxHash: null,
+            expiresAt,
+          },
+        });
+      }
+
+      return tx.userWallet.findUniqueOrThrow({
+        where: { userId: user.id },
+        include: { chainAuthorizations: true },
+      });
     });
 
     return {
       userId: user.id,
       wallet: this.toWalletResponse(wallet),
-      agentRegistration: {
-        agentAddress: agent.address,
-        keyHash: agent.keyHash,
-        expiresAt: expiresAt.toISOString(),
-      },
+      agentRegistration:
+        chainId && expiresAt
+          ? {
+              agentAddress: agent.address,
+              keyHash: agent.keyHash,
+              chainId,
+              expiresAt: expiresAt.toISOString(),
+            }
+          : undefined,
     };
   }
 
   async markAgentRegistrationTransaction(
     openfortUserId: string,
+    chainId: number,
     txHash: string,
   ): Promise<{
     userId: string;
@@ -212,7 +251,7 @@ export class AuthService {
   }> {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
-      include: { wallet: true },
+      include: { wallet: { include: { chainAuthorizations: true } } },
     });
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
 
@@ -220,18 +259,25 @@ export class AuthService {
       throw new NotFoundException('Agent registration is not pending');
     }
 
-    const wallet = await this.prisma.userWallet.update({
-      where: { userId: user.id },
+    const authorization = this.findChainAuthorization(user.wallet, chainId);
+    if (!authorization || authorization.status !== AgentStatus.RegistrationRequired) {
+      throw new NotFoundException('Agent registration is not pending for this chain');
+    }
+
+    await this.prisma.walletChainAuthorization.update({
+      where: { walletId_chainId: { walletId: user.wallet.id, chainId: BigInt(chainId) } },
       data: {
-        agentStatus: AgentStatus.PendingRegistration,
-        agentRegistrationTxHash: txHash,
+        status: AgentStatus.PendingRegistration,
+        registrationTxHash: txHash,
       },
     });
+    const wallet = await this.findWalletWithAuthorizations(user.id);
 
     this.logger.log(
       this.logContext({
         message: 'Agent registration transaction hash recorded',
         userId: user.id,
+        chainId,
         txHash,
       }),
     );
@@ -244,6 +290,7 @@ export class AuthService {
 
   async markAgentRegistrationResult(
     openfortUserId: string,
+    chainId: number,
     reportedStatus: 'registered' | 'registration_failed',
     txHash: string,
   ): Promise<{
@@ -252,7 +299,7 @@ export class AuthService {
   }> {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
-      include: { wallet: true },
+      include: { wallet: { include: { chainAuthorizations: true } } },
     });
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
 
@@ -260,25 +307,32 @@ export class AuthService {
       throw new NotFoundException('Agent registration is not pending');
     }
 
+    const authorization = this.findChainAuthorization(user.wallet, chainId);
+    if (!authorization) {
+      throw new NotFoundException('Agent registration is not pending for this chain');
+    }
+
     let status: AgentStatusValue = AgentStatus.RegistrationFailed;
     if (reportedStatus === AgentStatus.Registered) {
       await this.openfort.verifyAgentKeyRegistration({
         accountAddress: user.wallet.walletAddress!,
-        chainId: Number(user.wallet.chainId),
+        chainId,
         keyHash: user.wallet.agentKeyHash!,
       });
       status = AgentStatus.Registered;
     }
 
-    const wallet = await this.prisma.userWallet.update({
-      where: { userId: user.id },
-      data: { agentStatus: status, agentRegistrationTxHash: txHash },
+    await this.prisma.walletChainAuthorization.update({
+      where: { walletId_chainId: { walletId: user.wallet.id, chainId: BigInt(chainId) } },
+      data: { status, registrationTxHash: txHash },
     });
+    const wallet = await this.findWalletWithAuthorizations(user.id);
 
     this.logger.log(
       this.logContext({
         message: 'Agent registration transaction result recorded',
         userId: user.id,
+        chainId,
         status,
         txHash,
       }),
@@ -304,6 +358,17 @@ export class AuthService {
     );
   }
 
+  private findChainAuthorization(wallet: WalletWithAuthorizations, chainId: number) {
+    return wallet.chainAuthorizations?.find((authorization) => Number(authorization.chainId) === chainId);
+  }
+
+  private async findWalletWithAuthorizations(userId: string) {
+    return this.prisma.userWallet.findUniqueOrThrow({
+      where: { userId },
+      include: { chainAuthorizations: true },
+    });
+  }
+
   /**
    * Return the current user's wallet info from DB (no Openfort calls).
    */
@@ -313,12 +378,12 @@ export class AuthService {
   }> {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
-      include: { wallet: true },
+      include: { wallet: { include: { chainAuthorizations: true } } },
     });
 
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
 
-    const wallet = await this.selfHealAgentRegistration(user.wallet);
+    const wallet = await this.selfHealAgentRegistrations(user.wallet);
 
     return {
       userId: user.id,
@@ -326,73 +391,83 @@ export class AuthService {
     };
   }
 
-  private async selfHealAgentRegistration(wallet: UserWallet) {
-    if (
-      !this.hasAgentRegistrationContext(wallet) ||
-      wallet.agentStatus !== AgentStatus.PendingRegistration ||
-      !wallet.agentRegistrationTxHash
-    ) {
-      if (
-        this.hasAgentRegistrationContext(wallet) &&
-        wallet.agentStatus === AgentStatus.PendingRegistration &&
-        !wallet.agentRegistrationTxHash
-      ) {
-        return this.prisma.userWallet.update({
-          where: { userId: wallet.userId },
-          data: { agentStatus: AgentStatus.RegistrationRequired },
+  private async selfHealAgentRegistrations(wallet: WalletWithAuthorizations) {
+    if (!this.hasAgentRegistrationContext(wallet)) return wallet;
+
+    let changed = false;
+    for (const authorization of wallet.chainAuthorizations ?? []) {
+      if (authorization.status !== AgentStatus.PendingRegistration) continue;
+
+      if (!authorization.registrationTxHash) {
+        await this.prisma.walletChainAuthorization.update({
+          where: {
+            walletId_chainId: { walletId: wallet.id, chainId: authorization.chainId },
+          },
+          data: { status: AgentStatus.RegistrationRequired },
         });
+        changed = true;
+        continue;
       }
-      return wallet;
+
+      let receiptStatus: 'success' | 'reverted' | null;
+      try {
+        receiptStatus = await this.openfort.getTransactionReceiptStatus(
+          Number(authorization.chainId),
+          authorization.registrationTxHash,
+        );
+      } catch (error: any) {
+        this.logger.warn(
+          this.logContext({
+            message: 'Agent registration receipt check pending',
+            userId: wallet.userId,
+            chainId: Number(authorization.chainId),
+            txHash: authorization.registrationTxHash,
+            error: error?.message ?? String(error),
+          }),
+        );
+        continue;
+      }
+
+      if (!receiptStatus) continue;
+
+      if (receiptStatus === 'reverted') {
+        await this.prisma.walletChainAuthorization.update({
+          where: {
+            walletId_chainId: { walletId: wallet.id, chainId: authorization.chainId },
+          },
+          data: { status: AgentStatus.RegistrationFailed },
+        });
+        changed = true;
+        continue;
+      }
+
+      try {
+        await this.openfort.verifyAgentKeyRegistration({
+          accountAddress: wallet.walletAddress!,
+          chainId: Number(authorization.chainId),
+          keyHash: wallet.agentKeyHash!,
+        });
+        await this.prisma.walletChainAuthorization.update({
+          where: {
+            walletId_chainId: { walletId: wallet.id, chainId: authorization.chainId },
+          },
+          data: { status: AgentStatus.Registered },
+        });
+        changed = true;
+      } catch (error: any) {
+        this.logger.warn(
+          this.logContext({
+            message: 'Agent registration verification pending',
+            userId: wallet.userId,
+            chainId: Number(authorization.chainId),
+            txHash: authorization.registrationTxHash,
+            error: error?.message ?? String(error),
+          }),
+        );
+      }
     }
 
-    let receiptStatus: 'success' | 'reverted' | null;
-    try {
-      receiptStatus = await this.openfort.getTransactionReceiptStatus(
-        Number(wallet.chainId),
-        wallet.agentRegistrationTxHash,
-      );
-    } catch (error: any) {
-      this.logger.warn(
-        this.logContext({
-          message: 'Agent registration receipt check pending',
-          userId: wallet.userId,
-          txHash: wallet.agentRegistrationTxHash,
-          error: error?.message ?? String(error),
-        }),
-      );
-      return wallet;
-    }
-
-    if (!receiptStatus) return wallet;
-
-    if (receiptStatus === 'reverted') {
-      return this.prisma.userWallet.update({
-        where: { userId: wallet.userId },
-        data: { agentStatus: AgentStatus.RegistrationFailed },
-      });
-    }
-
-    try {
-      await this.openfort.verifyAgentKeyRegistration({
-        accountAddress: wallet.walletAddress!,
-        chainId: Number(wallet.chainId),
-        keyHash: wallet.agentKeyHash!,
-      });
-      return this.prisma.userWallet.update({
-        where: { userId: wallet.userId },
-        data: { agentStatus: AgentStatus.Registered },
-      });
-    } catch (error: any) {
-      this.logger.warn(
-        this.logContext({
-          message: 'Agent registration verification pending',
-          userId: wallet.userId,
-          txHash: wallet.agentRegistrationTxHash,
-          error: error?.message ?? String(error),
-        }),
-      );
-      return wallet;
-    }
+    return changed ? this.findWalletWithAuthorizations(wallet.userId) : wallet;
   }
 
   /**
@@ -437,18 +512,23 @@ export class AuthService {
     return expiresAt;
   }
 
-  private toWalletResponse(wallet: UserWallet): WalletResponse {
+  private toWalletResponse(wallet: WalletWithAuthorizations): WalletResponse {
     return {
       walletAddress: wallet.walletAddress,
       embeddedWalletAddress: wallet.walletAddress,
-      chainId: Number(wallet.chainId),
       status: wallet.status,
       supportedTokens: ['USDC', 'ETH'],
       agentWalletAddress: wallet.agentWalletAddress,
-      agentStatus: wallet.agentStatus,
       agentKeyHash: wallet.agentKeyHash,
-      agentRegistrationTxHash: wallet.agentRegistrationTxHash,
-      agentExpiresAt: wallet.agentExpiresAt?.toISOString() ?? null,
+      chainAuthorizations: (wallet.chainAuthorizations ?? [])
+        .map((authorization) => ({
+          chainId: Number(authorization.chainId),
+          status: authorization.status,
+          registrationTxHash: authorization.registrationTxHash,
+          expiresAt: authorization.expiresAt?.toISOString() ?? null,
+          updatedAt: authorization.updatedAt.toISOString(),
+        }))
+        .sort((a, b) => a.chainId - b.chainId),
     };
   }
 }

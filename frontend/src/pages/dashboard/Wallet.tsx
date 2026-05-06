@@ -164,7 +164,14 @@ export default function WalletPage() {
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
   const [agentChainId, setAgentChainId] = useState(DEFAULT_CHAIN_ID);
-  const agentRegistrationChainId = wallet?.agentStatus === 'pending_registration' ? wallet.chainId : agentChainId;
+  const selectedAuthorization = wallet?.chainAuthorizations.find((authorization) => authorization.chainId === agentChainId);
+  const pendingAuthorization = wallet?.chainAuthorizations.find(
+    (authorization) => authorization.status === 'pending_registration' && authorization.registrationTxHash,
+  );
+  const hasRegisteredAuthorization = wallet?.chainAuthorizations.some(
+    (authorization) => authorization.status === 'registered',
+  );
+  const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
@@ -224,12 +231,6 @@ export default function WalletPage() {
   }, [user, getToken]);
 
   useEffect(() => {
-    if (wallet?.chainId && wallet.agentStatus !== 'registered') {
-      setAgentChainId(wallet.chainId);
-    }
-  }, [wallet?.chainId, wallet?.agentStatus]);
-
-  useEffect(() => {
     if (!user || !wallet?.walletAddress) {
       setBalances(null);
       return;
@@ -255,14 +256,16 @@ export default function WalletPage() {
   }, [user, selectedChainId, wallet, getToken]);
 
   useEffect(() => {
-    const txHash = wallet?.agentRegistrationTxHash;
-    if (!user || !publicClient || wallet?.agentStatus !== 'pending_registration' || !txHash) {
+    const txHash = pendingAuthorization?.registrationTxHash;
+    const chainId = pendingAuthorization?.chainId;
+    if (!user || !publicClient || !chainId || !txHash) {
       return;
     }
 
     let cancelled = false;
     const client = publicClient;
     const savedTxHash = txHash;
+    const savedChainId = chainId;
 
     async function resumeAgentRegistrationCheck() {
       try {
@@ -272,7 +275,7 @@ export default function WalletPage() {
         });
         const status: 'registered' | 'registration_failed' =
           receipt.status === 'success' ? 'registered' : 'registration_failed';
-        const result = await markAgentRegistrationResult(getToken, { txHash: savedTxHash, status });
+        const result = await markAgentRegistrationResult(getToken, { chainId: savedChainId, txHash: savedTxHash, status });
         if (!cancelled) setWallet(result.wallet);
       } catch {
         // Leave the saved tx hash and pending status intact; the next page visit will retry.
@@ -284,7 +287,7 @@ export default function WalletPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, publicClient, wallet?.agentStatus, wallet?.agentRegistrationTxHash, getToken]);
+  }, [user, publicClient, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, getToken]);
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -314,10 +317,6 @@ export default function WalletPage() {
       assertWebCryptoAvailable();
       if (recoveryPassword.length < 8) {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
-      }
-      const agentExpiresAt = new Date(agentExpiryLocal);
-      if (Number.isNaN(agentExpiresAt.getTime()) || agentExpiresAt <= new Date()) {
-        throw new Error('Choose an agent key expiry time in the future.');
       }
 
       const openfortAccessToken = await getAccessToken();
@@ -352,8 +351,6 @@ export default function WalletPage() {
             openfortAccessToken,
             embeddedWalletAddress: address,
             embeddedOpenfortAccountId: accountId,
-            chainId: agentChainId,
-            agentExpiresAt: agentExpiresAt.toISOString(),
           });
           break;
         } catch (err: unknown) {
@@ -364,7 +361,7 @@ export default function WalletPage() {
       }
 
       setWallet(authorized.wallet);
-      setWalletSetupSuccess('Developer wallet created. Add a small amount of gas, then authorize API access.');
+      setWalletSetupSuccess('Developer wallet created. Choose a network below, add gas, then authorize API access.');
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
@@ -380,14 +377,40 @@ export default function WalletPage() {
 
     try {
       assertWebCryptoAvailable();
-      if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash || !wallet.agentExpiresAt) {
+      if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
       }
       if (recoveryPassword.length < 8) {
         throw new Error('Enter your wallet recovery password to unlock registration.');
       }
+      const agentExpiresAt = new Date(agentExpiryLocal);
+      if (Number.isNaN(agentExpiresAt.getTime()) || agentExpiresAt <= new Date()) {
+        throw new Error('Choose an API authorization expiry time in the future.');
+      }
 
       const address = wallet.walletAddress as Address;
+
+      let authorization = selectedAuthorization;
+      let currentWallet = wallet;
+      if (!authorization || authorization.status === 'registered' || authorization.status === 'registration_failed') {
+        const openfortAccessToken = await getAccessToken();
+        if (!openfortAccessToken) {
+          throw new Error('Openfort session is not ready. Refresh and sign in again.');
+        }
+        const initialized = await authorizeEmbeddedWallet(getToken, {
+          openfortAccessToken,
+          embeddedWalletAddress: address,
+          chainId: agentChainId,
+          agentExpiresAt: agentExpiresAt.toISOString(),
+        });
+        currentWallet = initialized.wallet;
+        setWallet(currentWallet);
+        authorization = currentWallet.chainAuthorizations.find((item) => item.chainId === agentChainId);
+      }
+
+      if (!authorization?.expiresAt) {
+        throw new Error('Missing authorization expiry. Please retry.');
+      }
 
       await embeddedWallet.setActive({
         address,
@@ -409,14 +432,14 @@ export default function WalletPage() {
 
       const agentKey: CaliburKey = {
         keyType: KeyType.Secp256k1,
-        publicKey: padHex(wallet.agentWalletAddress as Hex, { size: 32 }),
+        publicKey: padHex(currentWallet.agentWalletAddress as Hex, { size: 32 }),
       };
       const frontendKeyHash = hashKey(agentKey);
-      if (frontendKeyHash.toLowerCase() !== wallet.agentKeyHash.toLowerCase()) {
+      if (frontendKeyHash.toLowerCase() !== currentWallet.agentKeyHash!.toLowerCase()) {
         throw new Error('Agent key hash mismatch. Please contact support.');
       }
 
-      const expiration = Math.floor(new Date(wallet.agentExpiresAt).getTime() / 1000);
+      const expiration = Math.floor(new Date(authorization.expiresAt).getTime() / 1000);
       const txData = encodeExecute([
         encodeRegisterKey(agentKey),
         encodeUpdateKeySettings(frontendKeyHash, {
@@ -443,7 +466,7 @@ export default function WalletPage() {
       }
 
       const txHash = await sendTransactionAsync({ to: address, data: txData });
-      const pending = await markAgentRegistrationTransaction(getToken, { txHash });
+      const pending = await markAgentRegistrationTransaction(getToken, { chainId: agentChainId, txHash });
       setWallet(pending.wallet);
 
       let receipt: Awaited<ReturnType<typeof publicClient.waitForTransactionReceipt>>;
@@ -459,6 +482,7 @@ export default function WalletPage() {
 
       const registrationStatus = receipt.status === 'success' ? 'registered' : 'registration_failed';
       const result = await markAgentRegistrationResult(getToken, {
+        chainId: agentChainId,
         txHash,
         status: registrationStatus,
       });
@@ -477,20 +501,21 @@ export default function WalletPage() {
   }
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
+  const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
   const setupStatus = !wallet?.walletAddress
     ? { title: 'Create developer wallet', tone: 'amber', description: 'Set one recovery password. We keep the wallet secured by Openfort and never expose private keys.' }
-    : wallet.agentStatus === 'registered'
-      ? { title: 'Ready for API transactions', tone: 'green', description: 'Your developer wallet can now sign transactions submitted with API keys.' }
-      : wallet.agentStatus === 'pending_registration'
+    : hasRegisteredAuthorization
+      ? { title: 'Ready for API transactions', tone: 'green', description: 'Your developer wallet has API access on at least one network. You can authorize more networks anytime.' }
+      : pendingAuthorization
         ? { title: 'Authorization pending', tone: 'blue', description: 'The authorization transaction was submitted and is being checked.' }
-        : { title: 'Authorize API access', tone: 'blue', description: 'Add gas, unlock the wallet, and authorize the backend signer once.' };
+        : { title: 'Authorize API access', tone: 'blue', description: 'Choose a network, add gas, unlock the wallet, and authorize API access.' };
   const setupStatusClasses =
     setupStatus.tone === 'green'
       ? 'border-green-200 bg-green-50 text-green-800'
       : setupStatus.tone === 'blue'
         ? 'border-blue-200 bg-blue-50 text-blue-800'
         : 'border-amber-200 bg-amber-50 text-amber-800';
-  const setupPhase = !wallet?.walletAddress ? 1 : wallet.agentStatus === 'registered' ? 3 : 2;
+  const setupPhase = !wallet?.walletAddress ? 1 : hasRegisteredAuthorization ? 3 : 2;
   const setupSteps = [
     {
       number: 1,
@@ -500,8 +525,8 @@ export default function WalletPage() {
     },
     {
       number: 2,
-      title: 'Authorize access',
-      description: 'Unlock wallet and approve',
+      title: 'Authorize networks',
+      description: 'Choose network and approve',
       state: setupPhase > 2 ? 'done' : setupPhase === 2 ? 'active' : 'locked',
     },
   ];
@@ -558,10 +583,10 @@ export default function WalletPage() {
                     <h2 className="font-serif text-xl font-bold text-brand-text">{setupStatus.title}</h2>
                     <p className="mt-1 text-sm">{setupStatus.description}</p>
                     <p className="mt-2 text-xs font-medium opacity-80">
-                      Network: {agentChain?.name ?? `Chain ${agentChainId}`} · Status: {formatAgentStatus(wallet.agentStatus)}
+                      Selected network: {agentChain?.name ?? `Chain ${agentChainId}`} · Status: {formatAgentStatus(selectedAuthorizationStatus)}
                     </p>
                   </div>
-                  {wallet.agentStatus === 'registered' && (
+                  {hasRegisteredAuthorization && (
                     <Link
                       to="/dashboard/api-keys"
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-text px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl"
@@ -614,7 +639,7 @@ export default function WalletPage() {
                     );
                   })}
                 </div>
-                {wallet.agentStatus === 'registered' && (
+                {hasRegisteredAuthorization && (
                   <div className="rounded-xl border border-green-200 bg-white/70 p-4 text-sm text-green-800">
                     Wallet setup is complete. Create an API key when you are ready to connect your backend.
                   </div>
@@ -647,7 +672,7 @@ export default function WalletPage() {
                     Authorized Signer
                   </span>
                   <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
-                    {formatAgentStatus(wallet.agentStatus)}
+                    {wallet.chainAuthorizations.length} network{wallet.chainAuthorizations.length === 1 ? '' : 's'} configured
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -669,7 +694,7 @@ export default function WalletPage() {
                     Step 1: Create your developer wallet
                   </h2>
                   <p className="mt-1 text-sm text-amber-800">
-                    Choose a recovery password. Advanced settings already have safe defaults.
+                    Choose a recovery password. You will select networks in Step 2.
                   </p>
                 </div>
 
@@ -694,44 +719,6 @@ export default function WalletPage() {
                       className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
                   </div>
-
-                  <details className="rounded-xl border border-amber-200 bg-white/70 p-4 text-sm text-amber-900">
-                    <summary className="cursor-pointer select-none font-semibold text-brand-text">
-                      Advanced settings
-                    </summary>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                          Network
-                        </label>
-                        <select
-                          value={agentChainId}
-                          onChange={(event) => setAgentChainId(Number(event.target.value))}
-                          disabled={walletSetupLoading}
-                          className="block w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {SUPPORTED_CHAINS.map((chain) => (
-                            <option key={chain.id} value={chain.id}>
-                              {chain.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                          API authorization expiry
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={agentExpiryLocal}
-                          min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
-                          onChange={(event) => setAgentExpiryLocal(event.target.value)}
-                          required
-                          className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                        />
-                      </div>
-                    </div>
-                  </details>
                 </div>
 
                 <div className="mt-5 flex justify-end">
@@ -747,22 +734,27 @@ export default function WalletPage() {
               </form>
             )}
 
-            {wallet.walletAddress && wallet.agentStatus === 'registration_required' && (
+            {wallet.walletAddress && (
               <form
                 onSubmit={handleRegisterAgent}
                 className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm"
               >
                 <div className="mb-4">
-                  <h2 className="font-serif text-xl font-bold text-brand-text">
-                    Step 2: Authorize API access
-                  </h2>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="font-serif text-xl font-bold text-brand-text">
+                      Step 2: Authorize API access
+                    </h2>
+                    <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-200">
+                      Status: {formatAgentStatus(selectedAuthorizationStatus)}
+                    </span>
+                  </div>
                   <p className="mt-2 text-sm text-blue-800">
                     This one-time on-chain approval lets your backend submit transactions through API keys.
                   </p>
                   <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
                     <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
                     <p className="mb-3 text-blue-800">
-                      Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this wallet address, then unlock your wallet with the password from Step 1.
+                      Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this wallet address. Then use your Step 1 password to sign the one-time authorization in your browser.
                     </p>
                     <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
                       <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>
@@ -785,17 +777,47 @@ export default function WalletPage() {
                   </div>
                 )}
 
-                <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[1fr_auto] md:items-end">
+                <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-end">
+                  <div>
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Network
+                    </label>
+                    <select
+                      value={agentChainId}
+                      onChange={(event) => setAgentChainId(Number(event.target.value))}
+                      disabled={walletSetupLoading || registerTxPending}
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {SUPPORTED_CHAINS.map((chain) => (
+                        <option key={chain.id} value={chain.id}>
+                          {chain.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Authorization expiry
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={agentExpiryLocal}
+                      min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
+                      onChange={(event) => setAgentExpiryLocal(event.target.value)}
+                      required
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                    />
+                  </div>
                   <div className="flex-1">
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                      Wallet Password
+                      Step 1 Wallet Password
                     </label>
                     <input
                       type="password"
                       minLength={8}
                       value={recoveryPassword}
                       onChange={(event) => setRecoveryPassword(event.target.value)}
-                      placeholder="Password from Step 1"
+                      placeholder="Enter the password you created in Step 1"
                       className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
                   </div>
