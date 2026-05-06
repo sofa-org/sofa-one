@@ -541,9 +541,6 @@ export default function WalletPage() {
                       required
                       className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
-                    <p className="mt-1 text-xs text-amber-800">
-                      API-key transactions stop when this Calibur agent key expires.
-                    </p>
                   </div>
                   <button
                     type="submit"
