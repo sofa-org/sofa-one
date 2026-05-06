@@ -5,7 +5,6 @@ const AuthProviders = lazy(() => import('./components/AuthProviders'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
 const LandingPage = lazy(() => import('./pages/Landing'));
 const SignInPage = lazy(() => import('./pages/SignIn'));
-const SignUpPage = lazy(() => import('./pages/SignUp'));
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
 const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
 const ApiKeysPage = lazy(() => import('./pages/dashboard/ApiKeys'));
@@ -34,7 +33,7 @@ export default function App() {
           />
           <Route
             path="/sign-up/*"
-            element={<SignUpPage />}
+            element={<Navigate to="/sign-in" replace />}
           />
           <Route
             path="/dashboard"

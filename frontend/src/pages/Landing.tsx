@@ -23,7 +23,7 @@ export default function LandingPage() {
 
         <div className="mb-16 flex items-center justify-center">
           <Link
-            to="/sign-up"
+            to="/sign-in"
             className="rounded-full bg-brand-text px-10 py-3.5 text-sm font-medium tracking-widest text-white transition-colors hover:bg-black/90"
           >
             GET STARTED

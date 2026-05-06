@@ -47,19 +47,9 @@ export default function SignInPage() {
 
         <div className="w-full max-w-sm">
           <Suspense fallback={<AuthFormFallback />}>
-            <AuthFormPanel mode="sign-in" />
+            <AuthFormPanel />
           </Suspense>
         </div>
-
-        <p className="mt-6 text-center text-sm text-brand-muted">
-          New to SOFA ONE?{' '}
-          <Link
-            to="/sign-up"
-            className="font-medium text-brand-text underline underline-offset-4 decoration-brand-border transition-colors hover:text-brand-accent hover:decoration-brand-accent"
-          >
-            Create an account
-          </Link>
-        </p>
 
         <p className="mt-8 text-center text-xs text-brand-muted">
           By continuing, you agree to our{' '}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useEmailOtpAuth } from '@openfort/react';
 import { useNavigate } from 'react-router-dom';
 
-export default function EmailOtpForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+export default function EmailOtpForm() {
   const navigate = useNavigate();
   const { requestEmailOtp, signInEmailOtp, isRequesting, isLoading } = useEmailOtpAuth();
   const [email, setEmail] = useState('');
@@ -35,7 +35,7 @@ export default function EmailOtpForm({ mode }: { mode: 'sign-in' | 'sign-up' }) 
   return (
     <div className="w-full rounded-2xl border border-brand-border bg-white p-8 shadow-2xl shadow-[#E8E2D9]/40">
       <h1 className="font-serif text-2xl font-semibold text-brand-text">
-        {mode === 'sign-in' ? 'Sign in' : 'Create account'}
+        Sign in or create account
       </h1>
       <p className="mt-2 text-sm text-brand-muted">
         Use Openfort email OTP to access your embedded wallet.
