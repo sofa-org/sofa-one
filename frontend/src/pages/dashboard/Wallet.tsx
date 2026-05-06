@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient, useSendTransaction } from 'wagmi';
-import { padHex, zeroAddress, type Address, type Hex } from 'viem';
+import { formatEther, padHex, zeroAddress, type Address, type Hex } from 'viem';
 import {
   DEFAULT_CHAIN_ID,
   authorizeEmbeddedWallet,
@@ -122,6 +122,13 @@ function formatDateTimeLocal(date: Date) {
 
 function getDefaultAgentExpiryLocal() {
   return formatDateTimeLocal(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+}
+
+function formatNativeAmount(raw: bigint) {
+  const value = formatEther(raw);
+  const [whole, fraction = ''] = value.split('.');
+  const trimmedFraction = fraction.slice(0, 6).replace(/0+$/, '');
+  return trimmedFraction ? `${whole}.${trimmedFraction}` : whole;
 }
 
 export default function WalletPage() {
@@ -303,6 +310,18 @@ export default function WalletPage() {
         password: recoveryPassword,
       });
 
+      if (!publicClient) {
+        throw new Error('Cannot check gas balance for this chain. Please retry after the network is ready.');
+      }
+
+      const nativeSymbol = publicClient.chain?.nativeCurrency.symbol ?? 'native gas token';
+      const nativeBalance = await publicClient.getBalance({ address });
+      if (nativeBalance === 0n) {
+        throw new Error(
+          `Your wallet has no ${nativeSymbol} for gas. Deposit ${nativeSymbol} to ${address} and retry agent registration.`,
+        );
+      }
+
       const authorized = await authorizeEmbeddedWallet(getToken, {
         openfortAccessToken,
         embeddedWalletAddress: address,
@@ -329,6 +348,23 @@ export default function WalletPage() {
           hook: zeroAddress,
         }),
       ]);
+
+      const estimatedGas = await publicClient.estimateGas({
+        account: address,
+        to: address,
+        data: txData,
+      });
+      const fees = await publicClient.estimateFeesPerGas().catch(() => null);
+      const gasPrice = fees?.maxFeePerGas ?? (await publicClient.getGasPrice());
+      const requiredGasBalance = estimatedGas * gasPrice;
+      const requiredGasBalanceWithBuffer = requiredGasBalance + requiredGasBalance / 5n;
+
+      if (nativeBalance < requiredGasBalanceWithBuffer) {
+        throw new Error(
+          `Your ${nativeSymbol} balance is too low to register the agent key. Current: ${formatNativeAmount(nativeBalance)} ${nativeSymbol}; estimated needed: ${formatNativeAmount(requiredGasBalanceWithBuffer)} ${nativeSymbol}. Deposit gas to ${address} and retry.`,
+        );
+      }
+
       const txHash = await sendTransactionAsync({ to: address, data: txData });
       const pending = await markAgentRegistrationTransaction(getToken, { txHash });
       setWallet(pending.wallet);
