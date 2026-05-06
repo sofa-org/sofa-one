@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient, useSendTransaction } from 'wagmi';
@@ -27,7 +28,7 @@ import {
   hashKey,
   type CaliburKey,
 } from '@/lib/calibur';
-import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 
 function parseUsdcAmount(input: string): string {
@@ -363,7 +364,7 @@ export default function WalletPage() {
       }
 
       setWallet(authorized.wallet);
-      setWalletSetupSuccess('Embedded wallet connected successfully.');
+      setWalletSetupSuccess('Developer wallet created. Add a small amount of gas, then authorize API access.');
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
@@ -452,7 +453,7 @@ export default function WalletPage() {
           timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
         });
       } catch {
-        setWalletSetupSuccess(`Agent key registration pending. We will check again next time: ${txHash}`);
+        setWalletSetupSuccess(`Authorization pending. We will check again next time: ${txHash}`);
         return;
       }
 
@@ -464,9 +465,9 @@ export default function WalletPage() {
 
       setWallet(result.wallet);
       if (registrationStatus === 'registered') {
-        setWalletSetupSuccess(`Agent key registration succeeded: ${txHash}`);
+        setWalletSetupSuccess(`API access authorized: ${txHash}`);
       } else {
-        setWalletSetupError(`Agent key registration failed: ${txHash}`);
+        setWalletSetupError(`API access authorization failed: ${txHash}`);
       }
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
@@ -474,6 +475,36 @@ export default function WalletPage() {
       setWalletSetupLoading(false);
     }
   }
+
+  const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
+  const setupStatus = !wallet?.walletAddress
+    ? { title: 'Create developer wallet', tone: 'amber', description: 'Set one recovery password. We keep the wallet secured by Openfort and never expose private keys.' }
+    : wallet.agentStatus === 'registered'
+      ? { title: 'Ready for API transactions', tone: 'green', description: 'Your developer wallet can now sign transactions submitted with API keys.' }
+      : wallet.agentStatus === 'pending_registration'
+        ? { title: 'Authorization pending', tone: 'blue', description: 'The authorization transaction was submitted and is being checked.' }
+        : { title: 'Authorize API access', tone: 'blue', description: 'Add gas, unlock the wallet, and authorize the backend signer once.' };
+  const setupStatusClasses =
+    setupStatus.tone === 'green'
+      ? 'border-green-200 bg-green-50 text-green-800'
+      : setupStatus.tone === 'blue'
+        ? 'border-blue-200 bg-blue-50 text-blue-800'
+        : 'border-amber-200 bg-amber-50 text-amber-800';
+  const setupPhase = !wallet?.walletAddress ? 1 : wallet.agentStatus === 'registered' ? 3 : 2;
+  const setupSteps = [
+    {
+      number: 1,
+      title: 'Create wallet',
+      description: 'Set recovery password',
+      state: setupPhase > 1 ? 'done' : setupPhase === 1 ? 'active' : 'locked',
+    },
+    {
+      number: 2,
+      title: 'Authorize access',
+      description: 'Unlock wallet and approve',
+      state: setupPhase > 2 ? 'done' : setupPhase === 2 ? 'active' : 'locked',
+    },
+  ];
 
   if (loading) {
     return (
@@ -495,14 +526,16 @@ export default function WalletPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-10 pb-16">
       <div className="border-b border-brand-border pb-6">
-        <h1 className="text-3xl font-bold font-serif text-brand-text">Wallet Overview</h1>
-        <p className="mt-2 text-sm text-brand-muted">Manage your TEE-secured wallet and balances</p>
+        <h1 className="text-3xl font-bold font-serif text-brand-text">Developer Wallet</h1>
+        <p className="mt-2 max-w-2xl text-sm text-brand-muted">
+          Create one secure wallet, authorize API access, then use API keys from your backend.
+        </p>
       </div>
 
       {apiKeyDisplay && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
           <p className="text-sm font-medium text-amber-800 mb-2">
-            Your API key (save it — shown only once):
+            API key for backend requests (save it — shown only once):
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 break-all rounded-lg bg-amber-100 px-4 py-3 font-mono text-sm text-amber-900 ring-1 ring-amber-200/50">
@@ -518,11 +551,82 @@ export default function WalletPage() {
           <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
 
           <div className="mt-0 space-y-6">
+            <div className={`rounded-2xl border p-5 shadow-sm ${setupStatusClasses}`}>
+              <div className="space-y-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-brand-text">{setupStatus.title}</h2>
+                    <p className="mt-1 text-sm">{setupStatus.description}</p>
+                    <p className="mt-2 text-xs font-medium opacity-80">
+                      Network: {agentChain?.name ?? `Chain ${agentChainId}`} · Status: {formatAgentStatus(wallet.agentStatus)}
+                    </p>
+                  </div>
+                  {wallet.agentStatus === 'registered' && (
+                    <Link
+                      to="/dashboard/api-keys"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-text px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl"
+                    >
+                      Create API key
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+                  {setupSteps.map((step, index) => {
+                    const isDone = step.state === 'done';
+                    const isActive = step.state === 'active';
+                    return (
+                      <div key={step.number} className="contents">
+                        <div
+                          className={`rounded-xl border bg-white/75 p-4 ring-1 ring-black/5 ${
+                            isActive
+                              ? 'border-brand-text shadow-sm'
+                              : isDone
+                                ? 'border-green-200'
+                                : 'border-brand-border/70 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                isDone
+                                  ? 'bg-green-600 text-white'
+                                  : isActive
+                                    ? 'bg-brand-text text-white'
+                                    : 'bg-brand-bg text-brand-muted ring-1 ring-brand-border'
+                              }`}
+                            >
+                              {isDone ? <CheckCircle2 className="h-4 w-4" /> : step.number}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-brand-text">Step {step.number}: {step.title}</p>
+                              <p className="mt-0.5 text-xs text-brand-muted">{step.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                        {index === 0 && (
+                          <div className="hidden items-center px-1 text-brand-muted md:flex" aria-hidden="true">
+                            <ArrowRight className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {wallet.agentStatus === 'registered' && (
+                  <div className="rounded-xl border border-green-200 bg-white/70 p-4 text-sm text-green-800">
+                    Wallet setup is complete. Create an API key when you are ready to connect your backend.
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Address</label>
               <div className="mt-1 flex items-center gap-3">
                 <p className="break-all font-mono text-sm text-brand-text flex-1">
-                  {wallet.walletAddress ?? 'Connect an embedded wallet to finish setup'}
+                  {wallet.walletAddress ?? 'Create a developer wallet to finish setup'}
                 </p>
                 {wallet.walletAddress && <CopyButton text={wallet.walletAddress} className="shrink-0" />}
                 <button
@@ -540,7 +644,7 @@ export default function WalletPage() {
               <div className="rounded-xl border border-brand-border/60 bg-brand-bg/30 p-4 text-sm">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                    Backend Agent Wallet
+                    Authorized Signer
                   </span>
                   <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
                     {formatAgentStatus(wallet.agentStatus)}
@@ -562,10 +666,10 @@ export default function WalletPage() {
               >
                 <div className="mb-4">
                   <h2 className="font-serif text-xl font-bold text-brand-text">
-                    Connect your Openfort embedded wallet
+                    Step 1: Create your developer wallet
                   </h2>
                   <p className="mt-1 text-sm text-amber-800">
-                    This creates or activates your user smart wallet and authorizes it for backend use.
+                    Choose a recovery password. Advanced settings already have safe defaults.
                   </p>
                 </div>
 
@@ -576,25 +680,8 @@ export default function WalletPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                  <div className="w-full sm:w-44">
-                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                      Agent Chain
-                    </label>
-                    <select
-                      value={agentChainId}
-                      onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={walletSetupLoading}
-                      className="block w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {SUPPORTED_CHAINS.map((chain) => (
-                        <option key={chain.id} value={chain.id}>
-                          {chain.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
+                <div className="space-y-5">
+                  <div className="max-w-xl">
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                       Recovery Password
                     </label>
@@ -607,20 +694,46 @@ export default function WalletPage() {
                       className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
                   </div>
-                  <div className="flex-1">
-                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                      Agent Key Expiry
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={agentExpiryLocal}
-                      min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
-                      onChange={(event) => setAgentExpiryLocal(event.target.value)}
-                      required
-                      className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                    />
-                  </div>
+
+                  <details className="rounded-xl border border-amber-200 bg-white/70 p-4 text-sm text-amber-900">
+                    <summary className="cursor-pointer select-none font-semibold text-brand-text">
+                      Advanced settings
+                    </summary>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                          Network
+                        </label>
+                        <select
+                          value={agentChainId}
+                          onChange={(event) => setAgentChainId(Number(event.target.value))}
+                          disabled={walletSetupLoading}
+                          className="block w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {SUPPORTED_CHAINS.map((chain) => (
+                            <option key={chain.id} value={chain.id}>
+                              {chain.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                          API authorization expiry
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={agentExpiryLocal}
+                          min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
+                          onChange={(event) => setAgentExpiryLocal(event.target.value)}
+                          required
+                          className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                        />
+                      </div>
+                    </div>
+                  </details>
                 </div>
+
                 <div className="mt-5 flex justify-end">
                   <button
                     type="submit"
@@ -628,7 +741,7 @@ export default function WalletPage() {
                     className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {walletSetupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <span>Connect Wallet</span>
+                    <span>Create Wallet</span>
                   </button>
                 </div>
               </form>
@@ -641,14 +754,16 @@ export default function WalletPage() {
               >
                 <div className="mb-4">
                   <h2 className="font-serif text-xl font-bold text-brand-text">
-                    Register your agent key
+                    Step 2: Authorize API access
                   </h2>
                   <p className="mt-2 text-sm text-blue-800">
-                    Your embedded wallet is ready. To enable API-key transactions, you must register the backend agent key on Calibur.
+                    This one-time on-chain approval lets your backend submit transactions through API keys.
                   </p>
-                  <div className="mt-3 rounded-lg bg-blue-100/50 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
-                    <strong className="block mb-1 text-blue-950">Action Required: Deposit Gas</strong>
-                    <p className="mb-3 text-blue-800">Deposit {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on your selected chain to this embedded wallet address before registering:</p>
+                  <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
+                    <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
+                    <p className="mb-3 text-blue-800">
+                      Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this wallet address, then unlock your wallet with the password from Step 1.
+                    </p>
                     <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
                       <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>
                       <CopyButton text={wallet.walletAddress} className="border-blue-300 text-blue-600 hover:bg-blue-100 bg-blue-50" />
@@ -670,34 +785,17 @@ export default function WalletPage() {
                   </div>
                 )}
 
-                <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[176px_1fr_auto] md:items-end">
-                  <div className="w-full sm:w-44">
-                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                      Agent Chain
-                    </label>
-                    <select
-                      value={agentChainId}
-                      onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={walletSetupLoading || registerTxPending}
-                      className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {SUPPORTED_CHAINS.map((chain) => (
-                        <option key={chain.id} value={chain.id}>
-                          {chain.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[1fr_auto] md:items-end">
                   <div className="flex-1">
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                      Recovery Password
+                      Wallet Password
                     </label>
                     <input
                       type="password"
                       minLength={8}
                       value={recoveryPassword}
                       onChange={(event) => setRecoveryPassword(event.target.value)}
-                      placeholder="Unlock your embedded wallet"
+                      placeholder="Password from Step 1"
                       className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
                   </div>
@@ -710,7 +808,7 @@ export default function WalletPage() {
                       {(walletSetupLoading || registerTxPending) && (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
-                      <span>{registerTxPending ? 'Confirming...' : 'Register Agent Key'}</span>
+                      <span>{registerTxPending ? 'Confirming...' : 'Authorize API Access'}</span>
                     </button>
                   </div>
                 </div>

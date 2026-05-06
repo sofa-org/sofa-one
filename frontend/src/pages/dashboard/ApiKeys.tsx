@@ -89,21 +89,13 @@ export default function ApiKeysPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-brand-border pb-6 gap-4">
+      <div className="border-b border-brand-border pb-6">
         <div>
           <h1 className="text-3xl font-bold font-serif text-brand-text">API Keys</h1>
           <p className="mt-2 text-sm text-brand-muted">
-            Manage authentication keys for programmatic access.
+            Create keys your backend uses to submit transactions through your authorized developer wallet.
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={actionLoading}
-          className="flex items-center gap-1.5 rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-semibold text-brand-text hover:border-brand-accent hover:text-brand-accent hover:shadow-sm transition-all disabled:opacity-50"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Rotate All Keys
-        </button>
       </div>
 
       {error && (
@@ -123,7 +115,10 @@ export default function ApiKeysPage() {
             <X className="h-3.5 w-3.5" />
           </button>
           <p className="text-sm font-medium text-amber-800">
-            New API key created — save it now (shown only once):
+            New backend API key created — save it now (shown only once):
+          </p>
+          <p className="mt-1 text-xs text-amber-700">
+            Use this as the <code>X-API-Key</code> header from your server. Do not expose it in browser code.
           </p>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 break-all rounded-xl bg-amber-100/50 border border-amber-200/50 px-4 py-3 font-mono text-sm text-amber-900 shadow-sm">
@@ -138,7 +133,7 @@ export default function ApiKeysPage() {
         <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
         <h2 className="text-xl font-bold font-serif text-brand-text">Create New Key</h2>
         <p className="mt-2 text-sm text-brand-muted">
-          API keys identify your application. Choose the execution chain when creating or registering the agent key.
+          Name the app or environment that will use this key. You can revoke individual keys anytime.
         </p>
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-end">
           <div className="space-y-2 lg:flex-1">
@@ -175,7 +170,12 @@ export default function ApiKeysPage() {
             <Loader2 className="h-8 w-8 animate-spin text-brand-accent" />
           </div>
         ) : keys.length === 0 ? (
-          <p className="px-7 py-12 text-center text-sm text-brand-muted">No API keys yet.</p>
+          <div className="px-7 py-12 text-center">
+            <p className="text-base font-semibold text-brand-text">Create your first API key</p>
+            <p className="mt-2 text-sm text-brand-muted">
+              After your developer wallet is authorized, this key authenticates backend transaction requests.
+            </p>
+          </div>
         ) : (
           <div className="divide-y divide-brand-border">
             <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
@@ -240,6 +240,25 @@ export default function ApiKeysPage() {
           </pre>
         </div>
       </div>
+
+      <details className="rounded-2xl border border-red-200 bg-red-50 p-7 shadow-sm">
+        <summary className="cursor-pointer select-none text-xl font-bold font-serif text-brand-text">
+          Advanced key rotation
+        </summary>
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-2xl text-sm text-red-800">
+            Rotate all keys only if you believe existing keys were exposed. This revokes every active key and creates one replacement.
+          </p>
+          <button
+            onClick={handleRefresh}
+            disabled={actionLoading}
+            className="flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-5 py-2 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Rotate All Keys
+          </button>
+        </div>
+      </details>
     </div>
   );
 }
