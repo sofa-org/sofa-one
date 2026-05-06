@@ -78,6 +78,7 @@ function TokenIcon({ token }: { token: string }) {
 function resolveEmbeddedWallet(
   createdAccount: unknown,
   embeddedWallet: { address?: Address; activeWallet?: unknown; wallets?: unknown[] },
+  refreshedAccounts?: unknown[],
 ): { address: Address; accountId?: string } {
   const created = createdAccount as
     | { id?: string; address?: Address; accounts?: Array<{ id?: string; address?: Address }> }
@@ -88,7 +89,10 @@ function resolveEmbeddedWallet(
   const firstWallet = embeddedWallet.wallets?.[0] as
     | { id?: string; address?: Address; accountId?: string; accounts?: Array<{ id?: string }> }
     | undefined;
-  const address = embeddedWallet.address ?? active?.address ?? created?.address ?? firstWallet?.address;
+  const firstRefreshed = refreshedAccounts?.[0] as
+    | { id?: string; address?: Address; accountId?: string; accounts?: Array<{ id?: string }> }
+    | undefined;
+  const address = created?.address ?? embeddedWallet.address ?? active?.address ?? firstWallet?.address ?? firstRefreshed?.address;
 
   if (!address) {
     throw new Error('Embedded wallet address was not returned by Openfort.');
@@ -103,9 +107,15 @@ function resolveEmbeddedWallet(
       created?.id ??
       firstWallet?.accountId ??
       firstWallet?.accounts?.[0]?.id ??
-      firstWallet?.id,
+      firstWallet?.id ??
+      firstRefreshed?.accountId ??
+      firstRefreshed?.accounts?.[0]?.id ??
+      firstRefreshed?.id,
   };
 }
+
+const AUTHORIZE_EMBEDDED_WALLET_RETRIES = 5;
+const AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS = 1_000;
 
 function formatAgentStatus(status?: string | null) {
   if (status === 'registered') return 'success';
@@ -131,6 +141,17 @@ function formatNativeAmount(raw: bigint) {
   const [whole, fraction = ''] = value.split('.');
   const trimmedFraction = fraction.slice(0, 6).replace(/0+$/, '');
   return trimmedFraction ? `${whole}.${trimmedFraction}` : whole;
+}
+
+function assertWebCryptoAvailable() {
+  if (globalThis.crypto?.subtle) return;
+  throw new Error(
+    'Secure browser crypto is not available. Open this app over HTTPS or localhost before creating an embedded wallet.',
+  );
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export default function WalletPage() {
@@ -289,6 +310,7 @@ export default function WalletPage() {
     setWalletSetupSuccess(null);
 
     try {
+      assertWebCryptoAvailable();
       if (recoveryPassword.length < 8) {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
       }
@@ -303,6 +325,7 @@ export default function WalletPage() {
       }
 
       let createdAccount: unknown;
+      let refreshedAccounts: unknown[] | undefined;
       if (!embeddedWallet.address) {
         createdAccount = await embeddedWallet.create({
           chainId: agentChainId,
@@ -310,10 +333,10 @@ export default function WalletPage() {
           recoveryMethod: RecoveryMethod.PASSWORD,
           password: recoveryPassword,
         });
-        await openfort.updateEmbeddedAccounts({ silent: true });
+        refreshedAccounts = await openfort.updateEmbeddedAccounts({ silent: true });
       }
 
-      const { address, accountId } = resolveEmbeddedWallet(createdAccount, embeddedWallet);
+      const { address, accountId } = resolveEmbeddedWallet(createdAccount, embeddedWallet, refreshedAccounts);
       await embeddedWallet.setActive({
         address,
         chainId: agentChainId,
@@ -321,13 +344,23 @@ export default function WalletPage() {
         password: recoveryPassword,
       });
 
-      const authorized = await authorizeEmbeddedWallet(getToken, {
-        openfortAccessToken,
-        embeddedWalletAddress: address,
-        embeddedOpenfortAccountId: accountId,
-        chainId: agentChainId,
-        agentExpiresAt: agentExpiresAt.toISOString(),
-      });
+      let authorized: AuthSessionResponse;
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          authorized = await authorizeEmbeddedWallet(getToken, {
+            openfortAccessToken,
+            embeddedWalletAddress: address,
+            embeddedOpenfortAccountId: accountId,
+            chainId: agentChainId,
+            agentExpiresAt: agentExpiresAt.toISOString(),
+          });
+          break;
+        } catch (err: unknown) {
+          if (attempt >= AUTHORIZE_EMBEDDED_WALLET_RETRIES) throw err;
+          await delay(AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS);
+          refreshedAccounts = await openfort.updateEmbeddedAccounts({ silent: true });
+        }
+      }
 
       setWallet(authorized.wallet);
       setWalletSetupSuccess('Embedded wallet connected successfully.');
@@ -345,6 +378,7 @@ export default function WalletPage() {
     setWalletSetupSuccess(null);
 
     try {
+      assertWebCryptoAvailable();
       if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash || !wallet.agentExpiresAt) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
       }
