@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@openfort/react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
+import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
   listApiKeysAuth,
   createApiKeyAuth,
@@ -88,16 +89,10 @@ export default function ApiKeysPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      <div className="border-b border-brand-border pb-6">
-        <div>
-          <h1 className="text-3xl font-bold font-serif text-brand-text">API Keys</h1>
-          <p className="mt-2 text-sm text-brand-muted">
-            Create keys your backend uses to submit transactions through your authorized developer wallet.
-          </p>
-        </div>
-      </div>
-
+    <DashboardPage
+      title="API Keys"
+      description="Create keys your backend uses to submit transactions through your authorized developer wallet."
+    >
       {error && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
           <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
@@ -129,12 +124,10 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-        <h2 className="text-xl font-bold font-serif text-brand-text">Create New Key</h2>
-        <p className="mt-2 text-sm text-brand-muted">
-          Name the app or environment that will use this key. You can revoke individual keys anytime.
-        </p>
+      <DashboardCard
+        title="Create New Key"
+        description="Name the app or environment that will use this key. You can revoke individual keys anytime."
+      >
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-end">
           <div className="space-y-2 lg:flex-1">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
@@ -158,7 +151,7 @@ export default function ApiKeysPage() {
             </button>
           </div>
         </div>
-      </div>
+      </DashboardCard>
 
       <div className="rounded-2xl border border-brand-border bg-white shadow-xl relative overflow-hidden ring-1 ring-black/5">
         <div className="p-7 border-b border-brand-border">
@@ -221,8 +214,7 @@ export default function ApiKeysPage() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
-        <h2 className="text-xl font-bold font-serif text-brand-text">Quick Start</h2>
+      <DashboardCard title="Quick Start">
         <div className="mt-5">
           <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
 {`curl -X POST ${window.location.origin}/api/v1/transactions/send \\
@@ -239,7 +231,7 @@ export default function ApiKeysPage() {
   }'`}
           </pre>
         </div>
-      </div>
+      </DashboardCard>
 
       <details className="rounded-2xl border border-red-200 bg-red-50 p-7 shadow-sm">
         <summary className="cursor-pointer select-none text-xl font-bold font-serif text-brand-text">
@@ -259,6 +251,6 @@ export default function ApiKeysPage() {
           </button>
         </div>
       </details>
-    </div>
+    </DashboardPage>
   );
 }

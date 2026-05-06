@@ -1,3 +1,5 @@
+import { DashboardPage } from "./components/DashboardPage";
+
 const codeClass =
   "rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm";
 
@@ -88,24 +90,20 @@ function EndpointCard({
 
 export default function APIDocsPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      <header className="rounded-3xl border border-brand-border bg-white p-8 shadow-xl ring-1 ring-black/5">
-        <div className="mb-4 flex flex-wrap gap-2">
+    <DashboardPage
+      title="API Documentation"
+      description="Sign messages and submit contract interactions from your SOFA ONE backend wallet. Private keys stay inside Openfort TEE infrastructure and are never returned to clients."
+      tags={
+        <>
           <span className="rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-accent">
             Public API
           </span>
           <span className="rounded-full bg-brand-bg px-3 py-1 text-xs font-medium text-brand-muted">
             TEE-managed wallet signing
           </span>
-        </div>
-        <h1 className="mb-3 font-serif text-3xl font-bold text-brand-text">
-          API Documentation
-        </h1>
-        <p className="max-w-3xl text-sm leading-6 text-brand-muted">
-          Sign messages and submit contract interactions from your SOFA ONE backend wallet. Private keys stay inside Openfort TEE infrastructure and are never returned to clients.
-        </p>
-      </header>
-
+        </>
+      }
+    >
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
@@ -256,6 +254,6 @@ export default function APIDocsPage() {
           </p>
         </div>
       </section>
-    </div>
+    </DashboardPage>
   );
 }

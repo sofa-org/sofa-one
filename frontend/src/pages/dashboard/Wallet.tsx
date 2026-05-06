@@ -30,6 +30,7 @@ import {
 } from '@/lib/calibur';
 import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
+import { DashboardPage, DashboardCard } from './components/DashboardPage';
 
 function parseUsdcAmount(input: string): string {
   const trimmed = input.trim();
@@ -531,33 +532,25 @@ export default function WalletPage() {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-border border-t-brand-accent" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto max-w-6xl flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-        <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
-        {error}
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      <div className="border-b border-brand-border pb-6">
-        <h1 className="text-3xl font-bold font-serif text-brand-text">Developer Wallet</h1>
-        <p className="mt-2 max-w-2xl text-sm text-brand-muted">
-          Create one secure wallet, authorize API access, then use API keys from your backend.
-        </p>
-      </div>
-
-      {apiKeyDisplay && (
+    <DashboardPage
+      title="Developer Wallet"
+      description="Create one secure wallet, authorize API access, then use API keys from your backend."
+    >
+      {loading ? (
+        <DashboardCard>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-accent" />
+          </div>
+        </DashboardCard>
+      ) : error ? (
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+          {error}
+        </div>
+      ) : (
+        <>
+          {apiKeyDisplay && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
           <p className="text-sm font-medium text-amber-800 mb-2">
             API key for backend requests (save it — shown only once):
@@ -569,13 +562,11 @@ export default function WalletPage() {
             <CopyButton text={apiKeyDisplay} className="shrink-0 border-amber-300 text-amber-600 hover:bg-amber-100" />
           </div>
         </div>
-      )}
+          )}
 
-      {wallet && (
-        <div className="rounded-2xl border border-brand-border bg-white p-7 shadow-xl relative overflow-hidden ring-1 ring-black/5">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-brand-text" />
-
-          <div className="mt-0 space-y-6">
+          {wallet && (
+        <DashboardCard className="!p-0">
+          <div className="p-7 space-y-6">
             <div className={`rounded-2xl border p-5 shadow-sm ${setupStatusClasses}`}>
               <div className="space-y-5">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -975,9 +966,11 @@ export default function WalletPage() {
               </div>
             )}
           </div>
-        </div>
+        </DashboardCard>
+          )}
+        </>
       )}
 
-    </div>
+    </DashboardPage>
   );
 }
