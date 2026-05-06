@@ -426,7 +426,6 @@ components:
             - WALLET_NOT_FOUND
             - TRANSACTION_NOT_FOUND
             - CHAIN_NOT_SUPPORTED
-            - CHAIN_NOT_ALLOWED
             - IDEMPOTENCY_CONFLICT
             - RAW_HASH_SIGNING_DISABLED
             - WALLET_NOT_ACTIVE

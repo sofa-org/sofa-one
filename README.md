@@ -174,7 +174,7 @@ curl http://localhost:3001/v1/transactions/<transactionId> \
 
 > **Access control split**: `POST /v1/wallets/sign`, `POST /v1/transactions/send`, and `GET /v1/transactions/:id` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
 >
-> API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates allowed chains/expiry, and returns raw secrets only once on creation/rotation.
+> API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates expiry, and returns raw secrets only once on creation/rotation.
 
 ### Public API error contract
 
@@ -190,7 +190,7 @@ Errors use a stable machine-readable `code` plus a human-readable `message`:
 }
 ```
 
-Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `CHAIN_NOT_ALLOWED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
+Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `CHAIN_NOT_SUPPORTED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
 
 Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 

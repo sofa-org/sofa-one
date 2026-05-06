@@ -51,7 +51,6 @@ model ApiKey {
   expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
   revoked       Boolean   @default(false)
   allowedIps    String[]  @map("allowed_ips")
-  allowedChains Int[]     @default([84532]) @map("allowed_chains")
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz()
 

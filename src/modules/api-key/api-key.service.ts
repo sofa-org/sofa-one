@@ -3,7 +3,6 @@ import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
-import { DEFAULT_CHAIN_ID, getSupportedChain } from '../../common/chains/supported-chains';
 import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
 
 const MAX_ACTIVE_API_KEYS = 10;
@@ -11,7 +10,6 @@ const MAX_API_KEY_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 type ApiKeyCreateOptions = {
   name: string;
-  allowedChains?: number[];
   expiresAt?: string | Date;
   allowedIps?: string[];
 };
@@ -41,7 +39,6 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
-          allowedChains: normalized.allowedChains,
         },
       });
 
@@ -49,7 +46,6 @@ export class ApiKeyService {
         keyPrefix: created.keyPrefix,
         keyName: created.name,
         metadata: {
-          allowedChains: created.allowedChains,
           allowedIps: created.allowedIps,
           expiresAt: created.expiresAt?.toISOString() ?? null,
         },
@@ -63,7 +59,6 @@ export class ApiKeyService {
       rawKey: keyMaterial.rawKey,
       keyPrefix: apiKey.keyPrefix,
       name: apiKey.name,
-      allowedChains: apiKey.allowedChains,
       expiresAt: apiKey.expiresAt,
       createdAt: apiKey.createdAt,
     };
@@ -152,7 +147,6 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: [],
-          allowedChains: normalized.allowedChains,
         },
       });
 
@@ -161,7 +155,6 @@ export class ApiKeyService {
         keyName: created.name,
         metadata: {
           revokedKeyCount: activeKeys.length,
-          allowedChains: created.allowedChains,
         },
       });
 
@@ -173,7 +166,6 @@ export class ApiKeyService {
       rawKey: keyMaterial.rawKey,
       keyPrefix: apiKey.keyPrefix,
       name: apiKey.name,
-      allowedChains: apiKey.allowedChains,
       expiresAt: apiKey.expiresAt,
       createdAt: apiKey.createdAt,
     };
@@ -190,7 +182,6 @@ export class ApiKeyService {
         revoked: true,
         expiresAt: true,
         allowedIps: true,
-        allowedChains: true,
         createdAt: true,
         lastUsedAt: true,
       },
@@ -204,15 +195,10 @@ export class ApiKeyService {
       throw new BadRequestException('API key name is required');
     }
 
-    const allowedChains = options.allowedChains?.length
-      ? [...new Set(options.allowedChains)]
-      : [DEFAULT_CHAIN_ID];
-    allowedChains.forEach(getSupportedChain);
-
     const expiresAt = this.normalizeExpiresAt(options.expiresAt);
     const allowedIps = options.allowedIps ?? [];
 
-    return { name, allowedChains, expiresAt, allowedIps };
+    return { name, expiresAt, allowedIps };
   }
 
   private normalizeExpiresAt(expiresAt?: string | Date) {

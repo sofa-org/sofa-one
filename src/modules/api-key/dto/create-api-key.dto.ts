@@ -2,13 +2,11 @@ import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsISO8601,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
-  Min,
 } from 'class-validator';
 
 export class CreateApiKeyDto {
@@ -21,12 +19,6 @@ export class CreateApiKeyDto {
   @IsOptional()
   @IsISO8601()
   expiresAt?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  allowedChains?: number[];
 
   @IsOptional()
   @IsArray()

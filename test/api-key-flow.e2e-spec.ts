@@ -24,7 +24,6 @@ process.env.DATABASE_URL =
 const TEST_WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
 const TEST_TARGET_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const TEST_CHAIN_ID = 84532;
-const DISALLOWED_CHAIN_ID = 8453;
 const TEST_TX_HASH = `0x${'1'.repeat(64)}`;
 const TEST_SIGNATURE = `0x${'2'.repeat(130)}`;
 
@@ -82,7 +81,7 @@ describe('API-key public security flow (e2e)', () => {
     throttlerStorage.storage?.clear();
     await cleanDatabase();
 
-    const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key', [TEST_CHAIN_ID]);
+    const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key');
     testUserId = seeded.userId;
     testApiKey = seeded.rawKey;
     testKeyId = seeded.keyId;
@@ -266,7 +265,7 @@ describe('API-key public security flow (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/api-keys')
         .set('X-API-Key', testApiKey)
-        .send({ name: 'Illegitimate child key', allowedChains: [TEST_CHAIN_ID] })
+        .send({ name: 'Illegitimate child key' })
         .expect(401);
       await request(app.getHttpServer())
         .post('/v1/wallets/deposit-info')
@@ -302,7 +301,6 @@ describe('API-key public security flow (e2e)', () => {
       const expired = await seedUserWithKey(
         'expired_social_id_e2e',
         'Expired Key',
-        [TEST_CHAIN_ID],
         {
           openfortAccountId: 'ofa_expired_account_123',
           walletAddress: '0x2222222222222222222222222222222222222222',
@@ -317,28 +315,6 @@ describe('API-key public security flow (e2e)', () => {
         .set('X-API-Key', expired.rawKey)
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'expired' })
         .expect(401);
-    });
-
-    it('rejects disallowed chains for sign and send', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/sign')
-        .set('X-API-Key', testApiKey)
-        .send({ chainId: DISALLOWED_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(400)
-        .expect((res) => expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/wallets/sign'));
-
-      await request(app.getHttpServer())
-        .post('/v1/transactions/send')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: DISALLOWED_CHAIN_ID,
-          idempotencyKey: 'wrong-chain',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
-        })
-        .expect(400)
-        .expect((res) =>
-          expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/transactions/send'),
-        );
     });
 
     it('rejects raw hash signing before creating a signing audit row', async () => {
@@ -403,7 +379,7 @@ describe('API-key public security flow (e2e)', () => {
         },
       });
 
-      const other = await seedUserWithKey('other_social_id_e2e', 'Other E2E Key', [TEST_CHAIN_ID], {
+      const other = await seedUserWithKey('other_social_id_e2e', 'Other E2E Key', {
         openfortAccountId: 'ofa_other_account_123',
         walletAddress: '0x3333333333333333333333333333333333333333',
       });
@@ -440,7 +416,6 @@ describe('API-key public security flow (e2e)', () => {
   async function seedUserWithKey(
     socialId: string,
     keyName: string,
-    allowedChains: number[],
     wallet: { openfortAccountId: string; walletAddress: string } = {
       openfortAccountId: 'ofa_test_account_123',
       walletAddress: TEST_WALLET_ADDRESS,
@@ -463,7 +438,7 @@ describe('API-key public security flow (e2e)', () => {
       },
     });
 
-    const key = await apiKeyService.createApiKey(user.id, { name: keyName, allowedChains });
+    const key = await apiKeyService.createApiKey(user.id, { name: keyName });
 
     return { userId: user.id, keyId: key.id, rawKey: key.rawKey };
   }

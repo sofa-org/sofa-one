@@ -15,7 +15,7 @@ describe('TransactionsService', () => {
     agentWalletAddress: '0x2222222222222222222222222222222222222222',
     agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
     agentStatus: 'registered',
-    agentExpiresAt: new Date('2026-05-06T00:00:00.000Z'),
+    agentExpiresAt: new Date('2027-05-06T00:00:00.000Z'),
     chainId: BigInt(84532),
     status: 'active',
   };
@@ -30,7 +30,6 @@ describe('TransactionsService', () => {
     id: 'api-key-1',
     keyPrefix: apiKeyPrefix,
     name: 'Production key',
-    allowedChains: [8453],
   };
 
   const prisma = {
@@ -239,13 +238,6 @@ describe('TransactionsService', () => {
     },
   );
 
-  it('rejects API keys that are not allowed to use the requested chain', async () => {
-    await expect(
-      service.send('user-1', dto as any, { ...apiKeyContext, allowedChains: [84532] }),
-    ).rejects.toThrow(BadRequestException);
-    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
-  });
-
   it('rejects idempotency key reuse with a different request on the same chain', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-existing',
@@ -350,17 +342,4 @@ describe('TransactionsService', () => {
     );
   });
 
-  it('rejects status lookup when the API key is not allowed on the transaction chain', async () => {
-    prisma.transaction.findFirst.mockResolvedValue({
-      id: 'tx-1',
-      status: 'confirmed',
-      txHash: '0xhash',
-      chainId: BigInt(8453),
-      walletAddress: wallet.walletAddress,
-    });
-
-    await expect(
-      service.getStatus('user-1', 'tx-1', { ...apiKeyContext, allowedChains: [84532] }),
-    ).rejects.toThrow(BadRequestException);
-  });
 });

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
-import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
+import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
@@ -18,7 +18,6 @@ type ApiKeyTransactionContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
-  allowedChains: number[];
 };
 
 @Injectable()
@@ -43,7 +42,6 @@ export class TransactionsService {
 
     const chainId = dto.chainId;
     getSupportedChain(chainId);
-    assertAllowedApiKeyChain(apiKeyRecord, chainId);
     this.assertAgentWalletReady(wallet);
     const accountAddress = wallet.walletAddress!;
     const agentAccountId = wallet.agentOpenfortAccountId!;
@@ -203,8 +201,6 @@ export class TransactionsService {
       where: { id: transactionId, userId },
     });
     if (!tx) throw new NotFoundException('Transaction not found');
-
-    assertAllowedApiKeyChain(apiKeyRecord, Number(tx.chainId));
 
     return this.toStatusResponse(tx);
   }

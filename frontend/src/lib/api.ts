@@ -141,7 +141,6 @@ export interface ApiKeyRecord {
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
-  allowedChains: number[];
 }
 
 export interface CreateApiKeyResponse {
@@ -197,8 +196,6 @@ function friendlyErrorMessage(code: string, fallback: string) {
     case 'API_KEY_REQUIRED':
     case 'AUTHENTICATION_REQUIRED':
       return 'Authentication is required. Sign in again or provide a valid API key.';
-    case 'CHAIN_NOT_ALLOWED':
-      return 'This key is not allowed to use the selected chain.';
     case 'CHAIN_NOT_SUPPORTED':
       return 'The selected chain is not supported.';
     case 'IDEMPOTENCY_CONFLICT':
@@ -346,11 +343,10 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
 export async function createApiKeyAuth(
   getToken: () => Promise<string | null>,
   name: string,
-  allowedChains?: number[],
 ) {
   return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
     method: 'POST',
-    body: JSON.stringify({ name, allowedChains }),
+    body: JSON.stringify({ name }),
   });
 }
 

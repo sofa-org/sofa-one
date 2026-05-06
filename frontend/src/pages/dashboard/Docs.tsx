@@ -252,7 +252,7 @@ export default function APIDocsPage() {
   "path": "/v1/transactions/send"
 }`}</CodeBlock>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
-            Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">CHAIN_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
+            Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
           </p>
         </div>
       </section>

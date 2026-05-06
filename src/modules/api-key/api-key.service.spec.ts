@@ -52,7 +52,6 @@ describe('ApiKeyService', () => {
           keyPrefix: result.keyPrefix,
           apiKeyHash: 'argon2-hash',
           name: 'Production key',
-          allowedChains: [84532],
         }),
       }),
     );
@@ -118,15 +117,6 @@ describe('ApiKeyService', () => {
         expiresAt: new Date(Date.now() + 366 * 24 * 60 * 60 * 1000),
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-  });
-
-  it('rejects unsupported allowed chains', async () => {
-    const service = new ApiKeyService(prisma as any);
-
-    await expect(
-      service.createApiKey('user-1', { name: 'Bad chain', allowedChains: [999999] }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
   it('audits single-key revocation and rejects unknown keys', async () => {

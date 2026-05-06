@@ -20,7 +20,7 @@ import {
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
-import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
+import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import type { SignDto, SignMessage } from './dto/sign.dto';
@@ -40,7 +40,6 @@ type ApiKeySigningContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
-  allowedChains: number[];
 };
 
 @Injectable()
@@ -103,7 +102,6 @@ export class WalletService {
     const chainId = this.resolveSigningChainId(params);
     if (chainId !== undefined) {
       getSupportedChain(chainId);
-      assertAllowedApiKeyChain(apiKeyRecord, chainId);
     }
 
     let data: string;

@@ -18,6 +18,7 @@ import {
   type BalanceChain,
   type WalletInfo,
 } from '@/lib/api';
+import { SUPPORTED_CHAINS } from '@/lib/chains';
 import {
   KeyType,
   encodeExecute,
@@ -140,8 +141,10 @@ export default function WalletPage() {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
-  const publicClient = usePublicClient({ chainId: wallet?.chainId ?? selectedChainId });
-  const embeddedWallet = useEthereumEmbeddedWallet({ chainId: selectedChainId });
+  const [agentChainId, setAgentChainId] = useState(DEFAULT_CHAIN_ID);
+  const agentRegistrationChainId = wallet?.agentStatus === 'pending_registration' ? wallet.chainId : agentChainId;
+  const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
+  const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -196,6 +199,12 @@ export default function WalletPage() {
       controller.abort();
     };
   }, [user, getToken]);
+
+  useEffect(() => {
+    if (wallet?.chainId && wallet.agentStatus !== 'registered') {
+      setAgentChainId(wallet.chainId);
+    }
+  }, [wallet?.chainId, wallet?.agentStatus]);
 
   useEffect(() => {
     if (!user || !wallet?.walletAddress) {
@@ -295,7 +304,7 @@ export default function WalletPage() {
       let createdAccount: unknown;
       if (!embeddedWallet.address) {
         createdAccount = await embeddedWallet.create({
-          chainId: selectedChainId,
+          chainId: agentChainId,
           accountType: AccountTypeEnum.SMART_ACCOUNT,
           recoveryMethod: RecoveryMethod.PASSWORD,
           password: recoveryPassword,
@@ -306,7 +315,7 @@ export default function WalletPage() {
       const { address, accountId } = resolveEmbeddedWallet(createdAccount, embeddedWallet);
       await embeddedWallet.setActive({
         address,
-        chainId: selectedChainId,
+        chainId: agentChainId,
         recoveryMethod: RecoveryMethod.PASSWORD,
         password: recoveryPassword,
       });
@@ -327,7 +336,7 @@ export default function WalletPage() {
         openfortAccessToken,
         embeddedWalletAddress: address,
         embeddedOpenfortAccountId: accountId,
-        chainId: selectedChainId,
+        chainId: agentChainId,
         agentExpiresAt: agentExpiresAt.toISOString(),
       });
 
@@ -516,6 +525,23 @@ export default function WalletPage() {
                 )}
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="w-full sm:w-44">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Agent Chain
+                    </label>
+                    <select
+                      value={agentChainId}
+                      onChange={(event) => setAgentChainId(Number(event.target.value))}
+                      disabled={walletSetupLoading || registerTxPending}
+                      className="block w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {SUPPORTED_CHAINS.map((chain) => (
+                        <option key={chain.id} value={chain.id}>
+                          {chain.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex-1">
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                       Recovery Password
@@ -542,6 +568,8 @@ export default function WalletPage() {
                       className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
                     />
                   </div>
+                </div>
+                <div className="mt-5 flex justify-end">
                   <button
                     type="submit"
                     disabled={walletSetupLoading || registerTxPending}
@@ -564,12 +592,11 @@ export default function WalletPage() {
                   onChange={(e) => setSelectedChainId(Number(e.target.value))}
                   className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors cursor-pointer hover:bg-brand-bg/50"
                 >
-                  <option value={84532}>Base Sepolia</option>
-                  <option value={8453}>Base</option>
-                  <option value={1}>Ethereum</option>
-                  <option value={11155111}>Ethereum Sepolia</option>
-                  <option value={137}>Polygon</option>
-                  <option value={80002}>Polygon Amoy</option>
+                  {SUPPORTED_CHAINS.map((chain) => (
+                    <option key={chain.id} value={chain.id}>
+                      {chain.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -650,12 +677,11 @@ export default function WalletPage() {
                         onChange={(e) => setSelectedChainId(Number(e.target.value))}
                         className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
                       >
-                        <option value={84532}>Base Sepolia</option>
-                        <option value={8453}>Base</option>
-                        <option value={1}>Ethereum</option>
-                        <option value={11155111}>Ethereum Sepolia</option>
-                        <option value={137}>Polygon</option>
-                        <option value={80002}>Polygon Amoy</option>
+                        {SUPPORTED_CHAINS.map((chain) => (
+                          <option key={chain.id} value={chain.id}>
+                            {chain.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="flex-1">

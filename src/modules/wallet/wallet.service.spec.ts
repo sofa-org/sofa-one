@@ -61,7 +61,6 @@ const API_KEY_CONTEXT = {
   id: 'api-key-1',
   keyPrefix: API_KEY_PREFIX,
   name: 'Production key',
-  allowedChains: [84532],
 };
 const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
 const WRAPPED_SIGNATURE = encodeAbiParameters(
@@ -492,7 +491,6 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
         id: API_KEY_CONTEXT.id,
-        allowedChains: [84532],
       }),
     ).rejects.toThrow(
       'typedData.domain.chainId is required when signing typed data with an API key',
@@ -505,7 +503,6 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
         id: API_KEY_CONTEXT.id,
-        allowedChains: [84532],
       }),
     ).rejects.toThrow('typedData.domain.chainId must match chainId');
   });
@@ -518,7 +515,6 @@ describe('WalletService.sign()', () => {
       { type: 'typed_data', typedData, chainId: 84532 } as any,
       {
         id: API_KEY_CONTEXT.id,
-        allowedChains: [84532],
       },
     );
 
