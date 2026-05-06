@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
@@ -154,6 +155,22 @@ export class OpenfortService {
       this.logOpenfortError('verifyAgentKeyRegistration', error, {
         chainId: params.chainId,
       });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  async getTransactionReceiptStatus(chainId: number, txHash: string): Promise<'success' | 'reverted' | null> {
+    try {
+      const { chain } = getSupportedChain(chainId);
+      const client = createClient({ chain, transport: http() });
+      const receipt = await getTransactionReceipt(client, { hash: txHash as Hex });
+      return receipt.status ?? null;
+    } catch (error: any) {
+      const message = String(error?.message ?? '');
+      if (message.includes('Transaction receipt not found') || message.includes('not found')) {
+        return null;
+      }
+      this.logOpenfortError('getTransactionReceiptStatus', error, { chainId, txHash });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

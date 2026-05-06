@@ -51,6 +51,7 @@ describe('AuthService', () => {
       createAgentWallet: jest.fn(),
       authorizeEmbeddedAddress: jest.fn(),
       verifyAgentKeyRegistration: jest.fn(),
+      getTransactionReceiptStatus: jest.fn(),
     };
 
     apiKeyService = {
@@ -157,6 +158,48 @@ describe('AuthService', () => {
       expect.objectContaining({
         create: expect.objectContaining({ agentExpiresAt: new Date(expiresAt) }),
         update: expect.objectContaining({ agentExpiresAt: new Date(expiresAt) }),
+      }),
+    );
+  });
+
+  it('sets registration required while agent details exist but no tx hash is recorded', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet: null });
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      chainId: BigInt(chainId),
+      status: 'active',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'registration_required',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: null,
+      agentExpiresAt: null,
+    };
+    prisma.userWallet.upsert = jest.fn().mockResolvedValue(wallet);
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({
+      openfortUserId: 'openfort-user-1',
+      accountId: 'embedded-account-1',
+      address: wallet.walletAddress,
+    });
+    openfort.createAgentWallet.mockResolvedValue({
+      id: wallet.agentOpenfortAccountId,
+      address: wallet.agentWalletAddress,
+      keyHash: wallet.agentKeyHash,
+    });
+
+    await service.authorizeEmbeddedWallet('openfort-user-1', {
+      openfortAccessToken: 'openfort-token',
+      embeddedWalletAddress: wallet.walletAddress,
+      chainId,
+    });
+
+    expect(prisma.userWallet.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ agentStatus: 'registration_required', agentRegistrationTxHash: null }),
+        update: expect.objectContaining({ agentStatus: 'registration_required', agentRegistrationTxHash: null }),
       }),
     );
   });
@@ -339,6 +382,129 @@ describe('AuthService', () => {
     expect(prisma.userWallet.update).toHaveBeenCalledWith({
       where: { userId: 'user-1' },
       data: { agentStatus: 'registration_failed', agentRegistrationTxHash: txHash },
+    });
+  });
+
+  it('normalizes pending agent rows without tx hash to registration required on getMe', async () => {
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: null,
+      agentExpiresAt: null,
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    prisma.userWallet.update.mockResolvedValue({ ...wallet, agentStatus: 'registration_required' });
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'registration_required' },
+    });
+
+    expect(openfort.getTransactionReceiptStatus).not.toHaveBeenCalled();
+    expect(prisma.userWallet.update).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      data: { agentStatus: 'registration_required' },
+    });
+  });
+
+  it('self-heals pending agent registration to registered when receipt is successful', async () => {
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      agentExpiresAt: null,
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    openfort.getTransactionReceiptStatus = jest.fn().mockResolvedValue('success');
+    openfort.verifyAgentKeyRegistration.mockResolvedValue(undefined);
+    prisma.userWallet.update.mockResolvedValue({ ...wallet, agentStatus: 'registered' });
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'registered' },
+    });
+
+    expect(openfort.getTransactionReceiptStatus).toHaveBeenCalledWith(chainId, wallet.agentRegistrationTxHash);
+    expect(openfort.verifyAgentKeyRegistration).toHaveBeenCalled();
+  });
+
+  it('marks pending agent registration failed when receipt is reverted', async () => {
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      agentExpiresAt: null,
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    openfort.getTransactionReceiptStatus = jest.fn().mockResolvedValue('reverted');
+    prisma.userWallet.update.mockResolvedValue({ ...wallet, agentStatus: 'registration_failed' });
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'registration_failed' },
+    });
+
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+  });
+
+  it('keeps pending agent registration when receipt is missing, receipt check fails, or verification fails', async () => {
+    const wallet = {
+      id: 'wallet-1',
+      userId: 'user-1',
+      openfortAccountId: 'embedded-account-1',
+      status: 'active',
+      chainId: BigInt(chainId),
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      agentOpenfortAccountId: 'agent-account-1',
+      agentWalletAddress: '0x2222222222222222222222222222222222222222',
+      agentStatus: 'pending_registration',
+      agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      agentRegistrationTxHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      agentExpiresAt: null,
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    openfort.getTransactionReceiptStatus = jest.fn().mockResolvedValue(null);
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'pending_registration' },
+    });
+
+    openfort.getTransactionReceiptStatus.mockRejectedValue(new Error('rpc unavailable'));
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'pending_registration' },
+    });
+
+    openfort.getTransactionReceiptStatus.mockResolvedValue('success');
+    openfort.verifyAgentKeyRegistration.mockRejectedValue(new Error('rpc lag'));
+
+    await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({
+      wallet: { agentStatus: 'pending_registration' },
     });
   });
 });

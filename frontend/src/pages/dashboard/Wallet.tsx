@@ -109,6 +109,7 @@ function resolveEmbeddedWallet(
 function formatAgentStatus(status?: string | null) {
   if (status === 'registered') return 'success';
   if (status === 'registration_failed') return 'failed';
+  if (status === 'registration_required') return 'action required';
   if (status === 'pending_registration') return 'checking';
   return status ?? 'not registered';
 }
@@ -484,18 +485,19 @@ export default function WalletPage() {
               </div>
             )}
 
-            {!wallet.walletAddress && (
+            {(!wallet.walletAddress || wallet.agentStatus === 'registration_required') && (
               <form
                 onSubmit={handleSetupEmbeddedWallet}
                 className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm"
               >
                 <div className="mb-4">
                   <h2 className="font-serif text-xl font-bold text-brand-text">
-                    Connect your Openfort embedded wallet
+                    {wallet.walletAddress ? 'Register your agent key' : 'Connect your Openfort embedded wallet'}
                   </h2>
                   <p className="mt-1 text-sm text-amber-800">
-                    This creates or activates your user smart wallet, asks it to register the backend
-                    agent key on Calibur, then uses that key for API-key transaction execution.
+                    {wallet.walletAddress
+                      ? 'Your embedded wallet is ready. Register the backend agent key on Calibur to enable API-key transactions.'
+                      : 'This creates or activates your user smart wallet, asks it to register the backend agent key on Calibur, then uses that key for API-key transaction execution.'}
                   </p>
                 </div>
 

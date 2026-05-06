@@ -1,4 +1,5 @@
 export const AgentStatus = {
+  RegistrationRequired: 'registration_required',
   PendingRegistration: 'pending_registration',
   Registered: 'registered',
   RegistrationFailed: 'registration_failed',

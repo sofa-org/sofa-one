@@ -174,7 +174,7 @@ export class AuthService {
         agentOpenfortAccountId: agent.id,
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
-        agentStatus: AgentStatus.PendingRegistration,
+        agentStatus: AgentStatus.RegistrationRequired,
         agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
@@ -186,7 +186,7 @@ export class AuthService {
         agentOpenfortAccountId: agent.id,
         agentWalletAddress: agent.address,
         agentKeyHash: agent.keyHash,
-        agentStatus: AgentStatus.PendingRegistration,
+        agentStatus: AgentStatus.RegistrationRequired,
         agentRegistrationTxHash: null,
         agentExpiresAt: expiresAt,
       },
@@ -318,10 +318,81 @@ export class AuthService {
 
     if (!user || !user.wallet) throw new NotFoundException('User or wallet not found');
 
+    const wallet = await this.selfHealAgentRegistration(user.wallet);
+
     return {
       userId: user.id,
-      wallet: this.toWalletResponse(user.wallet),
+      wallet: this.toWalletResponse(wallet),
     };
+  }
+
+  private async selfHealAgentRegistration(wallet: UserWallet) {
+    if (
+      !this.hasAgentRegistrationContext(wallet) ||
+      wallet.agentStatus !== AgentStatus.PendingRegistration ||
+      !wallet.agentRegistrationTxHash
+    ) {
+      if (
+        this.hasAgentRegistrationContext(wallet) &&
+        wallet.agentStatus === AgentStatus.PendingRegistration &&
+        !wallet.agentRegistrationTxHash
+      ) {
+        return this.prisma.userWallet.update({
+          where: { userId: wallet.userId },
+          data: { agentStatus: AgentStatus.RegistrationRequired },
+        });
+      }
+      return wallet;
+    }
+
+    let receiptStatus: 'success' | 'reverted' | null;
+    try {
+      receiptStatus = await this.openfort.getTransactionReceiptStatus(
+        Number(wallet.chainId),
+        wallet.agentRegistrationTxHash,
+      );
+    } catch (error: any) {
+      this.logger.warn(
+        this.logContext({
+          message: 'Agent registration receipt check pending',
+          userId: wallet.userId,
+          txHash: wallet.agentRegistrationTxHash,
+          error: error?.message ?? String(error),
+        }),
+      );
+      return wallet;
+    }
+
+    if (!receiptStatus) return wallet;
+
+    if (receiptStatus === 'reverted') {
+      return this.prisma.userWallet.update({
+        where: { userId: wallet.userId },
+        data: { agentStatus: AgentStatus.RegistrationFailed },
+      });
+    }
+
+    try {
+      await this.openfort.verifyAgentKeyRegistration({
+        accountAddress: wallet.walletAddress!,
+        chainId: Number(wallet.chainId),
+        keyHash: wallet.agentKeyHash!,
+      });
+      return this.prisma.userWallet.update({
+        where: { userId: wallet.userId },
+        data: { agentStatus: AgentStatus.Registered },
+      });
+    } catch (error: any) {
+      this.logger.warn(
+        this.logContext({
+          message: 'Agent registration verification pending',
+          userId: wallet.userId,
+          txHash: wallet.agentRegistrationTxHash,
+          error: error?.message ?? String(error),
+        }),
+      );
+      return wallet;
+    }
   }
 
   /**
