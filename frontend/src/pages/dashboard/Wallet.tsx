@@ -145,6 +145,7 @@ export default function WalletPage() {
   const agentRegistrationChainId = wallet?.agentStatus === 'pending_registration' ? wallet.chainId : agentChainId;
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
+  const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -281,7 +282,7 @@ export default function WalletPage() {
     }
   }
 
-  async function handleSetupEmbeddedWallet(e: React.FormEvent) {
+  async function handleConnectWallet(e: React.FormEvent) {
     e.preventDefault();
     setWalletSetupLoading(true);
     setWalletSetupError(null);
@@ -320,18 +321,6 @@ export default function WalletPage() {
         password: recoveryPassword,
       });
 
-      if (!publicClient) {
-        throw new Error('Cannot check gas balance for this chain. Please retry after the network is ready.');
-      }
-
-      const nativeSymbol = publicClient.chain?.nativeCurrency.symbol ?? 'native gas token';
-      const nativeBalance = await publicClient.getBalance({ address });
-      if (nativeBalance === 0n) {
-        throw new Error(
-          `Your wallet has no ${nativeSymbol} for gas. Deposit ${nativeSymbol} to ${address} and retry agent registration.`,
-        );
-      }
-
       const authorized = await authorizeEmbeddedWallet(getToken, {
         openfortAccessToken,
         embeddedWalletAddress: address,
@@ -340,16 +329,59 @@ export default function WalletPage() {
         agentExpiresAt: agentExpiresAt.toISOString(),
       });
 
-      const agentKey: CaliburKey = {
-        keyType: KeyType.Secp256k1,
-        publicKey: padHex(authorized.agentRegistration.agentAddress as Hex, { size: 32 }),
-      };
-      const frontendKeyHash = hashKey(agentKey);
-      if (frontendKeyHash.toLowerCase() !== authorized.agentRegistration.keyHash.toLowerCase()) {
-        throw new Error('Agent key hash mismatch. Please retry wallet setup.');
+      setWallet(authorized.wallet);
+      setWalletSetupSuccess('Embedded wallet connected successfully.');
+    } catch (err: unknown) {
+      setWalletSetupError(getApiErrorMessage(err));
+    } finally {
+      setWalletSetupLoading(false);
+    }
+  }
+
+  async function handleRegisterAgent(e: React.FormEvent) {
+    e.preventDefault();
+    setWalletSetupLoading(true);
+    setWalletSetupError(null);
+    setWalletSetupSuccess(null);
+
+    try {
+      if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash || !wallet.agentExpiresAt) {
+        throw new Error('Missing wallet or agent key details. Please reload the page.');
+      }
+      if (recoveryPassword.length < 8) {
+        throw new Error('Enter your wallet recovery password to unlock registration.');
       }
 
-      const expiration = Math.floor(new Date(authorized.agentRegistration.expiresAt).getTime() / 1000);
+      const address = wallet.walletAddress as Address;
+
+      await embeddedWallet.setActive({
+        address,
+        chainId: agentChainId,
+        recoveryMethod: RecoveryMethod.PASSWORD,
+        password: recoveryPassword,
+      });
+
+      if (!publicClient) {
+        throw new Error('Cannot check gas balance for this chain. Please retry after the network is ready.');
+      }
+
+      const nativeBalance = await publicClient.getBalance({ address });
+      if (nativeBalance === 0n) {
+        throw new Error(
+          `Your wallet has no ${agentNativeSymbol} for gas. Deposit ${agentNativeSymbol} to ${address} and retry agent registration.`,
+        );
+      }
+
+      const agentKey: CaliburKey = {
+        keyType: KeyType.Secp256k1,
+        publicKey: padHex(wallet.agentWalletAddress as Hex, { size: 32 }),
+      };
+      const frontendKeyHash = hashKey(agentKey);
+      if (frontendKeyHash.toLowerCase() !== wallet.agentKeyHash.toLowerCase()) {
+        throw new Error('Agent key hash mismatch. Please contact support.');
+      }
+
+      const expiration = Math.floor(new Date(wallet.agentExpiresAt).getTime() / 1000);
       const txData = encodeExecute([
         encodeRegisterKey(agentKey),
         encodeUpdateKeySettings(frontendKeyHash, {
@@ -371,18 +403,13 @@ export default function WalletPage() {
 
       if (nativeBalance < requiredGasBalanceWithBuffer) {
         throw new Error(
-          `Your ${nativeSymbol} balance is too low to register the agent key. Current: ${formatNativeAmount(nativeBalance)} ${nativeSymbol}; estimated needed: ${formatNativeAmount(requiredGasBalanceWithBuffer)} ${nativeSymbol}. Deposit gas to ${address} and retry.`,
+          `Your ${agentNativeSymbol} balance is too low to register the agent key. Current: ${formatNativeAmount(nativeBalance)} ${agentNativeSymbol}; estimated needed: ${formatNativeAmount(requiredGasBalanceWithBuffer)} ${agentNativeSymbol}. Deposit gas to ${address} and retry.`,
         );
       }
 
       const txHash = await sendTransactionAsync({ to: address, data: txData });
       const pending = await markAgentRegistrationTransaction(getToken, { txHash });
       setWallet(pending.wallet);
-
-      if (!publicClient) {
-        setWalletSetupSuccess(`Agent key registration pending. We will check again next time: ${txHash}`);
-        return;
-      }
 
       let receipt: Awaited<ReturnType<typeof publicClient.waitForTransactionReceipt>>;
       try {
@@ -494,19 +521,17 @@ export default function WalletPage() {
               </div>
             )}
 
-            {(!wallet.walletAddress || wallet.agentStatus === 'registration_required') && (
+            {!wallet.walletAddress && (
               <form
-                onSubmit={handleSetupEmbeddedWallet}
+                onSubmit={handleConnectWallet}
                 className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm"
               >
                 <div className="mb-4">
                   <h2 className="font-serif text-xl font-bold text-brand-text">
-                    {wallet.walletAddress ? 'Register your agent key' : 'Connect your Openfort embedded wallet'}
+                    Connect your Openfort embedded wallet
                   </h2>
                   <p className="mt-1 text-sm text-amber-800">
-                    {wallet.walletAddress
-                      ? 'Your embedded wallet is ready. Register the backend agent key on Calibur to enable API-key transactions.'
-                      : 'This creates or activates your user smart wallet, asks it to register the backend agent key on Calibur, then uses that key for API-key transaction execution.'}
+                    This creates or activates your user smart wallet and authorizes it for backend use.
                   </p>
                 </div>
 
@@ -514,13 +539,6 @@ export default function WalletPage() {
                   <div className="mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
                     <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
                     {walletSetupError}
-                  </div>
-                )}
-
-                {walletSetupSuccess && (
-                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
-                    <span className="break-all">{walletSetupSuccess}</span>
                   </div>
                 )}
 
@@ -532,7 +550,7 @@ export default function WalletPage() {
                     <select
                       value={agentChainId}
                       onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={walletSetupLoading || registerTxPending}
+                      disabled={walletSetupLoading}
                       className="block w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {SUPPORTED_CHAINS.map((chain) => (
@@ -572,14 +590,95 @@ export default function WalletPage() {
                 <div className="mt-5 flex justify-end">
                   <button
                     type="submit"
-                    disabled={walletSetupLoading || registerTxPending}
+                    disabled={walletSetupLoading}
                     className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {(walletSetupLoading || registerTxPending) && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    <span>{registerTxPending ? 'Confirming...' : 'Create & Register Agent'}</span>
+                    {walletSetupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <span>Connect Wallet</span>
                   </button>
+                </div>
+              </form>
+            )}
+
+            {wallet.walletAddress && wallet.agentStatus === 'registration_required' && (
+              <form
+                onSubmit={handleRegisterAgent}
+                className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm"
+              >
+                <div className="mb-4">
+                  <h2 className="font-serif text-xl font-bold text-brand-text">
+                    Register your agent key
+                  </h2>
+                  <p className="mt-2 text-sm text-blue-800">
+                    Your embedded wallet is ready. To enable API-key transactions, you must register the backend agent key on Calibur.
+                  </p>
+                  <div className="mt-3 rounded-lg bg-blue-100/50 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
+                    <strong className="block mb-1 text-blue-950">Action Required: Deposit Gas</strong>
+                    <p className="mb-3 text-blue-800">Deposit {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on your selected chain to this embedded wallet address before registering:</p>
+                    <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
+                      <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>
+                      <CopyButton text={wallet.walletAddress} className="border-blue-300 text-blue-600 hover:bg-blue-100 bg-blue-50" />
+                    </div>
+                  </div>
+                </div>
+
+                {walletSetupError && (
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+                    {walletSetupError}
+                  </div>
+                )}
+
+                {walletSetupSuccess && (
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                    <span className="break-all">{walletSetupSuccess}</span>
+                  </div>
+                )}
+
+                <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[176px_1fr_auto] md:items-end">
+                  <div className="w-full sm:w-44">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Agent Chain
+                    </label>
+                    <select
+                      value={agentChainId}
+                      onChange={(event) => setAgentChainId(Number(event.target.value))}
+                      disabled={walletSetupLoading || registerTxPending}
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {SUPPORTED_CHAINS.map((chain) => (
+                        <option key={chain.id} value={chain.id}>
+                          {chain.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                      Recovery Password
+                    </label>
+                    <input
+                      type="password"
+                      minLength={8}
+                      value={recoveryPassword}
+                      onChange={(event) => setRecoveryPassword(event.target.value)}
+                      placeholder="Unlock your embedded wallet"
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={walletSetupLoading || registerTxPending}
+                      className="flex h-[42px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand-text px-8 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {(walletSetupLoading || registerTxPending) && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      <span>{registerTxPending ? 'Confirming...' : 'Register Agent Key'}</span>
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
