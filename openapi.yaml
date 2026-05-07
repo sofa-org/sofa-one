@@ -88,8 +88,8 @@ paths:
 
         | type | 说明 | 必填字段 |
         |------|------|----------|
-        | `message` | EIP-191 个人消息签名 | `message` |
-        | `typed_data` | EIP-712 结构化数据签名 | `typedData` |
+        | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
+        | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData` |
       operationId: signData
       requestBody:
         required: true
@@ -102,6 +102,7 @@ paths:
                 summary: 签名纯文本消息
                 value:
                   type: message
+                  chainId: 84532
                   message: "Hello, SOFA ONE!"
               typedData:
                 summary: 签名 EIP-712 结构化数据
@@ -248,7 +249,7 @@ components:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [type, chainId]
+      required: [type]
       properties:
         type:
           type: string
@@ -263,7 +264,7 @@ components:
         chainId:
           type: integer
           minimum: 1
-          description: 必填链上下文；该链必须已在开发者钱包中完成 API access authorization。`typed_data.domain.chainId` 如存在必须与该值一致。
+          description: 链上下文。`message` 签名必填；`typed_data` 可省略并从 `typedData.domain.chainId` 推导。如两者同时存在，必须一致。该链必须已在开发者钱包中完成 API access authorization。
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:
@@ -273,8 +274,13 @@ components:
       properties:
         domain:
           type: object
+          required: [chainId]
           additionalProperties: true
-          description: EIP-712 domain 数据
+          properties:
+            chainId:
+              type: integer
+              minimum: 1
+          description: EIP-712 domain 数据；`chainId` 必填，用作 typed_data 签名的链上下文。
         types:
           type: object
           additionalProperties:

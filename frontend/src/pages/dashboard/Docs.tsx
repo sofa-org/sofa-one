@@ -9,12 +9,12 @@ const tagClass =
 const fieldRows = {
   sign: [
     ["type", "string", "Yes", "message | typed_data"],
-    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key."],
+    ["chainId", "integer", "Cond.", "Required for message. Optional for typed_data when typedData.domain.chainId is present."],
     ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
-    ["typedData", "object", "Cond.", "Required for typed_data. Must include domain, types, primaryType, and message."],
+    ["typedData", "object", "Cond.", "Required for typed_data. Must include domain.chainId, types, primaryType, and message."],
   ],
   send: [
-    ["chainId", "integer", "Yes", "Supported chain ID. Must be allowed by the API key."],
+    ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's agent wallet."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -236,7 +236,7 @@ export default function APIDocsPage() {
           <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Validation</h2>
           <ul className="space-y-2 text-sm leading-6 text-brand-muted">
             <li>• Unknown request properties are rejected.</li>
-            <li>• Chain IDs must be supported and allowed for the API key.</li>
+            <li>• Chain IDs must be supported and authorized for the user's agent wallet.</li>
             <li>• Wallets must exist and be active before sending transactions.</li>
           </ul>
         </div>

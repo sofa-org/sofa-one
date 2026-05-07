@@ -71,7 +71,7 @@ export interface SignMessageRequest {
 }
 
 export interface SignTypedDataRequest {
-  chainId: number;
+  chainId?: number;
   type: 'typed_data';
   typedData: Record<string, unknown>;
 }

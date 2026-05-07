@@ -486,12 +486,33 @@ describe('WalletService.sign()', () => {
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
-  it('requires explicit chainId for API-key typed data signing', async () => {
+  it('infers chainId from typedData.domain.chainId for API-key typed data signing', async () => {
     const typedData = createTypedData(84532);
 
-    await expect(
-      service.sign('user-1', { type: 'typed_data', typedData } as any, API_KEY_CONTEXT),
-    ).rejects.toThrow('chainId is required when signing typed data with an API key');
+    const result = await service.sign(
+      'user-1',
+      { type: 'typed_data', typedData } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(mockFindUnique).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(84532) } },
+      },
+    });
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'typed_data',
+        chainId: BigInt(84532),
+      }),
+    });
+    expect(result).toEqual({
+      signature: WRAPPED_SIGNATURE,
+      walletAddress: WALLET.walletAddress,
+      signerAddress: WALLET.agentWalletAddress,
+      type: 'typed_data',
+    });
   });
 
   it('requires typedData.domain.chainId for API-key typed data signing', async () => {
@@ -516,7 +537,7 @@ describe('WalletService.sign()', () => {
     ).rejects.toThrow('typedData.domain.chainId must match chainId');
   });
 
-  it('allows API-key typed data signing when chainId matches and is allowed', async () => {
+  it('allows API-key typed data signing when explicit chainId matches and is allowed', async () => {
     const typedData = createTypedData(84532);
 
     const result = await service.sign(

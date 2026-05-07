@@ -540,17 +540,12 @@ export class WalletService {
     const typedDataChainId = params.typedData?.domain?.chainId;
 
     if (params.type === 'typed_data') {
-      if (params.chainId === undefined) {
-        throw new BadRequestException(
-          'chainId is required when signing typed data with an API key',
-        );
-      }
       if (typeof typedDataChainId !== 'number') {
         throw new BadRequestException(
           'typedData.domain.chainId is required when signing typed data with an API key',
         );
       }
-      if (typedDataChainId !== params.chainId) {
+      if (params.chainId !== undefined && typedDataChainId !== params.chainId) {
         throw new BadRequestException('typedData.domain.chainId must match chainId');
       }
     }

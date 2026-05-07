@@ -38,7 +38,7 @@ function IsSignMessage(validationOptions?: ValidationOptions) {
 }
 
 export class SignDto {
-  /** Chain context for API-key authorization. Required for API-key message signing. */
+  /** Chain context for API-key authorization. Required for message signing; optional for typed data when domain.chainId is present. */
   @IsOptional()
   @IsInt()
   @Min(1)
