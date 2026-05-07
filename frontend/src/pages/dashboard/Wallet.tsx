@@ -332,7 +332,7 @@ export default function WalletPage() {
       if (!embeddedWallet.address) {
         createdAccount = await embeddedWallet.create({
           chainId: agentChainId,
-          accountType: AccountTypeEnum.SMART_ACCOUNT,
+          accountType: AccountTypeEnum.EOA,
           recoveryMethod: RecoveryMethod.PASSWORD,
           password: recoveryPassword,
         });
@@ -391,9 +391,16 @@ export default function WalletPage() {
         throw new Error('Choose an API authorization expiry time in the future.');
       }
 
-      const address = wallet.walletAddress as Address;
+      let activeEmbeddedWallet: { address: Address; accountId?: string };
+      try {
+        activeEmbeddedWallet = resolveEmbeddedWallet(undefined, embeddedWallet);
+      } catch {
+        activeEmbeddedWallet = { address: wallet.walletAddress as Address };
+      }
 
-      let authorization = selectedAuthorization;
+      let address = activeEmbeddedWallet.address;
+      const walletAddressChanged = wallet.walletAddress.toLowerCase() !== address.toLowerCase();
+      let authorization = walletAddressChanged ? undefined : selectedAuthorization;
       let currentWallet = wallet;
       if (!authorization || authorization.status === 'registered' || authorization.status === 'registration_failed') {
         const openfortAccessToken = await getAccessToken();
@@ -403,11 +410,13 @@ export default function WalletPage() {
         const initialized = await authorizeEmbeddedWallet(getToken, {
           openfortAccessToken,
           embeddedWalletAddress: address,
+          embeddedOpenfortAccountId: activeEmbeddedWallet.accountId,
           chainId: agentChainId,
           agentExpiresAt: agentExpiresAt.toISOString(),
         });
         currentWallet = initialized.wallet;
         setWallet(currentWallet);
+        address = currentWallet.walletAddress as Address;
         authorization = currentWallet.chainAuthorizations.find((item) => item.chainId === agentChainId);
       }
 

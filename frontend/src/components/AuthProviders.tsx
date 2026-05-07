@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AuthProvider, ChainTypeEnum, OpenfortProvider, RecoveryMethod } from '@openfort/react';
+import { AccountTypeEnum, AuthProvider, ChainTypeEnum, OpenfortProvider, RecoveryMethod } from '@openfort/react';
 import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, WagmiProvider } from 'wagmi';
@@ -55,7 +55,7 @@ export default function AuthProviders({ children }: { children: ReactNode }) {
             walletConfig={{
               chainType: ChainTypeEnum.EVM,
               shieldPublishableKey: OPENFORT_SHIELD_KEY,
-              ethereum: { chainId: DEFAULT_CHAIN_ID },
+              ethereum: { chainId: DEFAULT_CHAIN_ID, accountType: AccountTypeEnum.EOA },
               connectOnLogin: false,
             }}
             uiConfig={{
