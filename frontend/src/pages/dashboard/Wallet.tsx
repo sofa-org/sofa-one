@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
-import { usePublicClient, useSendTransaction } from 'wagmi';
+import { usePublicClient, useWalletClient } from 'wagmi';
 import { formatEther, padHex, zeroAddress, type Address, type Hex } from 'viem';
 import {
   DEFAULT_CHAIN_ID,
@@ -21,6 +21,8 @@ import {
 } from '@/lib/api';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
 import {
+  CALIBUR_ADDRESS,
+  CALIBUR_DELEGATION_CODE,
   KeyType,
   encodeExecute,
   encodeRegisterKey,
@@ -160,7 +162,6 @@ export default function WalletPage() {
   const openfort = useOpenfort();
   const { getAccessToken, user } = useUser();
   const getToken = getAccessToken;
-  const { sendTransactionAsync, isPending: registerTxPending } = useSendTransaction();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
@@ -174,6 +175,7 @@ export default function WalletPage() {
   );
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
+  const { data: walletClient } = useWalletClient({ chainId: agentChainId });
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
   const [loading, setLoading] = useState(true);
@@ -450,10 +452,31 @@ export default function WalletPage() {
         }),
       ]);
 
+      if (!walletClient) {
+        throw new Error('Wallet signer is not ready. Refresh and unlock the wallet again.');
+      }
+
+      const walletCode = await publicClient.getCode({ address });
+      if (walletCode && walletCode !== '0x' && walletCode.toLowerCase() !== CALIBUR_DELEGATION_CODE.toLowerCase()) {
+        throw new Error('This wallet is delegated to an unsupported contract. Please contact support.');
+      }
+      const authorizationList =
+        !walletCode || walletCode === '0x'
+          ? [
+              await walletClient.signAuthorization({
+                account: address,
+                chainId: agentChainId,
+                contractAddress: CALIBUR_ADDRESS,
+                executor: 'self',
+              }),
+            ]
+          : undefined;
+
       const estimatedGas = await publicClient.estimateGas({
         account: address,
         to: address,
         data: txData,
+        ...(authorizationList ? { authorizationList } : {}),
       });
       const fees = await publicClient.estimateFeesPerGas().catch(() => null);
       const gasPrice = fees?.maxFeePerGas ?? (await publicClient.getGasPrice());
@@ -466,7 +489,12 @@ export default function WalletPage() {
         );
       }
 
-      const txHash = await sendTransactionAsync({ to: address, data: txData });
+      const txHash = await walletClient.sendTransaction({
+        account: address,
+        to: address,
+        data: txData,
+        ...(authorizationList ? { authorizationList } : {}),
+      });
       const pending = await markAgentRegistrationTransaction(getToken, { chainId: agentChainId, txHash });
       setWallet(pending.wallet);
 
@@ -776,7 +804,7 @@ export default function WalletPage() {
                     <select
                       value={agentChainId}
                       onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={walletSetupLoading || registerTxPending}
+                      disabled={walletSetupLoading}
                       className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {SUPPORTED_CHAINS.map((chain) => (
@@ -815,13 +843,13 @@ export default function WalletPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      disabled={walletSetupLoading || registerTxPending}
+                      disabled={walletSetupLoading}
                       className="flex h-[42px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand-text px-8 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {(walletSetupLoading || registerTxPending) && (
+                      {walletSetupLoading && (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
-                      <span>{registerTxPending ? 'Confirming...' : 'Authorize API Access'}</span>
+                      <span>Authorize API Access</span>
                     </button>
                   </div>
                 </div>

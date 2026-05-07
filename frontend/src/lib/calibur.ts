@@ -16,6 +16,9 @@ const caliburAbi = parseAbi([
   'function execute((address target, uint256 value, bytes data)[] calls) payable',
 ]);
 
+export const CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
+export const CALIBUR_DELEGATION_CODE = `0xef0100${CALIBUR_ADDRESS.slice(2)}` as const;
+
 export enum KeyType {
   P256 = 0,
   WebAuthnP256 = 1,
