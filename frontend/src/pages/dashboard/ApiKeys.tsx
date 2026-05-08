@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@openfort/react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
@@ -13,7 +13,14 @@ import {
 } from '@/lib/api';
 
 export default function ApiKeysPage() {
-  const { getAccessToken: getToken, user } = useUser();
+  const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
+  const getToken = useCallback(async () => {
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('Openfort session is not ready. Refresh and sign in again.');
+    }
+    return token;
+  }, [getAccessToken]);
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
@@ -22,7 +29,7 @@ export default function ApiKeysPage() {
   const [error, setError] = useState<string | null>(null);
   const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
 
-  async function fetchKeys() {
+  const fetchKeys = useCallback(async () => {
     try {
       const data = await listApiKeysAuth(getToken);
       setKeys(data);
@@ -31,13 +38,16 @@ export default function ApiKeysPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [getToken]);
 
   useEffect(() => {
-    if (user) {
-      fetchKeys();
+    if (authLoading) return;
+    if (!isAuthenticated || !user) {
+      setLoading(false);
+      return;
     }
-  }, [user]);
+    fetchKeys();
+  }, [authLoading, fetchKeys, isAuthenticated, user]);
 
   async function handleCreate() {
     const trimmedName = newKeyName.trim();

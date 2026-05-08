@@ -238,11 +238,15 @@ export async function authFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const token = await getToken();
+  if (!token) {
+    throw new Error('Openfort session is not ready. Refresh and sign in again.');
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`,
       ...options?.headers,
     },
   });

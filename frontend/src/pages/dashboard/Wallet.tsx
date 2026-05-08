@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
@@ -160,8 +160,14 @@ function delay(ms: number) {
 
 export default function WalletPage() {
   const openfort = useOpenfort();
-  const { getAccessToken, user } = useUser();
-  const getToken = getAccessToken;
+  const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
+  const getToken = useCallback(async () => {
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('Openfort session is not ready. Refresh and sign in again.');
+    }
+    return token;
+  }, [getAccessToken]);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
@@ -201,7 +207,11 @@ export default function WalletPage() {
   const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!isAuthenticated || !user) {
+      setLoading(false);
+      return;
+    }
 
     const controller = new AbortController();
 
@@ -231,7 +241,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [user, getToken]);
+  }, [authLoading, isAuthenticated, user, getToken]);
 
   useEffect(() => {
     if (!user || !wallet?.walletAddress) {
