@@ -235,11 +235,14 @@ export default function ApiKeysPage() {
     "idempotencyKey": "order-abc-123",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb...",
+      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
       "value": "0"
     }]
   }'`}
           </pre>
+          <p className="mt-3 text-sm leading-6 text-brand-muted">
+            Replace the calldata with your ABI-encoded contract call. Keep API keys on your backend; do not ship them in browser code.
+          </p>
         </div>
       </DashboardCard>
 

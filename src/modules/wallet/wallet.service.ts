@@ -111,6 +111,11 @@ export class WalletService {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
     this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
+    await this.openfort.verifyAgentKeyRegistration({
+      accountAddress: wallet.walletAddress,
+      chainId,
+      keyHash: wallet.agentKeyHash,
+    });
 
     let data: string;
     switch (params.type) {

@@ -225,7 +225,12 @@ export function createCaliburSessionAccount({
       });
     },
     async getNonce() {
-      return 0n;
+      return readContract(client, {
+        abi: entryPoint08Abi,
+        address: ENTRYPOINT_V08_ADDRESS,
+        functionName: 'getNonce',
+        args: [accountAddress, 0n],
+      });
     },
     async getStubSignature() {
       return encodeAbiParameters(

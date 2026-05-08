@@ -9,7 +9,7 @@ const tagClass =
 const fieldRows = {
   sign: [
     ["type", "string", "Yes", "message | typed_data"],
-    ["chainId", "integer", "Cond.", "Required for message. Optional for typed_data when typedData.domain.chainId is present."],
+    ["chainId", "integer", "Cond.", "Required for message. Optional for typed_data when typedData.domain.chainId is present; if provided, both values must match."],
     ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain.chainId, types, primaryType, and message."],
   ],
@@ -112,17 +112,17 @@ export default function APIDocsPage() {
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
           <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
+            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Create keys from this dashboard and keep them on your backend only. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
           </p>
         </div>
       </section>
 
-      <CodeBlock>{`X-API-Key: sk_live_...`}</CodeBlock>
+      <CodeBlock>{`X-API-Key: sk_<64-hex-chars>`}</CodeBlock>
 
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent signer. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, so verifiers should call ERC-1271 <code>isValidSignature</code> on the user&apos;s EIP-7702 delegated EOA address. Raw hash signing is disabled for safety and no transaction is broadcast.
+            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent signer. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, not a plain 65-byte EOA signature. Verifiers should call ERC-1271 <code>isValidSignature</code> on the user&apos;s EIP-7702 delegated EOA address instead of using <code>ecrecover</code> against <code>walletAddress</code>. Raw hash signing is disabled for safety and no transaction is broadcast.
           </p>
 
           <div className="space-y-3">
@@ -134,7 +134,7 @@ export default function APIDocsPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
-  -H "X-API-Key: sk_live_..." \\
+  -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
     "type": "message",
@@ -172,13 +172,13 @@ export default function APIDocsPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/transactions/send \\
-  -H "X-API-Key: sk_live_..." \\
+  -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
     "chainId": 84532,
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb...",
+      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
       "value": "0"
     }],
     "idempotencyKey": "order-123"
@@ -188,11 +188,11 @@ export default function APIDocsPage() {
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">201 response</h4>
               <CodeBlock>{`{
   "transactionId": "550e8400-e29b-41d4-a716-446655440000",
-  "transactionHash": "0xabc123...",
+  "transactionHash": null,
   "status": "pending"
 }`}</CodeBlock>
               <p className="text-xs leading-5 text-brand-muted">
-                Status may be pending, submitting, confirmed, or failed. The transaction hash can be empty while submission is pending.
+                Status may be submitting, pending, confirmed, failed, or unknown. The transaction hash is null while submission is pending or not yet known.
               </p>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function APIDocsPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CodeBlock>{`curl https://api.agentwallet.com/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \
-  -H "X-API-Key: sk_live_..."`}</CodeBlock>
+  -H "X-API-Key: sk_your_key_here"`}</CodeBlock>
             </div>
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">200 response</h4>
@@ -246,11 +246,12 @@ export default function APIDocsPage() {
   "statusCode": 401,
   "code": "INVALID_API_KEY",
   "message": "Invalid API key",
+  "requestId": "req_...",
   "timestamp": "2026-04-20T10:35:00.000Z",
   "path": "/v1/transactions/send"
 }`}</CodeBlock>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
-            Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
+            Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">INVALID_API_KEY</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, <span className="font-mono text-brand-text">IP_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
           </p>
         </div>
       </section>

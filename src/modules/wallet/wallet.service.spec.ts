@@ -309,6 +309,7 @@ describe('WalletService.sign()', () => {
 
   const mockFindUnique = jest.fn();
   const mockSignData = jest.fn();
+  const mockVerifyAgentKeyRegistration = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
@@ -317,6 +318,7 @@ describe('WalletService.sign()', () => {
     jest.clearAllMocks();
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
@@ -333,7 +335,10 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: OpenfortService,
-          useValue: { signData: mockSignData },
+          useValue: {
+            signData: mockSignData,
+            verifyAgentKeyRegistration: mockVerifyAgentKeyRegistration,
+          },
         },
       ],
     }).compile();
@@ -356,6 +361,11 @@ describe('WalletService.sign()', () => {
       WALLET.agentOpenfortAccountId,
       hashMessage('Hello, SOFA ONE!'),
     );
+    expect(mockVerifyAgentKeyRegistration).toHaveBeenCalledWith({
+      accountAddress: WALLET.walletAddress,
+      chainId: 84532,
+      keyHash: WALLET.agentKeyHash,
+    });
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
@@ -403,6 +413,22 @@ describe('WalletService.sign()', () => {
     ).rejects.toThrow(UnauthorizedException);
 
     expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects signing when the agent key is not registered on-chain before creating an audit record', async () => {
+    mockVerifyAgentKeyRegistration.mockRejectedValue(new BadRequestException('Agent key is not ready'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('Agent key is not ready');
+
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
   });

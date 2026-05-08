@@ -1,18 +1,18 @@
 # SOFA ONE
 
-Server-side automated blockchain signing for users authenticated via social OAuth. Users receive a Backend Wallet (managed in TEE via [Openfort](https://www.openfort.io/)) and an API Key for programmatic transaction submission.
+Server-side automated blockchain signing for users authenticated with Openfort email OTP. Users connect an Openfort embedded EOA, authorize a backend agent signer on-chain, and create API keys for programmatic transaction submission.
 
 ## Architecture
 
 ```
 [User Client]
-   ↓ Social OAuth (Google, Twitter/X, Discord, Apple)
-[Frontend — Vite + React SPA + Clerk]
-   ↓ HTTPS + JWT
+   ↓ Openfort email OTP + embedded wallet
+[Frontend — Vite + React SPA + Openfort]
+   ↓ HTTPS + Openfort IAM token
 [Backend — NestJS]
-   ├── Auth Module        (Clerk social login + user provisioning)
-   ├── Wallet Module      (Openfort SDK — backend wallet lifecycle)
-   ├── Transaction Module (raw transaction submission + signing)
+   ├── Auth Module        (Openfort IAM session sync + embedded EOA authorization)
+   ├── Wallet Module      (Openfort SDK — signing, balances, deposits, withdrawals)
+   ├── Transaction Module (Calibur agent UserOperation submission)
    └── API Key Module     (generation, validation, rotation, revocation)
    ↓
 [Openfort SDK → TEE]     [PostgreSQL + Redis]     [EVM Chains]
@@ -22,7 +22,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 ### Key Properties
 
 - **Private keys never leave the TEE** — all signing happens inside Openfort / AWS Nitro Enclaves.
-- **Split auth** — public signing/transaction APIs require `X-API-Key`; dashboard-only APIs require Clerk JWT plus frontend-origin checks.
+- **Split auth** — public signing/transaction APIs require `X-API-Key`; dashboard-only APIs require an Openfort IAM bearer token plus frontend-origin checks.
 - **API keys hashed with Argon2** — never stored in plaintext; a 27-character lookup prefix (`sk_` + 24 hex chars) is stored for DB lookup, and every prefix candidate is hash-verified to tolerate collisions/legacy keys.
 - **On-chain agent authorization** — Backend Agent Wallet execution is governed by the Calibur key registry rather than an off-chain policy table.
 
@@ -30,7 +30,7 @@ Server-side automated blockchain signing for users authenticated via social OAut
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vite 6, React 19, React Router 7, Tailwind CSS 4, Clerk |
+| Frontend | Vite 6, React 19, React Router 7, Tailwind CSS 4, Openfort React SDK |
 | Backend | NestJS 10, TypeScript 5 |
 | Wallet Core | Openfort Node SDK |
 | Database | PostgreSQL 16, Prisma 5 |
@@ -41,7 +41,6 @@ Server-side automated blockchain signing for users authenticated via social OAut
 
 - **Node.js** ≥ 20
 - **Docker** (for PostgreSQL + Redis)
-- **Clerk** account — [clerk.com](https://clerk.com)
 - **Openfort** account — [openfort.io](https://www.openfort.io)
 
 ## Getting Started
@@ -66,21 +65,23 @@ This starts PostgreSQL (port 5432) and Redis (port 6379).
 
 ```bash
 cp .env.example .env
-# Edit .env with your Clerk and Openfort keys
+# Edit .env with your Openfort, database, and app settings
 ```
 
 Required variables:
 
 | Variable | Description |
 |----------|-------------|
-| `CLERK_SECRET_KEY` | Clerk backend secret key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key (Vite-prefixed) |
 | `OPENFORT_API_KEY` | Openfort API secret key |
+| `OPENFORT_PUBLISHABLE_KEY` | Openfort publishable key used by the backend RPC / bundler client |
+| `OPENFORT_WALLET_SECRET` | Openfort wallet signing secret; never expose or log it |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
 | `DEFAULT_CHAIN_ID` | Default chain (84532 for Base Sepolia) |
+| `VITE_OPENFORT_PUBLISHABLE_KEY` | Openfort frontend publishable key (`frontend/.env`) |
+| `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` | Openfort Shield frontend publishable key (`frontend/.env`) |
 | `VITE_API_URL` | Backend URL for production (leave empty in dev — Vite proxy handles it) |
-| `CORS_ORIGIN` | Allowed frontend origin(s) for CORS, comma-separated (defaults to `*`) |
+| `CORS_ORIGIN` | Allowed frontend origin(s) for CORS, comma-separated; required in production |
 
 ### 4. Run database migrations
 
@@ -91,7 +92,7 @@ npm run prisma:migrate:dev
 ### 5. Start development servers
 
 ```bash
-# Backend (port 3001)
+# Backend (PORT from .env, 3100 by default in .env.example)
 npm run start:dev
 
 # Frontend (port 3000, in a separate terminal)
@@ -126,16 +127,22 @@ cd frontend && npm run dev
 
 ## API Overview
 
-All wallet and transaction endpoints require the `X-API-Key` header:
+Public wallet signing and transaction endpoints require the `X-API-Key` header:
 
 ```
 X-API-Key: sk_<64-hex-chars>
 ```
 
+`POST /v1/wallets/sign` returns a Calibur wrapped signature for the user's
+EIP-7702 delegated EOA. It is ABI-encoded as
+`(bytes32 keyHash, bytes signature, bytes hookData)` and is intended for
+Calibur/ERC-1271-style verification against `walletAddress`; it is not a plain
+65-byte EOA signature recoverable directly with `ecrecover(walletAddress)`.
+
 ### Quick example — send USDC on Base Sepolia
 
 ```bash
-curl -X POST http://localhost:3001/v1/transactions/send \
+curl -X POST http://localhost:3100/v1/transactions/send \
   -H "X-API-Key: sk_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
@@ -143,7 +150,7 @@ curl -X POST http://localhost:3001/v1/transactions/send \
     "idempotencyKey": "order-abc-123",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb000000000000000000000000<recipient>0000000000000000000000000000000000000000000000000000000000000f4240",
+      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
       "value": "0"
     }]
   }'
@@ -154,7 +161,7 @@ The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the exa
 Query the returned transaction status without exposing calldata or request hashes:
 
 ```bash
-curl http://localhost:3001/v1/transactions/<transactionId> \
+curl http://localhost:3100/v1/transactions/<transactionId> \
   -H "X-API-Key: sk_your_key_here"
 ```
 
@@ -162,19 +169,23 @@ curl http://localhost:3001/v1/transactions/<transactionId> \
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/auth/social` | Public | Social login → returns `userId`, `walletAddress`, `apiKey` |
-| `POST` | `/auth/refresh-api-key` | JWT | Rotate API key |
+| `POST` | `/auth/session` | Openfort IAM | Sync Openfort session → returns `userId` and wallet state |
+| `POST` | `/auth/embedded-wallet/authorize` | Openfort IAM | Bind an Openfort embedded EOA and return agent-key registration details |
+| `POST` | `/auth/embedded-wallet/registration-transaction` | Openfort IAM | Save a submitted Calibur `registerKey` transaction hash |
+| `POST` | `/auth/embedded-wallet/registration-result` | Openfort IAM | Mark agent-key registration as registered or failed |
+| `GET` | `/auth/me` | Openfort IAM | Return current wallet and authorization state |
+| `POST` | `/auth/refresh-api-key` | Openfort IAM | Revoke all active API keys and create a replacement |
 | `POST` | `/v1/transactions/send` | API Key | Submit raw transaction (ABI-encoded calldata) |
 | `GET` | `/v1/transactions/:id` | API Key | Query safe transaction status for the API-key user |
 | `POST` | `/v1/wallets/sign` | API Key | Sign a message or typed data without broadcasting |
-| `GET`  | `/v1/wallets/balances` | JWT + Frontend | ETH + USDC balances across **all** supported chains simultaneously |
-| `POST` | `/v1/wallets/deposit-info` | JWT + Frontend | Get wallet address for deposits |
-| `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |
-| `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
+| `GET`  | `/v1/wallets/balances` | Openfort IAM + Frontend | Native token + USDC balances for the requested chain |
+| `POST` | `/v1/wallets/deposit-info` | Openfort IAM + Frontend | Get wallet address for deposits |
+| `POST` | `/v1/wallets/withdraw` | Openfort IAM + Frontend | Withdraw USDC to an external address |
+| `GET/POST/DELETE` | `/v1/api-keys/*` | Openfort IAM + Frontend | API key management (list, create, revoke) |
 
-> **Access control split**: `POST /v1/wallets/sign`, `POST /v1/transactions/send`, and `GET /v1/transactions/:id` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
+> **Access control split**: `POST /v1/wallets/sign`, `POST /v1/transactions/send`, and `GET /v1/transactions/:id` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require an Openfort IAM bearer token plus a matching `Origin`/`Referer` header.
 >
-> API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates expiry, and returns raw secrets only once on creation/rotation.
+> API keys cannot manage API keys. `/v1/api-keys/*` is Openfort-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates expiry/IP allowlists, and returns raw secrets only once on creation/rotation.
 
 ### Public API error contract
 
@@ -185,12 +196,13 @@ Errors use a stable machine-readable `code` plus a human-readable `message`:
   "statusCode": 401,
   "code": "INVALID_API_KEY",
   "message": "Invalid API key",
+  "requestId": "req_...",
   "timestamp": "2026-04-20T10:00:00.000Z",
   "path": "/v1/transactions/send"
 }
 ```
 
-Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `CHAIN_NOT_SUPPORTED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
+Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `IP_NOT_ALLOWED`, `CHAIN_NOT_SUPPORTED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
 
 Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
 
@@ -205,9 +217,9 @@ sofa-agent-wallet/
 │   ├── config/                  # Environment config
 │   ├── core/                    # Prisma, Openfort providers
 │   └── modules/
-│       ├── auth/                # Clerk social OAuth
+│       ├── auth/                # Openfort IAM session + embedded EOA authorization
 │       ├── wallet/              # Openfort wallet operations
-│       ├── transaction/         # Raw transaction submission & signing
+│       ├── transactions/        # Calibur agent UserOperation submission
 │       └── api-key/             # Key generation, validation, rotation
 ├── prisma/
 │   └── schema.prisma            # Database schema (4 models)
@@ -222,11 +234,12 @@ sofa-agent-wallet/
 
 Core tables managed by Prisma:
 
-- **users** — social provider, social ID, email
-- **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
+- **users** — Openfort IAM user mapping and email
+- **user_wallets** — 1:1 with user; stores embedded EOA details and backend agent signer metadata
 - **api_keys** — Argon2-hashed keys; `keyPrefix` (27 chars for new keys, legacy 11 chars supported) used for lookup before full hash verification; optional IP/expiry allowlists; active key names are unique per user
 - **api_key_events** — immutable audit events for key creation, revocation, and rotation with key prefix/name snapshots
-- **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address, request/interactions hashes, and API-key attribution snapshot
+- **wallet_chain_authorizations** — per-chain Calibur agent-key registration status, transaction hash, and expiry
+- **transactions** — transaction/user operation status, tx hash, chain ID, wallet address, request hash, and API-key attribution snapshot
 
 ## Development Phases
 
