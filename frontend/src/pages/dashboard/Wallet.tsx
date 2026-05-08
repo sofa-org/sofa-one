@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AccountTypeEnum, RecoveryMethod, use7702Authorization, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
-import { usePublicClient, useWalletClient } from 'wagmi';
-import { formatEther, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
-import { prepareAuthorization } from 'viem/actions';
+import { usePublicClient } from 'wagmi';
+import { http, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
+import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { toAccount } from 'viem/accounts';
 import {
   DEFAULT_CHAIN_ID,
   authorizeEmbeddedWallet,
@@ -25,7 +26,7 @@ import {
   CALIBUR_ADDRESS,
   CALIBUR_DELEGATION_CODE,
   KeyType,
-  encodeExecute,
+  createCaliburAccount,
   encodeRegisterKey,
   encodeSelfCall,
   encodeUpdateKeySettings,
@@ -145,13 +146,6 @@ function getDefaultAgentExpiryLocal() {
   return formatDateTimeLocal(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 }
 
-function formatNativeAmount(raw: bigint) {
-  const value = formatEther(raw);
-  const [whole, fraction = ''] = value.split('.');
-  const trimmedFraction = fraction.slice(0, 6).replace(/0+$/, '');
-  return trimmedFraction ? `${whole}.${trimmedFraction}` : whole;
-}
-
 function assertWebCryptoAvailable() {
   if (globalThis.crypto?.subtle) return;
   throw new Error(
@@ -186,7 +180,6 @@ export default function WalletPage() {
   );
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
-  const { data: walletClient } = useWalletClient({ chainId: agentChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
@@ -531,8 +524,9 @@ export default function WalletPage() {
         throw new Error('Cannot check gas balance for this chain. Please retry after the network is ready.');
       }
 
+      const feeSponsorshipId = import.meta.env.VITE_OPENFORT_FEE_SPONSORSHIP_ID;
       const nativeBalance = await publicClient.getBalance({ address });
-      if (nativeBalance === 0n) {
+      if (!feeSponsorshipId && nativeBalance === 0n) {
         throw new Error(
           `Your wallet has no ${agentNativeSymbol} for gas. Deposit ${agentNativeSymbol} to ${address} and retry agent registration.`,
         );
@@ -548,7 +542,7 @@ export default function WalletPage() {
       }
 
       const expiration = Math.floor(new Date(authorization.expiresAt).getTime() / 1000);
-      const txData = encodeExecute([
+      const registrationCalls = [
         encodeSelfCall(encodeRegisterKey(agentKey)),
         encodeSelfCall(
           encodeUpdateKeySettings(frontendKeyHash, {
@@ -557,59 +551,81 @@ export default function WalletPage() {
             hook: zeroAddress,
           }),
         ),
-      ]);
-
-      if (!walletClient) {
-        throw new Error('Wallet signer is not ready. Refresh and unlock the wallet again.');
-      }
+      ];
 
       const walletCode = await publicClient.getCode({ address });
       if (walletCode && walletCode !== '0x' && walletCode.toLowerCase() !== CALIBUR_DELEGATION_CODE.toLowerCase()) {
         throw new Error('This wallet is delegated to an unsupported contract. Please contact support.');
       }
-      const authorizationList =
+      const eip7702Authorization =
         !walletCode || walletCode === '0x'
-          ? await (async () => {
-              const authorization = await prepareAuthorization(walletClient, {
-                account: address,
-                chainId: agentChainId,
-                contractAddress: CALIBUR_ADDRESS,
-                executor: 'self',
-              });
-
-              return [
-                await signOpenfortAuthorization({
-                  chainId: authorization.chainId,
-                  nonce: authorization.nonce,
-                  contractAddress: CALIBUR_ADDRESS,
-                }),
-              ];
-            })()
+          ? await signOpenfortAuthorization({
+              chainId: agentChainId,
+              nonce: await publicClient.getTransactionCount({ address, blockTag: 'pending' }),
+              contractAddress: CALIBUR_ADDRESS,
+            })
           : undefined;
 
-      const estimatedGas = await publicClient.estimateGas({
-        account: address,
-        to: address,
-        data: txData,
-        ...(authorizationList ? { authorizationList } : {}),
-      });
-      const fees = await publicClient.estimateFeesPerGas().catch(() => null);
-      const gasPrice = fees?.maxFeePerGas ?? (await publicClient.getGasPrice());
-      const requiredGasBalance = estimatedGas * gasPrice;
-      const requiredGasBalanceWithBuffer = requiredGasBalance + requiredGasBalance / 5n;
+      const owner = toAccount({
+        address,
+        async sign({ hash }) {
+          return openfort.client.embeddedWallet.signMessage(hash, {
+            hashMessage: false,
+            arrayifyMessage: false,
+          }) as Promise<Hex>;
+        },
+        async signMessage({ message }) {
+          if (typeof message === 'string') {
+            return openfort.client.embeddedWallet.signMessage(message) as Promise<Hex>;
+          }
 
-      if (nativeBalance < requiredGasBalanceWithBuffer) {
-        throw new Error(
-          `Your ${agentNativeSymbol} balance is too low to register the agent key. Current: ${formatNativeAmount(nativeBalance)} ${agentNativeSymbol}; estimated needed: ${formatNativeAmount(requiredGasBalanceWithBuffer)} ${agentNativeSymbol}. Deposit gas to ${address} and retry.`,
-        );
+          return openfort.client.embeddedWallet.signMessage(message.raw, {
+            hashMessage: false,
+            arrayifyMessage: false,
+          }) as Promise<Hex>;
+        },
+        async signTransaction() {
+          throw new Error('Openfort embedded wallet transaction signing is not used for Calibur UserOperations.');
+        },
+        async signTypedData(typedData) {
+          const payload = typedData as {
+            domain: Parameters<typeof openfort.client.embeddedWallet.signTypedData>[0];
+            types: Parameters<typeof openfort.client.embeddedWallet.signTypedData>[1];
+            message: Parameters<typeof openfort.client.embeddedWallet.signTypedData>[2];
+          };
+          return openfort.client.embeddedWallet.signTypedData(payload.domain, payload.types, payload.message) as Promise<Hex>;
+        },
+      });
+      const caliburAccount = await createCaliburAccount({ client: publicClient, owner });
+      const openfortRpcTransport = http(`https://api.openfort.io/rpc/${agentChainId}`, {
+        fetchOptions: {
+          headers: { Authorization: `Bearer ${import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY}` },
+        },
+      });
+      const paymaster = feeSponsorshipId
+        ? createPaymasterClient({ transport: openfortRpcTransport })
+        : undefined;
+      const bundlerClient = createBundlerClient({
+        account: caliburAccount,
+        chain: publicClient.chain,
+        client: publicClient,
+        ...(paymaster ? { paymaster } : {}),
+        transport: openfortRpcTransport,
+      } as never);
+      const userOpHash = await bundlerClient.sendUserOperation({
+        account: caliburAccount,
+        calls: registrationCalls,
+        ...(eip7702Authorization ? { authorization: eip7702Authorization } : {}),
+        ...(feeSponsorshipId
+          ? { paymasterContext: { policyId: feeSponsorshipId } }
+          : {}),
+      } as never);
+      const userOpReceipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
+      const txHash = (userOpReceipt as { receipt?: { transactionHash?: Hex }; transactionHash?: Hex }).receipt?.transactionHash
+        ?? (userOpReceipt as { transactionHash?: Hex }).transactionHash;
+      if (!txHash) {
+        throw new Error(`Agent registration UserOperation was submitted but no transaction hash was returned: ${userOpHash}`);
       }
-
-      const txHash = await walletClient.sendTransaction({
-        account: address,
-        to: address,
-        data: txData,
-        ...(authorizationList ? { authorizationList } : {}),
-      });
       const pending = await markAgentRegistrationTransaction(getToken, { chainId: agentChainId, txHash });
       setWallet(pending.wallet);
 
