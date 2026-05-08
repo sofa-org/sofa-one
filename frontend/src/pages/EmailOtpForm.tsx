@@ -38,7 +38,7 @@ export default function EmailOtpForm() {
         Sign in or create account
       </h1>
       <p className="mt-2 text-sm text-brand-muted">
-        Use Openfort email OTP to access your embedded wallet.
+        Use Openfort email OTP to access your EOA.
       </p>
 
       <form onSubmit={sent ? handleVerifyOtp : handleRequestOtp} className="mt-6 space-y-4">

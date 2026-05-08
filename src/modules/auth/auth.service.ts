@@ -51,8 +51,8 @@ export class AuthService {
   ) {}
 
   /**
-   * Handle Openfort email OTP login: upsert user and create a pending embedded-wallet record.
-   * Embedded wallet creation/authorization happens client-side through Openfort React SDK.
+   * Handle Openfort email OTP login: upsert user and create a pending embedded-EOA record.
+   * Embedded EOA creation/authorization happens client-side through Openfort React SDK.
    * API keys are created explicitly through the API-key management flow.
    */
   async syncOpenfortSession(

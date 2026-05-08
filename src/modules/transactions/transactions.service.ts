@@ -31,7 +31,7 @@ export class TransactionsService {
     private readonly requestContext?: RequestContextService,
   ) {}
 
-  /** Send a transaction from the user's embedded Calibur account via the backend agent wallet. */
+  /** Send a transaction from the user's EIP-7702 delegated EOA via the backend agent signer. */
   async send(userId: string, dto: SendTransactionDto, apiKeyRecord?: ApiKeyTransactionContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required');

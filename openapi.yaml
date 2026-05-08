@@ -123,7 +123,7 @@ paths:
                       wallet: "0x1234567890abcdef1234567890abcdef12345678"
       responses:
         '200':
-          description: 签名成功。签名由已授权的 Backend Agent Wallet/session key 产生，用于代替 embedded wallet 完成 EIP-191 或 EIP-712 签名。
+          description: 签名成功。签名由已授权的 Backend Agent Signer 产生，并以 Calibur wrapped signature 形式绑定到用户的 EIP-7702 delegated EOA。
           content:
             application/json:
               schema:
@@ -308,15 +308,15 @@ components:
       properties:
         signature:
           type: string
-          description: Calibur wrapped signature，ABI 编码为 `(bytes32 keyHash, bytes signature, bytes hookData)`；内部 signature 由 Backend Agent Wallet/session key 对 EIP-191/EIP-712 digest 生成，可用于 `walletAddress.isValidSignature(digest, signature)`
+          description: Calibur wrapped signature，ABI 编码为 `(bytes32 keyHash, bytes signature, bytes hookData)`；内部 signature 由 Backend Agent Signer 对 EIP-191/EIP-712 digest 生成，可用于 `walletAddress.isValidSignature(digest, signature)`
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 用户 embedded wallet / Calibur 账户地址，即被 agent 代签的资产账户
+          description: 用户 EIP-7702 delegated EOA 地址，即被 agent 代签的资产账户
         signerAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 实际产生签名的 Backend Agent Wallet 地址
+          description: 实际产生签名的 Backend Agent Signer 地址
         type:
           type: string
           enum: [message, typed_data]

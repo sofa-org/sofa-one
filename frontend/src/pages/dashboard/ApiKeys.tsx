@@ -91,7 +91,7 @@ export default function ApiKeysPage() {
   return (
     <DashboardPage
       title="API Keys"
-      description="Create keys your backend uses to submit transactions through your authorized developer wallet."
+      description="Create keys your backend uses to submit transactions through your authorized EOA."
     >
       {error && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
@@ -166,7 +166,7 @@ export default function ApiKeysPage() {
           <div className="px-7 py-12 text-center">
             <p className="text-base font-semibold text-brand-text">Create your first API key</p>
             <p className="mt-2 text-sm text-brand-muted">
-              After your developer wallet is authorized, this key authenticates backend transaction requests.
+              After your EOA is authorized, this key authenticates backend transaction requests.
             </p>
           </div>
         ) : (

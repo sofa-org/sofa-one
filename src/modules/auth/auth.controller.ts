@@ -47,8 +47,8 @@ export class AuthController {
 
   /**
    * POST /auth/embedded-wallet/authorize
-   * Verifies an Openfort embedded wallet belongs to the Openfort IAM session,
-   * binds it as the user's asset wallet, and creates/returns backend agent registration details.
+   * Verifies an Openfort embedded EOA belongs to the Openfort IAM session,
+   * binds it as the user's asset account, and creates/returns backend agent registration details.
    */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('embedded-wallet/authorize')

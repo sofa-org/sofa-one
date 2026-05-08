@@ -64,7 +64,7 @@ export class WalletService {
     return client;
   }
 
-  /** Return the user's wallet address and supported deposit tokens. */
+  /** Return the user's EOA address and supported deposit tokens. */
   async getDepositInfo(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
@@ -82,7 +82,7 @@ export class WalletService {
     };
   }
 
-  /** Sign data with the user's backend agent wallet (no transaction broadcast). */
+  /** Sign data with the user's backend agent signer (no transaction broadcast). */
   async sign(userId: string, params: SignDto, apiKeyRecord?: ApiKeySigningContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');

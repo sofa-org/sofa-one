@@ -56,7 +56,7 @@ export class OpenfortService {
     }
   }
 
-  /** Create a backend agent wallet that will act as a Calibur session key. */
+  /** Create a backend agent signer that will act as a Calibur session key. */
   async createAgentWallet(): Promise<{ id: string; address: string; keyHash: Hex }> {
     const account = await this.createBackendWallet();
     return {
@@ -115,7 +115,7 @@ export class OpenfortService {
         }
       });
 
-      if (!account) throw new ForbiddenException('Embedded wallet is not owned by Openfort user');
+      if (!account) throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
       return { openfortUserId, accountId: account.id, address: normalizedAddress };
     } catch (error: any) {
       if (error instanceof ForbiddenException) throw error;

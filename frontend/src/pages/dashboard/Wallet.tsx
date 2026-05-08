@@ -99,7 +99,7 @@ function resolveEmbeddedWallet(
   const address = created?.address ?? embeddedWallet.address ?? active?.address ?? firstWallet?.address ?? firstRefreshed?.address;
 
   if (!address) {
-    throw new Error('Embedded wallet address was not returned by Openfort.');
+    throw new Error('EOA address was not returned by Openfort.');
   }
 
   return {
@@ -150,7 +150,7 @@ function formatNativeAmount(raw: bigint) {
 function assertWebCryptoAvailable() {
   if (globalThis.crypto?.subtle) return;
   throw new Error(
-    'Secure browser crypto is not available. Open this app over HTTPS or localhost before creating an embedded wallet.',
+    'Secure browser crypto is not available. Open this app over HTTPS or localhost before creating an EOA.',
   );
 }
 
@@ -364,7 +364,7 @@ export default function WalletPage() {
       }
 
       setWallet(authorized.wallet);
-      setWalletSetupSuccess('Developer wallet created. Choose a network below, add gas, then authorize API access.');
+      setWalletSetupSuccess('Agent wallet created. Choose a network below, add gas, then authorize API access.');
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
@@ -541,9 +541,9 @@ export default function WalletPage() {
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
   const setupStatus = !wallet?.walletAddress
-    ? { title: 'Create developer wallet', tone: 'amber', description: 'Set one recovery password. We keep the wallet secured by Openfort and never expose private keys.' }
+    ? { title: 'Create agent EOA', tone: 'amber', description: 'Set one recovery password. Openfort secures the EOA key and we never expose private keys.' }
     : hasRegisteredAuthorization
-      ? { title: 'Ready for API transactions', tone: 'green', description: 'Your developer wallet has API access on at least one network. You can authorize more networks anytime.' }
+      ? { title: 'Ready for API transactions', tone: 'green', description: 'Your EOA has Calibur API access on at least one network. You can authorize more networks anytime.' }
       : pendingAuthorization
         ? { title: 'Authorization pending', tone: 'blue', description: 'The authorization transaction was submitted and is being checked.' }
         : { title: 'Authorize API access', tone: 'blue', description: 'Choose a network, add gas, unlock the wallet, and authorize API access.' };
@@ -571,7 +571,7 @@ export default function WalletPage() {
 
   return (
     <DashboardPage
-      title="Developer Wallet"
+      title="Agent Wallet"
       description="Create one secure wallet, authorize API access, then use API keys from your backend."
     >
       {loading ? (
@@ -669,17 +669,17 @@ export default function WalletPage() {
                 </div>
                 {hasRegisteredAuthorization && (
                   <div className="rounded-xl border border-green-200 bg-white/70 p-4 text-sm text-green-800">
-                    Wallet setup is complete. Create an API key when you are ready to connect your backend.
+                    EOA setup is complete. Create an API key when you are ready to connect your backend.
                   </div>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Address</label>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">EOA Address</label>
               <div className="mt-1 flex items-center gap-3">
                 <p className="break-all font-mono text-sm text-brand-text flex-1">
-                  {wallet.walletAddress ?? 'Create a developer wallet to finish setup'}
+                  {wallet.walletAddress ?? 'Create an agent EOA to finish setup'}
                 </p>
                 {wallet.walletAddress && <CopyButton text={wallet.walletAddress} className="shrink-0" />}
                 <button
@@ -719,7 +719,7 @@ export default function WalletPage() {
               >
                 <div className="mb-4">
                   <h2 className="font-serif text-xl font-bold text-brand-text">
-                    Step 1: Create your developer wallet
+                    Step 1: Create your agent EOA
                   </h2>
                   <p className="mt-1 text-sm text-amber-800">
                     Choose a recovery password. You will select networks in Step 2.
@@ -756,7 +756,7 @@ export default function WalletPage() {
                     className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {walletSetupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <span>Create Wallet</span>
+                    <span>Create EOA</span>
                   </button>
                 </div>
               </form>
@@ -782,7 +782,7 @@ export default function WalletPage() {
                   <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
                     <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
                     <p className="mb-3 text-blue-800">
-                      Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this wallet address. Then use your Step 1 password to sign the one-time authorization in your browser.
+                      Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this EOA address. Then use your Step 1 password to sign the one-time Calibur authorization in your browser.
                     </p>
                     <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
                       <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>

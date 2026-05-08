@@ -14,7 +14,7 @@ const fieldRows = {
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain.chainId, types, primaryType, and message."],
   ],
   send: [
-    ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's agent wallet."],
+    ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's EOA."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -122,7 +122,7 @@ export default function APIDocsPage() {
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent wallet/session key. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, so verifiers should call ERC-1271 <code>isValidSignature</code> on the embedded wallet address. Raw hash signing is disabled for safety and no transaction is broadcast.
+            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent signer. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, so verifiers should call ERC-1271 <code>isValidSignature</code> on the user&apos;s EIP-7702 delegated EOA address. Raw hash signing is disabled for safety and no transaction is broadcast.
           </p>
 
           <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions from the user&apos;s active backend agent wallet using an API key. The server handles UserOp signing; Calibur verifies the registered agent key on-chain. Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions from the user&apos;s EIP-7702 delegated EOA using an API key. The server handles UserOp signing with the authorized backend agent signer; Calibur verifies the registered agent key on-chain. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
@@ -236,8 +236,8 @@ export default function APIDocsPage() {
           <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Validation</h2>
           <ul className="space-y-2 text-sm leading-6 text-brand-muted">
             <li>• Unknown request properties are rejected.</li>
-            <li>• Chain IDs must be supported and authorized for the user's agent wallet.</li>
-            <li>• Wallets must exist and be active before sending transactions.</li>
+            <li>• Chain IDs must be supported and authorized for the user's EOA.</li>
+            <li>• EOAs must exist and be active before sending transactions.</li>
           </ul>
         </div>
         <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
