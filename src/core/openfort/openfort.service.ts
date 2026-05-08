@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -14,10 +15,12 @@ import { getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import {
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
+  hasCaliburDelegation,
   hashKey,
   isCaliburKeyRegistered,
   KeyType,
@@ -142,6 +145,14 @@ export class OpenfortService {
       const accountAddress = getAddress(params.accountAddress);
       const keyHash = params.keyHash as Hex;
 
+      const delegatedToCalibur = await hasCaliburDelegation(client, accountAddress);
+      if (!delegatedToCalibur) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.AGENT_REGISTRATION_PENDING,
+          message: 'Agent registration is still pending on-chain',
+        });
+      }
+
       const registered = await isCaliburKeyRegistered(client, accountAddress, keyHash);
       if (!registered) {
         throw new ForbiddenException('Agent key is not registered on Calibur account');
@@ -151,7 +162,7 @@ export class OpenfortService {
       const failure = getAgentKeyUsabilityFailure(settings);
       if (failure) throw new ForbiddenException(failure);
     } catch (error: any) {
-      if (error instanceof ForbiddenException) throw error;
+      if (error instanceof ConflictException || error instanceof ForbiddenException) throw error;
       this.logOpenfortError('verifyAgentKeyRegistration', error, {
         chainId: params.chainId,
       });

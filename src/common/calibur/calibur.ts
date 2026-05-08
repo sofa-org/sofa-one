@@ -12,11 +12,12 @@ import {
   type Transport,
 } from 'viem';
 import { entryPoint08Abi, getUserOperationTypedData, toSmartAccount } from 'viem/account-abstraction';
-import { readContract } from 'viem/actions';
+import { getCode, readContract } from 'viem/actions';
 import type { Account } from 'viem/accounts';
 
 export const CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
 export const ENTRYPOINT_V08_ADDRESS = '0x4337084d9e255ff0702461cf8895ce9e3b5ff108' as const;
+export const EIP7702_DELEGATION_PREFIX = '0xef0100' as const;
 
 export enum KeyType {
   P256 = 0,
@@ -63,6 +64,18 @@ const CALIBUR_KEY_ABI = [
     stateMutability: 'view',
   },
 ] as const;
+
+export function getCaliburDelegationCode(): Hex {
+  return `${EIP7702_DELEGATION_PREFIX}${CALIBUR_ADDRESS.slice(2)}` as Hex;
+}
+
+export async function hasCaliburDelegation(
+  client: Client<Transport, Chain | undefined>,
+  account: Address,
+): Promise<boolean> {
+  const code = await getCode(client, { address: account });
+  return code?.toLowerCase() === getCaliburDelegationCode();
+}
 
 export function hashKey(key: CaliburKey): Hex {
   return keccak256(

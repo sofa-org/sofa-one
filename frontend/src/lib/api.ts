@@ -212,6 +212,8 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'Transaction not found, or this key does not have access to it.';
     case 'WALLET_NOT_ACTIVE':
       return 'Wallet is not active yet. Try again shortly.';
+    case 'AGENT_REGISTRATION_PENDING':
+      return 'Agent registration is still syncing on-chain. Try again shortly.';
     case 'IP_NOT_ALLOWED':
       return 'This request is blocked by the API key IP allowlist.';
     default:

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AccountTypeEnum, RecoveryMethod, use7702Authorization, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient, useWalletClient } from 'wagmi';
-import { formatEther, padHex, zeroAddress, type Address, type Hex } from 'viem';
+import { formatEther, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
 import { prepareAuthorization } from 'viem/actions';
 import {
   DEFAULT_CHAIN_ID,
@@ -132,6 +132,9 @@ function formatAgentStatus(status?: string | null) {
 }
 
 const AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS = 60_000;
+const AGENT_REGISTRATION_RESULT_RETRY_DELAY_MS = 3_000;
+const AGENT_REGISTRATION_AUTO_CHECK_MS = 120_000;
+const AGENT_REGISTRATION_MANUAL_CHECK_MS = 60_000;
 
 function formatDateTimeLocal(date: Date) {
   const offsetMs = date.getTimezoneOffset() * 60_000;
@@ -208,6 +211,49 @@ export default function WalletPage() {
   const [walletSetupLoading, setWalletSetupLoading] = useState(false);
   const [walletSetupError, setWalletSetupError] = useState<string | null>(null);
   const [walletSetupSuccess, setWalletSetupSuccess] = useState<string | null>(null);
+  const [agentRegistrationCheckStatus, setAgentRegistrationCheckStatus] = useState<
+    'idle' | 'checking' | 'timed_out'
+  >('idle');
+
+  const confirmAgentRegistration = useCallback(
+    async (client: PublicClient, chainId: number, txHash: Hex, shouldContinue: () => boolean) => {
+      const receipt = await client.waitForTransactionReceipt({
+        hash: txHash,
+        timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
+      });
+      const status: 'registered' | 'registration_failed' =
+        receipt.status === 'success' ? 'registered' : 'registration_failed';
+
+      while (shouldContinue()) {
+        try {
+          return await markAgentRegistrationResult(getToken, { chainId, txHash, status });
+        } catch (err: unknown) {
+          if (status === 'registration_failed' || !hasApiErrorCode(err, 'AGENT_REGISTRATION_PENDING')) {
+            throw err;
+          }
+          await delay(AGENT_REGISTRATION_RESULT_RETRY_DELAY_MS);
+        }
+      }
+
+      return null;
+    },
+    [getToken],
+  );
+
+  const checkPendingAgentRegistration = useCallback(
+    async (durationMs: number) => {
+      if (!pendingAuthorization?.registrationTxHash || !publicClient) return null;
+
+      const deadline = Date.now() + durationMs;
+      return confirmAgentRegistration(
+        publicClient,
+        pendingAuthorization.chainId,
+        pendingAuthorization.registrationTxHash as Hex,
+        () => Date.now() < deadline,
+      );
+    },
+    [confirmAgentRegistration, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, publicClient],
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -282,18 +328,30 @@ export default function WalletPage() {
     const client = publicClient;
     const savedTxHash = txHash;
     const savedChainId = chainId;
+    const deadline = Date.now() + AGENT_REGISTRATION_AUTO_CHECK_MS;
+    setAgentRegistrationCheckStatus('checking');
+    setWalletSetupError(null);
 
     async function resumeAgentRegistrationCheck() {
       try {
-        const receipt = await client.waitForTransactionReceipt({
-          hash: savedTxHash as Hex,
-          timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
-        });
-        const status: 'registered' | 'registration_failed' =
-          receipt.status === 'success' ? 'registered' : 'registration_failed';
-        const result = await markAgentRegistrationResult(getToken, { chainId: savedChainId, txHash: savedTxHash, status });
-        if (!cancelled) setWallet(result.wallet);
-      } catch {
+        const result = await confirmAgentRegistration(
+          client,
+          savedChainId,
+          savedTxHash as Hex,
+          () => !cancelled && Date.now() < deadline,
+        );
+        if (cancelled) return;
+        if (result) {
+          setWallet(result.wallet);
+          setAgentRegistrationCheckStatus('idle');
+          return;
+        }
+        setAgentRegistrationCheckStatus('timed_out');
+        setWalletSetupSuccess('Authorization transaction succeeded, but confirmation is taking longer than expected. Use Retry check to verify again.');
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setAgentRegistrationCheckStatus('timed_out');
+        setWalletSetupError(getApiErrorMessage(err));
         // Leave the saved tx hash and pending status intact; the next page visit will retry.
       }
     }
@@ -303,7 +361,29 @@ export default function WalletPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, publicClient, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, getToken]);
+  }, [user, publicClient, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, confirmAgentRegistration]);
+
+  async function handleRetryAgentRegistrationCheck() {
+    setAgentRegistrationCheckStatus('checking');
+    setWalletSetupError(null);
+    setWalletSetupSuccess(null);
+
+    try {
+      const result = await checkPendingAgentRegistration(AGENT_REGISTRATION_MANUAL_CHECK_MS);
+      if (result) {
+        setWallet(result.wallet);
+        setAgentRegistrationCheckStatus('idle');
+        setWalletSetupSuccess('API access authorization confirmed.');
+        return;
+      }
+
+      setAgentRegistrationCheckStatus('timed_out');
+      setWalletSetupSuccess('Authorization is still pending verification. Retry again in a moment; do not submit another authorization.');
+    } catch (err: unknown) {
+      setAgentRegistrationCheckStatus('timed_out');
+      setWalletSetupError(getApiErrorMessage(err));
+    }
+  }
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -395,6 +475,9 @@ export default function WalletPage() {
       assertWebCryptoAvailable();
       if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
+      }
+      if (pendingAuthorization) {
+        throw new Error('API access authorization is already checking. Wait for confirmation before authorizing again.');
       }
       if (recoveryPassword.length < 8) {
         throw new Error('Enter your wallet recovery password to unlock registration.');
@@ -530,26 +613,23 @@ export default function WalletPage() {
       const pending = await markAgentRegistrationTransaction(getToken, { chainId: agentChainId, txHash });
       setWallet(pending.wallet);
 
-      let receipt: Awaited<ReturnType<typeof publicClient.waitForTransactionReceipt>>;
+      let result: AuthSessionResponse | null;
       try {
-        receipt = await publicClient.waitForTransactionReceipt({
-          hash: txHash,
-          timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
-        });
+        let attempts = 0;
+        result = await confirmAgentRegistration(publicClient, agentChainId, txHash, () => attempts++ < 3);
       } catch {
         setWalletSetupSuccess(`Authorization pending. We will check again next time: ${txHash}`);
         return;
       }
 
-      const registrationStatus = receipt.status === 'success' ? 'registered' : 'registration_failed';
-      const result = await markAgentRegistrationResult(getToken, {
-        chainId: agentChainId,
-        txHash,
-        status: registrationStatus,
-      });
+      if (!result) {
+        setWalletSetupSuccess(`Authorization pending. We are still checking on-chain: ${txHash}`);
+        return;
+      }
 
       setWallet(result.wallet);
-      if (registrationStatus === 'registered') {
+      const confirmedAuthorization = result.wallet.chainAuthorizations.find((item) => item.chainId === agentChainId);
+      if (confirmedAuthorization?.status === 'registered') {
         setWalletSetupSuccess(`API access authorized: ${txHash}`);
       } else {
         setWalletSetupError(`API access authorization failed: ${txHash}`);
@@ -563,6 +643,9 @@ export default function WalletPage() {
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
+  const isAgentRegistrationChecking = Boolean(pendingAuthorization);
+  const authorizeDisabled = walletSetupLoading || isAgentRegistrationChecking;
+  const showAgentRegistrationSpinner = walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !wallet?.walletAddress
     ? { title: 'Create agent EOA', tone: 'amber', description: 'Set one recovery password. Openfort secures the EOA key and we never expose private keys.' }
     : hasRegisteredAuthorization
@@ -800,7 +883,9 @@ export default function WalletPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-blue-800">
-                    This one-time on-chain approval lets your backend submit transactions through API keys.
+                    {isAgentRegistrationChecking
+                      ? 'Authorization is checking on-chain. We will update this page automatically; do not submit another authorization.'
+                      : 'This one-time on-chain approval lets your backend submit transactions through API keys.'}
                   </p>
                   <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
                     <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
@@ -828,6 +913,32 @@ export default function WalletPage() {
                   </div>
                 )}
 
+                {pendingAuthorization && (
+                  <div className="mb-4 rounded-xl border border-blue-200 bg-white/80 p-4 text-sm text-blue-900 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold">
+                          {agentRegistrationCheckStatus === 'checking'
+                            ? 'Checking on-chain authorization...'
+                            : 'Authorization submitted; confirmation is not complete yet.'}
+                        </p>
+                        <p className="mt-1 break-all text-xs text-blue-700">
+                          Tx: {pendingAuthorization.registrationTxHash}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRetryAgentRegistrationCheck}
+                        disabled={agentRegistrationCheckStatus === 'checking' || walletSetupLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-800 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {agentRegistrationCheckStatus === 'checking' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        Retry check
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-end">
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
@@ -836,7 +947,7 @@ export default function WalletPage() {
                     <select
                       value={agentChainId}
                       onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={walletSetupLoading}
+                      disabled={authorizeDisabled}
                       className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {SUPPORTED_CHAINS.map((chain) => (
@@ -855,8 +966,9 @@ export default function WalletPage() {
                       value={agentExpiryLocal}
                       min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
                       onChange={(event) => setAgentExpiryLocal(event.target.value)}
+                      disabled={authorizeDisabled}
                       required
-                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </div>
                   <div className="flex-1">
@@ -869,19 +981,20 @@ export default function WalletPage() {
                       value={recoveryPassword}
                       onChange={(event) => setRecoveryPassword(event.target.value)}
                       placeholder="Enter the password you created in Step 1"
-                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                      disabled={authorizeDisabled}
+                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </div>
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      disabled={walletSetupLoading}
+                      disabled={authorizeDisabled}
                       className="flex h-[42px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand-text px-8 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {walletSetupLoading && (
+                      {showAgentRegistrationSpinner && (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
-                      <span>Authorize API Access</span>
+                      <span>{isAgentRegistrationChecking ? 'Authorization pending' : 'Authorize API Access'}</span>
                     </button>
                   </div>
                 </div>
