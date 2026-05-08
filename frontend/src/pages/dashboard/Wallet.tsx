@@ -659,8 +659,10 @@ export default function WalletPage() {
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
+  const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
-  const authorizeDisabled = walletSetupLoading || isAgentRegistrationChecking;
+  const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
+  const authorizeSubmitDisabled = registrationBusy || isSelectedChainRegistered;
   const showAgentRegistrationSpinner = walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !wallet?.walletAddress
     ? { title: 'Create agent EOA', tone: 'amber', description: 'Set one recovery password. Openfort secures the EOA key and we never expose private keys.' }
@@ -887,23 +889,29 @@ export default function WalletPage() {
             {wallet.walletAddress && (
               <form
                 onSubmit={handleRegisterAgent}
-                className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm"
+                className={`rounded-2xl border p-5 shadow-sm ${
+                  isSelectedChainRegistered ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'
+                }`}
               >
                 <div className="mb-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <h2 className="font-serif text-xl font-bold text-brand-text">
                       Step 2: Authorize API access
                     </h2>
-                    <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-200">
+                    <span className={`inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold ring-1 ${
+                      isSelectedChainRegistered ? 'text-green-800 ring-green-200' : 'text-blue-800 ring-blue-200'
+                    }`}>
                       Status: {formatAgentStatus(selectedAuthorizationStatus)}
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-blue-800">
-                    {isAgentRegistrationChecking
+                    {isSelectedChainRegistered
+                      ? `${agentChain?.name ?? `Chain ${agentChainId}`} is already authorized for API access.`
+                      : isAgentRegistrationChecking
                       ? 'Authorization is checking on-chain. We will update this page automatically; do not submit another authorization.'
                       : 'This one-time on-chain approval lets your backend submit transactions through API keys.'}
                   </p>
-                  <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
+                  {!isSelectedChainRegistered && <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
                     <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
                     <p className="mb-3 text-blue-800">
                       Send a small amount of {publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token'} on {agentChain?.name ?? 'the selected network'} to this EOA address. Then use your Step 1 password to sign the one-time Calibur authorization in your browser.
@@ -912,7 +920,7 @@ export default function WalletPage() {
                       <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>
                       <CopyButton text={wallet.walletAddress} className="border-blue-300 text-blue-600 hover:bg-blue-100 bg-blue-50" />
                     </div>
-                  </div>
+                  </div>}
                 </div>
 
                 {walletSetupError && (
@@ -963,7 +971,7 @@ export default function WalletPage() {
                     <select
                       value={agentChainId}
                       onChange={(event) => setAgentChainId(Number(event.target.value))}
-                      disabled={authorizeDisabled}
+                      disabled={registrationBusy}
                       className="block w-full rounded-lg border border-blue-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {SUPPORTED_CHAINS.map((chain) => (
@@ -982,7 +990,7 @@ export default function WalletPage() {
                       value={agentExpiryLocal}
                       min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
                       onChange={(event) => setAgentExpiryLocal(event.target.value)}
-                      disabled={authorizeDisabled}
+                      disabled={authorizeSubmitDisabled}
                       required
                       className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     />
@@ -997,20 +1005,26 @@ export default function WalletPage() {
                       value={recoveryPassword}
                       onChange={(event) => setRecoveryPassword(event.target.value)}
                       placeholder="Enter the password you created in Step 1"
-                      disabled={authorizeDisabled}
+                      disabled={authorizeSubmitDisabled}
                       className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </div>
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      disabled={authorizeDisabled}
+                      disabled={authorizeSubmitDisabled}
                       className="flex h-[42px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand-text px-8 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {showAgentRegistrationSpinner && (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
-                      <span>{isAgentRegistrationChecking ? 'Authorization pending' : 'Authorize API Access'}</span>
+                      <span>
+                        {isSelectedChainRegistered
+                          ? 'Authorized'
+                          : isAgentRegistrationChecking
+                            ? 'Authorization pending'
+                            : 'Authorize API Access'}
+                      </span>
                     </button>
                   </div>
                 </div>
