@@ -13,7 +13,7 @@ import {
 const caliburAbi = parseAbi([
   'function register((uint8 keyType, bytes publicKey) key)',
   'function update(bytes32 keyHash, uint256 settings)',
-  'function execute((address target, uint256 value, bytes data)[] calls) payable',
+  'function execute(((address to, uint256 value, bytes data)[] calls, bool revertOnFailure) batchedCall) payable',
 ]);
 
 export const CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
@@ -30,16 +30,16 @@ export type CaliburKey = {
   publicKey: Hex;
 };
 
-export type CaliburCall = {
-  target: Address;
-  value: bigint;
-  data: Hex;
-};
-
 export type KeySettings = {
   isAdmin: boolean;
   expiration: number;
   hook: Address;
+};
+
+export type CaliburCall = {
+  to: Address;
+  value: bigint;
+  data: Hex;
 };
 
 export function hashKey(key: CaliburKey): Hex {
@@ -56,27 +56,27 @@ export function packSettings(settings: KeySettings): bigint {
   return (admin << 200n) | (expiration << 160n) | hook;
 }
 
-export function encodeRegisterKey(key: CaliburKey): CaliburCall {
-  return {
-    target: zeroAddress,
-    value: 0n,
-    data: encodeFunctionData({
-      abi: caliburAbi,
-      functionName: 'register',
-      args: [key],
-    }),
-  };
+export function encodeRegisterKey(key: CaliburKey): Hex {
+  return encodeFunctionData({
+    abi: caliburAbi,
+    functionName: 'register',
+    args: [key],
+  });
 }
 
-export function encodeUpdateKeySettings(keyHash: Hex, settings: KeySettings): CaliburCall {
+export function encodeUpdateKeySettings(keyHash: Hex, settings: KeySettings): Hex {
+  return encodeFunctionData({
+    abi: caliburAbi,
+    functionName: 'update',
+    args: [keyHash, packSettings(settings)],
+  });
+}
+
+export function encodeSelfCall(data: Hex): CaliburCall {
   return {
-    target: zeroAddress,
+    to: zeroAddress,
     value: 0n,
-    data: encodeFunctionData({
-      abi: caliburAbi,
-      functionName: 'update',
-      args: [keyHash, packSettings(settings)],
-    }),
+    data,
   };
 }
 
@@ -84,6 +84,6 @@ export function encodeExecute(calls: CaliburCall[]): Hex {
   return encodeFunctionData({
     abi: caliburAbi,
     functionName: 'execute',
-    args: [calls],
+    args: [{ calls, revertOnFailure: true }],
   });
 }

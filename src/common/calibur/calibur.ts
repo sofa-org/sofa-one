@@ -150,22 +150,6 @@ export function encodeRegisterKey(key: CaliburKey): Hex {
   });
 }
 
-export function encodeExecute(calls: Hex[]): Hex {
-  return encodeFunctionData({
-    abi: [
-      {
-        type: 'function',
-        name: 'execute',
-        inputs: [{ name: 'calls', type: 'bytes[]' }],
-        outputs: [],
-        stateMutability: 'payable',
-      },
-    ],
-    functionName: 'execute',
-    args: [calls],
-  });
-}
-
 export function createCaliburSessionAccount({
   client,
   signer,
@@ -183,6 +167,10 @@ export function createCaliburSessionAccount({
       return accountAddress;
     },
     async encodeCalls(calls: Array<{ to: Address; value?: bigint; data?: Hex }>) {
+      // Calibur's EntryPoint path calls executeUserOp(PackedUserOperation, bytes32),
+      // then decodes userOp.callData after removing the first 4 selector bytes as
+      // BatchedCall({ calls: Call[], revertOnFailure: bool }). This is not the
+      // public direct execute(...) ABI used for browser self-registration.
       return encodeFunctionData({
         abi: [
           {
@@ -190,12 +178,19 @@ export function createCaliburSessionAccount({
             name: 'executeUserOp',
             inputs: [
               {
-                name: 'calls',
-                type: 'tuple[]',
+                name: 'batchedCall',
+                type: 'tuple',
                 components: [
-                  { name: 'target', type: 'address' },
-                  { name: 'value', type: 'uint256' },
-                  { name: 'data', type: 'bytes' },
+                  {
+                    name: 'calls',
+                    type: 'tuple[]',
+                    components: [
+                      { name: 'to', type: 'address' },
+                      { name: 'value', type: 'uint256' },
+                      { name: 'data', type: 'bytes' },
+                    ],
+                  },
+                  { name: 'revertOnFailure', type: 'bool' },
                 ],
               },
             ],
@@ -205,11 +200,14 @@ export function createCaliburSessionAccount({
         ],
         functionName: 'executeUserOp',
         args: [
-          calls.map((call: { to: Address; value?: bigint; data?: Hex }) => ({
-            target: call.to as Address,
-            value: call.value ?? 0n,
-            data: call.data ?? '0x',
-          })),
+          {
+            calls: calls.map((call: { to: Address; value?: bigint; data?: Hex }) => ({
+              to: call.to as Address,
+              value: call.value ?? 0n,
+              data: call.data ?? '0x',
+            })),
+            revertOnFailure: true,
+          },
         ],
       });
     },

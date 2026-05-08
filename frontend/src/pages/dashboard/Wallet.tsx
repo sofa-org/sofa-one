@@ -27,6 +27,7 @@ import {
   KeyType,
   encodeExecute,
   encodeRegisterKey,
+  encodeSelfCall,
   encodeUpdateKeySettings,
   hashKey,
   type CaliburKey,
@@ -465,12 +466,14 @@ export default function WalletPage() {
 
       const expiration = Math.floor(new Date(authorization.expiresAt).getTime() / 1000);
       const txData = encodeExecute([
-        encodeRegisterKey(agentKey),
-        encodeUpdateKeySettings(frontendKeyHash, {
-          isAdmin: false,
-          expiration,
-          hook: zeroAddress,
-        }),
+        encodeSelfCall(encodeRegisterKey(agentKey)),
+        encodeSelfCall(
+          encodeUpdateKeySettings(frontendKeyHash, {
+            isAdmin: false,
+            expiration,
+            hook: zeroAddress,
+          }),
+        ),
       ]);
 
       if (!walletClient) {
