@@ -54,7 +54,7 @@ export default function DashboardLayout() {
   );
 
   return (
-    <div className="flex min-h-screen bg-brand-bg flex-col lg:flex-row">
+    <div className="flex min-h-screen flex-col bg-brand-bg lg:h-screen lg:overflow-hidden lg:flex-row">
       {/* Mobile Top Bar */}
       <div className="flex lg:hidden items-center justify-between border-b border-brand-border bg-brand-surface px-4 py-3">
         <span className="text-lg font-bold font-serif tracking-tight text-brand-text">
@@ -103,7 +103,7 @@ export default function DashboardLayout() {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col border-r border-brand-border bg-brand-surface">
+      <aside className="hidden w-60 flex-col border-r border-brand-border bg-brand-surface lg:flex lg:h-screen">
         <div className="flex items-center gap-2 border-b border-brand-border px-6 py-4">
           <span className="text-lg font-bold font-serif tracking-tight text-brand-text">
             SOFA ONE
@@ -129,7 +129,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto bg-brand-bg p-4 sm:p-8">
+      <main className="flex-1 overflow-auto bg-brand-bg p-4 sm:p-8 lg:h-screen">
         <Outlet />
       </main>
     </div>

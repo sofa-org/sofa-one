@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AccountTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react';
+import { AccountTypeEnum, RecoveryMethod, use7702Authorization, useOpenfort, useUser } from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient, useWalletClient } from 'wagmi';
 import { formatEther, padHex, zeroAddress, type Address, type Hex } from 'viem';
+import { prepareAuthorization } from 'viem/actions';
 import {
   DEFAULT_CHAIN_ID,
   authorizeEmbeddedWallet,
@@ -182,6 +183,7 @@ export default function WalletPage() {
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { data: walletClient } = useWalletClient({ chainId: agentChainId });
+  const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
   const [loading, setLoading] = useState(true);
@@ -481,14 +483,22 @@ export default function WalletPage() {
       }
       const authorizationList =
         !walletCode || walletCode === '0x'
-          ? [
-              await walletClient.signAuthorization({
+          ? await (async () => {
+              const authorization = await prepareAuthorization(walletClient, {
                 account: address,
                 chainId: agentChainId,
                 contractAddress: CALIBUR_ADDRESS,
                 executor: 'self',
-              }),
-            ]
+              });
+
+              return [
+                await signOpenfortAuthorization({
+                  chainId: authorization.chainId,
+                  nonce: authorization.nonce,
+                  contractAddress: CALIBUR_ADDRESS,
+                }),
+              ];
+            })()
           : undefined;
 
       const estimatedGas = await publicClient.estimateGas({
