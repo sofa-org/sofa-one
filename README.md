@@ -16,7 +16,7 @@ Server-side automated blockchain signing for users authenticated with Openfort e
    └── API Key Module     (generation, validation, rotation, revocation)
    ↓
 [Openfort SDK → TEE]     [PostgreSQL + Redis]     [EVM Chains]
-  Private key custody      User/wallet/key store    Base · Ethereum
+  Private key custody      User/wallet/key store    Base · Ethereum · Polygon
 ```
 
 ### Key Properties
@@ -77,7 +77,7 @@ Required variables:
 | `OPENFORT_WALLET_SECRET` | Openfort wallet signing secret; never expose or log it |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
-| `DEFAULT_CHAIN_ID` | Default chain (84532 for Base Sepolia) |
+| `DEFAULT_CHAIN_ID` | Default chain; supported values include Polygon (137) and Polygon Amoy (80002) |
 | `VITE_OPENFORT_PUBLISHABLE_KEY` | Openfort frontend publishable key (`frontend/.env`) |
 | `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` | Openfort Shield frontend publishable key (`frontend/.env`) |
 | `VITE_API_URL` | Backend URL for production (leave empty in dev — Vite proxy handles it) |
@@ -251,7 +251,7 @@ Core tables managed by Prisma:
 
 ## Testing
 
-- **Testnet**: Base Sepolia (chain ID `84532`)
+- **Testnets**: Base Sepolia (chain ID `84532`), Ethereum Sepolia (`11155111`), Polygon Amoy (`80002`)
 - **USDC Faucet**: [Circle USDC Faucet](https://faucet.circle.com/)
 - **Load target**: 1,000 concurrent transaction intents
 
