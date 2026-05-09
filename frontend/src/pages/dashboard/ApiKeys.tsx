@@ -27,6 +27,7 @@ export default function ApiKeysPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const apiBaseUrl = `${window.location.origin}/api`;
   const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
 
   const fetchKeys = useCallback(async () => {
@@ -227,7 +228,7 @@ export default function ApiKeysPage() {
       <DashboardCard title="Quick Start">
         <div className="mt-5">
           <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-{`curl -X POST ${window.location.origin}/api/v1/transactions/send \\
+{`curl -X POST ${apiBaseUrl}/v1/transactions/send \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
