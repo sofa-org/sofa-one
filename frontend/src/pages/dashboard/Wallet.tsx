@@ -82,6 +82,23 @@ function TokenIcon({ token }: { token: string }) {
   return <EthIcon />;
 }
 
+type UserOperationGasPrice = {
+  fast?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+  standard?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+  slow?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+};
+
+async function getRecommendedUserOperationGasPrice(bundlerClient: {
+  request: (args: { method: 'pimlico_getUserOperationGasPrice'; params: [] }) => Promise<UserOperationGasPrice>;
+}) {
+  try {
+    const gasPrice = await bundlerClient.request({ method: 'pimlico_getUserOperationGasPrice', params: [] });
+    return gasPrice.fast ?? gasPrice.standard ?? gasPrice.slow;
+  } catch {
+    return undefined;
+  }
+}
+
 function resolveEmbeddedWallet(
   createdAccount: unknown,
   embeddedWallet: { address?: Address; activeWallet?: unknown; wallets?: unknown[] },
@@ -601,10 +618,17 @@ export default function WalletPage() {
         ...(paymaster ? { paymaster } : {}),
         transport: openfortRpcTransport,
       } as never);
+      const recommendedGasPrice = await getRecommendedUserOperationGasPrice(bundlerClient as never);
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
         ...(eip7702Authorization ? { authorization: eip7702Authorization } : {}),
+        ...(recommendedGasPrice
+          ? {
+              maxFeePerGas: BigInt(recommendedGasPrice.maxFeePerGas),
+              maxPriorityFeePerGas: BigInt(recommendedGasPrice.maxPriorityFeePerGas),
+            }
+          : {}),
         ...(feeSponsorshipId
           ? { paymasterContext: { policyId: feeSponsorshipId } }
           : {}),
