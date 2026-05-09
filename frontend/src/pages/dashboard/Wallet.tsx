@@ -408,11 +408,6 @@ export default function WalletPage() {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
       }
 
-      const openfortAccessToken = await getAccessToken();
-      if (!openfortAccessToken) {
-        throw new Error('Openfort session is not ready. Refresh and sign in again.');
-      }
-
       let createdAccount: unknown;
       let refreshedAccounts: unknown[] | undefined;
       if (!embeddedWallet.address) {
@@ -437,7 +432,6 @@ export default function WalletPage() {
       for (let attempt = 0; ; attempt += 1) {
         try {
           authorized = await authorizeEmbeddedWallet(getToken, {
-            openfortAccessToken,
             embeddedWalletAddress: address,
             embeddedOpenfortAccountId: accountId,
           });
@@ -492,12 +486,7 @@ export default function WalletPage() {
       let authorization = walletAddressChanged ? undefined : selectedAuthorization;
       let currentWallet = wallet;
       if (!authorization || authorization.status === 'registered' || authorization.status === 'registration_failed') {
-        const openfortAccessToken = await getAccessToken();
-        if (!openfortAccessToken) {
-          throw new Error('Openfort session is not ready. Refresh and sign in again.');
-        }
         const initialized = await authorizeEmbeddedWallet(getToken, {
-          openfortAccessToken,
           embeddedWalletAddress: address,
           embeddedOpenfortAccountId: activeEmbeddedWallet.accountId,
           chainId: agentChainId,

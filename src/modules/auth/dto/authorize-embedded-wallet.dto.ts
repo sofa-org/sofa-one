@@ -1,9 +1,6 @@
 import { IsDateString, IsEthereumAddress, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class AuthorizeEmbeddedWalletDto {
-  @IsString()
-  openfortAccessToken: string;
-
   @IsEthereumAddress()
   embeddedWalletAddress: string;
 

@@ -5,7 +5,7 @@ import { OpenfortService } from '../../core/openfort/openfort.service';
 
 /**
  * Verifies the Openfort IAM access token from Authorization: Bearer.
- * On success, attaches `openfortUserId` and `openfortSession` to the request.
+ * On success, attaches Openfort session context to the request.
  */
 @Injectable()
 export class OpenfortAuthGuard implements CanActivate {
@@ -28,6 +28,7 @@ export class OpenfortAuthGuard implements CanActivate {
     try {
       const session = await this.openfort.verifyIamSession(token);
       request.openfortUserId = session.openfortUserId;
+      request.openfortAccessToken = token;
       request.openfortSession = session.session;
       request.openfortEmail = session.email;
       return true;

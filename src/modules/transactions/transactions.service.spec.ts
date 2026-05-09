@@ -310,6 +310,8 @@ describe('TransactionsService', () => {
       txHash: '0xhash',
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
+      operationType: 'send',
+      authMethod: 'api_key',
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: new Date('2026-04-28T00:01:00.000Z'),
@@ -334,6 +336,8 @@ describe('TransactionsService', () => {
       txHash: null,
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
+      operationType: 'send',
+      authMethod: 'api_key',
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: null,
@@ -341,6 +345,40 @@ describe('TransactionsService', () => {
 
     await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).resolves.toEqual(
       expect.objectContaining({ status: 'pending', transactionHash: null }),
+    );
+  });
+
+  it('rejects status lookups for non-send operations', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      userId: 'user-1',
+      status: 'confirmed',
+      txHash: '0xhash',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      operationType: 'withdraw',
+      authMethod: 'api_key',
+    });
+
+    await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('rejects status lookups for non-api-key auth methods', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-1',
+      userId: 'user-1',
+      status: 'confirmed',
+      txHash: '0xhash',
+      chainId: BigInt(8453),
+      walletAddress: wallet.walletAddress,
+      operationType: 'send',
+      authMethod: 'clerk',
+    });
+
+    await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).rejects.toThrow(
+      NotFoundException,
     );
   });
 

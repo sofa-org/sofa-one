@@ -191,7 +191,7 @@ export default function ApiKeysPage() {
             </div>
             {sortedKeys.map((key) => (
               <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_110px_36px] md:items-center md:gap-4">
-                <span className="font-mono text-sm text-brand-text">{key.keyPrefix.slice(0, 11)}...</span>
+                <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
                 <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
                 </span>

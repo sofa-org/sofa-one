@@ -28,7 +28,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
 
-    const apiKey = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       await this.assertCanCreateKey(tx, userId, normalized.name);
 
       const created = await tx.apiKey.create({
@@ -55,12 +55,7 @@ export class ApiKeyService {
     });
 
     return {
-      id: apiKey.id,
       rawKey: keyMaterial.rawKey,
-      keyPrefix: apiKey.keyPrefix,
-      name: apiKey.name,
-      expiresAt: apiKey.expiresAt,
-      createdAt: apiKey.createdAt,
     };
   }
 
@@ -120,7 +115,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions({ name });
     const keyMaterial = await this.generateKeyMaterial();
 
-    const apiKey = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -162,18 +157,13 @@ export class ApiKeyService {
     });
 
     return {
-      id: apiKey.id,
       rawKey: keyMaterial.rawKey,
-      keyPrefix: apiKey.keyPrefix,
-      name: apiKey.name,
-      expiresAt: apiKey.expiresAt,
-      createdAt: apiKey.createdAt,
     };
   }
 
   /** List all API keys (metadata only — no secrets). */
   async listApiKeys(userId: string) {
-    return this.prisma.apiKey.findMany({
+    const keys = await this.prisma.apiKey.findMany({
       where: { userId },
       select: {
         id: true,
@@ -181,12 +171,21 @@ export class ApiKeyService {
         name: true,
         revoked: true,
         expiresAt: true,
-        allowedIps: true,
         createdAt: true,
         lastUsedAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return keys.map((key) => ({
+      id: key.id,
+      displayPrefix: `${key.keyPrefix.slice(0, 11)}...`,
+      name: key.name,
+      revoked: key.revoked,
+      expiresAt: key.expiresAt,
+      createdAt: key.createdAt,
+      lastUsedAt: key.lastUsedAt,
+    }));
   }
 
   private normalizeCreateOptions(options: ApiKeyCreateOptions) {

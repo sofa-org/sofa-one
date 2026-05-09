@@ -201,9 +201,12 @@ export class TransactionsService {
     }
 
     const tx = await this.prisma.transaction.findFirst({
-      where: { id: transactionId, userId },
+      where: { id: transactionId, userId, operationType: 'send', authMethod: 'api_key' },
     });
     if (!tx) throw new NotFoundException('Transaction not found');
+    if (tx.operationType !== 'send' || tx.authMethod !== 'api_key') {
+      throw new NotFoundException('Transaction not found');
+    }
 
     return this.toStatusResponse(tx);
   }

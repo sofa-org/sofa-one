@@ -18,9 +18,7 @@ import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet
 
 type WalletResponse = {
   walletAddress: string | null;
-  embeddedWalletAddress: string | null;
   status: string;
-  supportedTokens: string[];
   agentWalletAddress?: string | null;
   agentKeyHash?: string | null;
   chainAuthorizations: Array<{
@@ -28,7 +26,6 @@ type WalletResponse = {
     status: string;
     registrationTxHash: string | null;
     expiresAt: string | null;
-    updatedAt: string;
   }>;
 };
 
@@ -155,7 +152,11 @@ export class AuthService {
     return this.syncOpenfortSession(openfortUserId, undefined, _depth);
   }
 
-  async authorizeEmbeddedWallet(openfortUserId: string, dto: AuthorizeEmbeddedWalletDto) {
+  async authorizeEmbeddedWallet(
+    openfortUserId: string,
+    openfortAccessToken: string,
+    dto: AuthorizeEmbeddedWalletDto,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
       include: { wallet: { include: { chainAuthorizations: true } } },
@@ -163,7 +164,7 @@ export class AuthService {
     if (!user) throw new NotFoundException('User not found');
 
     const authorized = await this.openfort.authorizeEmbeddedAddress(
-      dto.openfortAccessToken,
+      openfortAccessToken,
       dto.embeddedWalletAddress,
     );
     if (authorized.openfortUserId !== openfortUserId) {
@@ -229,15 +230,6 @@ export class AuthService {
     return {
       userId: user.id,
       wallet: this.toWalletResponse(wallet),
-      agentRegistration:
-        chainId && expiresAt
-          ? {
-              agentAddress: agent.address,
-              keyHash: agent.keyHash,
-              chainId,
-              expiresAt: expiresAt.toISOString(),
-            }
-          : undefined,
     };
   }
 
@@ -515,9 +507,7 @@ export class AuthService {
   private toWalletResponse(wallet: WalletWithAuthorizations): WalletResponse {
     return {
       walletAddress: wallet.walletAddress,
-      embeddedWalletAddress: wallet.walletAddress,
       status: wallet.status,
-      supportedTokens: ['USDC', 'ETH'],
       agentWalletAddress: wallet.agentWalletAddress,
       agentKeyHash: wallet.agentKeyHash,
       chainAuthorizations: (wallet.chainAuthorizations ?? [])
@@ -526,7 +516,6 @@ export class AuthService {
           status: authorization.status,
           registrationTxHash: authorization.registrationTxHash,
           expiresAt: authorization.expiresAt?.toISOString() ?? null,
-          updatedAt: authorization.updatedAt.toISOString(),
         }))
         .sort((a, b) => a.chainId - b.chainId),
     };

@@ -24,7 +24,11 @@ describe('AuthService', () => {
     jest.clearAllMocks();
     const tx = {
       user: { create: jest.fn().mockResolvedValue({ id: 'user-1' }) },
-      userWallet: { create: jest.fn().mockResolvedValue({ walletAddress: null, status: 'pending_embedded_wallet', chainAuthorizations: [] }), upsert: jest.fn() },
+      userWallet: {
+        create: jest.fn().mockResolvedValue({ walletAddress: null, status: 'pending_embedded_wallet', chainAuthorizations: [] }),
+        upsert: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+      },
       walletChainAuthorization: { upsert: jest.fn(), update: jest.fn() },
     };
     prisma = {
@@ -37,6 +41,38 @@ describe('AuthService', () => {
     openfort = { createBackendWallet: jest.fn(), createAgentWallet: jest.fn(), authorizeEmbeddedAddress: jest.fn(), verifyAgentKeyRegistration: jest.fn(), getTransactionReceiptStatus: jest.fn() };
     apiKeyService = { createApiKey: jest.fn().mockResolvedValue({ rawKey: 'sk_test' }) };
     service = new AuthService(prisma, openfort, apiKeyService, { get: jest.fn((_k: string, fb: unknown) => fb), getOrThrow: jest.fn(() => 'secret') } as any);
+  });
+
+  it('authorizes embedded wallet without requiring an access token on the DTO', async () => {
+    const wallet = { id: 'wallet-1', userId: 'user-1', status: 'active', walletAddress: '0x1111111111111111111111111111111111111111', agentOpenfortAccountId: 'agent-account-1', agentWalletAddress: '0x2222222222222222222222222222222222222222', agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333', chainAuthorizations: [auth({ status: 'registration_required' })] };
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    prisma.__tx.userWallet.upsert.mockResolvedValue(wallet);
+    prisma.__tx.userWallet.findUniqueOrThrow.mockResolvedValue(wallet);
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({ openfortUserId: 'openfort-user-1', address: '0x1111111111111111111111111111111111111111', accountId: 'acc-1' });
+
+    const result = await service.authorizeEmbeddedWallet(
+      'openfort-user-1',
+      'openfort-access-token',
+      {
+        embeddedWalletAddress: wallet.walletAddress,
+        embeddedOpenfortAccountId: 'embedded-acc-1',
+        chainId: chainId,
+        agentExpiresAt: futureDate.toISOString(),
+      } as any,
+    );
+
+    expect(openfort.authorizeEmbeddedAddress).toHaveBeenCalledWith('openfort-access-token', wallet.walletAddress);
+    expect(result).toMatchObject({
+      userId: 'user-1',
+      wallet: expect.objectContaining({
+        walletAddress: wallet.walletAddress,
+        status: 'active',
+      }),
+    });
+    expect(result).not.toHaveProperty('agentRegistration');
+    expect(result.wallet).not.toHaveProperty('embeddedWalletAddress');
+    expect(result.wallet).not.toHaveProperty('supportedTokens');
+    expect(result.wallet.chainAuthorizations[0]).not.toHaveProperty('updatedAt');
   });
 
   it('creates a pending embedded-wallet record', async () => {

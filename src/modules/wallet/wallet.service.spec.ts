@@ -369,7 +369,6 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
-      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
   });
@@ -462,7 +461,6 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
-      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
@@ -496,7 +494,6 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
-      signerAddress: WALLET.agentWalletAddress,
       type: 'message',
     });
   });
@@ -536,7 +533,6 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
-      signerAddress: WALLET.agentWalletAddress,
       type: 'typed_data',
     });
   });
@@ -581,7 +577,6 @@ describe('WalletService.sign()', () => {
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
-      signerAddress: WALLET.agentWalletAddress,
       type: 'typed_data',
     });
   });
@@ -596,6 +591,56 @@ describe('WalletService.sign()', () => {
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(NotFoundException);
+  });
+});
+
+describe('WalletService.getBalances()', () => {
+  let service: WalletService;
+
+  const mockFindUnique = jest.fn();
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockGetBalance.mockResolvedValue(BigInt('1000000000000000000'));
+    mockReadContract.mockResolvedValue(BigInt('2500000'));
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WalletService,
+        {
+          provide: PrismaService,
+          useValue: {
+            userWallet: { findUnique: mockFindUnique },
+          },
+        },
+        {
+          provide: OpenfortService,
+          useValue: {},
+        },
+      ],
+    }).compile();
+
+    service = module.get<WalletService>(WalletService);
+  });
+
+  it('returns display balances without raw values or token contracts', async () => {
+    const result = await service.getBalances('user-1', 84532);
+
+    expect(result).toEqual({
+      chains: [
+        expect.objectContaining({
+          chainId: 84532,
+          balances: [
+            { token: expect.any(String), formatted: '1' },
+            { token: 'USDC', formatted: '2.5' },
+          ],
+        }),
+      ],
+    });
+    expect(result).not.toHaveProperty('walletAddress');
+    expect(result.chains[0].balances[0]).not.toHaveProperty('raw');
+    expect(result.chains[0].balances[1]).not.toHaveProperty('contractAddress');
   });
 });
 

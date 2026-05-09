@@ -194,7 +194,6 @@ export class WalletService {
     return {
       signature,
       walletAddress: wallet.walletAddress,
-      signerAddress: wallet.agentWalletAddress,
       type: params.type,
     };
   }
@@ -260,8 +259,8 @@ export class WalletService {
     const usdcAddress = supportedChain.usdcAddress;
 
     type BalanceEntry =
-      | { token: string; raw: string; formatted: string; contractAddress?: string }
-      | { token: string; raw: null; formatted: null; error: string; contractAddress?: string };
+      | { token: string; formatted: string }
+      | { token: string; formatted: null; error: string };
 
     const [ethResult, usdcResult] = await Promise.all([
       publicClient
@@ -269,14 +268,12 @@ export class WalletService {
         .then(
           (raw): BalanceEntry => ({
             token: supportedChain.nativeCurrencySymbol,
-            raw: raw.toString(),
             formatted: formatEther(raw),
           }),
         )
         .catch(
           (): BalanceEntry => ({
             token: supportedChain.nativeCurrencySymbol,
-            raw: null,
             formatted: null,
             error: 'fetch failed',
           }),
@@ -293,18 +290,14 @@ export class WalletService {
             .then(
               (raw): BalanceEntry => ({
                 token: 'USDC',
-                raw: raw.toString(),
                 formatted: formatUnits(raw, 6),
-                contractAddress: usdcAddress,
               }),
             )
             .catch(
               (): BalanceEntry => ({
                 token: 'USDC',
-                raw: null,
                 formatted: null,
                 error: 'fetch failed',
-                contractAddress: usdcAddress,
               }),
             )
         : Promise.resolve(null),
@@ -315,7 +308,7 @@ export class WalletService {
 
     const chains = [{ chainId, chainName: supportedChain.name, balances }];
 
-    return { walletAddress, chains };
+    return { chains };
   }
 
   /** Submit a withdrawal transaction. */

@@ -133,7 +133,6 @@ paths:
               example:
                 signature: "0x1a2b3c4d5e6f..."
                 walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
-                signerAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
                 type: "message"
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -204,7 +203,7 @@ paths:
       tags: [Transactions]
       summary: 查询交易状态
       description: |
-        使用 `X-API-Key` 查询当前用户的交易状态。状态来自 SOFA ONE 本地交易记录；响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。
+        使用 `X-API-Key` 查询当前用户通过公开 `POST /v1/transactions/send` 创建的交易状态。状态来自 SOFA ONE 本地交易记录；响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。Dashboard withdrawal 等 frontend-only 交易不通过此公开接口查询。
       operationId: getTransactionStatus
       parameters:
         - name: transactionId
@@ -316,7 +315,7 @@ components:
 
     SignResponse:
       type: object
-      required: [signature, walletAddress, signerAddress, type]
+      required: [signature, walletAddress, type]
       properties:
         signature:
           type: string
@@ -325,10 +324,6 @@ components:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
           description: 用户 EIP-7702 delegated EOA 地址，即被 agent 代签的资产账户
-        signerAddress:
-          type: string
-          pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 实际产生签名的 Backend Agent Signer 地址
         type:
           type: string
           enum: [message, typed_data]

@@ -147,7 +147,6 @@ export default function APIDocsPage() {
               <CodeBlock>{`{
   "signature": "0x5d99b6f7...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  "signerAddress": "0x1111111111111111111111111111111111111111",
   "type": "message"
 }`}</CodeBlock>
             </div>
@@ -200,7 +199,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/:id" method="GET">
           <p className="text-sm leading-6 text-brand-muted">
-            Query a safe transaction status view for the API-key user. The response excludes calldata, request hashes, and interaction hashes.
+            Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes.
           </p>
 
           <div className="space-y-3">

@@ -15,9 +15,7 @@ export interface ApiErrorBody {
 
 export interface WalletInfo {
   walletAddress: string | null;
-  embeddedWalletAddress?: string | null;
   status: string;
-  supportedTokens: string[];
   agentWalletAddress?: string | null;
   agentKeyHash?: string | null;
   chainAuthorizations: Array<{
@@ -25,7 +23,6 @@ export interface WalletInfo {
     status: string;
     registrationTxHash: string | null;
     expiresAt: string | null;
-    updatedAt: string;
   }>;
 }
 
@@ -41,9 +38,7 @@ export interface RefreshApiKeyResponse {
 
 export interface BalanceEntry {
   token: string;
-  raw: string | null;
   formatted: string | null;
-  contractAddress?: string;
   error?: string;
 }
 
@@ -54,7 +49,6 @@ export interface BalanceChain {
 }
 
 export interface BalancesResponse {
-  walletAddress: string;
   chains: BalanceChain[];
 }
 
@@ -81,26 +75,17 @@ export type SignRequest = SignMessageRequest | SignTypedDataRequest;
 export interface SignResponse {
   signature: string;
   walletAddress: string;
-  signerAddress?: string;
   type: SignRequest['type'];
 }
 
 export interface AuthorizeEmbeddedWalletRequest {
-  openfortAccessToken: string;
   embeddedWalletAddress: string;
   embeddedOpenfortAccountId?: string;
   chainId?: number;
   agentExpiresAt?: string;
 }
 
-export interface AuthorizeEmbeddedWalletResponse extends AuthSessionResponse {
-  agentRegistration?: {
-    agentAddress: string;
-    keyHash: string;
-    chainId: number;
-    expiresAt: string;
-  };
-}
+export type AuthorizeEmbeddedWalletResponse = AuthSessionResponse;
 
 export interface AgentRegistrationResultRequest {
   chainId: number;
@@ -141,7 +126,7 @@ export interface TransactionStatusResponse extends SendTransactionResponse {
 
 export interface ApiKeyRecord {
   id: string;
-  keyPrefix: string;
+  displayPrefix: string;
   name: string | null;
   revoked: boolean;
   expiresAt: string | null;

@@ -44,12 +44,14 @@ describe('ApiKeyService', () => {
     const result = await service.createApiKey('user-1', { name: 'Production key' });
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
-    expect(result.keyPrefix).toHaveLength(API_KEY_PREFIX_LENGTH);
-    expect(result.keyPrefix).toBe(result.rawKey.substring(0, API_KEY_PREFIX_LENGTH));
+    expect(result).toEqual({ rawKey: expect.any(String) });
+    expect(prisma.apiKey.create.mock.calls[0][0].data.keyPrefix).toBe(
+      result.rawKey.slice(0, API_KEY_PREFIX_LENGTH),
+    );
     expect(prisma.apiKey.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          keyPrefix: result.keyPrefix,
+          keyPrefix: expect.stringMatching(/^sk_[a-f0-9]{24}$/),
           apiKeyHash: 'argon2-hash',
           name: 'Production key',
         }),
@@ -155,6 +157,7 @@ describe('ApiKeyService', () => {
     const result = await service.rotateApiKey('user-1', 'Refreshed');
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
+    expect(result).toEqual({ rawKey: expect.any(String) });
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
       data: { revoked: true },
@@ -167,16 +170,41 @@ describe('ApiKeyService', () => {
     );
   });
 
-  it('lists metadata only and never selects API key hashes', async () => {
-    prisma.apiKey.findMany.mockResolvedValue([]);
+  it('lists masked metadata only and never selects API key hashes or allowlists', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      {
+        id: 'key-1',
+        keyPrefix: 'sk_1234567890abcdef12345678',
+        name: 'Production key',
+        revoked: false,
+        expiresAt: null,
+        createdAt: new Date('2026-04-27T00:00:00.000Z'),
+        lastUsedAt: null,
+      },
+    ]);
     const service = new ApiKeyService(prisma as any);
 
-    await service.listApiKeys('user-1');
+    await expect(service.listApiKeys('user-1')).resolves.toEqual([
+      {
+        id: 'key-1',
+        displayPrefix: 'sk_12345678...',
+        name: 'Production key',
+        revoked: false,
+        expiresAt: null,
+        createdAt: new Date('2026-04-27T00:00:00.000Z'),
+        lastUsedAt: null,
+      },
+    ]);
 
     expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'user-1' },
         select: expect.not.objectContaining({ apiKeyHash: true }),
+      }),
+    );
+    expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.not.objectContaining({ allowedIps: true }),
       }),
     );
   });
