@@ -89,6 +89,8 @@ function EndpointCard({
 }
 
 export default function APIDocsPage() {
+  const apiBaseUrl = `${window.location.origin}/api`;
+
   return (
     <DashboardPage
       title="API Documentation"
@@ -107,7 +109,7 @@ export default function APIDocsPage() {
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
-          <p className="mt-2 font-mono text-sm text-brand-text">https://api.agentwallet.com</p>
+          <p className="mt-2 font-mono text-sm text-brand-text">{apiBaseUrl}</p>
         </div>
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
@@ -133,7 +135,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/wallets/sign \\
+              <CodeBlock>{`curl -X POST ${apiBaseUrl}/v1/wallets/sign \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -170,7 +172,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl -X POST https://api.agentwallet.com/v1/transactions/send \\
+              <CodeBlock>{`curl -X POST ${apiBaseUrl}/v1/transactions/send \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -210,7 +212,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl https://api.agentwallet.com/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \
+              <CodeBlock>{`curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \
   -H "X-API-Key: sk_your_key_here"`}</CodeBlock>
             </div>
             <div className="space-y-2">
