@@ -88,15 +88,36 @@ type UserOperationGasPrice = {
   slow?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
 };
 
-async function getRecommendedUserOperationGasPrice(bundlerClient: {
-  request: (args: { method: 'pimlico_getUserOperationGasPrice'; params: [] }) => Promise<UserOperationGasPrice>;
-}) {
-  try {
-    const gasPrice = await bundlerClient.request({ method: 'pimlico_getUserOperationGasPrice', params: [] });
-    return gasPrice.fast ?? gasPrice.standard ?? gasPrice.slow;
-  } catch {
-    return undefined;
+async function getRecommendedUserOperationGasPrice(rpcUrl: string, publishableKey: string) {
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${publishableKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: Date.now(),
+      method: 'pimlico_getUserOperationGasPrice',
+      params: [],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to fetch bundler gas price recommendation (${response.status}).`);
   }
+
+  const payload = (await response.json()) as { result?: UserOperationGasPrice; error?: { message?: string } };
+  if (payload.error) {
+    throw new Error(payload.error.message ?? 'Unable to fetch bundler gas price recommendation.');
+  }
+
+  const gasPrice = payload.result?.fast ?? payload.result?.standard ?? payload.result?.slow;
+  if (!gasPrice) {
+    throw new Error('Bundler did not return a usable gas price recommendation.');
+  }
+
+  return gasPrice;
 }
 
 function resolveEmbeddedWallet(
@@ -603,9 +624,11 @@ export default function WalletPage() {
         },
       });
       const caliburAccount = await createCaliburAccount({ client: publicClient, owner });
-      const openfortRpcTransport = http(`https://api.openfort.io/rpc/${agentChainId}`, {
+      const openfortPublishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
+      const openfortRpcUrl = `https://api.openfort.io/rpc/${agentChainId}`;
+      const openfortRpcTransport = http(openfortRpcUrl, {
         fetchOptions: {
-          headers: { Authorization: `Bearer ${import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY}` },
+          headers: { Authorization: `Bearer ${openfortPublishableKey}` },
         },
       });
       const paymaster = feeSponsorshipId
@@ -618,7 +641,7 @@ export default function WalletPage() {
         ...(paymaster ? { paymaster } : {}),
         transport: openfortRpcTransport,
       } as never);
-      const recommendedGasPrice = await getRecommendedUserOperationGasPrice(bundlerClient as never);
+      const recommendedGasPrice = await getRecommendedUserOperationGasPrice(openfortRpcUrl, openfortPublishableKey);
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
