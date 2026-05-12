@@ -12,7 +12,7 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
-import type { SendTransactionDto } from './dto/send-transaction.dto';
+import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -39,6 +39,7 @@ export class TransactionsService {
 
     const chainId = dto.chainId;
     getSupportedChain(chainId);
+    const executionMode = this.resolveExecutionMode(dto.executionMode);
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
       include: {
@@ -47,19 +48,23 @@ export class TransactionsService {
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
-    this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
+    this.assertWalletReady(wallet);
     const accountAddress = wallet.walletAddress!;
-    const agentAccountId = wallet.agentOpenfortAccountId!;
-    const agentKeyHash = wallet.agentKeyHash!;
-    await this.openfort.verifyAgentKeyRegistration({
-      accountAddress,
-      chainId,
-      keyHash: agentKeyHash,
-    });
+    if (executionMode === 'session_key') {
+      this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
+      await this.openfort.verifyAgentKeyRegistration({
+        accountAddress,
+        chainId,
+        keyHash: wallet.agentKeyHash!,
+      });
+    } else if (!wallet.openfortAccountId) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
 
     const requestHash = hashRequest({
       operationType: 'send',
       chainId,
+      executionMode,
       interactions: dto.interactions,
     });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
@@ -84,10 +89,11 @@ export class TransactionsService {
       walletAddress: accountAddress,
       details: {
         type: 'send',
-        execution: 'calibur_agent_user_operation',
+        execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
+        executionMode,
         interactionCount: dto.interactions.length,
         agentWalletAddress: wallet.agentWalletAddress,
-        agentKeyHash,
+        agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
         requestHash,
       },
@@ -101,30 +107,35 @@ export class TransactionsService {
     try {
       this.logger.log(
         this.logContext({
-          message: 'Submitting UserOperation to Openfort bundler',
+          message:
+            executionMode === 'session_key'
+              ? 'Submitting UserOperation to Openfort bundler'
+              : 'Submitting backend EOA transaction to Openfort',
           transactionId: tx.id,
           chainId,
+          executionMode,
           interactionCount: dto.interactions.length,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
-      const { transactionHash, userOpHash } = await this.openfort.sendUserOperation({
-        agentAccountId,
+      const submission = await this.submitTransaction(executionMode, {
         accountAddress,
         chainId,
-        keyHash: agentKeyHash,
         interactions: dto.interactions,
+        openfortAccountId: wallet.openfortAccountId!,
+        agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
+        agentKeyHash: wallet.agentKeyHash!,
       });
 
       const updated = await this.prisma.transaction.update({
         where: { id: tx.id },
         data: {
-          txHash: transactionHash ?? null,
-          status: transactionHash ? 'confirmed' : 'pending',
-          completedAt: transactionHash ? new Date() : null,
+          txHash: submission.transactionHash ?? null,
+          status: submission.transactionHash ? 'confirmed' : 'pending',
+          completedAt: submission.transactionHash ? new Date() : null,
           details: {
             ...((tx.details as Record<string, unknown>) ?? {}),
-            userOpHash,
+            ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : {}),
           } as any,
         },
       });
@@ -136,13 +147,13 @@ export class TransactionsService {
           status: updated.status,
           chainId,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
-          hasTransactionHash: Boolean(transactionHash),
+          hasTransactionHash: Boolean(submission.transactionHash),
         }),
       );
 
       return {
         transactionId: updated.id,
-        transactionHash,
+        transactionHash: submission.transactionHash,
         status: updated.status,
       };
     } catch (error) {
@@ -165,6 +176,47 @@ export class TransactionsService {
       });
       throw error;
     }
+  }
+
+  private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
+    return mode ?? 'session_key';
+  }
+
+  private assertWalletReady(wallet: {
+    status: string;
+    walletAddress?: string | null;
+  }): void {
+    if (wallet.status !== 'active' || !wallet.walletAddress) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+  }
+
+  private async submitTransaction(
+    executionMode: ExecutionMode,
+    params: {
+      accountAddress: string;
+      chainId: number;
+      interactions: SendTransactionDto['interactions'];
+      openfortAccountId: string;
+      agentOpenfortAccountId: string;
+      agentKeyHash: string;
+    },
+  ): Promise<{ transactionHash: string | null; userOpHash?: string }> {
+    if (executionMode === 'eoa') {
+      return this.openfort.sendBackendTransaction({
+        accountId: params.openfortAccountId,
+        chainId: params.chainId,
+        interactions: params.interactions,
+      });
+    }
+
+    return this.openfort.sendUserOperation({
+      agentAccountId: params.agentOpenfortAccountId,
+      accountAddress: params.accountAddress,
+      chainId: params.chainId,
+      keyHash: params.agentKeyHash,
+      interactions: params.interactions,
+    });
   }
 
   private assertAgentWalletReady(wallet: {

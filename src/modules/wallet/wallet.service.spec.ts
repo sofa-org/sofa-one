@@ -370,6 +370,24 @@ describe('WalletService.sign()', () => {
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       type: 'message',
+      executionMode: 'session_key',
+    });
+  });
+
+  it('uses raw Openfort signature and skips agent verification for eoa execution mode', async () => {
+    const result = await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage('Hello, SOFA ONE!'));
+    expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      signature: RAW_SIGNATURE,
+      walletAddress: WALLET.walletAddress,
+      type: 'message',
+      executionMode: 'eoa',
     });
   });
 
@@ -462,6 +480,7 @@ describe('WalletService.sign()', () => {
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       type: 'message',
+      executionMode: 'session_key',
     });
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
       where: { id: 'signing-request-1' },
@@ -495,6 +514,7 @@ describe('WalletService.sign()', () => {
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       type: 'message',
+      executionMode: 'session_key',
     });
   });
 
@@ -534,6 +554,7 @@ describe('WalletService.sign()', () => {
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       type: 'typed_data',
+      executionMode: 'session_key',
     });
   });
 
@@ -578,6 +599,7 @@ describe('WalletService.sign()', () => {
       signature: WRAPPED_SIGNATURE,
       walletAddress: WALLET.walletAddress,
       type: 'typed_data',
+      executionMode: 'session_key',
     });
   });
 

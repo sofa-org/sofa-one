@@ -233,6 +233,7 @@ export default function ApiKeysPage() {
   -H "Content-Type: application/json" \\
   -d '{
     "chainId": 84532,
+    "executionMode": "session_key",
     "idempotencyKey": "order-abc-123",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",

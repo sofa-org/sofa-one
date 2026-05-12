@@ -254,6 +254,39 @@ export class OpenfortService {
     }
   }
 
+  /** Execute calls directly from a backend EOA through Openfort. */
+  async sendBackendTransaction(params: {
+    accountId: string;
+    chainId: number;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+  }): Promise<{ transactionHash: string | null }> {
+    try {
+      const account = await this.withTimeout(
+        this.client.accounts.evm.backend.get({ id: params.accountId }),
+        'getBackendWallet',
+      );
+      const result = (await this.withTimeout(
+        (this.client.accounts.evm.backend as any).sendTransaction({
+          account,
+          chainId: params.chainId,
+          interactions: params.interactions,
+        }),
+        'sendBackendTransaction',
+      )) as any;
+
+      return {
+        transactionHash:
+          result?.response?.transactionHash ?? result?.transactionHash ?? result?.hash ?? null,
+      };
+    } catch (error: any) {
+      this.logOpenfortError('sendBackendTransaction', error, {
+        chainId: params.chainId,
+        interactionCount: params.interactions.length,
+      });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {

@@ -49,7 +49,11 @@ describe('TransactionsService', () => {
     },
   } as any;
 
-  const openfort = { verifyAgentKeyRegistration: jest.fn(), sendUserOperation: jest.fn() } as any;
+  const openfort = {
+    verifyAgentKeyRegistration: jest.fn(),
+    sendUserOperation: jest.fn(),
+    sendBackendTransaction: jest.fn(),
+  } as any;
 
   let service: TransactionsService;
 
@@ -71,6 +75,7 @@ describe('TransactionsService', () => {
       userOpHash: '0xuserop',
       transactionHash: '0xhash',
     });
+    openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     service = new TransactionsService(prisma, openfort);
   });
@@ -114,6 +119,23 @@ describe('TransactionsService', () => {
         keyHash: wallet.agentKeyHash,
       }),
     );
+  });
+
+  it('uses backend transaction sending and skips agent verification for eoa execution mode', async () => {
+    await service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext);
+
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).toHaveBeenCalledWith({
+      accountId: wallet.openfortAccountId,
+      chainId: 8453,
+      interactions: dto.interactions,
+    });
+    expect(prisma.transaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        details: expect.objectContaining({ executionMode: 'eoa', execution: 'backend_eoa' }),
+      }),
+    });
   });
 
   it('rejects bearer-token transaction submission before loading the wallet', async () => {

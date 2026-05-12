@@ -10,7 +10,10 @@ import {
   Min,
   MaxLength,
   ValidateNested,
+  IsIn,
 } from 'class-validator';
+
+export type ExecutionMode = 'session_key' | 'eoa';
 
 export class InteractionDto {
   @IsString()
@@ -33,6 +36,13 @@ export class InteractionDto {
 }
 
 export class SendTransactionDto {
+  /** Which backend wallet authority executes: session key (default) or the user's EOA backend wallet. */
+  @IsOptional()
+  @IsIn(['session_key', 'eoa'], {
+    message: 'executionMode must be session_key or eoa',
+  })
+  executionMode?: ExecutionMode;
+
   /** Execution chain ID. Required for multi-chain safety. */
   @IsInt()
   @Min(1)

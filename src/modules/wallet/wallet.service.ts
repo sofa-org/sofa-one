@@ -24,7 +24,7 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
-import type { SignDto, SignMessage } from './dto/sign.dto';
+import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
 const ERC20_BALANCE_ABI = [
@@ -93,6 +93,7 @@ export class WalletService {
       throw new BadRequestException('chainId is required for API-key signing');
     }
     getSupportedChain(chainId);
+    const executionMode = this.resolveExecutionMode(params.executionMode);
 
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
@@ -101,21 +102,20 @@ export class WalletService {
       },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    if (
-      wallet.status !== 'active' ||
-      !wallet.walletAddress ||
-      !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress ||
-      !wallet.agentKeyHash
-    ) {
+    if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
-    this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
-    await this.openfort.verifyAgentKeyRegistration({
-      accountAddress: wallet.walletAddress,
-      chainId,
-      keyHash: wallet.agentKeyHash,
-    });
+    if (executionMode === 'session_key') {
+      this.assertAgentWalletReady(wallet);
+      this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
+      await this.openfort.verifyAgentKeyRegistration({
+        accountAddress: wallet.walletAddress,
+        chainId,
+        keyHash: wallet.agentKeyHash!,
+      });
+    } else if (!wallet.openfortAccountId) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
 
     let data: string;
     switch (params.type) {
@@ -141,7 +141,7 @@ export class WalletService {
         type: params.type,
         chainId: chainId === undefined ? undefined : BigInt(chainId),
         walletAddress: wallet.walletAddress,
-        requestHash: hashRequest({ type: params.type, chainId, digest: data }),
+        requestHash: hashRequest({ type: params.type, chainId, digest: data, executionMode }),
         digest: data,
         status: 'submitting',
       },
@@ -154,14 +154,20 @@ export class WalletService {
         userId,
         chainId,
         type: params.type,
+        executionMode,
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       }),
     );
 
     let signature: string;
     try {
-      const rawSignature = await this.openfort.signData(wallet.agentOpenfortAccountId, data);
-      signature = this.wrapCaliburSignature(wallet.agentKeyHash, rawSignature);
+      const accountId =
+        executionMode === 'session_key' ? wallet.agentOpenfortAccountId! : wallet.openfortAccountId!;
+      const rawSignature = await this.openfort.signData(accountId, data);
+      signature =
+        executionMode === 'session_key'
+          ? this.wrapCaliburSignature(wallet.agentKeyHash!, rawSignature)
+          : rawSignature;
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -170,6 +176,7 @@ export class WalletService {
           userId,
           chainId,
           type: params.type,
+          executionMode,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
         err instanceof Error ? err.stack : undefined,
@@ -187,6 +194,7 @@ export class WalletService {
         userId,
         chainId,
         type: params.type,
+        executionMode,
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       }),
     );
@@ -195,7 +203,23 @@ export class WalletService {
       signature,
       walletAddress: wallet.walletAddress,
       type: params.type,
+      executionMode,
     };
+  }
+
+  private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
+    return mode ?? 'session_key';
+  }
+
+  private assertAgentWalletReady(wallet: {
+    status: string;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+    agentKeyHash?: string | null;
+  }): void {
+    if (!wallet.agentOpenfortAccountId || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
   }
 
   private wrapCaliburSignature(keyHash: string, signature: string): Hex {

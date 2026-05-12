@@ -32,7 +32,12 @@ const mockOpenfortService = {
     id: 'ofa_test_account_123',
     address: TEST_WALLET_ADDRESS,
   }),
-  sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
+  verifyAgentKeyRegistration: jest.fn().mockResolvedValue(undefined),
+  sendUserOperation: jest.fn().mockResolvedValue({
+    userOpHash: `0x${'4'.repeat(64)}`,
+    transactionHash: TEST_TX_HASH,
+  }),
+  sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
 
@@ -130,12 +135,13 @@ describe('API-key public security flow (e2e)', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        signature: TEST_SIGNATURE,
+        signature: expect.stringMatching(/^0x[0-9a-fA-F]+$/),
         walletAddress: TEST_WALLET_ADDRESS,
         type: 'message',
+        executionMode: 'session_key',
       });
       expect(mockOpenfortService.signData).toHaveBeenCalledWith(
-        'ofa_test_account_123',
+        'ofa_test_agent_account_123',
         expect.stringMatching(/^0x[0-9a-f]{64}$/),
       );
 
@@ -167,9 +173,11 @@ describe('API-key public security flow (e2e)', () => {
         transactionHash: TEST_TX_HASH,
         status: 'confirmed',
       });
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledWith({
-        accountId: 'ofa_test_account_123',
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledWith({
+        agentAccountId: 'ofa_test_agent_account_123',
+        accountAddress: TEST_WALLET_ADDRESS,
         chainId: TEST_CHAIN_ID,
+        keyHash: `0x${'3'.repeat(64)}`,
         interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
       });
 
@@ -203,7 +211,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect(201);
 
       expect(second.body).toEqual(first.body);
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
       await expect(
         prisma.transaction.count({
           where: {
@@ -356,7 +364,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect((res) =>
           expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions/send'),
         );
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
     });
 
     it('does not allow an API key to read another user transaction status', async () => {
@@ -416,7 +424,13 @@ describe('API-key public security flow (e2e)', () => {
   async function seedUserWithKey(
     socialId: string,
     keyName: string,
-    wallet: { openfortAccountId: string; walletAddress: string } = {
+    wallet: {
+      openfortAccountId: string;
+      walletAddress: string;
+      agentOpenfortAccountId?: string;
+      agentWalletAddress?: string;
+      agentKeyHash?: string;
+    } = {
       openfortAccountId: 'ofa_test_account_123',
       walletAddress: TEST_WALLET_ADDRESS,
     },
@@ -429,18 +443,53 @@ describe('API-key public security flow (e2e)', () => {
       },
     });
 
-    await prisma.userWallet.create({
+    const userWallet = await prisma.userWallet.create({
       data: {
         userId: user.id,
         openfortAccountId: wallet.openfortAccountId,
         walletAddress: wallet.walletAddress,
+        agentOpenfortAccountId: wallet.agentOpenfortAccountId ?? defaultAgentOpenfortAccountId(socialId),
+        agentWalletAddress: wallet.agentWalletAddress ?? defaultAgentWalletAddress(socialId),
+        agentKeyHash: wallet.agentKeyHash ?? defaultAgentKeyHash(socialId),
+      },
+    });
+    await prisma.walletChainAuthorization.create({
+      data: {
+        walletId: userWallet.id,
         chainId: BigInt(TEST_CHAIN_ID),
+        status: 'registered',
+        expiresAt: new Date(Date.now() + 86_400_000),
       },
     });
 
     const key = await apiKeyService.createApiKey(user.id, { name: keyName });
+    const storedKey = await prisma.apiKey.findFirstOrThrow({
+      where: { userId: user.id, name: keyName },
+    });
 
-    return { userId: user.id, keyId: key.id, rawKey: key.rawKey };
+    return { userId: user.id, keyId: storedKey.id, rawKey: key.rawKey };
+  }
+
+  function defaultAgentOpenfortAccountId(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? 'ofa_test_agent_account_123'
+      : `ofa_${socialId}_agent_account_123`;
+  }
+
+  function defaultAgentWalletAddress(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? `0x${'4'.repeat(40)}`
+      : `0x${hexFromText(socialId, 40)}`;
+  }
+
+  function defaultAgentKeyHash(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? `0x${'3'.repeat(64)}`
+      : `0x${hexFromText(`${socialId}_agent_key`, 64)}`;
+  }
+
+  function hexFromText(value: string, length: number): string {
+    return Buffer.from(value).toString('hex').padEnd(length, '0').slice(0, length);
   }
 
   async function cleanDatabase() {

@@ -9,12 +9,14 @@ const tagClass =
 const fieldRows = {
   sign: [
     ["type", "string", "Yes", "message | typed_data"],
+    ["executionMode", "string", "No", "session_key (default) returns a Calibur wrapped signature; eoa returns a plain EOA signature."],
     ["chainId", "integer", "Cond.", "Required for message. Optional for typed_data when typedData.domain.chainId is present; if provided, both values must match."],
     ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
     ["typedData", "object", "Cond.", "Required for typed_data. Must include domain.chainId, types, primaryType, and message."],
   ],
   send: [
     ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's EOA."],
+    ["executionMode", "string", "No", "session_key (default) executes through Calibur UserOp; eoa executes directly from the backend EOA."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -124,7 +126,7 @@ export default function APIDocsPage() {
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message or EIP-712 typed data through the user&apos;s authorized backend agent signer. The returned signature is a Calibur wrapped signature <code>abi.encode(keyHash, agentSignature, hookData)</code>, not a plain 65-byte EOA signature. Verifiers should call ERC-1271 <code>isValidSignature</code> on the user&apos;s EIP-7702 delegated EOA address instead of using <code>ecrecover</code> against <code>walletAddress</code>. Raw hash signing is disabled for safety and no transaction is broadcast.
+            Sign a message or EIP-712 typed data through either the authorized backend agent signer (<code>executionMode: &quot;session_key&quot;</code>, default) or the user&apos;s backend EOA (<code>executionMode: &quot;eoa&quot;</code>). Session-key signatures are Calibur wrapped signatures; EOA signatures are plain EOA signatures. Raw hash signing is disabled for safety and no transaction is broadcast.
           </p>
 
           <div className="space-y-3">
@@ -141,6 +143,7 @@ export default function APIDocsPage() {
   -d '{
     "type": "message",
     "chainId": 84532,
+    "executionMode": "session_key",
     "message": "Hello, SOFA ONE!"
   }'`}</CodeBlock>
             </div>
@@ -149,7 +152,8 @@ export default function APIDocsPage() {
               <CodeBlock>{`{
   "signature": "0x5d99b6f7...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  "type": "message"
+  "type": "message",
+  "executionMode": "session_key"
 }`}</CodeBlock>
             </div>
           </div>
@@ -157,7 +161,7 @@ export default function APIDocsPage() {
 
         <EndpointCard path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions from the user&apos;s EIP-7702 delegated EOA using an API key. The server handles UserOp signing with the authorized backend agent signer; Calibur verifies the registered agent key on-chain. Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
@@ -177,6 +181,7 @@ export default function APIDocsPage() {
   -H "Content-Type: application/json" \\
   -d '{
     "chainId": 84532,
+    "executionMode": "session_key",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
