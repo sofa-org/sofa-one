@@ -2,6 +2,8 @@ import {
   BadGatewayException,
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   Optional,
@@ -107,7 +109,9 @@ export class OpenfortService {
       const accountsResult = (await this.withTimeout(
         (this.client as any).accounts.list({ user: openfortUserId }),
         'listOpenfortUserAccounts',
-      )) as { data?: Array<{ id?: string; address?: string }> } | Array<{ id?: string; address?: string }>;
+      )) as
+        | { data?: Array<{ id?: string; address?: string }> }
+        | Array<{ id?: string; address?: string }>;
       const accounts = Array.isArray(accountsResult) ? accountsResult : (accountsResult.data ?? []);
       const account = accounts.find((candidate) => {
         if (!candidate.address) return false;
@@ -170,7 +174,10 @@ export class OpenfortService {
     }
   }
 
-  async getTransactionReceiptStatus(chainId: number, txHash: string): Promise<'success' | 'reverted' | null> {
+  async getTransactionReceiptStatus(
+    chainId: number,
+    txHash: string,
+  ): Promise<'success' | 'reverted' | null> {
     try {
       const { chain } = getSupportedChain(chainId);
       const client = createClient({ chain, transport: http() });
@@ -193,6 +200,7 @@ export class OpenfortService {
     chainId: number;
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
+    sponsorship?: 'auto' | 'required' | 'none';
   }): Promise<{ userOpHash: string; transactionHash: string | null }> {
     const publishableKey = this.configService.get<string>('openfort.publishableKey');
     if (!publishableKey) {
@@ -219,39 +227,114 @@ export class OpenfortService {
         accountAddress: getAddress(params.accountAddress),
         keyHash: params.keyHash as Hex,
       });
+      const sponsorshipMode = params.sponsorship ?? 'auto';
       const openfortRpcTransport = http(`https://api.openfort.io/rpc/${params.chainId}`, {
         fetchOptions: {
           headers: { Authorization: `Bearer ${publishableKey}` },
         },
       });
-      const paymaster = createPaymasterClient({ transport: openfortRpcTransport });
-      const bundlerClient = createBundlerClient({
+      const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
         client,
-        paymaster,
         transport: openfortRpcTransport,
-      } as any);
-      const hash = await bundlerClient.sendUserOperation({
-        account: sessionAccount,
-        calls: params.interactions.map((interaction) => ({
-          to: getAddress(interaction.to),
-          data: interaction.data as Hex,
-          value: interaction.value ? BigInt(interaction.value) : 0n,
-        })),
-      } as any);
-      const receipt = (await bundlerClient.waitForUserOperationReceipt({ hash })) as any;
+        interactions: params.interactions,
+        sponsorshipMode,
+        chainId: params.chainId,
+      });
+      const receipt = (await submission.bundlerClient.waitForUserOperationReceipt({
+        hash: submission.hash as Hex,
+      })) as any;
       return {
-        userOpHash: hash,
+        userOpHash: submission.hash,
         transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
       };
     } catch (error: any) {
+      if (params.sponsorship === 'required' && this.isMissingPaymasterPolicyError(error)) {
+        throw this.createPaymasterPolicyException(params.chainId);
+      }
       this.logOpenfortError('sendUserOperation', error, {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
       });
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
+  }
+
+  private createBundlerClient(params: {
+    account: any;
+    chain: any;
+    client: any;
+    transport: any;
+    includePaymaster: boolean;
+  }) {
+    return createBundlerClient({
+      account: params.account,
+      chain: params.chain,
+      client: params.client,
+      ...(params.includePaymaster
+        ? { paymaster: createPaymasterClient({ transport: params.transport }) }
+        : {}),
+      transport: params.transport,
+    } as any);
+  }
+
+  private async sendUserOperationWithSponsorship(params: {
+    account: any;
+    chain: any;
+    client: any;
+    transport: any;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+    sponsorshipMode: 'auto' | 'required' | 'none';
+    chainId: number;
+  }): Promise<{ hash: string; bundlerClient: any }> {
+    const calls = params.interactions.map((interaction) => ({
+      to: getAddress(interaction.to),
+      data: interaction.data as Hex,
+      value: interaction.value ? BigInt(interaction.value) : 0n,
+    }));
+    if (params.sponsorshipMode === 'none') {
+      const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
+      return {
+        hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+        bundlerClient,
+      };
+    }
+
+    try {
+      const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
+      return {
+        hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+        bundlerClient,
+      };
+    } catch (error: any) {
+      if (this.isMissingPaymasterPolicyError(error) && params.sponsorshipMode === 'auto') {
+        const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
+        return {
+          hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+          bundlerClient,
+        };
+      }
+      throw error;
+    }
+  }
+
+  private isMissingPaymasterPolicyError(error: any): boolean {
+    const text =
+      `${error?.message ?? ''} ${error?.details ?? ''} ${error?.cause?.message ?? ''}`.toLowerCase();
+    return (
+      text.includes('no matching project-scoped policy found') || text.includes('paymaster policy')
+    );
+  }
+
+  private createPaymasterPolicyException(chainId: number) {
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED,
+        message: `No gas sponsorship policy is configured for chainId ${chainId}.`,
+      },
+      HttpStatus.FAILED_DEPENDENCY,
+    );
   }
 
   /** Execute calls directly from a backend EOA through Openfort. */

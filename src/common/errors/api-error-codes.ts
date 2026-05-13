@@ -13,6 +13,7 @@ export const API_ERROR_CODES = {
   RAW_HASH_SIGNING_DISABLED: 'RAW_HASH_SIGNING_DISABLED',
   WALLET_NOT_ACTIVE: 'WALLET_NOT_ACTIVE',
   AGENT_REGISTRATION_PENDING: 'AGENT_REGISTRATION_PENDING',
+  PAYMASTER_POLICY_NOT_CONFIGURED: 'PAYMASTER_POLICY_NOT_CONFIGURED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
   NOT_FOUND: 'NOT_FOUND',
@@ -43,6 +44,12 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   if (normalized.includes('wallet is not active')) return API_ERROR_CODES.WALLET_NOT_ACTIVE;
   if (normalized.includes('agent registration is still pending')) {
     return API_ERROR_CODES.AGENT_REGISTRATION_PENDING;
+  }
+  if (
+    normalized.includes('no matching project-scoped policy found') ||
+    normalized.includes('paymaster policy')
+  ) {
+    return API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED;
   }
   if (statusCode === HttpStatus.UNAUTHORIZED) return API_ERROR_CODES.UNAUTHORIZED;
   if (statusCode === HttpStatus.NOT_FOUND) return API_ERROR_CODES.NOT_FOUND;

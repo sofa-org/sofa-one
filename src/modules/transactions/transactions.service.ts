@@ -61,10 +61,12 @@ export class TransactionsService {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
 
+    const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'auto') : undefined;
     const requestHash = hashRequest({
       operationType: 'send',
       chainId,
       executionMode,
+      ...(sponsorship ? { sponsorship } : {}),
       interactions: dto.interactions,
     });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
@@ -91,6 +93,7 @@ export class TransactionsService {
         type: 'send',
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
         executionMode,
+        ...(sponsorship ? { sponsorship } : {}),
         interactionCount: dto.interactions.length,
         agentWalletAddress: wallet.agentWalletAddress,
         agentKeyHash: wallet.agentKeyHash,
@@ -125,6 +128,7 @@ export class TransactionsService {
         openfortAccountId: wallet.openfortAccountId!,
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
+        sponsorship,
       });
 
       const updated = await this.prisma.transaction.update({
@@ -182,10 +186,7 @@ export class TransactionsService {
     return mode ?? 'session_key';
   }
 
-  private assertWalletReady(wallet: {
-    status: string;
-    walletAddress?: string | null;
-  }): void {
+  private assertWalletReady(wallet: { status: string; walletAddress?: string | null }): void {
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -200,6 +201,7 @@ export class TransactionsService {
       openfortAccountId: string;
       agentOpenfortAccountId: string;
       agentKeyHash: string;
+      sponsorship?: SendTransactionDto['sponsorship'];
     },
   ): Promise<{ transactionHash: string | null; userOpHash?: string }> {
     if (executionMode === 'eoa') {
@@ -216,16 +218,20 @@ export class TransactionsService {
       chainId: params.chainId,
       keyHash: params.agentKeyHash,
       interactions: params.interactions,
+      sponsorship: params.sponsorship,
     });
   }
 
-  private assertAgentWalletReady(wallet: {
-    status: string;
-    walletAddress?: string | null;
-    agentOpenfortAccountId?: string | null;
-    agentWalletAddress?: string | null;
-    agentKeyHash?: string | null;
-  }, authorization?: { status: string; expiresAt?: Date | string | null } | null): void {
+  private assertAgentWalletReady(
+    wallet: {
+      status: string;
+      walletAddress?: string | null;
+      agentOpenfortAccountId?: string | null;
+      agentWalletAddress?: string | null;
+      agentKeyHash?: string | null;
+    },
+    authorization?: { status: string; expiresAt?: Date | string | null } | null,
+  ): void {
     if (
       wallet.status !== 'active' ||
       !wallet.walletAddress ||

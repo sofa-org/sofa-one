@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 
 export type ExecutionMode = 'session_key' | 'eoa';
+export type SponsorshipMode = 'auto' | 'required' | 'none';
 
 export class InteractionDto {
   @IsString()
@@ -42,6 +43,12 @@ export class SendTransactionDto {
     message: 'executionMode must be session_key or eoa',
   })
   executionMode?: ExecutionMode;
+
+  @IsOptional()
+  @IsIn(['auto', 'required', 'none'], {
+    message: 'sponsorship must be auto, required, or none',
+  })
+  sponsorship?: SponsorshipMode;
 
   /** Execution chain ID. Required for multi-chain safety. */
   @IsInt()

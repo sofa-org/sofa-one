@@ -149,10 +149,12 @@ paths:
       tags: [Transactions]
       summary: 发送交易
       description: |
-        使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和 Gas 处理。
+        使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和交易提交。
         此端点不接受 Openfort IAM Bearer token。
 
         `executionMode` 可选：默认 `session_key`，通过已授权的 Backend Agent Signer / Calibur UserOperation 从用户 EIP-7702 delegated EOA 执行；`eoa` 通过用户 EOA backend wallet 直接执行。
+
+        `sponsorship` 仅适用于 `executionMode=session_key`：默认 `auto` 会先尝试 Openfort Paymaster，若该链未配置 sponsorship policy 则自动退回非 sponsored UserOperation；`required` 要求必须有 sponsorship policy；`none` 不使用 Paymaster。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
         必填 `chainId` 指定执行链，且该链必须已在开发者钱包中完成 API access authorization；必填 `idempotencyKey` 用于防止重复提交。
@@ -169,6 +171,7 @@ paths:
                 value:
                   chainId: 84532
                   executionMode: session_key
+                  sponsorship: auto
                   idempotencyKey: "order-abc-123"
                   interactions:
                     - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
@@ -199,6 +202,19 @@ paths:
                 statusCode: 400
                 code: IDEMPOTENCY_CONFLICT
                 message: "Idempotency key already used with different request payload"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/transactions/send"
+        '424':
+          description: 当 `sponsorship=required` 且该链未配置 Openfort Paymaster policy 时返回
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 424
+                code: PAYMASTER_POLICY_NOT_CONFIGURED
+                message: "No gas sponsorship policy is configured for chainId 137."
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/transactions/send"
@@ -362,6 +378,15 @@ components:
             交易执行身份：
             - `session_key` — 默认，通过已授权的 Backend Agent Signer / Calibur UserOperation 执行，需要该链 API access authorization
             - `eoa` — 用户 EOA backend wallet 直接执行
+        sponsorship:
+          type: string
+          enum: [auto, required, none]
+          default: auto
+          description: |
+            仅适用于 `executionMode=session_key` 的 Gas sponsorship 策略：
+            - `auto` — 默认，先尝试 Openfort Paymaster；无匹配 policy 时退回非 sponsored UserOperation
+            - `required` — 必须使用 Openfort Paymaster；无匹配 policy 时返回 `PAYMASTER_POLICY_NOT_CONFIGURED`
+            - `none` — 不使用 Paymaster，直接提交非 sponsored UserOperation
         interactions:
           type: array
           minItems: 1

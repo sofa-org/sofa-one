@@ -1,4 +1,10 @@
-import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -117,7 +123,16 @@ describe('TransactionsService', () => {
         accountAddress: wallet.walletAddress,
         agentAccountId: wallet.agentOpenfortAccountId,
         keyHash: wallet.agentKeyHash,
+        sponsorship: 'auto',
       }),
+    );
+  });
+
+  it('passes explicit auto sponsorship to session_key UserOps', async () => {
+    await service.send('user-1', { ...dto, sponsorship: 'auto' } as any, apiKeyContext);
+
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ sponsorship: 'auto' }),
     );
   });
 
@@ -138,6 +153,32 @@ describe('TransactionsService', () => {
     });
   });
 
+  it('propagates clear paymaster policy failures when sponsorship is required', async () => {
+    openfort.sendUserOperation.mockRejectedValue(
+      new HttpException(
+        {
+          code: 'PAYMASTER_POLICY_NOT_CONFIGURED',
+          message: 'No gas sponsorship policy is configured for chainId 8453.',
+        },
+        HttpStatus.FAILED_DEPENDENCY,
+      ),
+    );
+
+    await expect(
+      service.send('user-1', { ...dto, sponsorship: 'required' } as any, apiKeyContext),
+    ).rejects.toMatchObject({ status: 424 });
+
+    expect(prisma.transaction.update).toHaveBeenCalledWith({
+      where: { id: 'tx-1' },
+      data: expect.objectContaining({
+        status: 'failed',
+        failureReason: expect.stringContaining(
+          'No gas sponsorship policy is configured for chainId 8453.',
+        ),
+      }),
+    });
+  });
+
   it('rejects bearer-token transaction submission before loading the wallet', async () => {
     await expect(service.send('user-1', dto as any)).rejects.toThrow(UnauthorizedException);
 
@@ -152,7 +193,9 @@ describe('TransactionsService', () => {
       chainAuthorizations: [{ ...wallet.chainAuthorizations[0], status: 'pending_registration' }],
     });
 
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      BadRequestException,
+    );
 
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
@@ -161,10 +204,14 @@ describe('TransactionsService', () => {
   it('rejects expired agent registration before sending', async () => {
     prisma.userWallet.findUnique.mockResolvedValue({
       ...wallet,
-      chainAuthorizations: [{ ...wallet.chainAuthorizations[0], expiresAt: new Date('2026-05-04T00:00:00.000Z') }],
+      chainAuthorizations: [
+        { ...wallet.chainAuthorizations[0], expiresAt: new Date('2026-05-04T00:00:00.000Z') },
+      ],
     });
 
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      BadRequestException,
+    );
 
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
@@ -411,5 +458,4 @@ describe('TransactionsService', () => {
       NotFoundException,
     );
   });
-
 });

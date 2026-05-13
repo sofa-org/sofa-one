@@ -106,6 +106,8 @@ export interface TransactionInteraction {
 
 export interface SendTransactionRequest {
   chainId: number;
+  executionMode?: 'session_key' | 'eoa';
+  sponsorship?: 'auto' | 'required' | 'none';
   interactions: TransactionInteraction[];
   idempotencyKey?: string;
 }
