@@ -136,18 +136,19 @@ describe('TransactionsService', () => {
     );
   });
 
-  it('uses backend transaction sending and skips agent verification for eoa execution mode', async () => {
+  it('uses the backend wallet for eoa transaction sending and skips agent verification', async () => {
     await service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext);
 
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
     expect(openfort.sendBackendTransaction).toHaveBeenCalledWith({
-      accountId: wallet.openfortAccountId,
+      accountId: wallet.agentOpenfortAccountId,
       chainId: 8453,
       interactions: dto.interactions,
     });
     expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
+        walletAddress: wallet.agentWalletAddress,
         details: expect.objectContaining({ executionMode: 'eoa', execution: 'backend_eoa' }),
       }),
     });

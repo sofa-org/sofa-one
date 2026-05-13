@@ -57,9 +57,11 @@ export class TransactionsService {
         chainId,
         keyHash: wallet.agentKeyHash!,
       });
-    } else if (!wallet.openfortAccountId) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    } else {
+      this.assertBackendWalletReady(wallet);
     }
+    const transactionWalletAddress =
+      executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
 
     const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'auto') : undefined;
     const requestHash = hashRequest({
@@ -88,7 +90,7 @@ export class TransactionsService {
       idempotencyKey: dto.idempotencyKey!,
       chainId,
       requestHash,
-      walletAddress: accountAddress,
+      walletAddress: transactionWalletAddress,
       details: {
         type: 'send',
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
@@ -125,7 +127,6 @@ export class TransactionsService {
         accountAddress,
         chainId,
         interactions: dto.interactions,
-        openfortAccountId: wallet.openfortAccountId!,
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
         sponsorship,
@@ -198,7 +199,6 @@ export class TransactionsService {
       accountAddress: string;
       chainId: number;
       interactions: SendTransactionDto['interactions'];
-      openfortAccountId: string;
       agentOpenfortAccountId: string;
       agentKeyHash: string;
       sponsorship?: SendTransactionDto['sponsorship'];
@@ -206,7 +206,7 @@ export class TransactionsService {
   ): Promise<{ transactionHash: string | null; userOpHash?: string }> {
     if (executionMode === 'eoa') {
       return this.openfort.sendBackendTransaction({
-        accountId: params.openfortAccountId,
+        accountId: params.agentOpenfortAccountId,
         chainId: params.chainId,
         interactions: params.interactions,
       });
@@ -249,6 +249,16 @@ export class TransactionsService {
     const expiresAt = authorization.expiresAt ? new Date(authorization.expiresAt) : null;
     if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
       throw new BadRequestException('API access authorization is expired for this chain');
+    }
+  }
+
+  private assertBackendWalletReady(wallet: {
+    status: string;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+  }): void {
+    if (wallet.status !== 'active' || !wallet.agentOpenfortAccountId || !wallet.agentWalletAddress) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
   }
 

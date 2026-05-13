@@ -374,18 +374,24 @@ describe('WalletService.sign()', () => {
     });
   });
 
-  it('uses raw Openfort signature and skips agent verification for eoa execution mode', async () => {
+  it('uses the backend wallet raw signature and skips agent verification for eoa execution mode', async () => {
     const result = await service.sign(
       'user-1',
       { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
       API_KEY_CONTEXT,
     );
 
-    expect(mockSignData).toHaveBeenCalledWith(WALLET.openfortAccountId, hashMessage('Hello, SOFA ONE!'));
+    expect(mockSignData).toHaveBeenCalledWith(
+      WALLET.agentOpenfortAccountId,
+      hashMessage('Hello, SOFA ONE!'),
+    );
     expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ walletAddress: WALLET.agentWalletAddress }),
+    });
     expect(result).toEqual({
       signature: RAW_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
+      walletAddress: WALLET.agentWalletAddress,
       type: 'message',
       executionMode: 'eoa',
     });

@@ -113,9 +113,11 @@ export class WalletService {
         chainId,
         keyHash: wallet.agentKeyHash!,
       });
-    } else if (!wallet.openfortAccountId) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    } else {
+      this.assertBackendWalletReady(wallet);
     }
+    const signingWalletAddress =
+      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress;
 
     let data: string;
     switch (params.type) {
@@ -140,7 +142,7 @@ export class WalletService {
         apiKeyName: apiKeyRecord?.name,
         type: params.type,
         chainId: chainId === undefined ? undefined : BigInt(chainId),
-        walletAddress: wallet.walletAddress,
+        walletAddress: signingWalletAddress,
         requestHash: hashRequest({ type: params.type, chainId, digest: data, executionMode }),
         digest: data,
         status: 'submitting',
@@ -161,8 +163,7 @@ export class WalletService {
 
     let signature: string;
     try {
-      const accountId =
-        executionMode === 'session_key' ? wallet.agentOpenfortAccountId! : wallet.openfortAccountId!;
+      const accountId = wallet.agentOpenfortAccountId!;
       const rawSignature = await this.openfort.signData(accountId, data);
       signature =
         executionMode === 'session_key'
@@ -201,7 +202,7 @@ export class WalletService {
 
     return {
       signature,
-      walletAddress: wallet.walletAddress,
+      walletAddress: signingWalletAddress,
       type: params.type,
       executionMode,
     };
@@ -218,6 +219,16 @@ export class WalletService {
     agentKeyHash?: string | null;
   }): void {
     if (!wallet.agentOpenfortAccountId || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+  }
+
+  private assertBackendWalletReady(wallet: {
+    status: string;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+  }): void {
+    if (wallet.status !== 'active' || !wallet.agentOpenfortAccountId || !wallet.agentWalletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
   }
