@@ -4,6 +4,7 @@ import {
   getAddress,
   keccak256,
   numberToHex,
+  parseAbiParameters,
   serializeSignature,
   type Address,
   type Chain,
@@ -163,6 +164,18 @@ export function encodeRegisterKey(key: CaliburKey): Hex {
   });
 }
 
+export function encodeCaliburExecuteUserOpCalls(
+  calls: Array<{ to: Address; value?: bigint; data?: Hex }>,
+): Hex {
+  const encoded = encodeAbiParameters(parseAbiParameters('((address,uint256,bytes)[],bool)'), [
+    [
+      calls.map((call) => [call.to, call.value ?? 0n, call.data ?? '0x'] as const),
+      true,
+    ],
+  ]);
+  return `0x8dd7712f${encoded.slice(2)}` as Hex;
+}
+
 export function createCaliburSessionAccount({
   client,
   signer,
@@ -184,45 +197,7 @@ export function createCaliburSessionAccount({
       // then decodes userOp.callData after removing the first 4 selector bytes as
       // BatchedCall({ calls: Call[], revertOnFailure: bool }). This is not the
       // public direct execute(...) ABI used for browser self-registration.
-      return encodeFunctionData({
-        abi: [
-          {
-            type: 'function',
-            name: 'executeUserOp',
-            inputs: [
-              {
-                name: 'batchedCall',
-                type: 'tuple',
-                components: [
-                  {
-                    name: 'calls',
-                    type: 'tuple[]',
-                    components: [
-                      { name: 'to', type: 'address' },
-                      { name: 'value', type: 'uint256' },
-                      { name: 'data', type: 'bytes' },
-                    ],
-                  },
-                  { name: 'revertOnFailure', type: 'bool' },
-                ],
-              },
-            ],
-            outputs: [],
-            stateMutability: 'payable',
-          },
-        ],
-        functionName: 'executeUserOp',
-        args: [
-          {
-            calls: calls.map((call: { to: Address; value?: bigint; data?: Hex }) => ({
-              to: call.to as Address,
-              value: call.value ?? 0n,
-              data: call.data ?? '0x',
-            })),
-            revertOnFailure: true,
-          },
-        ],
-      });
+      return encodeCaliburExecuteUserOpCalls(calls);
     },
     async getNonce() {
       return readContract(client, {

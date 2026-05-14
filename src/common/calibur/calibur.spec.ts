@@ -7,6 +7,7 @@ jest.mock('viem/actions', () => ({
 
 import {
   CALIBUR_ADDRESS,
+  encodeCaliburExecuteUserOpCalls,
   EIP7702_DELEGATION_PREFIX,
   getCaliburDelegationCode,
   hasCaliburDelegation,
@@ -30,5 +31,18 @@ describe('Calibur delegation helpers', () => {
 
     await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(true);
     await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(false);
+  });
+
+  it('encodes Calibur session calls with the EntryPoint executeUserOp selector', async () => {
+    const callData = encodeCaliburExecuteUserOpCalls([
+      {
+        to: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB',
+        value: 0n,
+        data: '0x095ea7b3000000000000000000000000e111180000d2663c0091e4f400237545b87b996bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+      },
+    ]);
+
+    expect(callData).toMatch(/^0x8dd7712f/);
+    expect(callData).not.toMatch(/^0xc0972062/);
   });
 });
