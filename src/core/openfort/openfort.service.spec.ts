@@ -5,6 +5,8 @@ const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
 const mockEstimateFeesPerGas = jest.fn();
+const originalFetch = globalThis.fetch;
+const mockFetch = jest.fn();
 
 jest.mock('@openfort/openfort-node', () => ({
   __esModule: true,
@@ -43,6 +45,17 @@ import { RequestContextService } from '../../common/request-context/request-cont
 describe('OpenfortService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (globalThis as any).fetch = mockFetch;
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        fast: {
+          maxFee: 423.766175783,
+          maxPriorityFee: 179.624336611,
+        },
+        estimatedBaseFee: 244.141839172,
+      }),
+    });
     mockEstimateFeesPerGas.mockResolvedValue({
       maxFeePerGas: 200_000_000_000n,
       maxPriorityFeePerGas: 178_000_000_000n,
@@ -51,6 +64,7 @@ describe('OpenfortService', () => {
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
     jest.useRealTimers();
   });
 
@@ -208,7 +222,7 @@ describe('OpenfortService', () => {
     );
   });
 
-  it('uses standard chain fee estimation for UserOperation fees', async () => {
+  it('uses Polygon Gas Station fast fees for Polygon UserOperation fees', async () => {
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
       get: jest.fn(() => 25),
@@ -217,11 +231,27 @@ describe('OpenfortService', () => {
 
     const gasPrice = await service.estimateUserOperationFees({ chain: { id: 137 } });
 
+    expect(gasPrice.maxFeePerGas.toString()).toBe('423766175783');
+    expect(gasPrice.maxPriorityFeePerGas.toString()).toBe('179624336611');
+    expect(mockFetch).toHaveBeenCalledWith('https://gasstation.polygon.technology/v2');
+    expect(mockEstimateFeesPerGas).not.toHaveBeenCalled();
+  });
+
+  it('uses standard chain fee estimation for non-Polygon UserOperation fees', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+
+    const gasPrice = await service.estimateUserOperationFees({ chain: { id: 8453 } });
+
     expect(gasPrice.maxFeePerGas.toString()).toBe('200000000000');
     expect(gasPrice.maxPriorityFeePerGas.toString()).toBe('178000000000');
+    expect(mockFetch).not.toHaveBeenCalled();
     expect(mockEstimateFeesPerGas).toHaveBeenCalledWith(
-      expect.objectContaining({ chain: { id: 137 } }),
-      { chain: { id: 137 }, type: 'eip1559' },
+      expect.objectContaining({ chain: { id: 8453 } }),
+      { chain: { id: 8453 }, type: 'eip1559' },
     );
   });
 
