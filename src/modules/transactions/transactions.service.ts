@@ -63,7 +63,7 @@ export class TransactionsService {
     const transactionWalletAddress =
       executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
 
-    const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'auto') : undefined;
+    const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
     const requestHash = hashRequest({
       operationType: 'send',
       chainId,

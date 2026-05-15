@@ -14,7 +14,7 @@ import {
 } from 'class-validator';
 
 export type ExecutionMode = 'session_key' | 'eoa';
-export type SponsorshipMode = 'auto' | 'required' | 'none';
+export type SponsorshipMode = 'required' | 'none';
 
 export class InteractionDto {
   @IsString()
@@ -45,8 +45,8 @@ export class SendTransactionDto {
   executionMode?: ExecutionMode;
 
   @IsOptional()
-  @IsIn(['auto', 'required', 'none'], {
-    message: 'sponsorship must be auto, required, or none',
+  @IsIn(['required', 'none'], {
+    message: 'sponsorship must be required or none',
   })
   sponsorship?: SponsorshipMode;
 

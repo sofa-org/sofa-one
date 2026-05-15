@@ -123,16 +123,29 @@ describe('TransactionsService', () => {
         accountAddress: wallet.walletAddress,
         agentAccountId: wallet.agentOpenfortAccountId,
         keyHash: wallet.agentKeyHash,
-        sponsorship: 'auto',
+        sponsorship: 'none',
       }),
     );
   });
 
-  it('passes explicit auto sponsorship to session_key UserOps', async () => {
-    await service.send('user-1', { ...dto, sponsorship: 'auto' } as any, apiKeyContext);
+  it('does not use paymaster sponsorship by default for session_key UserOps', async () => {
+    await service.send('user-1', dto as any, apiKeyContext);
 
     expect(openfort.sendUserOperation).toHaveBeenCalledWith(
-      expect.objectContaining({ sponsorship: 'auto' }),
+      expect.objectContaining({ sponsorship: 'none' }),
+    );
+    expect(prisma.transaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        details: expect.objectContaining({ sponsorship: 'none' }),
+      }),
+    });
+  });
+
+  it('passes explicit required sponsorship to session_key UserOps', async () => {
+    await service.send('user-1', { ...dto, sponsorship: 'required' } as any, apiKeyContext);
+
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ sponsorship: 'required' }),
     );
   });
 

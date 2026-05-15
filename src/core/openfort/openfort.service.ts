@@ -200,7 +200,7 @@ export class OpenfortService {
     chainId: number;
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
-    sponsorship?: 'auto' | 'required' | 'none';
+    sponsorship?: 'required' | 'none';
   }): Promise<{ userOpHash: string; transactionHash: string | null }> {
     const publishableKey = this.configService.get<string>('openfort.publishableKey');
     if (!publishableKey) {
@@ -227,7 +227,7 @@ export class OpenfortService {
         accountAddress: getAddress(params.accountAddress),
         keyHash: params.keyHash as Hex,
       });
-      const sponsorshipMode = params.sponsorship ?? 'auto';
+      const sponsorshipMode = params.sponsorship ?? 'none';
       const openfortRpcUrl = `https://api.openfort.io/rpc/${params.chainId}`;
       const gasPrice = await this.estimateUserOperationFees(client);
       const openfortRpcTransport = http(openfortRpcUrl, {
@@ -288,7 +288,7 @@ export class OpenfortService {
     client: any;
     transport: any;
     interactions: Array<{ to: string; data: string; value?: string }>;
-    sponsorshipMode: 'auto' | 'required' | 'none';
+    sponsorshipMode: 'required' | 'none';
     chainId: number;
     gasPrice: UserOperationGasPrice;
   }): Promise<{ hash: string; bundlerClient: any }> {
@@ -322,18 +322,6 @@ export class OpenfortService {
         bundlerClient,
       };
     } catch (error: any) {
-      if (this.isMissingPaymasterPolicyError(error) && params.sponsorshipMode === 'auto') {
-        const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
-        return {
-          hash: await bundlerClient.sendUserOperation({
-            account: params.account,
-            calls,
-            maxFeePerGas: params.gasPrice.maxFeePerGas,
-            maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-          } as any),
-          bundlerClient,
-        };
-      }
       throw error;
     }
   }

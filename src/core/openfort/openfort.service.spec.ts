@@ -131,26 +131,14 @@ describe('OpenfortService', () => {
     });
   });
 
-  it('falls back to an unsponsored UserOperation when auto sponsorship has no policy', async () => {
+  it('uses paymaster only when sponsorship is required', async () => {
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
       get: jest.fn(() => 25),
     };
     const service = new OpenfortService(configService as any) as any;
-    const sponsoredClient = {
-      sendUserOperation: jest
-        .fn()
-        .mockRejectedValue(
-          new Error('No matching project-scoped policy found for this transaction'),
-        ),
-    };
-    const unsponsoredClient = {
-      sendUserOperation: jest.fn().mockResolvedValue('0xuserop'),
-    };
-    jest
-      .spyOn(service, 'createBundlerClient')
-      .mockReturnValueOnce(sponsoredClient)
-      .mockReturnValueOnce(unsponsoredClient);
+    const sponsoredClient = { sendUserOperation: jest.fn().mockResolvedValue('0xuserop') };
+    jest.spyOn(service, 'createBundlerClient').mockReturnValueOnce(sponsoredClient);
 
     await expect(
       service.sendUserOperationWithSponsorship({
@@ -165,7 +153,49 @@ describe('OpenfortService', () => {
             value: '0',
           },
         ],
-        sponsorshipMode: 'auto',
+        sponsorshipMode: 'required',
+        chainId: 137,
+        gasPrice: {
+          maxFeePerGas: 200_000_000_000n,
+          maxPriorityFeePerGas: 178_000_000_000n,
+        },
+      }),
+    ).resolves.toEqual({ hash: '0xuserop', bundlerClient: sponsoredClient });
+    expect(sponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
+      '200000000000',
+    );
+    expect(
+      sponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
+    ).toBe('178000000000');
+    expect(service.createBundlerClient).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ includePaymaster: true }),
+    );
+  });
+
+  it('skips paymaster when sponsorship is none', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+    const unsponsoredClient = { sendUserOperation: jest.fn().mockResolvedValue('0xuserop') };
+    jest.spyOn(service, 'createBundlerClient').mockReturnValueOnce(unsponsoredClient);
+
+    await expect(
+      service.sendUserOperationWithSponsorship({
+        account: {},
+        chain: {},
+        client: {},
+        transport: {},
+        interactions: [
+          {
+            to: '0x1111111111111111111111111111111111111111',
+            data: '0x',
+            value: '0',
+          },
+        ],
+        sponsorshipMode: 'none',
         chainId: 137,
         gasPrice: {
           maxFeePerGas: 200_000_000_000n,
@@ -173,24 +203,7 @@ describe('OpenfortService', () => {
         },
       }),
     ).resolves.toEqual({ hash: '0xuserop', bundlerClient: unsponsoredClient });
-    expect(sponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
-      '200000000000',
-    );
-    expect(
-      sponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
-    ).toBe('178000000000');
-    expect(unsponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
-      '200000000000',
-    );
-    expect(
-      unsponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
-    ).toBe('178000000000');
-    expect(service.createBundlerClient).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ includePaymaster: true }),
-    );
-    expect(service.createBundlerClient).toHaveBeenNthCalledWith(
-      2,
+    expect(service.createBundlerClient).toHaveBeenCalledWith(
       expect.objectContaining({ includePaymaster: false }),
     );
   });
