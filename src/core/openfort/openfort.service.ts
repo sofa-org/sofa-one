@@ -228,7 +228,12 @@ export class OpenfortService {
         keyHash: params.keyHash as Hex,
       });
       const sponsorshipMode = params.sponsorship ?? 'auto';
-      const openfortRpcTransport = http(`https://api.openfort.io/rpc/${params.chainId}`, {
+      const openfortRpcUrl = `https://api.openfort.io/rpc/${params.chainId}`;
+      const gasPrice = await this.getRecommendedUserOperationGasPrice({
+        rpcUrl: openfortRpcUrl,
+        publishableKey,
+      });
+      const openfortRpcTransport = http(openfortRpcUrl, {
         fetchOptions: {
           headers: { Authorization: `Bearer ${publishableKey}` },
         },
@@ -241,6 +246,7 @@ export class OpenfortService {
         interactions: params.interactions,
         sponsorshipMode,
         chainId: params.chainId,
+        gasPrice,
       });
       const receipt = (await submission.bundlerClient.waitForUserOperationReceipt({
         hash: submission.hash as Hex,
@@ -287,6 +293,7 @@ export class OpenfortService {
     interactions: Array<{ to: string; data: string; value?: string }>;
     sponsorshipMode: 'auto' | 'required' | 'none';
     chainId: number;
+    gasPrice: UserOperationGasPrice;
   }): Promise<{ hash: string; bundlerClient: any }> {
     const calls = params.interactions.map((interaction) => ({
       to: getAddress(interaction.to),
@@ -296,7 +303,12 @@ export class OpenfortService {
     if (params.sponsorshipMode === 'none') {
       const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
       return {
-        hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+        hash: await bundlerClient.sendUserOperation({
+          account: params.account,
+          calls,
+          maxFeePerGas: params.gasPrice.maxFeePerGas,
+          maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+        } as any),
         bundlerClient,
       };
     }
@@ -304,19 +316,77 @@ export class OpenfortService {
     try {
       const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
       return {
-        hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+        hash: await bundlerClient.sendUserOperation({
+          account: params.account,
+          calls,
+          maxFeePerGas: params.gasPrice.maxFeePerGas,
+          maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+        } as any),
         bundlerClient,
       };
     } catch (error: any) {
       if (this.isMissingPaymasterPolicyError(error) && params.sponsorshipMode === 'auto') {
         const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
         return {
-          hash: await bundlerClient.sendUserOperation({ account: params.account, calls } as any),
+          hash: await bundlerClient.sendUserOperation({
+            account: params.account,
+            calls,
+            maxFeePerGas: params.gasPrice.maxFeePerGas,
+            maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+          } as any),
           bundlerClient,
         };
       }
       throw error;
     }
+  }
+
+  private async getRecommendedUserOperationGasPrice(params: {
+    rpcUrl: string;
+    publishableKey: string;
+  }): Promise<UserOperationGasPrice> {
+    const response = await this.withTimeout(
+      fetch(params.rpcUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${params.publishableKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'pimlico_getUserOperationGasPrice',
+          params: [],
+        }),
+      }),
+      'getUserOperationGasPrice',
+    );
+
+    if (!response.ok) {
+      throw new Error(`Unable to fetch bundler gas price recommendation (${response.status})`);
+    }
+
+    const payload = (await response.json()) as {
+      result?: {
+        fast?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+        standard?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+        slow?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
+      };
+      error?: { message?: string };
+    };
+    if (payload.error) {
+      throw new Error(payload.error.message ?? 'Unable to fetch bundler gas price recommendation');
+    }
+
+    const gasPrice = payload.result?.fast ?? payload.result?.standard ?? payload.result?.slow;
+    if (!gasPrice) {
+      throw new Error('Bundler did not return a usable gas price recommendation');
+    }
+
+    return {
+      maxFeePerGas: BigInt(gasPrice.maxFeePerGas),
+      maxPriorityFeePerGas: BigInt(gasPrice.maxPriorityFeePerGas),
+    };
   }
 
   private isMissingPaymasterPolicyError(error: any): boolean {
@@ -418,3 +488,8 @@ export class OpenfortService {
     }
   }
 }
+
+type UserOperationGasPrice = {
+  maxFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
+};

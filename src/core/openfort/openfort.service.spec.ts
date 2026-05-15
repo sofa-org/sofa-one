@@ -157,8 +157,24 @@ describe('OpenfortService', () => {
         ],
         sponsorshipMode: 'auto',
         chainId: 137,
+        gasPrice: {
+          maxFeePerGas: 200_000_000_000n,
+          maxPriorityFeePerGas: 178_000_000_000n,
+        },
       }),
     ).resolves.toEqual({ hash: '0xuserop', bundlerClient: unsponsoredClient });
+    expect(sponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
+      '200000000000',
+    );
+    expect(
+      sponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
+    ).toBe('178000000000');
+    expect(unsponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
+      '200000000000',
+    );
+    expect(
+      unsponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
+    ).toBe('178000000000');
     expect(service.createBundlerClient).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ includePaymaster: true }),
@@ -167,5 +183,40 @@ describe('OpenfortService', () => {
       2,
       expect.objectContaining({ includePaymaster: false }),
     );
+  });
+
+  it('uses bundler-recommended UserOperation gas prices', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+    const fetchSpy = jest.spyOn(global, 'fetch' as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        result: {
+          fast: {
+            maxFeePerGas: '0x2e90edd000',
+            maxPriorityFeePerGas: '0x2971a07400',
+          },
+        },
+      }),
+    } as any);
+
+    const gasPrice = await service.getRecommendedUserOperationGasPrice({
+      rpcUrl: 'https://api.openfort.io/rpc/137',
+      publishableKey: 'pk_test',
+    });
+    expect(gasPrice.maxFeePerGas.toString()).toBe('200000000000');
+    expect(gasPrice.maxPriorityFeePerGas.toString()).toBe('178000000000');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.openfort.io/rpc/137',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer pk_test' }),
+      }),
+    );
+
+    fetchSpy.mockRestore();
   });
 });
