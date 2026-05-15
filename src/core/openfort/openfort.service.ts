@@ -28,16 +28,6 @@ import {
   KeyType,
 } from '../../common/calibur/calibur';
 
-const POLYGON_MAINNET_CHAIN_ID = 137;
-const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
-
-interface PolygonGasStationResponse {
-  fast?: {
-    maxFee?: number | string;
-    maxPriorityFee?: number | string;
-  };
-}
-
 @Injectable()
 export class OpenfortService {
   private readonly client: Openfort;
@@ -309,10 +299,17 @@ export class OpenfortService {
     }));
     if (params.sponsorshipMode === 'none') {
       const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
+      const gasLimits = await this.estimateUnsponsoredUserOperationGas(bundlerClient, {
+        account: params.account,
+        calls,
+        maxFeePerGas: params.gasPrice.maxFeePerGas,
+        maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+      });
       return {
         hash: await bundlerClient.sendUserOperation({
           account: params.account,
           calls,
+          ...gasLimits,
           maxFeePerGas: params.gasPrice.maxFeePerGas,
           maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
         } as any),
@@ -337,10 +334,6 @@ export class OpenfortService {
   }
 
   private async estimateUserOperationFees(client: any): Promise<UserOperationGasPrice> {
-    if (client.chain?.id === POLYGON_MAINNET_CHAIN_ID) {
-      return this.estimatePolygonUserOperationFees();
-    }
-
     const fees = (await this.withTimeout(
       estimateFeesPerGas(client, { chain: client.chain, type: 'eip1559' }),
       'estimateUserOperationFees',
@@ -356,35 +349,33 @@ export class OpenfortService {
     };
   }
 
-  private async estimatePolygonUserOperationFees(): Promise<UserOperationGasPrice> {
-    const response = (await this.withTimeout(
-      fetch(POLYGON_GAS_STATION_URL),
-      'estimatePolygonUserOperationFees',
-    )) as Response;
+  private async estimateUnsponsoredUserOperationGas(
+    bundlerClient: any,
+    request: {
+      account: any;
+      calls: Array<{ to: Address; data: Hex; value: bigint }>;
+      maxFeePerGas: bigint;
+      maxPriorityFeePerGas: bigint;
+    },
+  ): Promise<UserOperationGasLimits> {
+    const gas = (await this.withTimeout(
+      bundlerClient.estimateUserOperationGas(request),
+      'estimateUserOperationGas',
+    )) as Partial<UserOperationGasLimits> & Record<string, unknown>;
 
-    if (!response.ok) {
-      throw new Error('Unable to estimate UserOperation fee parameters from Polygon Gas Station');
+    if (
+      gas.callGasLimit === undefined ||
+      gas.verificationGasLimit === undefined ||
+      gas.preVerificationGas === undefined
+    ) {
+      throw new Error('Unable to estimate UserOperation gas limits from bundler');
     }
 
-    const gasStation = (await response.json()) as PolygonGasStationResponse;
-    const maxFeePerGas = this.gweiToWei(gasStation.fast?.maxFee);
-    const maxPriorityFeePerGas = this.gweiToWei(gasStation.fast?.maxPriorityFee);
-
-    if (!maxFeePerGas || !maxPriorityFeePerGas) {
-      throw new Error('Unable to estimate UserOperation fee parameters from Polygon Gas Station');
-    }
-
-    return { maxFeePerGas, maxPriorityFeePerGas };
-  }
-
-  private gweiToWei(value?: number | string): bigint | null {
-    if (value === undefined || value === null) return null;
-    const text = String(value).trim();
-    if (!/^\d+(\.\d+)?$/.test(text)) return null;
-
-    const [whole, fractional = ''] = text.split('.');
-    const fractionalWei = fractional.slice(0, 9).padEnd(9, '0');
-    return BigInt(whole) * 1_000_000_000n + BigInt(fractionalWei);
+    return {
+      callGasLimit: gas.callGasLimit,
+      verificationGasLimit: gas.verificationGasLimit,
+      preVerificationGas: gas.preVerificationGas,
+    };
   }
 
   private isMissingPaymasterPolicyError(error: any): boolean {
@@ -517,9 +508,7 @@ export class OpenfortService {
 
     const message = this.getErrorText(error).toLowerCase();
     const baseMessage =
-      message.includes('maxpriorityfeepergas') ||
-      message.includes('max fee') ||
-      message.includes('gas price')
+      this.isGasFeeTooLowError(message)
         ? 'UserOperation rejected by bundler: gas price is below the required network minimum.'
         : message.includes('simulation') ||
             message.includes('revert') ||
@@ -535,6 +524,19 @@ export class OpenfortService {
       },
       HttpStatus.BAD_GATEWAY,
     );
+  }
+
+  private isGasFeeTooLowError(message: string): boolean {
+    const mentionsFee =
+      message.includes('maxpriorityfeepergas') ||
+      message.includes('maxfeepergas') ||
+      message.includes('gas price');
+    const mentionsMinimum =
+      message.includes('at least') ||
+      message.includes('too low') ||
+      message.includes('underpriced') ||
+      message.includes('minimum');
+    return mentionsFee && mentionsMinimum;
   }
 
   private isTimeoutError(error: any): boolean {
@@ -600,4 +602,10 @@ export class OpenfortService {
 type UserOperationGasPrice = {
   maxFeePerGas: bigint;
   maxPriorityFeePerGas: bigint;
+};
+
+type UserOperationGasLimits = {
+  callGasLimit: bigint;
+  verificationGasLimit: bigint;
+  preVerificationGas: bigint;
 };
