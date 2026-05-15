@@ -14,6 +14,10 @@ export const API_ERROR_CODES = {
   WALLET_NOT_ACTIVE: 'WALLET_NOT_ACTIVE',
   AGENT_REGISTRATION_PENDING: 'AGENT_REGISTRATION_PENDING',
   PAYMASTER_POLICY_NOT_CONFIGURED: 'PAYMASTER_POLICY_NOT_CONFIGURED',
+  USER_OPERATION_GAS_PRICE_UNAVAILABLE: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
+  USER_OPERATION_REJECTED: 'USER_OPERATION_REJECTED',
+  BACKEND_TRANSACTION_FAILED: 'BACKEND_TRANSACTION_FAILED',
+  WALLET_SERVICE_UNAVAILABLE: 'WALLET_SERVICE_UNAVAILABLE',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
   NOT_FOUND: 'NOT_FOUND',
@@ -50,6 +54,16 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
     normalized.includes('paymaster policy')
   ) {
     return API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED;
+  }
+  if (normalized.includes('useroperation gas price')) {
+    return API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE;
+  }
+  if (normalized.includes('useroperation rejected')) return API_ERROR_CODES.USER_OPERATION_REJECTED;
+  if (normalized.includes('backend eoa transaction failed')) {
+    return API_ERROR_CODES.BACKEND_TRANSACTION_FAILED;
+  }
+  if (normalized.includes('wallet service unavailable')) {
+    return API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE;
   }
   if (statusCode === HttpStatus.UNAUTHORIZED) return API_ERROR_CODES.UNAUTHORIZED;
   if (statusCode === HttpStatus.NOT_FOUND) return API_ERROR_CODES.NOT_FOUND;

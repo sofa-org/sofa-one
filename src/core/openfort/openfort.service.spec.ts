@@ -219,4 +219,63 @@ describe('OpenfortService', () => {
 
     fetchSpy.mockRestore();
   });
+
+  it('maps UserOperation gas price failures to a specific API error', () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+
+    const exception = service.createOpenfortApiException(
+      'sendUserOperation',
+      new Error('Unable to fetch bundler gas price recommendation (502)'),
+    );
+
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+    expect(exception.getResponse()).toEqual({
+      code: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
+      message: 'Unable to fetch UserOperation gas price recommendation from bundler.',
+    });
+  });
+
+  it('maps bundler rejections to a specific sanitized API error', () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+
+    const exception = service.createOpenfortApiException('sendUserOperation', {
+      message:
+        'maxPriorityFeePerGas must be at least 178 gwei for calldata 0x1234567890abcdef1234567890abcdef1234567890abcdef',
+    });
+
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+    expect(exception.getResponse()).toEqual({
+      code: 'USER_OPERATION_REJECTED',
+      message:
+        'UserOperation rejected by bundler: gas price is below the required network minimum. Reason: maxPriorityFeePerGas must be at least 178 gwei for calldata [hex]',
+    });
+  });
+
+  it('maps backend EOA send failures to a specific API error', () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+
+    const exception = service.createOpenfortApiException(
+      'sendBackendTransaction',
+      new Error('insufficient funds for gas'),
+    );
+
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+    expect(exception.getResponse()).toEqual({
+      code: 'BACKEND_TRANSACTION_FAILED',
+      message:
+        'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance. Reason: insufficient funds for gas',
+    });
+  });
 });

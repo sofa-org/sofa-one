@@ -263,7 +263,7 @@ export class OpenfortService {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
       });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
+      throw this.createOpenfortApiException('sendUserOperation', error);
     }
   }
 
@@ -436,7 +436,7 @@ export class OpenfortService {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
       });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
+      throw this.createOpenfortApiException('sendBackendTransaction', error);
     }
   }
 
@@ -467,6 +467,116 @@ export class OpenfortService {
       }),
       error?.stack,
     );
+  }
+
+  private createOpenfortApiException(operation: string, error: any): HttpException {
+    if (this.isTimeoutError(error)) {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE,
+          message: 'Wallet service unavailable: Openfort request timed out.',
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    if (operation === 'sendUserOperation') {
+      return this.createUserOperationException(error);
+    }
+
+    if (operation === 'sendBackendTransaction') {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.BACKEND_TRANSACTION_FAILED,
+          message: this.withSafeReason(
+            'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance.',
+            error,
+          ),
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE,
+        message: 'Wallet service unavailable: Openfort request failed.',
+      },
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+
+  private createUserOperationException(error: any): HttpException {
+    if (this.isGasPriceRecommendationError(error)) {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE,
+          message: 'Unable to fetch UserOperation gas price recommendation from bundler.',
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    const message = this.getErrorText(error).toLowerCase();
+    const baseMessage =
+      message.includes('maxpriorityfeepergas') ||
+      message.includes('max fee') ||
+      message.includes('gas price')
+        ? 'UserOperation rejected by bundler: gas price is below the required network minimum.'
+        : message.includes('simulation') ||
+            message.includes('revert') ||
+            message.includes('unrecognized selector') ||
+            message.includes('execution reverted')
+          ? 'UserOperation rejected by bundler: simulation failed. Check target contract calldata and session key permissions.'
+          : 'UserOperation rejected by bundler. Check chainId, target contract calldata, value, gas sponsorship, and session key authorization.';
+
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.USER_OPERATION_REJECTED,
+        message: this.withSafeReason(baseMessage, error),
+      },
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+
+  private isTimeoutError(error: any): boolean {
+    return this.getErrorText(error).toLowerCase().includes('timed out');
+  }
+
+  private isGasPriceRecommendationError(error: any): boolean {
+    const text = this.getErrorText(error).toLowerCase();
+    return (
+      text.includes('bundler gas price recommendation') ||
+      text.includes('useroperation gas price') ||
+      text.includes('pimlico_getuseroperationgasprice')
+    );
+  }
+
+  private withSafeReason(message: string, error: any): string {
+    const reason = this.sanitizeExternalErrorMessage(error);
+    return reason ? `${message} Reason: ${reason}` : message;
+  }
+
+  private sanitizeExternalErrorMessage(error: any): string | null {
+    const text = this.getErrorText(error)
+      .replace(/0x[a-fA-F0-9]{16,}/g, '[hex]')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text) return null;
+    return text.slice(0, 240);
+  }
+
+  private getErrorText(error: any): string {
+    return [
+      error?.shortMessage,
+      error?.message,
+      error?.details,
+      error?.cause?.shortMessage,
+      error?.cause?.message,
+      error?.cause?.details,
+    ]
+      .filter(Boolean)
+      .join(' ');
   }
 
   private logContext(extra: Record<string, unknown>) {
