@@ -5,6 +5,7 @@ import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient } from 'wagmi';
 import { http, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { estimateFeesPerGas } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import {
   DEFAULT_CHAIN_ID,
@@ -80,44 +81,6 @@ function UsdcIcon() {
 function TokenIcon({ token }: { token: string }) {
   if (token.toUpperCase() === 'USDC') return <UsdcIcon />;
   return <EthIcon />;
-}
-
-type UserOperationGasPrice = {
-  fast?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-  standard?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-  slow?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-};
-
-async function getRecommendedUserOperationGasPrice(rpcUrl: string, publishableKey: string) {
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${publishableKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: Date.now(),
-      method: 'pimlico_getUserOperationGasPrice',
-      params: [],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Unable to fetch bundler gas price recommendation (${response.status}).`);
-  }
-
-  const payload = (await response.json()) as { result?: UserOperationGasPrice; error?: { message?: string } };
-  if (payload.error) {
-    throw new Error(payload.error.message ?? 'Unable to fetch bundler gas price recommendation.');
-  }
-
-  const gasPrice = payload.result?.fast ?? payload.result?.standard ?? payload.result?.slow;
-  if (!gasPrice) {
-    throw new Error('Bundler did not return a usable gas price recommendation.');
-  }
-
-  return gasPrice;
 }
 
 function resolveEmbeddedWallet(
@@ -641,17 +604,13 @@ export default function WalletPage() {
         ...(paymaster ? { paymaster } : {}),
         transport: openfortRpcTransport,
       } as never);
-      const recommendedGasPrice = await getRecommendedUserOperationGasPrice(openfortRpcUrl, openfortPublishableKey);
+      const fees = await estimateFeesPerGas(publicClient, { chain: publicClient.chain, type: 'eip1559' });
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
         ...(eip7702Authorization ? { authorization: eip7702Authorization } : {}),
-        ...(recommendedGasPrice
-          ? {
-              maxFeePerGas: BigInt(recommendedGasPrice.maxFeePerGas),
-              maxPriorityFeePerGas: BigInt(recommendedGasPrice.maxPriorityFeePerGas),
-            }
-          : {}),
+        maxFeePerGas: fees.maxFeePerGas,
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
         ...(feeSponsorshipId
           ? { paymasterContext: { policyId: feeSponsorshipId } }
           : {}),

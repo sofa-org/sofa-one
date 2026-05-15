@@ -55,7 +55,7 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   ) {
     return API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED;
   }
-  if (normalized.includes('useroperation gas price')) {
+  if (normalized.includes('useroperation gas price') || normalized.includes('useroperation fee')) {
     return API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE;
   }
   if (normalized.includes('useroperation rejected')) return API_ERROR_CODES.USER_OPERATION_REJECTED;

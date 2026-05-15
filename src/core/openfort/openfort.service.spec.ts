@@ -4,6 +4,7 @@ const backendCreate = jest.fn();
 const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
+const mockEstimateFeesPerGas = jest.fn();
 
 jest.mock('@openfort/openfort-node', () => ({
   __esModule: true,
@@ -31,12 +32,21 @@ jest.mock('../../common/calibur/calibur', () => {
   };
 });
 
+jest.mock('viem/actions', () => ({
+  ...jest.requireActual('viem/actions'),
+  estimateFeesPerGas: mockEstimateFeesPerGas,
+}));
+
 import { OpenfortService } from './openfort.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 
 describe('OpenfortService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEstimateFeesPerGas.mockResolvedValue({
+      maxFeePerGas: 200_000_000_000n,
+      maxPriorityFeePerGas: 178_000_000_000n,
+    });
     jest.useFakeTimers();
   });
 
@@ -185,39 +195,21 @@ describe('OpenfortService', () => {
     );
   });
 
-  it('uses bundler-recommended UserOperation gas prices', async () => {
+  it('uses standard chain fee estimation for UserOperation fees', async () => {
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
       get: jest.fn(() => 25),
     };
     const service = new OpenfortService(configService as any) as any;
-    const fetchSpy = jest.spyOn(global, 'fetch' as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        result: {
-          fast: {
-            maxFeePerGas: '0x2e90edd000',
-            maxPriorityFeePerGas: '0x2971a07400',
-          },
-        },
-      }),
-    } as any);
 
-    const gasPrice = await service.getRecommendedUserOperationGasPrice({
-      rpcUrl: 'https://api.openfort.io/rpc/137',
-      publishableKey: 'pk_test',
-    });
+    const gasPrice = await service.estimateUserOperationFees({ chain: { id: 137 } });
+
     expect(gasPrice.maxFeePerGas.toString()).toBe('200000000000');
     expect(gasPrice.maxPriorityFeePerGas.toString()).toBe('178000000000');
-    expect(fetchSpy).toHaveBeenCalledWith(
-      'https://api.openfort.io/rpc/137',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({ Authorization: 'Bearer pk_test' }),
-      }),
+    expect(mockEstimateFeesPerGas).toHaveBeenCalledWith(
+      expect.objectContaining({ chain: { id: 137 } }),
+      { chain: { id: 137 }, type: 'eip1559' },
     );
-
-    fetchSpy.mockRestore();
   });
 
   it('maps UserOperation gas price failures to a specific API error', () => {
@@ -229,13 +221,13 @@ describe('OpenfortService', () => {
 
     const exception = service.createOpenfortApiException(
       'sendUserOperation',
-      new Error('Unable to fetch bundler gas price recommendation (502)'),
+      new Error('Unable to estimate UserOperation fee parameters from chain RPC'),
     );
 
     expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
     expect(exception.getResponse()).toEqual({
       code: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
-      message: 'Unable to fetch UserOperation gas price recommendation from bundler.',
+      message: 'Unable to estimate UserOperation fee parameters from chain RPC.',
     });
   });
 

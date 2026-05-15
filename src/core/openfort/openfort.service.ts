@@ -13,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getTransactionReceipt } from 'viem/actions';
+import { estimateFeesPerGas, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
@@ -229,10 +229,7 @@ export class OpenfortService {
       });
       const sponsorshipMode = params.sponsorship ?? 'auto';
       const openfortRpcUrl = `https://api.openfort.io/rpc/${params.chainId}`;
-      const gasPrice = await this.getRecommendedUserOperationGasPrice({
-        rpcUrl: openfortRpcUrl,
-        publishableKey,
-      });
+      const gasPrice = await this.estimateUserOperationFees(client);
       const openfortRpcTransport = http(openfortRpcUrl, {
         fetchOptions: {
           headers: { Authorization: `Bearer ${publishableKey}` },
@@ -341,51 +338,19 @@ export class OpenfortService {
     }
   }
 
-  private async getRecommendedUserOperationGasPrice(params: {
-    rpcUrl: string;
-    publishableKey: string;
-  }): Promise<UserOperationGasPrice> {
-    const response = await this.withTimeout(
-      fetch(params.rpcUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${params.publishableKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: Date.now(),
-          method: 'pimlico_getUserOperationGasPrice',
-          params: [],
-        }),
-      }),
-      'getUserOperationGasPrice',
-    );
+  private async estimateUserOperationFees(client: any): Promise<UserOperationGasPrice> {
+    const fees = (await this.withTimeout(
+      estimateFeesPerGas(client, { chain: client.chain, type: 'eip1559' }),
+      'estimateUserOperationFees',
+    )) as { maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint };
 
-    if (!response.ok) {
-      throw new Error(`Unable to fetch bundler gas price recommendation (${response.status})`);
-    }
-
-    const payload = (await response.json()) as {
-      result?: {
-        fast?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-        standard?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-        slow?: { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex };
-      };
-      error?: { message?: string };
-    };
-    if (payload.error) {
-      throw new Error(payload.error.message ?? 'Unable to fetch bundler gas price recommendation');
-    }
-
-    const gasPrice = payload.result?.fast ?? payload.result?.standard ?? payload.result?.slow;
-    if (!gasPrice) {
-      throw new Error('Bundler did not return a usable gas price recommendation');
+    if (!fees.maxFeePerGas || !fees.maxPriorityFeePerGas) {
+      throw new Error('Unable to estimate UserOperation fee parameters from chain RPC');
     }
 
     return {
-      maxFeePerGas: BigInt(gasPrice.maxFeePerGas),
-      maxPriorityFeePerGas: BigInt(gasPrice.maxPriorityFeePerGas),
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
     };
   }
 
@@ -511,7 +476,7 @@ export class OpenfortService {
       return new HttpException(
         {
           code: API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE,
-          message: 'Unable to fetch UserOperation gas price recommendation from bundler.',
+          message: 'Unable to estimate UserOperation fee parameters from chain RPC.',
         },
         HttpStatus.BAD_GATEWAY,
       );
@@ -546,9 +511,9 @@ export class OpenfortService {
   private isGasPriceRecommendationError(error: any): boolean {
     const text = this.getErrorText(error).toLowerCase();
     return (
-      text.includes('bundler gas price recommendation') ||
-      text.includes('useroperation gas price') ||
-      text.includes('pimlico_getuseroperationgasprice')
+      text.includes('useroperation fee') ||
+      text.includes('estimateuseroperationfees') ||
+      text.includes('estimate fees per gas')
     );
   }
 
