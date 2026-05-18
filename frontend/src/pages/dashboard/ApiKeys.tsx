@@ -340,9 +340,14 @@ export default function ApiKeysPage() {
           Advanced key rotation
         </summary>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-2xl text-sm text-red-800">
-            Rotate all keys only if you believe existing keys were exposed. This revokes every active key and creates one replacement.
-          </p>
+          <div className="max-w-2xl space-y-2 text-sm text-red-800">
+            <p>
+              Rotate all keys only if you believe existing keys were exposed. This revokes every active key and creates one replacement.
+            </p>
+            <p>
+              The replacement raw key is shown once. Copy it into your backend secret store before deploying, then remove the old keys from every environment.
+            </p>
+          </div>
           <button
             onClick={handleRefresh}
             disabled={actionLoading}
