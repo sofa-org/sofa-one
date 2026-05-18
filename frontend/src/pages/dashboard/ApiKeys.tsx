@@ -47,6 +47,20 @@ function getRelativeDateSummary(value: string | null, emptyLabel: string) {
   };
 }
 
+function getKeyExpirySortTime(key: ApiKeyRecord) {
+  if (!key.expiresAt) return Number.POSITIVE_INFINITY;
+
+  const expiryTime = new Date(key.expiresAt).getTime();
+  return Number.isNaN(expiryTime) ? Number.NEGATIVE_INFINITY : expiryTime;
+}
+
+function getLastUsedSortTime(key: ApiKeyRecord) {
+  if (!key.lastUsedAt) return Number.NEGATIVE_INFINITY;
+
+  const lastUsedTime = new Date(key.lastUsedAt).getTime();
+  return Number.isNaN(lastUsedTime) ? Number.NEGATIVE_INFINITY : lastUsedTime;
+}
+
 function getKeyExpirySummary(expiresAt: string | null) {
   if (!expiresAt) {
     return { label: 'No expiry', detail: 'Manual revoke only', tone: 'text-brand-muted' };
@@ -106,7 +120,18 @@ export default function ApiKeysPage() {
       "value": "0"
     }]
   }'`;
-  const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
+  const sortedKeys = [...keys].sort((a, b) => {
+    if (a.revoked !== b.revoked) return Number(a.revoked) - Number(b.revoked);
+
+    if (!a.revoked && !b.revoked) {
+      const expirySort = getKeyExpirySortTime(a) - getKeyExpirySortTime(b);
+      if (expirySort !== 0) return expirySort;
+
+      return getLastUsedSortTime(b) - getLastUsedSortTime(a);
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
   const activeKeyCount = keys.filter((key) => !key.revoked).length;
   const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - activeKeyCount, 0);
   const hasReachedKeyLimit = remainingKeySlots === 0;
@@ -312,7 +337,12 @@ export default function ApiKeysPage() {
       <div className="rounded-2xl border border-brand-border bg-white shadow-xl relative overflow-hidden ring-1 ring-black/5">
         <div className="p-7 border-b border-brand-border">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
+            <div>
+              <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
+              <p className="mt-1 text-xs text-brand-muted">
+                Active keys are ordered by soonest expiry, then most recent use, so lifecycle risks stay visible.
+              </p>
+            </div>
             {keysRefreshing && !loading && (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
