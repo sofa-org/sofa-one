@@ -20,6 +20,10 @@ function getDashboardRedirectPath(state: unknown) {
   return `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`;
 }
 
+function reloadPage() {
+  window.location.reload();
+}
+
 export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { isLoading, user } = useOpenfort();
   const location = useLocation();
@@ -43,6 +47,13 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
           <p className="mt-3 text-xs leading-5 text-brand-muted/80">
             If this check takes more than a few seconds, reload the page to refresh your Openfort session.
           </p>
+          <button
+            type="button"
+            onClick={reloadPage}
+            className="mt-4 rounded-full border border-brand-border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text transition hover:border-brand-accent hover:text-brand-accent"
+          >
+            Reload page
+          </button>
         </div>
       </div>
     );
