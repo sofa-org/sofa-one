@@ -11,6 +11,17 @@ coverage/
 *.swo
 *.md
 !README.md
+!ARCHITECTURE.md
+!REQUIREMENTS.md
+!SECURITY.md
+!API.md
+!DATABASE.md
+!DEPLOYMENT.md
+!RUNBOOK.md
+!CONTRIBUTING.md
+!docs/
+!docs/archive/
+!docs/archive/legacy-design.md
 /.agent-shell/
 .slim/
 examples/
