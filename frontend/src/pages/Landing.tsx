@@ -21,12 +21,18 @@ export default function LandingPage() {
           ever touching a private key.
         </p>
 
-        <div className="mb-16 flex items-center justify-center">
+        <div className="mb-16 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/sign-in"
             className="rounded-full bg-brand-text px-10 py-3.5 text-sm font-medium tracking-widest text-white transition-colors hover:bg-black/90"
           >
-            GET STARTED
+            SIGN IN WITH EMAIL OTP
+          </Link>
+          <Link
+            to="/dashboard/docs"
+            className="rounded-full border border-brand-border bg-white/70 px-8 py-3.5 text-sm font-medium tracking-widest text-brand-text transition-colors hover:border-brand-text hover:bg-white"
+          >
+            VIEW API DOCS
           </Link>
         </div>
 
@@ -49,14 +55,12 @@ export default function LandingPage() {
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3">
-          <a
-            href="https://www.openfort.io/blog/how-to-build-an-agent-wallet"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/dashboard"
             className="text-sm font-medium text-brand-muted transition-colors hover:text-brand-text underline underline-offset-4 decoration-brand-border hover:decoration-brand-text"
           >
-            Learn more about the architecture
-          </a>
+            Open your wallet dashboard after sign-in
+          </Link>
           <span className="text-xs text-brand-muted">
             Powered by{' '}
             <a
