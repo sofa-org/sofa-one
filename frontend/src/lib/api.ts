@@ -1,6 +1,8 @@
 const _viteApiUrl: string | undefined = import.meta.env.VITE_API_URL;
 if (!_viteApiUrl && import.meta.env.PROD) {
-  throw new Error('VITE_API_URL must be set in production builds');
+  throw new Error(
+    'VITE_API_URL must be set in production builds to the deployed SOFA ONE API base URL, for example https://api.example.com.',
+  );
 }
 const API_BASE = _viteApiUrl ?? '/api';
 export const DEFAULT_CHAIN_ID = 84532;
