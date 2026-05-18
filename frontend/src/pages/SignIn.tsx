@@ -55,7 +55,7 @@ export default function SignInPage() {
         </div>
 
         <p className="mt-8 text-center text-xs text-brand-muted">
-          By continuing with email OTP, you agree to SOFA ONE&apos;s terms and privacy policy.
+          Continue with email OTP to access your secure SOFA ONE dashboard.
         </p>
       </div>
     </div>
