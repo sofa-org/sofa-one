@@ -75,7 +75,8 @@ export default function EmailOtpForm() {
         Sign in or create account
       </h1>
       <p className="mt-2 text-sm text-brand-muted">
-        Use Openfort email OTP to access your EOA.
+        We&apos;ll send a one-time code to your email. No social OAuth or browser
+        wallet connection is required.
       </p>
       {sent && (
         <p className="mt-4 rounded-lg border border-brand-border bg-brand-bg/60 px-3 py-2 text-xs text-brand-muted">

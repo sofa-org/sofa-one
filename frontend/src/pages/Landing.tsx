@@ -16,9 +16,9 @@ export default function LandingPage() {
         </h1>
 
         <p className="mx-auto mb-12 max-w-2xl text-lg font-light leading-relaxed text-brand-muted md:text-xl">
-          Sign in with your social account, get a wallet and API key instantly.
-          Let your AI agents execute on-chain transactions — swap, transfer,
-          mint — without ever touching a private key.
+          Sign in with email OTP, get a wallet and API key instantly. Let your AI
+          agents execute on-chain transactions — swap, transfer, mint — without
+          ever touching a private key.
         </p>
 
         <div className="mb-16 flex items-center justify-center">
@@ -32,7 +32,7 @@ export default function LandingPage() {
 
         <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
           {[
-            'Social OAuth Login',
+            'Email OTP Login',
             'TEE-Secured Keys',
             'EIP-7702 Delegation',
             'USDC Gas Payments',

@@ -28,7 +28,8 @@ export default function SignInPage() {
             </span>
           </Link>
           <p className="text-brand-muted text-lg leading-relaxed">
-            Your secure, automated blockchain signing infrastructure.
+            Sign in with an email one-time code to provision your secure
+            automated signing wallet.
           </p>
           <div className="mt-12 flex items-center gap-3">
             <div className="h-px w-8 bg-brand-accent" />
@@ -52,7 +53,7 @@ export default function SignInPage() {
         </div>
 
         <p className="mt-8 text-center text-xs text-brand-muted">
-          By continuing, you agree to our{' '}
+          By continuing with email OTP, you agree to our{' '}
           <span className="underline underline-offset-2 decoration-brand-border cursor-pointer hover:text-brand-text transition-colors">Terms</span>
           {' '}and{' '}
           <span className="underline underline-offset-2 decoration-brand-border cursor-pointer hover:text-brand-text transition-colors">Privacy Policy</span>.
