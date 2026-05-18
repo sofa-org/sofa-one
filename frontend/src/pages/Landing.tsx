@@ -99,15 +99,7 @@ export default function LandingPage() {
             Open your wallet dashboard after sign-in
           </Link>
           <span className="text-xs text-brand-muted">
-            Powered by{' '}
-            <a
-              href="https://sofa.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 decoration-brand-border hover:text-brand-text transition-colors"
-            >
-              SOFA.org
-            </a>
+            Built for secure server-side signing with Openfort-managed wallet keys.
           </span>
         </div>
       </div>
