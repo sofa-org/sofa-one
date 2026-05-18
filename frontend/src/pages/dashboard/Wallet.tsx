@@ -48,6 +48,8 @@ import {
   ArrowRight,
   RotateCcw,
   ExternalLink,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
@@ -318,6 +320,7 @@ export default function WalletPage() {
     : null;
 
   const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
   const [agentExpiryLocal, setAgentExpiryLocal] = useState(getDefaultAgentExpiryLocal);
   const [walletSetupLoading, setWalletSetupLoading] = useState(false);
   const [walletSetupError, setWalletSetupError] = useState<string | null>(null);
@@ -1042,14 +1045,24 @@ export default function WalletPage() {
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                       Recovery Password
                     </label>
-                    <input
-                      type="password"
-                      minLength={8}
-                      value={recoveryPassword}
-                      onChange={(event) => setRecoveryPassword(event.target.value)}
-                      placeholder="At least 8 characters"
-                      className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showRecoveryPassword ? 'text' : 'password'}
+                        minLength={8}
+                        value={recoveryPassword}
+                        onChange={(event) => setRecoveryPassword(event.target.value)}
+                        placeholder="At least 8 characters"
+                        className="block w-full rounded-lg border border-amber-200 bg-white px-4 py-2.5 pr-11 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecoveryPassword((visible) => !visible)}
+                        className="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-900"
+                        aria-label={showRecoveryPassword ? 'Hide recovery password' : 'Show recovery password'}
+                      >
+                        {showRecoveryPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     <p className="mt-2 text-xs text-amber-800">
                       This password unlocks the browser-local recovery flow when authorizing networks. Keep it available;
                       SOFA ONE never stores or returns it.
@@ -1273,15 +1286,26 @@ export default function WalletPage() {
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                       Step 1 Wallet Password
                     </label>
-                    <input
-                      type="password"
-                      minLength={8}
-                      value={recoveryPassword}
-                      onChange={(event) => setRecoveryPassword(event.target.value)}
-                      placeholder="Enter the password you created in Step 1"
-                      disabled={authorizeSubmitDisabled}
-                      className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showRecoveryPassword ? 'text' : 'password'}
+                        minLength={8}
+                        value={recoveryPassword}
+                        onChange={(event) => setRecoveryPassword(event.target.value)}
+                        placeholder="Enter the password you created in Step 1"
+                        disabled={authorizeSubmitDisabled}
+                        className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 pr-11 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecoveryPassword((visible) => !visible)}
+                        disabled={authorizeSubmitDisabled}
+                        className="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-blue-700 transition-colors hover:bg-blue-50 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label={showRecoveryPassword ? 'Hide recovery password' : 'Show recovery password'}
+                      >
+                        {showRecoveryPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex justify-end">
                     <button
