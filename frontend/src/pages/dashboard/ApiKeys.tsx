@@ -17,27 +17,34 @@ import {
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-function getKeyExpiryLabel(expiresAt: string | null) {
-  if (!expiresAt) return 'No expiry';
+function getKeyExpirySummary(expiresAt: string | null) {
+  if (!expiresAt) {
+    return { label: 'No expiry', detail: 'Manual revoke only', tone: 'text-brand-muted' };
+  }
 
   const expiry = new Date(expiresAt);
-  if (Number.isNaN(expiry.getTime())) return 'Invalid expiry';
+  if (Number.isNaN(expiry.getTime())) {
+    return { label: 'Invalid expiry', detail: 'Check key metadata', tone: 'text-red-700' };
+  }
 
-  return expiry.toLocaleDateString();
-}
+  const timeUntilExpiry = expiry.getTime() - Date.now();
+  const dateLabel = expiry.toLocaleDateString();
+  if (timeUntilExpiry <= 0) {
+    return { label: 'Expired', detail: dateLabel, tone: 'text-red-700' };
+  }
 
-function getKeyExpiryTone(expiresAt: string | null) {
-  if (!expiresAt) return 'text-brand-muted';
+  const daysUntilExpiry = Math.ceil(timeUntilExpiry / ONE_DAY_MS);
+  if (timeUntilExpiry <= API_KEY_EXPIRY_SOON_MS) {
+    return {
+      label: daysUntilExpiry <= 1 ? 'Expires today' : `${daysUntilExpiry}d left`,
+      detail: dateLabel,
+      tone: 'text-amber-700',
+    };
+  }
 
-  const expiryTime = new Date(expiresAt).getTime();
-  if (Number.isNaN(expiryTime)) return 'text-red-700';
-
-  const timeUntilExpiry = expiryTime - Date.now();
-  if (timeUntilExpiry <= 0) return 'text-red-700';
-  if (timeUntilExpiry <= API_KEY_EXPIRY_SOON_MS) return 'text-amber-700';
-
-  return 'text-brand-muted';
+  return { label: dateLabel, detail: `${daysUntilExpiry}d left`, tone: 'text-brand-muted' };
 }
 
 export default function ApiKeysPage() {
@@ -329,7 +336,7 @@ export default function ApiKeysPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_100px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
               <span>Key</span>
               <span>Status</span>
               <span>Name</span>
@@ -338,41 +345,46 @@ export default function ApiKeysPage() {
               <span>Created</span>
               <span className="sr-only">Actions</span>
             </div>
-            {sortedKeys.map((key) => (
-              <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_100px_110px_36px] md:items-center md:gap-4">
-                <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
-                <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {sortedKeys.map((key) => {
+              const expiry = getKeyExpirySummary(key.expiresAt);
+
+              return (
+                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_120px_110px_36px] md:items-center md:gap-4">
+                  <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
+                  <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
-                </span>
-                <span className="min-w-0 truncate text-sm text-brand-muted">
-                  <span className="font-semibold text-brand-text md:hidden">Name: </span>
-                  {key.name || '—'}
-                </span>
-                <span className="text-xs text-brand-muted">
-                  <span className="font-semibold text-brand-text md:hidden">Last used: </span>
-                  {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
-                </span>
-                <span className={`text-xs ${getKeyExpiryTone(key.expiresAt)}`}>
-                  <span className="font-semibold text-brand-text md:hidden">Expires: </span>
-                  {getKeyExpiryLabel(key.expiresAt)}
-                </span>
-                <span className="text-xs text-brand-muted">
-                  <span className="font-semibold text-brand-text md:hidden">Created: </span>
-                  {new Date(key.createdAt).toLocaleDateString()}
-                </span>
-                {!key.revoked ? (
-                  <button
-                    onClick={() => handleRevoke(key)}
-                    disabled={actionLoading}
-                    className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 md:justify-self-end"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                ) : (
-                  <span className="hidden h-7 w-7 md:block" />
-                )}
-              </div>
-            ))}
+                  </span>
+                  <span className="min-w-0 truncate text-sm text-brand-muted">
+                    <span className="font-semibold text-brand-text md:hidden">Name: </span>
+                    {key.name || '—'}
+                  </span>
+                  <span className="text-xs text-brand-muted">
+                    <span className="font-semibold text-brand-text md:hidden">Last used: </span>
+                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
+                  </span>
+                  <span className={`text-xs ${expiry.tone}`}>
+                    <span className="font-semibold text-brand-text md:hidden">Expires: </span>
+                    <span className="font-semibold">{expiry.label}</span>
+                    <span className="block text-[11px] opacity-80">{expiry.detail}</span>
+                  </span>
+                  <span className="text-xs text-brand-muted">
+                    <span className="font-semibold text-brand-text md:hidden">Created: </span>
+                    {new Date(key.createdAt).toLocaleDateString()}
+                  </span>
+                  {!key.revoked ? (
+                    <button
+                      onClick={() => handleRevoke(key)}
+                      disabled={actionLoading}
+                      className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 md:justify-self-end"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <span className="hidden h-7 w-7 md:block" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
