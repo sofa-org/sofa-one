@@ -495,6 +495,9 @@ const created = await authFetch('/v1/api-keys', getToken, {
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">INVALID_API_KEY</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, <span className="font-mono text-brand-text">IP_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.
           </p>
+          <p className="mt-3 text-sm leading-6 text-brand-muted">
+            Include the <span className="font-mono text-brand-text">requestId</span> value in support tickets and backend logs so SOFA ONE can trace the exact failed request without exposing API keys or transaction calldata.
+          </p>
         </div>
       </section>
     </DashboardPage>
