@@ -436,6 +436,13 @@ export default function ApiKeysPage() {
             <p className="mt-2 text-sm text-brand-muted">
               Switch filters to review the rest of your API key history.
             </p>
+            <button
+              type="button"
+              onClick={() => setKeyStatusFilter('all')}
+              className="mt-5 inline-flex items-center justify-center rounded-full border border-brand-border bg-white px-5 py-2 text-sm font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg"
+            >
+              Show all keys
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
