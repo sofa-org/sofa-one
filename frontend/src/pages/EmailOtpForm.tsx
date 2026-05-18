@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import { useEmailOtpAuth } from '@openfort/react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+type RedirectState = {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+};
 
 function getAuthErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error && err.message) return err.message;
   return fallback;
 }
 
+function getPostSignInPath(state: unknown) {
+  const from = (state as RedirectState | null)?.from;
+
+  if (!from?.pathname?.startsWith('/dashboard')) {
+    return '/dashboard';
+  }
+
+  return `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`;
+}
+
 export default function EmailOtpForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { requestEmailOtp, signInEmailOtp, isRequesting, isLoading } = useEmailOtpAuth();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -63,7 +82,7 @@ export default function EmailOtpForm() {
         setError(result.error?.message ?? 'Invalid OTP.');
         return;
       }
-      navigate('/dashboard', { replace: true });
+      navigate(getPostSignInPath(location.state), { replace: true });
     } catch (err: unknown) {
       setError(getAuthErrorMessage(err, 'Could not verify OTP. Check your connection and try again.'));
     }

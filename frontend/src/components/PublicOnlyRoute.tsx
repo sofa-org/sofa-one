@@ -1,9 +1,28 @@
 import type { ReactNode } from 'react';
 import { useOpenfort } from '@openfort/react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+
+type RedirectState = {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+};
+
+function getDashboardRedirectPath(state: unknown) {
+  const from = (state as RedirectState | null)?.from;
+
+  if (!from?.pathname?.startsWith('/dashboard')) {
+    return '/dashboard';
+  }
+
+  return `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`;
+}
 
 export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { isLoading, user } = useOpenfort();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -14,7 +33,7 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDashboardRedirectPath(location.state)} replace />;
   }
 
   return <>{children}</>;

@@ -1,8 +1,9 @@
 import { useOpenfort } from '@openfort/react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoading, user } = useOpenfort();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -26,7 +27,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!user) {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate to="/sign-in" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;
