@@ -238,6 +238,31 @@ function persistChainId(storageKey: string, chainId: number) {
   }
 }
 
+function formatAuthorizationExpiry(expiresAt: string | null | undefined) {
+  if (!expiresAt) return null;
+
+  const expiry = new Date(expiresAt);
+  const expiryTime = expiry.getTime();
+  if (Number.isNaN(expiryTime)) return null;
+
+  const timeRemainingMs = expiryTime - Date.now();
+  const absoluteLabel = expiry.toLocaleString();
+  if (timeRemainingMs <= 0) {
+    return { absoluteLabel, relativeLabel: 'Expired', tone: 'red' as const };
+  }
+
+  const hoursRemaining = Math.ceil(timeRemainingMs / (60 * 60 * 1000));
+  const relativeLabel = hoursRemaining < 48
+    ? `${hoursRemaining}h remaining`
+    : `${Math.ceil(hoursRemaining / 24)}d remaining`;
+
+  return {
+    absoluteLabel,
+    relativeLabel,
+    tone: hoursRemaining <= 72 ? 'amber' as const : 'green' as const,
+  };
+}
+
 export default function WalletPage() {
   const openfort = useOpenfort();
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
@@ -253,6 +278,7 @@ export default function WalletPage() {
   const [selectedChainId, setSelectedChainId] = useState(() => getStoredChainId(BALANCE_CHAIN_STORAGE_KEY));
   const [agentChainId, setAgentChainId] = useState(() => getStoredChainId(AGENT_CHAIN_STORAGE_KEY));
   const selectedAuthorization = wallet?.chainAuthorizations.find((authorization) => authorization.chainId === agentChainId);
+  const selectedAuthorizationExpiry = formatAuthorizationExpiry(selectedAuthorization?.expiresAt);
   const pendingAuthorization = wallet?.chainAuthorizations.find(
     (authorization) => authorization.status === 'pending_registration' && authorization.registrationTxHash,
   );
@@ -789,6 +815,11 @@ export default function WalletPage() {
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
+  const selectedAuthorizationExpiryClasses = selectedAuthorizationExpiry?.tone === 'red'
+    ? 'border-red-200 bg-red-50 text-red-800'
+    : selectedAuthorizationExpiry?.tone === 'amber'
+      ? 'border-amber-200 bg-amber-50 text-amber-800'
+      : 'border-green-200 bg-green-50 text-green-800';
   const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
@@ -1156,6 +1187,17 @@ export default function WalletPage() {
                         Retry check
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {isSelectedChainRegistered && selectedAuthorizationExpiry && (
+                  <div className={`mb-4 rounded-xl border p-4 text-sm shadow-sm ${selectedAuthorizationExpiryClasses}`}>
+                    <p className="font-semibold">
+                      Current network authorization expires {selectedAuthorizationExpiry.relativeLabel.toLowerCase()}.
+                    </p>
+                    <p className="mt-1 text-xs opacity-80">
+                      Exact expiry: {selectedAuthorizationExpiry.absoluteLabel}. Re-authorize before then if this backend integration must keep running.
+                    </p>
                   </div>
                 )}
 
