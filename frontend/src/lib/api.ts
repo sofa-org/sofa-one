@@ -15,6 +15,10 @@ export function getApiBaseUrlForDisplay(origin = window.location.origin) {
   return `${origin}${path}`;
 }
 
+export function getApiBaseUrlModeLabel() {
+  return _viteApiUrl ? 'Configured API URL' : 'Vite proxy';
+}
+
 export interface ApiErrorBody {
   statusCode?: number;
   code?: string;

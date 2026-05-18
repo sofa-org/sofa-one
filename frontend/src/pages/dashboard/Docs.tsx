@@ -1,5 +1,5 @@
 import { CopyButton } from "@/components/CopyButton";
-import { getApiBaseUrlForDisplay } from "@/lib/api";
+import { getApiBaseUrlForDisplay, getApiBaseUrlModeLabel } from "@/lib/api";
 import { SUPPORTED_CHAINS } from "@/lib/chains";
 import { DashboardPage } from "./components/DashboardPage";
 
@@ -148,6 +148,7 @@ function EndpointCard({
 
 export default function APIDocsPage() {
   const apiBaseUrl = getApiBaseUrlForDisplay();
+  const apiBaseUrlMode = getApiBaseUrlModeLabel();
   const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
   -H "X-API-Key: sk_your_key_here"`;
@@ -212,11 +213,21 @@ const created = await authFetch('/v1/api-keys', getToken, {
     >
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
+            <span className="rounded-full bg-brand-bg px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-brand-muted">
+              {apiBaseUrlMode}
+            </span>
+          </div>
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-sm text-brand-text">{apiBaseUrl}</p>
             <CopyButton text={apiBaseUrl} className="w-fit shrink-0" />
           </div>
+          <p className="mt-3 text-xs leading-5 text-brand-muted">
+            {apiBaseUrlMode === 'Vite proxy'
+              ? 'Local examples route through the Vite /api proxy.'
+              : 'Examples use the deployed API URL from VITE_API_URL.'}
+          </p>
         </div>
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
