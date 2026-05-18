@@ -5,6 +5,14 @@ if (!_viteApiUrl && import.meta.env.PROD) {
 const API_BASE = _viteApiUrl ?? '/api';
 export const DEFAULT_CHAIN_ID = 84532;
 
+export function getApiBaseUrlForDisplay(origin = window.location.origin) {
+  const normalizedBase = API_BASE.replace(/\/$/, '');
+  if (/^https?:\/\//i.test(normalizedBase)) return normalizedBase;
+
+  const path = normalizedBase.startsWith('/') ? normalizedBase : `/${normalizedBase}`;
+  return `${origin}${path}`;
+}
+
 export interface ApiErrorBody {
   statusCode?: number;
   code?: string;

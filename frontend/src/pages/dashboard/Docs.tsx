@@ -1,4 +1,5 @@
 import { CopyButton } from "@/components/CopyButton";
+import { getApiBaseUrlForDisplay } from "@/lib/api";
 import { DashboardPage } from "./components/DashboardPage";
 
 const codeClass =
@@ -92,7 +93,7 @@ function EndpointCard({
 }
 
 export default function APIDocsPage() {
-  const apiBaseUrl = `${window.location.origin}/api`;
+  const apiBaseUrl = getApiBaseUrlForDisplay();
   const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
   -H "X-API-Key: sk_your_key_here"`;

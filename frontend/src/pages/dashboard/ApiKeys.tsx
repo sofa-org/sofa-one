@@ -10,6 +10,7 @@ import {
   revokeApiKeyAuth,
   refreshApiKey as refreshApiKeyApi,
   getApiErrorMessage,
+  getApiBaseUrlForDisplay,
   type ApiKeyRecord,
 } from '@/lib/api';
 
@@ -32,7 +33,7 @@ export default function ApiKeysPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [keysRefreshing, setKeysRefreshing] = useState(false);
-  const apiBaseUrl = `${window.location.origin}/api`;
+  const apiBaseUrl = getApiBaseUrlForDisplay();
   const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions/send \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
