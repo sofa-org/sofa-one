@@ -18,6 +18,7 @@ export interface ApiErrorBody {
   code?: string;
   message?: string;
   details?: string[];
+  requestId?: string;
   path?: string;
 }
 
@@ -152,6 +153,7 @@ export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly details: string[];
+  readonly requestId?: string;
   readonly path?: string;
 
   constructor(response: Response, body: ApiErrorBody) {
@@ -160,6 +162,7 @@ export class ApiError extends Error {
     this.statusCode = body.statusCode ?? response.status;
     this.code = body.code ?? `HTTP_${response.status}`;
     this.details = body.details ?? [];
+    this.requestId = body.requestId;
     this.path = body.path;
   }
 }
@@ -173,7 +176,9 @@ export function hasApiErrorCode(error: unknown, ...codes: string[]) {
 }
 
 export function getApiErrorMessage(error: unknown) {
-  if (isApiError(error)) return error.message;
+  if (isApiError(error)) {
+    return error.requestId ? `${error.message} Request ID: ${error.requestId}` : error.message;
+  }
   if (error instanceof Error) return error.message;
   return String(error);
 }
