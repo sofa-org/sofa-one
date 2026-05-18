@@ -1,11 +1,26 @@
+import { GUARDS_METADATA } from '@nestjs/common/constants';
+
 jest.mock('./wallet.service', () => ({
   WalletService: class WalletService {},
 }));
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
+jest.mock('../../common/guards/either-auth.guard', () => ({
+  EitherAuthGuard: class EitherAuthGuard {},
+}));
+jest.mock('../../common/guards/api-key-only.guard', () => ({
+  ApiKeyOnlyGuard: class ApiKeyOnlyGuard {},
+}));
+jest.mock('../../common/guards/frontend-only.guard', () => ({
+  FrontendOnlyGuard: class FrontendOnlyGuard {},
+}));
 
 import { WalletController } from './wallet.controller';
+import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
+import { ApiKeyOnlyGuard } from '../../common/guards/api-key-only.guard';
+import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
+import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 
 describe('WalletController', () => {
   const walletService = {
@@ -31,6 +46,13 @@ describe('WalletController', () => {
       expect(walletService.getBalances).toHaveBeenCalledWith('user-1', 84532);
       expect(result).toEqual({ eth: '1.0', usdc: '100.0' });
     });
+
+    it('is frontend-only', () => {
+      const guards = Reflect.getMetadata(GUARDS_METADATA, controller.getBalances) ?? [];
+
+      expect(guards).toContain(FrontendOnlyGuard);
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.getBalances)).toBe(true);
+    });
   });
 
   describe('getDepositInfo', () => {
@@ -41,6 +63,13 @@ describe('WalletController', () => {
 
       expect(walletService.getDepositInfo).toHaveBeenCalledWith('user-1', 84532);
       expect(result).toEqual({ address: '0xabc', chainId: 84532 });
+    });
+
+    it('is frontend-only', () => {
+      const guards = Reflect.getMetadata(GUARDS_METADATA, controller.getDepositInfo) ?? [];
+
+      expect(guards).toContain(FrontendOnlyGuard);
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.getDepositInfo)).toBe(true);
     });
   });
 
@@ -56,6 +85,15 @@ describe('WalletController', () => {
       expect(walletService.sign).toHaveBeenCalledWith('user-1', dto, apiKeyRecord);
       expect(result).toEqual({ signature: '0xsig' });
     });
+
+    it('is public API-only', () => {
+      const guards = Reflect.getMetadata(GUARDS_METADATA, controller.sign) ?? [];
+
+      expect(guards).toContain(EitherAuthGuard);
+      expect(guards).toContain(ApiKeyOnlyGuard);
+      expect(guards).not.toContain(FrontendOnlyGuard);
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.sign)).toBeUndefined();
+    });
   });
 
   describe('withdraw', () => {
@@ -67,6 +105,13 @@ describe('WalletController', () => {
 
       expect(walletService.withdraw).toHaveBeenCalledWith('user-1', dto);
       expect(result).toEqual({ transactionHash: '0xhash' });
+    });
+
+    it('is frontend-only', () => {
+      const guards = Reflect.getMetadata(GUARDS_METADATA, controller.withdraw) ?? [];
+
+      expect(guards).toContain(FrontendOnlyGuard);
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.withdraw)).toBe(true);
     });
   });
 });
