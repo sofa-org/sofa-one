@@ -1,5 +1,6 @@
 import { CopyButton } from "@/components/CopyButton";
 import { getApiBaseUrlForDisplay } from "@/lib/api";
+import { SUPPORTED_CHAINS } from "@/lib/chains";
 import { DashboardPage } from "./components/DashboardPage";
 
 const codeClass =
@@ -30,6 +31,10 @@ const routeSections = [
     description: "JWT-only browser routes",
   },
 ];
+
+function getNetworkEnvironment(chainName: string) {
+  return /sepolia|amoy/i.test(chainName) ? "Testnet" : "Mainnet";
+}
 
 const fieldRows = {
   sign: [
@@ -253,6 +258,41 @@ const created = await authFetch('/v1/api-keys', getToken, {
                 {section.description}
               </span>
             </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
+              Supported networks
+            </p>
+            <h2 className="mt-1 font-serif text-xl font-bold text-brand-text">
+              Pick a chain ID your wallet has authorized
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-brand-muted">
+            Use these chain IDs in public requests and dashboard examples. Testnets include faucet help in the
+            wallet setup flow; mainnets require funding the EOA with real native gas.
+          </p>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {SUPPORTED_CHAINS.map((chain) => (
+            <div
+              key={chain.id}
+              className="rounded-xl border border-brand-border bg-brand-bg/50 p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-brand-text">{chain.name}</p>
+                  <p className="mt-1 font-mono text-xs text-brand-muted">chainId: {chain.id}</p>
+                </div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-brand-muted">
+                  {getNetworkEnvironment(chain.name)}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       </section>
