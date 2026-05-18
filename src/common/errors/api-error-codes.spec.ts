@@ -1,0 +1,57 @@
+import { HttpStatus } from '@nestjs/common';
+
+import { API_ERROR_CODES, resolveApiErrorCode } from './api-error-codes';
+
+describe('resolveApiErrorCode', () => {
+  it('maps validation message arrays to validation errors', () => {
+    expect(
+      resolveApiErrorCode(HttpStatus.BAD_REQUEST, [
+        'chainId must be an integer',
+        'message must be a string',
+      ]),
+    ).toBe(API_ERROR_CODES.VALIDATION_ERROR);
+  });
+
+  it.each([
+    ['Invalid API key', API_ERROR_CODES.INVALID_API_KEY],
+    ['API key is required', API_ERROR_CODES.API_KEY_REQUIRED],
+    ['Missing authentication credentials', API_ERROR_CODES.AUTHENTICATION_REQUIRED],
+    ['IP address not allowed', API_ERROR_CODES.IP_NOT_ALLOWED],
+    ['Wallet not found', API_ERROR_CODES.WALLET_NOT_FOUND],
+    ['Transaction not found', API_ERROR_CODES.TRANSACTION_NOT_FOUND],
+    ['Chain 1 is not supported', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['Idempotency key conflicts with prior request', API_ERROR_CODES.IDEMPOTENCY_CONFLICT],
+    ['Hash signing is not allowed', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
+    ['Type must be message', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
+    ['Wallet is not active', API_ERROR_CODES.WALLET_NOT_ACTIVE],
+    [
+      'Agent registration is still pending',
+      API_ERROR_CODES.AGENT_REGISTRATION_PENDING,
+    ],
+    [
+      'No matching project-scoped policy found',
+      API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED,
+    ],
+    ['Paymaster policy is not configured', API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED],
+    [
+      'UserOperation gas price is unavailable',
+      API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE,
+    ],
+    ['UserOperation fee estimate failed', API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE],
+    ['UserOperation rejected by bundler', API_ERROR_CODES.USER_OPERATION_REJECTED],
+    ['Backend EOA transaction failed', API_ERROR_CODES.BACKEND_TRANSACTION_FAILED],
+    ['Wallet service unavailable', API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE],
+  ])('maps "%s" to %s', (message, expectedCode) => {
+    expect(resolveApiErrorCode(HttpStatus.BAD_REQUEST, message)).toBe(expectedCode);
+  });
+
+  it.each([
+    [HttpStatus.UNAUTHORIZED, API_ERROR_CODES.UNAUTHORIZED],
+    [HttpStatus.NOT_FOUND, API_ERROR_CODES.NOT_FOUND],
+    [HttpStatus.INTERNAL_SERVER_ERROR, API_ERROR_CODES.INTERNAL_ERROR],
+    [HttpStatus.BAD_GATEWAY, API_ERROR_CODES.INTERNAL_ERROR],
+    [HttpStatus.BAD_REQUEST, API_ERROR_CODES.BAD_REQUEST],
+  ])('falls back from status %s to %s', (statusCode, expectedCode) => {
+    expect(resolveApiErrorCode(statusCode, 'Unmapped error')).toBe(expectedCode);
+  });
+});
