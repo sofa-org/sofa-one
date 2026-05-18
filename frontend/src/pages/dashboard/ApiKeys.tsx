@@ -410,7 +410,13 @@ export default function ApiKeysPage() {
 
               return (
                 <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
-                  <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
+                  <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text">
+                    <span className="min-w-0 truncate">{key.displayPrefix}</span>
+                    <CopyButton
+                      text={key.displayPrefix}
+                      className="h-7 w-7 shrink-0 border-brand-border/80 bg-white text-brand-muted hover:text-brand-accent"
+                    />
+                  </span>
                   <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
                   </span>
