@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut } from '@openfort/react';
 import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, Loader2, Menu, X } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
@@ -17,6 +18,7 @@ export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const accountEmail = user?.email ?? null;
 
   const handleSignOut = async () => {
     if (signOutLoading) return;
@@ -119,14 +121,15 @@ export default function DashboardLayout() {
               <SignOutError />
               <div className="mb-3 flex min-w-0 items-center gap-2 rounded-lg bg-brand-bg px-3 py-2">
                 <UserBadge />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">
                     Signed in as
                   </p>
                   <p className="truncate text-sm font-medium text-brand-text">
-                    {user?.email ?? 'Openfort user'}
+                    {accountEmail ?? 'Openfort user'}
                   </p>
                 </div>
+                {accountEmail && <CopyButton text={accountEmail} className="h-7 w-7 shrink-0" />}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-brand-muted">
@@ -161,7 +164,10 @@ export default function DashboardLayout() {
           <div className="flex items-center justify-between">
             <div className="flex min-w-0 items-center gap-2">
               <UserBadge />
-              <span className="truncate text-xs font-medium text-brand-muted">{user?.email ?? 'Openfort user'}</span>
+              <span className="truncate text-xs font-medium text-brand-muted">
+                {accountEmail ?? 'Openfort user'}
+              </span>
+              {accountEmail && <CopyButton text={accountEmail} className="h-7 w-7 shrink-0" />}
             </div>
             <button
               onClick={handleSignOut}
