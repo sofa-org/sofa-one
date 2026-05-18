@@ -40,6 +40,9 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Confirming whether to open the dashboard or continue email OTP sign-in.
           </p>
+          <p className="mt-3 text-xs leading-5 text-brand-muted/80">
+            If this check takes more than a few seconds, reload the page to refresh your Openfort session.
+          </p>
         </div>
       </div>
     );
