@@ -25,6 +25,17 @@ export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
                 <li key={name}>{name}</li>
               ))}
             </ul>
+            <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs text-red-800">
+              <p className="font-semibold text-red-900">Local setup</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-4">
+                <li>
+                  Copy <span className="font-mono">frontend/.env.example</span> to{' '}
+                  <span className="font-mono">frontend/.env</span>.
+                </li>
+                <li>Fill the missing Openfort values below from the Openfort dashboard.</li>
+                <li>Restart the Vite dev server so the new VITE_* values are loaded.</li>
+              </ol>
+            </div>
             <div className="rounded-lg border border-red-200 bg-white/80 p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-red-700">
