@@ -18,6 +18,7 @@ const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const KEY_STATUS_FILTER_STORAGE_KEY = 'sofa-one.apiKeys.statusFilter';
 
 type KeyStatusFilter = 'all' | 'active' | 'revoked';
 
@@ -26,6 +27,27 @@ const KEY_STATUS_FILTERS: Array<{ value: KeyStatusFilter; label: string }> = [
   { value: 'active', label: 'Active' },
   { value: 'revoked', label: 'Revoked' },
 ];
+
+function isKeyStatusFilter(value: string | null): value is KeyStatusFilter {
+  return value === 'all' || value === 'active' || value === 'revoked';
+}
+
+function getStoredKeyStatusFilter(): KeyStatusFilter {
+  try {
+    const storedValue = window.localStorage.getItem(KEY_STATUS_FILTER_STORAGE_KEY);
+    return isKeyStatusFilter(storedValue) ? storedValue : 'active';
+  } catch {
+    return 'active';
+  }
+}
+
+function persistKeyStatusFilter(value: KeyStatusFilter) {
+  try {
+    window.localStorage.setItem(KEY_STATUS_FILTER_STORAGE_KEY, value);
+  } catch {
+    // Ignore storage failures so private browsing or blocked storage never breaks key management.
+  }
+}
 
 function getRelativeDateSummary(value: string | null, emptyLabel: string) {
   if (!value) {
@@ -114,7 +136,7 @@ export default function ApiKeysPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [keysRefreshing, setKeysRefreshing] = useState(false);
-  const [keyStatusFilter, setKeyStatusFilter] = useState<KeyStatusFilter>('active');
+  const [keyStatusFilter, setKeyStatusFilter] = useState<KeyStatusFilter>(getStoredKeyStatusFilter);
   const apiBaseUrl = getApiBaseUrlForDisplay();
   const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions/send \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -183,6 +205,10 @@ export default function ApiKeysPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [newRawKey]);
+
+  useEffect(() => {
+    persistKeyStatusFilter(keyStatusFilter);
+  }, [keyStatusFilter]);
 
   async function handleCreate() {
     if (hasReachedKeyLimit) {
