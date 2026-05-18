@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoading, user } = useOpenfort();
   const location = useLocation();
+  const reloadPage = () => window.location.reload();
 
   if (isLoading) {
     return (
@@ -21,6 +22,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Verifying access before opening your wallet dashboard.
           </p>
+          <button
+            type="button"
+            onClick={reloadPage}
+            className="mt-5 rounded-full border border-brand-border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-muted transition-colors hover:border-brand-accent hover:text-brand-accent"
+          >
+            Reload page
+          </button>
         </div>
       </div>
     );
