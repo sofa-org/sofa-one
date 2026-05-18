@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEmailOtpAuth } from '@openfort/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -29,10 +29,16 @@ export default function EmailOtpForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { requestEmailOtp, signInEmailOtp, isRequesting, isLoading } = useEmailOtpAuth();
+  const otpInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sent) return;
+    otpInputRef.current?.focus();
+  }, [sent]);
 
   async function requestOtpForEmail() {
     const normalizedEmail = email.trim();
@@ -122,6 +128,7 @@ export default function EmailOtpForm() {
           <div>
             <label className="mb-1 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">One-time code</label>
             <input
+              ref={otpInputRef}
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
