@@ -1,3 +1,4 @@
+import { CopyButton } from "@/components/CopyButton";
 import { DashboardPage } from "./components/DashboardPage";
 
 const codeClass =
@@ -92,6 +93,8 @@ function EndpointCard({
 
 export default function APIDocsPage() {
   const apiBaseUrl = `${window.location.origin}/api`;
+  const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
+  -H "X-API-Key: sk_your_key_here"`;
 
   return (
     <DashboardPage
@@ -122,6 +125,26 @@ export default function APIDocsPage() {
       </section>
 
       <CodeBlock>{`X-API-Key: sk_<64-hex-chars>`}</CodeBlock>
+
+      <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Quick action</p>
+            <h2 className="mt-2 font-serif text-xl font-bold text-brand-text">
+              Check a transaction from your backend
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">
+              After calling <span className="font-mono text-brand-text">/v1/transactions/send</span>, store the
+              returned transaction ID and poll the safe status endpoint. The response omits calldata and request
+              hashes, so it is safe for backend logs and customer support tooling.
+            </p>
+          </div>
+          <CopyButton text={statusQuickStart} className="shrink-0" />
+        </div>
+        <div className="mt-5">
+          <CodeBlock>{statusQuickStart}</CodeBlock>
+        </div>
+      </section>
 
       <div className="space-y-8">
         <EndpointCard path="/v1/wallets/sign">
