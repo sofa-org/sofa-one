@@ -10,6 +10,8 @@ type RedirectState = {
   };
 };
 
+const OTP_RESEND_COOLDOWN_SECONDS = 30;
+
 function getAuthErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error && err.message) return err.message;
   return fallback;
@@ -34,13 +36,26 @@ export default function EmailOtpForm() {
   const [otp, setOtp] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
 
   useEffect(() => {
     if (!sent) return;
     otpInputRef.current?.focus();
   }, [sent]);
 
+  useEffect(() => {
+    if (resendCooldownSeconds <= 0) return;
+
+    const timeout = window.setTimeout(() => {
+      setResendCooldownSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timeout);
+  }, [resendCooldownSeconds]);
+
   async function requestOtpForEmail() {
+    if (sent && resendCooldownSeconds > 0) return;
+
     const normalizedEmail = email.trim();
 
     setError(null);
@@ -60,6 +75,7 @@ export default function EmailOtpForm() {
 
       setSent(true);
       setOtp('');
+      setResendCooldownSeconds(OTP_RESEND_COOLDOWN_SECONDS);
     } catch (err: unknown) {
       setError(getAuthErrorMessage(err, 'Could not send OTP. Check your connection and try again.'));
     }
@@ -156,10 +172,14 @@ export default function EmailOtpForm() {
           <button
             type="button"
             onClick={requestOtpForEmail}
-            disabled={isRequesting || isLoading}
+            disabled={isRequesting || isLoading || resendCooldownSeconds > 0}
             className="text-brand-accent hover:text-brand-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isRequesting ? 'Resending…' : 'Resend code'}
+            {isRequesting
+              ? 'Resending…'
+              : resendCooldownSeconds > 0
+                ? `Resend in ${resendCooldownSeconds}s`
+                : 'Resend code'}
           </button>
           <button
             type="button"
@@ -167,6 +187,7 @@ export default function EmailOtpForm() {
               setSent(false);
               setOtp('');
               setError(null);
+              setResendCooldownSeconds(0);
             }}
             className="text-brand-muted hover:text-brand-text"
           >
