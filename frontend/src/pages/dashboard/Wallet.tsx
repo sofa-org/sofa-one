@@ -182,6 +182,12 @@ const AGENT_REGISTRATION_AUTO_CHECK_MS = 120_000;
 const AGENT_REGISTRATION_MANUAL_CHECK_MS = 60_000;
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 
+type WithdrawSuccess = {
+  message: string;
+  transactionHash: string | null;
+  chainId: number;
+};
+
 function formatDateTimeLocal(date: Date) {
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
@@ -249,8 +255,11 @@ export default function WalletPage() {
   const [amount, setAmount] = useState('');
   const [token, setToken] = useState('USDC');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
-  const [withdrawResult, setWithdrawResult] = useState<string | null>(null);
+  const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const withdrawExplorerUrl = withdrawResult
+    ? getExplorerTransactionUrl(withdrawResult.chainId, withdrawResult.transactionHash)
+    : null;
 
   const [recoveryPassword, setRecoveryPassword] = useState('');
   const [agentExpiryLocal, setAgentExpiryLocal] = useState(getDefaultAgentExpiryLocal);
@@ -462,8 +471,13 @@ export default function WalletPage() {
     setWithdrawError(null);
     try {
       const baseUnits = parseUsdcAmount(amount);
-      const result = await withdrawAuth(getToken, to, baseUnits, token, selectedChainId);
-      setWithdrawResult(`Transaction submitted: ${result.transactionHash || result.transactionId}`);
+      const chainId = selectedChainId;
+      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId);
+      setWithdrawResult({
+        message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
+        transactionHash: result.transactionHash,
+        chainId,
+      });
       setTo('');
       setAmount('');
     } catch (err: unknown) {
@@ -1260,9 +1274,30 @@ export default function WalletPage() {
                 )}
 
                 {withdrawResult && (
-                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
-                    <span>{withdrawResult}</span>
+                  <div className="mb-6 space-y-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                      <span>{withdrawResult.message}</span>
+                    </div>
+                    {withdrawResult.transactionHash && (
+                      <div className="flex flex-col gap-3 rounded-lg border border-green-200/80 bg-white/70 p-3 text-xs text-green-900 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="break-all font-mono">{withdrawResult.transactionHash}</span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <CopyButton text={withdrawResult.transactionHash} />
+                          {withdrawExplorerUrl && (
+                            <a
+                              href={withdrawExplorerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 rounded-full border border-green-200 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-green-800 transition hover:border-green-400 hover:text-green-950"
+                            >
+                              Explorer
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
