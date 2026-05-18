@@ -997,6 +997,16 @@ export default function WalletPage() {
                       ? 'Authorization is checking on-chain. We will update this page automatically; do not submit another authorization.'
                       : 'This one-time on-chain approval lets your backend submit transactions through API keys.'}
                   </p>
+                  {!isSelectedChainRegistered && !isAgentRegistrationChecking && (
+                    <div className="mt-3 rounded-xl border border-blue-200 bg-white/70 p-4 text-sm text-blue-900 shadow-inner">
+                      <strong className="block text-blue-950">Before you authorize</strong>
+                      <ul className="mt-2 space-y-1.5 text-blue-800">
+                        <li>• Keep your Step 1 recovery password ready to unlock the EOA in this browser.</li>
+                        <li>• Deposit a small amount of {agentNativeSymbol} on the selected network for gas.</li>
+                        <li>• Choose a future authorization expiry that matches this backend integration.</li>
+                      </ul>
+                    </div>
+                  )}
                   {!isSelectedChainRegistered && <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
                     <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
                     <p className="mb-3 text-blue-800">
