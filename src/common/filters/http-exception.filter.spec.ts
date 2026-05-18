@@ -1,4 +1,9 @@
-import { InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { HttpExceptionFilter } from './http-exception.filter';
 
 function createHost(exceptionRequest: Record<string, unknown> = {}) {
@@ -48,6 +53,31 @@ describe('HttpExceptionFilter', () => {
         message: 'Missing',
         requestId: 'req-123',
         path: '/v1/example',
+      }),
+    );
+  });
+
+  it('formats validation errors with a stable message, code, and details', () => {
+    const { host, response } = createHost({ url: '/v1/wallets/sign' });
+    const filter = new HttpExceptionFilter();
+
+    filter.catch(
+      new BadRequestException({
+        message: ['chainId must be an integer', 'message must be a string'],
+        error: 'Bad Request',
+      }),
+      host,
+    );
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: ['chainId must be an integer', 'message must be a string'],
+        requestId: 'req-123',
+        path: '/v1/wallets/sign',
       }),
     );
   });
