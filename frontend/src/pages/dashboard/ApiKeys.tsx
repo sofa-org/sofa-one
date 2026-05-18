@@ -16,6 +16,29 @@ import {
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
+const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
+
+function getKeyExpiryLabel(expiresAt: string | null) {
+  if (!expiresAt) return 'No expiry';
+
+  const expiry = new Date(expiresAt);
+  if (Number.isNaN(expiry.getTime())) return 'Invalid expiry';
+
+  return expiry.toLocaleDateString();
+}
+
+function getKeyExpiryTone(expiresAt: string | null) {
+  if (!expiresAt) return 'text-brand-muted';
+
+  const expiryTime = new Date(expiresAt).getTime();
+  if (Number.isNaN(expiryTime)) return 'text-red-700';
+
+  const timeUntilExpiry = expiryTime - Date.now();
+  if (timeUntilExpiry <= 0) return 'text-red-700';
+  if (timeUntilExpiry <= API_KEY_EXPIRY_SOON_MS) return 'text-amber-700';
+
+  return 'text-brand-muted';
+}
 
 export default function ApiKeysPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
@@ -306,16 +329,17 @@ export default function ApiKeysPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_100px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
               <span>Key</span>
               <span>Status</span>
               <span>Name</span>
               <span>Last Used</span>
+              <span>Expires</span>
               <span>Created</span>
               <span className="sr-only">Actions</span>
             </div>
             {sortedKeys.map((key) => (
-              <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_110px_36px] md:items-center md:gap-4">
+              <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_100px_110px_36px] md:items-center md:gap-4">
                 <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
                 <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
@@ -327,6 +351,10 @@ export default function ApiKeysPage() {
                 <span className="text-xs text-brand-muted">
                   <span className="font-semibold text-brand-text md:hidden">Last used: </span>
                   {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
+                </span>
+                <span className={`text-xs ${getKeyExpiryTone(key.expiresAt)}`}>
+                  <span className="font-semibold text-brand-text md:hidden">Expires: </span>
+                  {getKeyExpiryLabel(key.expiresAt)}
                 </span>
                 <span className="text-xs text-brand-muted">
                   <span className="font-semibold text-brand-text md:hidden">Created: </span>
