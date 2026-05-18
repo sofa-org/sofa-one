@@ -18,6 +18,16 @@ describe('environment validation', () => {
     );
   });
 
+  it('rejects blank CORS_ORIGIN in production', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        NODE_ENV: 'production',
+        CORS_ORIGIN: '   ',
+      }),
+    ).toThrow('CORS_ORIGIN must be set in production');
+  });
+
   it('accepts production when CORS_ORIGIN is configured', () => {
     expect(
       validate({
@@ -34,6 +44,9 @@ describe('environment validation', () => {
 
   it('rejects invalid Openfort timeout values', () => {
     expect(() => validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '0' })).toThrow();
+    expect(() =>
+      validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '120001' }),
+    ).toThrow();
   });
 
   it('rejects unsupported default chains', () => {
