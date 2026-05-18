@@ -34,7 +34,7 @@ import {
   hashKey,
   type CaliburKey,
 } from '@/lib/calibur';
-import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 
@@ -190,6 +190,7 @@ export default function WalletPage() {
   const [balances, setBalances] = useState<BalanceChain[] | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
+  const [balanceRefreshNonce, setBalanceRefreshNonce] = useState(0);
 
   const [showWithdraw, setShowWithdraw] = useState(false);
   
@@ -289,6 +290,7 @@ export default function WalletPage() {
   useEffect(() => {
     if (!user || !wallet?.walletAddress) {
       setBalances(null);
+      setBalancesError(null);
       return;
     }
 
@@ -297,7 +299,10 @@ export default function WalletPage() {
     setBalancesError(null);
     getBalancesAuth(getToken, selectedChainId, controller.signal)
       .then((data) => {
-        if (!controller.signal.aborted) setBalances(data.chains);
+        if (!controller.signal.aborted) {
+          setBalances(data.chains);
+          setBalancesError(null);
+        }
       })
       .catch((err: unknown) => {
         if (!controller.signal.aborted) setBalancesError(getApiErrorMessage(err));
@@ -309,7 +314,11 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [user, selectedChainId, wallet, getToken]);
+  }, [user, selectedChainId, wallet, getToken, balanceRefreshNonce]);
+
+  function retryBalances() {
+    setBalanceRefreshNonce((nonce) => nonce + 1);
+  }
 
   useEffect(() => {
     const txHash = pendingAuthorization?.registrationTxHash;
@@ -1027,31 +1036,57 @@ export default function WalletPage() {
             )}
 
             <div className="pt-6 border-t border-brand-border">
-              <div className="mb-5 flex items-center justify-between">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Assets</label>
-                <select
-                  value={selectedChainId}
-                  onChange={(e) => setSelectedChainId(Number(e.target.value))}
-                  className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors cursor-pointer hover:bg-brand-bg/50"
-                >
-                  {SUPPORTED_CHAINS.map((chain) => (
-                    <option key={chain.id} value={chain.id}>
-                      {chain.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  {balancesLoading && balances && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Refreshing
+                    </span>
+                  )}
+                  <button
+                    onClick={retryBalances}
+                    disabled={balancesLoading}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg disabled:opacity-50"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Retry
+                  </button>
+                  <select
+                    value={selectedChainId}
+                    onChange={(e) => setSelectedChainId(Number(e.target.value))}
+                    className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors cursor-pointer hover:bg-brand-bg/50"
+                  >
+                    {SUPPORTED_CHAINS.map((chain) => (
+                      <option key={chain.id} value={chain.id}>
+                        {chain.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                {balancesLoading ? (
+                {balancesError && (
+                  <div className="sm:col-span-2 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <span>{balancesError}</span>
+                    <button
+                      onClick={retryBalances}
+                      disabled={balancesLoading}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      {balancesLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                      Retry balances
+                    </button>
+                  </div>
+                )}
+
+                {balancesLoading && !balances ? (
                   <>
                     <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
                     <div className="h-16 rounded-xl border border-brand-border/40 bg-brand-bg/30 animate-pulse"></div>
                   </>
-                ) : balancesError ? (
-                  <div className="sm:col-span-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-                    {balancesError}
-                  </div>
                 ) : balances && balances.length > 0 ? (
                   balances.map((chain) => (
                     chain.balances.map((b) => (
