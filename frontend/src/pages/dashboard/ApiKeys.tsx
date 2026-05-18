@@ -12,6 +12,8 @@ import {
   type ApiKeyRecord,
 } from '@/lib/api';
 
+const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
+
 export default function ApiKeysPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
   const getToken = useCallback(async () => {
@@ -49,6 +51,16 @@ export default function ApiKeysPage() {
     }
     fetchKeys();
   }, [authLoading, fetchKeys, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!newRawKey) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setNewRawKey(null);
+    }, RAW_KEY_NOTICE_TTL_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [newRawKey]);
 
   async function handleCreate() {
     const trimmedName = newKeyName.trim();
@@ -125,6 +137,8 @@ export default function ApiKeysPage() {
           </p>
           <p className="mt-1 text-xs text-amber-700">
             Use this as the <code>X-API-Key</code> header from your server. Do not expose it in browser code.
+            {' '}
+            This notice auto-hides in 2 minutes.
           </p>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 break-all rounded-xl bg-amber-100/50 border border-amber-200/50 px-4 py-3 font-mono text-sm text-amber-900 shadow-sm">
