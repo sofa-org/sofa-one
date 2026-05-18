@@ -32,6 +32,19 @@ export default function ApiKeysPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [keysRefreshing, setKeysRefreshing] = useState(false);
   const apiBaseUrl = `${window.location.origin}/api`;
+  const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions/send \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "chainId": 84532,
+    "executionMode": "session_key",
+    "idempotencyKey": "order-abc-123",
+    "interactions": [{
+      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
+      "value": "0"
+    }]
+  }'`;
   const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
 
   const fetchKeys = useCallback(async () => {
@@ -286,23 +299,17 @@ export default function ApiKeysPage() {
       </div>
 
       <DashboardCard title="Quick Start">
-        <div className="mt-5">
+        <div className="mt-5 space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-brand-muted">
+              Copy this backend-only request once you have saved a key.
+            </p>
+            <CopyButton text={quickStartCurl} className="w-fit shrink-0" />
+          </div>
           <pre className="rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm">
-{`curl -X POST ${apiBaseUrl}/v1/transactions/send \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "chainId": 84532,
-    "executionMode": "session_key",
-    "idempotencyKey": "order-abc-123",
-    "interactions": [{
-      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
-      "value": "0"
-    }]
-  }'`}
+            {quickStartCurl}
           </pre>
-          <p className="mt-3 text-sm leading-6 text-brand-muted">
+          <p className="text-sm leading-6 text-brand-muted">
             Replace the calldata with your ABI-encoded contract call. Keep API keys on your backend; do not ship them in browser code.
           </p>
         </div>
