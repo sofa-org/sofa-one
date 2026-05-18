@@ -1,6 +1,14 @@
-import { BadGatewayException, ConflictException, HttpStatus, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ConflictException,
+  ForbiddenException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 
 const backendCreate = jest.fn();
+const iamGetSession = jest.fn();
+const accountsList = jest.fn();
 const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
@@ -10,6 +18,7 @@ jest.mock('@openfort/openfort-node', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
     accounts: {
+      list: accountsList,
       evm: {
         backend: {
           create: backendCreate,
@@ -18,6 +27,9 @@ jest.mock('@openfort/openfort-node', () => ({
           sign: jest.fn(),
         },
       },
+    },
+    iam: {
+      getSession: iamGetSession,
     },
   })),
 }));
@@ -95,6 +107,53 @@ describe('OpenfortService', () => {
     );
 
     loggerErrorSpy.mockRestore();
+  });
+
+  it('rejects IAM sessions without an Openfort user id', async () => {
+    iamGetSession.mockResolvedValue({ user: { email: 'user@example.com' } });
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any);
+
+    await expect(service.verifyIamSession('access-token')).rejects.toThrow(ForbiddenException);
+  });
+
+  it('maps IAM session lookup failures to BadGatewayException', async () => {
+    iamGetSession.mockRejectedValue(new Error('Openfort unavailable'));
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any);
+
+    await expect(service.verifyIamSession('access-token')).rejects.toThrow(BadGatewayException);
+  });
+
+  it('rejects embedded wallet addresses not owned by the Openfort user', async () => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    accountsList.mockResolvedValue({
+      data: [
+        {
+          id: 'acc_other',
+          address: '0x2222222222222222222222222222222222222222',
+        },
+      ],
+    });
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any);
+
+    await expect(
+      service.authorizeEmbeddedAddress(
+        'access-token',
+        '0x1111111111111111111111111111111111111111',
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(accountsList).toHaveBeenCalledWith({ user: 'ofu_123' });
   });
 
   it('reports pending agent registration when 7702 delegation is not active yet', async () => {
