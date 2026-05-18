@@ -31,6 +31,7 @@ jest.mock('../../core/openfort/openfort.service', () => ({
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import { getSupportedChain } from '../../common/chains/supported-chains';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -669,6 +670,65 @@ describe('WalletService.getBalances()', () => {
     expect(result).not.toHaveProperty('walletAddress');
     expect(result.chains[0].balances[0]).not.toHaveProperty('raw');
     expect(result.chains[0].balances[1]).not.toHaveProperty('contractAddress');
+  });
+
+  it('returns safe fetch-failed balance entries when RPC calls fail', async () => {
+    mockGetBalance.mockRejectedValue(new Error('native rpc failure with internal URL'));
+    mockReadContract.mockRejectedValue(new Error('usdc rpc failure with raw calldata'));
+
+    const result = await service.getBalances('user-1', 84532);
+
+    expect(result.chains[0].balances).toEqual([
+      { token: expect.any(String), formatted: null, error: 'fetch failed' },
+      { token: 'USDC', formatted: null, error: 'fetch failed' },
+    ]);
+    expect(JSON.stringify(result)).not.toContain('internal URL');
+    expect(JSON.stringify(result)).not.toContain('raw calldata');
+  });
+});
+
+describe('WalletService.getDepositInfo()', () => {
+  let service: WalletService;
+
+  const mockFindUnique = jest.fn();
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockFindUnique.mockResolvedValue({ ...WALLET });
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WalletService,
+        {
+          provide: PrismaService,
+          useValue: {
+            userWallet: { findUnique: mockFindUnique },
+          },
+        },
+        {
+          provide: OpenfortService,
+          useValue: {},
+        },
+      ],
+    }).compile();
+
+    service = module.get<WalletService>(WalletService);
+  });
+
+  it('returns the requested chain and supported deposit tokens', async () => {
+    const supportedChain = getSupportedChain(84532);
+
+    await expect(service.getDepositInfo('user-1', 84532)).resolves.toEqual({
+      walletAddress: WALLET.walletAddress,
+      chainId: 84532,
+      chainName: supportedChain.name,
+      status: 'active',
+      supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
+    });
+  });
+
+  it('rejects unsupported deposit chains', async () => {
+    await expect(service.getDepositInfo('user-1', 999999)).rejects.toThrow(BadRequestException);
   });
 });
 
