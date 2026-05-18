@@ -216,6 +216,17 @@ function isSupportedChainId(chainId: number) {
   return SUPPORTED_CHAINS.some((chain) => chain.id === chainId);
 }
 
+function getChainDisplayName(chainId: number) {
+  return SUPPORTED_CHAINS.find((chain) => chain.id === chainId)?.name ?? `Chain ${chainId}`;
+}
+
+function getAuthorizationBadgeClasses(status: string) {
+  if (status === 'registered') return 'border-green-200 bg-green-50 text-green-800';
+  if (status === 'registration_failed') return 'border-red-200 bg-red-50 text-red-800';
+  if (status === 'pending_registration') return 'border-blue-200 bg-blue-50 text-blue-800';
+  return 'border-amber-200 bg-amber-50 text-amber-800';
+}
+
 function getStoredChainId(storageKey: string) {
   if (typeof window === 'undefined') return DEFAULT_CHAIN_ID;
 
@@ -1016,6 +1027,23 @@ export default function WalletPage() {
                   </code>
                   <CopyButton text={wallet.agentWalletAddress} className="shrink-0" />
                 </div>
+                {wallet.chainAuthorizations.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {wallet.chainAuthorizations.map((authorization) => {
+                      const expiry = formatAuthorizationExpiry(authorization.expiresAt);
+                      return (
+                        <span
+                          key={authorization.chainId}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getAuthorizationBadgeClasses(authorization.status)}`}
+                        >
+                          <span>{getChainDisplayName(authorization.chainId)}</span>
+                          <span className="font-medium opacity-80">{formatAgentStatus(authorization.status)}</span>
+                          {expiry && <span className="font-medium opacity-80">· {expiry.relativeLabel}</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
