@@ -1014,9 +1014,15 @@ export default function WalletPage() {
                             ? 'Checking on-chain authorization...'
                             : 'Authorization submitted; confirmation is not complete yet.'}
                         </p>
-                        <p className="mt-1 break-all text-xs text-blue-700">
-                          Tx: {pendingAuthorization.registrationTxHash}
-                        </p>
+                        <div className="mt-2 flex max-w-xl items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/70 p-1.5">
+                          <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-blue-900">
+                            Tx: {pendingAuthorization.registrationTxHash}
+                          </code>
+                          <CopyButton
+                            text={pendingAuthorization.registrationTxHash ?? ''}
+                            className="shrink-0 border-blue-300 bg-white text-blue-700 hover:bg-blue-100"
+                          />
+                        </div>
                       </div>
                       <button
                         type="button"
