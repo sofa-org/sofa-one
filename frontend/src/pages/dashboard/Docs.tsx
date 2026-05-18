@@ -8,6 +8,29 @@ const codeClass =
 const tagClass =
   "inline-flex rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-800";
 
+const routeSections = [
+  {
+    label: "Sign",
+    href: "#sign",
+    description: "Message and typed-data signatures",
+  },
+  {
+    label: "Send",
+    href: "#send",
+    description: "Backend transaction submission",
+  },
+  {
+    label: "Status",
+    href: "#status",
+    description: "Safe transaction polling",
+  },
+  {
+    label: "Dashboard APIs",
+    href: "#dashboard-only",
+    description: "JWT-only browser routes",
+  },
+];
+
 const fieldRows = {
   sign: [
     ["type", "string", "Yes", "message | typed_data"],
@@ -94,14 +117,19 @@ function FieldTable({ rows }: { rows: string[][] }) {
 function EndpointCard({
   path,
   method = "POST",
+  id,
   children,
 }: {
   path: string;
   method?: "GET" | "POST";
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-brand-border bg-white p-7 shadow-xl ring-1 ring-black/5">
+    <section
+      id={id}
+      className="scroll-mt-24 relative overflow-hidden rounded-2xl border border-brand-border bg-white p-7 shadow-xl ring-1 ring-black/5"
+    >
       <div className="absolute left-0 top-0 h-1.5 w-full bg-brand-text" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className={tagClass}>{method}</span>
@@ -196,9 +224,45 @@ const created = await authFetch('/v1/api-keys', getToken, {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
+              Route map
+            </p>
+            <h2 className="mt-1 font-serif text-xl font-bold text-brand-text">
+              Jump to the integration surface you need
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-brand-muted">
+            Public backend routes use <span className="font-mono text-brand-text">X-API-Key</span>;
+            dashboard-only routes use the signed-in browser session.
+          </p>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {routeSections.map((section) => (
+            <a
+              key={section.href}
+              href={section.href}
+              className="rounded-xl border border-brand-border bg-brand-bg/50 p-4 transition hover:border-brand-text hover:bg-white"
+            >
+              <span className="text-sm font-semibold text-brand-text">
+                {section.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-brand-muted">
+                {section.description}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
       <CodeBlock>{apiKeyHeader}</CodeBlock>
 
-      <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+      <section
+        id="dashboard-only"
+        className="scroll-mt-24 rounded-2xl border border-brand-border bg-white p-6 shadow-sm"
+      >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
@@ -275,7 +339,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
       </section>
 
       <div className="space-y-8">
-        <EndpointCard path="/v1/wallets/sign">
+        <EndpointCard id="sign" path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
             Sign a message or EIP-712 typed data through either the authorized backend agent signer (<code>executionMode: &quot;session_key&quot;</code>, default) or the user&apos;s backend EOA (<code>executionMode: &quot;eoa&quot;</code>). Session-key signatures are Calibur wrapped signatures; EOA signatures are plain EOA signatures. Raw hash signing is disabled for safety and no transaction is broadcast.
           </p>
@@ -302,7 +366,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
           </div>
         </EndpointCard>
 
-        <EndpointCard path="/v1/transactions/send">
+        <EndpointCard id="send" path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
             Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Openfort IAM bearer tokens are not accepted here.
           </p>
@@ -335,7 +399,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
           </div>
         </EndpointCard>
 
-        <EndpointCard path="/v1/transactions/:id" method="GET">
+        <EndpointCard id="status" path="/v1/transactions/:id" method="GET">
           <p className="text-sm leading-6 text-brand-muted">
             Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes.
           </p>
