@@ -47,6 +47,7 @@ const fieldRows = {
   send: [
     ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's EOA."],
     ["executionMode", "string", "No", "session_key (default) executes through Calibur UserOp; eoa executes directly from the backend EOA."],
+    ["sponsorship", "string", "No", "required | none. Only applies to session_key UserOps; defaults to none."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -165,6 +166,7 @@ export default function APIDocsPage() {
   -d '{
     "chainId": 84532,
     "executionMode": "session_key",
+    "sponsorship": "none",
     "interactions": [{
       "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
@@ -408,7 +410,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
 
         <EndpointCard id="send" path="/v1/transactions/send">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
