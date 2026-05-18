@@ -56,6 +56,16 @@ describe('isIpAllowed', () => {
       expect(isIpAllowed('not-an-ip', ['10.0.0.0/8'])).toBe(false);
     });
 
+    it('returns false for IPv6 client IPs against IPv4 allowlists', () => {
+      expect(isIpAllowed('2001:db8::1', ['0.0.0.0/0', '2001:db8::1/128'])).toBe(false);
+    });
+
+    it('fails closed for malformed CIDR allowlist entries', () => {
+      expect(isIpAllowed('10.0.0.1', ['10.0.0.0/24/extra'])).toBe(false);
+      expect(isIpAllowed('10.0.0.1', ['10.0.0.0/24extra'])).toBe(false);
+      expect(isIpAllowed('10.0.0.1', ['999.0.0.0/8'])).toBe(false);
+    });
+
     it('returns false for an empty allowlist', () => {
       expect(isIpAllowed('10.0.0.1', [])).toBe(false);
     });

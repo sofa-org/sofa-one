@@ -6,7 +6,10 @@ export function isIpAllowed(ip: string, allowedEntries: string[]): boolean {
 }
 
 function isIpInCidr(ip: string, cidr: string): boolean {
-  const [network, prefixStr] = cidr.split('/');
+  const parts = cidr.split('/');
+  if (parts.length !== 2) return false;
+  const [network, prefixStr] = parts;
+  if (!/^\d+$/.test(prefixStr)) return false;
   const prefix = parseInt(prefixStr, 10);
   if (isNaN(prefix) || prefix < 0 || prefix > 32) return false;
   const ipNum = ipv4ToNumber(ip);
