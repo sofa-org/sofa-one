@@ -19,6 +19,14 @@ const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+type KeyStatusFilter = 'all' | 'active' | 'revoked';
+
+const KEY_STATUS_FILTERS: Array<{ value: KeyStatusFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'revoked', label: 'Revoked' },
+];
+
 function getRelativeDateSummary(value: string | null, emptyLabel: string) {
   if (!value) {
     return { label: emptyLabel, detail: null, tone: 'text-brand-muted' };
@@ -106,6 +114,7 @@ export default function ApiKeysPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [keysRefreshing, setKeysRefreshing] = useState(false);
+  const [keyStatusFilter, setKeyStatusFilter] = useState<KeyStatusFilter>('active');
   const apiBaseUrl = getApiBaseUrlForDisplay();
   const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions/send \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -132,7 +141,13 @@ export default function ApiKeysPage() {
 
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+  const visibleKeys = sortedKeys.filter((key) => {
+    if (keyStatusFilter === 'active') return !key.revoked;
+    if (keyStatusFilter === 'revoked') return key.revoked;
+    return true;
+  });
   const activeKeyCount = keys.filter((key) => !key.revoked).length;
+  const revokedKeyCount = keys.length - activeKeyCount;
   const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - activeKeyCount, 0);
   const hasReachedKeyLimit = remainingKeySlots === 0;
 
@@ -336,20 +351,43 @@ export default function ApiKeysPage() {
 
       <div className="rounded-2xl border border-brand-border bg-white shadow-xl relative overflow-hidden ring-1 ring-black/5">
         <div className="p-7 border-b border-brand-border">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
               <p className="mt-1 text-xs text-brand-muted">
                 Active keys are ordered by soonest expiry, then most recent use, so lifecycle risks stay visible.
               </p>
             </div>
-            {keysRefreshing && !loading && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Refreshing
-              </span>
-            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="inline-flex rounded-full border border-brand-border bg-brand-bg p-1">
+                {KEY_STATUS_FILTERS.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setKeyStatusFilter(filter.value)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                      keyStatusFilter === filter.value
+                        ? 'bg-white text-brand-text shadow-sm'
+                        : 'text-brand-muted hover:text-brand-text'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              {keysRefreshing && !loading && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Refreshing
+                </span>
+              )}
+            </div>
           </div>
+          {!loading && keys.length > 0 && (
+            <p className="mt-4 text-xs text-brand-muted">
+              Showing {visibleKeys.length} of {keys.length} keys · {activeKeyCount} active · {revokedKeyCount} revoked
+            </p>
+          )}
         </div>
         
         {loading ? (
@@ -392,6 +430,13 @@ export default function ApiKeysPage() {
               </Link>
             </div>
           </div>
+        ) : visibleKeys.length === 0 ? (
+          <div className="px-7 py-12 text-center">
+            <p className="text-base font-semibold text-brand-text">No {keyStatusFilter} keys to show</p>
+            <p className="mt-2 text-sm text-brand-muted">
+              Switch filters to review the rest of your API key history.
+            </p>
+          </div>
         ) : (
           <div className="divide-y divide-brand-border">
             <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
@@ -403,7 +448,7 @@ export default function ApiKeysPage() {
               <span>Created</span>
               <span className="sr-only">Actions</span>
             </div>
-            {sortedKeys.map((key) => {
+            {visibleKeys.map((key) => {
               const lastUsed = getRelativeDateSummary(key.lastUsedAt, 'Never');
               const created = getRelativeDateSummary(key.createdAt, 'Unknown');
               const expiry = getKeyExpirySummary(key.expiresAt);
