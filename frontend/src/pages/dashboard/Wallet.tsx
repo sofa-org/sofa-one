@@ -187,6 +187,7 @@ export default function WalletPage() {
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [walletReloadNonce, setWalletReloadNonce] = useState(0);
   
   const [balances, setBalances] = useState<BalanceChain[] | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
@@ -259,6 +260,8 @@ export default function WalletPage() {
     }
 
     const controller = new AbortController();
+    setLoading(true);
+    setError(null);
 
     async function init() {
       try {
@@ -286,7 +289,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [authLoading, isAuthenticated, user, getToken]);
+  }, [authLoading, isAuthenticated, user, getToken, walletReloadNonce]);
 
   useEffect(() => {
     if (!apiKeyDisplay) return;
@@ -329,6 +332,10 @@ export default function WalletPage() {
 
   function retryBalances() {
     setBalanceRefreshNonce((nonce) => nonce + 1);
+  }
+
+  function retryWalletLoad() {
+    setWalletReloadNonce((nonce) => nonce + 1);
   }
 
   useEffect(() => {
@@ -720,9 +727,19 @@ export default function WalletPage() {
           </div>
         </DashboardCard>
       ) : error ? (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-          <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
-          {error}
+        <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={retryWalletLoad}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Retry wallet
+          </button>
         </div>
       ) : (
         <>
