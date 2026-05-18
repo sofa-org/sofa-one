@@ -142,6 +142,24 @@ export default function APIDocsPage() {
   const statusExample = `curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \\
   -H "X-API-Key: sk_your_key_here"`;
 
+  const dashboardBalancesExample = `const balances = await authFetch('/v1/wallets/balances?chainId=84532', getToken);`;
+  const dashboardWithdrawExample = `const withdrawal = await authFetch('/v1/wallets/withdraw', getToken, {
+  method: 'POST',
+  body: JSON.stringify({
+    chainId: 84532,
+    to: '0x1111111111111111111111111111111111111111',
+    amount: '1000000',
+    token: 'USDC',
+    idempotencyKey: crypto.randomUUID(),
+  }),
+});`;
+  const dashboardApiKeysExample = `const keys = await authFetch('/v1/api-keys', getToken);
+
+const created = await authFetch('/v1/api-keys', getToken, {
+  method: 'POST',
+  body: JSON.stringify({ name: 'Production backend' }),
+});`;
+
   return (
     <DashboardPage
       title="API Documentation"
@@ -179,6 +197,63 @@ export default function APIDocsPage() {
       </section>
 
       <CodeBlock>{apiKeyHeader}</CodeBlock>
+
+      <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
+              Dashboard-only APIs
+            </p>
+            <h2 className="mt-2 font-serif text-xl font-bold text-brand-text">
+              Browser calls use Openfort IAM, not API keys
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
+              Wallet balances, withdrawals, and API-key management are intentionally dashboard-only. Call them
+              from the signed-in SPA with <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">authFetch</code>
+              and the current Openfort IAM token; never expose or reuse a backend <span className="font-mono text-brand-text">X-API-Key</span>
+              for these routes.
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-brand-bg px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-muted">
+            Frontend only
+          </span>
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Balances</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/wallets/balances</p>
+            </div>
+            <p className="text-sm leading-6 text-brand-muted">
+              Refresh dashboard balances for the selected chain while keeping RPC errors safely shaped.
+            </p>
+            <CopyableCodeBlock label="JWT example">{dashboardBalancesExample}</CopyableCodeBlock>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Withdraw</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">POST /v1/wallets/withdraw</p>
+            </div>
+            <p className="text-sm leading-6 text-brand-muted">
+              Submit a dashboard USDC withdrawal with a fresh idempotency key and Clerk/Openfort session.
+            </p>
+            <CopyableCodeBlock label="JWT example">{dashboardWithdrawExample}</CopyableCodeBlock>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">API keys</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">/v1/api-keys/*</p>
+            </div>
+            <p className="text-sm leading-6 text-brand-muted">
+              List and create dashboard-managed API keys. The raw key is returned once and must be stored server-side.
+            </p>
+            <CopyableCodeBlock label="JWT example">{dashboardApiKeysExample}</CopyableCodeBlock>
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
