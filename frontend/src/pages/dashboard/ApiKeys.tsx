@@ -202,6 +202,10 @@ export default function ApiKeysPage() {
               required
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
+            <p className="text-xs leading-5 text-brand-muted">
+              Use a unique active name per environment or app. The raw key is shown once after creation, so copy it
+              directly into your backend secret store.
+            </p>
           </div>
           <div>
             <button
