@@ -305,6 +305,8 @@ export default function WalletPage() {
     pendingAuthorization?.registrationTxHash,
   );
   const agentGasHelpUrl = getChainGasHelpUrl(agentChainId);
+  const authorizedChainIdsText =
+    wallet?.chainAuthorizations.map((authorization) => authorization.chainId).join(', ') ?? '';
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
@@ -1017,9 +1019,17 @@ export default function WalletPage() {
                   <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                     Authorized Signer
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
-                    {wallet.chainAuthorizations.length} network{wallet.chainAuthorizations.length === 1 ? '' : 's'} configured
-                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
+                      {wallet.chainAuthorizations.length} network{wallet.chainAuthorizations.length === 1 ? '' : 's'} configured
+                    </span>
+                    {authorizedChainIdsText && (
+                      <CopyButton
+                        text={authorizedChainIdsText}
+                        className="h-7 w-7 border-brand-border/80 bg-white text-brand-muted hover:text-brand-accent"
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="min-w-0 flex-1 break-all font-mono text-xs text-brand-text">
