@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useUser } from '@openfort/react';
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
@@ -250,8 +251,22 @@ export default function ApiKeysPage() {
           <div className="px-7 py-12 text-center">
             <p className="text-base font-semibold text-brand-text">Create your first API key</p>
             <p className="mt-2 text-sm text-brand-muted">
-              After your EOA is authorized, this key authenticates backend transaction requests.
+              Authorize your wallet first, then create a key for backend transaction requests.
             </p>
+            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center justify-center rounded-full bg-brand-text px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-text/90"
+              >
+                Review wallet setup
+              </Link>
+              <Link
+                to="/dashboard/docs"
+                className="inline-flex items-center justify-center rounded-full border border-brand-border bg-white px-5 py-2 text-sm font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg"
+              >
+                Read API docs
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
