@@ -210,12 +210,32 @@ function friendlyErrorMessage(code: string, fallback: string) {
 
 async function readJson<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const text = await response.text();
+  if (!text.trim()) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 async function throwApiError(response: Response): Promise<never> {
-  const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
+  const body = await readApiErrorBody(response);
   throw new ApiError(response, body);
+}
+
+async function readApiErrorBody(response: Response): Promise<ApiErrorBody> {
+  const text = await response.text();
+  if (!text.trim()) {
+    return { message: response.statusText || `Request failed: ${response.status}` };
+  }
+
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as ApiErrorBody;
+    }
+  } catch {
+    // Fall through to plain-text error handling.
+  }
+
+  return { message: text };
 }
 
 /**
