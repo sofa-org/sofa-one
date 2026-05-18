@@ -151,6 +151,7 @@ describe('ApiKeyService', () => {
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
     prisma.apiKey.findMany.mockResolvedValue([
       { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
+      { id: 'old-key-2', keyPrefix: 'sk_old22222222222222222222', name: 'Backup key' },
     ]);
     const service = new ApiKeyService(prisma as any);
 
@@ -166,7 +167,30 @@ describe('ApiKeyService', () => {
       expect.objectContaining({ data: expect.objectContaining({ name: 'Refreshed' }) }),
     );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ action: 'api_key.rotated' }) }),
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'api_key.revoked',
+          apiKeyId: 'old-key-1',
+          metadata: { reason: 'rotation' },
+        }),
+      }),
+    );
+    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'api_key.revoked',
+          apiKeyId: 'old-key-2',
+          metadata: { reason: 'rotation' },
+        }),
+      }),
+    );
+    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'api_key.rotated',
+          metadata: { revokedKeyCount: 2 },
+        }),
+      }),
     );
   });
 
