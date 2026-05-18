@@ -28,18 +28,23 @@ export default function ApiKeysPage() {
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [keysRefreshing, setKeysRefreshing] = useState(false);
   const apiBaseUrl = `${window.location.origin}/api`;
   const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
 
   const fetchKeys = useCallback(async () => {
+    setKeysRefreshing(true);
+    setListError(null);
     try {
       const data = await listApiKeysAuth(getToken);
       setKeys(data);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err));
+      setListError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
+      setKeysRefreshing(false);
     }
   }, [getToken]);
 
@@ -65,19 +70,19 @@ export default function ApiKeysPage() {
   async function handleCreate() {
     const trimmedName = newKeyName.trim();
     if (!trimmedName) {
-      setError('Enter a unique name for this API key.');
+      setActionError('Enter a unique name for this API key.');
       return;
     }
 
     setActionLoading(true);
-    setError(null);
+    setActionError(null);
     try {
       const result = await createApiKeyAuth(getToken, trimmedName);
       setNewRawKey(result.rawKey);
       setNewKeyName('');
       await fetchKeys();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err));
+      setActionError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -86,11 +91,12 @@ export default function ApiKeysPage() {
   async function handleRevoke(id: string) {
     if (!confirm('Revoke this API key? This cannot be undone.')) return;
     setActionLoading(true);
+    setActionError(null);
     try {
       await revokeApiKeyAuth(getToken, id);
       await fetchKeys();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err));
+      setActionError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -99,13 +105,13 @@ export default function ApiKeysPage() {
   async function handleRefresh() {
     if (!confirm('This will revoke ALL existing keys and create a new one.')) return;
     setActionLoading(true);
-    setError(null);
+    setActionError(null);
     try {
       const result = await refreshApiKeyApi(getToken);
       setNewRawKey(result.apiKey);
       await fetchKeys();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err));
+      setActionError(getApiErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -116,10 +122,27 @@ export default function ApiKeysPage() {
       title="API Keys"
       description="Create keys your backend uses to submit transactions through your authorized EOA."
     >
-      {error && (
+      {actionError && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
           <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
-          {error}
+          {actionError}
+        </div>
+      )}
+
+      {listError && (
+        <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
+            <span>{listError}</span>
+          </div>
+          <button
+            onClick={fetchKeys}
+            disabled={keysRefreshing || actionLoading}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+          >
+            {keysRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            Retry keys
+          </button>
         </div>
       )}
 
@@ -180,12 +203,35 @@ export default function ApiKeysPage() {
 
       <div className="rounded-2xl border border-brand-border bg-white shadow-xl relative overflow-hidden ring-1 ring-black/5">
         <div className="p-7 border-b border-brand-border">
-          <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
+            {keysRefreshing && !loading && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Refreshing
+              </span>
+            )}
+          </div>
         </div>
         
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-brand-accent" />
+          </div>
+        ) : listError && keys.length === 0 ? (
+          <div className="px-7 py-12 text-center">
+            <p className="text-base font-semibold text-brand-text">Could not load API keys</p>
+            <p className="mt-2 text-sm text-brand-muted">
+              Check your session or network connection, then try again.
+            </p>
+            <button
+              onClick={fetchKeys}
+              disabled={keysRefreshing || actionLoading}
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-white px-5 py-2 text-sm font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg disabled:opacity-50"
+            >
+              {keysRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+              Retry loading keys
+            </button>
           </div>
         ) : keys.length === 0 ? (
           <div className="px-7 py-12 text-center">
