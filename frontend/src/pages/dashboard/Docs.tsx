@@ -38,6 +38,26 @@ function CodeBlock({ children }: { children: string }) {
   );
 }
 
+function CopyableCodeBlock({
+  children,
+  label = "Copy example",
+}: {
+  children: string;
+  label?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+          {label}
+        </span>
+        <CopyButton text={children} className="shrink-0" />
+      </div>
+      <CodeBlock>{children}</CodeBlock>
+    </div>
+  );
+}
+
 function FieldTable({ rows }: { rows: string[][] }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-brand-border shadow-sm">
@@ -97,6 +117,30 @@ export default function APIDocsPage() {
   const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
   -H "X-API-Key: sk_your_key_here"`;
+  const signExample = `curl -X POST ${apiBaseUrl}/v1/wallets/sign \\
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "type": "message",
+    "chainId": 84532,
+    "executionMode": "session_key",
+    "message": "Hello, SOFA ONE!"
+  }'`;
+  const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions/send \\
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "chainId": 84532,
+    "executionMode": "session_key",
+    "interactions": [{
+      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
+      "value": "0"
+    }],
+    "idempotencyKey": "order-123"
+  }'`;
+  const statusExample = `curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \\
+  -H "X-API-Key: sk_your_key_here"`;
 
   return (
     <DashboardPage
@@ -149,10 +193,9 @@ export default function APIDocsPage() {
               hashes, so it is safe for backend logs and customer support tooling.
             </p>
           </div>
-          <CopyButton text={statusQuickStart} className="shrink-0" />
         </div>
         <div className="mt-5">
-          <CodeBlock>{statusQuickStart}</CodeBlock>
+          <CopyableCodeBlock label="Status request">{statusQuickStart}</CopyableCodeBlock>
         </div>
       </section>
 
@@ -170,15 +213,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl -X POST ${apiBaseUrl}/v1/wallets/sign \\
-  -H "X-API-Key: sk_your_key_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "type": "message",
-    "chainId": 84532,
-    "executionMode": "session_key",
-    "message": "Hello, SOFA ONE!"
-  }'`}</CodeBlock>
+              <CopyableCodeBlock>{signExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">200 response</h4>
@@ -209,19 +244,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl -X POST ${apiBaseUrl}/v1/transactions/send \\
-  -H "X-API-Key: sk_your_key_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "chainId": 84532,
-    "executionMode": "session_key",
-    "interactions": [{
-      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
-      "value": "0"
-    }],
-    "idempotencyKey": "order-123"
-  }'`}</CodeBlock>
+              <CopyableCodeBlock>{sendExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">201 response</h4>
@@ -250,8 +273,7 @@ export default function APIDocsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
-              <CodeBlock>{`curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \
-  -H "X-API-Key: sk_your_key_here"`}</CodeBlock>
+              <CopyableCodeBlock>{statusExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">200 response</h4>
