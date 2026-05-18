@@ -1,5 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
-import { AlertCircle, RotateCcw } from 'lucide-react';
+import { AlertCircle, Home, RotateCcw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -22,6 +22,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private reloadPage = () => {
     window.location.reload();
+  };
+
+  private openDashboard = () => {
+    window.location.assign('/dashboard');
   };
 
   render() {
@@ -48,6 +52,13 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 <RotateCcw className="h-4 w-4" />
                 Reload app
+              </button>
+              <button
+                onClick={this.openDashboard}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
+              >
+                <Home className="h-4 w-4" />
+                Back to dashboard
               </button>
               <button
                 onClick={() => this.setState({ error: null })}
