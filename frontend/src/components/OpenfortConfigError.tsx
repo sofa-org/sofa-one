@@ -5,6 +5,11 @@ type OpenfortConfigErrorProps = {
   missingVars: string[];
 };
 
+const OPENFORT_ENV_HELP: Record<string, string> = {
+  VITE_OPENFORT_PUBLISHABLE_KEY: 'Enables Openfort email OTP sign-in and IAM session checks.',
+  VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY: 'Enables embedded wallet recovery and dashboard wallet setup.',
+};
+
 export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
   const envTemplate = missingVars.map((name) => `${name}=`).join('\n');
 
@@ -25,6 +30,17 @@ export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
                 <li key={name}>{name}</li>
               ))}
             </ul>
+            <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs text-red-800">
+              <p className="font-semibold text-red-900">What these unlock</p>
+              <ul className="mt-2 space-y-1.5">
+                {missingVars.map((name) => (
+                  <li key={name}>
+                    <span className="font-mono font-semibold">{name}</span>:{' '}
+                    {OPENFORT_ENV_HELP[name] ?? 'Required by the Openfort frontend integration.'}
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs text-red-800">
               <p className="font-semibold text-red-900">Local setup</p>
               <ol className="mt-2 list-decimal space-y-1 pl-4">
