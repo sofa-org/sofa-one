@@ -173,13 +173,18 @@ describe('API-key public security flow (e2e)', () => {
         transactionHash: TEST_TX_HASH,
         status: 'confirmed',
       });
-      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledWith({
-        agentAccountId: 'ofa_test_agent_account_123',
-        accountAddress: TEST_WALLET_ADDRESS,
-        chainId: TEST_CHAIN_ID,
-        keyHash: `0x${'3'.repeat(64)}`,
-        interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
-      });
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agentAccountId: 'ofa_test_agent_account_123',
+          accountAddress: TEST_WALLET_ADDRESS,
+          chainId: TEST_CHAIN_ID,
+          keyHash: `0x${'3'.repeat(64)}`,
+          interactions: [
+            expect.objectContaining({ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }),
+          ],
+          sponsorship: 'none',
+        }),
+      );
 
       const tx = await prisma.transaction.findFirstOrThrow({ where: { userId: testUserId } });
       expect(tx.apiKeyId).toBe(testKeyId);
@@ -224,13 +229,15 @@ describe('API-key public security flow (e2e)', () => {
     });
 
     it('GET /v1/transactions/:id returns safe transaction status for the API-key user', async () => {
+      const calldata = '0xdeadbeefcafebabefeedface';
+
       const created = await request(app.getHttpServer())
         .post('/v1/transactions/send')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
           idempotencyKey: 'status-abc-123',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef', value: '0' }],
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
         })
         .expect(201);
 
@@ -251,6 +258,9 @@ describe('API-key public security flow (e2e)', () => {
       );
       expect(res.body).not.toHaveProperty('details');
       expect(res.body).not.toHaveProperty('requestHash');
+      expect(res.body).not.toHaveProperty('interactionsHash');
+      expect(res.body).not.toHaveProperty('interactions');
+      expect(JSON.stringify(res.body)).not.toContain(calldata);
     });
   });
 
