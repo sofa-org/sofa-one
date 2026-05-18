@@ -1076,6 +1076,9 @@ export default function WalletPage() {
                     <div className="relative">
                       <input
                         type={showRecoveryPassword ? 'text' : 'password'}
+                        autoCapitalize="none"
+                        autoComplete="new-password"
+                        spellCheck={false}
                         minLength={8}
                         value={recoveryPassword}
                         onChange={(event) => setRecoveryPassword(event.target.value)}
@@ -1317,6 +1320,9 @@ export default function WalletPage() {
                     <div className="relative">
                       <input
                         type={showRecoveryPassword ? 'text' : 'password'}
+                        autoCapitalize="none"
+                        autoComplete="new-password"
+                        spellCheck={false}
                         minLength={8}
                         value={recoveryPassword}
                         onChange={(event) => setRecoveryPassword(event.target.value)}
