@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut } from '@openfort/react';
-import { LogOut, Wallet, KeyRound, BookOpen, Menu, X } from 'lucide-react';
+import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, Loader2, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
@@ -15,10 +15,23 @@ export default function DashboardLayout() {
   const { user } = useOpenfort();
   const { signOut } = useSignOut();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [signOutLoading, setSignOutLoading] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    if (signOutLoading) return;
+
+    setSignOutLoading(true);
+    setSignOutError(null);
+
+    try {
+      await signOut();
+      navigate('/');
+    } catch (err: unknown) {
+      setSignOutError(err instanceof Error ? err.message : 'Could not sign out. Please try again.');
+    } finally {
+      setSignOutLoading(false);
+    }
   };
 
   const UserBadge = () => (
@@ -52,6 +65,17 @@ export default function DashboardLayout() {
       })}
     </>
   );
+
+  const SignOutIcon = () =>
+    signOutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />;
+
+  const SignOutError = () =>
+    signOutError ? (
+      <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <span>{signOutError}</span>
+      </div>
+    ) : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-bg lg:h-screen lg:overflow-hidden lg:flex-row">
@@ -88,13 +112,18 @@ export default function DashboardLayout() {
               <NavLinks />
             </nav>
             <div className="border-t border-brand-border px-4 py-4">
+              <SignOutError />
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-brand-muted">Sign out</span>
+                <span className="text-sm font-medium text-brand-muted">
+                  {signOutLoading ? 'Signing out…' : 'Sign out'}
+                </span>
                 <button
                   onClick={handleSignOut}
-                  className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                  disabled={signOutLoading}
+                  className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label="Sign out"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <SignOutIcon />
                 </button>
               </div>
             </div>
@@ -113,6 +142,7 @@ export default function DashboardLayout() {
           <NavLinks />
         </nav>
         <div className="border-t border-brand-border px-4 py-4">
+          <SignOutError />
           <div className="flex items-center justify-between">
             <div className="flex min-w-0 items-center gap-2">
               <UserBadge />
@@ -120,9 +150,11 @@ export default function DashboardLayout() {
             </div>
             <button
               onClick={handleSignOut}
-              className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
+              disabled={signOutLoading}
+              className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label="Sign out"
             >
-              <LogOut className="h-4 w-4" />
+              <SignOutIcon />
             </button>
           </div>
         </div>
