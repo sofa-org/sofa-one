@@ -19,6 +19,34 @@ const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+function getRelativeDateSummary(value: string | null, emptyLabel: string) {
+  if (!value) {
+    return { label: emptyLabel, detail: null, tone: 'text-brand-muted' };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { label: 'Invalid date', detail: 'Check key metadata', tone: 'text-red-700' };
+  }
+
+  const elapsedMs = Date.now() - date.getTime();
+  const absoluteLabel = date.toLocaleDateString();
+  if (elapsedMs < 0) {
+    return { label: absoluteLabel, detail: 'Future date', tone: 'text-brand-muted' };
+  }
+
+  if (elapsedMs < ONE_DAY_MS) {
+    return { label: 'Today', detail: absoluteLabel, tone: 'text-brand-muted' };
+  }
+
+  const elapsedDays = Math.floor(elapsedMs / ONE_DAY_MS);
+  return {
+    label: `${elapsedDays}d ago`,
+    detail: absoluteLabel,
+    tone: 'text-brand-muted',
+  };
+}
+
 function getKeyExpirySummary(expiresAt: string | null) {
   if (!expiresAt) {
     return { label: 'No expiry', detail: 'Manual revoke only', tone: 'text-brand-muted' };
@@ -336,7 +364,7 @@ export default function ApiKeysPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_100px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
               <span>Key</span>
               <span>Status</span>
               <span>Name</span>
@@ -346,10 +374,12 @@ export default function ApiKeysPage() {
               <span className="sr-only">Actions</span>
             </div>
             {sortedKeys.map((key) => {
+              const lastUsed = getRelativeDateSummary(key.lastUsedAt, 'Never');
+              const created = getRelativeDateSummary(key.createdAt, 'Unknown');
               const expiry = getKeyExpirySummary(key.expiresAt);
 
               return (
-                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_100px_120px_110px_36px] md:items-center md:gap-4">
+                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
                   <span className="font-mono text-sm text-brand-text">{key.displayPrefix}</span>
                   <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {key.revoked ? 'Revoked' : 'Active'}
@@ -358,18 +388,20 @@ export default function ApiKeysPage() {
                     <span className="font-semibold text-brand-text md:hidden">Name: </span>
                     {key.name || '—'}
                   </span>
-                  <span className="text-xs text-brand-muted">
+                  <span className={`text-xs ${lastUsed.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Last used: </span>
-                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
+                    <span className="font-semibold">{lastUsed.label}</span>
+                    {lastUsed.detail && <span className="block text-[11px] opacity-80">{lastUsed.detail}</span>}
                   </span>
                   <span className={`text-xs ${expiry.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Expires: </span>
                     <span className="font-semibold">{expiry.label}</span>
                     <span className="block text-[11px] opacity-80">{expiry.detail}</span>
                   </span>
-                  <span className="text-xs text-brand-muted">
+                  <span className={`text-xs ${created.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Created: </span>
-                    {new Date(key.createdAt).toLocaleDateString()}
+                    <span className="font-semibold">{created.label}</span>
+                    {created.detail && <span className="block text-[11px] opacity-80">{created.detail}</span>}
                   </span>
                   {!key.revoked ? (
                     <button
