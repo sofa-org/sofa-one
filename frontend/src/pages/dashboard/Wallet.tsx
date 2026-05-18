@@ -525,6 +525,13 @@ export default function WalletPage() {
     }
   }
 
+  function resetWithdrawForm() {
+    setWithdrawResult(null);
+    setWithdrawError(null);
+    setTo('');
+    setAmount('');
+  }
+
   async function handleConnectWallet(e: React.FormEvent) {
     e.preventDefault();
     setWalletSetupLoading(true);
@@ -1313,9 +1320,18 @@ export default function WalletPage() {
 
                 {withdrawResult && (
                   <div className="mb-6 space-y-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
-                      <span>{withdrawResult.message}</span>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                        <span>{withdrawResult.message}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={resetWithdrawForm}
+                        className="inline-flex items-center justify-center rounded-full border border-green-200 bg-white/70 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-green-800 transition hover:border-green-400 hover:bg-white hover:text-green-950"
+                      >
+                        Withdraw another
+                      </button>
                     </div>
                     {withdrawResult.transactionHash && (
                       <div className="flex flex-col gap-3 rounded-lg border border-green-200/80 bg-white/70 p-3 text-xs text-green-900 sm:flex-row sm:items-center sm:justify-between">
