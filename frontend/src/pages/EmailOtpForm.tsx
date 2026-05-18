@@ -27,6 +27,10 @@ function getPostSignInPath(state: unknown) {
   return `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`;
 }
 
+function normalizeOtpInput(value: string) {
+  return value.replace(/[\s-]/g, '');
+}
+
 export default function EmailOtpForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -147,12 +151,15 @@ export default function EmailOtpForm() {
               ref={otpInputRef}
               type="text"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) => setOtp(normalizeOtpInput(e.target.value))}
               required
               inputMode="numeric"
               autoComplete="one-time-code"
               className="w-full rounded-lg border border-brand-border bg-brand-bg/50 px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
             />
+            <p className="mt-2 text-xs text-brand-muted">
+              You can paste the code from email; spaces and dashes are removed automatically.
+            </p>
           </div>
         )}
 
