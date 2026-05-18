@@ -1,6 +1,8 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { AlertCircle, Home, RotateCcw } from 'lucide-react';
 
+import { CopyButton } from './CopyButton';
+
 interface Props {
   children: ReactNode;
 }
@@ -28,8 +30,24 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.assign('/dashboard');
   };
 
+  private getErrorDetails(error: Error) {
+    const details = [
+      `Time: ${new Date().toISOString()}`,
+      `Path: ${window.location.pathname}${window.location.search}${window.location.hash}`,
+      `Error: ${error.name}: ${error.message}`,
+    ];
+
+    if (import.meta.env.DEV && error.stack) {
+      details.push('', error.stack);
+    }
+
+    return details.join('\n');
+  }
+
   render() {
     if (this.state.error) {
+      const errorDetails = this.getErrorDetails(this.state.error);
+
       return (
         <div className="flex min-h-screen items-center justify-center p-8">
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-sm">
@@ -44,6 +62,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   {this.state.error.message}
                 </p>
               )}
+              <div className="flex items-center justify-center gap-2 rounded-lg bg-white/70 px-3 py-2 text-xs text-red-700">
+                <span>Copy error details when contacting support.</span>
+                <CopyButton text={errorDetails} />
+              </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
