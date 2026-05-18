@@ -33,7 +33,9 @@ export default function SignInPage() {
           </p>
           <div className="mt-12 flex items-center gap-3">
             <div className="h-px w-8 bg-brand-accent" />
-            <span className="text-xs text-brand-muted tracking-widest uppercase">Powered by SOFA.org</span>
+            <span className="text-xs text-brand-muted tracking-widest uppercase">
+              Secure server-side signing
+            </span>
           </div>
         </div>
       </div>
