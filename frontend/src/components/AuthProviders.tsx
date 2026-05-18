@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, WagmiProvider } from 'wagmi';
 import { base, baseSepolia, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
 import { DEFAULT_CHAIN_ID } from '../lib/api';
+import { OpenfortConfigError } from './OpenfortConfigError';
 
 const OPENFORT_KEY = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
 const OPENFORT_SHIELD_KEY = import.meta.env.VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY;
@@ -37,15 +38,16 @@ const wagmiConfig = createConfig(
   }),
 );
 
-if (!OPENFORT_KEY) {
-  throw new Error('Missing VITE_OPENFORT_PUBLISHABLE_KEY environment variable');
-}
-
-if (!OPENFORT_SHIELD_KEY) {
-  throw new Error('Missing VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY environment variable');
-}
-
 export default function AuthProviders({ children }: { children: ReactNode }) {
+  const missingVars = [
+    !OPENFORT_KEY && 'VITE_OPENFORT_PUBLISHABLE_KEY',
+    !OPENFORT_SHIELD_KEY && 'VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY',
+  ].filter((name): name is string => Boolean(name));
+
+  if (missingVars.length > 0) {
+    return <OpenfortConfigError missingVars={missingVars} />;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>
