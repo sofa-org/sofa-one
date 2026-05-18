@@ -22,7 +22,11 @@ import {
   type BalanceChain,
   type WalletInfo,
 } from '@/lib/api';
-import { SUPPORTED_CHAINS } from '@/lib/chains';
+import {
+  SUPPORTED_CHAINS,
+  getExplorerAddressUrl,
+  getExplorerTransactionUrl,
+} from '@/lib/chains';
 import {
   CALIBUR_ADDRESS,
   CALIBUR_DELEGATION_CODE,
@@ -34,7 +38,16 @@ import {
   hashKey,
   type CaliburKey,
 } from '@/lib/calibur';
-import { BanknoteArrowUp, X, AlertCircle, CheckCircle2, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
+import {
+  BanknoteArrowUp,
+  X,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ArrowRight,
+  RotateCcw,
+  ExternalLink,
+} from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 
@@ -210,6 +223,11 @@ export default function WalletPage() {
     (authorization) => authorization.status === 'registered',
   );
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
+  const walletExplorerUrl = getExplorerAddressUrl(agentChainId, wallet?.walletAddress);
+  const pendingAuthorizationExplorerUrl = getExplorerTransactionUrl(
+    agentRegistrationChainId,
+    pendingAuthorization?.registrationTxHash,
+  );
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
@@ -988,6 +1006,17 @@ export default function WalletPage() {
                       <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-brand-text">{wallet.walletAddress}</code>
                       <CopyButton text={wallet.walletAddress} className="border-blue-300 text-blue-600 hover:bg-blue-100 bg-blue-50" />
                     </div>
+                    {walletExplorerUrl && (
+                      <a
+                        href={walletExplorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"
+                      >
+                        View EOA on {agentChain?.name ?? 'network'} explorer
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
                   </div>}
                 </div>
 
@@ -1023,6 +1052,17 @@ export default function WalletPage() {
                             className="shrink-0 border-blue-300 bg-white text-blue-700 hover:bg-blue-100"
                           />
                         </div>
+                        {pendingAuthorizationExplorerUrl && (
+                          <a
+                            href={pendingAuthorizationExplorerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"
+                          >
+                            View authorization transaction on explorer
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
                       </div>
                       <button
                         type="button"
