@@ -181,6 +181,8 @@ const AGENT_REGISTRATION_RESULT_RETRY_DELAY_MS = 3_000;
 const AGENT_REGISTRATION_AUTO_CHECK_MS = 120_000;
 const AGENT_REGISTRATION_MANUAL_CHECK_MS = 60_000;
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
+const BALANCE_CHAIN_STORAGE_KEY = 'sofa-one.wallet.balanceChainId';
+const AGENT_CHAIN_STORAGE_KEY = 'sofa-one.wallet.agentChainId';
 
 type WithdrawSuccess = {
   message: string;
@@ -208,6 +210,34 @@ function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function isSupportedChainId(chainId: number) {
+  return SUPPORTED_CHAINS.some((chain) => chain.id === chainId);
+}
+
+function getStoredChainId(storageKey: string) {
+  if (typeof window === 'undefined') return DEFAULT_CHAIN_ID;
+
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return DEFAULT_CHAIN_ID;
+
+    const chainId = Number(stored);
+    return Number.isInteger(chainId) && isSupportedChainId(chainId)
+      ? chainId
+      : DEFAULT_CHAIN_ID;
+  } catch {
+    return DEFAULT_CHAIN_ID;
+  }
+}
+
+function persistChainId(storageKey: string, chainId: number) {
+  try {
+    window.localStorage.setItem(storageKey, String(chainId));
+  } catch {
+    // Ignore storage failures so private browsing or disabled storage does not block wallet use.
+  }
+}
+
 export default function WalletPage() {
   const openfort = useOpenfort();
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
@@ -220,8 +250,8 @@ export default function WalletPage() {
   }, [getAccessToken]);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
-  const [selectedChainId, setSelectedChainId] = useState(DEFAULT_CHAIN_ID);
-  const [agentChainId, setAgentChainId] = useState(DEFAULT_CHAIN_ID);
+  const [selectedChainId, setSelectedChainId] = useState(() => getStoredChainId(BALANCE_CHAIN_STORAGE_KEY));
+  const [agentChainId, setAgentChainId] = useState(() => getStoredChainId(AGENT_CHAIN_STORAGE_KEY));
   const selectedAuthorization = wallet?.chainAuthorizations.find((authorization) => authorization.chainId === agentChainId);
   const pendingAuthorization = wallet?.chainAuthorizations.find(
     (authorization) => authorization.status === 'pending_registration' && authorization.registrationTxHash,
@@ -269,6 +299,14 @@ export default function WalletPage() {
   const [agentRegistrationCheckStatus, setAgentRegistrationCheckStatus] = useState<
     'idle' | 'checking' | 'timed_out'
   >('idle');
+
+  useEffect(() => {
+    persistChainId(BALANCE_CHAIN_STORAGE_KEY, selectedChainId);
+  }, [selectedChainId]);
+
+  useEffect(() => {
+    persistChainId(AGENT_CHAIN_STORAGE_KEY, agentChainId);
+  }, [agentChainId]);
 
   const confirmAgentRegistration = useCallback(
     async (client: PublicClient, chainId: number, txHash: Hex, shouldContinue: () => boolean) => {
