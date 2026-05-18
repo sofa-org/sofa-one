@@ -24,6 +24,7 @@ import {
 } from '@/lib/api';
 import {
   SUPPORTED_CHAINS,
+  getChainGasHelpUrl,
   getExplorerAddressUrl,
   getExplorerTransactionUrl,
 } from '@/lib/chains';
@@ -228,6 +229,7 @@ export default function WalletPage() {
     agentRegistrationChainId,
     pendingAuthorization?.registrationTxHash,
   );
+  const agentGasHelpUrl = getChainGasHelpUrl(agentChainId);
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
@@ -1024,6 +1026,17 @@ export default function WalletPage() {
                         className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"
                       >
                         View EOA on {agentChain?.name ?? 'network'} explorer
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                    {agentGasHelpUrl && (
+                      <a
+                        href={agentGasHelpUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ml-0 mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 sm:ml-4"
+                      >
+                        Get testnet {agentNativeSymbol}
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}

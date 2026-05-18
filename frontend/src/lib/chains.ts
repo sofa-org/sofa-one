@@ -3,6 +3,7 @@ export const SUPPORTED_CHAINS = [
     id: 84532,
     name: 'Base Sepolia',
     explorerBaseUrl: 'https://sepolia.basescan.org',
+    gasHelpUrl: 'https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet',
   },
   { id: 8453, name: 'Base', explorerBaseUrl: 'https://basescan.org' },
   { id: 1, name: 'Ethereum', explorerBaseUrl: 'https://etherscan.io' },
@@ -10,12 +11,14 @@ export const SUPPORTED_CHAINS = [
     id: 11155111,
     name: 'Ethereum Sepolia',
     explorerBaseUrl: 'https://sepolia.etherscan.io',
+    gasHelpUrl: 'https://cloud.google.com/application/web3/faucet/ethereum/sepolia',
   },
   { id: 137, name: 'Polygon', explorerBaseUrl: 'https://polygonscan.com' },
   {
     id: 80002,
     name: 'Polygon Amoy',
     explorerBaseUrl: 'https://amoy.polygonscan.com',
+    gasHelpUrl: 'https://faucet.polygon.technology/',
   },
 ] as const;
 
@@ -37,4 +40,9 @@ export function getExplorerTransactionUrl(chainId: number, txHash?: string | nul
   const explorerBaseUrl = getSupportedChain(chainId)?.explorerBaseUrl;
   if (!explorerBaseUrl || !txHash) return null;
   return `${explorerBaseUrl}/tx/${txHash}`;
+}
+
+export function getChainGasHelpUrl(chainId: number) {
+  const chain = getSupportedChain(chainId);
+  return chain && 'gasHelpUrl' in chain ? chain.gasHelpUrl : null;
 }
