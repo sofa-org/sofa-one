@@ -1,6 +1,24 @@
 import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
+  const onboardingSteps = [
+    {
+      step: '01',
+      title: 'Sign in with email OTP',
+      description: 'No browser wallet or OAuth detour required to enter the dashboard.',
+    },
+    {
+      step: '02',
+      title: 'Provision your Openfort wallet',
+      description: 'Set up the TEE-managed wallet and authorize agent execution.',
+    },
+    {
+      step: '03',
+      title: 'Create a backend API key',
+      description: 'Store the one-time key in your server and start sending requests.',
+    },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 selection:bg-brand-accent selection:text-white">
       <div className="w-full max-w-3xl text-center">
@@ -34,6 +52,25 @@ export default function LandingPage() {
           >
             VIEW API DOCS
           </Link>
+        </div>
+
+        <div className="mb-16 grid gap-3 text-left sm:grid-cols-3">
+          {onboardingSteps.map((item) => (
+            <div
+              key={item.step}
+              className="rounded-2xl border border-brand-border bg-white/75 p-5 shadow-sm backdrop-blur-sm"
+            >
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-accent">
+                {item.step}
+              </span>
+              <h2 className="mt-3 font-serif text-lg font-semibold text-brand-text">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-brand-muted">
+                {item.description}
+              </p>
+            </div>
+          ))}
         </div>
 
         <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
