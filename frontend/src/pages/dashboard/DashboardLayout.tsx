@@ -21,6 +21,7 @@ export default function DashboardLayout() {
   const handleSignOut = async () => {
     if (signOutLoading) return;
 
+    setMobileMenuOpen(false);
     setSignOutLoading(true);
     setSignOutError(null);
 
@@ -51,7 +52,10 @@ export default function DashboardLayout() {
           <Link
             key={item.href}
             to={item.href}
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setSignOutError(null);
+            }}
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-brand-accent/10 text-brand-accent'
