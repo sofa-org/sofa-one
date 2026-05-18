@@ -34,6 +34,8 @@ export class ErrorBoundary extends Component<Props, State> {
     const details = [
       `Time: ${new Date().toISOString()}`,
       `Path: ${window.location.pathname}${window.location.search}${window.location.hash}`,
+      `Browser: ${navigator.userAgent}`,
+      `Language: ${navigator.language}`,
       `Error: ${error.name}: ${error.message}`,
     ];
 
