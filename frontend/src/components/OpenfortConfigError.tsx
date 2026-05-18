@@ -91,6 +91,14 @@ export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
                 <li>Restart the Vite dev server so the new VITE_* values are loaded.</li>
               </ol>
             </div>
+            <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs leading-5 text-red-800">
+              <p className="font-semibold text-red-900">Optional RPC overrides</p>
+              <p className="mt-1">
+                The <span className="font-mono">VITE_*_RPC_URL</span> entries in{' '}
+                <span className="font-mono">frontend/.env.example</span> are optional browser-safe RPC overrides.
+                Leave them unset for public defaults, or set them when local development needs more reliable chain reads.
+              </p>
+            </div>
             <div className="rounded-lg border border-red-200 bg-white/80 p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-red-700">
