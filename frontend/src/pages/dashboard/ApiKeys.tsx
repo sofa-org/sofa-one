@@ -172,6 +172,7 @@ export default function ApiKeysPage() {
   const revokedKeyCount = keys.length - activeKeyCount;
   const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - activeKeyCount, 0);
   const hasReachedKeyLimit = remainingKeySlots === 0;
+  const selectedKeyStatusFilter = KEY_STATUS_FILTERS.find((filter) => filter.value === keyStatusFilter);
 
   const fetchKeys = useCallback(async () => {
     setKeysRefreshing(true);
@@ -410,9 +411,23 @@ export default function ApiKeysPage() {
             </div>
           </div>
           {!loading && keys.length > 0 && (
-            <p className="mt-4 text-xs text-brand-muted">
-              Showing {visibleKeys.length} of {keys.length} keys · {activeKeyCount} active · {revokedKeyCount} revoked
-            </p>
+            <div className="mt-4 flex flex-col gap-3 text-xs text-brand-muted sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Showing {visibleKeys.length} of {keys.length} keys · {activeKeyCount} active · {revokedKeyCount} revoked
+              </p>
+              {keyStatusFilter !== 'all' && (
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-border bg-brand-bg px-3 py-1 font-semibold text-brand-text">
+                  <span>Filtered: {selectedKeyStatusFilter?.label ?? keyStatusFilter}</span>
+                  <button
+                    type="button"
+                    onClick={() => setKeyStatusFilter('all')}
+                    className="text-brand-muted underline-offset-2 transition-colors hover:text-brand-accent hover:underline"
+                  >
+                    Show all
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
         
