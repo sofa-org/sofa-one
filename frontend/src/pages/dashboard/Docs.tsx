@@ -93,6 +93,7 @@ function EndpointCard({
 
 export default function APIDocsPage() {
   const apiBaseUrl = `${window.location.origin}/api`;
+  const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
   -H "X-API-Key: sk_your_key_here"`;
 
@@ -114,17 +115,25 @@ export default function APIDocsPage() {
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Base URL</p>
-          <p className="mt-2 font-mono text-sm text-brand-text">{apiBaseUrl}</p>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-mono text-sm text-brand-text">{apiBaseUrl}</p>
+            <CopyButton text={apiBaseUrl} className="w-fit shrink-0" />
+          </div>
         </div>
         <div className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm md:col-span-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
-          <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Create keys from this dashboard and keep them on your backend only. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
+              <p className="mt-2 text-sm leading-6 text-brand-muted">
+                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Create keys from this dashboard and keep them on your backend only. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
+              </p>
+            </div>
+            <CopyButton text={apiKeyHeader} className="w-fit shrink-0" />
+          </div>
         </div>
       </section>
 
-      <CodeBlock>{`X-API-Key: sk_<64-hex-chars>`}</CodeBlock>
+      <CodeBlock>{apiKeyHeader}</CodeBlock>
 
       <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
