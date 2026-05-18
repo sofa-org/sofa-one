@@ -15,6 +15,8 @@ info:
 
     API Key 在 Dashboard 中显式创建，原文只返回一次，格式为 `sk_` + 64 位十六进制字符。不要在浏览器代码中暴露 API Key。
 
+    Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info` 和 `POST /v1/wallets/withdraw`。这些端点只接受 Clerk JWT，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。
+
     ## 支持的链
 
     | Chain ID | 网络 |
