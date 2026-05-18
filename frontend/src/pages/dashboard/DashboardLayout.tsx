@@ -77,9 +77,20 @@ export default function DashboardLayout() {
 
   const SignOutError = () =>
     signOutError ? (
-      <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <span>{signOutError}</span>
+      <div className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>{signOutError}</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={signOutLoading}
+          className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-2 py-1 font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <SignOutIcon />
+          {signOutLoading ? 'Retrying…' : 'Retry sign out'}
+        </button>
       </div>
     ) : null;
 
