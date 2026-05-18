@@ -468,6 +468,9 @@ const created = await authFetch('/v1/api-keys', getToken, {
   "createdAt": "2026-04-28T10:00:00.000Z",
   "completedAt": "2026-04-28T10:00:10.000Z"
 }`}</CodeBlock>
+              <p className="text-xs leading-5 text-brand-muted">
+                <span className="font-mono text-brand-text">failureReason</span> is populated only for failed transactions, while <span className="font-mono text-brand-text">completedAt</span> is set when the transaction reaches a final state.
+              </p>
             </div>
           </div>
         </EndpointCard>
