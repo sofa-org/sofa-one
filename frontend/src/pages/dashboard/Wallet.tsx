@@ -1351,6 +1351,9 @@ export default function WalletPage() {
                       pattern="^0x[a-fA-F0-9]{40}$"
                       className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
                     />
+                    <p className="mt-2 text-xs text-brand-muted">
+                      Send only to a 0x EVM address on the selected network. Double-check the chain before submitting.
+                    </p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
                     <div className="w-full sm:w-48">
@@ -1372,11 +1375,15 @@ export default function WalletPage() {
                       <input
                         type="text"
                         placeholder="1.00"
+                        inputMode="decimal"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
                         className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
                       />
+                      <p className="mt-2 text-xs text-brand-muted">
+                        Enter a USDC amount. Keep enough native gas on this chain for the transaction.
+                      </p>
                     </div>
                     <div className="w-full sm:w-32">
                       <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Token</label>
