@@ -1279,6 +1279,9 @@ export default function WalletPage() {
                           : 'Authorize API access'}
                     </p>
                   </div>
+                  <p className="sm:col-span-3 text-xs leading-5 text-blue-700">
+                    Authorization is chain-specific. Changing the selected network changes which chain your backend can use with API keys.
+                  </p>
                 </div>
 
                 <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-end">
