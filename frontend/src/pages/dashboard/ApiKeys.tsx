@@ -15,6 +15,7 @@ import {
 } from '@/lib/api';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
+const MAX_ACTIVE_API_KEYS = 10;
 
 export default function ApiKeysPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
@@ -48,6 +49,9 @@ export default function ApiKeysPage() {
     }]
   }'`;
   const sortedKeys = [...keys].sort((a, b) => Number(a.revoked) - Number(b.revoked));
+  const activeKeyCount = keys.filter((key) => !key.revoked).length;
+  const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - activeKeyCount, 0);
+  const hasReachedKeyLimit = remainingKeySlots === 0;
 
   const fetchKeys = useCallback(async () => {
     setKeysRefreshing(true);
@@ -83,6 +87,11 @@ export default function ApiKeysPage() {
   }, [newRawKey]);
 
   async function handleCreate() {
+    if (hasReachedKeyLimit) {
+      setActionError('Revoke an active API key before creating another one.');
+      return;
+    }
+
     const trimmedName = newKeyName.trim();
     if (!trimmedName) {
       setActionError('Enter a unique name for this API key.');
@@ -121,7 +130,6 @@ export default function ApiKeysPage() {
   }
 
   async function handleRefresh() {
-    const activeKeyCount = keys.filter((key) => !key.revoked).length;
     if (
       !confirm(
         `Rotate ${activeKeyCount} active API key${activeKeyCount === 1 ? '' : 's'}? This revokes every active key, creates one replacement, and shows the new raw key only once.`,
@@ -201,6 +209,19 @@ export default function ApiKeysPage() {
         title="Create New Key"
         description="Name the app or environment that will use this key. You can revoke individual keys anytime."
       >
+        <div className="mt-5 rounded-xl border border-brand-border bg-brand-bg/60 p-4 text-sm leading-6 text-brand-muted">
+          {loading ? (
+            'Checking active API key capacity…'
+          ) : (
+            <>
+              <span className="font-semibold text-brand-text">{activeKeyCount}</span> of{' '}
+              <span className="font-semibold text-brand-text">{MAX_ACTIVE_API_KEYS}</span> active keys used.{' '}
+              {hasReachedKeyLimit
+                ? 'Revoke an active key before creating another one.'
+                : `${remainingKeySlots} active ${remainingKeySlots === 1 ? 'slot remains' : 'slots remain'}.`}
+            </>
+          )}
+        </div>
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-end">
           <div className="space-y-2 lg:flex-1">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
@@ -220,7 +241,7 @@ export default function ApiKeysPage() {
           <div>
             <button
               onClick={handleCreate}
-              disabled={actionLoading || !newKeyName.trim()}
+              disabled={loading || actionLoading || !newKeyName.trim() || hasReachedKeyLimit}
               className="flex items-center justify-center gap-2 w-full rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 lg:w-auto"
             >
               <Plus className="h-4 w-4" />
