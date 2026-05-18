@@ -10,8 +10,16 @@ const OPENFORT_ENV_HELP: Record<string, string> = {
   VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY: 'Enables embedded wallet recovery and dashboard wallet setup.',
 };
 
+const SIGN_IN_ENV_VARS = ['VITE_OPENFORT_PUBLISHABLE_KEY'];
+const WALLET_SETUP_ENV_VARS = ['VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY'];
+
 export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
   const envTemplate = missingVars.map((name) => `${name}=`).join('\n');
+  const signInVars = missingVars.filter((name) => SIGN_IN_ENV_VARS.includes(name));
+  const walletSetupVars = missingVars.filter((name) => WALLET_SETUP_ENV_VARS.includes(name));
+  const otherVars = missingVars.filter(
+    (name) => !SIGN_IN_ENV_VARS.includes(name) && !WALLET_SETUP_ENV_VARS.includes(name),
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-bg p-6 text-brand-text">
@@ -32,14 +40,45 @@ export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
             </ul>
             <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs text-red-800">
               <p className="font-semibold text-red-900">What these unlock</p>
-              <ul className="mt-2 space-y-1.5">
-                {missingVars.map((name) => (
-                  <li key={name}>
-                    <span className="font-mono font-semibold">{name}</span>:{' '}
-                    {OPENFORT_ENV_HELP[name] ?? 'Required by the Openfort frontend integration.'}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-2 space-y-3">
+                {signInVars.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-red-900">Sign-in and session checks</p>
+                    <ul className="mt-1 space-y-1.5">
+                      {signInVars.map((name) => (
+                        <li key={name}>
+                          <span className="font-mono font-semibold">{name}</span>: {OPENFORT_ENV_HELP[name]}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {walletSetupVars.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-red-900">Wallet setup and recovery</p>
+                    <ul className="mt-1 space-y-1.5">
+                      {walletSetupVars.map((name) => (
+                        <li key={name}>
+                          <span className="font-mono font-semibold">{name}</span>: {OPENFORT_ENV_HELP[name]}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {otherVars.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-red-900">Other Openfort frontend config</p>
+                    <ul className="mt-1 space-y-1.5">
+                      {otherVars.map((name) => (
+                        <li key={name}>
+                          <span className="font-mono font-semibold">{name}</span>:{' '}
+                          {OPENFORT_ENV_HELP[name] ?? 'Required by the Openfort frontend integration.'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="rounded-lg border border-red-200 bg-white/70 p-3 text-xs text-red-800">
               <p className="font-semibold text-red-900">Local setup</p>
