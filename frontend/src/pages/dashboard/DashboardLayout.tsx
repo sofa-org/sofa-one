@@ -117,6 +117,17 @@ export default function DashboardLayout() {
             </nav>
             <div className="border-t border-brand-border px-4 py-4">
               <SignOutError />
+              <div className="mb-3 flex min-w-0 items-center gap-2 rounded-lg bg-brand-bg px-3 py-2">
+                <UserBadge />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-muted">
+                    Signed in as
+                  </p>
+                  <p className="truncate text-sm font-medium text-brand-text">
+                    {user?.email ?? 'Openfort user'}
+                  </p>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-brand-muted">
                   {signOutLoading ? 'Signing out…' : 'Sign out'}
