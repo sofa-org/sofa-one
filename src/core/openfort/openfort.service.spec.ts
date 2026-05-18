@@ -13,6 +13,7 @@ const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
 const mockEstimateFeesPerGas = jest.fn();
+const mockGetTransactionReceipt = jest.fn();
 
 jest.mock('@openfort/openfort-node', () => ({
   __esModule: true,
@@ -47,6 +48,7 @@ jest.mock('../../common/calibur/calibur', () => {
 jest.mock('viem/actions', () => ({
   ...jest.requireActual('viem/actions'),
   estimateFeesPerGas: mockEstimateFeesPerGas,
+  getTransactionReceipt: mockGetTransactionReceipt,
 }));
 
 import { OpenfortService } from './openfort.service';
@@ -313,6 +315,41 @@ describe('OpenfortService', () => {
       expect.objectContaining({ chain: { id: 137 } }),
       { chain: { id: 137 }, type: 'eip1559' },
     );
+  });
+
+  it('returns null when a transaction receipt is not found yet', async () => {
+    mockGetTransactionReceipt.mockRejectedValue(new Error('Transaction receipt not found'));
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any);
+
+    await expect(
+      service.getTransactionReceiptStatus(
+        84532,
+        '0x1111111111111111111111111111111111111111111111111111111111111111',
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it('maps unexpected receipt lookup failures to BadGatewayException', async () => {
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    mockGetTransactionReceipt.mockRejectedValue(new Error('RPC connection failed'));
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any);
+
+    await expect(
+      service.getTransactionReceiptStatus(
+        84532,
+        '0x1111111111111111111111111111111111111111111111111111111111111111',
+      ),
+    ).rejects.toThrow(BadGatewayException);
+
+    loggerErrorSpy.mockRestore();
   });
 
   it('maps UserOperation gas price failures to a specific API error', () => {
