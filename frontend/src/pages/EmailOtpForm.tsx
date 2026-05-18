@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useEmailOtpAuth } from '@openfort/react';
 import { useNavigate } from 'react-router-dom';
 
+function getAuthErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
+
 export default function EmailOtpForm() {
   const navigate = useNavigate();
   const { requestEmailOtp, signInEmailOtp, isRequesting, isLoading } = useEmailOtpAuth();
@@ -16,14 +21,23 @@ export default function EmailOtpForm() {
     setError(null);
     setEmail(normalizedEmail);
 
-    const result = await requestEmailOtp({ email: normalizedEmail });
-    if (result.error) {
-      setError(result.error.message ?? 'Could not send OTP.');
+    if (!normalizedEmail) {
+      setError('Enter your email address to receive a one-time code.');
       return;
     }
 
-    setSent(true);
-    setOtp('');
+    try {
+      const result = await requestEmailOtp({ email: normalizedEmail });
+      if (result.error) {
+        setError(result.error.message ?? 'Could not send OTP.');
+        return;
+      }
+
+      setSent(true);
+      setOtp('');
+    } catch (err: unknown) {
+      setError(getAuthErrorMessage(err, 'Could not send OTP. Check your connection and try again.'));
+    }
   }
 
   async function handleRequestOtp(e: React.FormEvent) {
@@ -38,12 +52,21 @@ export default function EmailOtpForm() {
 
     setError(null);
 
-    const result = await signInEmailOtp({ email: normalizedEmail, otp: normalizedOtp });
-    if (result.error || !result.user) {
-      setError(result.error?.message ?? 'Invalid OTP.');
+    if (!normalizedEmail || !normalizedOtp) {
+      setError('Enter the email and one-time code before continuing.');
       return;
     }
-    navigate('/dashboard', { replace: true });
+
+    try {
+      const result = await signInEmailOtp({ email: normalizedEmail, otp: normalizedOtp });
+      if (result.error || !result.user) {
+        setError(result.error?.message ?? 'Invalid OTP.');
+        return;
+      }
+      navigate('/dashboard', { replace: true });
+    } catch (err: unknown) {
+      setError(getAuthErrorMessage(err, 'Could not verify OTP. Check your connection and try again.'));
+    }
   }
 
   return (
@@ -70,6 +93,7 @@ export default function EmailOtpForm() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={sent}
             required
+            autoComplete="email"
             className="w-full rounded-lg border border-brand-border bg-brand-bg/50 px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
           />
         </div>
@@ -83,6 +107,7 @@ export default function EmailOtpForm() {
               onChange={(e) => setOtp(e.target.value)}
               required
               inputMode="numeric"
+              autoComplete="one-time-code"
               className="w-full rounded-lg border border-brand-border bg-brand-bg/50 px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
             />
           </div>
