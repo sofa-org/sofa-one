@@ -10,21 +10,35 @@ export default function EmailOtpForm() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleRequestOtp(e: React.FormEvent) {
-    e.preventDefault();
+  async function requestOtpForEmail() {
+    const normalizedEmail = email.trim();
+
     setError(null);
-    const result = await requestEmailOtp({ email });
+    setEmail(normalizedEmail);
+
+    const result = await requestEmailOtp({ email: normalizedEmail });
     if (result.error) {
       setError(result.error.message ?? 'Could not send OTP.');
       return;
     }
+
     setSent(true);
+    setOtp('');
+  }
+
+  async function handleRequestOtp(e: React.FormEvent) {
+    e.preventDefault();
+    await requestOtpForEmail();
   }
 
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
+    const normalizedEmail = email.trim();
+    const normalizedOtp = otp.trim();
+
     setError(null);
-    const result = await signInEmailOtp({ email, otp });
+
+    const result = await signInEmailOtp({ email: normalizedEmail, otp: normalizedOtp });
     if (result.error || !result.user) {
       setError(result.error?.message ?? 'Invalid OTP.');
       return;
@@ -40,6 +54,12 @@ export default function EmailOtpForm() {
       <p className="mt-2 text-sm text-brand-muted">
         Use Openfort email OTP to access your EOA.
       </p>
+      {sent && (
+        <p className="mt-4 rounded-lg border border-brand-border bg-brand-bg/60 px-3 py-2 text-xs text-brand-muted">
+          We sent a one-time code to <span className="font-medium text-brand-text">{email}</span>. Check your inbox and
+          spam folder.
+        </p>
+      )}
 
       <form onSubmit={sent ? handleVerifyOtp : handleRequestOtp} className="mt-6 space-y-4">
         <div>
@@ -79,17 +99,29 @@ export default function EmailOtpForm() {
         </button>
       </form>
 
-      <button
-        type="button"
-        onClick={() => {
-          setSent(false);
-          setOtp('');
-          setError(null);
-        }}
-        className="mt-4 text-xs font-medium text-brand-accent hover:text-brand-accent/80"
-      >
-        Use a different email
-      </button>
+      {sent && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium">
+          <button
+            type="button"
+            onClick={requestOtpForEmail}
+            disabled={isRequesting || isLoading}
+            className="text-brand-accent hover:text-brand-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isRequesting ? 'Resending…' : 'Resend code'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSent(false);
+              setOtp('');
+              setError(null);
+            }}
+            className="text-brand-muted hover:text-brand-text"
+          >
+            Use a different email
+          </button>
+        </div>
+      )}
     </div>
   );
 }
