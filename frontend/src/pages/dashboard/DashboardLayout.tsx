@@ -26,7 +26,7 @@ export default function DashboardLayout() {
 
     try {
       await signOut();
-      navigate('/');
+      navigate('/sign-in', { replace: true });
     } catch (err: unknown) {
       setSignOutError(err instanceof Error ? err.message : 'Could not sign out. Please try again.');
     } finally {
