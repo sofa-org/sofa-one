@@ -1212,6 +1212,27 @@ export default function WalletPage() {
                   </div>
                 )}
 
+                <div className="mb-4 grid gap-3 rounded-xl border border-blue-200 bg-white/70 p-4 text-sm text-blue-950 shadow-inner sm:grid-cols-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Selected network</p>
+                    <p className="mt-1 font-semibold">{agentChain?.name ?? `Chain ${agentChainId}`}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Current status</p>
+                    <p className="mt-1 font-semibold">{formatAgentStatus(selectedAuthorizationStatus)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">This submission will</p>
+                    <p className="mt-1 font-semibold">
+                      {isSelectedChainRegistered && shouldPromptReauthorization
+                        ? 'Renew API access'
+                        : isSelectedChainRegistered
+                          ? 'Keep access unchanged'
+                          : 'Authorize API access'}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-end">
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
