@@ -815,6 +815,8 @@ export default function WalletPage() {
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
+  const shouldPromptReauthorization = selectedAuthorizationExpiry?.tone === 'red'
+    || selectedAuthorizationExpiry?.tone === 'amber';
   const selectedAuthorizationExpiryClasses = selectedAuthorizationExpiry?.tone === 'red'
     ? 'border-red-200 bg-red-50 text-red-800'
     : selectedAuthorizationExpiry?.tone === 'amber'
@@ -823,7 +825,7 @@ export default function WalletPage() {
   const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
-  const authorizeSubmitDisabled = registrationBusy || isSelectedChainRegistered;
+  const authorizeSubmitDisabled = registrationBusy || (isSelectedChainRegistered && !shouldPromptReauthorization);
   const showAgentRegistrationSpinner = walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !wallet?.walletAddress
     ? { title: 'Create agent EOA', tone: 'amber', description: 'Set one recovery password. Openfort secures the EOA key and we never expose private keys.' }
@@ -1192,12 +1194,21 @@ export default function WalletPage() {
 
                 {isSelectedChainRegistered && selectedAuthorizationExpiry && (
                   <div className={`mb-4 rounded-xl border p-4 text-sm shadow-sm ${selectedAuthorizationExpiryClasses}`}>
-                    <p className="font-semibold">
-                      Current network authorization expires {selectedAuthorizationExpiry.relativeLabel.toLowerCase()}.
-                    </p>
-                    <p className="mt-1 text-xs opacity-80">
-                      Exact expiry: {selectedAuthorizationExpiry.absoluteLabel}. Re-authorize before then if this backend integration must keep running.
-                    </p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold">
+                          Current network authorization expires {selectedAuthorizationExpiry.relativeLabel.toLowerCase()}.
+                        </p>
+                        <p className="mt-1 text-xs opacity-80">
+                          Exact expiry: {selectedAuthorizationExpiry.absoluteLabel}. Re-authorize before then if this backend integration must keep running.
+                        </p>
+                      </div>
+                      {shouldPromptReauthorization && (
+                        <span className="inline-flex items-center justify-center rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-current/20">
+                          Re-authorize below
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1257,8 +1268,10 @@ export default function WalletPage() {
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
                       <span>
-                        {isSelectedChainRegistered
-                          ? 'Authorized'
+                        {isSelectedChainRegistered && shouldPromptReauthorization
+                          ? 'Re-authorize API Access'
+                          : isSelectedChainRegistered
+                            ? 'Authorized'
                           : isAgentRegistrationChecking
                             ? 'Authorization pending'
                             : 'Authorize API Access'}
