@@ -103,12 +103,15 @@ export default function ApiKeysPage() {
     }
   }
 
-  async function handleRevoke(id: string) {
-    if (!confirm('Revoke this API key? This cannot be undone.')) return;
+  async function handleRevoke(key: ApiKeyRecord) {
+    const label = key.name ? `${key.name} (${key.displayPrefix})` : key.displayPrefix;
+    if (
+      !confirm(`Revoke API key ${label}? This immediately stops any backend using it and cannot be undone.`)
+    ) return;
     setActionLoading(true);
     setActionError(null);
     try {
-      await revokeApiKeyAuth(getToken, id);
+      await revokeApiKeyAuth(getToken, key.id);
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -118,7 +121,14 @@ export default function ApiKeysPage() {
   }
 
   async function handleRefresh() {
-    if (!confirm('This will revoke ALL existing keys and create a new one.')) return;
+    const activeKeyCount = keys.filter((key) => !key.revoked).length;
+    if (
+      !confirm(
+        `Rotate ${activeKeyCount} active API key${activeKeyCount === 1 ? '' : 's'}? This revokes every active key, creates one replacement, and shows the new raw key only once.`,
+      )
+    ) {
+      return;
+    }
     setActionLoading(true);
     setActionError(null);
     try {
@@ -303,7 +313,7 @@ export default function ApiKeysPage() {
                 </span>
                 {!key.revoked ? (
                   <button
-                    onClick={() => handleRevoke(key.id)}
+                    onClick={() => handleRevoke(key)}
                     disabled={actionLoading}
                     className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 md:justify-self-end"
                   >
