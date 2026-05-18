@@ -53,10 +53,7 @@ export default function SignInPage() {
         </div>
 
         <p className="mt-8 text-center text-xs text-brand-muted">
-          By continuing with email OTP, you agree to our{' '}
-          <span className="underline underline-offset-2 decoration-brand-border cursor-pointer hover:text-brand-text transition-colors">Terms</span>
-          {' '}and{' '}
-          <span className="underline underline-offset-2 decoration-brand-border cursor-pointer hover:text-brand-text transition-colors">Privacy Policy</span>.
+          By continuing with email OTP, you agree to SOFA ONE&apos;s terms and privacy policy.
         </p>
       </div>
     </div>
