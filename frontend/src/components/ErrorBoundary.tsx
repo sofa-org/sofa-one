@@ -31,8 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private getErrorDetails(error: Error) {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const details = [
       `Time: ${new Date().toISOString()}`,
+      `Time zone: ${timeZone ?? 'Unknown'}`,
       `Path: ${window.location.pathname}${window.location.search}${window.location.hash}`,
       `Browser: ${navigator.userAgent}`,
       `Language: ${navigator.language}`,
