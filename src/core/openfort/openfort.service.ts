@@ -317,20 +317,16 @@ export class OpenfortService {
       };
     }
 
-    try {
-      const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
-      return {
-        hash: await bundlerClient.sendUserOperation({
-          account: params.account,
-          calls,
-          maxFeePerGas: params.gasPrice.maxFeePerGas,
-          maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-        } as any),
-        bundlerClient,
-      };
-    } catch (error: any) {
-      throw error;
-    }
+    const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
+    return {
+      hash: await bundlerClient.sendUserOperation({
+        account: params.account,
+        calls,
+        maxFeePerGas: params.gasPrice.maxFeePerGas,
+        maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+      } as any),
+      bundlerClient,
+    };
   }
 
   private async estimateUserOperationFees(client: any): Promise<UserOperationGasPrice> {
