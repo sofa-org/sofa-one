@@ -5,7 +5,6 @@ import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient } from 'wagmi';
 import { http, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { estimateFeesPerGas } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import {
   DEFAULT_CHAIN_ID,
@@ -63,6 +62,58 @@ function parseUsdcAmount(input: string): string {
   const frac = fracPart.padEnd(6, '0');
   const baseUnits = BigInt(intPart) * 1_000_000n + BigInt(frac);
   return baseUnits.toString();
+}
+
+type OpenfortGasPriceResponse = {
+  result?: {
+    fast?: { maxFeePerGas?: string | number; maxPriorityFeePerGas?: string | number };
+    standard?: { maxFeePerGas?: string | number; maxPriorityFeePerGas?: string | number };
+    maxFeePerGas?: string | number;
+    maxPriorityFeePerGas?: string | number;
+  };
+  error?: { message?: string };
+};
+
+function parseRpcBigInt(value: unknown): bigint | null {
+  if (typeof value === 'bigint') return value;
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const text = String(value).trim();
+  if (/^0x[0-9a-fA-F]+$/.test(text)) return BigInt(text);
+  if (/^\d+$/.test(text)) return BigInt(text);
+  return null;
+}
+
+async function getOpenfortUserOperationGasPrice(openfortRpcUrl: string, publishableKey: string) {
+  const response = await fetch(openfortRpcUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${publishableKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'openfort_getUserOperationGasPrice',
+      params: [],
+    }),
+  });
+  if (!response.ok) {
+    throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC.');
+  }
+
+  const payload = (await response.json()) as OpenfortGasPriceResponse;
+  if (payload.error) {
+    throw new Error(payload.error.message ?? 'Unable to estimate UserOperation fee parameters from Openfort RPC.');
+  }
+
+  const candidate = payload.result?.fast ?? payload.result?.standard ?? payload.result;
+  const maxFeePerGas = parseRpcBigInt(candidate?.maxFeePerGas);
+  const maxPriorityFeePerGas = parseRpcBigInt(candidate?.maxPriorityFeePerGas);
+  if (!maxFeePerGas || !maxPriorityFeePerGas) {
+    throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC.');
+  }
+
+  return { maxFeePerGas, maxPriorityFeePerGas };
 }
 
 function EthIcon() {
@@ -765,6 +816,9 @@ export default function WalletPage() {
       });
       const caliburAccount = await createCaliburAccount({ client: publicClient, owner });
       const openfortPublishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
+      if (!openfortPublishableKey) {
+        throw new Error('Openfort publishable key is not configured.');
+      }
       const openfortRpcUrl = `https://api.openfort.io/rpc/${agentChainId}`;
       const openfortRpcTransport = http(openfortRpcUrl, {
         fetchOptions: {
@@ -781,7 +835,7 @@ export default function WalletPage() {
         ...(paymaster ? { paymaster } : {}),
         transport: openfortRpcTransport,
       } as never);
-      const fees = await estimateFeesPerGas(publicClient, { chain: publicClient.chain, type: 'eip1559' });
+      const fees = await getOpenfortUserOperationGasPrice(openfortRpcUrl, openfortPublishableKey);
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
