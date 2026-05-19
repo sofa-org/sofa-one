@@ -22,6 +22,7 @@ coverage/
 !docs/
 !docs/archive/
 !docs/archive/legacy-design.md
+!codemap.md
 /.agent-shell/
 .slim/
 examples/
