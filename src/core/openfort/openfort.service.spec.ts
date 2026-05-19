@@ -12,8 +12,9 @@ const accountsList = jest.fn();
 const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
-const mockEstimateFeesPerGas = jest.fn();
 const mockGetTransactionReceipt = jest.fn();
+const originalFetch = globalThis.fetch;
+const mockFetch = jest.fn();
 
 jest.mock('@openfort/openfort-node', () => ({
   __esModule: true,
@@ -47,7 +48,6 @@ jest.mock('../../common/calibur/calibur', () => {
 
 jest.mock('viem/actions', () => ({
   ...jest.requireActual('viem/actions'),
-  estimateFeesPerGas: mockEstimateFeesPerGas,
   getTransactionReceipt: mockGetTransactionReceipt,
 }));
 
@@ -57,14 +57,29 @@ import { RequestContextService } from '../../common/request-context/request-cont
 describe('OpenfortService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockEstimateFeesPerGas.mockResolvedValue({
-      maxFeePerGas: 200_000_000_000n,
-      maxPriorityFeePerGas: 178_000_000_000n,
+    (globalThis as any).fetch = mockFetch;
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          standard: {
+            maxFeePerGas: '200000000000',
+            maxPriorityFeePerGas: '178000000000',
+          },
+          fast: {
+            maxFeePerGas: '250000000000',
+            maxPriorityFeePerGas: '178000000000',
+          },
+        },
+      }),
     });
     jest.useFakeTimers();
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
     jest.useRealTimers();
   });
 
@@ -300,21 +315,33 @@ describe('OpenfortService', () => {
     );
   });
 
-  it('uses standard chain fee estimation for UserOperation fees', async () => {
+  it('uses Openfort fee endpoint for UserOperation fees', async () => {
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
       get: jest.fn(() => 25),
     };
     const service = new OpenfortService(configService as any) as any;
 
-    const gasPrice = await service.estimateUserOperationFees({ chain: { id: 137 } });
+    const gasPrice = await service.estimateUserOperationFees({
+      openfortRpcUrl: 'https://api.openfort.io/rpc/137',
+      publishableKey: 'pk_test',
+    });
 
-    expect(gasPrice.maxFeePerGas.toString()).toBe('200000000000');
+    expect(gasPrice.maxFeePerGas.toString()).toBe('250000000000');
     expect(gasPrice.maxPriorityFeePerGas.toString()).toBe('178000000000');
-    expect(mockEstimateFeesPerGas).toHaveBeenCalledWith(
-      expect.objectContaining({ chain: { id: 137 } }),
-      { chain: { id: 137 }, type: 'eip1559' },
-    );
+    expect(mockFetch).toHaveBeenCalledWith('https://api.openfort.io/rpc/137', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer pk_test',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'openfort_getUserOperationGasPrice',
+        params: [],
+      }),
+    });
   });
 
   it('returns null when a transaction receipt is not found yet', async () => {
@@ -361,13 +388,13 @@ describe('OpenfortService', () => {
 
     const exception = service.createOpenfortApiException(
       'sendUserOperation',
-      new Error('Unable to estimate UserOperation fee parameters from chain RPC'),
+      new Error('Unable to estimate UserOperation fee parameters from Openfort RPC'),
     );
 
     expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
     expect(exception.getResponse()).toEqual({
       code: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
-      message: 'Unable to estimate UserOperation fee parameters from chain RPC.',
+      message: 'Unable to estimate UserOperation fee parameters from Openfort RPC.',
     });
   });
 

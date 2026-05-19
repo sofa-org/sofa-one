@@ -13,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { estimateFeesPerGas, getTransactionReceipt } from 'viem/actions';
+import { getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
@@ -229,7 +229,7 @@ export class OpenfortService {
       });
       const sponsorshipMode = params.sponsorship ?? 'none';
       const openfortRpcUrl = `https://api.openfort.io/rpc/${params.chainId}`;
-      const gasPrice = await this.estimateUserOperationFees(client);
+      const gasPrice = await this.estimateUserOperationFees({ openfortRpcUrl, publishableKey });
       const openfortRpcTransport = http(openfortRpcUrl, {
         fetchOptions: {
           headers: { Authorization: `Bearer ${publishableKey}` },
@@ -329,20 +329,65 @@ export class OpenfortService {
     };
   }
 
-  private async estimateUserOperationFees(client: any): Promise<UserOperationGasPrice> {
-    const fees = (await this.withTimeout(
-      estimateFeesPerGas(client, { chain: client.chain, type: 'eip1559' }),
+  private async estimateUserOperationFees(params: {
+    openfortRpcUrl: string;
+    publishableKey: string;
+  }): Promise<UserOperationGasPrice> {
+    const response = await this.withTimeout(
+      fetch(params.openfortRpcUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${params.publishableKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'openfort_getUserOperationGasPrice',
+          params: [],
+        }),
+      }),
       'estimateUserOperationFees',
-    )) as { maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint };
+    );
 
-    if (!fees.maxFeePerGas || !fees.maxPriorityFeePerGas) {
-      throw new Error('Unable to estimate UserOperation fee parameters from chain RPC');
+    if (!response.ok) {
+      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
+    }
+
+    const payload = (await response.json()) as OpenfortGasPriceRpcResponse;
+    if (payload.error) {
+      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
+    }
+
+    const recommendedFees = this.selectOpenfortUserOperationGasPrice(payload.result);
+
+    if (!recommendedFees?.maxFeePerGas || !recommendedFees?.maxPriorityFeePerGas) {
+      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
     }
 
     return {
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+      maxFeePerGas: recommendedFees.maxFeePerGas,
+      maxPriorityFeePerGas: recommendedFees.maxPriorityFeePerGas,
     };
+  }
+
+  private selectOpenfortUserOperationGasPrice(
+    result: OpenfortGasPriceRpcResult | undefined,
+  ): UserOperationGasPrice | null {
+    const candidate = result?.fast ?? result?.standard ?? result;
+    const maxFeePerGas = this.parseRpcBigInt(candidate?.maxFeePerGas);
+    const maxPriorityFeePerGas = this.parseRpcBigInt(candidate?.maxPriorityFeePerGas);
+    if (!maxFeePerGas || !maxPriorityFeePerGas) return null;
+    return { maxFeePerGas, maxPriorityFeePerGas };
+  }
+
+  private parseRpcBigInt(value: unknown): bigint | null {
+    if (typeof value === 'bigint') return value;
+    if (typeof value !== 'string' && typeof value !== 'number') return null;
+    const text = String(value).trim();
+    if (/^0x[0-9a-fA-F]+$/.test(text)) return BigInt(text);
+    if (/^\d+$/.test(text)) return BigInt(text);
+    return null;
   }
 
   private async estimateUnsponsoredUserOperationGas(
@@ -496,7 +541,7 @@ export class OpenfortService {
       return new HttpException(
         {
           code: API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE,
-          message: 'Unable to estimate UserOperation fee parameters from chain RPC.',
+          message: 'Unable to estimate UserOperation fee parameters from Openfort RPC.',
         },
         HttpStatus.BAD_GATEWAY,
       );
@@ -604,4 +649,19 @@ type UserOperationGasLimits = {
   callGasLimit: bigint;
   verificationGasLimit: bigint;
   preVerificationGas: bigint;
+};
+
+type OpenfortGasPriceRpcResponse = {
+  result?: OpenfortGasPriceRpcResult;
+  error?: unknown;
+};
+
+type OpenfortGasPriceRpcResult = Partial<UserOperationGasPriceLike> & {
+  standard?: UserOperationGasPriceLike;
+  fast?: UserOperationGasPriceLike;
+};
+
+type UserOperationGasPriceLike = {
+  maxFeePerGas?: bigint | number | string;
+  maxPriorityFeePerGas?: bigint | number | string;
 };
