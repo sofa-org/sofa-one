@@ -99,9 +99,11 @@ describe('WalletService.withdraw()', () => {
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
+  let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
     // Default: wallet exists, sufficient balance, no duplicate tx
     mockFindUnique.mockResolvedValue({ ...WALLET });
@@ -129,6 +131,10 @@ describe('WalletService.withdraw()', () => {
     }).compile();
 
     service = module.get<WalletService>(WalletService);
+  });
+
+  afterEach(() => {
+    loggerWarnSpy.mockRestore();
   });
 
   // ── 1. Wallet not found ──────────────────────────────────────────────────────
@@ -223,6 +229,54 @@ describe('WalletService.withdraw()', () => {
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
     expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects withdrawals above the single-withdrawal limit before balance checks', async () => {
+    await expect(
+      service.withdraw('user-1', {
+        ...VALID_DTO,
+        amount: '10000000001',
+      }),
+    ).rejects.toThrow('Withdrawal amount exceeds single-withdrawal limit');
+
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Withdrawal policy rejected request',
+        reason: 'Withdrawal amount exceeds single-withdrawal limit',
+        userId: 'user-1',
+        chainId: VALID_DTO.chainId,
+        token: 'USDC',
+        amountUnits: '10000000001',
+        maxAmountUnits: '10000000000',
+      }),
+    );
+  });
+
+  it('logs high-value withdrawals without blocking allowed amounts', async () => {
+    mockReadContract.mockResolvedValue(BigInt('2000000000'));
+
+    await service.withdraw('user-1', {
+      ...VALID_DTO,
+      amount: '1000000000',
+    });
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'High-value withdrawal requested',
+        userId: 'user-1',
+        chainId: VALID_DTO.chainId,
+        token: 'USDC',
+        amountUnits: '1000000000',
+        thresholdUnits: '1000000000',
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(VALID_DTO.to);
+    expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
   });
 
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────

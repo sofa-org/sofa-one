@@ -11,10 +11,12 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
-/** USDC uses 6 decimals. Max single withdrawal: 1,000,000 USDC = 1_000_000_000_000 units. */
-const USDC_MAX_AMOUNT = BigInt('1000000000000'); // 1M USDC in micro-units
+/** USDC uses 6 decimals. Max single withdrawal: 10,000 USDC = 10_000_000_000 units. */
+export const USDC_MAX_AMOUNT = BigInt('10000000000'); // 10k USDC in micro-units
+/** High-value withdrawal threshold: 1,000 USDC = 1_000_000_000 units. */
+export const USDC_HIGH_VALUE_AMOUNT = BigInt('1000000000');
 /** Minimum withdrawal: 0.01 USDC = 10_000 units. */
-const USDC_MIN_AMOUNT = BigInt('10000');
+export const USDC_MIN_AMOUNT = BigInt('10000');
 
 function IsUsdcAmount(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -34,7 +36,7 @@ function IsUsdcAmount(validationOptions?: ValidationOptions) {
           }
         },
         defaultMessage(args: ValidationArguments): string {
-          return `${args.property} must be a numeric string between ${USDC_MIN_AMOUNT} (0.01 USDC) and ${USDC_MAX_AMOUNT} (1,000,000 USDC) in micro-units`;
+          return `${args.property} must be a numeric string between ${USDC_MIN_AMOUNT} (0.01 USDC) and ${USDC_MAX_AMOUNT} (10,000 USDC) in micro-units`;
         },
       },
     });

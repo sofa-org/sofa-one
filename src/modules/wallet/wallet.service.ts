@@ -27,7 +27,7 @@ import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
-import type { WithdrawDto } from './dto/withdraw.dto';
+import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -523,6 +523,8 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
+    this.assertWithdrawalPolicy(params, { userId, chainId });
+
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
@@ -644,6 +646,31 @@ export class WalletService {
         data: { status: 'unknown' },
       });
       throw error;
+    }
+  }
+
+  private assertWithdrawalPolicy(params: WithdrawDto, context: { userId: string; chainId: number }): void {
+    const amount = BigInt(params.amount);
+    if (amount > USDC_MAX_AMOUNT) {
+      this.logSecurityWarning({
+        message: 'Withdrawal policy rejected request',
+        reason: 'Withdrawal amount exceeds single-withdrawal limit',
+        ...context,
+        token: params.token,
+        amountUnits: params.amount,
+        maxAmountUnits: USDC_MAX_AMOUNT.toString(),
+      });
+      throw new BadRequestException('Withdrawal amount exceeds single-withdrawal limit');
+    }
+
+    if (amount >= USDC_HIGH_VALUE_AMOUNT) {
+      this.logSecurityWarning({
+        message: 'High-value withdrawal requested',
+        ...context,
+        token: params.token,
+        amountUnits: params.amount,
+        thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
+      });
     }
   }
 
