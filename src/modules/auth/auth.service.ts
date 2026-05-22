@@ -37,6 +37,7 @@ type WalletWithAuthorizations = UserWallet & {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private static readonly agentRegistrationGraceMs = 5 * 60 * 1000;
+  private static readonly agentAuthorizationMaxTtlMs = 30 * 24 * 60 * 60 * 1000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -499,6 +500,9 @@ export class AuthService {
     }
     if (expiresAt <= new Date()) {
       throw new BadRequestException('Agent expiry time must be in the future');
+    }
+    if (expiresAt.getTime() - Date.now() > AuthService.agentAuthorizationMaxTtlMs) {
+      throw new BadRequestException('Agent expiry time must be within 30 days');
     }
 
     return expiresAt;

@@ -233,6 +233,7 @@ const AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS = 60_000;
 const AGENT_REGISTRATION_RESULT_RETRY_DELAY_MS = 3_000;
 const AGENT_REGISTRATION_AUTO_CHECK_MS = 120_000;
 const AGENT_REGISTRATION_MANUAL_CHECK_MS = 60_000;
+const AGENT_AUTHORIZATION_MAX_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const BALANCE_CHAIN_STORAGE_KEY = 'sofa-one.wallet.balanceChainId';
 const AGENT_CHAIN_STORAGE_KEY = 'sofa-one.wallet.agentChainId';
@@ -249,7 +250,11 @@ function formatDateTimeLocal(date: Date) {
 }
 
 function getDefaultAgentExpiryLocal() {
-  return formatDateTimeLocal(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+  return formatDateTimeLocal(new Date(Date.now() + AGENT_AUTHORIZATION_MAX_TTL_MS));
+}
+
+function getMaxAgentExpiryLocal() {
+  return formatDateTimeLocal(new Date(Date.now() + AGENT_AUTHORIZATION_MAX_TTL_MS));
 }
 
 function assertWebCryptoAvailable() {
@@ -701,6 +706,9 @@ export default function WalletPage() {
       const agentExpiresAt = new Date(agentExpiryLocal);
       if (Number.isNaN(agentExpiresAt.getTime()) || agentExpiresAt <= new Date()) {
         throw new Error('Choose an API authorization expiry time in the future.');
+      }
+      if (agentExpiresAt.getTime() - Date.now() > AGENT_AUTHORIZATION_MAX_TTL_MS) {
+        throw new Error('Choose an API authorization expiry within 30 days.');
       }
 
       let activeEmbeddedWallet: { address: Address; accountId?: string };
@@ -1375,11 +1383,15 @@ export default function WalletPage() {
                       type="datetime-local"
                       value={agentExpiryLocal}
                       min={formatDateTimeLocal(new Date(Date.now() + 60_000))}
+                      max={getMaxAgentExpiryLocal()}
                       onChange={(event) => setAgentExpiryLocal(event.target.value)}
                       disabled={authorizeSubmitDisabled}
                       required
                       className="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm text-brand-text shadow-sm placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                     />
+                    <p className="mt-1 text-[11px] text-brand-muted">
+                      Maximum authorization lifetime is 30 days. Re-authorize before expiry for long-running integrations.
+                    </p>
                   </div>
                   <div className="flex-1">
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">

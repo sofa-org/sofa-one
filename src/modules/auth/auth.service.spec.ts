@@ -4,8 +4,8 @@ jest.mock('../../core/openfort/openfort.service', () => ({ OpenfortService: clas
 
 describe('AuthService', () => {
   const chainId = 84532;
-  const futureDate = new Date('2027-05-06T00:00:00.000Z');
   const updatedAt = new Date('2026-05-06T00:00:00.000Z');
+  const futureDate = new Date('2026-05-13T00:00:00.000Z');
   const auth = (overrides: Record<string, unknown> = {}) => ({
     chainId: BigInt(chainId),
     status: 'registered',
@@ -22,6 +22,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(updatedAt);
     const tx = {
       user: { create: jest.fn().mockResolvedValue({ id: 'user-1' }) },
       userWallet: {
@@ -41,6 +42,10 @@ describe('AuthService', () => {
     openfort = { createBackendWallet: jest.fn(), createAgentWallet: jest.fn(), authorizeEmbeddedAddress: jest.fn(), verifyAgentKeyRegistration: jest.fn(), getTransactionReceiptStatus: jest.fn() };
     apiKeyService = { createApiKey: jest.fn().mockResolvedValue({ rawKey: 'sk_test' }) };
     service = new AuthService(prisma, openfort, apiKeyService, { get: jest.fn((_k: string, fb: unknown) => fb), getOrThrow: jest.fn(() => 'secret') } as any);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('authorizes embedded wallet without requiring an access token on the DTO', async () => {
@@ -73,6 +78,55 @@ describe('AuthService', () => {
     expect(result.wallet).not.toHaveProperty('embeddedWalletAddress');
     expect(result.wallet).not.toHaveProperty('supportedTokens');
     expect(result.wallet.chainAuthorizations[0]).not.toHaveProperty('updatedAt');
+  });
+
+  it('rejects agent authorization expiry beyond 30 days', async () => {
+    const wallet = { id: 'wallet-1', userId: 'user-1', status: 'active', walletAddress: '0x1111111111111111111111111111111111111111', agentOpenfortAccountId: 'agent-account-1', agentWalletAddress: '0x2222222222222222222222222222222222222222', agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333', chainAuthorizations: [] };
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({ openfortUserId: 'openfort-user-1', address: wallet.walletAddress, accountId: 'acc-1' });
+
+    await expect(
+      service.authorizeEmbeddedWallet(
+        'openfort-user-1',
+        'openfort-access-token',
+        {
+          embeddedWalletAddress: wallet.walletAddress,
+          chainId,
+          agentExpiresAt: new Date(updatedAt.getTime() + 31 * 24 * 60 * 60 * 1000).toISOString(),
+        } as any,
+      ),
+    ).rejects.toThrow('Agent expiry time must be within 30 days');
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('uses a short default agent registration expiry when no expiry is supplied', async () => {
+    const wallet = { id: 'wallet-1', userId: 'user-1', status: 'active', walletAddress: '0x1111111111111111111111111111111111111111', agentOpenfortAccountId: 'agent-account-1', agentWalletAddress: '0x2222222222222222222222222222222222222222', agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333', chainAuthorizations: [] };
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', wallet });
+    prisma.__tx.userWallet.upsert.mockResolvedValue(wallet);
+    prisma.__tx.userWallet.findUniqueOrThrow.mockResolvedValue({
+      ...wallet,
+      chainAuthorizations: [auth({ status: 'registration_required', expiresAt: new Date('2026-05-06T00:05:00.000Z') })],
+    });
+    openfort.authorizeEmbeddedAddress.mockResolvedValue({ openfortUserId: 'openfort-user-1', address: wallet.walletAddress, accountId: 'acc-1' });
+
+    await expect(
+      service.authorizeEmbeddedWallet(
+        'openfort-user-1',
+        'openfort-access-token',
+        {
+          embeddedWalletAddress: wallet.walletAddress,
+          chainId,
+        } as any,
+      ),
+    ).resolves.toMatchObject({ wallet: { chainAuthorizations: [expect.objectContaining({ expiresAt: '2026-05-06T00:05:00.000Z' })] } });
+
+    expect(prisma.__tx.walletChainAuthorization.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ expiresAt: new Date('2026-05-06T00:05:00.000Z') }),
+        update: expect.objectContaining({ expiresAt: new Date('2026-05-06T00:05:00.000Z') }),
+      }),
+    );
   });
 
   it('creates a pending embedded-wallet record', async () => {
