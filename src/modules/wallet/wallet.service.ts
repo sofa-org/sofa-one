@@ -16,6 +16,7 @@ import {
   hashMessage,
   hashTypedData,
   http,
+  isAddress,
   type Hex,
   type PublicClient,
 } from 'viem';
@@ -37,6 +38,14 @@ const ERC20_BALANCE_ABI = [
     type: 'function',
   },
 ] as const;
+
+const BLOCKED_TYPED_DATA_PRIMARY_TYPES = new Set([
+  'permit',
+  'permitbatch',
+  'permitsingle',
+  'permittransferfrom',
+  'permitbatchtransferfrom',
+]);
 
 type ApiKeySigningContext = {
   id?: string;
@@ -104,6 +113,10 @@ export class WalletService {
         'API key is not allowed to use EOA execution',
       );
     }
+    const typedDataSummary =
+      params.type === 'typed_data'
+        ? this.assertTypedDataSigningPolicy(params.typedData!)
+        : undefined;
 
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
@@ -153,7 +166,13 @@ export class WalletService {
         type: params.type,
         chainId: chainId === undefined ? undefined : BigInt(chainId),
         walletAddress: signingWalletAddress,
-        requestHash: hashRequest({ type: params.type, chainId, digest: data, executionMode }),
+        requestHash: hashRequest({
+          type: params.type,
+          chainId,
+          digest: data,
+          executionMode,
+          ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
+        }),
         digest: data,
         status: 'submitting',
       },
@@ -167,6 +186,7 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
+        ...(typedDataSummary ?? {}),
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       }),
     );
@@ -226,6 +246,51 @@ export class WalletService {
     if (allowed !== true) {
       throw new ForbiddenException(message);
     }
+  }
+
+  private assertTypedDataSigningPolicy(typedData: NonNullable<SignDto['typedData']>) {
+    this.assertTypedDataShape(typedData);
+
+    const primaryType = typedData.primaryType.trim();
+    if (this.isBlockedTypedDataPrimaryType(primaryType)) {
+      throw new BadRequestException('Permit typed data signing is not allowed');
+    }
+
+    const verifyingContract = typedData.domain.verifyingContract;
+    if (verifyingContract !== undefined) {
+      if (typeof verifyingContract !== 'string' || !isAddress(verifyingContract)) {
+        throw new BadRequestException('typedData.domain.verifyingContract must be a valid address');
+      }
+    }
+
+    return {
+      typedDataPrimaryType: primaryType,
+      ...(typeof verifyingContract === 'string'
+        ? { typedDataVerifyingContract: verifyingContract.toLowerCase() }
+        : {}),
+    };
+  }
+
+  private assertTypedDataShape(typedData: NonNullable<SignDto['typedData']>): void {
+    if (!typedData.domain || typeof typedData.domain !== 'object' || Array.isArray(typedData.domain)) {
+      throw new BadRequestException('typedData.domain is required');
+    }
+
+    if (!typedData.types || typeof typedData.types !== 'object' || Array.isArray(typedData.types)) {
+      throw new BadRequestException('typedData.types is required');
+    }
+
+    if (typeof typedData.primaryType !== 'string' || typedData.primaryType.trim().length === 0) {
+      throw new BadRequestException('typedData.primaryType is required');
+    }
+
+    if (!typedData.message || typeof typedData.message !== 'object' || Array.isArray(typedData.message)) {
+      throw new BadRequestException('typedData.message is required');
+    }
+  }
+
+  private isBlockedTypedDataPrimaryType(primaryType: string): boolean {
+    return BLOCKED_TYPED_DATA_PRIMARY_TYPES.has(primaryType.toLowerCase());
   }
 
   private assertAgentWalletReady(wallet: {

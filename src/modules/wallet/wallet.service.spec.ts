@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { encodeAbiParameters, hashMessage, type Hex } from 'viem';
+import { encodeAbiParameters, hashMessage, hashTypedData, type Hex } from 'viem';
 
 // ── viem mock ──────────────────────────────────────────────────────────────────
 // Must be declared before any imports that pull in viem transitively.
@@ -33,6 +33,7 @@ import { WalletService } from './wallet.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
+import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -619,6 +620,86 @@ describe('WalletService.sign()', () => {
     ).rejects.toThrow('typedData.domain.chainId must match chainId');
   });
 
+  it('rejects Permit typed data signing before loading the wallet', async () => {
+    const typedData = {
+      ...createTypedData(84532),
+      primaryType: 'Permit',
+      types: {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      },
+      message: {
+        owner: WALLET.walletAddress,
+        spender: '0x1111111111111111111111111111111111111111',
+        value: '1',
+        nonce: 0,
+        deadline: 9999999999,
+      },
+    };
+
+    await expect(
+      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, API_KEY_CONTEXT),
+    ).rejects.toThrow('Permit typed data signing is not allowed');
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid typedData.domain.verifyingContract before loading the wallet', async () => {
+    const typedData = createTypedData(84532, 'not-an-address');
+
+    await expect(
+      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, API_KEY_CONTEXT),
+    ).rejects.toThrow('typedData.domain.verifyingContract must be a valid address');
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('includes safe typed data metadata in the audit request hash', async () => {
+    const typedData = createTypedData(84532, '0x1111111111111111111111111111111111111111');
+
+    await service.sign(
+      'user-1',
+      { type: 'typed_data', typedData, chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    const expectedDigest = hashTypedData(typedData as any);
+    const expectedRequestHash = hashRequest({
+      type: 'typed_data',
+      chainId: 84532,
+      digest: expectedDigest,
+      executionMode: 'session_key',
+      typedData: {
+        typedDataPrimaryType: 'Mail',
+        typedDataVerifyingContract: '0x1111111111111111111111111111111111111111',
+      },
+    });
+
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'typed_data',
+        chainId: BigInt(84532),
+        requestHash: expectedRequestHash,
+        digest: expectedDigest,
+      }),
+    });
+    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(
+      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    ).not.toContain('Hello');
+  });
+
   it('allows API-key typed data signing when explicit chainId matches and is allowed', async () => {
     const typedData = createTypedData(84532);
 
@@ -765,12 +846,13 @@ describe('WalletService.getDepositInfo()', () => {
   });
 });
 
-function createTypedData(chainId: number | undefined) {
+function createTypedData(chainId: number | undefined, verifyingContract?: string) {
   return {
     domain: {
       name: 'SOFA ONE',
       version: '1',
       ...(chainId === undefined ? {} : { chainId }),
+      ...(verifyingContract === undefined ? {} : { verifyingContract }),
     },
     types: {
       Mail: [{ name: 'message', type: 'string' }],
