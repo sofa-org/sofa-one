@@ -1,5 +1,5 @@
 {
-  "name": "sofa-agent-wallet",
+  "name": "sofa-one",
   "version": "0.1.0",
   "description": "SOFA ONE service — server-side automated blockchain signing for users authenticated via social OAuth",
   "private": true,

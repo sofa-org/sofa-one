@@ -192,6 +192,110 @@ describe('TransactionsService', () => {
     expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
+  it('rejects transactions with native value before loading the wallet', async () => {
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [{ ...dto.interactions[0], value: '1' }],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects transactions with too many interactions before loading the wallet', async () => {
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: Array.from({ length: 11 }, (_, index) => ({
+            ...dto.interactions[0],
+            to: `0x${String(index + 1).padStart(40, '0')}`,
+          })),
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects infinite token approvals before loading the wallet', async () => {
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [
+            {
+              ...dto.interactions[0],
+              data:
+                '0x095ea7b3' +
+                '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
+                'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            },
+          ],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects Permit/Permit2 calldata before loading the wallet', async () => {
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [{ ...dto.interactions[0], data: '0xd505accf' }],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects NFT operator approvals before loading the wallet', async () => {
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [
+            {
+              ...dto.interactions[0],
+              data:
+                '0xa22cb465' +
+                '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
+                '0000000000000000000000000000000000000000000000000000000000000001',
+            },
+          ],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
   it('propagates clear paymaster policy failures when sponsorship is required', async () => {
     openfort.sendUserOperation.mockRejectedValue(
       new HttpException(
