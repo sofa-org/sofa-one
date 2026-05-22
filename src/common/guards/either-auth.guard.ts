@@ -113,6 +113,7 @@ export class EitherAuthGuard implements CanActivate {
     // Use request.ip which is correctly set by Express after trust-proxy processing.
     // Never read X-Forwarded-For directly — it can be forged by the client.
     const clientIp: string = request.ip ?? '';
+    const userAgent = this.getUserAgent(request);
     if (keyRecord.allowedIps.length > 0) {
       if (!isIpAllowed(clientIp, keyRecord.allowedIps)) {
         throw new UnauthorizedException('IP address not allowed for this API key');
@@ -122,6 +123,8 @@ export class EitherAuthGuard implements CanActivate {
     request.user = keyRecord.user;
     request.apiKeyRecord = keyRecord;
 
+    this.logApiKeyUsageAnomaly(keyRecord, clientIp, userAgent);
+
     // Fire-and-forget: update lastUsedAt without blocking the request
     void this.prisma.apiKey
       .update({
@@ -129,7 +132,7 @@ export class EitherAuthGuard implements CanActivate {
         data: {
           lastUsedAt: new Date(),
           lastUsedIp: clientIp || null,
-          lastUsedUserAgent: this.getUserAgent(request),
+          lastUsedUserAgent: userAgent,
         },
       })
       .catch((err) => this.logger.warn('lastUsedAt update failed', err));
@@ -147,5 +150,38 @@ export class EitherAuthGuard implements CanActivate {
     const userAgent = Array.isArray(value) ? value[0] : value;
     if (!userAgent) return null;
     return userAgent.slice(0, MAX_USER_AGENT_LENGTH);
+  }
+
+  private logApiKeyUsageAnomaly(
+    keyRecord: {
+      id: string;
+      keyPrefix?: string | null;
+      lastUsedIp?: string | null;
+      lastUsedUserAgent?: string | null;
+      user?: { id?: string | null } | null;
+    },
+    currentIp: string,
+    currentUserAgent: string | null,
+  ) {
+    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const userAgentChanged = Boolean(
+      keyRecord.lastUsedUserAgent && currentUserAgent && keyRecord.lastUsedUserAgent !== currentUserAgent,
+    );
+
+    if (!ipChanged && !userAgentChanged) return;
+
+    this.logger.warn({
+      event: 'security',
+      message: 'API key usage context changed',
+      apiKeyId: keyRecord.id,
+      apiKeyPrefix: keyRecord.keyPrefix,
+      userId: keyRecord.user?.id,
+      ipChanged,
+      userAgentChanged,
+      previousIp: keyRecord.lastUsedIp ?? null,
+      currentIp: currentIp || null,
+      previousUserAgent: userAgentChanged ? keyRecord.lastUsedUserAgent : undefined,
+      currentUserAgent: userAgentChanged ? currentUserAgent : undefined,
+    });
   }
 }

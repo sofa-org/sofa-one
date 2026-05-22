@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { EitherAuthGuard } from './either-auth.guard';
@@ -32,6 +32,7 @@ describe('EitherAuthGuard API key authentication', () => {
   const rawKey = `sk_${'a'.repeat(64)}`;
   const longPrefix = rawKey.substring(0, API_KEY_PREFIX_LENGTH);
   const legacyPrefix = rawKey.substring(0, 11);
+  let loggerWarnSpy: jest.SpyInstance;
 
   function createGuard(keyRecords: any[]) {
     const prisma = {
@@ -52,6 +53,11 @@ describe('EitherAuthGuard API key authentication', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    loggerWarnSpy.mockRestore();
   });
 
   it('uses the extended prefix and verifies the matching hash', async () => {
@@ -127,6 +133,67 @@ describe('EitherAuthGuard API key authentication', () => {
         }),
       }),
     );
+  });
+
+  it('logs a security warning when API key usage IP or user agent changes', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      keyPrefix: longPrefix,
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedIp: '198.51.100.5',
+      lastUsedUserAgent: 'old-agent/1.0',
+      user: { id: 'user-1' },
+    };
+    const { guard } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(
+        contextWithApiKey(rawKey, {
+          ip: '203.0.113.10',
+          userAgent: 'new-agent/2.0',
+        }),
+      ),
+    ).resolves.toBe(true);
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'API key usage context changed',
+        apiKeyId: 'key-1',
+        apiKeyPrefix: longPrefix,
+        userId: 'user-1',
+        ipChanged: true,
+        userAgentChanged: true,
+        previousIp: '198.51.100.5',
+        currentIp: '203.0.113.10',
+        previousUserAgent: 'old-agent/1.0',
+        currentUserAgent: 'new-agent/2.0',
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('hash-1');
+  });
+
+  it('does not log a security warning on first API key use', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      keyPrefix: longPrefix,
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedIp: null,
+      lastUsedUserAgent: null,
+      user: { id: 'user-1' },
+    };
+    const { guard } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(contextWithApiKey(rawKey, { ip: '203.0.113.10', userAgent: 'agent/1.0' })),
+    ).resolves.toBe(true);
+
+    expect(loggerWarnSpy).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'security' }));
   });
 
   it('checks all records with the same prefix to avoid collision false negatives', async () => {
