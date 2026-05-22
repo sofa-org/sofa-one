@@ -25,6 +25,7 @@ describe('ApiKeyService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     prisma.apiKey.count.mockResolvedValue(0);
     prisma.apiKey.findFirst.mockResolvedValue(null);
     prisma.apiKey.findMany.mockResolvedValue([]);
@@ -39,12 +40,20 @@ describe('ApiKeyService', () => {
   });
 
   it('stores a 27-character prefix and audit event for newly generated API keys', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     const service = new ApiKeyService(prisma as any);
 
     const result = await service.createApiKey('user-1', { name: 'Production key' });
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
-    expect(result).toEqual({ rawKey: expect.any(String) });
+    expect(result).toEqual({
+      rawKey: expect.any(String),
+      id: 'key-1',
+      displayPrefix: 'sk_'.concat(result.rawKey.slice(3, 11), '...'),
+      name: 'Production key',
+      expiresAt: new Date('2026-07-26T00:00:00.000Z'),
+      createdAt: new Date('2026-04-27T00:00:00.000Z'),
+    });
     expect(prisma.apiKey.create.mock.calls[0][0].data.keyPrefix).toBe(
       result.rawKey.slice(0, API_KEY_PREFIX_LENGTH),
     );
@@ -54,6 +63,7 @@ describe('ApiKeyService', () => {
           keyPrefix: expect.stringMatching(/^sk_[a-f0-9]{24}$/),
           apiKeyHash: 'argon2-hash',
           name: 'Production key',
+          expiresAt: new Date('2026-07-26T00:00:00.000Z'),
         }),
       }),
     );
@@ -121,6 +131,19 @@ describe('ApiKeyService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('accepts explicit expiration dates within 365 days', async () => {
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const service = new ApiKeyService(prisma as any);
+
+    await service.createApiKey('user-1', { name: 'Short lived key', expiresAt });
+
+    expect(prisma.apiKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ expiresAt }),
+      }),
+    );
+  });
+
   it('audits single-key revocation and rejects unknown keys', async () => {
     prisma.apiKey.findFirst.mockResolvedValue({
       id: 'key-1',
@@ -149,6 +172,7 @@ describe('ApiKeyService', () => {
   });
 
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     prisma.apiKey.findMany.mockResolvedValue([
       { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
       { id: 'old-key-2', keyPrefix: 'sk_old22222222222222222222', name: 'Backup key' },
@@ -158,13 +182,25 @@ describe('ApiKeyService', () => {
     const result = await service.rotateApiKey('user-1', 'Refreshed');
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
-    expect(result).toEqual({ rawKey: expect.any(String) });
+    expect(result).toEqual({
+      rawKey: expect.any(String),
+      id: 'key-1',
+      displayPrefix: 'sk_'.concat(result.rawKey.slice(3, 11), '...'),
+      name: 'Refreshed',
+      expiresAt: new Date('2026-07-26T00:00:00.000Z'),
+      createdAt: new Date('2026-04-27T00:00:00.000Z'),
+    });
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
       data: { revoked: true },
     });
     expect(prisma.apiKey.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ name: 'Refreshed' }) }),
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: 'Refreshed',
+          expiresAt: new Date('2026-07-26T00:00:00.000Z'),
+        }),
+      }),
     );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -188,7 +224,7 @@ describe('ApiKeyService', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           action: 'api_key.rotated',
-          metadata: { revokedKeyCount: 2 },
+          metadata: { revokedKeyCount: 2, expiresAt: '2026-07-26T00:00:00.000Z' },
         }),
       }),
     );

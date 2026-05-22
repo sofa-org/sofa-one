@@ -130,7 +130,9 @@ export default function ApiKeysPage() {
   }, [getAccessToken]);
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
+  const [newKeyExpiresAt, setNewKeyExpiresAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -202,6 +204,7 @@ export default function ApiKeysPage() {
 
     const timeoutId = window.setTimeout(() => {
       setNewRawKey(null);
+      setNewKeyExpiresAt(null);
     }, RAW_KEY_NOTICE_TTL_MS);
 
     return () => window.clearTimeout(timeoutId);
@@ -223,12 +226,22 @@ export default function ApiKeysPage() {
       return;
     }
 
+    const allowedIps = newKeyAllowedIps
+      .split(/[\s,]+/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
     setActionLoading(true);
     setActionError(null);
     try {
-      const result = await createApiKeyAuth(getToken, trimmedName);
+      const result = await createApiKeyAuth(getToken, {
+        name: trimmedName,
+        ...(allowedIps.length > 0 ? { allowedIps } : {}),
+      });
       setNewRawKey(result.rawKey);
+      setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
+      setNewKeyAllowedIps('');
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -307,7 +320,10 @@ export default function ApiKeysPage() {
       {newRawKey && (
         <div className="relative rounded-2xl border border-amber-200 bg-amber-50 p-5 pr-14 shadow-sm">
           <button
-            onClick={() => setNewRawKey(null)}
+            onClick={() => {
+              setNewRawKey(null);
+              setNewKeyExpiresAt(null);
+            }}
             className="absolute right-4 top-4 inline-flex items-center justify-center rounded-full border border-amber-300 p-1 text-amber-600 hover:bg-amber-100 transition-colors"
             aria-label="Dismiss new API key notice"
           >
@@ -319,6 +335,7 @@ export default function ApiKeysPage() {
           <p className="mt-1 text-xs text-amber-700">
             Use this as the <code>X-API-Key</code> header from your server. Do not expose it in browser code.
             {' '}
+            {newKeyExpiresAt ? `This key expires on ${new Date(newKeyExpiresAt).toLocaleDateString()}. ` : ''}
             This notice auto-hides in 2 minutes.
           </p>
           <div className="mt-3 flex items-center gap-2">
@@ -332,7 +349,7 @@ export default function ApiKeysPage() {
 
       <DashboardCard
         title="Create New Key"
-        description="Name the app or environment that will use this key. You can revoke individual keys anytime."
+        description="Name the app or environment that will use this key. New keys expire by default and can be revoked anytime."
       >
         <div className="mt-5 rounded-xl border border-brand-border bg-brand-bg/60 p-4 text-sm leading-6 text-brand-muted">
           {loading ? (
@@ -347,7 +364,7 @@ export default function ApiKeysPage() {
             </>
           )}
         </div>
-        <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-end">
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
           <div className="space-y-2 lg:flex-1">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
             <input
@@ -360,7 +377,23 @@ export default function ApiKeysPage() {
             />
             <p className="text-xs leading-5 text-brand-muted">
               Use a unique active name per environment or app. The raw key is shown once after creation, so copy it
-              directly into your backend secret store.
+              directly into your backend secret store. If you do not choose a custom expiry via the API, the backend
+              applies a 90-day default.
+            </p>
+          </div>
+          <div className="space-y-2 lg:flex-1">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+              IP allowlist <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder="192.0.2.10, 203.0.113.0/24"
+              value={newKeyAllowedIps}
+              onChange={(e) => setNewKeyAllowedIps(e.target.value)}
+              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
+            />
+            <p className="text-xs leading-5 text-brand-muted">
+              Restrict this key to trusted backend egress IPs. Leave blank only for local development or rotating IP environments.
             </p>
           </div>
           <div>

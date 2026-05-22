@@ -153,6 +153,16 @@ export interface ApiKeyRecord {
 
 export interface CreateApiKeyResponse {
   rawKey: string;
+  id: string;
+  displayPrefix: string;
+  name: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface CreateApiKeyRequest {
+  name: string;
+  allowedIps?: string[];
 }
 
 export class ApiError extends Error {
@@ -380,11 +390,11 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
 
 export async function createApiKeyAuth(
   getToken: () => Promise<string | null>,
-  name: string,
+  request: CreateApiKeyRequest,
 ) {
   return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(request),
   });
 }
 

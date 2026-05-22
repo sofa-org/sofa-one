@@ -6,6 +6,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
 
 const MAX_ACTIVE_API_KEYS = 10;
+const DEFAULT_API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_API_KEY_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 type ApiKeyCreateOptions = {
@@ -28,7 +29,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
 
-    await this.prisma.$transaction(async (tx) => {
+    const createdKey = await this.prisma.$transaction(async (tx) => {
       await this.assertCanCreateKey(tx, userId, normalized.name);
 
       const created = await tx.apiKey.create({
@@ -56,6 +57,11 @@ export class ApiKeyService {
 
     return {
       rawKey: keyMaterial.rawKey,
+      id: createdKey.id,
+      displayPrefix: this.toDisplayPrefix(createdKey.keyPrefix),
+      name: createdKey.name,
+      expiresAt: createdKey.expiresAt,
+      createdAt: createdKey.createdAt,
     };
   }
 
@@ -115,7 +121,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions({ name });
     const keyMaterial = await this.generateKeyMaterial();
 
-    await this.prisma.$transaction(async (tx) => {
+    const createdKey = await this.prisma.$transaction(async (tx) => {
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -150,6 +156,7 @@ export class ApiKeyService {
         keyName: created.name,
         metadata: {
           revokedKeyCount: activeKeys.length,
+          expiresAt: created.expiresAt?.toISOString() ?? null,
         },
       });
 
@@ -158,6 +165,11 @@ export class ApiKeyService {
 
     return {
       rawKey: keyMaterial.rawKey,
+      id: createdKey.id,
+      displayPrefix: this.toDisplayPrefix(createdKey.keyPrefix),
+      name: createdKey.name,
+      expiresAt: createdKey.expiresAt,
+      createdAt: createdKey.createdAt,
     };
   }
 
@@ -179,7 +191,7 @@ export class ApiKeyService {
 
     return keys.map((key) => ({
       id: key.id,
-      displayPrefix: `${key.keyPrefix.slice(0, 11)}...`,
+      displayPrefix: this.toDisplayPrefix(key.keyPrefix),
       name: key.name,
       revoked: key.revoked,
       expiresAt: key.expiresAt,
@@ -201,7 +213,7 @@ export class ApiKeyService {
   }
 
   private normalizeExpiresAt(expiresAt?: string | Date) {
-    if (!expiresAt) return undefined;
+    if (!expiresAt) return new Date(Date.now() + DEFAULT_API_KEY_TTL_MS);
 
     const date = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
     if (Number.isNaN(date.getTime())) {
@@ -218,6 +230,10 @@ export class ApiKeyService {
     }
 
     return date;
+  }
+
+  private toDisplayPrefix(keyPrefix: string) {
+    return `${keyPrefix.slice(0, 11)}...`;
   }
 
   private async assertCanCreateKey(tx: PrismaTransaction, userId: string, name: string) {
