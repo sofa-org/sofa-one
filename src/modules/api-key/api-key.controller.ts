@@ -21,6 +21,7 @@ export class ApiKeyController {
       name: dto.name,
       expiresAt: dto.expiresAt,
       allowedIps: dto.allowedIps,
+      permissions: dto.permissions,
     });
   }
 
@@ -28,6 +29,14 @@ export class ApiKeyController {
   @Get()
   async list(@CurrentUser('id') userId: string) {
     return this.apiKeyService.listApiKeys(userId);
+  }
+
+  /** DELETE /v1/api-keys — revoke every active key without creating a replacement. */
+  @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
+  @Delete()
+  async revokeAll(@CurrentUser('id') userId: string) {
+    const result = await this.apiKeyService.revokeAllKeys(userId);
+    return { success: true, revokedCount: result.count };
   }
 
   /** DELETE /v1/api-keys/:id — revoke a specific key. */

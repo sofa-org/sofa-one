@@ -8,6 +8,7 @@ import {
   listApiKeysAuth,
   createApiKeyAuth,
   revokeApiKeyAuth,
+  revokeAllApiKeysAuth,
   refreshApiKey as refreshApiKeyApi,
   getApiErrorMessage,
   getApiBaseUrlForDisplay,
@@ -305,6 +306,29 @@ export default function ApiKeysPage() {
     }
   }
 
+  async function handleRevokeAll() {
+    if (activeKeyCount === 0) return;
+    if (
+      !confirm(
+        `Emergency revoke ${activeKeyCount} active API key${activeKeyCount === 1 ? '' : 's'}? This immediately stops all backend integrations and does not create a replacement.`,
+      )
+    ) {
+      return;
+    }
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await revokeAllApiKeysAuth(getToken);
+      setNewRawKey(null);
+      setNewKeyExpiresAt(null);
+      await fetchKeys();
+    } catch (err: unknown) {
+      setActionError(getApiErrorMessage(err));
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   return (
     <DashboardPage
       title="API Keys"
@@ -474,6 +498,15 @@ export default function ApiKeysPage() {
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={handleRevokeAll}
+                disabled={loading || actionLoading || activeKeyCount === 0}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Revoke all
+              </button>
               <div className="inline-flex rounded-full border border-brand-border bg-brand-bg p-1">
                 {KEY_STATUS_FILTERS.map((filter) => (
                   <button

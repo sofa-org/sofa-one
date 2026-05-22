@@ -200,6 +200,42 @@ describe('ApiKeyService', () => {
     );
   });
 
+  it('bulk revokes active keys and audits each revoked key', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      { id: 'key-1', keyPrefix: 'sk_111111111111111111111111', name: 'Primary' },
+      { id: 'key-2', keyPrefix: 'sk_222222222222222222222222', name: 'Backup' },
+    ]);
+    prisma.apiKey.updateMany.mockResolvedValue({ count: 2 });
+    const service = new ApiKeyService(prisma as any);
+
+    await expect(service.revokeAllKeys('user-1')).resolves.toEqual({ count: 2 });
+
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', revoked: false },
+      data: { revoked: true },
+    });
+    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'api_key.revoked',
+          apiKeyId: 'key-1',
+          keyName: 'Primary',
+          metadata: { reason: 'bulk_revoke' },
+        }),
+      }),
+    );
+    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'api_key.revoked',
+          apiKeyId: 'key-2',
+          keyName: 'Backup',
+          metadata: { reason: 'bulk_revoke' },
+        }),
+      }),
+    );
+  });
+
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     prisma.apiKey.findMany.mockResolvedValue([

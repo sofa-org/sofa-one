@@ -414,6 +414,12 @@ export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, i
   return authFetch<void>(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
 }
 
+export async function revokeAllApiKeysAuth(getToken: () => Promise<string | null>) {
+  return authFetch<{ success: boolean; revokedCount: number }>('/v1/api-keys', getToken, {
+    method: 'DELETE',
+  });
+}
+
 export async function withdrawAuth(
   getToken: () => Promise<string | null>,
   to: string,

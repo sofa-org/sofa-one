@@ -20,6 +20,7 @@ describe('ApiKeyController', () => {
     createApiKey: jest.fn(),
     listApiKeys: jest.fn(),
     revokeApiKey: jest.fn(),
+    revokeAllKeys: jest.fn(),
   };
 
   let controller: ApiKeyController;
@@ -47,7 +48,24 @@ describe('ApiKeyController', () => {
       name: 'My Key',
       expiresAt: undefined,
       allowedIps: undefined,
+      permissions: undefined,
     });
+  });
+
+  it('passes permissions to apiKeyService.createApiKey', async () => {
+    apiKeyService.createApiKey.mockResolvedValue({ rawKey: 'sk_test' });
+
+    await controller.create('user-1', {
+      name: 'Signer',
+      permissions: { canSign: true, canReadTransactionStatus: true },
+    } as any);
+
+    expect(apiKeyService.createApiKey).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        permissions: { canSign: true, canReadTransactionStatus: true },
+      }),
+    );
   });
 
   it('delegates list to apiKeyService.listApiKeys', async () => {
@@ -62,5 +80,15 @@ describe('ApiKeyController', () => {
 
     await expect(controller.revoke('user-1', 'key-1')).resolves.toEqual({ success: true });
     expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith('key-1', 'user-1');
+  });
+
+  it('delegates revoke all to apiKeyService.revokeAllKeys', async () => {
+    apiKeyService.revokeAllKeys.mockResolvedValue({ count: 3 });
+
+    await expect(controller.revokeAll('user-1')).resolves.toEqual({
+      success: true,
+      revokedCount: 3,
+    });
+    expect(apiKeyService.revokeAllKeys).toHaveBeenCalledWith('user-1');
   });
 });
