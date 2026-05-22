@@ -13,6 +13,21 @@ type ApiKeyCreateOptions = {
   name: string;
   expiresAt?: string | Date;
   allowedIps?: string[];
+  permissions?: Partial<ApiKeyPermissions>;
+};
+
+export type ApiKeyPermissions = {
+  canSign: boolean;
+  canSendTransaction: boolean;
+  canReadTransactionStatus: boolean;
+  canUseEoaExecution: boolean;
+};
+
+const DEFAULT_API_KEY_PERMISSIONS: ApiKeyPermissions = {
+  canSign: false,
+  canSendTransaction: false,
+  canReadTransactionStatus: true,
+  canUseEoaExecution: false,
 };
 
 type PrismaTransaction = Prisma.TransactionClient;
@@ -40,6 +55,7 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
+          ...normalized.permissions,
         },
       });
 
@@ -49,6 +65,7 @@ export class ApiKeyService {
         metadata: {
           allowedIps: created.allowedIps,
           expiresAt: created.expiresAt?.toISOString() ?? null,
+          permissions: this.toPermissions(created),
         },
       });
 
@@ -62,6 +79,7 @@ export class ApiKeyService {
       name: createdKey.name,
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
+      permissions: this.toPermissions(createdKey),
     };
   }
 
@@ -148,6 +166,7 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: [],
+          ...normalized.permissions,
         },
       });
 
@@ -157,6 +176,7 @@ export class ApiKeyService {
         metadata: {
           revokedKeyCount: activeKeys.length,
           expiresAt: created.expiresAt?.toISOString() ?? null,
+          permissions: this.toPermissions(created),
         },
       });
 
@@ -170,6 +190,7 @@ export class ApiKeyService {
       name: createdKey.name,
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
+      permissions: this.toPermissions(createdKey),
     };
   }
 
@@ -185,6 +206,10 @@ export class ApiKeyService {
         expiresAt: true,
         createdAt: true,
         lastUsedAt: true,
+        canSign: true,
+        canSendTransaction: true,
+        canReadTransactionStatus: true,
+        canUseEoaExecution: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -197,6 +222,7 @@ export class ApiKeyService {
       expiresAt: key.expiresAt,
       createdAt: key.createdAt,
       lastUsedAt: key.lastUsedAt,
+      permissions: this.toPermissions(key),
     }));
   }
 
@@ -208,8 +234,28 @@ export class ApiKeyService {
 
     const expiresAt = this.normalizeExpiresAt(options.expiresAt);
     const allowedIps = options.allowedIps ?? [];
+    const permissions = this.normalizePermissions(options.permissions);
 
-    return { name, expiresAt, allowedIps };
+    return { name, expiresAt, allowedIps, permissions };
+  }
+
+  private normalizePermissions(permissions?: Partial<ApiKeyPermissions>): ApiKeyPermissions {
+    return {
+      ...DEFAULT_API_KEY_PERMISSIONS,
+      ...(permissions ?? {}),
+    };
+  }
+
+  private toPermissions(key: Partial<ApiKeyPermissions>): ApiKeyPermissions {
+    return {
+      canSign: key.canSign ?? DEFAULT_API_KEY_PERMISSIONS.canSign,
+      canSendTransaction:
+        key.canSendTransaction ?? DEFAULT_API_KEY_PERMISSIONS.canSendTransaction,
+      canReadTransactionStatus:
+        key.canReadTransactionStatus ?? DEFAULT_API_KEY_PERMISSIONS.canReadTransactionStatus,
+      canUseEoaExecution:
+        key.canUseEoaExecution ?? DEFAULT_API_KEY_PERMISSIONS.canUseEoaExecution,
+    };
   }
 
   private normalizeExpiresAt(expiresAt?: string | Date) {

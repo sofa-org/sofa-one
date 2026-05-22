@@ -50,4 +50,22 @@ describe('CreateApiKeyDto', () => {
       expect(errors.some((error) => error.property === 'allowedIps')).toBe(true);
     }
   });
+
+  it('accepts boolean permissions', async () => {
+    const errors = await validateDto({
+      name: 'Valid key',
+      permissions: { canSign: true, canSendTransaction: false, canReadTransactionStatus: true },
+    });
+
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects non-boolean permissions', async () => {
+    const errors = await validateDto({
+      name: 'Valid key',
+      permissions: { canSign: 'yes' },
+    });
+
+    expect(errors.some((error) => error.property === 'permissions')).toBe(true);
+  });
 });

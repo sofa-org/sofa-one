@@ -131,6 +131,12 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
+  const [newKeyPermissions, setNewKeyPermissions] = useState({
+    canSign: false,
+    canSendTransaction: false,
+    canReadTransactionStatus: true,
+    canUseEoaExecution: false,
+  });
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
   const [newKeyExpiresAt, setNewKeyExpiresAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,11 +243,18 @@ export default function ApiKeysPage() {
       const result = await createApiKeyAuth(getToken, {
         name: trimmedName,
         ...(allowedIps.length > 0 ? { allowedIps } : {}),
+        permissions: newKeyPermissions,
       });
       setNewRawKey(result.rawKey);
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
       setNewKeyAllowedIps('');
+      setNewKeyPermissions({
+        canSign: false,
+        canSendTransaction: false,
+        canReadTransactionStatus: true,
+        canUseEoaExecution: false,
+      });
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -364,7 +377,7 @@ export default function ApiKeysPage() {
             </>
           )}
         </div>
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-2 lg:flex-1">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
             <input
@@ -396,7 +409,45 @@ export default function ApiKeysPage() {
               Restrict this key to trusted backend egress IPs. Leave blank only for local development or rotating IP environments.
             </p>
           </div>
-          <div>
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Permissions</p>
+              <p className="mt-1 text-xs leading-5 text-brand-muted">
+                Start read-only, then grant only the capabilities this backend needs. EOA execution is privileged and
+                should stay off unless this key is for a reviewed EOA-signing workflow.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ['canReadTransactionStatus', 'Read status', 'Fetch transaction status by id.'],
+                ['canSign', 'Sign messages', 'Use /v1/wallets/sign.'],
+                ['canSendTransaction', 'Send transactions', 'Use /v1/transactions/send.'],
+                ['canUseEoaExecution', 'Use EOA execution', 'Privileged backend EOA mode.'],
+              ].map(([permission, label, description]) => (
+                <label
+                  key={permission}
+                  className="flex cursor-pointer gap-3 rounded-lg border border-brand-border bg-white p-3 text-sm shadow-sm transition-colors hover:border-brand-accent"
+                >
+                  <input
+                    type="checkbox"
+                    checked={newKeyPermissions[permission as keyof typeof newKeyPermissions]}
+                    onChange={(event) =>
+                      setNewKeyPermissions((current) => ({
+                        ...current,
+                        [permission]: event.target.checked,
+                      }))
+                    }
+                    className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent"
+                  />
+                  <span>
+                    <span className="block font-semibold text-brand-text">{label}</span>
+                    <span className="block text-xs leading-5 text-brand-muted">{description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-2">
             <button
               onClick={handleCreate}
               disabled={loading || actionLoading || !newKeyName.trim() || hasReachedKeyLimit}
@@ -520,10 +571,11 @@ export default function ApiKeysPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            <div className="hidden grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+            <div className="hidden grid-cols-[140px_84px_minmax(160px,1fr)_minmax(150px,1fr)_110px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
               <span>Key</span>
               <span>Status</span>
               <span>Name</span>
+              <span>Permissions</span>
               <span>Last Used</span>
               <span>Expires</span>
               <span>Created</span>
@@ -535,7 +587,7 @@ export default function ApiKeysPage() {
               const expiry = getKeyExpirySummary(key.expiresAt);
 
               return (
-                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(180px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
+                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(160px,1fr)_minmax(150px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
                   <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text">
                     <span className="min-w-0 truncate">{key.displayPrefix}</span>
                     <CopyButton
@@ -549,6 +601,17 @@ export default function ApiKeysPage() {
                   <span className="min-w-0 truncate text-sm text-brand-muted">
                     <span className="font-semibold text-brand-text md:hidden">Name: </span>
                     {key.name || '—'}
+                  </span>
+                  <span className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-brand-muted">
+                    <span className="font-semibold text-brand-text md:hidden">Permissions: </span>
+                    {key.permissions.canReadTransactionStatus && <span className="rounded-full bg-brand-bg px-2 py-0.5">status</span>}
+                    {key.permissions.canSign && <span className="rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
+                    {key.permissions.canSendTransaction && <span className="rounded-full bg-brand-bg px-2 py-0.5">send</span>}
+                    {key.permissions.canUseEoaExecution && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
+                    {!key.permissions.canReadTransactionStatus &&
+                      !key.permissions.canSign &&
+                      !key.permissions.canSendTransaction &&
+                      !key.permissions.canUseEoaExecution && <span>none</span>}
                   </span>
                   <span className={`text-xs ${lastUsed.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Last used: </span>

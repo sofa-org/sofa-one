@@ -9,6 +9,13 @@ jest.mock('argon2', () => ({
 }));
 
 describe('ApiKeyService', () => {
+  const defaultPermissions = {
+    canSign: false,
+    canSendTransaction: false,
+    canReadTransactionStatus: true,
+    canUseEoaExecution: false,
+  };
+
   const prisma: any = {
     $transaction: jest.fn((callback: (tx: any) => unknown) => callback(prisma)),
     apiKey: {
@@ -53,6 +60,7 @@ describe('ApiKeyService', () => {
       name: 'Production key',
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
+      permissions: defaultPermissions,
     });
     expect(prisma.apiKey.create.mock.calls[0][0].data.keyPrefix).toBe(
       result.rawKey.slice(0, API_KEY_PREFIX_LENGTH),
@@ -64,6 +72,7 @@ describe('ApiKeyService', () => {
           apiKeyHash: 'argon2-hash',
           name: 'Production key',
           expiresAt: new Date('2026-07-26T00:00:00.000Z'),
+          ...defaultPermissions,
         }),
       }),
     );
@@ -144,6 +153,26 @@ describe('ApiKeyService', () => {
     );
   });
 
+  it('stores explicit API key permissions', async () => {
+    const service = new ApiKeyService(prisma as any);
+
+    await service.createApiKey('user-1', {
+      name: 'Signer key',
+      permissions: { canSign: true, canUseEoaExecution: true },
+    });
+
+    expect(prisma.apiKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          canSign: true,
+          canSendTransaction: false,
+          canReadTransactionStatus: true,
+          canUseEoaExecution: true,
+        }),
+      }),
+    );
+  });
+
   it('audits single-key revocation and rejects unknown keys', async () => {
     prisma.apiKey.findFirst.mockResolvedValue({
       id: 'key-1',
@@ -189,6 +218,7 @@ describe('ApiKeyService', () => {
       name: 'Refreshed',
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
+      permissions: defaultPermissions,
     });
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
@@ -199,6 +229,7 @@ describe('ApiKeyService', () => {
         data: expect.objectContaining({
           name: 'Refreshed',
           expiresAt: new Date('2026-07-26T00:00:00.000Z'),
+          ...defaultPermissions,
         }),
       }),
     );
@@ -224,7 +255,11 @@ describe('ApiKeyService', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           action: 'api_key.rotated',
-          metadata: { revokedKeyCount: 2, expiresAt: '2026-07-26T00:00:00.000Z' },
+          metadata: {
+            revokedKeyCount: 2,
+            expiresAt: '2026-07-26T00:00:00.000Z',
+            permissions: defaultPermissions,
+          },
         }),
       }),
     );
@@ -240,6 +275,10 @@ describe('ApiKeyService', () => {
         expiresAt: null,
         createdAt: new Date('2026-04-27T00:00:00.000Z'),
         lastUsedAt: null,
+        canSign: true,
+        canSendTransaction: false,
+        canReadTransactionStatus: true,
+        canUseEoaExecution: false,
       },
     ]);
     const service = new ApiKeyService(prisma as any);
@@ -253,6 +292,12 @@ describe('ApiKeyService', () => {
         expiresAt: null,
         createdAt: new Date('2026-04-27T00:00:00.000Z'),
         lastUsedAt: null,
+        permissions: {
+          canSign: true,
+          canSendTransaction: false,
+          canReadTransactionStatus: true,
+          canUseEoaExecution: false,
+        },
       },
     ]);
 

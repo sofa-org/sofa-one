@@ -149,6 +149,14 @@ export interface ApiKeyRecord {
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
+  permissions: ApiKeyPermissions;
+}
+
+export interface ApiKeyPermissions {
+  canSign: boolean;
+  canSendTransaction: boolean;
+  canReadTransactionStatus: boolean;
+  canUseEoaExecution: boolean;
 }
 
 export interface CreateApiKeyResponse {
@@ -158,11 +166,13 @@ export interface CreateApiKeyResponse {
   name: string;
   expiresAt: string;
   createdAt: string;
+  permissions: ApiKeyPermissions;
 }
 
 export interface CreateApiKeyRequest {
   name: string;
   allowedIps?: string[];
+  permissions?: Partial<ApiKeyPermissions>;
 }
 
 export class ApiError extends Error {

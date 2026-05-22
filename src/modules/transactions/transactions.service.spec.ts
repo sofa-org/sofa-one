@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   NotFoundException,
@@ -43,6 +44,9 @@ describe('TransactionsService', () => {
     id: 'api-key-1',
     keyPrefix: apiKeyPrefix,
     name: 'Production key',
+    canSendTransaction: true,
+    canReadTransactionStatus: true,
+    canUseEoaExecution: false,
   };
 
   const prisma = {
@@ -150,7 +154,10 @@ describe('TransactionsService', () => {
   });
 
   it('uses the backend wallet for eoa transaction sending and skips agent verification', async () => {
-    await service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext);
+    await service.send('user-1', { ...dto, executionMode: 'eoa' } as any, {
+      ...apiKeyContext,
+      canUseEoaExecution: true,
+    });
 
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
@@ -165,6 +172,24 @@ describe('TransactionsService', () => {
         details: expect.objectContaining({ executionMode: 'eoa', execution: 'backend_eoa' }),
       }),
     });
+  });
+
+  it('rejects transaction sending when the API key lacks send permission', async () => {
+    await expect(
+      service.send('user-1', dto as any, { ...apiKeyContext, canSendTransaction: false }),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects eoa execution when the API key lacks eoa permission', async () => {
+    await expect(service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext)).rejects.toThrow(
+      ForbiddenException,
+    );
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
   it('propagates clear paymaster policy failures when sponsorship is required', async () => {
@@ -410,6 +435,14 @@ describe('TransactionsService', () => {
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: new Date('2026-04-28T00:01:00.000Z'),
     });
+  });
+
+  it('rejects status lookups when the API key lacks read permission', async () => {
+    await expect(
+      service.getStatus('user-1', 'tx-1', { ...apiKeyContext, canReadTransactionStatus: false }),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(prisma.transaction.findFirst).not.toHaveBeenCalled();
   });
 
   it('returns stored pending status without Openfort status refresh', async () => {

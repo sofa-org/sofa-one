@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Logger,
   NotFoundException,
   UnauthorizedException,
@@ -71,6 +72,8 @@ const API_KEY_CONTEXT = {
   id: 'api-key-1',
   keyPrefix: API_KEY_PREFIX,
   name: 'Production key',
+  canSign: true,
+  canUseEoaExecution: false,
 };
 const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
 const WRAPPED_SIGNATURE = encodeAbiParameters(
@@ -379,7 +382,7 @@ describe('WalletService.sign()', () => {
     const result = await service.sign(
       'user-1',
       { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
-      API_KEY_CONTEXT,
+      { ...API_KEY_CONTEXT, canUseEoaExecution: true },
     );
 
     expect(mockSignData).toHaveBeenCalledWith(
@@ -396,6 +399,33 @@ describe('WalletService.sign()', () => {
       type: 'message',
       executionMode: 'eoa',
     });
+  });
+
+  it('rejects signing when the API key lacks sign permission', async () => {
+    await expect(
+      service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any, {
+        ...API_KEY_CONTEXT,
+        canSign: false,
+      }),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects eoa signing when the API key lacks eoa permission', async () => {
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
   });
 
   it('audits a successful signing request without storing the plaintext message', async () => {
@@ -571,6 +601,7 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
         id: API_KEY_CONTEXT.id,
+        canSign: true,
       }),
     ).rejects.toThrow(
       'typedData.domain.chainId is required when signing typed data with an API key',
@@ -583,6 +614,7 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
         id: API_KEY_CONTEXT.id,
+        canSign: true,
       }),
     ).rejects.toThrow('typedData.domain.chainId must match chainId');
   });
@@ -595,6 +627,7 @@ describe('WalletService.sign()', () => {
       { type: 'typed_data', typedData, chainId: 84532 } as any,
       {
         id: API_KEY_CONTEXT.id,
+        canSign: true,
       },
     );
 

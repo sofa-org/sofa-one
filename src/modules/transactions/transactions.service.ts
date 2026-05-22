@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  ForbiddenException,
   Logger,
   NotFoundException,
   Optional,
@@ -18,6 +19,9 @@ type ApiKeyTransactionContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
+  canSendTransaction?: boolean;
+  canReadTransactionStatus?: boolean;
+  canUseEoaExecution?: boolean;
 };
 
 @Injectable()
@@ -36,10 +40,20 @@ export class TransactionsService {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required');
     }
+    this.assertPermission(
+      apiKeyRecord.canSendTransaction,
+      'API key is not allowed to send transactions',
+    );
 
     const chainId = dto.chainId;
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(dto.executionMode);
+    if (executionMode === 'eoa') {
+      this.assertPermission(
+        apiKeyRecord.canUseEoaExecution,
+        'API key is not allowed to use EOA execution',
+      );
+    }
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
       include: {
@@ -267,6 +281,10 @@ export class TransactionsService {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required');
     }
+    this.assertPermission(
+      apiKeyRecord.canReadTransactionStatus,
+      'API key is not allowed to read transaction status',
+    );
 
     const tx = await this.prisma.transaction.findFirst({
       where: { id: transactionId, userId, operationType: 'send', authMethod: 'api_key' },
@@ -386,5 +404,11 @@ export class TransactionsService {
   private toFailureReason(error: unknown): string {
     const message = error instanceof Error ? error.message : 'Transaction submission failed';
     return message.slice(0, 500);
+  }
+
+  private assertPermission(allowed: boolean | undefined, message: string): void {
+    if (allowed !== true) {
+      throw new ForbiddenException(message);
+    }
   }
 }

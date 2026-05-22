@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -41,6 +42,8 @@ type ApiKeySigningContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
+  canSign?: boolean;
+  canUseEoaExecution?: boolean;
 };
 
 @Injectable()
@@ -87,6 +90,7 @@ export class WalletService {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');
     }
+    this.assertPermission(apiKeyRecord.canSign, 'API key is not allowed to sign messages');
 
     const chainId = this.resolveSigningChainId(params);
     if (chainId === undefined) {
@@ -94,6 +98,12 @@ export class WalletService {
     }
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(params.executionMode);
+    if (executionMode === 'eoa') {
+      this.assertPermission(
+        apiKeyRecord.canUseEoaExecution,
+        'API key is not allowed to use EOA execution',
+      );
+    }
 
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
@@ -210,6 +220,12 @@ export class WalletService {
 
   private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
     return mode ?? 'session_key';
+  }
+
+  private assertPermission(allowed: boolean | undefined, message: string): void {
+    if (allowed !== true) {
+      throw new ForbiddenException(message);
+    }
   }
 
   private assertAgentWalletReady(wallet: {
