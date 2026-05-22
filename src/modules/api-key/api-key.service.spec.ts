@@ -275,6 +275,8 @@ describe('ApiKeyService', () => {
         expiresAt: null,
         createdAt: new Date('2026-04-27T00:00:00.000Z'),
         lastUsedAt: null,
+        lastUsedIp: '203.0.113.10',
+        lastUsedUserAgent: 'sofa-agent/1.0',
         canSign: true,
         canSendTransaction: false,
         canReadTransactionStatus: true,
@@ -292,6 +294,8 @@ describe('ApiKeyService', () => {
         expiresAt: null,
         createdAt: new Date('2026-04-27T00:00:00.000Z'),
         lastUsedAt: null,
+        lastUsedIp: '203.0.113.10',
+        lastUsedUserAgent: 'sofa-agent/1.0',
         permissions: {
           canSign: true,
           canSendTransaction: false,

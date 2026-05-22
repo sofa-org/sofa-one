@@ -119,6 +119,10 @@ function getKeyExpirySummary(expiresAt: string | null) {
   return { label: dateLabel, detail: `${daysUntilExpiry}d left`, tone: 'text-brand-muted' };
 }
 
+function truncateUsageValue(value: string, maxLength = 36) {
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
+}
+
 export default function ApiKeysPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
   const getToken = useCallback(async () => {
@@ -617,6 +621,16 @@ export default function ApiKeysPage() {
                     <span className="font-semibold text-brand-text md:hidden">Last used: </span>
                     <span className="font-semibold">{lastUsed.label}</span>
                     {lastUsed.detail && <span className="block text-[11px] opacity-80">{lastUsed.detail}</span>}
+                    {key.lastUsedIp && (
+                      <span className="block truncate text-[11px] opacity-80" title={key.lastUsedIp}>
+                        IP: {key.lastUsedIp}
+                      </span>
+                    )}
+                    {key.lastUsedUserAgent && (
+                      <span className="block truncate text-[11px] opacity-80" title={key.lastUsedUserAgent}>
+                        UA: {truncateUsageValue(key.lastUsedUserAgent)}
+                      </span>
+                    )}
                   </span>
                   <span className={`text-xs ${expiry.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Expires: </span>

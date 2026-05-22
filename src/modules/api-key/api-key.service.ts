@@ -206,6 +206,8 @@ export class ApiKeyService {
         expiresAt: true,
         createdAt: true,
         lastUsedAt: true,
+        lastUsedIp: true,
+        lastUsedUserAgent: true,
         canSign: true,
         canSendTransaction: true,
         canReadTransactionStatus: true,
@@ -222,6 +224,8 @@ export class ApiKeyService {
       expiresAt: key.expiresAt,
       createdAt: key.createdAt,
       lastUsedAt: key.lastUsedAt,
+      lastUsedIp: key.lastUsedIp,
+      lastUsedUserAgent: key.lastUsedUserAgent,
       permissions: this.toPermissions(key),
     }));
   }

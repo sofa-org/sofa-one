@@ -13,6 +13,8 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { isIpAllowed } from '../utils/ip-cidr';
 
+const MAX_USER_AGENT_LENGTH = 255;
+
 /**
  * Accepts either Openfort IAM JWT (Authorization: Bearer) or X-API-Key header.
  * In both cases, resolves the full user record and attaches it to request.user
@@ -110,8 +112,8 @@ export class EitherAuthGuard implements CanActivate {
 
     // Use request.ip which is correctly set by Express after trust-proxy processing.
     // Never read X-Forwarded-For directly — it can be forged by the client.
+    const clientIp: string = request.ip ?? '';
     if (keyRecord.allowedIps.length > 0) {
-      const clientIp: string = request.ip ?? '';
       if (!isIpAllowed(clientIp, keyRecord.allowedIps)) {
         throw new UnauthorizedException('IP address not allowed for this API key');
       }
@@ -124,7 +126,11 @@ export class EitherAuthGuard implements CanActivate {
     void this.prisma.apiKey
       .update({
         where: { id: keyRecord.id },
-        data: { lastUsedAt: new Date() },
+        data: {
+          lastUsedAt: new Date(),
+          lastUsedIp: clientIp || null,
+          lastUsedUserAgent: this.getUserAgent(request),
+        },
       })
       .catch((err) => this.logger.warn('lastUsedAt update failed', err));
 
@@ -134,5 +140,12 @@ export class EitherAuthGuard implements CanActivate {
   private extractBearerToken(request: { headers: Record<string, string> }): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
+  }
+
+  private getUserAgent(request: { headers: Record<string, string | string[] | undefined> }): string | null {
+    const value = request.headers['user-agent'];
+    const userAgent = Array.isArray(value) ? value[0] : value;
+    if (!userAgent) return null;
+    return userAgent.slice(0, MAX_USER_AGENT_LENGTH);
   }
 }

@@ -149,6 +149,8 @@ export interface ApiKeyRecord {
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
+  lastUsedIp: string | null;
+  lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
 }
 

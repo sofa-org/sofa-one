@@ -54,20 +54,22 @@ model WalletChainAuthorization {
 }
 
 model ApiKey {
-  id            String    @id @default(uuid()) @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  apiKeyHash    String    @map("api_key_hash") @db.Text
-  keyPrefix     String    @map("key_prefix") @db.VarChar(32)
-  name          String?   @db.VarChar(100)
-  expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
-  revoked       Boolean   @default(false)
+  id                       String    @id @default(uuid()) @db.Uuid
+  userId                   String    @map("user_id") @db.Uuid
+  apiKeyHash               String    @map("api_key_hash") @db.Text
+  keyPrefix                String    @map("key_prefix") @db.VarChar(32)
+  name                     String?   @db.VarChar(100)
+  expiresAt                DateTime? @map("expires_at") @db.Timestamptz()
+  revoked                  Boolean   @default(false)
   canSign                  Boolean   @default(false) @map("can_sign")
   canSendTransaction       Boolean   @default(false) @map("can_send_transaction")
   canReadTransactionStatus Boolean   @default(true) @map("can_read_transaction_status")
   canUseEoaExecution       Boolean   @default(false) @map("can_use_eoa_execution")
-  allowedIps    String[]  @map("allowed_ips")
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz()
+  allowedIps               String[]  @map("allowed_ips")
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastUsedAt               DateTime? @map("last_used_at") @db.Timestamptz()
+  lastUsedIp               String?   @map("last_used_ip") @db.VarChar(64)
+  lastUsedUserAgent        String?   @map("last_used_user_agent") @db.VarChar(255)
 
   user            User             @relation(fields: [userId], references: [id])
   signingRequests SigningRequest[]
