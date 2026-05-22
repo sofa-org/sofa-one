@@ -112,10 +112,24 @@ export class WalletService {
         apiKeyRecord.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
+      this.logSecurityWarning({
+        message: 'Privileged EOA signing requested',
+        userId,
+        chainId,
+        type: params.type,
+        executionMode,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+      });
     }
     const typedDataSummary =
       params.type === 'typed_data'
-        ? this.assertTypedDataSigningPolicy(params.typedData!)
+        ? this.assertTypedDataSigningPolicy(params.typedData!, {
+            userId,
+            chainId,
+            type: params.type,
+            executionMode,
+            apiKeyPrefix: apiKeyRecord.keyPrefix,
+          })
         : undefined;
 
     const wallet = await this.prisma.userWallet.findUnique({
@@ -248,18 +262,36 @@ export class WalletService {
     }
   }
 
-  private assertTypedDataSigningPolicy(typedData: NonNullable<SignDto['typedData']>) {
-    this.assertTypedDataShape(typedData);
+  private assertTypedDataSigningPolicy(
+    typedData: NonNullable<SignDto['typedData']>,
+    context: {
+      userId: string;
+      chainId: number;
+      type: SignDto['type'];
+      executionMode: ExecutionMode;
+      apiKeyPrefix?: string;
+    },
+  ) {
+    this.assertTypedDataShape(typedData, context);
 
     const primaryType = typedData.primaryType.trim();
     if (this.isBlockedTypedDataPrimaryType(primaryType)) {
-      throw new BadRequestException('Permit typed data signing is not allowed');
+      this.rejectSigningPolicy('Permit typed data signing is not allowed', context, {
+        typedDataPrimaryType: primaryType,
+      });
     }
 
     const verifyingContract = typedData.domain.verifyingContract;
     if (verifyingContract !== undefined) {
       if (typeof verifyingContract !== 'string' || !isAddress(verifyingContract)) {
-        throw new BadRequestException('typedData.domain.verifyingContract must be a valid address');
+        this.rejectSigningPolicy(
+          'typedData.domain.verifyingContract must be a valid address',
+          context,
+          {
+            typedDataPrimaryType: primaryType,
+            hasVerifyingContract: true,
+          },
+        );
       }
     }
 
@@ -271,22 +303,53 @@ export class WalletService {
     };
   }
 
-  private assertTypedDataShape(typedData: NonNullable<SignDto['typedData']>): void {
+  private assertTypedDataShape(
+    typedData: NonNullable<SignDto['typedData']>,
+    context: {
+      userId: string;
+      chainId: number;
+      type: SignDto['type'];
+      executionMode: ExecutionMode;
+      apiKeyPrefix?: string;
+    },
+  ): void {
     if (!typedData.domain || typeof typedData.domain !== 'object' || Array.isArray(typedData.domain)) {
-      throw new BadRequestException('typedData.domain is required');
+      this.rejectSigningPolicy('typedData.domain is required', context);
     }
 
     if (!typedData.types || typeof typedData.types !== 'object' || Array.isArray(typedData.types)) {
-      throw new BadRequestException('typedData.types is required');
+      this.rejectSigningPolicy('typedData.types is required', context);
     }
 
     if (typeof typedData.primaryType !== 'string' || typedData.primaryType.trim().length === 0) {
-      throw new BadRequestException('typedData.primaryType is required');
+      this.rejectSigningPolicy('typedData.primaryType is required', context);
     }
 
     if (!typedData.message || typeof typedData.message !== 'object' || Array.isArray(typedData.message)) {
-      throw new BadRequestException('typedData.message is required');
+      this.rejectSigningPolicy('typedData.message is required', context, {
+        typedDataPrimaryType: typedData.primaryType.trim(),
+      });
     }
+  }
+
+  private rejectSigningPolicy(
+    reason: string,
+    context: {
+      userId: string;
+      chainId: number;
+      type: SignDto['type'];
+      executionMode: ExecutionMode;
+      apiKeyPrefix?: string;
+    },
+    extra: Record<string, unknown> = {},
+  ): never {
+    this.logSecurityWarning({
+      message: 'Signing policy rejected request',
+      reason,
+      ...context,
+      ...extra,
+    });
+    throw new BadRequestException(reason);
   }
 
   private isBlockedTypedDataPrimaryType(primaryType: string): boolean {
@@ -345,6 +408,10 @@ export class WalletService {
 
   private logContext(extra: Record<string, unknown>) {
     return this.requestContext?.getLogContext(extra) ?? extra;
+  }
+
+  private logSecurityWarning(extra: Record<string, unknown>): void {
+    this.logger.warn(this.logContext({ event: 'security', ...extra }));
   }
 
   private assertChainAuthorizationReady(

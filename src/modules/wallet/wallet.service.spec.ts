@@ -318,10 +318,12 @@ describe('WalletService.sign()', () => {
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
+  let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     jest.clearAllMocks();
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
@@ -353,6 +355,7 @@ describe('WalletService.sign()', () => {
 
   afterEach(() => {
     loggerErrorSpy.mockRestore();
+    loggerWarnSpy.mockRestore();
   });
 
   it('uses EIP-191 hash for message signing', async () => {
@@ -391,6 +394,17 @@ describe('WalletService.sign()', () => {
       hashMessage('Hello, SOFA ONE!'),
     );
     expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Privileged EOA signing requested',
+        userId: 'user-1',
+        chainId: 84532,
+        type: 'message',
+        executionMode: 'eoa',
+        apiKeyPrefix: API_KEY_PREFIX,
+      }),
+    );
     expect(mockSigningRequestCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({ walletAddress: WALLET.agentWalletAddress }),
     });
@@ -649,6 +663,21 @@ describe('WalletService.sign()', () => {
     expect(mockFindUnique).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Signing policy rejected request',
+        reason: 'Permit typed data signing is not allowed',
+        userId: 'user-1',
+        chainId: 84532,
+        type: 'typed_data',
+        executionMode: 'session_key',
+        apiKeyPrefix: API_KEY_PREFIX,
+        typedDataPrimaryType: 'Permit',
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('spender');
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('9999999999');
   });
 
   it('rejects invalid typedData.domain.verifyingContract before loading the wallet', async () => {

@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -66,9 +67,11 @@ describe('TransactionsService', () => {
   } as any;
 
   let service: TransactionsService;
+  let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
     prisma.transaction.findFirst.mockResolvedValue(null);
     prisma.transaction.create.mockResolvedValue({
@@ -88,6 +91,10 @@ describe('TransactionsService', () => {
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     service = new TransactionsService(prisma, openfort);
+  });
+
+  afterEach(() => {
+    loggerWarnSpy.mockRestore();
   });
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
@@ -166,6 +173,17 @@ describe('TransactionsService', () => {
       chainId: 8453,
       interactions: dto.interactions,
     });
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Privileged EOA transaction requested',
+        userId: 'user-1',
+        chainId: 8453,
+        executionMode: 'eoa',
+        interactionCount: 1,
+        apiKeyPrefix,
+      }),
+    );
     expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         walletAddress: wallet.agentWalletAddress,
@@ -230,6 +248,11 @@ describe('TransactionsService', () => {
   });
 
   it('rejects infinite token approvals before loading the wallet', async () => {
+    const infiniteApprovalCalldata =
+      '0x095ea7b3' +
+      '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
+      'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
     await expect(
       service.send(
         'user-1',
@@ -238,10 +261,7 @@ describe('TransactionsService', () => {
           interactions: [
             {
               ...dto.interactions[0],
-              data:
-                '0x095ea7b3' +
-                '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
-                'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              data: infiniteApprovalCalldata,
             },
           ],
         } as any,
@@ -252,6 +272,20 @@ describe('TransactionsService', () => {
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Transaction policy rejected request',
+        reason: 'Infinite token approvals are not allowed',
+        userId: 'user-1',
+        chainId: dto.chainId,
+        executionMode: 'session_key',
+        apiKeyPrefix,
+        interactionIndex: 0,
+        selector: '0x095ea7b3',
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(infiniteApprovalCalldata);
   });
 
   it('rejects Permit/Permit2 calldata before loading the wallet', async () => {

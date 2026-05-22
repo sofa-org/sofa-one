@@ -67,8 +67,21 @@ export class TransactionsService {
         apiKeyRecord.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
+      this.logSecurityWarning({
+        message: 'Privileged EOA transaction requested',
+        userId,
+        chainId,
+        executionMode,
+        interactionCount: dto.interactions.length,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+      });
     }
-    this.assertTransactionPolicy(dto);
+    this.assertTransactionPolicy(dto, {
+      userId,
+      chainId,
+      executionMode,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+    });
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
       include: {
@@ -216,41 +229,86 @@ export class TransactionsService {
     return mode ?? 'session_key';
   }
 
-  private assertTransactionPolicy(dto: SendTransactionDto): void {
+  private assertTransactionPolicy(
+    dto: SendTransactionDto,
+    context: {
+      userId: string;
+      chainId: number;
+      executionMode: ExecutionMode;
+      apiKeyPrefix?: string;
+    },
+  ): void {
     if (dto.interactions.length > MAX_TRANSACTION_INTERACTIONS) {
-      throw new BadRequestException(
+      this.rejectTransactionPolicy(
         `Transaction contains too many interactions; maximum is ${MAX_TRANSACTION_INTERACTIONS}`,
+        context,
+        { interactionCount: dto.interactions.length },
       );
     }
 
     dto.interactions.forEach((interaction, index) => {
       const value = BigInt(interaction.value ?? '0');
       if (value !== ZERO_NATIVE_VALUE) {
-        throw new BadRequestException('Native value transfers are not allowed for API key transactions');
+        this.rejectTransactionPolicy(
+          'Native value transfers are not allowed for API key transactions',
+          context,
+          { interactionIndex: index, hasNativeValue: true },
+        );
       }
 
       if (interaction.data.length > 2 && interaction.data.length < 10) {
-        throw new BadRequestException(`Interaction ${index + 1} calldata is too short`);
+        this.rejectTransactionPolicy(`Interaction ${index + 1} calldata is too short`, context, {
+          interactionIndex: index,
+          calldataLength: interaction.data.length,
+        });
       }
 
       const selector = this.getFunctionSelector(interaction.data);
       if (!selector) return;
 
       if (BLOCKED_PERMIT_SELECTORS.has(selector)) {
-        throw new BadRequestException('Permit signatures are not allowed in transaction calldata');
+        this.rejectTransactionPolicy('Permit signatures are not allowed in transaction calldata', context, {
+          interactionIndex: index,
+          selector,
+        });
       }
 
       if (selector === ERC20_APPROVE_SELECTOR && this.isMaxUint256Approval(interaction.data)) {
-        throw new BadRequestException('Infinite token approvals are not allowed');
+        this.rejectTransactionPolicy('Infinite token approvals are not allowed', context, {
+          interactionIndex: index,
+          selector,
+        });
       }
 
       if (
         selector === ERC721_ERC1155_SET_APPROVAL_FOR_ALL_SELECTOR &&
         this.isApprovalForAllEnabled(interaction.data)
       ) {
-        throw new BadRequestException('NFT operator approvals are not allowed');
+        this.rejectTransactionPolicy('NFT operator approvals are not allowed', context, {
+          interactionIndex: index,
+          selector,
+        });
       }
     });
+  }
+
+  private rejectTransactionPolicy(
+    reason: string,
+    context: {
+      userId: string;
+      chainId: number;
+      executionMode: ExecutionMode;
+      apiKeyPrefix?: string;
+    },
+    extra: Record<string, unknown> = {},
+  ): never {
+    this.logSecurityWarning({
+      message: 'Transaction policy rejected request',
+      reason,
+      ...context,
+      ...extra,
+    });
+    throw new BadRequestException(reason);
   }
 
   private getFunctionSelector(data: string): string | null {
@@ -463,6 +521,10 @@ export class TransactionsService {
 
   private logContext(extra: Record<string, unknown>) {
     return this.requestContext?.getLogContext(extra) ?? extra;
+  }
+
+  private logSecurityWarning(extra: Record<string, unknown>): void {
+    this.logger.warn(this.logContext({ event: 'security', ...extra }));
   }
 
   private toStatusResponse(tx: any) {
