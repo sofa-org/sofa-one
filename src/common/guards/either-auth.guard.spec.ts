@@ -240,5 +240,80 @@ describe('EitherAuthGuard API key authentication', () => {
     await expect(guard.canActivate(contextWithApiKey(rawKey))).rejects.toThrow(
       UnauthorizedException,
     );
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'API key authentication rejected',
+        reason: 'hash_verification_failed',
+        clientIp: '127.0.0.1',
+        candidateCount: 1,
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('wrong-hash');
+  });
+
+  it('logs a security warning when no active prefix candidates are found', async () => {
+    const { guard } = createGuard([]);
+
+    await expect(
+      guard.canActivate(
+        contextWithApiKey(rawKey, {
+          ip: '203.0.113.50',
+          userAgent: 'unknown-client/1.0',
+        }),
+      ),
+    ).rejects.toThrow(UnauthorizedException);
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'API key authentication rejected',
+        reason: 'no_active_prefix_candidate',
+        clientIp: '203.0.113.50',
+        userAgent: 'unknown-client/1.0',
+        lookupPrefixCount: 2,
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
+  });
+
+  it('logs a security warning when IP allowlist rejects a verified API key', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      keyPrefix: longPrefix,
+      apiKeyHash: 'hash-1',
+      allowedIps: ['198.51.100.0/24'],
+      user: { id: 'user-1' },
+    };
+    const { guard, prisma } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(
+        contextWithApiKey(rawKey, {
+          ip: '203.0.113.10',
+          userAgent: 'blocked-client/1.0',
+        }),
+      ),
+    ).rejects.toThrow(UnauthorizedException);
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'API key authentication rejected',
+        reason: 'ip_allowlist_rejected',
+        apiKeyId: 'key-1',
+        apiKeyPrefix: longPrefix,
+        userId: 'user-1',
+        clientIp: '203.0.113.10',
+        userAgent: 'blocked-client/1.0',
+        allowedIpCount: 1,
+      }),
+    );
+    expect(prisma.apiKey.update).not.toHaveBeenCalled();
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('hash-1');
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('198.51.100.0/24');
   });
 });

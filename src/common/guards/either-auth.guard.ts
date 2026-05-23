@@ -83,6 +83,10 @@ export class EitherAuthGuard implements CanActivate {
 
   private async authenticateWithApiKey(request: any, apiKey: string): Promise<boolean> {
     const prefixes = getApiKeyLookupPrefixes(apiKey);
+    // Use request.ip which is correctly set by Express after trust-proxy processing.
+    // Never read X-Forwarded-For directly — it can be forged by the client.
+    const clientIp: string = request.ip ?? '';
+    const userAgent = this.getUserAgent(request);
 
     const keyRecords = await this.prisma.apiKey.findMany({
       where: {
@@ -94,6 +98,11 @@ export class EitherAuthGuard implements CanActivate {
     });
 
     if (keyRecords.length === 0) {
+      this.logApiKeyAuthenticationFailure('no_active_prefix_candidate', {
+        clientIp,
+        userAgent,
+        lookupPrefixCount: prefixes.length,
+      });
       throw new UnauthorizedException('Invalid API key');
     }
 
@@ -107,15 +116,24 @@ export class EitherAuthGuard implements CanActivate {
     }
 
     if (!keyRecord) {
+      this.logApiKeyAuthenticationFailure('hash_verification_failed', {
+        clientIp,
+        userAgent,
+        candidateCount: keyRecords.length,
+      });
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // Use request.ip which is correctly set by Express after trust-proxy processing.
-    // Never read X-Forwarded-For directly — it can be forged by the client.
-    const clientIp: string = request.ip ?? '';
-    const userAgent = this.getUserAgent(request);
     if (keyRecord.allowedIps.length > 0) {
       if (!isIpAllowed(clientIp, keyRecord.allowedIps)) {
+        this.logApiKeyAuthenticationFailure('ip_allowlist_rejected', {
+          apiKeyId: keyRecord.id,
+          apiKeyPrefix: keyRecord.keyPrefix,
+          userId: keyRecord.user?.id,
+          clientIp,
+          userAgent,
+          allowedIpCount: keyRecord.allowedIps.length,
+        });
         throw new UnauthorizedException('IP address not allowed for this API key');
       }
     }
@@ -150,6 +168,34 @@ export class EitherAuthGuard implements CanActivate {
     const userAgent = Array.isArray(value) ? value[0] : value;
     if (!userAgent) return null;
     return userAgent.slice(0, MAX_USER_AGENT_LENGTH);
+  }
+
+  private logApiKeyAuthenticationFailure(
+    reason: string,
+    details: {
+      apiKeyId?: string;
+      apiKeyPrefix?: string | null;
+      userId?: string | null;
+      clientIp: string;
+      userAgent: string | null;
+      lookupPrefixCount?: number;
+      candidateCount?: number;
+      allowedIpCount?: number;
+    },
+  ) {
+    this.logger.warn({
+      event: 'security',
+      message: 'API key authentication rejected',
+      reason,
+      apiKeyId: details.apiKeyId,
+      apiKeyPrefix: details.apiKeyPrefix,
+      userId: details.userId,
+      clientIp: details.clientIp || null,
+      userAgent: details.userAgent,
+      lookupPrefixCount: details.lookupPrefixCount,
+      candidateCount: details.candidateCount,
+      allowedIpCount: details.allowedIpCount,
+    });
   }
 
   private logApiKeyUsageAnomaly(
