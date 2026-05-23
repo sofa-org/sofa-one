@@ -7,10 +7,24 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
   ValidateNested,
 } from 'class-validator';
+import { isIpOrCidr } from '../../../common/utils/ip-cidr';
+
+@ValidatorConstraint({ name: 'isIpOrCidr', async: false })
+class IsIpOrCidrConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    return typeof value === 'string' && isIpOrCidr(value);
+  }
+
+  defaultMessage(): string {
+    return 'Each entry must be a valid IPv4/IPv6 address or CIDR range (e.g. 1.2.3.4, 10.0.0.0/24, 2001:db8::1, or 2001:db8::/64)';
+  }
+}
 
 export class ApiKeyPermissionsDto {
   @IsOptional()
@@ -44,10 +58,7 @@ export class CreateApiKeyDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @Matches(/^(\d{1,3}\.){3}\d{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/, {
-    each: true,
-    message: 'Each entry must be a valid IPv4 address or CIDR range (e.g. 1.2.3.4 or 10.0.0.0/24)',
-  })
+  @Validate(IsIpOrCidrConstraint, { each: true })
   allowedIps?: string[];
 
   @IsOptional()

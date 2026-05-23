@@ -28,10 +28,10 @@ describe('CreateApiKeyDto', () => {
     expect(errors.some((error) => error.property === 'expiresAt')).toBe(true);
   });
 
-  it('accepts IPv4 and IPv4 CIDR allowedIps entries', async () => {
+  it('accepts IPv4, IPv6, and CIDR allowedIps entries', async () => {
     const errors = await validateDto({
       name: 'Valid key',
-      allowedIps: ['192.168.1.10', '10.0.0.0/24'],
+      allowedIps: ['192.168.1.10', '10.0.0.0/24', '2001:db8::1', '2001:db8::/64'],
     });
 
     expect(errors).toHaveLength(0);
@@ -39,8 +39,8 @@ describe('CreateApiKeyDto', () => {
 
   it('rejects invalid allowedIps values', async () => {
     const invalidValues = [
-      ['::1'],
       ['10.0.0.0/24extra'],
+      ['2001:db8::/129'],
       ['not-an-ip'],
     ];
 
