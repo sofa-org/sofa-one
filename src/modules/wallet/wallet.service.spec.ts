@@ -483,12 +483,45 @@ describe('WalletService.sign()', () => {
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
+  it('rejects typed data signing when the API key lacks sign permission', async () => {
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'typed_data', typedData: createTypedData(84532), chainId: 84532 } as any,
+        { ...API_KEY_CONTEXT, canSign: false },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
   it('rejects eoa signing when the API key lacks eoa permission', async () => {
     await expect(
       service.sign(
         'user-1',
         { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
         API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects typed data eoa signing when the API key lacks eoa permission', async () => {
+    await expect(
+      service.sign(
+        'user-1',
+        {
+          type: 'typed_data',
+          typedData: createTypedData(84532),
+          chainId: 84532,
+          executionMode: 'eoa',
+        } as any,
+        { ...API_KEY_CONTEXT, canUseEoaExecution: false },
       ),
     ).rejects.toThrow(ForbiddenException);
 
@@ -732,6 +765,31 @@ describe('WalletService.sign()', () => {
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('spender');
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('9999999999');
+  });
+
+  it('allows non-permit typed data signing and records safe typed data metadata', async () => {
+    const typedData = createTypedData(84532, '0x1111111111111111111111111111111111111111');
+
+    await service.sign(
+      'user-1',
+      { type: 'typed_data', typedData, chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(mockFindUnique).toHaveBeenCalledTimes(1);
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'typed_data',
+        chainId: BigInt(84532),
+        walletAddress: WALLET.walletAddress,
+      }),
+    });
+    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(
+      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    ).not.toContain('Hello');
   });
 
   it('rejects invalid typedData.domain.verifyingContract before loading the wallet', async () => {
