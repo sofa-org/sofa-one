@@ -305,21 +305,19 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('rejects NFT operator approvals before loading the wallet', async () => {
+  it.each([
+    ['0xd505accf', 'ERC-2612 permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'],
+    ['0x8fcbaf0c', 'DAI-style permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)'],
+    ['0x2b67b570', 'Permit2 permit(address,PermitSingle,bytes)'],
+    ['0xb7f13ed4', 'Permit2 compact/single permit variant'],
+    ['0x002a3e3a', 'Permit2 permitBatch(address,PermitBatch,bytes)'],
+  ])('rejects blocked permit selector %s before loading the wallet', async (selector) => {
     await expect(
       service.send(
         'user-1',
         {
           ...dto,
-          interactions: [
-            {
-              ...dto.interactions[0],
-              data:
-                '0xa22cb465' +
-                '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
-                '0000000000000000000000000000000000000000000000000000000000000001',
-            },
-          ],
+          interactions: [{ ...dto.interactions[0], data: selector }],
         } as any,
         apiKeyContext,
       ),
@@ -328,6 +326,76 @@ describe('TransactionsService', () => {
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects max-uint ERC20 approvals before loading the wallet', async () => {
+    const maxUintApprovalCalldata =
+      '0x095ea7b3' +
+      '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
+      'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [{ ...dto.interactions[0], data: maxUintApprovalCalldata }],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Transaction policy rejected request',
+        reason: 'Infinite token approvals are not allowed',
+        userId: 'user-1',
+        chainId: dto.chainId,
+        executionMode: 'session_key',
+        apiKeyPrefix,
+        interactionIndex: 0,
+        selector: '0x095ea7b3',
+      }),
+    );
+  });
+
+  it('rejects NFT operator approvals before loading the wallet', async () => {
+    const nftOperatorApprovalCalldata =
+      '0xa22cb465' +
+      '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
+      '0000000000000000000000000000000000000000000000000000000000000001';
+
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [{ ...dto.interactions[0], data: nftOperatorApprovalCalldata }],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Transaction policy rejected request',
+        reason: 'NFT operator approvals are not allowed',
+        userId: 'user-1',
+        chainId: dto.chainId,
+        executionMode: 'session_key',
+        apiKeyPrefix,
+        interactionIndex: 0,
+        selector: '0xa22cb465',
+      }),
+    );
   });
 
   it('propagates clear paymaster policy failures when sponsorship is required', async () => {
