@@ -116,6 +116,27 @@ describe('ApiKeyService', () => {
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
+  it('trims names before duplicate checks and persistence', async () => {
+    const service = new ApiKeyService(prisma as any);
+
+    await service.createApiKey('user-1', { name: '  Production key  ' });
+
+    expect(prisma.apiKey.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          revoked: false,
+          name: { equals: 'Production key', mode: 'insensitive' },
+        }),
+      }),
+    );
+    expect(prisma.apiKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ name: 'Production key' }),
+      }),
+    );
+  });
+
   it('rejects API key creation above the active-key limit', async () => {
     prisma.apiKey.count.mockResolvedValue(10);
     const service = new ApiKeyService(prisma as any);
@@ -124,6 +145,27 @@ describe('ApiKeyService', () => {
       BadRequestException,
     );
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
+  });
+
+  it('excludes revoked keys from name uniqueness and active-key limit checks', async () => {
+    prisma.apiKey.count.mockResolvedValue(9);
+    const service = new ApiKeyService(prisma as any);
+
+    await service.createApiKey('user-1', { name: 'Fresh key' });
+
+    expect(prisma.apiKey.count).toHaveBeenCalledWith({
+      where: { userId: 'user-1', revoked: false },
+    });
+    expect(prisma.apiKey.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          revoked: false,
+          name: { equals: 'Fresh key', mode: 'insensitive' },
+        }),
+      }),
+    );
+    expect(prisma.apiKey.create).toHaveBeenCalled();
   });
 
   it('rejects past and overly distant expiration dates', async () => {
@@ -236,6 +278,25 @@ describe('ApiKeyService', () => {
     );
   });
 
+  it('rejects revoke-all when auditing fails so the transaction can roll back', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      { id: 'key-1', keyPrefix: 'sk_111111111111111111111111', name: 'Primary' },
+      { id: 'key-2', keyPrefix: 'sk_222222222222222222222222', name: 'Backup' },
+    ]);
+    prisma.apiKeyEvent.create.mockImplementationOnce(async () => ({ id: 'event-1' }));
+    prisma.apiKeyEvent.create.mockImplementationOnce(async () => {
+      throw new Error('audit failed');
+    });
+    const service = new ApiKeyService(prisma as any);
+
+    await expect(service.revokeAllKeys('user-1')).rejects.toThrow('audit failed');
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', revoked: false },
+      data: { revoked: true },
+    });
+    expect(prisma.apiKeyEvent.create).toHaveBeenCalledTimes(2);
+  });
+
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     prisma.apiKey.findMany.mockResolvedValue([
@@ -299,6 +360,25 @@ describe('ApiKeyService', () => {
         }),
       }),
     );
+  });
+
+  it('does not create a replacement key if rotation auditing fails', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
+    ]);
+    prisma.apiKeyEvent.create.mockImplementationOnce(async () => {
+      throw new Error('rotation audit failed');
+    });
+    const service = new ApiKeyService(prisma as any);
+
+    await expect(service.rotateApiKey('user-1', 'Refreshed')).rejects.toThrow(
+      'rotation audit failed',
+    );
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', revoked: false },
+      data: { revoked: true },
+    });
+    expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
   it('lists masked metadata only and never selects API key hashes or allowlists', async () => {
