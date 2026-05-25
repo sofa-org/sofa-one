@@ -82,6 +82,124 @@ describe('EitherAuthGuard API key authentication', () => {
     expect(argon2.verify).toHaveBeenCalledWith('hash-1', rawKey);
   });
 
+  it('succeeds with a valid bearer session and does not invoke API-key fallback', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'user-1', socialId: 'openfort-user-1' }),
+      },
+      apiKey: {
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+    const openfort = {
+      verifyIamSession: jest.fn().mockResolvedValue({
+        openfortUserId: 'openfort-user-1',
+        session: { id: 'session-1' },
+        email: 'user@example.com',
+      }),
+    };
+    const guard = new EitherAuthGuard(
+      { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
+      prisma as any,
+      openfort as any,
+    );
+    const request: any = {
+      headers: { authorization: 'Bearer bearer-token' },
+      ip: '127.0.0.1',
+    };
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).resolves.toBe(true);
+
+    expect(openfort.verifyIamSession).toHaveBeenCalledWith('bearer-token');
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { socialId: 'openfort-user-1' },
+    });
+    expect(prisma.apiKey.findMany).not.toHaveBeenCalled();
+    expect(request.user).toEqual({ id: 'user-1', socialId: 'openfort-user-1' });
+    expect(request.openfortSession).toEqual({ id: 'session-1' });
+    expect(request.openfortEmail).toBe('user@example.com');
+  });
+
+  it('prefers bearer auth when both bearer and x-api-key are present', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'user-2', socialId: 'openfort-user-2' }),
+      },
+      apiKey: {
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+    const openfort = {
+      verifyIamSession: jest.fn().mockResolvedValue({
+        openfortUserId: 'openfort-user-2',
+        session: { id: 'session-2' },
+        email: 'user2@example.com',
+      }),
+    };
+    const guard = new EitherAuthGuard(
+      { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
+      prisma as any,
+      openfort as any,
+    );
+    const request: any = {
+      headers: { authorization: 'Bearer bearer-token', 'x-api-key': 'sk_test_123' },
+      ip: '127.0.0.1',
+    };
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).resolves.toBe(true);
+
+    expect(openfort.verifyIamSession).toHaveBeenCalledWith('bearer-token');
+    expect(prisma.apiKey.findMany).not.toHaveBeenCalled();
+    expect(request.user).toEqual({ id: 'user-2', socialId: 'openfort-user-2' });
+  });
+
+  it('uses api-key fallback only when bearer auth is absent', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn() },
+      apiKey: {
+        findMany: jest.fn().mockResolvedValue([]),
+        update: jest.fn(),
+      },
+    };
+    const openfort = {
+      verifyIamSession: jest.fn(),
+    };
+    const guard = new EitherAuthGuard(
+      { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
+      prisma as any,
+      openfort as any,
+    );
+    const request: any = {
+      headers: { 'x-api-key': 'sk_test_456' },
+      ip: '127.0.0.1',
+    };
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(UnauthorizedException);
+
+    expect(openfort.verifyIamSession).not.toHaveBeenCalled();
+    expect(prisma.apiKey.findMany).toHaveBeenCalled();
+  });
+
   it('records last used IP and user agent metadata for verified API keys', async () => {
     const keyRecord = {
       id: 'key-1',
