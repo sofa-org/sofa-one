@@ -15,7 +15,7 @@ export class ListSigningRequestsQueryDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['submitting', 'confirmed', 'failed'])
+  @IsIn(['submitting', 'signed', 'failed'])
   status?: string;
 
   @IsOptional()

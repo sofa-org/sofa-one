@@ -22,7 +22,7 @@ const TX_STATUS_OPTIONS = [
 const SR_STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
   { value: 'submitting', label: 'Submitting' },
-  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'signed', label: 'Signed' },
   { value: 'failed', label: 'Failed' },
 ] as const;
 
@@ -72,6 +72,7 @@ function statusBadge(status: string) {
     submitting: 'bg-blue-50 text-blue-700 ring-blue-600/20',
     pending: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
     confirmed: 'bg-green-50 text-green-700 ring-green-600/20',
+    signed: 'bg-green-50 text-green-700 ring-green-600/20',
     failed: 'bg-red-50 text-red-700 ring-red-600/20',
     unknown: 'bg-gray-50 text-gray-700 ring-gray-600/20',
   };
