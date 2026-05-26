@@ -253,6 +253,27 @@ export class WalletService {
     };
   }
 
+  /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
+  async getSigningRequestDetail(userId: string, signingRequestId: string) {
+    const sr = await this.prisma.signingRequest.findFirst({
+      where: { id: signingRequestId, userId },
+    });
+    if (!sr) throw new NotFoundException('Signing request not found');
+
+    return {
+      id: sr.id,
+      type: sr.type,
+      chainId: sr.chainId ? Number(sr.chainId) : null,
+      walletAddress: sr.walletAddress,
+      status: sr.status,
+      authMethod: sr.authMethod,
+      apiKeyPrefix: sr.apiKeyPrefix,
+      apiKeyName: sr.apiKeyName,
+      createdAt: sr.createdAt,
+      completedAt: sr.completedAt,
+    };
+  }
+
   /** List signing requests for a user with optional filtering and pagination. */
   async listSigningRequests(userId: string, query: ListSigningRequestsQueryDto) {
     const page = query.page ?? 1;

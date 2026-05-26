@@ -442,6 +442,16 @@ export class TransactionsService {
     };
   }
 
+  /** Return a safe dashboard detail view (dashboard-only, ownership-enforced). */
+  async getDashboardDetail(userId: string, transactionId: string) {
+    const tx = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
+    });
+    if (!tx) throw new NotFoundException('Transaction not found');
+
+    return this.toDashboardDetailResponse(tx);
+  }
+
   /** Return a safe transaction status view. */
   async getStatus(userId: string, transactionId: string, apiKeyRecord?: ApiKeyTransactionContext) {
     if (!apiKeyRecord) {
@@ -584,6 +594,33 @@ export class TransactionsService {
       failureReason: tx.failureReason ? 'Transaction failed' : null,
       createdAt: tx.createdAt,
       completedAt: tx.completedAt,
+    };
+  }
+
+  private toDashboardDetailResponse(tx: any) {
+    return {
+      id: tx.id,
+      status: tx.status,
+      txHash: tx.txHash,
+      chainId: Number(tx.chainId),
+      walletAddress: tx.walletAddress,
+      operationType: tx.operationType,
+      authMethod: tx.authMethod,
+      apiKeyPrefix: tx.apiKeyPrefix,
+      apiKeyName: tx.apiKeyName,
+      idempotencyKey: tx.idempotencyKey,
+      failureReason: tx.failureReason ? 'Transaction failed' : null,
+      createdAt: tx.createdAt,
+      completedAt: tx.completedAt,
+      // For withdrawals, include safe withdrawal details from the details JSON
+      withdrawal:
+        tx.operationType === 'withdraw' && tx.details
+          ? {
+              to: (tx.details as any)?.to ?? null,
+              amount: (tx.details as any)?.amount ?? null,
+              token: (tx.details as any)?.token ?? null,
+            }
+          : null,
     };
   }
 

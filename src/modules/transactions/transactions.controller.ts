@@ -32,6 +32,18 @@ export class TransactionsController {
     return this.transactionsService.list(userId, query);
   }
 
+  /** GET /v1/transactions/:id/detail — dashboard only: full transaction detail view. */
+  @Get(':id/detail')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
+  async getDetail(
+    @CurrentUser('id') userId: string,
+    @Param('id', new ParseUUIDPipe()) transactionId: string,
+  ) {
+    return this.transactionsService.getDashboardDetail(userId, transactionId);
+  }
+
   /** GET /v1/transactions/:id — public API: API-key-only transaction status lookup. */
   @Get(':id')
   @UseGuards(ApiKeyOnlyGuard)

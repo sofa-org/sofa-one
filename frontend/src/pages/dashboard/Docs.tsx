@@ -196,6 +196,10 @@ const created = await authFetch('/v1/api-keys', getToken, {
   body: JSON.stringify({ name: 'Production backend' }),
 });`;
 
+  const dashboardTxHistoryExample = `const transactions = await authFetch('/v1/transactions?status=confirmed&chainId=84532&page=1&limit=20', getToken);`;
+
+  const dashboardSigningRequestsExample = `const signingRequests = await authFetch('/v1/wallets/signing-requests?type=message&status=signed&chainId=84532&page=1&limit=20', getToken);`;
+
   return (
     <DashboardPage
       title="API Documentation"
@@ -325,7 +329,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
               Browser calls use Openfort IAM, not API keys
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
-              Wallet balances, withdrawals, and API-key management are intentionally dashboard-only. Call them
+              Wallet balances, withdrawals, transaction history, signing requests, and API-key management are intentionally dashboard-only. Call them
               from the signed-in SPA with <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">authFetch</code>
               and the current Openfort IAM token; never expose or reuse a backend <span className="font-mono text-brand-text">X-API-Key</span>
               for these routes.
@@ -369,7 +373,37 @@ const created = await authFetch('/v1/api-keys', getToken, {
             </p>
             <CopyableCodeBlock label="JWT example">{dashboardApiKeysExample}</CopyableCodeBlock>
           </div>
+
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Transaction History</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/transactions</p>
+            </div>
+            <p className="text-sm leading-6 text-brand-muted">
+              List all transactions for the authenticated user with optional status and chain filtering. Supports pagination.
+            </p>
+            <CopyableCodeBlock label="JWT example">{dashboardTxHistoryExample}</CopyableCodeBlock>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Signing Requests</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/wallets/signing-requests</p>
+            </div>
+            <p className="text-sm leading-6 text-brand-muted">
+              List all signing requests for the authenticated user with optional type, status, and chain filtering. Supports pagination.
+            </p>
+            <CopyableCodeBlock label="JWT example">{dashboardSigningRequestsExample}</CopyableCodeBlock>
+          </div>
         </div>
+
+        <p className="mt-4 text-sm leading-6 text-brand-muted">
+          Individual transaction and signing request details can be fetched via{" "}
+          <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">GET /v1/transactions/:id/detail</code>{" "}
+          (dashboard-only transaction detail) and{" "}
+          <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">GET /v1/wallets/signing-requests/:id</code>{" "}
+          (dashboard-only signing request detail).
+        </p>
       </section>
 
       <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">

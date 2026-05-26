@@ -528,3 +528,51 @@ export async function listSigningRequestsAuth(
   const qs = query.toString();
   return authFetch<ListSigningRequestsResponse>(`/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`, getToken, { signal });
 }
+
+// --- Transaction & Signing Request Detail (dashboard-only) ---
+
+export interface TransactionDetail {
+  id: string;
+  status: string;
+  txHash: string | null;
+  chainId: number;
+  walletAddress: string;
+  operationType: string;
+  authMethod: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  idempotencyKey: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  withdrawal: { to: string | null; amount: string | null; token: string | null } | null;
+}
+
+export async function getTransactionDetailAuth(
+  getToken: () => Promise<string | null>,
+  transactionId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, { signal });
+}
+
+export interface SigningRequestDetail {
+  id: string;
+  type: string;
+  chainId: number | null;
+  walletAddress: string;
+  status: string;
+  authMethod: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export async function getSigningRequestDetailAuth(
+  getToken: () => Promise<string | null>,
+  signingRequestId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<SigningRequestDetail>(`/v1/wallets/signing-requests/${signingRequestId}`, getToken, { signal });
+}
