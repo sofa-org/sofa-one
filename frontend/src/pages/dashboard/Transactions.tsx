@@ -131,6 +131,7 @@ export default function TransactionsPage() {
   const [drawerData, setDrawerData] = useState<TransactionDetail | SigningRequestDetail | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [drawerError, setDrawerError] = useState<string | null>(null);
+  const [drawerRetryNonce, setDrawerRetryNonce] = useState(0);
 
   const fetchTransactions = useCallback(async () => {
     setTxLoading(true);
@@ -230,6 +231,7 @@ export default function TransactionsPage() {
     setDrawerData(null);
     setDrawerError(null);
     setDrawerLoading(true);
+    setDrawerRetryNonce((nonce) => nonce + 1);
   }, [drawerId]);
 
   // Fetch detail when drawer opens
@@ -261,7 +263,7 @@ export default function TransactionsPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [drawerOpen, drawerId, drawerType, getToken]);
+  }, [drawerOpen, drawerId, drawerType, drawerRetryNonce, getToken]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
