@@ -14,6 +14,7 @@ import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
+import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 
 const MAX_TRANSACTION_INTERACTIONS = 10;
 const ZERO_NATIVE_VALUE = 0n;
@@ -411,6 +412,36 @@ export class TransactionsService {
     }
   }
 
+  /** List transactions for a user with optional filtering and pagination. */
+  async list(userId: string, query: ListTransactionsQueryDto) {
+    const { status, chainId, page = 1, limit = 20 } = query;
+
+    const where: any = { userId };
+    if (status) {
+      where.status = status;
+    }
+    if (chainId) {
+      where.chainId = BigInt(chainId);
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return {
+      items: items.map((tx) => this.toListItemResponse(tx)),
+      total,
+      page,
+      limit,
+    };
+  }
+
   /** Return a safe transaction status view. */
   async getStatus(userId: string, transactionId: string, apiKeyRecord?: ApiKeyTransactionContext) {
     if (!apiKeyRecord) {
@@ -525,6 +556,22 @@ export class TransactionsService {
 
   private logSecurityWarning(extra: Record<string, unknown>): void {
     this.logger.warn(this.logContext({ event: 'security', ...extra }));
+  }
+
+  private toListItemResponse(tx: any) {
+    return {
+      id: tx.id,
+      status: tx.status,
+      txHash: tx.txHash,
+      chainId: Number(tx.chainId),
+      walletAddress: tx.walletAddress,
+      operationType: tx.operationType,
+      apiKeyPrefix: tx.apiKeyPrefix,
+      apiKeyName: tx.apiKeyName,
+      createdAt: tx.createdAt,
+      completedAt: tx.completedAt,
+      failureReason: tx.failureReason ? 'Transaction failed' : null,
+    };
   }
 
   private toStatusResponse(tx: any) {

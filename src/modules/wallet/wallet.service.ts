@@ -27,6 +27,7 @@ import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
+import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
 
 const ERC20_BALANCE_ABI = [
@@ -249,6 +250,52 @@ export class WalletService {
       walletAddress: signingWalletAddress,
       type: params.type,
       executionMode,
+    };
+  }
+
+  /** List signing requests for a user with optional filtering and pagination. */
+  async listSigningRequests(userId: string, query: ListSigningRequestsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { userId };
+
+    if (query.type) {
+      where.type = query.type;
+    }
+    if (query.status) {
+      where.status = query.status;
+    }
+    if (query.chainId) {
+      where.chainId = BigInt(query.chainId);
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.signingRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.signingRequest.count({ where }),
+    ]);
+
+    return {
+      items: items.map((sr) => ({
+        id: sr.id,
+        type: sr.type,
+        chainId: sr.chainId ? Number(sr.chainId) : null,
+        walletAddress: sr.walletAddress,
+        status: sr.status,
+        apiKeyPrefix: sr.apiKeyPrefix,
+        apiKeyName: sr.apiKeyName,
+        createdAt: sr.createdAt,
+        completedAt: sr.completedAt,
+      })),
+      total,
+      page,
+      limit,
     };
   }
 

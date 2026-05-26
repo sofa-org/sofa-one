@@ -9,6 +9,7 @@ import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SignDto } from './dto/sign.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 
 @Controller('v1/wallets')
 export class WalletController {
@@ -28,6 +29,18 @@ export class WalletController {
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
   async getDepositInfo(@CurrentUser('id') userId: string, @Body('chainId') chainId: number) {
     return this.walletService.getDepositInfo(userId, Number(chainId));
+  }
+
+  /** GET /v1/wallets/signing-requests — frontend only: list signing request history. */
+  @Get('signing-requests')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
+  async listSigningRequests(
+    @CurrentUser('id') userId: string,
+    @Query() query: ListSigningRequestsQueryDto,
+  ) {
+    return this.walletService.listSigningRequests(userId, query);
   }
 
   /** POST /v1/wallets/sign — API-key only: sign data without sending a transaction. */
