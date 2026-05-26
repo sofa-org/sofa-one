@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut } from '@openfort/react';
-import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, Loader2, Menu, X } from 'lucide-react';
+import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
+  { href: '/dashboard/transactions', label: 'History', icon: History },
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 

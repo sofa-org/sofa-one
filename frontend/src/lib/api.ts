@@ -442,3 +442,89 @@ export async function getBalancesAuth(
     signal,
   });
 }
+
+// --- Transaction & Signing Request History (dashboard-only) ---
+
+export interface TransactionListItem {
+  id: string;
+  status: string;
+  txHash: string | null;
+  chainId: number;
+  walletAddress: string;
+  operationType: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  failureReason: string | null;
+}
+
+export interface ListTransactionsResponse {
+  items: TransactionListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ListTransactionsParams {
+  status?: string;
+  chainId?: number;
+  page?: number;
+  limit?: number;
+}
+
+export async function listTransactionsAuth(
+  getToken: () => Promise<string | null>,
+  params?: ListTransactionsParams,
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams();
+  if (params?.status) query.set('status', params.status);
+  if (params?.chainId) query.set('chainId', String(params.chainId));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, { signal });
+}
+
+export interface SigningRequestListItem {
+  id: string;
+  type: string;
+  chainId: number | null;
+  walletAddress: string;
+  status: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface ListSigningRequestsResponse {
+  items: SigningRequestListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ListSigningRequestsParams {
+  type?: string;
+  status?: string;
+  chainId?: number;
+  page?: number;
+  limit?: number;
+}
+
+export async function listSigningRequestsAuth(
+  getToken: () => Promise<string | null>,
+  params?: ListSigningRequestsParams,
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams();
+  if (params?.type) query.set('type', params.type);
+  if (params?.status) query.set('status', params.status);
+  if (params?.chainId) query.set('chainId', String(params.chainId));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<ListSigningRequestsResponse>(`/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`, getToken, { signal });
+}
