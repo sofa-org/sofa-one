@@ -11,6 +11,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
+import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
@@ -626,7 +627,7 @@ export class TransactionsService {
 
   private toFailureReason(error: unknown): string {
     const message = error instanceof Error ? error.message : 'Transaction submission failed';
-    return message.slice(0, 500);
+    return sanitizeErrorMessage(message);
   }
 
   private assertPermission(allowed: boolean | undefined, message: string): void {

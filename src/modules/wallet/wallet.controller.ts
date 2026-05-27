@@ -4,7 +4,9 @@ import { WalletService } from './wallet.service';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
+import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SignDto } from './dto/sign.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
@@ -62,10 +64,11 @@ export class WalletController {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }
 
-  /** POST /v1/wallets/withdraw — frontend only: submit a withdrawal transaction. */
+  /** POST /v1/wallets/withdraw — frontend only: submit a withdrawal transaction. Requires step-up. */
   @Post('withdraw')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
+  @RequireStepUp()
   @Throttle({ short: { limit: 3, ttl: 60000 }, medium: { limit: 10, ttl: 3600000 } })
   async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto) {
     return this.walletService.withdraw(userId, dto);

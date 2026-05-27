@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  BadGatewayException,
   InternalServerErrorException,
   Logger,
   NotFoundException,
@@ -97,6 +98,60 @@ describe('HttpExceptionFilter', () => {
         statusCode: 500,
       }),
       expect.any(String),
+    );
+  });
+
+  it('sanitizes hex values from error messages', () => {
+    const { host, response } = createHost();
+    const filter = new HttpExceptionFilter();
+
+    filter.catch(
+      new BadGatewayException({
+        code: 'USER_OPERATION_REJECTED',
+        message:
+          'UserOperation rejected by bundler. Reason: execution reverted at 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+      }),
+      host,
+    );
+
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.not.stringContaining('0xabcdef1234567890'),
+      }),
+    );
+  });
+
+  it('sanitizes internal URLs from error messages', () => {
+    const { host, response } = createHost();
+    const filter = new HttpExceptionFilter();
+
+    filter.catch(
+      new BadGatewayException({
+        code: 'WALLET_SERVICE_UNAVAILABLE',
+        message: 'Connection refused to http://localhost:5432/postgres',
+      }),
+      host,
+    );
+
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.not.stringContaining('localhost'),
+      }),
+    );
+  });
+
+  it('returns generic message for non-HttpException errors', () => {
+    const { host, response } = createHost();
+    const filter = new HttpExceptionFilter();
+
+    filter.catch(new Error('Database connection failed at /usr/src/app/db.ts:42'), host);
+
+    expect(response.status).toHaveBeenCalledWith(500);
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 500,
+        message: 'Internal server error',
+      }),
     );
   });
 });

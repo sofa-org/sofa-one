@@ -48,6 +48,7 @@ import { Step1CreateEoa } from './Step1CreateEoa';
 import { Step2AuthorizeAccess } from './Step2AuthorizeAccess';
 import { BalanceDisplay } from './BalanceDisplay';
 import { WithdrawForm } from './WithdrawForm';
+import { requestStepUpToken } from './step-up';
 import {
   AGENT_CHAIN_STORAGE_KEY,
   AGENT_AUTHORIZATION_MAX_TTL_MS,
@@ -357,7 +358,8 @@ export default function WalletPage() {
     try {
       const baseUnits = parseUsdcAmount(amount);
       const chainId = selectedChainId;
-      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId);
+      const stepUpToken = await requestStepUpToken(getToken);
+      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken);
       setWithdrawResult({
         message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
         transactionHash: result.transactionHash,

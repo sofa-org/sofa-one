@@ -195,12 +195,13 @@ describe('ApiKeyService', () => {
     );
   });
 
-  it('stores explicit API key permissions', async () => {
+  it('stores explicit API key permissions with IP allowlist for high-risk permissions', async () => {
     const service = new ApiKeyService(prisma as any);
 
     await service.createApiKey('user-1', {
       name: 'Signer key',
       permissions: { canSign: true, canUseEoaExecution: true },
+      allowedIps: ['203.0.113.0/24'],
     });
 
     expect(prisma.apiKey.create).toHaveBeenCalledWith(
@@ -210,6 +211,7 @@ describe('ApiKeyService', () => {
           canSendTransaction: false,
           canReadTransactionStatus: true,
           canUseEoaExecution: true,
+          allowedIps: ['203.0.113.0/24'],
         }),
       }),
     );
@@ -432,5 +434,233 @@ describe('ApiKeyService', () => {
         select: expect.not.objectContaining({ allowedIps: true }),
       }),
     );
+  });
+
+  // ── SEC-APIKEY-002: High-risk permissions require IP allowlist ──
+
+  describe('IP allowlist requirement for high-risk permissions', () => {
+    it('rejects canSign without IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'Signer key',
+          permissions: { canSign: true },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects canSendTransaction without IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'Tx key',
+          permissions: { canSendTransaction: true },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects canUseEoaExecution without IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'EOA key',
+          permissions: { canUseEoaExecution: true },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('allows read-only keys without IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'Read-only key',
+        permissions: { canReadTransactionStatus: true },
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    it('allows default-permission keys without IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', { name: 'Default key' });
+
+      expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    it('allows high-risk permissions when IP allowlist is provided', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'Signer key',
+        permissions: { canSign: true },
+        allowedIps: ['203.0.113.10'],
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            canSign: true,
+            allowedIps: ['203.0.113.10'],
+          }),
+        }),
+      );
+    });
+
+    it('allows high-risk permissions with CIDR IP allowlist', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'Tx key',
+        permissions: { canSendTransaction: true },
+        allowedIps: ['10.0.0.0/8', '2001:db8::/32'],
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            canSendTransaction: true,
+            allowedIps: ['10.0.0.0/8', '2001:db8::/32'],
+          }),
+        }),
+      );
+    });
+  });
+
+  // ── SEC-APIKEY-003: Permission-based TTL limits ──
+
+  describe('permission-based TTL limits', () => {
+    it('rejects canUseEoaExecution key with TTL exceeding 30 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'EOA key',
+          permissions: { canUseEoaExecution: true },
+          allowedIps: ['203.0.113.10'],
+          expiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts canUseEoaExecution key with TTL within 30 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'EOA key',
+        permissions: { canUseEoaExecution: true },
+        allowedIps: ['203.0.113.10'],
+        expiresAt: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    it('rejects canSign key with TTL exceeding 90 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'Signer key',
+          permissions: { canSign: true },
+          allowedIps: ['203.0.113.10'],
+          expiresAt: new Date(Date.now() + 91 * 24 * 60 * 60 * 1000),
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts canSign key with TTL within 90 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'Signer key',
+        permissions: { canSign: true },
+        allowedIps: ['203.0.113.10'],
+        expiresAt: new Date(Date.now() + 80 * 24 * 60 * 60 * 1000),
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    it('rejects canSendTransaction key with TTL exceeding 90 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'Tx key',
+          permissions: { canSendTransaction: true },
+          allowedIps: ['203.0.113.10'],
+          expiresAt: new Date(Date.now() + 91 * 24 * 60 * 60 * 1000),
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts read-only key with TTL up to 365 days', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      await service.createApiKey('user-1', {
+        name: 'Read-only key',
+        permissions: { canReadTransactionStatus: true },
+        expiresAt: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000),
+      });
+
+      expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    it('uses most restrictive TTL when multiple high-risk permissions are combined', async () => {
+      const service = new ApiKeyService(prisma as any);
+
+      // canSign + canUseEoaExecution → max TTL is 30 days (most restrictive)
+      await expect(
+        service.createApiKey('user-1', {
+          name: 'Combined key',
+          permissions: { canSign: true, canUseEoaExecution: true },
+          allowedIps: ['203.0.113.10'],
+          expiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    it('caps default TTL to permission-based max for EOA keys', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
+      const service = new ApiKeyService(prisma as any);
+
+      // Default TTL is 90 days, but EOA max is 30 days → should get 30-day expiry
+      const result = await service.createApiKey('user-1', {
+        name: 'EOA key',
+        permissions: { canUseEoaExecution: true },
+        allowedIps: ['203.0.113.10'],
+      });
+
+      // Default TTL for EOA should be min(90 days, 30 days) = 30 days
+      expect(result.expiresAt).toEqual(new Date('2026-05-27T00:00:00.000Z'));
+    });
+
+    it('uses 90-day default TTL for read-only keys', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
+      const service = new ApiKeyService(prisma as any);
+
+      const result = await service.createApiKey('user-1', { name: 'Read-only key' });
+
+      // Default TTL for read-only is min(90 days, 365 days) = 90 days
+      expect(result.expiresAt).toEqual(new Date('2026-07-26T00:00:00.000Z'));
+    });
   });
 });

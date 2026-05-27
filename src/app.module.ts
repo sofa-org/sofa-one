@@ -12,6 +12,7 @@ import { ApiKeyModule } from './modules/api-key/api-key.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { HealthModule } from './modules/health/health.module';
+import { StepUpModule } from './modules/step-up/step-up.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { RequestContextModule } from './common/request-context/request-context.module';
 
@@ -34,6 +35,7 @@ import { RequestContextModule } from './common/request-context/request-context.m
     WalletModule,
     TransactionsModule,
     HealthModule,
+    StepUpModule,
   ],
   providers: [
     RequestIdMiddleware,

@@ -179,8 +179,17 @@ export default function APIDocsPage() {
   -H "X-API-Key: sk_your_key_here"`;
 
   const dashboardBalancesExample = `const balances = await authFetch('/v1/wallets/balances?chainId=84532', getToken);`;
-  const dashboardWithdrawExample = `const withdrawal = await authFetch('/v1/wallets/withdraw', getToken, {
+  const dashboardWithdrawExample = `const { challengeId } = await authFetch('/v1/auth/step-up/challenge', getToken, {
   method: 'POST',
+  body: JSON.stringify({ type: 'email_otp' }),
+});
+const { proofToken } = await authFetch('/v1/auth/step-up/verify', getToken, {
+  method: 'POST',
+  body: JSON.stringify({ challengeId, code: userEnteredCode }),
+});
+const withdrawal = await authFetch('/v1/wallets/withdraw', getToken, {
+  method: 'POST',
+  headers: { 'X-Step-Up-Token': proofToken },
   body: JSON.stringify({
     chainId: 84532,
     to: '0x1111111111111111111111111111111111111111',
@@ -191,8 +200,17 @@ export default function APIDocsPage() {
 });`;
   const dashboardApiKeysExample = `const keys = await authFetch('/v1/api-keys', getToken);
 
+const { challengeId } = await authFetch('/v1/auth/step-up/challenge', getToken, {
+  method: 'POST',
+  body: JSON.stringify({ type: 'email_otp' }),
+});
+const { proofToken } = await authFetch('/v1/auth/step-up/verify', getToken, {
+  method: 'POST',
+  body: JSON.stringify({ challengeId, code: userEnteredCode }),
+});
 const created = await authFetch('/v1/api-keys', getToken, {
   method: 'POST',
+  headers: { 'X-Step-Up-Token': proofToken },
   body: JSON.stringify({ name: 'Production backend' }),
 });`;
 

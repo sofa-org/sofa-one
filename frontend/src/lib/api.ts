@@ -177,6 +177,16 @@ export interface CreateApiKeyRequest {
   permissions?: Partial<ApiKeyPermissions>;
 }
 
+export interface StepUpChallengeResponse {
+  challengeId: string;
+  code?: string;
+}
+
+export interface StepUpVerifyResponse {
+  proofToken: string;
+  expiresAt: string;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -374,6 +384,24 @@ export async function markAgentRegistrationTransaction(
   });
 }
 
+export async function createStepUpChallengeAuth(getToken: () => Promise<string | null>) {
+  return authFetch<StepUpChallengeResponse>('/v1/auth/step-up/challenge', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'email_otp' }),
+  });
+}
+
+export async function verifyStepUpChallengeAuth(
+  getToken: () => Promise<string | null>,
+  challengeId: string,
+  code: string,
+) {
+  return authFetch<StepUpVerifyResponse>('/v1/auth/step-up/verify', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ challengeId, code }),
+  });
+}
+
 // --- Public API-key endpoints ---
 
 export async function signWithApiKey(apiKey: string, body: SignRequest) {
@@ -403,20 +431,33 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
 export async function createApiKeyAuth(
   getToken: () => Promise<string | null>,
   request: CreateApiKeyRequest,
+  stepUpToken?: string,
 ) {
   return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
     method: 'POST',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify(request),
   });
 }
 
-export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<void>(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
+export async function revokeApiKeyAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  stepUpToken?: string,
+) {
+  return authFetch<void>(`/v1/api-keys/${id}`, getToken, {
+    method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  });
 }
 
-export async function revokeAllApiKeysAuth(getToken: () => Promise<string | null>) {
+export async function revokeAllApiKeysAuth(
+  getToken: () => Promise<string | null>,
+  stepUpToken?: string,
+) {
   return authFetch<{ success: boolean; revokedCount: number }>('/v1/api-keys', getToken, {
     method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
 }
 
@@ -426,9 +467,11 @@ export async function withdrawAuth(
   amount: string,
   token: string,
   chainId = DEFAULT_CHAIN_ID,
+  stepUpToken?: string,
 ) {
   return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
     method: 'POST',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
   });
 }

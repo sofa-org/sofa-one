@@ -14,6 +14,7 @@ import {
   getApiBaseUrlForDisplay,
   type ApiKeyRecord,
 } from '@/lib/api';
+import { requestStepUpToken } from './step-up';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
@@ -245,11 +246,16 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const result = await createApiKeyAuth(getToken, {
-        name: trimmedName,
-        ...(allowedIps.length > 0 ? { allowedIps } : {}),
-        permissions: newKeyPermissions,
-      });
+      const stepUpToken = await requestStepUpToken(getToken);
+      const result = await createApiKeyAuth(
+        getToken,
+        {
+          name: trimmedName,
+          ...(allowedIps.length > 0 ? { allowedIps } : {}),
+          permissions: newKeyPermissions,
+        },
+        stepUpToken,
+      );
       setNewRawKey(result.rawKey);
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
@@ -276,7 +282,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      await revokeApiKeyAuth(getToken, key.id);
+      const stepUpToken = await requestStepUpToken(getToken);
+      await revokeApiKeyAuth(getToken, key.id, stepUpToken);
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -318,7 +325,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      await revokeAllApiKeysAuth(getToken);
+      const stepUpToken = await requestStepUpToken(getToken);
+      await revokeAllApiKeysAuth(getToken, stepUpToken);
       setNewRawKey(null);
       setNewKeyExpiresAt(null);
       await fetchKeys();

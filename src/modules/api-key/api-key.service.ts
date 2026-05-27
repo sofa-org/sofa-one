@@ -9,6 +9,24 @@ const MAX_ACTIVE_API_KEYS = 10;
 const DEFAULT_API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_API_KEY_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
+/**
+ * Maximum TTL per permission level.
+ * The most restrictive high-risk permission determines the cap.
+ * Read-only keys (canReadTransactionStatus only) get the full 365-day window.
+ */
+const PERMISSION_MAX_TTL_MS: Record<string, number> = {
+  canUseEoaExecution: 30 * 24 * 60 * 60 * 1000, // 30 days
+  canSign: 90 * 24 * 60 * 60 * 1000, // 90 days
+  canSendTransaction: 90 * 24 * 60 * 60 * 1000, // 90 days
+  canReadTransactionStatus: 365 * 24 * 60 * 60 * 1000, // 365 days (read-only default)
+};
+
+const HIGH_RISK_PERMISSIONS: (keyof ApiKeyPermissions)[] = [
+  'canSign',
+  'canSendTransaction',
+  'canUseEoaExecution',
+];
+
 type ApiKeyCreateOptions = {
   name: string;
   expiresAt?: string | Date;
@@ -236,9 +254,12 @@ export class ApiKeyService {
       throw new BadRequestException('API key name is required');
     }
 
-    const expiresAt = this.normalizeExpiresAt(options.expiresAt);
-    const allowedIps = options.allowedIps ?? [];
     const permissions = this.normalizePermissions(options.permissions);
+    const allowedIps = options.allowedIps ?? [];
+
+    this.assertIpAllowlistForHighRiskPermissions(permissions, allowedIps);
+
+    const expiresAt = this.normalizeExpiresAt(options.expiresAt, permissions);
 
     return { name, expiresAt, allowedIps, permissions };
   }
@@ -262,8 +283,13 @@ export class ApiKeyService {
     };
   }
 
-  private normalizeExpiresAt(expiresAt?: string | Date) {
-    if (!expiresAt) return new Date(Date.now() + DEFAULT_API_KEY_TTL_MS);
+  private normalizeExpiresAt(expiresAt?: string | Date, permissions?: ApiKeyPermissions) {
+    const maxTtl = permissions ? this.getMaxTtlForPermissions(permissions) : MAX_API_KEY_TTL_MS;
+    const defaultTtl = permissions
+      ? Math.min(DEFAULT_API_KEY_TTL_MS, maxTtl)
+      : DEFAULT_API_KEY_TTL_MS;
+
+    if (!expiresAt) return new Date(Date.now() + defaultTtl);
 
     const date = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
     if (Number.isNaN(date.getTime())) {
@@ -275,8 +301,11 @@ export class ApiKeyService {
       throw new BadRequestException('expiresAt must be in the future');
     }
 
-    if (date.getTime() - now > MAX_API_KEY_TTL_MS) {
-      throw new BadRequestException('expiresAt must be within 365 days');
+    if (date.getTime() - now > maxTtl) {
+      const maxDays = Math.round(maxTtl / (24 * 60 * 60 * 1000));
+      throw new BadRequestException(
+        `expiresAt must be within ${maxDays} days for this permission level`,
+      );
     }
 
     return date;
@@ -284,6 +313,29 @@ export class ApiKeyService {
 
   private toDisplayPrefix(keyPrefix: string) {
     return `${keyPrefix.slice(0, 11)}...`;
+  }
+
+  /** Throw if high-risk permissions are enabled without an IP allowlist. */
+  private assertIpAllowlistForHighRiskPermissions(
+    permissions: ApiKeyPermissions,
+    allowedIps: string[],
+  ) {
+    const hasHighRiskPermission = HIGH_RISK_PERMISSIONS.some(
+      (perm) => permissions[perm] === true,
+    );
+    if (hasHighRiskPermission && allowedIps.length === 0) {
+      throw new BadRequestException(
+        'IP allowlist is required when requesting high-risk permissions (canSign, canSendTransaction, canUseEoaExecution)',
+      );
+    }
+  }
+
+  /** Return the maximum TTL allowed for the given permission set. */
+  private getMaxTtlForPermissions(permissions: ApiKeyPermissions): number {
+    if (permissions.canUseEoaExecution) return PERMISSION_MAX_TTL_MS.canUseEoaExecution;
+    if (permissions.canSendTransaction) return PERMISSION_MAX_TTL_MS.canSendTransaction;
+    if (permissions.canSign) return PERMISSION_MAX_TTL_MS.canSign;
+    return PERMISSION_MAX_TTL_MS.canReadTransactionStatus;
   }
 
   private async assertCanCreateKey(tx: PrismaTransaction, userId: string, name: string) {

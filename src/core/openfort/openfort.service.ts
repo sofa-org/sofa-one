@@ -18,6 +18,7 @@ import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
+import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
@@ -599,12 +600,9 @@ export class OpenfortService {
   }
 
   private sanitizeExternalErrorMessage(error: any): string | null {
-    const text = this.getErrorText(error)
-      .replace(/0x[a-fA-F0-9]{16,}/g, '[hex]')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = this.getErrorText(error);
     if (!text) return null;
-    return text.slice(0, 240);
+    return sanitizeErrorMessage(text, 240);
   }
 
   private getErrorText(error: any): string {

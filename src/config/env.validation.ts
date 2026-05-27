@@ -63,6 +63,14 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   TRUST_PROXY?: string;
+
+  @IsString()
+  @IsOptional()
+  STEP_UP_OTP_WEBHOOK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  STEP_UP_OTP_WEBHOOK_SECRET?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -88,6 +96,18 @@ function validateProductionConfig(config: EnvironmentVariables) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
 
+  if (!config.STEP_UP_OTP_WEBHOOK_URL?.trim()) {
+    throw new Error('STEP_UP_OTP_WEBHOOK_URL must be set in production');
+  }
+
+  try {
+    const url = new URL(config.STEP_UP_OTP_WEBHOOK_URL);
+    if (url.protocol !== 'https:') {
+      throw new Error();
+    }
+  } catch {
+    throw new Error('STEP_UP_OTP_WEBHOOK_URL must be a valid https URL');
+  }
 }
 
 function validateDefaultChain(rawChainId: string | undefined) {
