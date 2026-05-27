@@ -31,6 +31,7 @@ import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.d
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
+import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -54,6 +55,8 @@ type ApiKeySigningContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
+  allowedIps?: string[] | null;
+  expiresAt?: Date | string | null;
   canSign?: boolean;
   canUseEoaExecution?: boolean;
 };
@@ -68,6 +71,8 @@ export class WalletService {
     private readonly openfort: OpenfortService,
     @Optional()
     private readonly withdrawalPolicy?: WithdrawalPolicyService,
+    @Optional()
+    private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -138,6 +143,11 @@ export class WalletService {
         apiKeyRecord.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
+      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
+        operation: 'sign',
+        chainId,
+        metadata: { type: params.type },
+      });
       this.logSecurityWarning({
         message: 'Privileged EOA signing requested',
         userId,
@@ -353,6 +363,26 @@ export class WalletService {
     if (allowed !== true) {
       throw new ForbiddenException(message);
     }
+  }
+
+  private async assertEoaExecutionAllowed(
+    userId: string,
+    apiKeyRecord: ApiKeySigningContext,
+    context: { operation: 'sign'; chainId: number; metadata?: Record<string, unknown> },
+  ) {
+    if (!this.eoaExecutionPolicy) {
+      throw new ForbiddenException('EOA execution policy is not available');
+    }
+    await this.eoaExecutionPolicy.assertAllowed({
+      operation: context.operation,
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedIps: apiKeyRecord.allowedIps,
+      expiresAt: apiKeyRecord.expiresAt,
+      chainId: context.chainId,
+      metadata: context.metadata as any,
+    });
   }
 
   private assertTypedDataSigningPolicy(

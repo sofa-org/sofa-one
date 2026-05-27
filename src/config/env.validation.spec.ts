@@ -55,4 +55,11 @@ describe('environment validation', () => {
       'DEFAULT_CHAIN_ID must be one of the supported chains',
     );
   });
+
+  it('validates EOA execution global opt-in as a boolean string', () => {
+    expect(validate({ ...baseConfig, EOA_EXECUTION_ENABLED: 'true' })).toEqual(
+      expect.objectContaining({ EOA_EXECUTION_ENABLED: 'true' }),
+    );
+    expect(() => validate({ ...baseConfig, EOA_EXECUTION_ENABLED: 'yes' })).toThrow();
+  });
 });

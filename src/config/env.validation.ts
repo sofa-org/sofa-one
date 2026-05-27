@@ -1,5 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import {
+  IsBooleanString,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -71,6 +72,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   STEP_UP_OTP_WEBHOOK_SECRET?: string;
+
+  @IsBooleanString()
+  @IsOptional()
+  EOA_EXECUTION_ENABLED?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

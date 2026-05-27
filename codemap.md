@@ -43,6 +43,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
 | `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
+| `src/modules/eoa-execution/` | Runtime isolation policy for high-privilege backend EOA execution | [View Map](src/modules/eoa-execution/codemap.md) |
 
 ### Data Layer
 
@@ -91,6 +92,7 @@ Browser → Openfort IAM → POST /v1/auth/social
 
 Client → POST /v1/wallets/sign (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
+  → EOA execution requests are denied unless explicitly enabled, short-lived, IP-allowlisted, independently rate-limited, and security-event audited
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
   → OpenfortService.signData signs with TEE-managed backend wallet
@@ -98,6 +100,7 @@ Client → POST /v1/wallets/sign (X-API-Key only)
 
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
+  → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency

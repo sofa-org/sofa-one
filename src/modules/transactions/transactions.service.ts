@@ -16,6 +16,7 @@ import { RequestContextService } from '../../common/request-context/request-cont
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
+import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 
 const MAX_TRANSACTION_INTERACTIONS = 10;
 const ZERO_NATIVE_VALUE = 0n;
@@ -35,6 +36,8 @@ type ApiKeyTransactionContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
+  allowedIps?: string[] | null;
+  expiresAt?: Date | string | null;
   canSendTransaction?: boolean;
   canReadTransactionStatus?: boolean;
   canUseEoaExecution?: boolean;
@@ -47,6 +50,8 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    @Optional()
+    private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -69,6 +74,11 @@ export class TransactionsService {
         apiKeyRecord.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
+      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
+        operation: 'send_transaction',
+        chainId,
+        metadata: { interactionCount: dto.interactions.length },
+      });
       this.logSecurityWarning({
         message: 'Privileged EOA transaction requested',
         userId,
@@ -229,6 +239,26 @@ export class TransactionsService {
 
   private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
     return mode ?? 'session_key';
+  }
+
+  private async assertEoaExecutionAllowed(
+    userId: string,
+    apiKeyRecord: ApiKeyTransactionContext,
+    context: { operation: 'send_transaction'; chainId: number; metadata?: Record<string, unknown> },
+  ) {
+    if (!this.eoaExecutionPolicy) {
+      throw new ForbiddenException('EOA execution policy is not available');
+    }
+    await this.eoaExecutionPolicy.assertAllowed({
+      operation: context.operation,
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedIps: apiKeyRecord.allowedIps,
+      expiresAt: apiKeyRecord.expiresAt,
+      chainId: context.chainId,
+      metadata: context.metadata as any,
+    });
   }
 
   private assertTransactionPolicy(

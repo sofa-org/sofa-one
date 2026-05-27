@@ -36,6 +36,7 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
+import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,8 @@ const API_KEY_CONTEXT = {
   id: 'api-key-1',
   keyPrefix: API_KEY_PREFIX,
   name: 'Production key',
+  allowedIps: ['203.0.113.10'],
+  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   canSign: true,
   canUseEoaExecution: false,
 };
@@ -368,6 +371,7 @@ describe('WalletService.sign()', () => {
   const mockVerifyAgentKeyRegistration = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
+  const mockAssertEoaExecutionAllowed = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -380,6 +384,7 @@ describe('WalletService.sign()', () => {
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
+    mockAssertEoaExecutionAllowed.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -397,6 +402,10 @@ describe('WalletService.sign()', () => {
             signData: mockSignData,
             verifyAgentKeyRegistration: mockVerifyAgentKeyRegistration,
           },
+        },
+        {
+          provide: EoaExecutionPolicyService,
+          useValue: { assertAllowed: mockAssertEoaExecutionAllowed },
         },
       ],
     }).compile();
@@ -445,6 +454,16 @@ describe('WalletService.sign()', () => {
       hashMessage('Hello, SOFA ONE!'),
     );
     expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertEoaExecutionAllowed).toHaveBeenCalledWith({
+      operation: 'sign',
+      userId: 'user-1',
+      apiKeyId: 'api-key-1',
+      apiKeyPrefix: API_KEY_PREFIX,
+      allowedIps: ['203.0.113.10'],
+      expiresAt: expect.any(Date),
+      chainId: 84532,
+      metadata: { type: 'message' },
+    });
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'security',
@@ -502,6 +521,25 @@ describe('WalletService.sign()', () => {
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(ForbiddenException);
+
+    expect(mockFindUnique).not.toHaveBeenCalled();
+    expect(mockAssertEoaExecutionAllowed).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects eoa signing when the EOA isolation policy denies the request', async () => {
+    mockAssertEoaExecutionAllowed.mockRejectedValueOnce(
+      new ForbiddenException('EOA execution is disabled'),
+    );
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
+        { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+      ),
+    ).rejects.toThrow('EOA execution is disabled');
 
     expect(mockFindUnique).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();

@@ -45,6 +45,8 @@ describe('TransactionsService', () => {
     id: 'api-key-1',
     keyPrefix: apiKeyPrefix,
     name: 'Production key',
+    allowedIps: ['203.0.113.10'],
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     canSendTransaction: true,
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
@@ -65,6 +67,8 @@ describe('TransactionsService', () => {
     sendUserOperation: jest.fn(),
     sendBackendTransaction: jest.fn(),
   } as any;
+
+  const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
 
   let service: TransactionsService;
   let loggerWarnSpy: jest.SpyInstance;
@@ -90,7 +94,8 @@ describe('TransactionsService', () => {
     });
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
-    service = new TransactionsService(prisma, openfort);
+    eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
+    service = new TransactionsService(prisma, openfort, eoaExecutionPolicy);
   });
 
   afterEach(() => {
@@ -167,6 +172,16 @@ describe('TransactionsService', () => {
     });
 
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(eoaExecutionPolicy.assertAllowed).toHaveBeenCalledWith({
+      operation: 'send_transaction',
+      userId: 'user-1',
+      apiKeyId: 'api-key-1',
+      apiKeyPrefix,
+      allowedIps: ['203.0.113.10'],
+      expiresAt: expect.any(Date),
+      chainId: 8453,
+      metadata: { interactionCount: 1 },
+    });
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
     expect(openfort.sendBackendTransaction).toHaveBeenCalledWith({
       accountId: wallet.agentOpenfortAccountId,
@@ -207,6 +222,24 @@ describe('TransactionsService', () => {
     );
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(eoaExecutionPolicy.assertAllowed).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects eoa execution when the EOA isolation policy denies the request', async () => {
+    eoaExecutionPolicy.assertAllowed.mockRejectedValueOnce(
+      new ForbiddenException('EOA execution rate limit exceeded'),
+    );
+
+    await expect(
+      service.send('user-1', { ...dto, executionMode: 'eoa' } as any, {
+        ...apiKeyContext,
+        canUseEoaExecution: true,
+      }),
+    ).rejects.toThrow('EOA execution rate limit exceeded');
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
