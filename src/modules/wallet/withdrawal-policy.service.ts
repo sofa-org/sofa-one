@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 type WithdrawalPolicyRecord = {
   id: string;
@@ -28,7 +29,11 @@ const WITHDRAWAL_COUNTED_STATUSES = ['submitting', 'pending', 'confirmed', 'unkn
 export class WithdrawalPolicyService {
   private readonly logger = new Logger(WithdrawalPolicyService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional()
+    private readonly securityEvents?: SecurityEventService,
+  ) {}
 
   async listWithdrawalAddresses(userId: string) {
     const [policy, addresses] = await Promise.all([
@@ -79,6 +84,19 @@ export class WithdrawalPolicyService {
         availableAt: address.availableAt.toISOString(),
         cooldownHours: policy.newAddressCooldownHours,
       });
+      await this.recordSecurityEvent({
+        eventType: 'withdrawal_address.added',
+        userId,
+        riskLevel: 'medium',
+        result: 'allowed',
+        reason: 'withdrawal_address_added',
+        metadata: {
+          withdrawalAddressId: address.id,
+          address: normalizedAddress,
+          availableAt: address.availableAt.toISOString(),
+          cooldownHours: policy.newAddressCooldownHours,
+        },
+      });
 
       return this.toWithdrawalAddressResponse(address);
     } catch (error: unknown) {
@@ -103,6 +121,14 @@ export class WithdrawalPolicyService {
       userId,
       withdrawalAddressId: addressId,
     });
+    await this.recordSecurityEvent({
+      eventType: 'withdrawal_address.removed',
+      userId,
+      riskLevel: 'medium',
+      result: 'allowed',
+      reason: 'withdrawal_address_removed',
+      metadata: { withdrawalAddressId: addressId },
+    });
 
     return { success: true };
   }
@@ -121,7 +147,7 @@ export class WithdrawalPolicyService {
     );
 
     if (amount > singleLimit) {
-      this.reject('Withdrawal amount exceeds single-withdrawal limit', {
+      await this.reject('Withdrawal amount exceeds single-withdrawal limit', {
         ...context,
         userId,
         token: params.token,
@@ -144,6 +170,21 @@ export class WithdrawalPolicyService {
         amountUnits: params.amount,
         thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
         policyId: policy?.id,
+      });
+      await this.recordSecurityEvent({
+        eventType: 'withdrawal.high_value_requested',
+        userId,
+        walletId: context.walletId,
+        riskLevel: 'high',
+        result: 'allowed',
+        reason: 'high_value_withdrawal',
+        metadata: {
+          chainId: context.chainId,
+          token: params.token,
+          amountUnits: params.amount,
+          thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
+          policyId: policy?.id ?? null,
+        },
       });
     }
   }
@@ -203,7 +244,7 @@ export class WithdrawalPolicyService {
 
     const usedToday = withdrawals.reduce((total, tx) => total + this.extractWithdrawalAmount(tx.details), 0n);
     if (usedToday + amount > dailyLimit) {
-      this.reject('Withdrawal amount exceeds daily withdrawal limit', {
+      await this.reject('Withdrawal amount exceeds daily withdrawal limit', {
         ...context,
         userId,
         token: params.token,
@@ -229,15 +270,16 @@ export class WithdrawalPolicyService {
     })) as WithdrawalAddressRecord | null;
 
     if (!allowlisted) {
-      this.reject('Withdrawal address is not allowlisted', {
+      await this.reject('Withdrawal address is not allowlisted', {
         ...context,
         userId,
         policyId: policy.id,
       });
+      return;
     }
 
     if (allowlisted.availableAt > new Date()) {
-      this.reject('Withdrawal address is still in cooldown', {
+      await this.reject('Withdrawal address is still in cooldown', {
         ...context,
         userId,
         policyId: policy.id,
@@ -278,13 +320,62 @@ export class WithdrawalPolicyService {
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   }
 
-  private reject(reason: string, context: Record<string, unknown>): never {
+  private async reject(reason: string, context: Record<string, unknown>): Promise<never> {
     this.logger.warn({
       event: 'security',
       message: 'Withdrawal policy rejected request',
       reason,
       ...context,
     });
+    await this.recordSecurityEvent({
+      eventType: 'withdrawal.policy_denied',
+      userId: typeof context.userId === 'string' ? context.userId : undefined,
+      walletId: typeof context.walletId === 'string' ? context.walletId : undefined,
+      riskLevel: 'high',
+      result: 'denied',
+      reason,
+      metadata: this.toSafeMetadata(context),
+    });
     throw new BadRequestException(reason);
+  }
+
+  private async recordSecurityEvent(input: {
+    eventType: string;
+    userId?: string;
+    walletId?: string;
+    riskLevel: 'medium' | 'high';
+    result: 'allowed' | 'denied';
+    reason: string;
+    metadata: Prisma.InputJsonValue;
+  }): Promise<void> {
+    try {
+      await this.securityEvents?.record({
+        actorType: 'user',
+        ...input,
+      });
+    } catch (error) {
+      this.logger.error('Withdrawal security event recording failed', error);
+    }
+  }
+
+  private toSafeMetadata(context: Record<string, unknown>): Prisma.InputJsonObject {
+    const metadata: Record<string, Prisma.InputJsonValue> = {};
+    for (const [key, value] of Object.entries(context)) {
+      if (value === undefined) continue;
+      if (typeof value === 'bigint') {
+        metadata[key] = value.toString();
+      } else if (value instanceof Date) {
+        metadata[key] = value.toISOString();
+      } else if (value === null) {
+        continue;
+      } else if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        metadata[key] = value;
+      }
+    }
+    return metadata as Prisma.InputJsonObject;
   }
 }

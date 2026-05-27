@@ -12,7 +12,7 @@ Transaction submission and status API for raw Openfort-backed sends, with a dedi
 ## Flow
 - Controller accepts non-frozen API-key-authenticated send requests and status lookups after suspicious-use and route-level permission checks.
 - EOA sends require global opt-in, short API-key TTL, IP allowlist, independent per-key rate limit, and `SecurityEvent` audit.
-- Transaction policy runs before wallet lookup, idempotency persistence, or Openfort calls; reject logs include safe metadata only (lengths/counts/selectors), never full calldata.
+- Transaction policy runs before wallet lookup, idempotency persistence, or Openfort calls; rejects write `transaction.policy_denied` `SecurityEvent` rows and log safe metadata only (lengths/counts/selectors), never full calldata.
 - Service verifies wallet state, checks duplicates, stores request/interactions hashes plus API-key attribution, sends via Openfort, and updates the transaction status.
 - Status lookup returns only safe fields for the current API-key user and refreshes pending Openfort intent records when possible.
 

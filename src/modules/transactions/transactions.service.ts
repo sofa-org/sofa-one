@@ -76,10 +76,11 @@ export class TransactionsService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       });
     }
-    this.transactionPolicy.assertAllowed(dto, {
+    await this.transactionPolicy.assertAllowed(dto, {
       userId,
       chainId,
       executionMode,
+      apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
     });
     const wallet = await this.prisma.userWallet.findUnique({

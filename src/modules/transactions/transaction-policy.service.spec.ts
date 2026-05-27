@@ -17,10 +17,13 @@ describe('TransactionPolicyService', () => {
   };
 
   let service: TransactionPolicyService;
+  const securityEvents = { record: jest.fn() };
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    service = new TransactionPolicyService();
+    jest.clearAllMocks();
+    securityEvents.record.mockResolvedValue(undefined);
+    service = new TransactionPolicyService(securityEvents as never);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
@@ -28,13 +31,14 @@ describe('TransactionPolicyService', () => {
     loggerWarnSpy.mockRestore();
   });
 
-  it('allows benign interactions', () => {
-    expect(() => service.assertAllowed(baseDto, context)).not.toThrow();
+  it('allows benign interactions', async () => {
+    await expect(service.assertAllowed(baseDto, context)).resolves.toBeUndefined();
     expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(securityEvents.record).not.toHaveBeenCalled();
   });
 
-  it('rejects more than ten interactions', () => {
-    expect(() =>
+  it('rejects more than ten interactions', async () => {
+    await expect(
       service.assertAllowed(
         {
           ...baseDto,
@@ -45,7 +49,7 @@ describe('TransactionPolicyService', () => {
         },
         context,
       ),
-    ).toThrow(BadRequestException);
+    ).rejects.toThrow(BadRequestException);
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -55,30 +59,40 @@ describe('TransactionPolicyService', () => {
         interactionCount: 11,
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'api_key',
+        eventType: 'transaction.policy_denied',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'Transaction contains too many interactions; maximum is 10',
+      }),
+    );
   });
 
-  it('rejects native value transfers', () => {
-    expect(() =>
+  it('rejects native value transfers', async () => {
+    await expect(
       service.assertAllowed(
         { ...baseDto, interactions: [{ ...baseDto.interactions[0], value: '1' }] },
         context,
       ),
-    ).toThrow('Native value transfers are not allowed for API key transactions');
+    ).rejects.toThrow('Native value transfers are not allowed for API key transactions');
   });
 
-  it('rejects calldata that is too short to contain a full selector', () => {
-    expect(() =>
+  it('rejects calldata that is too short to contain a full selector', async () => {
+    await expect(
       service.assertAllowed(
         { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: '0x123456' }] },
         context,
       ),
-    ).toThrow('Interaction 1 calldata is too short');
+    ).rejects.toThrow('Interaction 1 calldata is too short');
   });
 
-  it('rejects aggregate calldata larger than 64 KB without logging full calldata', () => {
+  it('rejects aggregate calldata larger than 64 KB without logging full calldata', async () => {
     const largeCalldata = `0x${'11'.repeat(33 * 1024)}`;
 
-    expect(() =>
+    await expect(
       service.assertAllowed(
         {
           ...baseDto,
@@ -89,7 +103,7 @@ describe('TransactionPolicyService', () => {
         },
         context,
       ),
-    ).toThrow('Transaction calldata exceeds maximum total size of 64 KB');
+    ).rejects.toThrow('Transaction calldata exceeds maximum total size of 64 KB');
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -99,10 +113,11 @@ describe('TransactionPolicyService', () => {
       }),
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(largeCalldata);
+    expect(JSON.stringify(securityEvents.record.mock.calls)).not.toContain(largeCalldata);
   });
 
-  it('rejects batches that target too many distinct contracts', () => {
-    expect(() =>
+  it('rejects batches that target too many distinct contracts', async () => {
+    await expect(
       service.assertAllowed(
         {
           ...baseDto,
@@ -113,7 +128,7 @@ describe('TransactionPolicyService', () => {
         },
         context,
       ),
-    ).toThrow('Transaction targets too many distinct contracts');
+    ).rejects.toThrow('Transaction targets too many distinct contracts');
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -126,28 +141,28 @@ describe('TransactionPolicyService', () => {
 
   it.each(['0xd505accf', '0x8fcbaf0c', '0x2b67b570', '0xb7f13ed4', '0x002a3e3a'])(
     'rejects blocked permit selector %s',
-    (selector) => {
-      expect(() =>
+    async (selector) => {
+      await expect(
         service.assertAllowed(
           { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: selector }] },
           context,
         ),
-      ).toThrow('Permit signatures are not allowed in transaction calldata');
+      ).rejects.toThrow('Permit signatures are not allowed in transaction calldata');
     },
   );
 
-  it('rejects max-uint ERC20 approvals without logging full calldata', () => {
+  it('rejects max-uint ERC20 approvals without logging full calldata', async () => {
     const calldata =
       '0x095ea7b3' +
       '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
       'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
-    expect(() =>
+    await expect(
       service.assertAllowed(
         { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: calldata }] },
         context,
       ),
-    ).toThrow('Infinite token approvals are not allowed');
+    ).rejects.toThrow('Infinite token approvals are not allowed');
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -156,19 +171,20 @@ describe('TransactionPolicyService', () => {
       }),
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(calldata);
+    expect(JSON.stringify(securityEvents.record.mock.calls)).not.toContain(calldata);
   });
 
-  it('rejects NFT approval-for-all grants', () => {
+  it('rejects NFT approval-for-all grants', async () => {
     const calldata =
       '0xa22cb465' +
       '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
       '0000000000000000000000000000000000000000000000000000000000000001';
 
-    expect(() =>
+    await expect(
       service.assertAllowed(
         { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: calldata }] },
         context,
       ),
-    ).toThrow('NFT operator approvals are not allowed');
+    ).rejects.toThrow('NFT operator approvals are not allowed');
   });
 });

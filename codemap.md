@@ -16,7 +16,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
 - API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit for create/revoke/rotate/first-use/suspicious-use/freeze events.
-- Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; dashboard users can manage a step-up-protected withdrawal-address allowlist with cooldown.
+- Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; policy denies, high-value withdrawal requests, and withdrawal-address changes are written to `SecurityEvent`.
 - `UserWallet.openfortAccountId` is the FK into Openfort — never overwrite or orphan.
 
 ## Directory Map (Aggregated)
@@ -101,19 +101,19 @@ Client → POST /v1/wallets/sign (X-API-Key only)
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
-  → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions
+  → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
 Dashboard → POST /v1/wallets/withdraw (Openfort IAM + FrontendOnly + step-up)
-  → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown
+  → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`
   → WalletService checks idempotency and balance, then submits a Calibur agent user operation through Openfort
   → Transaction row persists withdrawal request hash/details for audit/idempotency
 
 Dashboard → POST /v1/wallets/withdrawal-addresses (Openfort IAM + FrontendOnly + step-up)
-  → WithdrawalPolicyService enables address allowlist policy, normalizes the EVM address, and records a 24h/default cooldown window
+  → WithdrawalPolicyService enables address allowlist policy, normalizes the EVM address, records a 24h/default cooldown window, and writes allowlist lifecycle `SecurityEvent` rows
   → Later withdrawals to that address are blocked until `availableAt`
 
 Client → GET /v1/transactions/:id (X-API-Key only)

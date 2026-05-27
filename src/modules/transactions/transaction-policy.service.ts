@@ -5,6 +5,7 @@ import {
   type ExecutionMode,
   type SendTransactionDto,
 } from './dto/send-transaction.dto';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 const MAX_TRANSACTION_CALLDATA_BYTES = 64 * 1024;
 const MAX_DISTINCT_TARGETS = 5;
@@ -25,6 +26,7 @@ type TransactionPolicyContext = {
   userId: string;
   chainId: number;
   executionMode: ExecutionMode;
+  apiKeyId?: string;
   apiKeyPrefix?: string;
 };
 
@@ -32,9 +34,11 @@ type TransactionPolicyContext = {
 export class TransactionPolicyService {
   private readonly logger = new Logger(TransactionPolicyService.name);
 
-  assertAllowed(dto: SendTransactionDto, context: TransactionPolicyContext): void {
+  constructor(private readonly securityEvents?: SecurityEventService) {}
+
+  async assertAllowed(dto: SendTransactionDto, context: TransactionPolicyContext): Promise<void> {
     if (dto.interactions.length > MAX_TRANSACTION_INTERACTIONS) {
-      this.reject(
+      await this.reject(
         `Transaction contains too many interactions; maximum is ${MAX_TRANSACTION_INTERACTIONS}`,
         context,
         { interactionCount: dto.interactions.length },
@@ -46,7 +50,7 @@ export class TransactionPolicyService {
       0,
     );
     if (totalCalldataBytes > MAX_TRANSACTION_CALLDATA_BYTES) {
-      this.reject('Transaction calldata exceeds maximum total size of 64 KB', context, {
+      await this.reject('Transaction calldata exceeds maximum total size of 64 KB', context, {
         interactionCount: dto.interactions.length,
         totalCalldataBytes,
       });
@@ -54,16 +58,16 @@ export class TransactionPolicyService {
 
     const distinctTargets = new Set(dto.interactions.map((interaction) => interaction.to.toLowerCase()));
     if (distinctTargets.size > MAX_DISTINCT_TARGETS) {
-      this.reject('Transaction targets too many distinct contracts', context, {
+      await this.reject('Transaction targets too many distinct contracts', context, {
         interactionCount: dto.interactions.length,
         distinctTargetCount: distinctTargets.size,
       });
     }
 
-    dto.interactions.forEach((interaction, index) => {
+    for (const [index, interaction] of dto.interactions.entries()) {
       const calldataBytes = this.getCalldataByteLength(interaction.data);
       if (calldataBytes > MAX_INTERACTION_CALLDATA_BYTES) {
-        this.reject(`Interaction ${index + 1} calldata exceeds maximum size of 64 KB`, context, {
+        await this.reject(`Interaction ${index + 1} calldata exceeds maximum size of 64 KB`, context, {
           interactionIndex: index,
           calldataBytes,
         });
@@ -71,31 +75,31 @@ export class TransactionPolicyService {
 
       const value = BigInt(interaction.value ?? '0');
       if (value !== ZERO_NATIVE_VALUE) {
-        this.reject('Native value transfers are not allowed for API key transactions', context, {
+        await this.reject('Native value transfers are not allowed for API key transactions', context, {
           interactionIndex: index,
           hasNativeValue: true,
         });
       }
 
       if (interaction.data.length > 2 && interaction.data.length < 10) {
-        this.reject(`Interaction ${index + 1} calldata is too short`, context, {
+        await this.reject(`Interaction ${index + 1} calldata is too short`, context, {
           interactionIndex: index,
           calldataLength: interaction.data.length,
         });
       }
 
       const selector = this.getFunctionSelector(interaction.data);
-      if (!selector) return;
+      if (!selector) continue;
 
       if (BLOCKED_PERMIT_SELECTORS.has(selector)) {
-        this.reject('Permit signatures are not allowed in transaction calldata', context, {
+        await this.reject('Permit signatures are not allowed in transaction calldata', context, {
           interactionIndex: index,
           selector,
         });
       }
 
       if (selector === ERC20_APPROVE_SELECTOR && this.isMaxUint256Approval(interaction.data)) {
-        this.reject('Infinite token approvals are not allowed', context, {
+        await this.reject('Infinite token approvals are not allowed', context, {
           interactionIndex: index,
           selector,
         });
@@ -105,25 +109,40 @@ export class TransactionPolicyService {
         selector === ERC721_ERC1155_SET_APPROVAL_FOR_ALL_SELECTOR &&
         this.isApprovalForAllEnabled(interaction.data)
       ) {
-        this.reject('NFT operator approvals are not allowed', context, {
+        await this.reject('NFT operator approvals are not allowed', context, {
           interactionIndex: index,
           selector,
         });
       }
-    });
+    }
   }
 
-  private reject(
+  private async reject(
     reason: string,
     context: TransactionPolicyContext,
     extra: Record<string, unknown> = {},
-  ): never {
+  ): Promise<never> {
     this.logger.warn({
       event: 'security',
       message: 'Transaction policy rejected request',
       reason,
       ...context,
       ...extra,
+    });
+    await this.securityEvents?.record({
+      actorType: 'api_key',
+      eventType: 'transaction.policy_denied',
+      userId: context.userId,
+      apiKeyId: context.apiKeyId ?? null,
+      riskLevel: 'high',
+      result: 'denied',
+      reason,
+      metadata: {
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        apiKeyPrefix: context.apiKeyPrefix ?? null,
+        ...extra,
+      },
     });
     throw new BadRequestException(reason);
   }

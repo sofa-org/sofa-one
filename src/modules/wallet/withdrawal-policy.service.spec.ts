@@ -20,10 +20,12 @@ describe('WithdrawalPolicyService', () => {
   const mockWithdrawalAddressCreate = jest.fn();
   const mockWithdrawalAddressDeleteMany = jest.fn();
   const mockTransactionFindMany = jest.fn();
+  const securityEvents = { record: jest.fn() };
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    securityEvents.record.mockResolvedValue(undefined);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
     mockWithdrawalPolicyUpsert.mockResolvedValue({
@@ -41,16 +43,19 @@ describe('WithdrawalPolicyService', () => {
     mockWithdrawalAddressDeleteMany.mockResolvedValue({ count: 1 });
     mockTransactionFindMany.mockResolvedValue([]);
 
-    service = new WithdrawalPolicyService({
-      withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique, upsert: mockWithdrawalPolicyUpsert },
-      withdrawalAddress: {
-        findUnique: mockWithdrawalAddressFindUnique,
-        findMany: mockWithdrawalAddressFindMany,
-        create: mockWithdrawalAddressCreate,
-        deleteMany: mockWithdrawalAddressDeleteMany,
-      },
-      transaction: { findMany: mockTransactionFindMany },
-    } as unknown as PrismaService);
+    service = new WithdrawalPolicyService(
+      {
+        withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique, upsert: mockWithdrawalPolicyUpsert },
+        withdrawalAddress: {
+          findUnique: mockWithdrawalAddressFindUnique,
+          findMany: mockWithdrawalAddressFindMany,
+          create: mockWithdrawalAddressCreate,
+          deleteMany: mockWithdrawalAddressDeleteMany,
+        },
+        transaction: { findMany: mockTransactionFindMany },
+      } as unknown as PrismaService,
+      securityEvents as never,
+    );
   });
 
   afterEach(() => {
@@ -88,6 +93,16 @@ describe('WithdrawalPolicyService', () => {
         reason: 'Withdrawal amount exceeds single-withdrawal limit',
         maxAmountUnits: '500000',
         policyId: 'policy-1',
+      }),
+    );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        eventType: 'withdrawal.policy_denied',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'Withdrawal amount exceeds single-withdrawal limit',
       }),
     );
   });
@@ -191,6 +206,16 @@ describe('WithdrawalPolicyService', () => {
         policyId: 'policy-1',
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        eventType: 'withdrawal.high_value_requested',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'allowed',
+        reason: 'high_value_withdrawal',
+      }),
+    );
   });
 
   it('rejects invalid policy limits explicitly', async () => {
@@ -275,6 +300,16 @@ describe('WithdrawalPolicyService', () => {
         isAvailable: false,
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        eventType: 'withdrawal_address.added',
+        userId: 'user-1',
+        riskLevel: 'medium',
+        result: 'allowed',
+        reason: 'withdrawal_address_added',
+      }),
+    );
   });
 
   it('rejects duplicate withdrawal addresses', async () => {
@@ -291,6 +326,16 @@ describe('WithdrawalPolicyService', () => {
     expect(mockWithdrawalAddressDeleteMany).toHaveBeenCalledWith({
       where: { id: 'addr-1', userId: 'user-1' },
     });
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        eventType: 'withdrawal_address.removed',
+        userId: 'user-1',
+        riskLevel: 'medium',
+        result: 'allowed',
+        reason: 'withdrawal_address_removed',
+      }),
+    );
   });
 
   it('rejects removing a missing withdrawal address', async () => {
