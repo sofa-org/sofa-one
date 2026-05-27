@@ -1,0 +1,180 @@
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../core/database/prisma.service';
+import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+
+type WithdrawalPolicyRecord = {
+  id: string;
+  singleWithdrawalLimit: string;
+  dailyWithdrawalLimit: string | null;
+  requireAddressAllowlist: boolean;
+  newAddressCooldownHours: number;
+  requireStepUp: boolean;
+};
+
+type WithdrawalAddressRecord = {
+  address: string;
+  availableAt: Date;
+};
+
+const WITHDRAWAL_COUNTED_STATUSES = ['submitting', 'pending', 'confirmed', 'unknown'] as const;
+
+@Injectable()
+export class WithdrawalPolicyService {
+  private readonly logger = new Logger(WithdrawalPolicyService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async assertWithdrawalAllowed(
+    userId: string,
+    params: WithdrawDto,
+    context: { chainId: number; walletId?: string; walletAddress?: string },
+  ): Promise<void> {
+    const policy = await this.getPolicy(userId);
+    const amount = this.parseAmount(params.amount);
+    const singleLimit = this.parsePositiveLimit(
+      policy?.singleWithdrawalLimit,
+      USDC_MAX_AMOUNT,
+      'singleWithdrawalLimit',
+    );
+
+    if (amount > singleLimit) {
+      this.reject('Withdrawal amount exceeds single-withdrawal limit', {
+        ...context,
+        userId,
+        token: params.token,
+        amountUnits: params.amount,
+        maxAmountUnits: singleLimit.toString(),
+        policyId: policy?.id,
+      });
+    }
+
+    await this.assertDailyLimit(userId, params, amount, policy, context);
+    await this.assertAddressAllowed(userId, params, policy, context);
+
+    if (amount >= USDC_HIGH_VALUE_AMOUNT) {
+      this.logger.warn({
+        event: 'security',
+        message: 'High-value withdrawal requested',
+        userId,
+        chainId: context.chainId,
+        token: params.token,
+        amountUnits: params.amount,
+        thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
+        policyId: policy?.id,
+      });
+    }
+  }
+
+  private async getPolicy(userId: string): Promise<WithdrawalPolicyRecord | null> {
+    return this.prisma.withdrawalPolicy.findUnique({ where: { userId } }) as Promise<WithdrawalPolicyRecord | null>;
+  }
+
+  private async assertDailyLimit(
+    userId: string,
+    params: WithdrawDto,
+    amount: bigint,
+    policy: WithdrawalPolicyRecord | null,
+    context: { chainId: number; walletId?: string; walletAddress?: string },
+  ): Promise<void> {
+    if (!policy?.dailyWithdrawalLimit) return;
+
+    const dailyLimit = this.parsePositiveLimit(policy.dailyWithdrawalLimit, null, 'dailyWithdrawalLimit');
+    const dayStart = this.startOfUtcDay(new Date());
+    const withdrawals = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        operationType: 'withdraw',
+        chainId: BigInt(params.chainId),
+        status: { in: [...WITHDRAWAL_COUNTED_STATUSES] },
+        createdAt: { gte: dayStart },
+      },
+      select: { details: true },
+    });
+
+    const usedToday = withdrawals.reduce((total, tx) => total + this.extractWithdrawalAmount(tx.details), 0n);
+    if (usedToday + amount > dailyLimit) {
+      this.reject('Withdrawal amount exceeds daily withdrawal limit', {
+        ...context,
+        userId,
+        token: params.token,
+        amountUnits: params.amount,
+        usedTodayUnits: usedToday.toString(),
+        dailyLimitUnits: dailyLimit.toString(),
+        policyId: policy.id,
+      });
+    }
+  }
+
+  private async assertAddressAllowed(
+    userId: string,
+    params: WithdrawDto,
+    policy: WithdrawalPolicyRecord | null,
+    context: { chainId: number; walletId?: string; walletAddress?: string },
+  ): Promise<void> {
+    if (policy?.requireAddressAllowlist !== true) return;
+
+    const address = params.to.toLowerCase();
+    const allowlisted = (await this.prisma.withdrawalAddress.findUnique({
+      where: { userId_address: { userId, address } },
+    })) as WithdrawalAddressRecord | null;
+
+    if (!allowlisted) {
+      this.reject('Withdrawal address is not allowlisted', {
+        ...context,
+        userId,
+        policyId: policy.id,
+      });
+    }
+
+    if (allowlisted.availableAt > new Date()) {
+      this.reject('Withdrawal address is still in cooldown', {
+        ...context,
+        userId,
+        policyId: policy.id,
+        availableAt: allowlisted.availableAt.toISOString(),
+        cooldownHours: policy.newAddressCooldownHours,
+      });
+    }
+  }
+
+  private parseAmount(value: string): bigint {
+    try {
+      return BigInt(value);
+    } catch {
+      throw new BadRequestException('Withdrawal amount must be a valid integer');
+    }
+  }
+
+  private parsePositiveLimit(value: string | null | undefined, fallback: bigint | null, field: string): bigint {
+    if (!value) {
+      if (fallback !== null) return fallback;
+      throw new BadRequestException(`Withdrawal policy ${field} is not configured`);
+    }
+    const parsed = this.parseAmount(value);
+    if (parsed <= 0n) {
+      throw new BadRequestException(`Withdrawal policy ${field} must be positive`);
+    }
+    return parsed;
+  }
+
+  private extractWithdrawalAmount(details: unknown): bigint {
+    if (!details || typeof details !== 'object' || Array.isArray(details)) return 0n;
+    const amount = (details as { amount?: unknown }).amount;
+    if (typeof amount !== 'string' || !/^\d+$/.test(amount)) return 0n;
+    return BigInt(amount);
+  }
+
+  private startOfUtcDay(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  }
+
+  private reject(reason: string, context: Record<string, unknown>): never {
+    this.logger.warn({
+      event: 'security',
+      message: 'Withdrawal policy rejected request',
+      reason,
+      ...context,
+    });
+    throw new BadRequestException(reason);
+  }
+}

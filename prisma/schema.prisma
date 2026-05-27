@@ -14,6 +14,8 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   wallet          UserWallet?
+  withdrawalPolicy WithdrawalPolicy?
+  withdrawalAddresses WithdrawalAddress[]
   apiKeys         ApiKey[]
   apiKeyEvents    ApiKeyEvent[]
   securityEvents  SecurityEvent[]
@@ -133,6 +135,37 @@ model SecurityEvent {
   @@index([eventType, createdAt])
   @@index([riskLevel, createdAt])
   @@map("security_events")
+}
+
+model WithdrawalPolicy {
+  id                       String   @id @default(uuid()) @db.Uuid
+  userId                   String   @unique @map("user_id") @db.Uuid
+  singleWithdrawalLimit    String   @default("10000000000") @map("single_withdrawal_limit") @db.VarChar(40)
+  dailyWithdrawalLimit     String?  @map("daily_withdrawal_limit") @db.VarChar(40)
+  requireAddressAllowlist  Boolean  @default(false) @map("require_address_allowlist")
+  newAddressCooldownHours  Int      @default(24) @map("new_address_cooldown_hours")
+  requireStepUp            Boolean  @default(true) @map("require_step_up")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_policies")
+}
+
+model WithdrawalAddress {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  address     String   @db.VarChar(42)
+  label       String?  @db.VarChar(100)
+  availableAt DateTime @map("available_at") @db.Timestamptz()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+  @@index([userId, availableAt])
+  @@map("withdrawal_addresses")
 }
 
 model Transaction {

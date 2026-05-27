@@ -29,6 +29,7 @@ import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+import { WithdrawalPolicyService } from './withdrawal-policy.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -64,6 +65,8 @@ export class WalletService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    @Optional()
+    private readonly withdrawalPolicy?: WithdrawalPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -591,7 +594,12 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    this.assertWithdrawalPolicy(params, { userId, chainId });
+    await this.assertWithdrawalPolicy(params, {
+      userId,
+      chainId,
+      walletId: wallet.id,
+      walletAddress: wallet.walletAddress,
+    });
 
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
@@ -717,7 +725,15 @@ export class WalletService {
     }
   }
 
-  private assertWithdrawalPolicy(params: WithdrawDto, context: { userId: string; chainId: number }): void {
+  private async assertWithdrawalPolicy(
+    params: WithdrawDto,
+    context: { userId: string; chainId: number; walletId?: string; walletAddress?: string },
+  ): Promise<void> {
+    if (this.withdrawalPolicy) {
+      await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context);
+      return;
+    }
+
     const amount = BigInt(params.amount);
     if (amount > USDC_MAX_AMOUNT) {
       this.logSecurityWarning({

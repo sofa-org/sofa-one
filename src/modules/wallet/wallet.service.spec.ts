@@ -35,6 +35,7 @@ import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
+import { WithdrawalPolicyService } from './withdrawal-policy.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +97,7 @@ describe('WalletService.withdraw()', () => {
   const mockFindFirst = jest.fn();
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
+  const mockAssertWithdrawalAllowed = jest.fn();
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
@@ -112,6 +114,7 @@ describe('WalletService.withdraw()', () => {
     mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: '0xhash' });
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
+    mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -126,6 +129,10 @@ describe('WalletService.withdraw()', () => {
         {
           provide: OpenfortService,
           useValue: { sendUserOperation: mockSendUserOperation, signData: jest.fn() },
+        },
+        {
+          provide: WithdrawalPolicyService,
+          useValue: { assertWithdrawalAllowed: mockAssertWithdrawalAllowed },
         },
       ],
     }).compile();
@@ -232,6 +239,10 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('rejects withdrawals above the single-withdrawal limit before balance checks', async () => {
+    mockAssertWithdrawalAllowed.mockRejectedValue(
+      new BadRequestException('Withdrawal amount exceeds single-withdrawal limit'),
+    );
+
     await expect(
       service.withdraw('user-1', {
         ...VALID_DTO,
@@ -242,18 +253,7 @@ describe('WalletService.withdraw()', () => {
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
     expect(mockSendUserOperation).not.toHaveBeenCalled();
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: 'security',
-        message: 'Withdrawal policy rejected request',
-        reason: 'Withdrawal amount exceeds single-withdrawal limit',
-        userId: 'user-1',
-        chainId: VALID_DTO.chainId,
-        token: 'USDC',
-        amountUnits: '10000000001',
-        maxAmountUnits: '10000000000',
-      }),
-    );
+    expect(mockAssertWithdrawalAllowed).toHaveBeenCalledTimes(1);
   });
 
   it('logs high-value withdrawals without blocking allowed amounts', async () => {
@@ -264,15 +264,12 @@ describe('WalletService.withdraw()', () => {
       amount: '1000000000',
     });
 
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
+    expect(mockAssertWithdrawalAllowed).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ amount: '1000000000' }),
       expect.objectContaining({
-        event: 'security',
-        message: 'High-value withdrawal requested',
-        userId: 'user-1',
         chainId: VALID_DTO.chainId,
-        token: 'USDC',
-        amountUnits: '1000000000',
-        thresholdUnits: '1000000000',
+        walletAddress: WALLET.walletAddress,
       }),
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(VALID_DTO.to);
