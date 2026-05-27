@@ -12,7 +12,7 @@ Access control for Openfort IAM auth, API-key auth, API-key route permissions, a
 ## Flow
 - Guards read headers and route metadata.
 - JWT paths verify Openfort IAM tokens and attach user context.
-- API-key paths query extended and legacy prefix candidates, verify every matching Argon2 hash to avoid prefix-collision failures, reject frozen keys, enforce allowed IPs, record suspicious context changes, freeze high-risk/repeated suspicious usage, and update last-used timestamps.
+- API-key paths query extended and legacy prefix candidates, verify every matching Argon2 hash to avoid prefix-collision failures, reject frozen keys, enforce allowed IPs, record first-use and suspicious context changes, freeze high-risk/repeated suspicious usage, and update last-used timestamps.
 - Permission-protected API-key routes require `canSign`, `canSendTransaction`, or `canReadTransactionStatus` at the guard layer; services retain duplicate checks for defense in depth.
 - Frontend-only routes reject requests without an allowed browser origin.
 - API-key-only routes authenticate directly with `ApiKeyAuthGuard` and do not accept IAM bearer tokens.

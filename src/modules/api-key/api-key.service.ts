@@ -4,6 +4,7 @@ import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 const MAX_ACTIVE_API_KEYS = 10;
 const DEFAULT_API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000;
@@ -52,7 +53,10 @@ type PrismaTransaction = Prisma.TransactionClient;
 
 @Injectable()
 export class ApiKeyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly securityEvents: SecurityEventService,
+  ) {}
 
   /**
    * Generate a new API key for the given user.
@@ -384,15 +388,33 @@ export class ApiKeyService {
       metadata?: Prisma.InputJsonValue;
     } = {},
   ) {
-    return tx.apiKeyEvent.create({
-      data: {
-        userId,
-        apiKeyId,
-        action,
-        keyPrefix: data.keyPrefix,
-        keyName: data.keyName,
-        metadata: data.metadata ?? Prisma.JsonNull,
-      },
-    });
+    return Promise.all([
+      tx.apiKeyEvent.create({
+        data: {
+          userId,
+          apiKeyId,
+          action,
+          keyPrefix: data.keyPrefix,
+          keyName: data.keyName,
+          metadata: data.metadata ?? Prisma.JsonNull,
+        },
+      }),
+      this.securityEvents.record(
+        {
+          actorType: 'user',
+          userId,
+          apiKeyId,
+          eventType: action,
+          riskLevel: 'low',
+          result: 'allowed',
+          metadata: {
+            keyPrefix: data.keyPrefix ?? null,
+            keyName: data.keyName ?? null,
+            details: data.metadata ?? null,
+          },
+        },
+        tx as unknown as Parameters<SecurityEventService['record']>[1],
+      ),
+    ]);
   }
 }

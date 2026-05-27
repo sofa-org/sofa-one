@@ -120,6 +120,7 @@ describe('ApiKeyAuthGuard', () => {
       id: 'key-1',
       apiKeyHash: 'hash-1',
       allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
       user: { id: 'user-1' },
     };
     const { guard, prisma } = createGuard([keyRecord]);
@@ -147,6 +148,41 @@ describe('ApiKeyAuthGuard', () => {
         lastUsedUserAgent: 'sofa-agent/1.0',
       },
     });
+  });
+
+  it('records first use when a valid API key has never been used', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: null,
+      user: { id: 'user-1' },
+    };
+    const { guard, securityEvents } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(
+        contextWithHeaders(
+          { 'x-api-key': rawKey, 'user-agent': 'sofa-agent/1.0' },
+          '203.0.113.10',
+        ),
+      ),
+    ).resolves.toBe(true);
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'api_key',
+        eventType: 'api_key.first_used',
+        apiKeyId: 'key-1',
+        userId: 'user-1',
+        riskLevel: 'low',
+        ip: '203.0.113.10',
+        userAgent: 'sofa-agent/1.0',
+        result: 'allowed',
+        reason: 'first_use',
+      }),
+    );
   });
 
   it('rejects frozen API keys and records the rejection', async () => {

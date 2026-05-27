@@ -15,7 +15,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes, and API-key permissions are enforced before service code runs.
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
-- API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and audited create/revoke/rotate events.
+- API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit for create/revoke/rotate/first-use/suspicious-use/freeze events.
 - Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; dashboard users can manage a step-up-protected withdrawal-address allowlist with cooldown.
 - `UserWallet.openfortAccountId` is the FK into Openfort — never overwrite or orphan.
 

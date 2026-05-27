@@ -29,6 +29,10 @@ describe('ApiKeyService', () => {
       create: jest.fn(),
     },
   };
+  const securityEvents = {
+    record: jest.fn(),
+  };
+  const createService = () => new ApiKeyService(prisma as any, securityEvents as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,12 +47,13 @@ describe('ApiKeyService', () => {
     }));
     prisma.apiKey.updateMany.mockResolvedValue({ count: 1 });
     prisma.apiKeyEvent.create.mockResolvedValue({ id: 'event-1' });
+    securityEvents.record.mockResolvedValue({ id: 'security-event-1' });
     jest.mocked(argon2.hash).mockResolvedValue('argon2-hash' as never);
   });
 
   it('stores a 27-character prefix and audit event for newly generated API keys', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     const result = await service.createApiKey('user-1', { name: 'Production key' });
 
@@ -86,10 +91,29 @@ describe('ApiKeyService', () => {
         }),
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        userId: 'user-1',
+        apiKeyId: 'key-1',
+        eventType: 'api_key.created',
+        riskLevel: 'low',
+        result: 'allowed',
+        metadata: expect.objectContaining({
+          keyName: 'Production key',
+          keyPrefix: expect.stringMatching(/^sk_[a-f0-9]{24}$/),
+          details: expect.objectContaining({
+            expiresAt: '2026-07-26T00:00:00.000Z',
+            permissions: defaultPermissions,
+          }),
+        }),
+      }),
+      prisma,
+    );
   });
 
   it('rejects blank API key names', async () => {
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.createApiKey('user-1', { name: '   ' })).rejects.toBeInstanceOf(
       BadRequestException,
@@ -99,7 +123,7 @@ describe('ApiKeyService', () => {
 
   it('rejects duplicate active API key names case-insensitively', async () => {
     prisma.apiKey.findFirst.mockResolvedValue({ id: 'existing-key' });
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.createApiKey('user-1', { name: 'Production key' })).rejects.toBeInstanceOf(
       BadRequestException,
@@ -117,7 +141,7 @@ describe('ApiKeyService', () => {
   });
 
   it('trims names before duplicate checks and persistence', async () => {
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await service.createApiKey('user-1', { name: '  Production key  ' });
 
@@ -139,7 +163,7 @@ describe('ApiKeyService', () => {
 
   it('rejects API key creation above the active-key limit', async () => {
     prisma.apiKey.count.mockResolvedValue(10);
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.createApiKey('user-1', { name: 'Overflow key' })).rejects.toBeInstanceOf(
       BadRequestException,
@@ -149,7 +173,7 @@ describe('ApiKeyService', () => {
 
   it('excludes revoked keys from name uniqueness and active-key limit checks', async () => {
     prisma.apiKey.count.mockResolvedValue(9);
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await service.createApiKey('user-1', { name: 'Fresh key' });
 
@@ -169,7 +193,7 @@ describe('ApiKeyService', () => {
   });
 
   it('rejects past and overly distant expiration dates', async () => {
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(
       service.createApiKey('user-1', { name: 'Past key', expiresAt: new Date(Date.now() - 1000) }),
@@ -184,7 +208,7 @@ describe('ApiKeyService', () => {
 
   it('accepts explicit expiration dates within 365 days', async () => {
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await service.createApiKey('user-1', { name: 'Short lived key', expiresAt });
 
@@ -196,7 +220,7 @@ describe('ApiKeyService', () => {
   });
 
   it('stores explicit API key permissions with IP allowlist for high-risk permissions', async () => {
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await service.createApiKey('user-1', {
       name: 'Signer key',
@@ -225,7 +249,7 @@ describe('ApiKeyService', () => {
       name: 'Production key',
       revoked: false,
     });
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.revokeApiKey('key-1', 'user-1')).resolves.toEqual({ count: 1 });
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
@@ -236,6 +260,20 @@ describe('ApiKeyService', () => {
           keyName: 'Production key',
         }),
       }),
+    );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        userId: 'user-1',
+        apiKeyId: 'key-1',
+        eventType: 'api_key.revoked',
+        result: 'allowed',
+        metadata: expect.objectContaining({
+          keyName: 'Production key',
+          keyPrefix: 'sk_1234567890abcdef12345678',
+        }),
+      }),
+      prisma,
     );
 
     prisma.apiKey.findFirst.mockResolvedValue(null);
@@ -250,7 +288,7 @@ describe('ApiKeyService', () => {
       { id: 'key-2', keyPrefix: 'sk_222222222222222222222222', name: 'Backup' },
     ]);
     prisma.apiKey.updateMany.mockResolvedValue({ count: 2 });
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.revokeAllKeys('user-1')).resolves.toEqual({ count: 2 });
 
@@ -268,6 +306,18 @@ describe('ApiKeyService', () => {
         }),
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key.revoked',
+        apiKeyId: 'key-1',
+        metadata: expect.objectContaining({
+          keyName: 'Primary',
+          keyPrefix: 'sk_111111111111111111111111',
+          details: { reason: 'bulk_revoke' },
+        }),
+      }),
+      prisma,
+    );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -277,6 +327,18 @@ describe('ApiKeyService', () => {
           metadata: { reason: 'bulk_revoke' },
         }),
       }),
+    );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key.revoked',
+        apiKeyId: 'key-2',
+        metadata: expect.objectContaining({
+          keyName: 'Backup',
+          keyPrefix: 'sk_222222222222222222222222',
+          details: { reason: 'bulk_revoke' },
+        }),
+      }),
+      prisma,
     );
   });
 
@@ -289,7 +351,7 @@ describe('ApiKeyService', () => {
     prisma.apiKeyEvent.create.mockImplementationOnce(async () => {
       throw new Error('audit failed');
     });
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.revokeAllKeys('user-1')).rejects.toThrow('audit failed');
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
@@ -299,13 +361,34 @@ describe('ApiKeyService', () => {
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledTimes(2);
   });
 
+  it('rejects revoke-all when security event recording fails so the transaction can roll back', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      { id: 'key-1', keyPrefix: 'sk_111111111111111111111111', name: 'Primary' },
+    ]);
+    securityEvents.record.mockRejectedValueOnce(new Error('security event failed'));
+    const service = createService();
+
+    await expect(service.revokeAllKeys('user-1')).rejects.toThrow('security event failed');
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', revoked: false },
+      data: { revoked: true },
+    });
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key.revoked',
+        apiKeyId: 'key-1',
+      }),
+      prisma,
+    );
+  });
+
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     prisma.apiKey.findMany.mockResolvedValue([
       { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
       { id: 'old-key-2', keyPrefix: 'sk_old22222222222222222222', name: 'Backup key' },
     ]);
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     const result = await service.rotateApiKey('user-1', 'Refreshed');
 
@@ -341,6 +424,21 @@ describe('ApiKeyService', () => {
         }),
       }),
     );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key.rotated',
+        apiKeyId: 'key-1',
+        metadata: expect.objectContaining({
+          keyName: 'Refreshed',
+          details: {
+            revokedKeyCount: 2,
+            expiresAt: '2026-07-26T00:00:00.000Z',
+            permissions: defaultPermissions,
+          },
+        }),
+      }),
+      prisma,
+    );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -371,7 +469,7 @@ describe('ApiKeyService', () => {
     prisma.apiKeyEvent.create.mockImplementationOnce(async () => {
       throw new Error('rotation audit failed');
     });
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.rotateApiKey('user-1', 'Refreshed')).rejects.toThrow(
       'rotation audit failed',
@@ -403,7 +501,7 @@ describe('ApiKeyService', () => {
         canUseEoaExecution: false,
       },
     ]);
-    const service = new ApiKeyService(prisma as any);
+    const service = createService();
 
     await expect(service.listApiKeys('user-1')).resolves.toEqual([
       {
@@ -444,7 +542,7 @@ describe('ApiKeyService', () => {
 
   describe('IP allowlist requirement for high-risk permissions', () => {
     it('rejects canSign without IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -457,7 +555,7 @@ describe('ApiKeyService', () => {
     });
 
     it('rejects canSendTransaction without IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -470,7 +568,7 @@ describe('ApiKeyService', () => {
     });
 
     it('rejects canUseEoaExecution without IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -483,7 +581,7 @@ describe('ApiKeyService', () => {
     });
 
     it('allows read-only keys without IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'Read-only key',
@@ -494,7 +592,7 @@ describe('ApiKeyService', () => {
     });
 
     it('allows default-permission keys without IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', { name: 'Default key' });
 
@@ -502,7 +600,7 @@ describe('ApiKeyService', () => {
     });
 
     it('allows high-risk permissions when IP allowlist is provided', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'Signer key',
@@ -521,7 +619,7 @@ describe('ApiKeyService', () => {
     });
 
     it('allows high-risk permissions with CIDR IP allowlist', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'Tx key',
@@ -544,7 +642,7 @@ describe('ApiKeyService', () => {
 
   describe('permission-based TTL limits', () => {
     it('rejects canUseEoaExecution key with TTL exceeding 30 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -559,7 +657,7 @@ describe('ApiKeyService', () => {
     });
 
     it('accepts canUseEoaExecution key with TTL within 30 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'EOA key',
@@ -572,7 +670,7 @@ describe('ApiKeyService', () => {
     });
 
     it('rejects canSign key with TTL exceeding 90 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -587,7 +685,7 @@ describe('ApiKeyService', () => {
     });
 
     it('accepts canSign key with TTL within 90 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'Signer key',
@@ -600,7 +698,7 @@ describe('ApiKeyService', () => {
     });
 
     it('rejects canSendTransaction key with TTL exceeding 90 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await expect(
         service.createApiKey('user-1', {
@@ -615,7 +713,7 @@ describe('ApiKeyService', () => {
     });
 
     it('accepts read-only key with TTL up to 365 days', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       await service.createApiKey('user-1', {
         name: 'Read-only key',
@@ -627,7 +725,7 @@ describe('ApiKeyService', () => {
     });
 
     it('uses most restrictive TTL when multiple high-risk permissions are combined', async () => {
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       // canSign + canUseEoaExecution → max TTL is 30 days (most restrictive)
       await expect(
@@ -644,7 +742,7 @@ describe('ApiKeyService', () => {
 
     it('caps default TTL to permission-based max for EOA keys', async () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       // Default TTL is 90 days, but EOA max is 30 days → should get 30-day expiry
       const result = await service.createApiKey('user-1', {
@@ -659,7 +757,7 @@ describe('ApiKeyService', () => {
 
     it('uses 90-day default TTL for read-only keys', async () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
-      const service = new ApiKeyService(prisma as any);
+      const service = createService();
 
       const result = await service.createApiKey('user-1', { name: 'Read-only key' });
 

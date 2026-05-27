@@ -26,6 +26,7 @@ type ApiKeyAuthRecord = {
   frozenReason?: string | null;
   lastUsedIp?: string | null;
   lastUsedUserAgent?: string | null;
+  lastUsedAt?: Date | string | null;
   canSign?: boolean;
   canSendTransaction?: boolean;
   canUseEoaExecution?: boolean;
@@ -133,6 +134,16 @@ export class ApiKeyAuthGuard implements CanActivate {
     }
 
     await this.handleApiKeyUsageAnomaly(keyRecord, clientIp, userAgent);
+
+    if (!keyRecord.lastUsedAt) {
+      await this.recordApiKeySecurityEvent(keyRecord, 'api_key.first_used', {
+        riskLevel: 'low',
+        clientIp,
+        userAgent,
+        result: 'allowed',
+        reason: 'first_use',
+      });
+    }
 
     request.user = keyRecord.user;
     request.apiKeyRecord = keyRecord;
