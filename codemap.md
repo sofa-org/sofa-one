@@ -101,6 +101,7 @@ Client → POST /v1/wallets/sign (X-API-Key only)
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
+  → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, and too many/malformed interactions
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency

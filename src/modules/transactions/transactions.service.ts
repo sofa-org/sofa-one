@@ -17,20 +17,7 @@ import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
-
-const MAX_TRANSACTION_INTERACTIONS = 10;
-const ZERO_NATIVE_VALUE = 0n;
-const MAX_UINT256 = (1n << 256n) - 1n;
-
-const ERC20_APPROVE_SELECTOR = '0x095ea7b3';
-const ERC721_ERC1155_SET_APPROVAL_FOR_ALL_SELECTOR = '0xa22cb465';
-const BLOCKED_PERMIT_SELECTORS = new Set([
-  '0xd505accf', // ERC-2612 permit(address,address,uint256,uint256,uint8,bytes32,bytes32)
-  '0x8fcbaf0c', // DAI-style permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)
-  '0x2b67b570', // Permit2 permit(address,PermitSingle,bytes)
-  '0xb7f13ed4', // Permit2 compact/single permit variant
-  '0x002a3e3a', // Permit2 permitBatch(address,PermitBatch,bytes)
-]);
+import { TransactionPolicyService } from './transaction-policy.service';
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -50,6 +37,7 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    private readonly transactionPolicy: TransactionPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -88,7 +76,7 @@ export class TransactionsService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       });
     }
-    this.assertTransactionPolicy(dto, {
+    this.transactionPolicy.assertAllowed(dto, {
       userId,
       chainId,
       executionMode,
@@ -259,113 +247,6 @@ export class TransactionsService {
       chainId: context.chainId,
       metadata: context.metadata as any,
     });
-  }
-
-  private assertTransactionPolicy(
-    dto: SendTransactionDto,
-    context: {
-      userId: string;
-      chainId: number;
-      executionMode: ExecutionMode;
-      apiKeyPrefix?: string;
-    },
-  ): void {
-    if (dto.interactions.length > MAX_TRANSACTION_INTERACTIONS) {
-      this.rejectTransactionPolicy(
-        `Transaction contains too many interactions; maximum is ${MAX_TRANSACTION_INTERACTIONS}`,
-        context,
-        { interactionCount: dto.interactions.length },
-      );
-    }
-
-    dto.interactions.forEach((interaction, index) => {
-      const value = BigInt(interaction.value ?? '0');
-      if (value !== ZERO_NATIVE_VALUE) {
-        this.rejectTransactionPolicy(
-          'Native value transfers are not allowed for API key transactions',
-          context,
-          { interactionIndex: index, hasNativeValue: true },
-        );
-      }
-
-      if (interaction.data.length > 2 && interaction.data.length < 10) {
-        this.rejectTransactionPolicy(`Interaction ${index + 1} calldata is too short`, context, {
-          interactionIndex: index,
-          calldataLength: interaction.data.length,
-        });
-      }
-
-      const selector = this.getFunctionSelector(interaction.data);
-      if (!selector) return;
-
-      if (BLOCKED_PERMIT_SELECTORS.has(selector)) {
-        this.rejectTransactionPolicy('Permit signatures are not allowed in transaction calldata', context, {
-          interactionIndex: index,
-          selector,
-        });
-      }
-
-      if (selector === ERC20_APPROVE_SELECTOR && this.isMaxUint256Approval(interaction.data)) {
-        this.rejectTransactionPolicy('Infinite token approvals are not allowed', context, {
-          interactionIndex: index,
-          selector,
-        });
-      }
-
-      if (
-        selector === ERC721_ERC1155_SET_APPROVAL_FOR_ALL_SELECTOR &&
-        this.isApprovalForAllEnabled(interaction.data)
-      ) {
-        this.rejectTransactionPolicy('NFT operator approvals are not allowed', context, {
-          interactionIndex: index,
-          selector,
-        });
-      }
-    });
-  }
-
-  private rejectTransactionPolicy(
-    reason: string,
-    context: {
-      userId: string;
-      chainId: number;
-      executionMode: ExecutionMode;
-      apiKeyPrefix?: string;
-    },
-    extra: Record<string, unknown> = {},
-  ): never {
-    this.logSecurityWarning({
-      message: 'Transaction policy rejected request',
-      reason,
-      ...context,
-      ...extra,
-    });
-    throw new BadRequestException(reason);
-  }
-
-  private getFunctionSelector(data: string): string | null {
-    if (data === '0x') return null;
-    if (data.length < 10) return null;
-    return data.slice(0, 10).toLowerCase();
-  }
-
-  private isMaxUint256Approval(data: string): boolean {
-    const amountWord = this.getAbiWord(data, 1);
-    if (!amountWord) return false;
-    return BigInt(`0x${amountWord}`) === MAX_UINT256;
-  }
-
-  private isApprovalForAllEnabled(data: string): boolean {
-    const approvedWord = this.getAbiWord(data, 1);
-    if (!approvedWord) return false;
-    return BigInt(`0x${approvedWord}`) !== 0n;
-  }
-
-  private getAbiWord(data: string, wordIndex: number): string | null {
-    const start = 10 + wordIndex * 64;
-    const end = start + 64;
-    if (data.length < end) return null;
-    return data.slice(start, end);
   }
 
   private assertWalletReady(wallet: { status: string; walletAddress?: string | null }): void {

@@ -13,6 +13,7 @@ jest.mock('../../core/openfort/openfort.service', () => ({
 }));
 
 import { TransactionsService } from './transactions.service';
+import { TransactionPolicyService } from './transaction-policy.service';
 
 describe('TransactionsService', () => {
   const apiKeyPrefix = 'sk_1234567890abcdef12345678';
@@ -69,6 +70,7 @@ describe('TransactionsService', () => {
   } as any;
 
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
+  const transactionPolicy = new TransactionPolicyService();
 
   let service: TransactionsService;
   let loggerWarnSpy: jest.SpyInstance;
@@ -95,7 +97,7 @@ describe('TransactionsService', () => {
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
-    service = new TransactionsService(prisma, openfort, eoaExecutionPolicy);
+    service = new TransactionsService(prisma, openfort, transactionPolicy, eoaExecutionPolicy);
   });
 
   afterEach(() => {
