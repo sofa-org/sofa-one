@@ -12,7 +12,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 
 ## Key Architecture Constraints
 - Private keys never leave TEE (Openfort). Never store, log, or return them.
-- Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes.
+- Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes, and API-key permissions are enforced before service code runs.
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
 - API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, and audited create/revoke/rotate events.
@@ -87,21 +87,21 @@ Browser → Openfort IAM → POST /v1/auth/social
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user; IAM bearer tokens are not accepted
+  → ApiKeyAuthGuard resolves API key user; ApiKeyPermissionGuard requires canSign
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
   → OpenfortService.signData signs with TEE-managed backend wallet
   → Returns { signature, walletAddress, type }
 
 Client → POST /v1/transactions/send (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user; IAM bearer tokens are not accepted
+  → ApiKeyAuthGuard resolves API key user; ApiKeyPermissionGuard requires canSendTransaction
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
 Client → GET /v1/transactions/:id (X-API-Key only)
-  → TransactionsService verifies current API-key user owns the transaction and chain is allowed
+  → ApiKeyPermissionGuard requires canReadTransactionStatus before service ownership checks
   → Returns the locally stored sendTransaction result/status
   → Returns safe status fields only; never returns calldata, requestHash, or interactionsHash
 ```

@@ -1,0 +1,43 @@
+{
+  "agent": {
+    "orchestrator": {
+      "model": "openai/gpt-5.5",
+      "options": {},
+      "permission": {}
+    },
+    "oracle": {
+      "model": "openai/gpt-5.5",
+      "variant": "high",
+      "options": {},
+      "permission": {}
+    },
+    "council": {
+      "model": "openai/gpt-5.5",
+      "options": {},
+      "permission": {}
+    },
+    "librarian": {
+      "model": "openai/gpt-5.4-mini",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    },
+    "explorer": {
+      "model": "openai/gpt-5.4-mini",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    },
+    "designer": {
+      "model": "google/gemini-3.1-pro-preview",
+      "options": {},
+      "permission": {}
+    },
+    "fixer": {
+      "model": "openai/gpt-5.4-mini",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    }
+  }
+}

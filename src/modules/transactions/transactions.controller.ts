@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, UseGuard
 import { Throttle } from '@nestjs/throttler';
 import { TransactionsService } from './transactions.service';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
+import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.guard';
+import { RequireApiKeyPermission } from '../../common/decorators/api-key-permission.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
@@ -15,7 +17,8 @@ export class TransactionsController {
 
   /** POST /v1/transactions/send — public API: API-key-only transaction submission. */
   @Post('send')
-  @UseGuards(ApiKeyAuthGuard)
+  @RequireApiKeyPermission('canSendTransaction')
+  @UseGuards(ApiKeyAuthGuard, ApiKeyPermissionGuard)
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async send(@CurrentUser('id') userId: string, @Body() dto: SendTransactionDto, @Req() req: any) {
     return this.transactionsService.send(userId, dto, req.apiKeyRecord);
@@ -44,7 +47,8 @@ export class TransactionsController {
 
   /** GET /v1/transactions/:id — public API: API-key-only transaction status lookup. */
   @Get(':id')
-  @UseGuards(ApiKeyAuthGuard)
+  @RequireApiKeyPermission('canReadTransactionStatus')
+  @UseGuards(ApiKeyAuthGuard, ApiKeyPermissionGuard)
   @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
   async getStatus(
     @CurrentUser('id') userId: string,

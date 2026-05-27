@@ -12,12 +12,17 @@ jest.mock('../../common/guards/either-auth.guard', () => ({
 jest.mock('../../common/guards/api-key-auth.guard', () => ({
   ApiKeyAuthGuard: class ApiKeyAuthGuard {},
 }));
+jest.mock('../../common/guards/api-key-permission.guard', () => ({
+  ApiKeyPermissionGuard: class ApiKeyPermissionGuard {},
+}));
 jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
 
 import { WalletController } from './wallet.controller';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
+import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.guard';
+import { API_KEY_PERMISSION_KEY } from '../../common/decorators/api-key-permission.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 
@@ -89,6 +94,8 @@ describe('WalletController', () => {
       const guards = Reflect.getMetadata(GUARDS_METADATA, controller.sign) ?? [];
 
       expect(guards).toContain(ApiKeyAuthGuard);
+      expect(guards).toContain(ApiKeyPermissionGuard);
+      expect(Reflect.getMetadata(API_KEY_PERMISSION_KEY, controller.sign)).toBe('canSign');
       expect(guards).not.toContain(FrontendOnlyGuard);
       expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.sign)).toBeUndefined();
     });

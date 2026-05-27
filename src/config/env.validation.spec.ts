@@ -34,6 +34,7 @@ describe('environment validation', () => {
         ...baseConfig,
         NODE_ENV: 'production',
         CORS_ORIGIN: 'https://app.example.com',
+        STEP_UP_OTP_WEBHOOK_URL: 'https://hooks.example.com/step-up-otp',
       }),
     ).toEqual(expect.objectContaining({ NODE_ENV: 'production' }));
   });

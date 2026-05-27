@@ -2,9 +2,11 @@ import { Controller, Get, Post, Body, Query, Req, Param, UseGuards, HttpCode, Ht
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
+import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { StepUpGuard } from '../../common/guards/step-up.guard';
+import { RequireApiKeyPermission } from '../../common/decorators/api-key-permission.decorator';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -59,7 +61,8 @@ export class WalletController {
   /** POST /v1/wallets/sign — API-key only: sign data without sending a transaction. */
   @Post('sign')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(ApiKeyAuthGuard)
+  @RequireApiKeyPermission('canSign')
+  @UseGuards(ApiKeyAuthGuard, ApiKeyPermissionGuard)
   async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto, @Req() req: any) {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }
