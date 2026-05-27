@@ -4,10 +4,10 @@
 Validated input for transaction send requests.
 
 ## Design/Patterns
-- DTOs with nested validation for batched interactions.
+- DTOs with nested validation for batched interactions, including byte-aligned calldata, per-interaction calldata size, and interaction-count limits.
 
 ## Flow
-- Validates chain ID, interaction array, and idempotency key before service execution.
+- Validates chain ID, interaction array size, calldata shape/size, native value shape, and idempotency key before service execution.
 
 ## Integration
 - Used by `TransactionsController`.

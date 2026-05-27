@@ -75,6 +75,55 @@ describe('TransactionPolicyService', () => {
     ).toThrow('Interaction 1 calldata is too short');
   });
 
+  it('rejects aggregate calldata larger than 64 KB without logging full calldata', () => {
+    const largeCalldata = `0x${'11'.repeat(33 * 1024)}`;
+
+    expect(() =>
+      service.assertAllowed(
+        {
+          ...baseDto,
+          interactions: [
+            { ...baseDto.interactions[0], data: largeCalldata },
+            { ...baseDto.interactions[0], data: largeCalldata },
+          ],
+        },
+        context,
+      ),
+    ).toThrow('Transaction calldata exceeds maximum total size of 64 KB');
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'Transaction calldata exceeds maximum total size of 64 KB',
+        interactionCount: 2,
+        totalCalldataBytes: 67584,
+      }),
+    );
+    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(largeCalldata);
+  });
+
+  it('rejects batches that target too many distinct contracts', () => {
+    expect(() =>
+      service.assertAllowed(
+        {
+          ...baseDto,
+          interactions: Array.from({ length: 6 }, (_, index) => ({
+            ...baseDto.interactions[0],
+            to: `0x${String(index + 1).padStart(40, '0')}`,
+          })),
+        },
+        context,
+      ),
+    ).toThrow('Transaction targets too many distinct contracts');
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'Transaction targets too many distinct contracts',
+        interactionCount: 6,
+        distinctTargetCount: 6,
+      }),
+    );
+  });
+
   it.each(['0xd505accf', '0x8fcbaf0c', '0x2b67b570', '0xb7f13ed4', '0x002a3e3a'])(
     'rejects blocked permit selector %s',
     (selector) => {

@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
+import {
+  MAX_INTERACTION_CALLDATA_BYTES,
+  MAX_TRANSACTION_INTERACTIONS,
+  type ExecutionMode,
+  type SendTransactionDto,
+} from './dto/send-transaction.dto';
 
-const MAX_TRANSACTION_INTERACTIONS = 10;
+const MAX_TRANSACTION_CALLDATA_BYTES = 64 * 1024;
+const MAX_DISTINCT_TARGETS = 5;
 const ZERO_NATIVE_VALUE = 0n;
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -35,7 +41,34 @@ export class TransactionPolicyService {
       );
     }
 
+    const totalCalldataBytes = dto.interactions.reduce(
+      (total, interaction) => total + this.getCalldataByteLength(interaction.data),
+      0,
+    );
+    if (totalCalldataBytes > MAX_TRANSACTION_CALLDATA_BYTES) {
+      this.reject('Transaction calldata exceeds maximum total size of 64 KB', context, {
+        interactionCount: dto.interactions.length,
+        totalCalldataBytes,
+      });
+    }
+
+    const distinctTargets = new Set(dto.interactions.map((interaction) => interaction.to.toLowerCase()));
+    if (distinctTargets.size > MAX_DISTINCT_TARGETS) {
+      this.reject('Transaction targets too many distinct contracts', context, {
+        interactionCount: dto.interactions.length,
+        distinctTargetCount: distinctTargets.size,
+      });
+    }
+
     dto.interactions.forEach((interaction, index) => {
+      const calldataBytes = this.getCalldataByteLength(interaction.data);
+      if (calldataBytes > MAX_INTERACTION_CALLDATA_BYTES) {
+        this.reject(`Interaction ${index + 1} calldata exceeds maximum size of 64 KB`, context, {
+          interactionIndex: index,
+          calldataBytes,
+        });
+      }
+
       const value = BigInt(interaction.value ?? '0');
       if (value !== ZERO_NATIVE_VALUE) {
         this.reject('Native value transfers are not allowed for API key transactions', context, {
@@ -99,6 +132,11 @@ export class TransactionPolicyService {
     if (data === '0x') return null;
     if (data.length < 10) return null;
     return data.slice(0, 10).toLowerCase();
+  }
+
+  private getCalldataByteLength(data: string): number {
+    if (data === '0x') return 0;
+    return Math.ceil((data.length - 2) / 2);
   }
 
   private isMaxUint256Approval(data: string): boolean {

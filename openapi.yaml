@@ -391,9 +391,10 @@ components:
         interactions:
           type: array
           minItems: 1
+          maxItems: 10
           items:
             $ref: '#/components/schemas/RawInteraction'
-          description: 合约交互列表（至少一个）
+          description: 合约交互列表（1-10 个；服务端还会限制总 calldata 大小和目标合约 fanout）
         idempotencyKey:
           type: string
           maxLength: 64
@@ -411,8 +412,9 @@ components:
           description: 目标合约地址
         data:
           type: string
-          pattern: '^0x[a-fA-F0-9]*$'
-          description: ABI-encoded calldata（0x 前缀十六进制）
+          maxLength: 131074
+          pattern: '^0x([a-fA-F0-9]{2})*$'
+          description: ABI-encoded calldata（0x 前缀、byte-aligned 十六进制，单个 interaction 最大 64 KB）
         value:
           type: string
           pattern: '^\d+$'

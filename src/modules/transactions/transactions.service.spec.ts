@@ -340,6 +340,36 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
+  it('rejects oversized aggregate calldata before loading the wallet', async () => {
+    const largeCalldata = `0x${'11'.repeat(33 * 1024)}`;
+
+    await expect(
+      service.send(
+        'user-1',
+        {
+          ...dto,
+          interactions: [
+            { ...dto.interactions[0], data: largeCalldata },
+            { ...dto.interactions[0], data: largeCalldata },
+          ],
+        } as any,
+        apiKeyContext,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'security',
+        message: 'Transaction policy rejected request',
+        reason: 'Transaction calldata exceeds maximum total size of 64 KB',
+        totalCalldataBytes: 67584,
+      }),
+    );
+  });
+
   it.each([
     ['0xd505accf', 'ERC-2612 permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'],
     ['0x8fcbaf0c', 'DAI-style permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)'],

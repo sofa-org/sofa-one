@@ -9,7 +9,7 @@ Feature-module container for auth, API keys, wallets, transactions, EOA executio
 
 ## Flow
 - Requests route into feature controllers by URL prefix.
-- Services execute domain logic and persistence/Openfort calls; wallet withdrawal policy and transaction calldata/approval policy are isolated in dedicated services before Openfort submission.
+- Services execute domain logic and persistence/Openfort calls; wallet withdrawal policy and transaction calldata/approval/fanout policy are isolated in dedicated services before Openfort submission.
 - EOA execution policy is isolated in its own module and imported by wallet/transaction modules before any backend EOA signing or sending path proceeds.
 - Cross-cutting security telemetry uses `security-events` instead of ad-hoc event writes in controllers; public API modules import it so API-key auth can record suspicious-use and freeze events.
 

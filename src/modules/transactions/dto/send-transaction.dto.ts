@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  ArrayMaxSize,
   ArrayMinSize,
   IsNotEmpty,
   IsString,
@@ -16,6 +17,10 @@ import {
 export type ExecutionMode = 'session_key' | 'eoa';
 export type SponsorshipMode = 'required' | 'none';
 
+export const MAX_TRANSACTION_INTERACTIONS = 10;
+export const MAX_INTERACTION_CALLDATA_BYTES = 64 * 1024;
+export const MAX_INTERACTION_CALLDATA_HEX_LENGTH = 2 + MAX_INTERACTION_CALLDATA_BYTES * 2;
+
 export class InteractionDto {
   @IsString()
   @IsNotEmpty()
@@ -24,8 +29,10 @@ export class InteractionDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(131074, { message: 'data must not exceed 64 KB' })
-  @Matches(/^0x[0-9a-fA-F]*$/, { message: 'data must be hex-encoded (0x...)' })
+  @MaxLength(MAX_INTERACTION_CALLDATA_HEX_LENGTH, { message: 'data must not exceed 64 KB' })
+  @Matches(/^0x(?:[0-9a-fA-F]{2})*$/, {
+    message: 'data must be byte-aligned hex-encoded (0x...)',
+  })
   data: string;
 
   /** Value in wei (optional, defaults to '0'). Max uint256 = 78 digits. */
@@ -57,6 +64,7 @@ export class SendTransactionDto {
 
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(MAX_TRANSACTION_INTERACTIONS)
   @ValidateNested({ each: true })
   @Type(() => InteractionDto)
   interactions: InteractionDto[];
