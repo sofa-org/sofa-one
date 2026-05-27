@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { SecurityNotificationService } from '../security-notifications/security-notification.service';
 
 export type SecurityEventActorType = 'user' | 'api_key' | 'system';
 export type SecurityEventRiskLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -24,15 +25,18 @@ export type RecordSecurityEventInput = {
 
 type SecurityEventClient = {
   securityEvent: {
-    create(args: { data: Record<string, unknown> }): unknown;
+    create(args: { data: Record<string, unknown> }): Promise<unknown>;
   };
 };
 
 @Injectable()
 export class SecurityEventService {
+  private readonly logger = new Logger(SecurityEventService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly requestContext: RequestContextService,
+    @Optional() private readonly notifications?: SecurityNotificationService,
   ) {}
 
   async record(input: RecordSecurityEventInput, tx?: SecurityEventClient) {
@@ -42,7 +46,7 @@ export class SecurityEventService {
     }
 
     const client = (tx ?? this.prisma) as SecurityEventClient;
-    return client.securityEvent.create({
+    const event = await client.securityEvent.create({
       data: {
         actorType: input.actorType,
         userId: input.userId ?? null,
@@ -58,5 +62,16 @@ export class SecurityEventService {
         metadata: input.metadata ?? Prisma.JsonNull,
       },
     });
+
+    try {
+      await this.notifications?.notifyForSecurityEvent(event as never, client as never);
+    } catch (error) {
+      this.logger.error(
+        `Security notification creation failed: eventType=${eventType}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
+    return event;
   }
 }

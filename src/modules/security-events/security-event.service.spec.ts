@@ -11,6 +11,9 @@ describe('SecurityEventService', () => {
   const requestContext = {
     getRequestId: jest.fn(),
   };
+  const notifications = {
+    notifyForSecurityEvent: jest.fn(),
+  };
 
   let service: SecurityEventService;
 
@@ -87,6 +90,43 @@ describe('SecurityEventService', () => {
 
     expect(tx.securityEvent.create).toHaveBeenCalled();
     expect(prisma.securityEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('asks the notification service to create user-facing notifications', async () => {
+    const event = { id: 'event-4', userId: 'user-1', eventType: 'api_key.created', riskLevel: 'low' };
+    prisma.securityEvent.create.mockResolvedValue(event);
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      notifications as never,
+    );
+
+    await service.record({ actorType: 'user', userId: 'user-1', eventType: 'api_key.created' });
+
+    expect(notifications.notifyForSecurityEvent).toHaveBeenCalledWith(
+      event,
+      expect.objectContaining({ securityEvent: prisma.securityEvent }),
+    );
+  });
+
+  it('does not fail security-event writes when notification creation fails', async () => {
+    const event = { id: 'event-5', userId: 'user-1', eventType: 'api_key.created', riskLevel: 'low' };
+    prisma.securityEvent.create.mockResolvedValue(event);
+    notifications.notifyForSecurityEvent.mockRejectedValue(new Error('delivery unavailable'));
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      notifications as never,
+    );
+    const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+
+    await expect(
+      service.record({ actorType: 'user', userId: 'user-1', eventType: 'api_key.created' }),
+    ).resolves.toEqual(event);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Security notification creation failed: eventType=api_key.created',
+      expect.any(String),
+    );
   });
 
   it('rejects blank event types', async () => {

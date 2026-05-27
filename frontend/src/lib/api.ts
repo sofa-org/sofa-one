@@ -204,6 +204,17 @@ export interface StepUpVerifyResponse {
   expiresAt: string;
 }
 
+export interface SecurityNotificationRecord {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  riskLevel: string;
+  readAt: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -476,6 +487,41 @@ export async function revokeAllApiKeysAuth(
     method: 'DELETE',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
+}
+
+export async function listSecurityNotificationsAuth(
+  getToken: () => Promise<string | null>,
+  params?: { unreadOnly?: boolean; limit?: number },
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams();
+  if (params?.unreadOnly) query.set('unreadOnly', 'true');
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<SecurityNotificationRecord[]>(
+    `/v1/security-notifications${qs ? `?${qs}` : ''}`,
+    getToken,
+    { signal },
+  );
+}
+
+export async function markSecurityNotificationReadAuth(
+  getToken: () => Promise<string | null>,
+  notificationId: string,
+) {
+  return authFetch<{ success: boolean; updatedCount: number }>(
+    `/v1/security-notifications/${notificationId}/read`,
+    getToken,
+    { method: 'POST' },
+  );
+}
+
+export async function markAllSecurityNotificationsReadAuth(getToken: () => Promise<string | null>) {
+  return authFetch<{ success: boolean; updatedCount: number }>(
+    '/v1/security-notifications/read-all',
+    getToken,
+    { method: 'POST' },
+  );
 }
 
 export async function withdrawAuth(

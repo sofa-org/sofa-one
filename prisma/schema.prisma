@@ -19,6 +19,7 @@ model User {
   apiKeys         ApiKey[]
   apiKeyEvents    ApiKeyEvent[]
   securityEvents  SecurityEvent[]
+  securityNotifications SecurityNotification[]
   transactions    Transaction[]
   signingRequests SigningRequest[]
   stepUpChallenges StepUpChallenge[]
@@ -128,6 +129,7 @@ model SecurityEvent {
   user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   apiKey ApiKey?     @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   wallet UserWallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  notifications SecurityNotification[]
 
   @@index([userId, createdAt])
   @@index([apiKeyId, createdAt])
@@ -135,6 +137,26 @@ model SecurityEvent {
   @@index([eventType, createdAt])
   @@index([riskLevel, createdAt])
   @@map("security_events")
+}
+
+model SecurityNotification {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  securityEventId String?   @map("security_event_id") @db.Uuid
+  type            String    @db.VarChar(80)
+  title           String    @db.VarChar(120)
+  body            String    @db.VarChar(500)
+  riskLevel       String    @default("medium") @map("risk_level") @db.VarChar(20)
+  readAt          DateTime? @map("read_at") @db.Timestamptz()
+  metadata        Json?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  securityEvent SecurityEvent? @relation(fields: [securityEventId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+  @@index([securityEventId])
+  @@map("security_notifications")
 }
 
 model WithdrawalPolicy {

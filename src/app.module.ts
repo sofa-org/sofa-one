@@ -14,6 +14,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { HealthModule } from './modules/health/health.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { SecurityEventModule } from './modules/security-events/security-event.module';
+import { SecurityNotificationModule } from './modules/security-notifications/security-notification.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { RequestContextModule } from './common/request-context/request-context.module';
 
@@ -38,6 +39,7 @@ import { RequestContextModule } from './common/request-context/request-context.m
     HealthModule,
     StepUpModule,
     SecurityEventModule,
+    SecurityNotificationModule,
   ],
   providers: [
     RequestIdMiddleware,
