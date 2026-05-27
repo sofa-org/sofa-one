@@ -13,4 +13,4 @@ Transaction submission and status API for raw Openfort-backed sends.
 - Status lookup returns only safe fields for the current API-key user and refreshes pending Openfort intent records when possible.
 
 ## Integration
-- Uses `EitherAuthGuard`, `ApiKeyOnlyGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and the send DTO.
+- Uses `ApiKeyAuthGuard`, `OpenfortUserGuard`, `FrontendOnlyGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and the send DTO.

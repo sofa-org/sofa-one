@@ -87,14 +87,14 @@ Browser → Openfort IAM → POST /v1/auth/social
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → EitherAuthGuard resolves API key user; WalletService rejects IAM-only requests
+  → ApiKeyAuthGuard resolves API key user; IAM bearer tokens are not accepted
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
   → OpenfortService.signData signs with TEE-managed backend wallet
   → Returns { signature, walletAddress, type }
 
 Client → POST /v1/transactions/send (X-API-Key only)
-  → EitherAuthGuard resolves API key user; ApiKeyOnlyGuard rejects IAM-only requests
+  → ApiKeyAuthGuard resolves API key user; IAM bearer tokens are not accepted
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency

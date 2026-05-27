@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Body, Query, Req, Param, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
-import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
-import { ApiKeyOnlyGuard } from '../../common/guards/api-key-only.guard';
+import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
@@ -58,7 +57,7 @@ export class WalletController {
   /** POST /v1/wallets/sign — API-key only: sign data without sending a transaction. */
   @Post('sign')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(EitherAuthGuard, ApiKeyOnlyGuard)
+  @UseGuards(ApiKeyAuthGuard)
   async sign(@CurrentUser('id') userId: string, @Body() dto: SignDto, @Req() req: any) {
     return this.walletService.sign(userId, dto, req.apiKeyRecord);
   }

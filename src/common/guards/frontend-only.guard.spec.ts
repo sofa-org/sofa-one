@@ -13,14 +13,22 @@ function contextWithHeaders(headers: Record<string, string | undefined>) {
 
 function createGuard({
   corsOrigin,
+  nodeEnv = 'test',
   isFrontendOnly = true,
 }: {
   corsOrigin?: string | undefined;
+  nodeEnv?: string;
   isFrontendOnly?: boolean;
 } = { corsOrigin: 'https://app.example.com' }) {
   return new FrontendOnlyGuard(
     { getAllAndOverride: jest.fn().mockReturnValue(isFrontendOnly) } as unknown as Reflector,
-    { get: jest.fn().mockReturnValue(corsOrigin) } as unknown as ConfigService,
+    {
+      get: jest.fn((key: string) => {
+        if (key === 'CORS_ORIGIN') return corsOrigin;
+        if (key === 'NODE_ENV') return nodeEnv;
+        return undefined;
+      }),
+    } as unknown as ConfigService,
   );
 }
 
@@ -45,6 +53,26 @@ describe('FrontendOnlyGuard', () => {
     expect(
       guard.canActivate(contextWithHeaders({ referer: 'https://app.example.com/dashboard' })),
     ).toBe(true);
+  });
+
+  it('rejects referer-only requests in production', () => {
+    const guard = createGuard({
+      corsOrigin: 'https://app.example.com',
+      nodeEnv: 'production',
+    });
+
+    expect(() =>
+      guard.canActivate(contextWithHeaders({ referer: 'https://app.example.com/dashboard' })),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('allows configured origin in production', () => {
+    const guard = createGuard({
+      corsOrigin: 'https://app.example.com',
+      nodeEnv: 'production',
+    });
+
+    expect(guard.canActivate(contextWithHeaders({ origin: 'https://app.example.com' }))).toBe(true);
   });
 
   it('allows non-frontend-only routes without origin or referer', () => {

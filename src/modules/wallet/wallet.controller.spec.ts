@@ -9,16 +9,15 @@ jest.mock('../../core/openfort/openfort.service', () => ({
 jest.mock('../../common/guards/either-auth.guard', () => ({
   EitherAuthGuard: class EitherAuthGuard {},
 }));
-jest.mock('../../common/guards/api-key-only.guard', () => ({
-  ApiKeyOnlyGuard: class ApiKeyOnlyGuard {},
+jest.mock('../../common/guards/api-key-auth.guard', () => ({
+  ApiKeyAuthGuard: class ApiKeyAuthGuard {},
 }));
 jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
 
 import { WalletController } from './wallet.controller';
-import { EitherAuthGuard } from '../../common/guards/either-auth.guard';
-import { ApiKeyOnlyGuard } from '../../common/guards/api-key-only.guard';
+import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 
@@ -89,8 +88,7 @@ describe('WalletController', () => {
     it('is public API-only', () => {
       const guards = Reflect.getMetadata(GUARDS_METADATA, controller.sign) ?? [];
 
-      expect(guards).toContain(EitherAuthGuard);
-      expect(guards).toContain(ApiKeyOnlyGuard);
+      expect(guards).toContain(ApiKeyAuthGuard);
       expect(guards).not.toContain(FrontendOnlyGuard);
       expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.sign)).toBeUndefined();
     });

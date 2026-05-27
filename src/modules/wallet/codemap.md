@@ -13,4 +13,4 @@ Wallet operations: deposit info, balance lookup, signing, and withdrawal intent 
 - Service reads wallet state from Prisma, signs API-key-authenticated payloads with audit attribution, queries balances, or creates withdrawal intents.
 
 ## Integration
-- Uses `EitherAuthGuard`, `FrontendOnlyGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and viem.
+- Uses `ApiKeyAuthGuard`, `FrontendOnlyGuard`, `OpenfortUserGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and viem.
