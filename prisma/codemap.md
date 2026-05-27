@@ -7,7 +7,7 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 - **ORM Abstraction**: Utilizes Prisma Client for type-safe database operations, eliminating raw SQL in application code.
 - **Relational Design**: Employs normalized tables with foreign key relationships to maintain referential integrity.
 - **Security by Design**: Implements hashed API keys with Argon2, unique constraints on sensitive fields, and optional IP whitelisting.
-- **Audit Trail**: ApiKeyEvent, Transaction, and SigningRequest models capture API-key lifecycle changes, blockchain transaction submissions, and TEE signing requests without storing API-key secrets, signing plaintext, or full calldata in transaction audit details.
+- **Audit Trail**: ApiKeyEvent, SecurityEvent, Transaction, and SigningRequest models capture API-key lifecycle changes, cross-cutting security telemetry, blockchain transaction submissions, and TEE signing requests without storing API-key secrets, signing plaintext, or full calldata in transaction audit details.
 - **Migration-Driven Evolution**: Schema changes are versioned through migrations, allowing incremental updates without data loss.
 
 ## Data & Control Flow
@@ -15,6 +15,7 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 - **User (1:1) UserWallet**: Each user has exactly one wallet via unique userId constraint.
 - **User (1:N) ApiKey**: Users can have multiple API keys for programmatic access.
 - **User (1:N) ApiKeyEvent**: Key creation, revocation, and rotation events are recorded with prefix/name snapshots.
+- **User/APIKey/Wallet (1:N) SecurityEvent**: Security events capture actor type, event type, risk level, result/reason, request context, and safe JSON metadata for audit/risk/alerting.
 - **User (1:N) Transaction**: Users can initiate multiple blockchain transactions; API-key submissions snapshot key prefix/name for durable attribution.
 - **Reverse Relations**: All child models reference User via userId foreign key with RESTRICT delete to prevent orphaned records.
 - **User (1:N) SigningRequest**: Users can initiate multiple message/typed-data signing requests; API-key requests snapshot key prefix/name for durable attribution.
@@ -36,6 +37,7 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 - **Authentication Module**: Consumes User and UserWallet models for Openfort IAM integration and wallet provisioning.
 - **API Key Middleware**: Validates ApiKey models for protected API routes, querying extended/legacy prefix candidates, verifying each Argon2 hash candidate, and enforcing IP restrictions.
 - **API Key Management**: Creates, revokes, and rotates API keys through transactional service methods that enforce lifecycle limits and append ApiKeyEvent audit rows.
+- **Security Events**: `SecurityEventService` appends generic security telemetry rows for future anomaly detection, freeze workflows, policy denials, and notifications.
 - **Transaction Service**: Creates Transaction records for Openfort intent submissions, stores request/interactions hashes and API-key attribution snapshots, then updates status/hash/failure metadata.
 - **Wallet Management**: Uses UserWallet for Openfort account mapping and address retrieval.
 - **Frontend Integration**: Indirectly supports React SPA through backend APIs, providing user wallet data and transaction history.

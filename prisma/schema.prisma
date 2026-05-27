@@ -16,6 +16,7 @@ model User {
   wallet          UserWallet?
   apiKeys         ApiKey[]
   apiKeyEvents    ApiKeyEvent[]
+  securityEvents  SecurityEvent[]
   transactions    Transaction[]
   signingRequests SigningRequest[]
   stepUpChallenges StepUpChallenge[]
@@ -36,6 +37,7 @@ model UserWallet {
 
   user                User                       @relation(fields: [userId], references: [id])
   chainAuthorizations WalletChainAuthorization[]
+  securityEvents      SecurityEvent[]
 
   @@map("user_wallets")
 }
@@ -76,6 +78,7 @@ model ApiKey {
   signingRequests SigningRequest[]
   transactions    Transaction[]
   events          ApiKeyEvent[]
+  securityEvents  SecurityEvent[]
 
   @@index([keyPrefix])
   @@index([userId, revoked])
@@ -99,6 +102,34 @@ model ApiKeyEvent {
   @@index([userId, createdAt])
   @@index([apiKeyId, createdAt])
   @@map("api_key_events")
+}
+
+model SecurityEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorType  String   @map("actor_type") @db.VarChar(20)
+  userId     String?  @map("user_id") @db.Uuid
+  apiKeyId   String?  @map("api_key_id") @db.Uuid
+  walletId   String?  @map("wallet_id") @db.Uuid
+  eventType  String   @map("event_type") @db.VarChar(80)
+  riskLevel  String   @default("low") @map("risk_level") @db.VarChar(20)
+  ip         String?  @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  requestId  String?  @map("request_id") @db.VarChar(64)
+  result     String?  @db.VarChar(20)
+  reason     String?  @db.VarChar(255)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKey ApiKey?     @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  wallet UserWallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([riskLevel, createdAt])
+  @@map("security_events")
 }
 
 model Transaction {

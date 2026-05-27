@@ -41,6 +41,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/wallet/dto/` | Input DTOs for signing and withdrawal requests with Ethereum address validation | [View Map](src/modules/wallet/dto/codemap.md) |
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
+| `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
 
 ### Data Layer
 
@@ -61,6 +62,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - User authenticates via Openfort IAM → `User` row is created or reused.
 - Wallet provisioning creates `UserWallet` tied 1:1 to `User` with `openfortAccountId`, `walletAddress`, `chainId`, and `status`.
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, and IP allowlist in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
+- Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, risk level, request context, and safe metadata.
 - Transaction submission appends `Transaction` records with intent/hash/status/details for audit and reconciliation.
 - Agent execution authority is anchored by the Calibur on-chain key registry; no off-chain strategy ownership table is used.
 
