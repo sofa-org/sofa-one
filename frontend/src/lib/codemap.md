@@ -6,7 +6,7 @@ Centralizes browser requests to the backend with auth header injection, JSON han
 ## Design/Patterns
 - Two typed transport helpers: Openfort IAM token (`authFetch<T>`) and explicit API key (`apiFetch<T>`)
 - `apiFetch` wrappers are limited to public API-key endpoints (`/v1/wallets/sign`, `/v1/transactions/send`, `/v1/transactions/:id`)
-- Frontend-only routes (`/v1/api-keys/*`, `/v1/wallets/balances`, `/v1/wallets/withdraw`) use Openfort IAM token wrappers only
+- Frontend-only routes (`/v1/api-keys/*`, `/v1/wallets/balances`, `/v1/wallets/withdraw`, `/v1/wallets/withdrawal-addresses`) use Openfort IAM token wrappers only
 - Shared DTO/response types and error parsing for non-2xx responses
 
 ## Flow

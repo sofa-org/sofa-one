@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 
 type WithdrawalPolicyRecord = {
   id: string;
@@ -12,8 +15,11 @@ type WithdrawalPolicyRecord = {
 };
 
 type WithdrawalAddressRecord = {
+  id: string;
   address: string;
+  label: string | null;
   availableAt: Date;
+  createdAt: Date;
 };
 
 const WITHDRAWAL_COUNTED_STATUSES = ['submitting', 'pending', 'confirmed', 'unknown'] as const;
@@ -23,6 +29,83 @@ export class WithdrawalPolicyService {
   private readonly logger = new Logger(WithdrawalPolicyService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  async listWithdrawalAddresses(userId: string) {
+    const [policy, addresses] = await Promise.all([
+      this.getPolicy(userId),
+      this.prisma.withdrawalAddress.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }) as Promise<WithdrawalAddressRecord[]>,
+    ]);
+
+    return {
+      policy: {
+        requireAddressAllowlist: policy?.requireAddressAllowlist ?? false,
+        newAddressCooldownHours: policy?.newAddressCooldownHours ?? 24,
+      },
+      addresses: addresses.map((address) => this.toWithdrawalAddressResponse(address)),
+    };
+  }
+
+  async addWithdrawalAddress(userId: string, dto: CreateWithdrawalAddressDto) {
+    const normalizedAddress = this.normalizeAddress(dto.address);
+    const label = dto.label?.trim() || null;
+    const policy = await this.prisma.withdrawalPolicy.upsert({
+      where: { userId },
+      update: { requireAddressAllowlist: true },
+      create: { userId, requireAddressAllowlist: true },
+    });
+    const availableAt = new Date(
+      Date.now() + Math.max(0, policy.newAddressCooldownHours) * 60 * 60 * 1000,
+    );
+
+    try {
+      const address = (await this.prisma.withdrawalAddress.create({
+        data: {
+          userId,
+          address: normalizedAddress,
+          label,
+          availableAt,
+        },
+      })) as WithdrawalAddressRecord;
+
+      this.logger.warn({
+        event: 'security',
+        message: 'Withdrawal address allowlisted',
+        userId,
+        withdrawalAddressId: address.id,
+        address: normalizedAddress,
+        availableAt: address.availableAt.toISOString(),
+        cooldownHours: policy.newAddressCooldownHours,
+      });
+
+      return this.toWithdrawalAddressResponse(address);
+    } catch (error: unknown) {
+      if (this.isPrismaUniqueConstraintError(error)) {
+        throw new BadRequestException('Withdrawal address is already allowlisted');
+      }
+      throw error;
+    }
+  }
+
+  async removeWithdrawalAddress(userId: string, addressId: string) {
+    const result = await this.prisma.withdrawalAddress.deleteMany({
+      where: { id: addressId, userId },
+    });
+    if (result.count === 0) {
+      throw new BadRequestException('Withdrawal address not found');
+    }
+
+    this.logger.warn({
+      event: 'security',
+      message: 'Withdrawal address removed',
+      userId,
+      withdrawalAddressId: addressId,
+    });
+
+    return { success: true };
+  }
 
   async assertWithdrawalAllowed(
     userId: string,
@@ -67,6 +150,33 @@ export class WithdrawalPolicyService {
 
   private async getPolicy(userId: string): Promise<WithdrawalPolicyRecord | null> {
     return this.prisma.withdrawalPolicy.findUnique({ where: { userId } }) as Promise<WithdrawalPolicyRecord | null>;
+  }
+
+  private toWithdrawalAddressResponse(address: WithdrawalAddressRecord) {
+    const now = new Date();
+    return {
+      id: address.id,
+      address: address.address,
+      label: address.label,
+      availableAt: address.availableAt,
+      createdAt: address.createdAt,
+      isAvailable: address.availableAt <= now,
+    };
+  }
+
+  private normalizeAddress(address: string): string {
+    try {
+      return getAddress(address).toLowerCase();
+    } catch {
+      throw new BadRequestException('Invalid Ethereum address');
+    }
+  }
+
+  private isPrismaUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError ||
+      (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002')
+    );
   }
 
   private async assertDailyLimit(

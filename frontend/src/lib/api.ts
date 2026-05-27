@@ -73,6 +73,23 @@ export interface WithdrawResponse {
   status: string;
 }
 
+export interface WithdrawalAddressRecord {
+  id: string;
+  address: string;
+  label: string | null;
+  availableAt: string;
+  createdAt: string;
+  isAvailable: boolean;
+}
+
+export interface ListWithdrawalAddressesResponse {
+  policy: {
+    requireAddressAllowlist: boolean;
+    newAddressCooldownHours: number;
+  };
+  addresses: WithdrawalAddressRecord[];
+}
+
 export interface SignMessageRequest {
   chainId: number;
   type: 'message';
@@ -473,6 +490,38 @@ export async function withdrawAuth(
     method: 'POST',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
+  });
+}
+
+export async function listWithdrawalAddressesAuth(
+  getToken: () => Promise<string | null>,
+  signal?: AbortSignal,
+) {
+  return authFetch<ListWithdrawalAddressesResponse>('/v1/wallets/withdrawal-addresses', getToken, {
+    signal,
+  });
+}
+
+export async function addWithdrawalAddressAuth(
+  getToken: () => Promise<string | null>,
+  body: { address: string; label?: string },
+  stepUpToken?: string,
+) {
+  return authFetch<WithdrawalAddressRecord>('/v1/wallets/withdrawal-addresses', getToken, {
+    method: 'POST',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function removeWithdrawalAddressAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  stepUpToken?: string,
+) {
+  return authFetch<{ success: boolean }>(`/v1/wallets/withdrawal-addresses/${id}`, getToken, {
+    method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
 }
 

@@ -1,6 +1,7 @@
-import { AlertCircle, CheckCircle2, Loader2, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, ExternalLink, ShieldCheck, Trash2 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
+import type { ListWithdrawalAddressesResponse } from '@/lib/api';
 import type { WithdrawSuccess } from './wallet-helpers';
 
 interface WithdrawFormProps {
@@ -11,12 +12,22 @@ interface WithdrawFormProps {
   withdrawLoading: boolean;
   withdrawResult: WithdrawSuccess | null;
   withdrawError: string | null;
+  withdrawalAllowlist: ListWithdrawalAddressesResponse | null;
+  withdrawalAllowlistLoading: boolean;
+  withdrawalAllowlistError: string | null;
+  newWithdrawalAddress: string;
+  newWithdrawalAddressLabel: string;
+  withdrawalAddressLoadingId: string | null;
   withdrawExplorerUrl: string | null;
   setTo: (value: string) => void;
   setAmount: (value: string) => void;
   setToken: (value: string) => void;
   setSelectedChainId: (chainId: number) => void;
+  setNewWithdrawalAddress: (value: string) => void;
+  setNewWithdrawalAddressLabel: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onAddWithdrawalAddress: (e: React.FormEvent) => void;
+  onRemoveWithdrawalAddress: (id: string) => void;
   onReset: () => void;
 }
 
@@ -28,14 +39,26 @@ export function WithdrawForm({
   withdrawLoading,
   withdrawResult,
   withdrawError,
+  withdrawalAllowlist,
+  withdrawalAllowlistLoading,
+  withdrawalAllowlistError,
+  newWithdrawalAddress,
+  newWithdrawalAddressLabel,
+  withdrawalAddressLoadingId,
   withdrawExplorerUrl,
   setTo,
   setAmount,
   setToken,
   setSelectedChainId,
+  setNewWithdrawalAddress,
+  setNewWithdrawalAddressLabel,
   onSubmit,
+  onAddWithdrawalAddress,
+  onRemoveWithdrawalAddress,
   onReset,
 }: WithdrawFormProps) {
+  const cooldownHours = withdrawalAllowlist?.policy.newAddressCooldownHours ?? 24;
+
   return (
     <div className="pt-6 border-t border-brand-border">
       <h3 className="text-base font-bold font-serif text-brand-text mb-6">Withdraw</h3>
@@ -83,6 +106,112 @@ export function WithdrawForm({
           )}
         </div>
       )}
+
+      <section className="mb-6 rounded-xl border border-brand-border bg-brand-bg/30 p-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-bold text-brand-text">
+              <ShieldCheck className="h-4 w-4 text-brand-accent" />
+              Withdrawal address allowlist
+            </div>
+            <p className="mt-1 text-xs text-brand-muted">
+              New addresses require step-up and become withdrawable after {cooldownHours}h. Adding an address enables the allowlist policy.
+            </p>
+          </div>
+          {withdrawalAllowlistLoading && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading
+            </span>
+          )}
+        </div>
+
+        {withdrawalAllowlistError && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-800">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            {withdrawalAllowlistError}
+          </div>
+        )}
+
+        <form onSubmit={onAddWithdrawalAddress} className="mb-4 grid gap-3 lg:grid-cols-[1fr_180px_auto]">
+          <input
+            type="text"
+            placeholder="0x allowlisted address"
+            value={newWithdrawalAddress}
+            onChange={(e) => setNewWithdrawalAddress(e.target.value)}
+            required
+            pattern="^0x[a-fA-F0-9]{40}$"
+            className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
+          />
+          <input
+            type="text"
+            placeholder="Label optional"
+            value={newWithdrawalAddressLabel}
+            onChange={(e) => setNewWithdrawalAddressLabel(e.target.value)}
+            maxLength={100}
+            className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
+          />
+          <button
+            type="submit"
+            disabled={withdrawalAddressLoadingId === 'new'}
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-text transition hover:border-brand-accent hover:text-brand-accent disabled:opacity-50"
+          >
+            {withdrawalAddressLoadingId === 'new' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            Add
+          </button>
+        </form>
+
+        <div className="space-y-2">
+          {withdrawalAllowlist?.addresses.length ? (
+            withdrawalAllowlist.addresses.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-col gap-3 rounded-lg border border-brand-border bg-white p-3 text-xs sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {entry.label && <span className="font-semibold text-brand-text">{entry.label}</span>}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${
+                        entry.isAvailable ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {entry.isAvailable ? 'Ready' : `Locked until ${new Date(entry.availableAt).toLocaleString()}`}
+                    </span>
+                  </div>
+                  <code className="mt-1 block break-all font-mono text-brand-muted">{entry.address}</code>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTo(entry.address)}
+                    disabled={!entry.isAvailable}
+                    className="rounded-full border border-brand-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-text transition hover:border-brand-accent hover:text-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Use
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveWithdrawalAddress(entry.id)}
+                    disabled={withdrawalAddressLoadingId === entry.id}
+                    className="rounded-full border border-red-200 p-1.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                    aria-label="Remove withdrawal address"
+                  >
+                    {withdrawalAddressLoadingId === entry.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-lg border border-dashed border-brand-border p-3 text-xs text-brand-muted">
+              No withdrawal addresses yet. Add one before withdrawing to enforce the allowlist and cooldown policy.
+            </p>
+          )}
+        </div>
+      </section>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div>

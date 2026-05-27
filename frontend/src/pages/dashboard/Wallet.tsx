@@ -13,11 +13,15 @@ import {
   markAgentRegistrationTransaction,
   syncSession,
   withdrawAuth,
+  addWithdrawalAddressAuth,
   getBalancesAuth,
   getApiErrorMessage,
   hasApiErrorCode,
+  listWithdrawalAddressesAuth,
+  removeWithdrawalAddressAuth,
   type AuthSessionResponse,
   type BalanceChain,
+  type ListWithdrawalAddressesResponse,
   type WalletInfo,
 } from '@/lib/api';
 import {
@@ -130,6 +134,12 @@ export default function WalletPage() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [withdrawalAllowlist, setWithdrawalAllowlist] = useState<ListWithdrawalAddressesResponse | null>(null);
+  const [withdrawalAllowlistLoading, setWithdrawalAllowlistLoading] = useState(false);
+  const [withdrawalAllowlistError, setWithdrawalAllowlistError] = useState<string | null>(null);
+  const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
+  const [newWithdrawalAddressLabel, setNewWithdrawalAddressLabel] = useState('');
+  const [withdrawalAddressLoadingId, setWithdrawalAddressLoadingId] = useState<string | null>(null);
   const withdrawExplorerUrl = withdrawResult
     ? getExplorerTransactionUrl(withdrawResult.chainId, withdrawResult.transactionHash)
     : null;
@@ -270,6 +280,35 @@ export default function WalletPage() {
     };
   }, [user, selectedChainId, wallet, getToken, balanceRefreshNonce]);
 
+  const loadWithdrawalAllowlist = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!user || !wallet?.walletAddress) {
+        setWithdrawalAllowlist(null);
+        setWithdrawalAllowlistError(null);
+        return;
+      }
+
+      setWithdrawalAllowlistLoading(true);
+      setWithdrawalAllowlistError(null);
+      try {
+        const data = await listWithdrawalAddressesAuth(getToken, signal);
+        if (!signal?.aborted) setWithdrawalAllowlist(data);
+      } catch (err: unknown) {
+        if (!signal?.aborted) setWithdrawalAllowlistError(getApiErrorMessage(err));
+      } finally {
+        if (!signal?.aborted) setWithdrawalAllowlistLoading(false);
+      }
+    },
+    [getToken, user, wallet?.walletAddress],
+  );
+
+  useEffect(() => {
+    if (!showWithdraw) return;
+    const controller = new AbortController();
+    loadWithdrawalAllowlist(controller.signal);
+    return () => controller.abort();
+  }, [loadWithdrawalAllowlist, showWithdraw]);
+
   function retryBalances() {
     setBalanceRefreshNonce((nonce) => nonce + 1);
   }
@@ -379,6 +418,46 @@ export default function WalletPage() {
     setWithdrawError(null);
     setTo('');
     setAmount('');
+  }
+
+  async function handleAddWithdrawalAddress(e: React.FormEvent) {
+    e.preventDefault();
+    setWithdrawalAddressLoadingId('new');
+    setWithdrawalAllowlistError(null);
+
+    try {
+      const stepUpToken = await requestStepUpToken(getToken);
+      await addWithdrawalAddressAuth(
+        getToken,
+        {
+          address: newWithdrawalAddress,
+          label: newWithdrawalAddressLabel || undefined,
+        },
+        stepUpToken,
+      );
+      setNewWithdrawalAddress('');
+      setNewWithdrawalAddressLabel('');
+      await loadWithdrawalAllowlist();
+    } catch (err: unknown) {
+      setWithdrawalAllowlistError(getApiErrorMessage(err));
+    } finally {
+      setWithdrawalAddressLoadingId(null);
+    }
+  }
+
+  async function handleRemoveWithdrawalAddress(id: string) {
+    setWithdrawalAddressLoadingId(id);
+    setWithdrawalAllowlistError(null);
+
+    try {
+      const stepUpToken = await requestStepUpToken(getToken);
+      await removeWithdrawalAddressAuth(getToken, id, stepUpToken);
+      await loadWithdrawalAllowlist();
+    } catch (err: unknown) {
+      setWithdrawalAllowlistError(getApiErrorMessage(err));
+    } finally {
+      setWithdrawalAddressLoadingId(null);
+    }
   }
 
   async function handleConnectWallet(e: React.FormEvent) {
@@ -872,12 +951,22 @@ export default function WalletPage() {
                     withdrawLoading={withdrawLoading}
                     withdrawResult={withdrawResult}
                     withdrawError={withdrawError}
+                    withdrawalAllowlist={withdrawalAllowlist}
+                    withdrawalAllowlistLoading={withdrawalAllowlistLoading}
+                    withdrawalAllowlistError={withdrawalAllowlistError}
+                    newWithdrawalAddress={newWithdrawalAddress}
+                    newWithdrawalAddressLabel={newWithdrawalAddressLabel}
+                    withdrawalAddressLoadingId={withdrawalAddressLoadingId}
                     withdrawExplorerUrl={withdrawExplorerUrl}
                     setTo={setTo}
                     setAmount={setAmount}
                     setToken={setToken}
                     setSelectedChainId={setSelectedChainId}
+                    setNewWithdrawalAddress={setNewWithdrawalAddress}
+                    setNewWithdrawalAddressLabel={setNewWithdrawalAddressLabel}
                     onSubmit={handleWithdraw}
+                    onAddWithdrawalAddress={handleAddWithdrawalAddress}
+                    onRemoveWithdrawalAddress={handleRemoveWithdrawalAddress}
                     onReset={resetWithdrawForm}
                   />
                 )}

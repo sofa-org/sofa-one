@@ -14,7 +14,11 @@ const VALID_DTO: WithdrawDto = {
 describe('WithdrawalPolicyService', () => {
   let service: WithdrawalPolicyService;
   const mockWithdrawalPolicyFindUnique = jest.fn();
+  const mockWithdrawalPolicyUpsert = jest.fn();
   const mockWithdrawalAddressFindUnique = jest.fn();
+  const mockWithdrawalAddressFindMany = jest.fn();
+  const mockWithdrawalAddressCreate = jest.fn();
+  const mockWithdrawalAddressDeleteMany = jest.fn();
   const mockTransactionFindMany = jest.fn();
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -22,12 +26,29 @@ describe('WithdrawalPolicyService', () => {
     jest.clearAllMocks();
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockWithdrawalPolicyUpsert.mockResolvedValue({
+      id: 'policy-1',
+      requireAddressAllowlist: true,
+      newAddressCooldownHours: 24,
+    });
     mockWithdrawalAddressFindUnique.mockResolvedValue(null);
+    mockWithdrawalAddressFindMany.mockResolvedValue([]);
+    mockWithdrawalAddressCreate.mockImplementation(({ data }) => ({
+      id: 'addr-1',
+      ...data,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    }));
+    mockWithdrawalAddressDeleteMany.mockResolvedValue({ count: 1 });
     mockTransactionFindMany.mockResolvedValue([]);
 
     service = new WithdrawalPolicyService({
-      withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique },
-      withdrawalAddress: { findUnique: mockWithdrawalAddressFindUnique },
+      withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique, upsert: mockWithdrawalPolicyUpsert },
+      withdrawalAddress: {
+        findUnique: mockWithdrawalAddressFindUnique,
+        findMany: mockWithdrawalAddressFindMany,
+        create: mockWithdrawalAddressCreate,
+        deleteMany: mockWithdrawalAddressDeleteMany,
+      },
       transaction: { findMany: mockTransactionFindMany },
     } as unknown as PrismaService);
   });
@@ -185,5 +206,98 @@ describe('WithdrawalPolicyService', () => {
     await expect(
       service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('lists withdrawal addresses with policy cooldown metadata', async () => {
+    const availableAt = new Date(Date.now() - 60_000);
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000000',
+      dailyWithdrawalLimit: null,
+      requireAddressAllowlist: true,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+    mockWithdrawalAddressFindMany.mockResolvedValue([
+      {
+        id: 'addr-1',
+        address: VALID_DTO.to.toLowerCase(),
+        label: 'Treasury',
+        availableAt,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+
+    const result = await service.listWithdrawalAddresses('user-1');
+
+    expect(mockWithdrawalAddressFindMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(result.policy).toEqual({ requireAddressAllowlist: true, newAddressCooldownHours: 24 });
+    expect(result.addresses[0]).toEqual(
+      expect.objectContaining({
+        id: 'addr-1',
+        address: VALID_DTO.to.toLowerCase(),
+        label: 'Treasury',
+        isAvailable: true,
+      }),
+    );
+  });
+
+  it('adds a withdrawal address, enables allowlist policy, and applies cooldown', async () => {
+    const before = Date.now();
+
+    const result = await service.addWithdrawalAddress('user-1', {
+      address: '0x1111111111111111111111111111111111111111',
+      label: ' Treasury ',
+    });
+
+    expect(mockWithdrawalPolicyUpsert).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      update: { requireAddressAllowlist: true },
+      create: { userId: 'user-1', requireAddressAllowlist: true },
+    });
+    expect(mockWithdrawalAddressCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        address: VALID_DTO.to.toLowerCase(),
+        label: 'Treasury',
+      }),
+    });
+    const availableAt = mockWithdrawalAddressCreate.mock.calls[0][0].data.availableAt as Date;
+    expect(availableAt.getTime()).toBeGreaterThanOrEqual(before + 24 * 60 * 60 * 1000 - 1000);
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'addr-1',
+        address: VALID_DTO.to.toLowerCase(),
+        label: 'Treasury',
+        isAvailable: false,
+      }),
+    );
+  });
+
+  it('rejects duplicate withdrawal addresses', async () => {
+    mockWithdrawalAddressCreate.mockRejectedValue({ code: 'P2002' });
+
+    await expect(
+      service.addWithdrawalAddress('user-1', { address: VALID_DTO.to }),
+    ).rejects.toThrow('Withdrawal address is already allowlisted');
+  });
+
+  it('removes a withdrawal address owned by the user', async () => {
+    await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).resolves.toEqual({ success: true });
+
+    expect(mockWithdrawalAddressDeleteMany).toHaveBeenCalledWith({
+      where: { id: 'addr-1', userId: 'user-1' },
+    });
+  });
+
+  it('rejects removing a missing withdrawal address', async () => {
+    mockWithdrawalAddressDeleteMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).rejects.toThrow(
+      'Withdrawal address not found',
+    );
   });
 });

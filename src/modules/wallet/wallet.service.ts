@@ -29,6 +29,7 @@ import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 
 const ERC20_BALANCE_ABI = [
@@ -96,6 +97,27 @@ export class WalletService {
       status: wallet.status,
       supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
     };
+  }
+
+  async listWithdrawalAddresses(userId: string) {
+    if (!this.withdrawalPolicy) {
+      throw new BadRequestException('Withdrawal policy service is not available');
+    }
+    return this.withdrawalPolicy.listWithdrawalAddresses(userId);
+  }
+
+  async addWithdrawalAddress(userId: string, dto: CreateWithdrawalAddressDto) {
+    if (!this.withdrawalPolicy) {
+      throw new BadRequestException('Withdrawal policy service is not available');
+    }
+    return this.withdrawalPolicy.addWithdrawalAddress(userId, dto);
+  }
+
+  async removeWithdrawalAddress(userId: string, addressId: string) {
+    if (!this.withdrawalPolicy) {
+      throw new BadRequestException('Withdrawal policy service is not available');
+    }
+    return this.withdrawalPolicy.removeWithdrawalAddress(userId, addressId);
   }
 
   /** Sign data with the user's backend agent signer (no transaction broadcast). */

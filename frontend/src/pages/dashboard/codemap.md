@@ -10,7 +10,7 @@ Contains the authenticated dashboard screens for wallet state, API key managemen
 
 ## Flow
 - `DashboardLayout.tsx` renders the sidebar/mobile drawer and sign-out action
-- `Wallet.tsx` initializes the account, shows balances, and submits withdrawals
+- `Wallet.tsx` initializes the account, shows balances, manages withdrawal-address allowlist/cooldown, and submits withdrawals
 - `ApiKeys.tsx` lists keys, creates named keys, revokes keys, and rotates all keys
 - `step-up.ts` runs the OTP challenge/verify flow before guarded dashboard mutations
 - `Docs.tsx` is static reference content for the public API

@@ -18,6 +18,9 @@ jest.mock('../../common/guards/api-key-permission.guard', () => ({
 jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
+jest.mock('../../common/guards/step-up.guard', () => ({
+  StepUpGuard: class StepUpGuard {},
+}));
 
 import { WalletController } from './wallet.controller';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
@@ -25,6 +28,8 @@ import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.gu
 import { API_KEY_PERMISSION_KEY } from '../../common/decorators/api-key-permission.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
+import { StepUpGuard } from '../../common/guards/step-up.guard';
+import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
 
 describe('WalletController', () => {
   const walletService = {
@@ -32,6 +37,9 @@ describe('WalletController', () => {
     getDepositInfo: jest.fn(),
     sign: jest.fn(),
     withdraw: jest.fn(),
+    listWithdrawalAddresses: jest.fn(),
+    addWithdrawalAddress: jest.fn(),
+    removeWithdrawalAddress: jest.fn(),
   };
 
   let controller: WalletController;
@@ -117,6 +125,51 @@ describe('WalletController', () => {
 
       expect(guards).toContain(FrontendOnlyGuard);
       expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.withdraw)).toBe(true);
+    });
+  });
+
+  describe('withdrawal addresses', () => {
+    it('lists withdrawal addresses for the current user', async () => {
+      walletService.listWithdrawalAddresses.mockResolvedValue({ addresses: [] });
+
+      const result = await controller.listWithdrawalAddresses('user-1');
+
+      expect(walletService.listWithdrawalAddresses).toHaveBeenCalledWith('user-1');
+      expect(result).toEqual({ addresses: [] });
+    });
+
+    it('adds a withdrawal address for the current user', async () => {
+      const dto = { address: '0x1111111111111111111111111111111111111111', label: 'Treasury' };
+      walletService.addWithdrawalAddress.mockResolvedValue({ id: 'addr-1', ...dto });
+
+      const result = await controller.addWithdrawalAddress('user-1', dto);
+
+      expect(walletService.addWithdrawalAddress).toHaveBeenCalledWith('user-1', dto);
+      expect(result).toEqual({ id: 'addr-1', ...dto });
+    });
+
+    it('removes a withdrawal address for the current user', async () => {
+      walletService.removeWithdrawalAddress.mockResolvedValue({ success: true });
+
+      const result = await controller.removeWithdrawalAddress('user-1', 'addr-1');
+
+      expect(walletService.removeWithdrawalAddress).toHaveBeenCalledWith('user-1', 'addr-1');
+      expect(result).toEqual({ success: true });
+    });
+
+    it('protects address mutations with frontend and step-up guards', () => {
+      const listGuards = Reflect.getMetadata(GUARDS_METADATA, controller.listWithdrawalAddresses) ?? [];
+      const addGuards = Reflect.getMetadata(GUARDS_METADATA, controller.addWithdrawalAddress) ?? [];
+      const removeGuards = Reflect.getMetadata(GUARDS_METADATA, controller.removeWithdrawalAddress) ?? [];
+
+      expect(listGuards).toContain(FrontendOnlyGuard);
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.listWithdrawalAddresses)).toBe(true);
+      expect(addGuards).toContain(FrontendOnlyGuard);
+      expect(addGuards).toContain(StepUpGuard);
+      expect(removeGuards).toContain(FrontendOnlyGuard);
+      expect(removeGuards).toContain(StepUpGuard);
+      expect(Reflect.getMetadata(STEP_UP_KEY, controller.addWithdrawalAddress)).toBe(true);
+      expect(Reflect.getMetadata(STEP_UP_KEY, controller.removeWithdrawalAddress)).toBe(true);
     });
   });
 });
