@@ -64,6 +64,8 @@ model ApiKey {
   name                     String?   @db.VarChar(100)
   expiresAt                DateTime? @map("expires_at") @db.Timestamptz()
   revoked                  Boolean   @default(false)
+  frozenAt                 DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason             String?   @map("frozen_reason") @db.VarChar(255)
   canSign                  Boolean   @default(false) @map("can_sign")
   canSendTransaction       Boolean   @default(false) @map("can_send_transaction")
   canReadTransactionStatus Boolean   @default(true) @map("can_read_transaction_status")
@@ -82,6 +84,7 @@ model ApiKey {
 
   @@index([keyPrefix])
   @@index([userId, revoked])
+  @@index([userId, frozenAt])
   @@index([userId])
   @@map("api_keys")
 }

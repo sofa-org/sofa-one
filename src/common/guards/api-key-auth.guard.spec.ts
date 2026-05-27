@@ -32,14 +32,22 @@ describe('ApiKeyAuthGuard', () => {
       apiKey: {
         findMany: jest.fn().mockResolvedValue(keyRecords),
         update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
+      securityEvent: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+    const securityEvents = {
+      record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
     };
     const guard = new ApiKeyAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
+      securityEvents as any,
     );
 
-    return { guard, prisma };
+    return { guard, prisma, securityEvents };
   }
 
   beforeEach(() => {
@@ -139,5 +147,149 @@ describe('ApiKeyAuthGuard', () => {
         lastUsedUserAgent: 'sofa-agent/1.0',
       },
     });
+  });
+
+  it('rejects frozen API keys and records the rejection', async () => {
+    const frozenAt = new Date('2026-05-28T00:00:00.000Z');
+    const { guard, securityEvents, prisma } = createGuard([
+      {
+        id: 'key-1',
+        keyPrefix: longPrefix,
+        apiKeyHash: 'hash-1',
+        allowedIps: [],
+        frozenAt,
+        frozenReason: 'repeated_context_changed',
+        user: { id: 'user-1' },
+      },
+    ]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }))).rejects.toThrow(
+      ForbiddenException,
+    );
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'api_key',
+        eventType: 'api_key_frozen_rejected',
+        apiKeyId: 'key-1',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'repeated_context_changed',
+      }),
+    );
+    expect(prisma.apiKey.update).not.toHaveBeenCalled();
+  });
+
+  it('records first low-risk context change without freezing the key', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      keyPrefix: longPrefix,
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedIp: '203.0.113.10',
+      lastUsedUserAgent: 'sofa-agent/1.0',
+      canSign: false,
+      canSendTransaction: false,
+      canUseEoaExecution: false,
+      user: { id: 'user-1' },
+    };
+    const { guard, prisma, securityEvents } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(
+        contextWithHeaders(
+          { 'x-api-key': rawKey, 'user-agent': 'sofa-agent/2.0' },
+          '203.0.113.11',
+        ),
+      ),
+    ).resolves.toBe(true);
+
+    expect(prisma.securityEvent.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          apiKeyId: 'key-1',
+          eventType: 'api_key_suspicious_use',
+        }),
+      }),
+    );
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key_suspicious_use',
+        riskLevel: 'medium',
+        result: 'allowed',
+        reason: 'repeated_context_changed',
+      }),
+    );
+    expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('freezes low-risk keys after repeated suspicious context changes', async () => {
+    const { guard, prisma, securityEvents } = createGuard([
+      {
+        id: 'key-1',
+        keyPrefix: longPrefix,
+        apiKeyHash: 'hash-1',
+        allowedIps: [],
+        lastUsedIp: '203.0.113.10',
+        canSign: false,
+        canSendTransaction: false,
+        canUseEoaExecution: false,
+        user: { id: 'user-1' },
+      },
+    ]);
+    prisma.securityEvent.count.mockResolvedValue(1);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }, '203.0.113.11')),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { id: 'key-1', frozenAt: null },
+      data: { frozenAt: expect.any(Date), frozenReason: 'repeated_context_changed' },
+    });
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'api_key_frozen', riskLevel: 'critical' }),
+    );
+  });
+
+  it('freezes high-risk keys immediately on suspicious context change', async () => {
+    const { guard, prisma, securityEvents } = createGuard([
+      {
+        id: 'key-1',
+        keyPrefix: longPrefix,
+        apiKeyHash: 'hash-1',
+        allowedIps: [],
+        lastUsedUserAgent: 'sofa-agent/1.0',
+        canSign: true,
+        canSendTransaction: false,
+        canUseEoaExecution: false,
+        user: { id: 'user-1' },
+      },
+    ]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(
+        contextWithHeaders({ 'x-api-key': rawKey, 'user-agent': 'sofa-agent/2.0' }),
+      ),
+    ).rejects.toThrow(ForbiddenException);
+
+    expect(prisma.securityEvent.count).not.toHaveBeenCalled();
+    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { id: 'key-1', frozenAt: null },
+      data: { frozenAt: expect.any(Date), frozenReason: 'high_risk_context_changed' },
+    });
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key_suspicious_use',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'high_risk_context_changed',
+      }),
+    );
   });
 });

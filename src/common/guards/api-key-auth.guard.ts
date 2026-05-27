@@ -7,13 +7,30 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
+import { SecurityEventService } from '../../modules/security-events/security-event.service';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { isIpAllowed } from '../utils/ip-cidr';
 
 const MAX_USER_AGENT_LENGTH = 255;
+const SUSPICIOUS_USE_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+
+type ApiKeyAuthRecord = {
+  id: string;
+  userId?: string | null;
+  keyPrefix?: string | null;
+  frozenAt?: Date | string | null;
+  frozenReason?: string | null;
+  lastUsedIp?: string | null;
+  lastUsedUserAgent?: string | null;
+  canSign?: boolean;
+  canSendTransaction?: boolean;
+  canUseEoaExecution?: boolean;
+  user?: { id?: string | null } | null;
+};
 
 /**
  * Authenticates public API routes with X-API-Key only.
@@ -29,6 +46,7 @@ export class ApiKeyAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
+    private readonly securityEvents: SecurityEventService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -91,6 +109,17 @@ export class ApiKeyAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid API key');
     }
 
+    if (keyRecord.frozenAt) {
+      await this.recordApiKeySecurityEvent(keyRecord, 'api_key_frozen_rejected', {
+        riskLevel: 'high',
+        clientIp,
+        userAgent,
+        result: 'denied',
+        reason: keyRecord.frozenReason ?? 'api_key_frozen',
+      });
+      throw new ForbiddenException('API key is frozen');
+    }
+
     if (keyRecord.allowedIps.length > 0 && !isIpAllowed(clientIp, keyRecord.allowedIps)) {
       this.logApiKeyAuthenticationFailure('ip_allowlist_rejected', {
         apiKeyId: keyRecord.id,
@@ -103,10 +132,10 @@ export class ApiKeyAuthGuard implements CanActivate {
       throw new ForbiddenException('IP address not allowed for this API key');
     }
 
+    await this.handleApiKeyUsageAnomaly(keyRecord, clientIp, userAgent);
+
     request.user = keyRecord.user;
     request.apiKeyRecord = keyRecord;
-
-    this.logApiKeyUsageAnomaly(keyRecord, clientIp, userAgent);
 
     // Fire-and-forget: update lastUsedAt without blocking the request.
     void this.prisma.apiKey
@@ -189,5 +218,115 @@ export class ApiKeyAuthGuard implements CanActivate {
       previousUserAgent: userAgentChanged ? keyRecord.lastUsedUserAgent : undefined,
       currentUserAgent: userAgentChanged ? currentUserAgent : undefined,
     });
+  }
+
+  private async handleApiKeyUsageAnomaly(
+    keyRecord: ApiKeyAuthRecord,
+    currentIp: string,
+    currentUserAgent: string | null,
+  ) {
+    const anomaly = this.getApiKeyUsageAnomaly(keyRecord, currentIp, currentUserAgent);
+    if (!anomaly.contextChanged) return;
+
+    this.logApiKeyUsageAnomaly(keyRecord, currentIp, currentUserAgent);
+
+    const highRiskKey = this.hasHighRiskPermission(keyRecord);
+    const repeatedSuspiciousUse = highRiskKey ? false : await this.hasRecentSuspiciousUse(keyRecord.id);
+    const shouldFreeze = highRiskKey || repeatedSuspiciousUse;
+    const reason = highRiskKey ? 'high_risk_context_changed' : 'repeated_context_changed';
+
+    await this.recordApiKeySecurityEvent(keyRecord, 'api_key_suspicious_use', {
+      riskLevel: shouldFreeze ? 'high' : 'medium',
+      clientIp: currentIp,
+      userAgent: currentUserAgent,
+      result: shouldFreeze ? 'denied' : 'allowed',
+      reason,
+      metadata: {
+        ipChanged: anomaly.ipChanged,
+        userAgentChanged: anomaly.userAgentChanged,
+        previousIp: keyRecord.lastUsedIp ?? null,
+        currentIp: currentIp || null,
+        previousUserAgent: anomaly.userAgentChanged ? keyRecord.lastUsedUserAgent ?? null : null,
+        highRiskKey,
+        repeatedSuspiciousUse,
+      },
+    });
+
+    if (!shouldFreeze) return;
+
+    await this.freezeApiKey(keyRecord, reason);
+    throw new ForbiddenException('API key frozen due to suspicious usage');
+  }
+
+  private getApiKeyUsageAnomaly(
+    keyRecord: ApiKeyAuthRecord,
+    currentIp: string,
+    currentUserAgent: string | null,
+  ) {
+    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const userAgentChanged = Boolean(
+      keyRecord.lastUsedUserAgent &&
+        currentUserAgent &&
+        keyRecord.lastUsedUserAgent !== currentUserAgent,
+    );
+
+    return { ipChanged, userAgentChanged, contextChanged: ipChanged || userAgentChanged };
+  }
+
+  private hasHighRiskPermission(keyRecord: ApiKeyAuthRecord) {
+    return Boolean(
+      keyRecord.canSign || keyRecord.canSendTransaction || keyRecord.canUseEoaExecution,
+    );
+  }
+
+  private async hasRecentSuspiciousUse(apiKeyId: string) {
+    const count = await this.prisma.securityEvent.count({
+      where: {
+        apiKeyId,
+        eventType: 'api_key_suspicious_use',
+        createdAt: { gt: new Date(Date.now() - SUSPICIOUS_USE_LOOKBACK_MS) },
+      },
+    });
+    return count > 0;
+  }
+
+  private async freezeApiKey(keyRecord: ApiKeyAuthRecord, reason: string) {
+    await this.prisma.apiKey.updateMany({
+      where: { id: keyRecord.id, frozenAt: null },
+      data: { frozenAt: new Date(), frozenReason: reason },
+    });
+    await this.recordApiKeySecurityEvent(keyRecord, 'api_key_frozen', {
+      riskLevel: 'critical',
+      result: 'denied',
+      reason,
+    });
+  }
+
+  private async recordApiKeySecurityEvent(
+    keyRecord: ApiKeyAuthRecord,
+    eventType: string,
+    details: {
+      riskLevel: 'low' | 'medium' | 'high' | 'critical';
+      clientIp?: string;
+      userAgent?: string | null;
+      result: 'allowed' | 'denied';
+      reason: string;
+      metadata?: Prisma.InputJsonValue;
+    },
+  ) {
+    await this.securityEvents
+      .record({
+        actorType: 'api_key',
+        eventType,
+        userId: keyRecord.user?.id ?? keyRecord.userId ?? null,
+        apiKeyId: keyRecord.id,
+        riskLevel: details.riskLevel,
+        ip: details.clientIp ?? null,
+        userAgent: details.userAgent ?? null,
+        result: details.result,
+        reason: details.reason,
+        metadata: details.metadata,
+      })
+      .catch((err) => this.logger.warn('security event recording failed', err));
   }
 }

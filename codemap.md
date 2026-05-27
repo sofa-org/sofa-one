@@ -15,7 +15,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes, and API-key permissions are enforced before service code runs.
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
-- API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, and audited create/revoke/rotate events.
+- API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and audited create/revoke/rotate events.
 - `UserWallet.openfortAccountId` is the FK into Openfort — never overwrite or orphan.
 
 ## Directory Map (Aggregated)
@@ -61,7 +61,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 #### `prisma/` Flow
 - User authenticates via Openfort IAM → `User` row is created or reused.
 - Wallet provisioning creates `UserWallet` tied 1:1 to `User` with `openfortAccountId`, `walletAddress`, `chainId`, and `status`.
-- API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, and IP allowlist in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
+- API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, IP allowlist, and optional freeze state in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
 - Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, risk level, request context, and safe metadata.
 - Transaction submission appends `Transaction` records with intent/hash/status/details for audit and reconciliation.
 - Agent execution authority is anchored by the Calibur on-chain key registry; no off-chain strategy ownership table is used.
@@ -89,14 +89,14 @@ Browser → Openfort IAM → POST /v1/auth/social
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user; ApiKeyPermissionGuard requires canSign
+  → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
   → OpenfortService.signData signs with TEE-managed backend wallet
   → Returns { signature, walletAddress, type }
 
 Client → POST /v1/transactions/send (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user; ApiKeyPermissionGuard requires canSendTransaction
+  → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency

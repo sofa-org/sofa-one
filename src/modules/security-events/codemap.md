@@ -15,6 +15,6 @@ Unified security-event persistence for account, API-key, wallet, transaction pol
 - Service writes through either the provided transaction client or the shared `PrismaService`.
 
 ## Integration
-- Exported by `SecurityEventModule` and imported by `AppModule` for future module injection.
+- Exported by `SecurityEventModule` and imported by `AppModule` plus public API modules that need API-key suspicious-use/freeze telemetry.
 - Prisma model is `SecurityEvent` mapped to `security_events`.
 - Do not store raw API keys, private keys, wallet secrets, full calldata, or full typed data in event metadata.

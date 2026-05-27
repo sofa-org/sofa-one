@@ -10,7 +10,7 @@ Wallet operations: deposit info, balance lookup, signing, and withdrawal intent 
 
 ## Flow
 - Controllers resolve the current user and validate request bodies.
-- Service reads wallet state from Prisma, signs API-key-authenticated payloads after `canSign` guard enforcement with audit attribution, queries balances, or creates withdrawal intents.
+- Service reads wallet state from Prisma, signs non-frozen API-key-authenticated payloads after suspicious-use and `canSign` guard enforcement with audit attribution, queries balances, or creates withdrawal intents.
 
 ## Integration
-- Uses `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `FrontendOnlyGuard`, `OpenfortUserGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and viem.
+- Uses `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `SecurityEventModule`, `FrontendOnlyGuard`, `OpenfortUserGuard`, `CurrentUser`, `PrismaService`, `OpenfortService`, and viem.

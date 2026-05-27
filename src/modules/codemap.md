@@ -10,7 +10,7 @@ Feature-module container for auth, API keys, wallets, transactions, security eve
 ## Flow
 - Requests route into feature controllers by URL prefix.
 - Services execute domain logic and persistence/Openfort calls.
-- Cross-cutting security telemetry uses `security-events` instead of ad-hoc event writes in controllers.
+- Cross-cutting security telemetry uses `security-events` instead of ad-hoc event writes in controllers; public API modules import it so API-key auth can record suspicious-use and freeze events.
 
 ## Integration
 - Imported by `AppModule`.
