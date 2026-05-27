@@ -358,7 +358,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
               <p className="mt-1 font-mono text-sm font-semibold text-brand-text">POST /v1/wallets/withdraw</p>
             </div>
             <p className="text-sm leading-6 text-brand-muted">
-              Submit a dashboard USDC withdrawal with a fresh idempotency key and Clerk/Openfort session.
+              Submit a dashboard USDC withdrawal with a fresh idempotency key and Openfort IAM session.
             </p>
             <CopyableCodeBlock label="JWT example">{dashboardWithdrawExample}</CopyableCodeBlock>
           </div>

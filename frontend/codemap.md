@@ -14,6 +14,6 @@ Owns the Vite + React SPA build/runtime configuration: package scripts, dependen
 - TypeScript builds in strict mode with no emit; production bundles are emitted by Vite
 
 ## Integration
-- Depends on React 19, React Router 7, Clerk React, Lucide, TypeScript, Tailwind CSS
+- Depends on React 19, React Router 7, Openfort React, Lucide, TypeScript, Tailwind CSS
 - Browser consumes the compiled SPA
 - Backend API is reached through the Vite proxy in development

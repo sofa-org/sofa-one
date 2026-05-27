@@ -4,9 +4,9 @@
 Centralizes browser requests to the backend with auth header injection, JSON handling, and normalized errors.
 
 ## Design/Patterns
-- Two typed transport helpers: Clerk JWT (`authFetch<T>`) and explicit API key (`apiFetch<T>`)
+- Two typed transport helpers: Openfort IAM token (`authFetch<T>`) and explicit API key (`apiFetch<T>`)
 - `apiFetch` wrappers are limited to public API-key endpoints (`/v1/wallets/sign`, `/v1/transactions/send`, `/v1/transactions/:id`)
-- Frontend-only routes (`/v1/api-keys/*`, `/v1/wallets/balances`, `/v1/wallets/withdraw`) use Clerk JWT wrappers only
+- Frontend-only routes (`/v1/api-keys/*`, `/v1/wallets/balances`, `/v1/wallets/withdraw`) use Openfort IAM token wrappers only
 - Shared DTO/response types and error parsing for non-2xx responses
 
 ## Flow
@@ -16,5 +16,5 @@ Centralizes browser requests to the backend with auth header injection, JSON han
 - Higher-level helpers map directly to backend routes used by dashboard pages and public API examples
 
 ## Integration
-- Depends on browser `fetch` and Clerk token retrieval
+- Depends on browser `fetch` and Openfort IAM token retrieval
 - Consumed by dashboard pages for all data fetches and mutations

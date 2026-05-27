@@ -4,7 +4,7 @@
 Social-login onboarding: Openfort user lookup and wallet provisioning.
 
 ## Design/Patterns
-- Controller/service split with Clerk auth guard.
+- Controller/service split with Openfort auth guard.
 - Prisma transaction for atomic user/wallet creation.
 - API keys are issued explicitly through API-key management or refresh flows, not during login.
 
@@ -14,4 +14,4 @@ Social-login onboarding: Openfort user lookup and wallet provisioning.
 - `/auth/me` returns persisted wallet info only.
 
 ## Integration
-- Uses `ClerkAuthGuard`, `PrismaService`, `OpenfortService`, `ApiKeyService`, and `ConfigService`.
+- Uses `OpenfortAuthGuard`, `PrismaService`, `OpenfortService`, `ApiKeyService`, and `ConfigService`.

@@ -14,4 +14,4 @@ Shared NestJS building blocks used across backend modules: decorators, filters, 
 
 ## Integration
 - Imported by controllers and `main.ts`.
-- Relies on NestJS core plus ConfigService, Reflector, Clerk, Prisma, and Argon2 where needed.
+- Relies on NestJS core plus ConfigService, Reflector, Openfort IAM, Prisma, and Argon2 where needed.

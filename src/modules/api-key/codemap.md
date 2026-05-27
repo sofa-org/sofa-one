@@ -6,7 +6,7 @@ API-key lifecycle management: create, list metadata, revoke, and rotate keys saf
 ## Design/Patterns
 - Service layer with Prisma persistence.
 - Argon2 hashing with extended prefix-based lookup; prefixes are lookup hints and every candidate must be hash-verified.
-- Throttled controller endpoints behind Clerk dashboard auth + frontend-origin checks.
+- Throttled controller endpoints behind Openfort IAM dashboard auth + frontend-origin checks.
 - Lifecycle rules enforce non-empty unique active names per user, a maximum of 10 active keys, supported chains only, bounded future expiry, and audit events.
 
 ## Flow
@@ -16,4 +16,4 @@ API-key lifecycle management: create, list metadata, revoke, and rotate keys saf
 - Rotation revokes active keys and creates the replacement in one transaction, recording `api_key.rotated`.
 
 ## Integration
-- Uses `ClerkUserGuard`, `FrontendOnlyGuard`, `CurrentUser`, `PrismaService`, and Argon2.
+- Uses `OpenfortUserGuard`, `FrontendOnlyGuard`, `CurrentUser`, `PrismaService`, and Argon2.

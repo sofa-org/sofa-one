@@ -1,21 +1,21 @@
 # Repository Atlas: sofa-agent-wallet (SOFA ONE)
 
 ## Project Responsibility
-Server-side automated blockchain signing service. Users authenticate via Clerk social OAuth, receive a TEE-managed wallet (Openfort), and an API key for programmatic transaction submission. NestJS backend + Vite/React 19 SPA.
+Server-side automated blockchain signing service. Users authenticate via Openfort IAM (email OTP / embedded wallet), receive a TEE-managed wallet (Openfort), and an API key for programmatic transaction submission. NestJS backend + Vite/React 19 SPA.
 
 ## System Entry Points
 - `src/main.ts` — NestJS bootstrap, global middleware, Swagger, port 3100
 - `src/app.module.ts` — Root module composition
-- `frontend/src/main.tsx` — React SPA entry, Clerk + Router providers
+- `frontend/src/main.tsx` — React SPA entry, Openfort + Router providers
 - `prisma/schema.prisma` — Data model definition
 - `openapi.yaml` — REST API specification
 
 ## Key Architecture Constraints
 - Private keys never leave TEE (Openfort). Never store, log, or return them.
-- Public signing and transaction submission require `X-API-Key`; Clerk JWT is not accepted for these public API routes.
+- Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes.
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
-- API-key management is Clerk-dashboard-only with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, and audited create/revoke/rotate events.
+- API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, and audited create/revoke/rotate events.
 - `UserWallet.openfortAccountId` is the FK into Openfort — never overwrite or orphan.
 
 ## Directory Map (Aggregated)
@@ -29,7 +29,7 @@ Server-side automated blockchain signing service. Users authenticate via Clerk s
 | `src/common/` | Shared utilities container (decorators, filters, guards) | [View Map](src/common/codemap.md) |
 | `src/common/decorators/` | Custom parameter decorators: `@CurrentUser()`, `@Public()` | [View Map](src/common/decorators/codemap.md) |
 | `src/common/filters/` | Global HTTP exception filter for standardized error responses | [View Map](src/common/filters/codemap.md) |
-| `src/common/guards/` | Auth guards: Clerk JWT verification + API key validation | [View Map](src/common/guards/codemap.md) |
+| `src/common/guards/` | Auth guards: Openfort IAM verification + API key validation | [View Map](src/common/guards/codemap.md) |
 | `src/core/` | Infrastructure layer: database + Openfort client, globally exported | [View Map](src/core/codemap.md) |
 | `src/core/database/` | Prisma ORM service with lifecycle hooks (onModuleInit/onModuleDestroy) | [View Map](src/core/database/codemap.md) |
 | `src/core/openfort/` | Openfort SDK wrapper for TEE wallet creation and transaction intents | [View Map](src/core/openfort/codemap.md) |
@@ -58,7 +58,7 @@ Server-side automated blockchain signing service. Users authenticate via Clerk s
 - Sensitive lookup fields use normalized storage patterns (`keyPrefix` lookup hint plus hashed API keys, unique wallet identifiers).
 
 #### `prisma/` Flow
-- User authenticates via Clerk → `User` row is created or reused.
+- User authenticates via Openfort IAM → `User` row is created or reused.
 - Wallet provisioning creates `UserWallet` tied 1:1 to `User` with `openfortAccountId`, `walletAddress`, `chainId`, and `status`.
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, and IP allowlist in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
 - Transaction submission appends `Transaction` records with intent/hash/status/details for audit and reconciliation.
@@ -74,10 +74,10 @@ Server-side automated blockchain signing service. Users authenticate via Clerk s
 | Directory | Responsibility Summary | Detailed Map |
 |-----------|------------------------|--------------|
 | `frontend/` | Vite build config, Tailwind CSS 4, path aliasing, dev proxy to port 3100 | [View Map](frontend/codemap.md) |
-| `frontend/src/` | App entry point, React Router routes, Clerk provider composition | [View Map](frontend/src/codemap.md) |
+| `frontend/src/` | App entry point, React Router routes, Openfort provider composition | [View Map](frontend/src/codemap.md) |
 | `frontend/src/components/` | Shared UI: `ProtectedRoute` HOC for auth-gated navigation | [View Map](frontend/src/components/codemap.md) |
 | `frontend/src/lib/` | API abstraction layer: `authFetch` (JWT) and `apiFetch` (API key) helpers | [View Map](frontend/src/lib/codemap.md) |
-| `frontend/src/pages/` | Public pages: landing, sign-in/sign-up via Clerk components | [View Map](frontend/src/pages/codemap.md) |
+| `frontend/src/pages/` | Public pages: landing, sign-in via Openfort email OTP | [View Map](frontend/src/pages/codemap.md) |
 | `frontend/src/pages/dashboard/` | Authenticated dashboard: wallet info, API key management, docs | [View Map](frontend/src/pages/dashboard/codemap.md) |
 
 ## Data Flow (High Level)
@@ -87,14 +87,14 @@ Browser → Openfort IAM → POST /v1/auth/social
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → EitherAuthGuard resolves API key user; WalletService rejects Clerk-only requests
+  → EitherAuthGuard resolves API key user; WalletService rejects IAM-only requests
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
   → OpenfortService.signData signs with TEE-managed backend wallet
   → Returns { signature, walletAddress, type }
 
 Client → POST /v1/transactions/send (X-API-Key only)
-  → EitherAuthGuard resolves API key user; ApiKeyOnlyGuard rejects Clerk-only requests
+  → EitherAuthGuard resolves API key user; ApiKeyOnlyGuard rejects IAM-only requests
   → TransactionsService loads UserWallet chain/account data
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency

@@ -696,7 +696,7 @@ describe('TransactionsService', () => {
       chainId: BigInt(8453),
       walletAddress: wallet.walletAddress,
       operationType: 'send',
-      authMethod: 'clerk',
+      authMethod: 'iam',
     });
 
     await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).rejects.toThrow(

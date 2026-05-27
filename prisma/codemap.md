@@ -33,7 +33,7 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 - **Drop Transaction Intent ID (20260429120000)**: Removed obsolete intent_id from transactions after transaction status moved to locally stored send results.
 
 ## Integration Points
-- **Authentication Module**: Consumes User and UserWallet models for Clerk OAuth integration and wallet provisioning.
+- **Authentication Module**: Consumes User and UserWallet models for Openfort IAM integration and wallet provisioning.
 - **API Key Middleware**: Validates ApiKey models for protected API routes, querying extended/legacy prefix candidates, verifying each Argon2 hash candidate, and enforcing IP restrictions.
 - **API Key Management**: Creates, revokes, and rotates API keys through transactional service methods that enforce lifecycle limits and append ApiKeyEvent audit rows.
 - **Transaction Service**: Creates Transaction records for Openfort intent submissions, stores request/interactions hashes and API-key attribution snapshots, then updates status/hash/failure metadata.

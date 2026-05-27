@@ -15,6 +15,6 @@ Contains the authenticated dashboard screens for wallet state, API key managemen
 - `Docs.tsx` is static reference content for the public API
 
 ## Integration
-- Depends on Clerk auth, React Router, Lucide icons, and `@/lib/api`
+- Depends on Openfort auth, React Router, Lucide icons, and `@/lib/api`
 - Mounted by `App.tsx` under `/dashboard/*`
 - Calls backend endpoints for wallet and key operations
