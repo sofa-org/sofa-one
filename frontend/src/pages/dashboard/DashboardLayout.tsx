@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { useOpenfort, useSignOut } from '@openfort/react';
-import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X } from 'lucide-react';
+import { useOpenfort, useSignOut, useUser } from '@openfort/react';
+import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
+import { listSecurityNotificationsAuth } from '@/lib/api';
+import { onSecurityNotificationsChanged } from './notification-events';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/dashboard/transactions', label: 'History', icon: History },
+  { href: '/dashboard/notifications', label: 'Alerts', icon: Bell },
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 
@@ -16,10 +19,47 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const { user } = useOpenfort();
   const { signOut } = useSignOut();
+  const { getAccessToken, isAuthenticated } = useUser();
+  const getToken = useCallback(async () => {
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('Openfort session is not ready. Refresh and sign in again.');
+    }
+    return token;
+  }, [getAccessToken]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const accountEmail = user?.email ?? null;
+
+  const fetchUnreadCount = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const data = await listSecurityNotificationsAuth(getToken, { unreadOnly: true }, signal);
+        if (!signal?.aborted) {
+          setUnreadCount(data.length);
+        }
+      } catch {
+        // Silently fail; badge will just not show
+      }
+    },
+    [getToken],
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const controller = new AbortController();
+    fetchUnreadCount(controller.signal);
+    return () => controller.abort();
+  }, [fetchUnreadCount, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    return onSecurityNotificationsChanged(() => {
+      void fetchUnreadCount();
+    });
+  }, [fetchUnreadCount, isAuthenticated]);
 
   const handleSignOut = async () => {
     if (signOutLoading) return;
@@ -51,6 +91,7 @@ export default function DashboardLayout() {
           item.href === '/dashboard'
             ? location.pathname === '/dashboard'
             : location.pathname.startsWith(item.href);
+        const isNotifications = item.href === '/dashboard/notifications';
         return (
           <Link
             key={item.href}
@@ -66,7 +107,12 @@ export default function DashboardLayout() {
             }`}
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {isNotifications && unreadCount > 0 && (
+              <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -103,6 +149,17 @@ export default function DashboardLayout() {
           SOFA ONE
         </span>
         <div className="flex items-center gap-4">
+          <Link
+            to="/dashboard/notifications"
+            className="relative rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
           <UserBadge />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

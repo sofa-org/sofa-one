@@ -18,6 +18,7 @@ describe('AuthService', () => {
   let prisma: any;
   let openfort: any;
   let apiKeyService: any;
+  let securityEvents: any;
   let service: AuthService;
 
   beforeEach(() => {
@@ -36,12 +37,14 @@ describe('AuthService', () => {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
       userWallet: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn(), upsert: jest.fn(), findUniqueOrThrow: jest.fn() },
       walletChainAuthorization: { update: jest.fn(), upsert: jest.fn() },
+      userKnownIp: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({}) },
       $transaction: jest.fn((cb) => cb(tx)),
       __tx: tx,
     };
     openfort = { createBackendWallet: jest.fn(), createAgentWallet: jest.fn(), authorizeEmbeddedAddress: jest.fn(), verifyAgentKeyRegistration: jest.fn(), getTransactionReceiptStatus: jest.fn() };
     apiKeyService = { createApiKey: jest.fn().mockResolvedValue({ rawKey: 'sk_test' }) };
-    service = new AuthService(prisma, openfort, apiKeyService, { get: jest.fn((_k: string, fb: unknown) => fb), getOrThrow: jest.fn(() => 'secret') } as any);
+    securityEvents = { record: jest.fn().mockResolvedValue({}) };
+    service = new AuthService(prisma, openfort, apiKeyService, { get: jest.fn((_k: string, fb: unknown) => fb), getOrThrow: jest.fn(() => 'secret') } as any, undefined, securityEvents);
   });
 
   afterEach(() => {
@@ -158,5 +161,59 @@ describe('AuthService', () => {
     prisma.userWallet.findUniqueOrThrow.mockResolvedValue({ ...wallet, chainAuthorizations: [auth({ status: 'registered', registrationTxHash: '0xaaa' })] });
     openfort.getTransactionReceiptStatus.mockResolvedValue('success');
     await expect(service.getMe('openfort-user-1')).resolves.toMatchObject({ wallet: { chainAuthorizations: [expect.objectContaining({ status: 'registered' })] } });
+  });
+
+  describe('login IP tracking', () => {
+    it('records a login.new_ip security event when the IP is new for the user', async () => {
+      prisma.userKnownIp.findUnique.mockResolvedValue(null);
+      prisma.userKnownIp.create.mockResolvedValue({ id: 'kip-1', userId: 'user-1', ip: '203.0.113.5' });
+
+      await service.syncOpenfortSession('openfort-user-1', 'user@example.com', '203.0.113.5', 'Mozilla/5.0');
+
+      expect(prisma.userKnownIp.findUnique).toHaveBeenCalledWith({
+        where: { userId_ip: { userId: 'user-1', ip: '203.0.113.5' } },
+      });
+      expect(prisma.userKnownIp.create).toHaveBeenCalledWith({
+        data: { userId: 'user-1', ip: '203.0.113.5' },
+      });
+      expect(securityEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorType: 'user',
+          eventType: 'login.new_ip',
+          userId: 'user-1',
+          riskLevel: 'medium',
+          ip: '203.0.113.5',
+          userAgent: 'Mozilla/5.0',
+          result: 'allowed',
+          reason: 'new_ip_login',
+        }),
+      );
+    });
+
+    it('does not record a login.new_ip event when the IP is already known', async () => {
+      prisma.userKnownIp.findUnique.mockResolvedValue({ id: 'kip-1', userId: 'user-1', ip: '203.0.113.5' });
+
+      await service.syncOpenfortSession('openfort-user-1', 'user@example.com', '203.0.113.5', 'Mozilla/5.0');
+
+      expect(prisma.userKnownIp.create).not.toHaveBeenCalled();
+      expect(securityEvents.record).not.toHaveBeenCalled();
+    });
+
+    it('skips IP tracking when no client IP is provided', async () => {
+      await service.syncOpenfortSession('openfort-user-1', 'user@example.com', undefined, 'Mozilla/5.0');
+
+      expect(prisma.userKnownIp.findUnique).not.toHaveBeenCalled();
+      expect(securityEvents.record).not.toHaveBeenCalled();
+    });
+
+    it('gracefully handles IP tracking errors without failing the login', async () => {
+      prisma.userKnownIp.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await service.syncOpenfortSession('openfort-user-1', 'user@example.com', '203.0.113.5', 'Mozilla/5.0');
+
+      // Login should still succeed even if IP tracking fails
+      expect(result).toBeDefined();
+      expect(result.userId).toBe('user-1');
+    });
   });
 });

@@ -13,6 +13,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { AgentStatus, type AgentStatusValue } from '../../common/agent/agent-status';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { SecurityEventService } from '../security-events/security-event.service';
 import { ApiKeyService } from '../api-key/api-key.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
@@ -46,6 +47,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     @Optional()
     private readonly requestContext?: RequestContextService,
+    @Optional()
+    private readonly securityEvents?: SecurityEventService,
   ) {}
 
   /**
@@ -56,6 +59,8 @@ export class AuthService {
   async syncOpenfortSession(
     openfortUserId: string,
     email?: string,
+    clientIp?: string,
+    userAgent?: string,
     _depth = 0,
   ): Promise<{
     userId: string;
@@ -108,7 +113,7 @@ export class AuthService {
               depth: _depth,
             }),
           );
-          return this.syncOpenfortSession(openfortUserId, email, _depth + 1);
+          return this.syncOpenfortSession(openfortUserId, email, clientIp, userAgent, _depth + 1);
         }
         throw err;
       }
@@ -142,6 +147,9 @@ export class AuthService {
       }
     }
 
+    // Track login IP: record a security event if this IP is new for the user.
+    await this.trackLoginIp(userId, clientIp, userAgent);
+
     return {
       userId,
       wallet: this.toWalletResponse(wallet),
@@ -150,7 +158,7 @@ export class AuthService {
 
   /** @deprecated Use syncOpenfortSession. Kept as a compatibility alias for older callers/tests. */
   async handleSocialLogin(openfortUserId: string, _depth = 0) {
-    return this.syncOpenfortSession(openfortUserId, undefined, _depth);
+    return this.syncOpenfortSession(openfortUserId, undefined, undefined, undefined, _depth);
   }
 
   async authorizeEmbeddedWallet(
@@ -339,6 +347,42 @@ export class AuthService {
 
   private logContext(extra: Record<string, unknown>) {
     return this.requestContext?.getLogContext(extra) ?? extra;
+  }
+
+  /**
+   * Track login IP: if this IP has not been seen for this user before,
+   * record it and emit a login.new_ip security event.
+   */
+  private async trackLoginIp(userId: string, clientIp?: string, userAgent?: string) {
+    if (!clientIp || !this.securityEvents) return;
+
+    try {
+      const existing = await this.prisma.userKnownIp.findUnique({
+        where: { userId_ip: { userId, ip: clientIp } },
+      });
+
+      if (!existing) {
+        await this.prisma.userKnownIp.create({
+          data: { userId, ip: clientIp },
+        });
+
+        await this.securityEvents.record({
+          actorType: 'user',
+          eventType: 'login.new_ip',
+          userId,
+          riskLevel: 'medium',
+          ip: clientIp,
+          userAgent: userAgent ?? null,
+          result: 'allowed',
+          reason: 'new_ip_login',
+          metadata: { ip: clientIp },
+        });
+      }
+    } catch (error) {
+      this.logger.warn(
+        this.logContext({ message: 'Failed to track login IP', userId, ip: clientIp, error }),
+      );
+    }
   }
 
   private hasAgentRegistrationContext(wallet: UserWallet) {

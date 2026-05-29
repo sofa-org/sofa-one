@@ -10,6 +10,7 @@ const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
 const ApiKeysPage = lazy(() => import('./pages/dashboard/ApiKeys'));
 const APIDocsPage = lazy(() => import('./pages/dashboard/Docs'));
 const TransactionsPage = lazy(() => import('./pages/dashboard/Transactions'));
+const SecurityNotificationsPage = lazy(() => import('./pages/dashboard/SecurityNotifications'));
 
 function PageFallback() {
   return (
@@ -62,6 +63,7 @@ export default function App() {
             <Route index element={<WalletPage />} />
             <Route path="api-keys" element={<ApiKeysPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="notifications" element={<SecurityNotificationsPage />} />
             <Route path="docs" element={<APIDocsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

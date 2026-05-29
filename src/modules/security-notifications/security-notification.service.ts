@@ -30,6 +30,7 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'api_key.first_used',
   'api_key.suspicious_use',
   'api_key_frozen',
+  'login.new_ip',
   'transaction.policy_denied',
   'withdrawal.policy_denied',
   'withdrawal.high_value_requested',
@@ -147,6 +148,16 @@ export class SecurityNotificationService {
         return {
           title: 'EOA execution blocked',
           body: 'A high-privilege EOA execution request was blocked.',
+        };
+      case 'login.new_ip':
+        return {
+          title: 'New login from unrecognized IP',
+          body: 'Your account was accessed from a new IP address. If this was not you, review your security settings.',
+        };
+      case 'login.failed':
+        return {
+          title: 'Failed login attempt',
+          body: 'An unsuccessful login attempt was detected on your account.',
         };
       default:
         return {

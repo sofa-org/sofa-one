@@ -34,6 +34,8 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'api_key.first_used', riskLevel: 'medium' },
   { eventType: 'withdrawal_address.added', riskLevel: 'medium' },
   { eventType: 'withdrawal_address.removed', riskLevel: 'medium' },
+  { eventType: 'login.new_ip', riskLevel: 'medium' },
+  { eventType: 'login.failed', riskLevel: 'high' },
 ];
 
 @Injectable()

@@ -21,14 +21,24 @@ export class AuthController {
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('session')
   async syncSession(@Req() req: any) {
-    return this.authService.syncOpenfortSession(req.openfortUserId, req.openfortEmail);
+    return this.authService.syncOpenfortSession(
+      req.openfortUserId,
+      req.openfortEmail,
+      req.ip ?? undefined,
+      req.headers?.['user-agent'] ?? undefined,
+    );
   }
 
   /** Compatibility alias for older frontend builds. */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('social')
   async socialLogin(@Req() req: any) {
-    return this.authService.syncOpenfortSession(req.openfortUserId, req.openfortEmail);
+    return this.authService.syncOpenfortSession(
+      req.openfortUserId,
+      req.openfortEmail,
+      req.ip ?? undefined,
+      req.headers?.['user-agent'] ?? undefined,
+    );
   }
 
   /**

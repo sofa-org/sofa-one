@@ -68,4 +68,20 @@ describe('SecurityRiskService', () => {
       reasons: ['event:api_key.first_used', 'explicit:critical'],
     });
   });
+
+  it('scores login.new_ip as medium risk', () => {
+    expect(service.score({ actorType: 'user', eventType: 'login.new_ip' })).toEqual({
+      riskLevel: 'medium',
+      score: 40,
+      reasons: ['event:login.new_ip'],
+    });
+  });
+
+  it('scores login.failed as high risk', () => {
+    expect(service.score({ actorType: 'user', eventType: 'login.failed' })).toEqual({
+      riskLevel: 'high',
+      score: 70,
+      reasons: ['event:login.failed'],
+    });
+  });
 });
