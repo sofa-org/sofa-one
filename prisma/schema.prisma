@@ -11,6 +11,8 @@ model User {
   socialProvider String   @map("social_provider") @db.VarChar(20)
   socialId       String   @unique @map("social_id") @db.VarChar(255)
   email          String?  @db.VarChar(255)
+  frozenAt       DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason   String?  @map("frozen_reason") @db.VarChar(255)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   wallet          UserWallet?
@@ -36,12 +38,15 @@ model UserWallet {
   agentOpenfortAccountId String?   @unique @map("agent_openfort_account_id") @db.VarChar(255)
   agentWalletAddress     String?   @unique @map("agent_wallet_address") @db.VarChar(42)
   agentKeyHash           String?   @map("agent_key_hash") @db.VarChar(66)
+  frozenAt               DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason           String?   @map("frozen_reason") @db.VarChar(255)
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   user                User                       @relation(fields: [userId], references: [id])
   chainAuthorizations WalletChainAuthorization[]
   securityEvents      SecurityEvent[]
 
+  @@index([userId, frozenAt])
   @@map("user_wallets")
 }
 

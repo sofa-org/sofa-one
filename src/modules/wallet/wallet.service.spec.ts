@@ -165,6 +165,20 @@ describe('WalletService.withdraw()', () => {
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(/not active/i);
   });
 
+  it('rejects frozen wallets before withdrawal policy or balance checks', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...WALLET,
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'security_review',
+    });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(ForbiddenException);
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('security_review');
+    expect(mockAssertWithdrawalAllowed).not.toHaveBeenCalled();
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
   // ── 3. Self-withdrawal ───────────────────────────────────────────────────────
 
   it('throws BadRequestException when `to` equals wallet address (case-insensitive)', async () => {
@@ -440,6 +454,24 @@ describe('WalletService.sign()', () => {
       type: 'message',
       executionMode: 'session_key',
     });
+  });
+
+  it('rejects frozen wallets before creating signing request', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...WALLET,
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'wallet_compromise',
+    });
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
   });
 
   it('uses the backend wallet raw signature and skips agent verification for eoa execution mode', async () => {
@@ -975,6 +1007,18 @@ describe('WalletService.getBalances()', () => {
     expect(JSON.stringify(result)).not.toContain('internal URL');
     expect(JSON.stringify(result)).not.toContain('raw calldata');
   });
+
+  it('rejects frozen wallets before RPC balance calls', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...WALLET,
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'security_review',
+    });
+
+    await expect(service.getBalances('user-1', 84532)).rejects.toThrow(ForbiddenException);
+    expect(mockGetBalance).not.toHaveBeenCalled();
+    expect(mockReadContract).not.toHaveBeenCalled();
+  });
 });
 
 describe('WalletService.getDepositInfo()', () => {
@@ -1019,6 +1063,16 @@ describe('WalletService.getDepositInfo()', () => {
 
   it('rejects unsupported deposit chains', async () => {
     await expect(service.getDepositInfo('user-1', 999999)).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects frozen wallets before returning deposit info', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...WALLET,
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'security_review',
+    });
+
+    await expect(service.getDepositInfo('user-1', 84532)).rejects.toThrow(ForbiddenException);
   });
 });
 

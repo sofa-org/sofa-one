@@ -12,7 +12,7 @@ Wallet operations: deposit info, balance lookup, signing, withdrawal-address all
 
 ## Flow
 - Controllers resolve the current user and validate request bodies.
-- Service reads wallet state from Prisma, signs non-frozen API-key-authenticated payloads after suspicious-use, `canSign` guard enforcement, and EOA isolation checks with audit attribution, queries balances, or creates withdrawal intents.
+- Service reads wallet state from Prisma, rejects frozen wallets before returning deposit/balance data or creating signing/withdrawal side effects, signs non-frozen API-key-authenticated payloads after suspicious-use, `canSign` guard enforcement, and EOA isolation checks with audit attribution, queries balances, or creates withdrawal intents.
 - Withdrawal address management is dashboard-only: list uses IAM + frontend guard; add/remove additionally require step-up. Adding an address enables the allowlist policy, starts the configured cooldown window, and records allowlist lifecycle events.
 - Withdrawal flow: Openfort IAM + frontend + step-up guards → wallet/chain readiness → self-transfer guard → `WithdrawalPolicyService` records policy denies/high-value requests → idempotency/balance checks → Openfort Calibur agent user operation.
 

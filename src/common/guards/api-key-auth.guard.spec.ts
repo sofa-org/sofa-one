@@ -218,6 +218,41 @@ describe('ApiKeyAuthGuard', () => {
     expect(prisma.apiKey.update).not.toHaveBeenCalled();
   });
 
+  it('rejects API keys for frozen users and records the rejection', async () => {
+    const { guard, securityEvents, prisma } = createGuard([
+      {
+        id: 'key-1',
+        keyPrefix: longPrefix,
+        apiKeyHash: 'hash-1',
+        allowedIps: [],
+        lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+        user: {
+          id: 'user-1',
+          frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+          frozenReason: 'account_takeover_response',
+        },
+      },
+    ]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }))).rejects.toThrow(
+      ForbiddenException,
+    );
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'api_key',
+        eventType: 'api_key_user_frozen_rejected',
+        apiKeyId: 'key-1',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'account_takeover_response',
+      }),
+    );
+    expect(prisma.apiKey.update).not.toHaveBeenCalled();
+  });
+
   it('records first low-risk context change without freezing the key', async () => {
     const keyRecord = {
       id: 'key-1',

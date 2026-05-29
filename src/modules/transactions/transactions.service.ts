@@ -91,6 +91,7 @@ export class TransactionsService {
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
 
+    this.assertWalletNotFrozen(wallet);
     this.assertWalletReady(wallet);
     const accountAddress = wallet.walletAddress!;
     if (executionMode === 'session_key') {
@@ -253,6 +254,12 @@ export class TransactionsService {
   private assertWalletReady(wallet: { status: string; walletAddress?: string | null }): void {
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+  }
+
+  private assertWalletNotFrozen(wallet: { frozenAt?: Date | string | null; frozenReason?: string | null }): void {
+    if (wallet.frozenAt) {
+      throw new ForbiddenException(wallet.frozenReason ?? 'Wallet is frozen');
     }
   }
 

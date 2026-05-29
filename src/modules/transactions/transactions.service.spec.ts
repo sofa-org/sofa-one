@@ -497,6 +497,22 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
+  it('rejects frozen wallets before creating or sending transactions', async () => {
+    prisma.userWallet.findUnique.mockResolvedValue({
+      ...wallet,
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'wallet_compromise',
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      ForbiddenException,
+    );
+
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
   it('rejects pending agent status before sending', async () => {
     prisma.userWallet.findUnique.mockResolvedValue({
       ...wallet,

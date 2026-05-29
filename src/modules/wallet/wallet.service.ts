@@ -90,6 +90,7 @@ export class WalletService {
   async getDepositInfo(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -175,6 +176,7 @@ export class WalletService {
       },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -537,6 +539,12 @@ export class WalletService {
     this.logger.warn(this.logContext({ event: 'security', ...extra }));
   }
 
+  private assertWalletNotFrozen(wallet: { frozenAt?: Date | string | null; frozenReason?: string | null }): void {
+    if (wallet.frozenAt) {
+      throw new ForbiddenException(wallet.frozenReason ?? 'Wallet is frozen');
+    }
+  }
+
   private assertChainAuthorizationReady(
     authorization?: { status: string; expiresAt?: Date | string | null } | null,
   ) {
@@ -554,6 +562,7 @@ export class WalletService {
   async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -628,6 +637,7 @@ export class WalletService {
       },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
 
     // Guard: wallet must be active before any outbound transfer
     if (

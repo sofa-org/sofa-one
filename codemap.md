@@ -16,6 +16,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
 - API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit for create/revoke/rotate/first-use/suspicious-use/freeze events.
+- User, API-key, and wallet freeze state is modeled explicitly; frozen users are rejected by dashboard and API-key auth, frozen API keys are rejected by `ApiKeyAuthGuard`, and frozen wallets cannot sign, send, withdraw, expose deposit info, or fetch balances.
 - User-facing security alerts are derived from selected `SecurityEvent` rows into dashboard-only `SecurityNotification` records.
 - Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; policy denies, high-value withdrawal requests, and withdrawal-address changes are written to `SecurityEvent`.
 - `UserWallet.openfortAccountId` is the FK into Openfort — never overwrite or orphan.
@@ -94,7 +95,7 @@ Browser → Openfort IAM → POST /v1/auth/social
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
+  → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
   → EOA execution requests are denied unless explicitly enabled, short-lived, IP-allowlisted, independently rate-limited, and security-event audited
   → WalletService hashes message/typedData input as needed; raw hash signing is disabled
   → SigningRequest audit row records API-key attribution snapshot
@@ -102,17 +103,17 @@ Client → POST /v1/wallets/sign (X-API-Key only)
   → Returns { signature, walletAddress, type }
 
 Client → POST /v1/transactions/send (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user, rejects frozen keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
+  → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
   → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
-  → TransactionsService loads UserWallet chain/account data
+  → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
 Dashboard → POST /v1/wallets/withdraw (Openfort IAM + FrontendOnly + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`
-  → WalletService checks idempotency and balance, then submits a Calibur agent user operation through Openfort
+  → WalletService rejects frozen wallets, then checks idempotency and balance before submitting a Calibur agent user operation through Openfort
   → Transaction row persists withdrawal request hash/details for audit/idempotency
 
 Dashboard → POST /v1/wallets/withdrawal-addresses (Openfort IAM + FrontendOnly + step-up)

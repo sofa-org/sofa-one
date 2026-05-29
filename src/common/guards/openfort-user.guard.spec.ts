@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
@@ -97,5 +97,24 @@ describe('OpenfortUserGuard', () => {
     expect(request.openfortUserId).toBe('openfort-user-1');
     expect(request.openfortSession).toEqual({ id: 'session-1' });
     expect(request.openfortEmail).toBe('user@example.com');
+  });
+
+  it('rejects frozen dashboard users', async () => {
+    const { guard, openfort, prisma } = createGuard();
+    openfort.verifyIamSession.mockResolvedValue({
+      openfortUserId: 'openfort-user-1',
+      session: { id: 'session-1' },
+      email: 'user@example.com',
+    });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      socialId: 'openfort-user-1',
+      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
+      frozenReason: 'account_takeover_response',
+    });
+
+    await expect(
+      guard.canActivate(contextWithHeaders({ authorization: 'Bearer token-123' })),
+    ).rejects.toThrow(ForbiddenException);
   });
 });

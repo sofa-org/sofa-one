@@ -30,7 +30,7 @@ type ApiKeyAuthRecord = {
   canSign?: boolean;
   canSendTransaction?: boolean;
   canUseEoaExecution?: boolean;
-  user?: { id?: string | null } | null;
+  user?: { id?: string | null; frozenAt?: Date | string | null; frozenReason?: string | null } | null;
 };
 
 /**
@@ -119,6 +119,17 @@ export class ApiKeyAuthGuard implements CanActivate {
         reason: keyRecord.frozenReason ?? 'api_key_frozen',
       });
       throw new ForbiddenException('API key is frozen');
+    }
+
+    if (keyRecord.user?.frozenAt) {
+      await this.recordApiKeySecurityEvent(keyRecord, 'api_key_user_frozen_rejected', {
+        riskLevel: 'high',
+        clientIp,
+        userAgent,
+        result: 'denied',
+        reason: keyRecord.user.frozenReason ?? 'user_frozen',
+      });
+      throw new ForbiddenException('User account is frozen');
     }
 
     if (keyRecord.allowedIps.length > 0 && !isIpAllowed(clientIp, keyRecord.allowedIps)) {

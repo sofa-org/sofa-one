@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
@@ -32,6 +38,7 @@ export class OpenfortUserGuard implements CanActivate {
         where: { socialId: session.openfortUserId },
       });
       if (!user) throw new UnauthorizedException('User not found');
+      if (user.frozenAt) throw new ForbiddenException('User account is frozen');
 
       request.user = user;
       request.openfortUserId = session.openfortUserId;
@@ -40,6 +47,7 @@ export class OpenfortUserGuard implements CanActivate {
       return true;
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
+      if (err instanceof ForbiddenException) throw err;
       throw new UnauthorizedException('Invalid authorization token');
     }
   }

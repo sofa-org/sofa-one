@@ -6,7 +6,7 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 ## Design Patterns
 - **ORM Abstraction**: Utilizes Prisma Client for type-safe database operations, eliminating raw SQL in application code.
 - **Relational Design**: Employs normalized tables with foreign key relationships to maintain referential integrity.
-- **Security by Design**: Implements hashed API keys with Argon2, unique constraints on sensitive fields, optional IP whitelisting, and freeze metadata for suspicious usage response.
+- **Security by Design**: Implements hashed API keys with Argon2, unique constraints on sensitive fields, optional IP whitelisting, and user/API-key/wallet freeze metadata for suspicious usage or incident response.
 - **Audit Trail**: ApiKeyEvent, SecurityEvent, SecurityNotification, Transaction, and SigningRequest models capture API-key lifecycle changes, cross-cutting security telemetry, user-facing security alerts, blockchain transaction submissions, and TEE signing requests without storing API-key secrets, signing plaintext, or full calldata in transaction audit details.
 - **Withdrawal Policy**: WithdrawalPolicy and WithdrawalAddress store per-user withdrawal caps and allowlisted addresses with cooldown windows; adding an address enables allowlist enforcement.
 - **Migration-Driven Evolution**: Schema changes are versioned through migrations, allowing incremental updates without data loss.
@@ -26,8 +26,8 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 ### Key Constraints
 - **Uniqueness**: socialId (users), openfortAccountId (user_wallets), walletAddress (user_wallets), and active API-key names per user through a partial unique index. API-key prefixes are indexed lookup hints, not unique identifiers.
 - **Data Types**: Uses PostgreSQL-specific types (UUID, TIMESTAMPTZ, JSONB, BIGINT for chainId).
-- **Security**: apiKeyHash stored as TEXT (Argon2 hash), keyPrefix as VARCHAR(32) for efficient lookup before verifying every matching hash candidate; suspicious keys can be marked with `frozenAt`/`frozenReason` without deleting audit history.
-- **Optional Fields**: email, expiresAt, name, frozenAt/frozenReason, withdrawal daily limit, txHash, details, failureReason, completedAt allow flexible data capture without storing sensitive plaintext payloads.
+- **Security**: apiKeyHash stored as TEXT (Argon2 hash), keyPrefix as VARCHAR(32) for efficient lookup before verifying every matching hash candidate; users, wallets, and suspicious keys can be marked with `frozenAt`/`frozenReason` without deleting audit history.
+- **Optional Fields**: email, expiresAt, name, user/API-key/wallet frozenAt/frozenReason, withdrawal daily limit, txHash, details, failureReason, completedAt allow flexible data capture without storing sensitive plaintext payloads.
 - **Defaults**: status='active', revoked=false, signing/transaction authMethod='api_key', signing status='submitting', createdAt=now().
 
 ### Migration History
@@ -38,9 +38,9 @@ The Prisma schema serves as the data persistence layer for the SOFA ONE applicat
 
 ## Integration Points
 - **Authentication Module**: Consumes User and UserWallet models for Openfort IAM integration and wallet provisioning.
-- **API Key Middleware**: Validates ApiKey models for protected API routes, querying extended/legacy prefix candidates, verifying each Argon2 hash candidate, rejecting frozen keys, enforcing IP restrictions, and freezing high-risk/repeated suspicious context changes.
+- **API Key Middleware**: Validates ApiKey models for protected API routes, querying extended/legacy prefix candidates, verifying each Argon2 hash candidate, rejecting frozen users/keys, enforcing IP restrictions, and freezing high-risk/repeated suspicious context changes.
 - **API Key Management**: Creates, revokes, and rotates API keys through transactional service methods that enforce lifecycle limits and append ApiKeyEvent audit rows.
 - **Security Events**: `SecurityEventService` appends generic security telemetry rows for future anomaly detection, freeze workflows, and policy denials; selected rows fan out to `SecurityNotification` dashboard alerts.
 - **Transaction Service**: Creates Transaction records for Openfort intent submissions, stores request/interactions hashes and API-key attribution snapshots, then updates status/hash/failure metadata.
-- **Wallet Management**: Uses UserWallet for Openfort account mapping and address retrieval; WithdrawalPolicy/WithdrawalAddress manage dashboard withdrawal allowlists/cooldowns and enforce limits before Openfort submission.
+- **Wallet Management**: Uses UserWallet for Openfort account mapping and address retrieval; wallet freeze metadata blocks signing, transaction send, withdrawals, deposit info, and balance reads; WithdrawalPolicy/WithdrawalAddress manage dashboard withdrawal allowlists/cooldowns and enforce limits before Openfort submission.
 - **Frontend Integration**: Indirectly supports React SPA through backend APIs, providing user wallet data and transaction history.
