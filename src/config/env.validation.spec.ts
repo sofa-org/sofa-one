@@ -62,4 +62,21 @@ describe('environment validation', () => {
     );
     expect(() => validate({ ...baseConfig, EOA_EXECUTION_ENABLED: 'yes' })).toThrow();
   });
+
+  it('validates optional SecurityEvent SIEM webhook URL as HTTPS', () => {
+    expect(
+      validate({
+        ...baseConfig,
+        SECURITY_EVENTS_SIEM_WEBHOOK_URL: 'https://siem.example.com/events',
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        SECURITY_EVENTS_SIEM_WEBHOOK_URL: 'https://siem.example.com/events',
+      }),
+    );
+
+    expect(() =>
+      validate({ ...baseConfig, SECURITY_EVENTS_SIEM_WEBHOOK_URL: 'http://siem.example.com/events' }),
+    ).toThrow('SECURITY_EVENTS_SIEM_WEBHOOK_URL must be a valid https URL');
+  });
 });

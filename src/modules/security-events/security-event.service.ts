@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityNotificationService } from '../security-notifications/security-notification.service';
+import { SecurityEventExportService } from './security-event-export.service';
 import { SecurityRiskService } from './security-risk.service';
 
 export type SecurityEventActorType = 'user' | 'api_key' | 'system';
@@ -39,6 +40,7 @@ export class SecurityEventService {
     private readonly requestContext: RequestContextService,
     @Optional() private readonly notifications?: SecurityNotificationService,
     @Optional() private readonly riskService?: SecurityRiskService,
+    @Optional() private readonly exporter?: SecurityEventExportService,
   ) {}
 
   async record(input: RecordSecurityEventInput, tx?: SecurityEventClient) {
@@ -73,6 +75,15 @@ export class SecurityEventService {
     } catch (error) {
       this.logger.error(
         `Security notification creation failed: eventType=${eventType}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
+    try {
+      await this.exporter?.exportSecurityEvent(event as never);
+    } catch (error) {
+      this.logger.error(
+        `SecurityEvent SIEM export failed: eventType=${eventType}`,
         error instanceof Error ? error.stack : undefined,
       );
     }

@@ -76,6 +76,14 @@ class EnvironmentVariables {
   @IsBooleanString()
   @IsOptional()
   EOA_EXECUTION_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  SECURITY_EVENTS_SIEM_WEBHOOK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  SECURITY_EVENTS_SIEM_WEBHOOK_SECRET?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -90,6 +98,10 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(errors.toString());
   }
   validateProductionConfig(validatedConfig);
+  validateOptionalHttpsUrl(
+    validatedConfig.SECURITY_EVENTS_SIEM_WEBHOOK_URL,
+    'SECURITY_EVENTS_SIEM_WEBHOOK_URL',
+  );
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
   return validatedConfig;
 }
@@ -112,6 +124,18 @@ function validateProductionConfig(config: EnvironmentVariables) {
     }
   } catch {
     throw new Error('STEP_UP_OTP_WEBHOOK_URL must be a valid https URL');
+  }
+}
+
+function validateOptionalHttpsUrl(rawUrl: string | undefined, name: string) {
+  if (!rawUrl?.trim()) return;
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:') {
+      throw new Error();
+    }
+  } catch {
+    throw new Error(`${name} must be a valid https URL`);
   }
 }
 

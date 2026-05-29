@@ -16,6 +16,9 @@ describe('SecurityEventService', () => {
     notifyForSecurityEvent: jest.fn(),
   };
   const riskService = new SecurityRiskService();
+  const exporter = {
+    exportSecurityEvent: jest.fn(),
+  };
 
   let service: SecurityEventService;
 
@@ -169,6 +172,44 @@ describe('SecurityEventService', () => {
     ).resolves.toEqual(event);
     expect(errorSpy).toHaveBeenCalledWith(
       'Security notification creation failed: eventType=api_key.created',
+      expect.any(String),
+    );
+  });
+
+  it('exports security events to configured SIEM integrations after persistence', async () => {
+    const event = { id: 'event-6', userId: 'user-1', eventType: 'api_key_frozen', riskLevel: 'critical' };
+    prisma.securityEvent.create.mockResolvedValue(event);
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      undefined,
+      undefined,
+      exporter as never,
+    );
+
+    await service.record({ actorType: 'api_key', userId: 'user-1', eventType: 'api_key_frozen' });
+
+    expect(exporter.exportSecurityEvent).toHaveBeenCalledWith(event);
+  });
+
+  it('does not fail security-event writes when SIEM export fails', async () => {
+    const event = { id: 'event-7', userId: 'user-1', eventType: 'api_key_frozen', riskLevel: 'critical' };
+    prisma.securityEvent.create.mockResolvedValue(event);
+    exporter.exportSecurityEvent.mockRejectedValue(new Error('siem unavailable'));
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      undefined,
+      undefined,
+      exporter as never,
+    );
+    const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+
+    await expect(
+      service.record({ actorType: 'api_key', userId: 'user-1', eventType: 'api_key_frozen' }),
+    ).resolves.toEqual(event);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'SecurityEvent SIEM export failed: eventType=api_key_frozen',
       expect.any(String),
     );
   });

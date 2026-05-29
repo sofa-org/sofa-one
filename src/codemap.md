@@ -10,7 +10,7 @@ Backend root for bootstrapping NestJS, composing global infrastructure, and wiri
 
 ## Flow
 - `main.ts` creates the HTTP app, sets security/CORS/body limits, installs global validation/filter behavior, and starts the server.
-- `app.module.ts` loads env config, registers throttling, and imports core + feature modules including `SecurityEventModule` (with rule-based risk scoring) and `SecurityNotificationModule`.
+- `app.module.ts` loads env config, registers throttling, and imports core + feature modules including `SecurityEventModule` (with rule-based risk scoring and optional SIEM export) and `SecurityNotificationModule`.
 
 ## Integration
 - Entry points: `main.ts`, `app.module.ts`.
