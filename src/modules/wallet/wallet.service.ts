@@ -16,7 +16,6 @@ import {
   hashMessage,
   hashTypedData,
   http,
-  isAddress,
   type Hex,
   type PublicClient,
 } from 'viem';
@@ -32,6 +31,7 @@ import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
+import { SigningPolicyService } from './signing-policy.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -42,14 +42,6 @@ const ERC20_BALANCE_ABI = [
     type: 'function',
   },
 ] as const;
-
-const BLOCKED_TYPED_DATA_PRIMARY_TYPES = new Set([
-  'permit',
-  'permitbatch',
-  'permitsingle',
-  'permittransferfrom',
-  'permitbatchtransferfrom',
-]);
 
 type ApiKeySigningContext = {
   id?: string;
@@ -73,6 +65,8 @@ export class WalletService {
     private readonly withdrawalPolicy?: WithdrawalPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
+    @Optional()
+    private readonly signingPolicy?: SigningPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -139,6 +133,15 @@ export class WalletService {
     }
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(params.executionMode);
+    const policyContext = {
+      userId,
+      chainId,
+      type: params.type,
+      executionMode,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+    };
+
     if (executionMode === 'eoa') {
       this.assertPermission(
         apiKeyRecord.canUseEoaExecution,
@@ -158,16 +161,17 @@ export class WalletService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       });
     }
-    const typedDataSummary =
-      params.type === 'typed_data'
-        ? this.assertTypedDataSigningPolicy(params.typedData!, {
-            userId,
-            chainId,
-            type: params.type,
-            executionMode,
-            apiKeyPrefix: apiKeyRecord.keyPrefix,
-          })
-        : undefined;
+
+    // Apply signing policy checks
+    let typedDataSummary: { typedDataPrimaryType?: string; typedDataVerifyingContract?: string; typedDataDomainName?: string } | undefined = undefined;
+    if (params.type === 'message') {
+      await this.signingPolicy?.assertMessageSigningPolicy(params.message!, policyContext);
+    } else if (params.type === 'typed_data') {
+      typedDataSummary = await this.signingPolicy?.assertTypedDataSigningPolicy(
+        params.typedData!,
+        policyContext,
+      );
+    }
 
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
@@ -385,100 +389,6 @@ export class WalletService {
       chainId: context.chainId,
       metadata: context.metadata as any,
     });
-  }
-
-  private assertTypedDataSigningPolicy(
-    typedData: NonNullable<SignDto['typedData']>,
-    context: {
-      userId: string;
-      chainId: number;
-      type: SignDto['type'];
-      executionMode: ExecutionMode;
-      apiKeyPrefix?: string;
-    },
-  ) {
-    this.assertTypedDataShape(typedData, context);
-
-    const primaryType = typedData.primaryType.trim();
-    if (this.isBlockedTypedDataPrimaryType(primaryType)) {
-      this.rejectSigningPolicy('Permit typed data signing is not allowed', context, {
-        typedDataPrimaryType: primaryType,
-      });
-    }
-
-    const verifyingContract = typedData.domain.verifyingContract;
-    if (verifyingContract !== undefined) {
-      if (typeof verifyingContract !== 'string' || !isAddress(verifyingContract)) {
-        this.rejectSigningPolicy(
-          'typedData.domain.verifyingContract must be a valid address',
-          context,
-          {
-            typedDataPrimaryType: primaryType,
-            hasVerifyingContract: true,
-          },
-        );
-      }
-    }
-
-    return {
-      typedDataPrimaryType: primaryType,
-      ...(typeof verifyingContract === 'string'
-        ? { typedDataVerifyingContract: verifyingContract.toLowerCase() }
-        : {}),
-    };
-  }
-
-  private assertTypedDataShape(
-    typedData: NonNullable<SignDto['typedData']>,
-    context: {
-      userId: string;
-      chainId: number;
-      type: SignDto['type'];
-      executionMode: ExecutionMode;
-      apiKeyPrefix?: string;
-    },
-  ): void {
-    if (!typedData.domain || typeof typedData.domain !== 'object' || Array.isArray(typedData.domain)) {
-      this.rejectSigningPolicy('typedData.domain is required', context);
-    }
-
-    if (!typedData.types || typeof typedData.types !== 'object' || Array.isArray(typedData.types)) {
-      this.rejectSigningPolicy('typedData.types is required', context);
-    }
-
-    if (typeof typedData.primaryType !== 'string' || typedData.primaryType.trim().length === 0) {
-      this.rejectSigningPolicy('typedData.primaryType is required', context);
-    }
-
-    if (!typedData.message || typeof typedData.message !== 'object' || Array.isArray(typedData.message)) {
-      this.rejectSigningPolicy('typedData.message is required', context, {
-        typedDataPrimaryType: typedData.primaryType.trim(),
-      });
-    }
-  }
-
-  private rejectSigningPolicy(
-    reason: string,
-    context: {
-      userId: string;
-      chainId: number;
-      type: SignDto['type'];
-      executionMode: ExecutionMode;
-      apiKeyPrefix?: string;
-    },
-    extra: Record<string, unknown> = {},
-  ): never {
-    this.logSecurityWarning({
-      message: 'Signing policy rejected request',
-      reason,
-      ...context,
-      ...extra,
-    });
-    throw new BadRequestException(reason);
-  }
-
-  private isBlockedTypedDataPrimaryType(primaryType: string): boolean {
-    return BLOCKED_TYPED_DATA_PRIMARY_TYPES.has(primaryType.toLowerCase());
   }
 
   private assertAgentWalletReady(wallet: {

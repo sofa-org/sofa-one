@@ -36,6 +36,9 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'withdrawal_address.removed', riskLevel: 'medium' },
   { eventType: 'login.new_ip', riskLevel: 'medium' },
   { eventType: 'login.failed', riskLevel: 'high' },
+  { eventType: 'signing.policy_denied', riskLevel: 'high' },
+  { eventType: 'signing.message_allowed', riskLevel: 'low' },
+  { eventType: 'signing.typed_data_allowed', riskLevel: 'low' },
 ];
 
 @Injectable()

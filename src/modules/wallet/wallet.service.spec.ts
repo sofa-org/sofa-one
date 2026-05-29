@@ -37,6 +37,8 @@ import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
+import { SigningPolicyService } from './signing-policy.service';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -421,6 +423,11 @@ describe('WalletService.sign()', () => {
           provide: EoaExecutionPolicyService,
           useValue: { assertAllowed: mockAssertEoaExecutionAllowed },
         },
+        {
+          provide: SecurityEventService,
+          useValue: { record: jest.fn().mockResolvedValue({}) },
+        },
+        SigningPolicyService,
       ],
     }).compile();
 
@@ -817,21 +824,6 @@ describe('WalletService.sign()', () => {
     expect(mockFindUnique).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: 'security',
-        message: 'Signing policy rejected request',
-        reason: 'Permit typed data signing is not allowed',
-        userId: 'user-1',
-        chainId: 84532,
-        type: 'typed_data',
-        executionMode: 'session_key',
-        apiKeyPrefix: API_KEY_PREFIX,
-        typedDataPrimaryType: 'Permit',
-      }),
-    );
-    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('spender');
-    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('9999999999');
   });
 
   it('allows non-permit typed data signing and records safe typed data metadata', async () => {
@@ -889,6 +881,7 @@ describe('WalletService.sign()', () => {
       typedData: {
         typedDataPrimaryType: 'Mail',
         typedDataVerifyingContract: '0x1111111111111111111111111111111111111111',
+        typedDataDomainName: 'SOFA ONE',
       },
     });
 

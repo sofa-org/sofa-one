@@ -37,6 +37,7 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'withdrawal_address.added',
   'withdrawal_address.removed',
   'eoa_execution_denied',
+  'signing.policy_denied',
 ]);
 
 const NOTIFY_RISK_LEVELS = new Set(['medium', 'high', 'critical']);
@@ -148,6 +149,11 @@ export class SecurityNotificationService {
         return {
           title: 'EOA execution blocked',
           body: 'A high-privilege EOA execution request was blocked.',
+        };
+      case 'signing.policy_denied':
+        return {
+          title: 'Signing request blocked by policy',
+          body: 'A signing request was blocked by SOFA ONE safety policy.',
         };
       case 'login.new_ip':
         return {
