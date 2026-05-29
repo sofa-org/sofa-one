@@ -67,7 +67,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - User authenticates via Openfort IAM → `User` row is created or reused.
 - Wallet provisioning creates `UserWallet` tied 1:1 to `User` with `openfortAccountId`, `walletAddress`, `chainId`, and `status`.
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, IP allowlist, and optional freeze state in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
-- Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, risk level, request context, and safe metadata.
+- Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, rule-based risk scoring, request context, and safe metadata.
 - User-facing dashboard alerts are stored in `SecurityNotification` when selected security events require user attention.
 - Transaction submission appends `Transaction` records with intent/hash/status/details for audit and reconciliation.
 - Agent execution authority is anchored by the Calibur on-chain key registry; no off-chain strategy ownership table is used.

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityNotificationService } from '../security-notifications/security-notification.service';
+import { SecurityRiskService } from './security-risk.service';
 
 export type SecurityEventActorType = 'user' | 'api_key' | 'system';
 export type SecurityEventRiskLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -37,6 +38,7 @@ export class SecurityEventService {
     private readonly prisma: PrismaService,
     private readonly requestContext: RequestContextService,
     @Optional() private readonly notifications?: SecurityNotificationService,
+    @Optional() private readonly riskService?: SecurityRiskService,
   ) {}
 
   async record(input: RecordSecurityEventInput, tx?: SecurityEventClient) {
@@ -46,6 +48,9 @@ export class SecurityEventService {
     }
 
     const client = (tx ?? this.prisma) as SecurityEventClient;
+    const risk = this.riskService?.score({ ...input, eventType }) ?? {
+      riskLevel: input.riskLevel ?? 'low',
+    };
     const event = await client.securityEvent.create({
       data: {
         actorType: input.actorType,
@@ -53,7 +58,7 @@ export class SecurityEventService {
         apiKeyId: input.apiKeyId ?? null,
         walletId: input.walletId ?? null,
         eventType,
-        riskLevel: input.riskLevel ?? 'low',
+        riskLevel: risk.riskLevel,
         ip: input.ip ?? null,
         userAgent: input.userAgent ?? null,
         requestId: input.requestId ?? this.requestContext.getRequestId() ?? null,

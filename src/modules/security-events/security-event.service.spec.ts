@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { SecurityEventService } from './security-event.service';
+import { SecurityRiskService } from './security-risk.service';
 
 describe('SecurityEventService', () => {
   const prisma = {
@@ -14,6 +15,7 @@ describe('SecurityEventService', () => {
   const notifications = {
     notifyForSecurityEvent: jest.fn(),
   };
+  const riskService = new SecurityRiskService();
 
   let service: SecurityEventService;
 
@@ -81,6 +83,48 @@ describe('SecurityEventService', () => {
       }),
     });
     expect(requestContext.getRequestId).not.toHaveBeenCalled();
+  });
+
+  it('uses rule-based risk scoring when no explicit risk is provided', async () => {
+    prisma.securityEvent.create.mockResolvedValue({ id: 'event-risk' });
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      undefined,
+      riskService,
+    );
+
+    await service.record({ actorType: 'api_key', eventType: 'transaction.policy_denied' });
+
+    expect(prisma.securityEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        eventType: 'transaction.policy_denied',
+        riskLevel: 'high',
+      }),
+    });
+  });
+
+  it('does not let inferred risk downgrade explicit critical events', async () => {
+    prisma.securityEvent.create.mockResolvedValue({ id: 'event-risk-explicit' });
+    service = new SecurityEventService(
+      prisma as never,
+      requestContext as never,
+      undefined,
+      riskService,
+    );
+
+    await service.record({
+      actorType: 'system',
+      eventType: 'api_key.first_used',
+      riskLevel: 'critical',
+    });
+
+    expect(prisma.securityEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        eventType: 'api_key.first_used',
+        riskLevel: 'critical',
+      }),
+    });
   });
 
   it('uses a transaction client when provided', async () => {
