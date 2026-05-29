@@ -70,6 +70,7 @@ describe('TransactionsService', () => {
   } as any;
 
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
+  const transactionSimulation = { assertSimulatable: jest.fn() } as any;
   const transactionPolicy = new TransactionPolicyService();
 
   let service: TransactionsService;
@@ -97,7 +98,14 @@ describe('TransactionsService', () => {
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
-    service = new TransactionsService(prisma, openfort, transactionPolicy, eoaExecutionPolicy);
+    transactionSimulation.assertSimulatable.mockResolvedValue(undefined);
+    service = new TransactionsService(
+      prisma,
+      openfort,
+      transactionPolicy,
+      eoaExecutionPolicy,
+      transactionSimulation,
+    );
   });
 
   afterEach(() => {
@@ -111,6 +119,15 @@ describe('TransactionsService', () => {
       accountAddress: wallet.walletAddress,
       chainId: 8453,
       keyHash: wallet.agentKeyHash,
+    });
+
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalledWith(dto, {
+      userId: 'user-1',
+      apiKeyId: 'api-key-1',
+      apiKeyPrefix,
+      chainId: 8453,
+      executionMode: 'session_key',
+      from: wallet.walletAddress,
     });
 
     expect(prisma.transaction.create).toHaveBeenCalledWith({
@@ -185,6 +202,10 @@ describe('TransactionsService', () => {
       metadata: { interactionCount: 1 },
     });
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ executionMode: 'eoa', from: wallet.agentWalletAddress }),
+    );
     expect(openfort.sendBackendTransaction).toHaveBeenCalledWith({
       accountId: wallet.agentOpenfortAccountId,
       chainId: 8453,
@@ -509,7 +530,26 @@ describe('TransactionsService', () => {
     );
 
     expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects failed transaction simulation before idempotency persistence or Openfort send', async () => {
+    transactionSimulation.assertSimulatable.mockRejectedValueOnce(
+      new BadRequestException('Transaction simulation failed. Check target contract calldata and permissions.'),
+    );
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Transaction simulation failed',
+    );
+
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalledWith(
+      dto,
+      expect.objectContaining({ from: wallet.walletAddress, executionMode: 'session_key' }),
+    );
+    expect(prisma.transaction.findFirst).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 

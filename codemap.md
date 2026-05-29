@@ -107,6 +107,7 @@ Client → POST /v1/transactions/send (X-API-Key only)
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
   → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
   → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
+  → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction before creating a new idempotency row or submitting to Openfort; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
   → OpenfortService.sendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }

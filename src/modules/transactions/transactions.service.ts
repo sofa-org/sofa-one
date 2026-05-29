@@ -18,6 +18,7 @@ import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.d
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
+import { TransactionSimulationService } from './transaction-simulation.service';
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -40,6 +41,8 @@ export class TransactionsService {
     private readonly transactionPolicy: TransactionPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
+    @Optional()
+    private readonly transactionSimulation?: TransactionSimulationService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -125,6 +128,12 @@ export class TransactionsService {
       this.logExistingTransaction(existingTransaction, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(existingTransaction);
     }
+
+    await this.assertTransactionSimulatable(userId, dto, apiKeyRecord, {
+      chainId,
+      executionMode,
+      from: transactionWalletAddress,
+    });
 
     const { tx, created } = await this.createPendingOrReturnExisting(userId, {
       apiKeyId: apiKeyRecord.id,
@@ -330,6 +339,25 @@ export class TransactionsService {
     if (wallet.status !== 'active' || !wallet.agentOpenfortAccountId || !wallet.agentWalletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
+  }
+
+  private async assertTransactionSimulatable(
+    userId: string,
+    dto: SendTransactionDto,
+    apiKeyRecord: ApiKeyTransactionContext,
+    context: { chainId: number; executionMode: ExecutionMode; from: string },
+  ): Promise<void> {
+    if (!this.transactionSimulation) {
+      throw new BadRequestException('Transaction simulation service is not available');
+    }
+    await this.transactionSimulation.assertSimulatable(dto, {
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      chainId: context.chainId,
+      executionMode: context.executionMode,
+      from: context.from,
+    });
   }
 
   /** List transactions for a user with optional filtering and pagination. */

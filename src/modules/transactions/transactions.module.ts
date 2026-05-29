@@ -4,10 +4,11 @@ import { TransactionsService } from './transactions.service';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
 import { TransactionPolicyService } from './transaction-policy.service';
+import { TransactionSimulationService } from './transaction-simulation.service';
 
 @Module({
   imports: [SecurityEventModule, EoaExecutionModule],
   controllers: [TransactionsController],
-  providers: [TransactionsService, TransactionPolicyService],
+  providers: [TransactionsService, TransactionPolicyService, TransactionSimulationService],
 })
 export class TransactionsModule {}

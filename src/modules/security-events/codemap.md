@@ -16,7 +16,7 @@ Unified security-event persistence for account, API-key, wallet, transaction pol
 - After the event is persisted, selected user-attributed events are passed to `SecurityNotificationService` to create dashboard alerts; notification failures are logged but do not fail the canonical event write.
 
 ## Integration
-- Exported by `SecurityEventModule` and imported by `AppModule`, `ApiKeyModule` for lifecycle events, public API modules that need API-key first-use/suspicious-use/freeze/frozen-user rejection telemetry, `EoaExecutionModule` for EOA allow/deny audit events, `TransactionsModule` for transaction-policy denies, and `WalletModule` for withdrawal policy/high-value/address lifecycle events.
+- Exported by `SecurityEventModule` and imported by `AppModule`, `ApiKeyModule` for lifecycle events, public API modules that need API-key first-use/suspicious-use/freeze/frozen-user rejection telemetry, `EoaExecutionModule` for EOA allow/deny audit events, `TransactionsModule` for transaction-policy denies and simulation allow/deny events, and `WalletModule` for withdrawal policy/high-value/address lifecycle events.
 - Imports `SecurityNotificationModule` so user-facing alerts can be derived from selected security events.
 - Prisma model is `SecurityEvent` mapped to `security_events`.
 - Do not store raw API keys, private keys, wallet secrets, full calldata, or full typed data in event metadata.
