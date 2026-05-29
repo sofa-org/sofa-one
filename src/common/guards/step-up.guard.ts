@@ -43,6 +43,10 @@ export class StepUpGuard implements CanActivate {
       throw new ForbiddenException('Invalid or expired step-up verification. Please verify again.');
     }
 
+    // Defense-in-depth: mark request as step-up verified so downstream services
+    // can enforce per-user step-up policies.
+    request.stepUpVerified = true;
+
     return true;
   }
 }

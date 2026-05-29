@@ -27,7 +27,7 @@ import { RequestContextService } from '../../common/request-context/request-cont
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
-import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+import type { WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
@@ -63,8 +63,7 @@ export class WalletService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
-    @Optional()
-    private readonly withdrawalPolicy?: WithdrawalPolicyService,
+    private readonly withdrawalPolicy: WithdrawalPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -102,23 +101,14 @@ export class WalletService {
   }
 
   async listWithdrawalAddresses(userId: string) {
-    if (!this.withdrawalPolicy) {
-      throw new BadRequestException('Withdrawal policy service is not available');
-    }
     return this.withdrawalPolicy.listWithdrawalAddresses(userId);
   }
 
   async addWithdrawalAddress(userId: string, dto: CreateWithdrawalAddressDto) {
-    if (!this.withdrawalPolicy) {
-      throw new BadRequestException('Withdrawal policy service is not available');
-    }
     return this.withdrawalPolicy.addWithdrawalAddress(userId, dto);
   }
 
   async removeWithdrawalAddress(userId: string, addressId: string) {
-    if (!this.withdrawalPolicy) {
-      throw new BadRequestException('Withdrawal policy service is not available');
-    }
     return this.withdrawalPolicy.removeWithdrawalAddress(userId, addressId);
   }
 
@@ -541,7 +531,7 @@ export class WalletService {
   }
 
   /** Submit a withdrawal transaction. */
-  async withdraw(userId: string, params: WithdrawDto) {
+  async withdraw(userId: string, params: WithdrawDto, options?: { stepUpVerified?: boolean }) {
     const chainId = params.chainId;
     const supportedChain = getSupportedChain(chainId);
     const wallet = await this.prisma.userWallet.findUnique({
@@ -575,6 +565,7 @@ export class WalletService {
       chainId,
       walletId: wallet.id,
       walletAddress: wallet.walletAddress,
+      stepUpVerified: options?.stepUpVerified,
     });
 
     const usdcAddressHex = supportedChain.usdcAddress;
@@ -703,35 +694,9 @@ export class WalletService {
 
   private async assertWithdrawalPolicy(
     params: WithdrawDto,
-    context: { userId: string; chainId: number; walletId?: string; walletAddress?: string },
+    context: { userId: string; chainId: number; walletId?: string; walletAddress?: string; stepUpVerified?: boolean },
   ): Promise<void> {
-    if (this.withdrawalPolicy) {
-      await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context);
-      return;
-    }
-
-    const amount = BigInt(params.amount);
-    if (amount > USDC_MAX_AMOUNT) {
-      this.logSecurityWarning({
-        message: 'Withdrawal policy rejected request',
-        reason: 'Withdrawal amount exceeds single-withdrawal limit',
-        ...context,
-        token: params.token,
-        amountUnits: params.amount,
-        maxAmountUnits: USDC_MAX_AMOUNT.toString(),
-      });
-      throw new BadRequestException('Withdrawal amount exceeds single-withdrawal limit');
-    }
-
-    if (amount >= USDC_HIGH_VALUE_AMOUNT) {
-      this.logSecurityWarning({
-        message: 'High-value withdrawal requested',
-        ...context,
-        token: params.token,
-        amountUnits: params.amount,
-        thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
-      });
-    }
+    await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context);
   }
 
   private async createPendingWithdrawalOrReturnExisting(

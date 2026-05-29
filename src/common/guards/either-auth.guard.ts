@@ -11,7 +11,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
-import { isIpAllowed } from '../utils/ip-cidr';
+import { IpAllowlistService } from './ip-allowlist.service';
 
 const MAX_USER_AGENT_LENGTH = 255;
 
@@ -30,6 +30,7 @@ export class EitherAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    private readonly ipAllowlist: IpAllowlistService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -124,19 +125,15 @@ export class EitherAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    if (keyRecord.allowedIps.length > 0) {
-      if (!isIpAllowed(clientIp, keyRecord.allowedIps)) {
-        this.logApiKeyAuthenticationFailure('ip_allowlist_rejected', {
-          apiKeyId: keyRecord.id,
-          apiKeyPrefix: keyRecord.keyPrefix,
-          userId: keyRecord.user?.id,
-          clientIp,
-          userAgent,
-          allowedIpCount: keyRecord.allowedIps.length,
-        });
-        throw new UnauthorizedException('IP address not allowed for this API key');
-      }
-    }
+    await this.ipAllowlist.assertIpAllowed(clientIp, keyRecord.allowedIps, {
+      actorType: 'api_key',
+      apiKeyId: keyRecord.id,
+      apiKeyPrefix: keyRecord.keyPrefix,
+      userId: keyRecord.user?.id,
+      clientIp,
+      userAgent,
+      allowedIpCount: keyRecord.allowedIps.length,
+    });
 
     request.user = keyRecord.user;
     request.apiKeyRecord = keyRecord;

@@ -30,6 +30,7 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'api_key.first_used',
   'api_key.suspicious_use',
   'api_key_frozen',
+  'api_key.ip_rejected',
   'login.new_ip',
   'transaction.policy_denied',
   'withdrawal.policy_denied',
@@ -164,6 +165,11 @@ export class SecurityNotificationService {
         return {
           title: 'Failed login attempt',
           body: 'An unsuccessful login attempt was detected on your account.',
+        };
+      case 'api_key.ip_rejected':
+        return {
+          title: 'API key blocked by IP allowlist',
+          body: 'An API key request was blocked because the IP address is not in the allowlist.',
         };
       default:
         return {

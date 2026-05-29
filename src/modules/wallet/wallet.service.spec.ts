@@ -427,6 +427,10 @@ describe('WalletService.sign()', () => {
           provide: SecurityEventService,
           useValue: { record: jest.fn().mockResolvedValue({}) },
         },
+        {
+          provide: WithdrawalPolicyService,
+          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
+        },
         SigningPolicyService,
       ],
     }).compile();
@@ -962,6 +966,10 @@ describe('WalletService.getBalances()', () => {
           provide: OpenfortService,
           useValue: {},
         },
+        {
+          provide: WithdrawalPolicyService,
+          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -1035,6 +1043,10 @@ describe('WalletService.getDepositInfo()', () => {
         {
           provide: OpenfortService,
           useValue: {},
+        },
+        {
+          provide: WithdrawalPolicyService,
+          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
         },
       ],
     }).compile();

@@ -39,6 +39,7 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'signing.policy_denied', riskLevel: 'high' },
   { eventType: 'signing.message_allowed', riskLevel: 'low' },
   { eventType: 'signing.typed_data_allowed', riskLevel: 'low' },
+  { eventType: 'api_key.ip_rejected', riskLevel: 'high' },
 ];
 
 @Injectable()

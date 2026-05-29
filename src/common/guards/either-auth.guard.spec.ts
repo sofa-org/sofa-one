@@ -1,4 +1,4 @@
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { EitherAuthGuard } from './either-auth.guard';
@@ -42,13 +42,22 @@ describe('EitherAuthGuard API key authentication', () => {
       },
     };
 
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockImplementation(async (_clientIp: string, allowedIps: string[]) => {
+        if (allowedIps.length > 0) {
+          throw new ForbiddenException('IP address not allowed for this API key');
+        }
+      }),
+    };
+
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       { verifyIamSession: jest.fn() } as any,
+      ipAllowlist as any,
     );
 
-    return { guard, prisma };
+    return { guard, prisma, ipAllowlist };
   }
 
   beforeEach(() => {
@@ -99,10 +108,14 @@ describe('EitherAuthGuard API key authentication', () => {
         email: 'user@example.com',
       }),
     };
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockResolvedValue(undefined),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
+      ipAllowlist as any,
     );
     const request: any = {
       headers: { authorization: 'Bearer bearer-token' },
@@ -144,10 +157,14 @@ describe('EitherAuthGuard API key authentication', () => {
         email: 'user2@example.com',
       }),
     };
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockResolvedValue(undefined),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
+      ipAllowlist as any,
     );
     const request: any = {
       headers: { authorization: 'Bearer bearer-token', 'x-api-key': 'sk_test_123' },
@@ -178,10 +195,14 @@ describe('EitherAuthGuard API key authentication', () => {
     const openfort = {
       verifyIamSession: jest.fn(),
     };
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockResolvedValue(undefined),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
+      ipAllowlist as any,
     );
     const request: any = {
       headers: { 'x-api-key': 'sk_test_456' },
@@ -396,7 +417,7 @@ describe('EitherAuthGuard API key authentication', () => {
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
   });
 
-  it('logs a security warning when IP allowlist rejects a verified API key', async () => {
+  it('rejects a verified API key outside its IP allowlist with ForbiddenException', async () => {
     const keyRecord = {
       id: 'key-1',
       keyPrefix: longPrefix,
@@ -404,7 +425,7 @@ describe('EitherAuthGuard API key authentication', () => {
       allowedIps: ['198.51.100.0/24'],
       user: { id: 'user-1' },
     };
-    const { guard, prisma } = createGuard([keyRecord]);
+    const { guard, prisma, ipAllowlist } = createGuard([keyRecord]);
     jest.mocked(argon2.verify).mockResolvedValue(true as never);
 
     await expect(
@@ -414,13 +435,13 @@ describe('EitherAuthGuard API key authentication', () => {
           userAgent: 'blocked-client/1.0',
         }),
       ),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrow(ForbiddenException);
 
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
+    expect(ipAllowlist.assertIpAllowed).toHaveBeenCalledWith(
+      '203.0.113.10',
+      ['198.51.100.0/24'],
       expect.objectContaining({
-        event: 'security',
-        message: 'API key authentication rejected',
-        reason: 'ip_allowlist_rejected',
+        actorType: 'api_key',
         apiKeyId: 'key-1',
         apiKeyPrefix: longPrefix,
         userId: 'user-1',
@@ -430,8 +451,5 @@ describe('EitherAuthGuard API key authentication', () => {
       }),
     );
     expect(prisma.apiKey.update).not.toHaveBeenCalled();
-    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(rawKey);
-    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('hash-1');
-    expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain('198.51.100.0/24');
   });
 });

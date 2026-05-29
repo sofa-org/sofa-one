@@ -22,6 +22,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
@@ -34,6 +35,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "helmet": "^7.0.0",
+    "ioredis": "^5.11.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
     "viem": "^2.48.1"

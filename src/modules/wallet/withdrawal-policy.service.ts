@@ -136,7 +136,7 @@ export class WithdrawalPolicyService {
   async assertWithdrawalAllowed(
     userId: string,
     params: WithdrawDto,
-    context: { chainId: number; walletId?: string; walletAddress?: string },
+    context: { chainId: number; walletId?: string; walletAddress?: string; stepUpVerified?: boolean },
   ): Promise<void> {
     const policy = await this.getPolicy(userId);
     const amount = this.parseAmount(params.amount);
@@ -145,6 +145,17 @@ export class WithdrawalPolicyService {
       USDC_MAX_AMOUNT,
       'singleWithdrawalLimit',
     );
+
+    // Defense-in-depth: if the user's policy requires step-up, verify it was performed.
+    // The controller enforces @RequireStepUp() on the withdraw route, but this check
+    // ensures the policy is enforced even if the route decorator is removed or bypassed.
+    if (policy?.requireStepUp && !context.stepUpVerified) {
+      await this.reject('Withdrawal requires step-up verification', {
+        ...context,
+        userId,
+        policyId: policy.id,
+      });
+    }
 
     if (amount > singleLimit) {
       await this.reject('Withdrawal amount exceeds single-withdrawal limit', {

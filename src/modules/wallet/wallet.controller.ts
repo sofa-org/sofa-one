@@ -107,7 +107,7 @@ export class WalletController {
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
   @RequireStepUp()
   @Throttle({ short: { limit: 3, ttl: 60000 }, medium: { limit: 10, ttl: 3600000 } })
-  async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto) {
-    return this.walletService.withdraw(userId, dto);
+  async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto, @Req() req: any) {
+    return this.walletService.withdraw(userId, dto, { stepUpVerified: req.stepUpVerified === true });
   }
 }

@@ -84,4 +84,12 @@ describe('SecurityRiskService', () => {
       reasons: ['event:login.failed'],
     });
   });
+
+  it('scores api_key.ip_rejected as high risk', () => {
+    expect(service.score({ actorType: 'api_key', eventType: 'api_key.ip_rejected' })).toEqual({
+      riskLevel: 'high',
+      score: 70,
+      reasons: ['event:api_key.ip_rejected'],
+    });
+  });
 });

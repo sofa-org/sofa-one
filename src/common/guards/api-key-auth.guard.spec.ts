@@ -41,13 +41,21 @@ describe('ApiKeyAuthGuard', () => {
     const securityEvents = {
       record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
     };
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockImplementation(async (_clientIp: string, allowedIps: string[]) => {
+        if (allowedIps.length > 0) {
+          throw new ForbiddenException('IP address not allowed for this API key');
+        }
+      }),
+    };
     const guard = new ApiKeyAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       securityEvents as any,
+      ipAllowlist as any,
     );
 
-    return { guard, prisma, securityEvents };
+    return { guard, prisma, securityEvents, ipAllowlist };
   }
 
   beforeEach(() => {

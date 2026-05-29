@@ -83,7 +83,7 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
     ).rejects.toThrow('Withdrawal amount exceeds single-withdrawal limit');
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
@@ -122,7 +122,7 @@ describe('WithdrawalPolicyService', () => {
     ]);
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
     ).rejects.toThrow('Withdrawal amount exceeds daily withdrawal limit');
 
     expect(mockTransactionFindMany).toHaveBeenCalledWith(
@@ -149,7 +149,7 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
     ).rejects.toThrow('Withdrawal address is not allowlisted');
 
     expect(mockWithdrawalAddressFindUnique).toHaveBeenCalledWith({
@@ -172,7 +172,7 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
     ).rejects.toThrow('Withdrawal address is still in cooldown');
   });
 
@@ -194,7 +194,7 @@ describe('WithdrawalPolicyService', () => {
       service.assertWithdrawalAllowed(
         'user-1',
         { ...VALID_DTO, amount: '1000000000' },
-        { chainId: VALID_DTO.chainId },
+        { chainId: VALID_DTO.chainId, stepUpVerified: true },
       ),
     ).resolves.toBeUndefined();
 
@@ -229,7 +229,7 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -344,5 +344,69 @@ describe('WithdrawalPolicyService', () => {
     await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).rejects.toThrow(
       'Withdrawal address not found',
     );
+  });
+
+  it('rejects withdrawals when requireStepUp is true and step-up was not verified', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000000',
+      dailyWithdrawalLimit: null,
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+    ).rejects.toThrow('Withdrawal requires step-up verification');
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        eventType: 'withdrawal.policy_denied',
+        userId: 'user-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'Withdrawal requires step-up verification',
+      }),
+    );
+  });
+
+  it('allows withdrawals when requireStepUp is true and step-up was verified', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000000',
+      dailyWithdrawalLimit: null,
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('allows withdrawals when requireStepUp is false regardless of step-up verification', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000000',
+      dailyWithdrawalLimit: null,
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: false,
+    });
+
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('allows withdrawals when no policy exists (requireStepUp defaults to false)', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId }),
+    ).resolves.toBeUndefined();
   });
 });
