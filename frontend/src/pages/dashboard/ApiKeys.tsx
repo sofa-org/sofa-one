@@ -137,6 +137,10 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
+  const [newKeyAllowedContracts, setNewKeyAllowedContracts] = useState('');
+  const [newKeyAllowedSelectors, setNewKeyAllowedSelectors] = useState('');
+  const [newKeyDailySpendLimit, setNewKeyDailySpendLimit] = useState('');
+  const [newKeyMonthlySpendLimit, setNewKeyMonthlySpendLimit] = useState('');
   const [newKeyPermissions, setNewKeyPermissions] = useState({
     canSign: false,
     canSendTransaction: false,
@@ -243,6 +247,20 @@ export default function ApiKeysPage() {
       .map((value) => value.trim())
       .filter(Boolean);
 
+    const allowedContracts = newKeyAllowedContracts
+      .split(/[\s,]+/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const allowedFunctionSelectors = newKeyAllowedSelectors
+      .split(/[\s,]+/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const spendLimits: { daily?: string; monthly?: string } = {};
+    if (newKeyDailySpendLimit.trim()) spendLimits.daily = newKeyDailySpendLimit.trim();
+    if (newKeyMonthlySpendLimit.trim()) spendLimits.monthly = newKeyMonthlySpendLimit.trim();
+
     setActionLoading(true);
     setActionError(null);
     try {
@@ -252,6 +270,9 @@ export default function ApiKeysPage() {
         {
           name: trimmedName,
           ...(allowedIps.length > 0 ? { allowedIps } : {}),
+          ...(allowedContracts.length > 0 ? { allowedContracts } : {}),
+          ...(allowedFunctionSelectors.length > 0 ? { allowedFunctionSelectors } : {}),
+          ...(Object.keys(spendLimits).length > 0 ? { spendLimits } : {}),
           permissions: newKeyPermissions,
         },
         stepUpToken,
@@ -260,6 +281,10 @@ export default function ApiKeysPage() {
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
       setNewKeyAllowedIps('');
+      setNewKeyAllowedContracts('');
+      setNewKeyAllowedSelectors('');
+      setNewKeyDailySpendLimit('');
+      setNewKeyMonthlySpendLimit('');
       setNewKeyPermissions({
         canSign: false,
         canSendTransaction: false,
@@ -444,6 +469,68 @@ export default function ApiKeysPage() {
             <p className="text-xs leading-5 text-brand-muted">
               Restrict this key to trusted backend egress IPs. Leave blank only for local development or rotating IP environments.
             </p>
+          </div>
+          <div className="space-y-2 lg:flex-1">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+              Contract allowlist <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder="0x1234…, 0x5678…"
+              value={newKeyAllowedContracts}
+              onChange={(e) => setNewKeyAllowedContracts(e.target.value)}
+              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
+            />
+            <p className="text-xs leading-5 text-brand-muted">
+              Restrict transactions and signing to these contract addresses. Leave blank to allow all.
+            </p>
+          </div>
+          <div className="space-y-2 lg:flex-1">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+              Function selectors <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder="0xa9059cbb, 0x095ea7b3"
+              value={newKeyAllowedSelectors}
+              onChange={(e) => setNewKeyAllowedSelectors(e.target.value)}
+              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
+            />
+            <p className="text-xs leading-5 text-brand-muted">
+              Restrict transactions to these 4-byte function selectors. Leave blank to allow all.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+                Daily spend limit (wei) <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 1000000000000000000 (1 ETH)"
+                value={newKeyDailySpendLimit}
+                onChange={(e) => setNewKeyDailySpendLimit(e.target.value)}
+                className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
+              />
+              <p className="text-xs leading-5 text-brand-muted">
+                Max total native-token value per transaction, in wei. Leave blank for no limit.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+                Monthly spend limit (wei) <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 30000000000000000000 (30 ETH)"
+                value={newKeyMonthlySpendLimit}
+                onChange={(e) => setNewKeyMonthlySpendLimit(e.target.value)}
+                className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
+              />
+              <p className="text-xs leading-5 text-brand-muted">
+                Max total native-token value per transaction, in wei. Leave blank for no limit.
+              </p>
+            </div>
           </div>
           <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
             <div>
@@ -658,6 +745,38 @@ export default function ApiKeysPage() {
                       !key.permissions.canSendTransaction &&
                       !key.permissions.canUseEoaExecution && <span>none</span>}
                   </span>
+                  {(key.allowedContracts.length > 0 || key.allowedFunctionSelectors.length > 0) && (
+                    <span className="mt-1 flex flex-wrap gap-1 text-[10px] text-brand-muted">
+                      {key.allowedContracts.length > 0 && (
+                        <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={key.allowedContracts.join(', ')}>
+                          {key.allowedContracts.length} contract{key.allowedContracts.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {key.allowedFunctionSelectors.length > 0 && (
+                        <span className="rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={key.allowedFunctionSelectors.join(', ')}>
+                          {key.allowedFunctionSelectors.length} selector{key.allowedFunctionSelectors.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {(key.dailySpendLimit || key.monthlySpendLimit) && (
+                    <span className="mt-1 flex flex-wrap gap-1 text-[10px] text-brand-muted">
+                      {key.dailySpendLimit && (
+                        <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                          Daily: {BigInt(key.dailySpendLimit) >= 1_000_000_000_000_000_000n
+                            ? `${(Number(BigInt(key.dailySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
+                            : `${Number(key.dailySpendLimit).toLocaleString()} wei`}
+                        </span>
+                      )}
+                      {key.monthlySpendLimit && (
+                        <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                          Monthly: {BigInt(key.monthlySpendLimit) >= 1_000_000_000_000_000_000n
+                            ? `${(Number(BigInt(key.monthlySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
+                            : `${Number(key.monthlySpendLimit).toLocaleString()} wei`}
+                        </span>
+                      )}
+                    </span>
+                  )}
                   <span className={`text-xs ${lastUsed.tone}`}>
                     <span className="font-semibold text-brand-text md:hidden">Last used: </span>
                     <span className="font-semibold">{lastUsed.label}</span>

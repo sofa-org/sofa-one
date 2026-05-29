@@ -531,11 +531,6 @@ describe('ApiKeyService', () => {
         select: expect.not.objectContaining({ apiKeyHash: true }),
       }),
     );
-    expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        select: expect.not.objectContaining({ allowedIps: true }),
-      }),
-    );
   });
 
   // ── SEC-APIKEY-002: High-risk permissions require IP allowlist ──

@@ -169,6 +169,10 @@ export interface ApiKeyRecord {
   lastUsedIp: string | null;
   lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
+  allowedContracts: string[];
+  allowedFunctionSelectors: string[];
+  dailySpendLimit: string | null;
+  monthlySpendLimit: string | null;
 }
 
 export interface ApiKeyPermissions {
@@ -188,9 +192,17 @@ export interface CreateApiKeyResponse {
   permissions: ApiKeyPermissions;
 }
 
+export interface ApiKeySpendLimits {
+  daily?: string;
+  monthly?: string;
+}
+
 export interface CreateApiKeyRequest {
   name: string;
   allowedIps?: string[];
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  spendLimits?: ApiKeySpendLimits;
   permissions?: Partial<ApiKeyPermissions>;
 }
 

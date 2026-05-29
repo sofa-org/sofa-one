@@ -187,4 +187,146 @@ describe('TransactionPolicyService', () => {
       ),
     ).rejects.toThrow('NFT operator approvals are not allowed');
   });
+
+  // ── Contract allowlist ──────────────────────────────────────────────
+
+  it('allows interactions targeting allowed contracts when allowlist is set', async () => {
+    const allowedContext = {
+      ...context,
+      allowedContracts: ['0x1111111111111111111111111111111111111111'],
+    };
+    await expect(service.assertAllowed(baseDto, allowedContext)).resolves.toBeUndefined();
+  });
+
+  it('rejects interactions targeting a contract not in the allowlist', async () => {
+    const allowedContext = {
+      ...context,
+      allowedContracts: ['0x2222222222222222222222222222222222222222'],
+    };
+    await expect(service.assertAllowed(baseDto, allowedContext)).rejects.toThrow(
+      'targets a contract not allowed by this API key',
+    );
+  });
+
+  it('contract allowlist is case-insensitive', async () => {
+    const allowedContext = {
+      ...context,
+      allowedContracts: ['0x1111111111111111111111111111111111111111'.toUpperCase()],
+    };
+    await expect(service.assertAllowed(baseDto, allowedContext)).resolves.toBeUndefined();
+  });
+
+  it('skips contract allowlist check when allowedContracts is empty', async () => {
+    const allowedContext = { ...context, allowedContracts: [] };
+    await expect(service.assertAllowed(baseDto, allowedContext)).resolves.toBeUndefined();
+  });
+
+  it('skips contract allowlist check when allowedContracts is undefined', async () => {
+    const allowedContext = { ...context };
+    await expect(service.assertAllowed(baseDto, allowedContext)).resolves.toBeUndefined();
+  });
+
+  // ── Function selector allowlist ──────────────────────────────────────
+
+  it('allows interactions with allowed function selectors when allowlist is set', async () => {
+    const selectorContext = {
+      ...context,
+      allowedFunctionSelectors: ['0xa9059cbb'],
+    };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+    };
+    await expect(service.assertAllowed(dto, selectorContext)).resolves.toBeUndefined();
+  });
+
+  it('rejects interactions with a function selector not in the allowlist', async () => {
+    const selectorContext = {
+      ...context,
+      allowedFunctionSelectors: ['0x12345678'],
+    };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+    };
+    await expect(service.assertAllowed(dto, selectorContext)).rejects.toThrow(
+      'uses a function selector not allowed by this API key',
+    );
+  });
+
+  it('function selector allowlist is case-insensitive', async () => {
+    const selectorContext = {
+      ...context,
+      allowedFunctionSelectors: ['0xA9059CBB'],
+    };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+    };
+    await expect(service.assertAllowed(dto, selectorContext)).resolves.toBeUndefined();
+  });
+
+  it('rejects selectorless calldata when selector allowlist is set', async () => {
+    const selectorContext = {
+      ...context,
+      allowedFunctionSelectors: ['0xa9059cbb'],
+    };
+    await expect(service.assertAllowed(baseDto, selectorContext)).rejects.toThrow(
+      'uses a function selector not allowed by this API key',
+    );
+  });
+
+  // ── Spend limits ────────────────────────────────────────────────────
+
+  it('allows transactions within daily spend limit', async () => {
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '500000000000000000' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'Native value transfers are not allowed',
+    );
+  });
+
+  it('rejects transactions exceeding daily spend limit', async () => {
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'exceeds daily spend limit',
+    );
+  });
+
+  it('rejects transactions exceeding monthly spend limit', async () => {
+    const spendContext = { ...context, monthlySpendLimit: '1000000000000000000' }; // 1 ETH
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'exceeds monthly spend limit',
+    );
+  });
+
+  it('sums values across multiple interactions for spend limit check', async () => {
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [
+        { ...baseDto.interactions[0], value: '600000000000000000' },
+        { ...baseDto.interactions[0], value: '500000000000000000' },
+      ],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'exceeds daily spend limit',
+    );
+  });
+
+  it('skips spend limit check when limits are null/undefined', async () => {
+    const spendContext = { ...context, dailySpendLimit: null, monthlySpendLimit: undefined };
+    await expect(service.assertAllowed(baseDto, spendContext)).resolves.toBeUndefined();
+  });
 });

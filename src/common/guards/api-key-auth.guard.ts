@@ -30,6 +30,10 @@ type ApiKeyAuthRecord = {
   canSign?: boolean;
   canSendTransaction?: boolean;
   canUseEoaExecution?: boolean;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  dailySpendLimit?: string | null;
+  monthlySpendLimit?: string | null;
   user?: { id?: string | null; frozenAt?: Date | string | null; frozenReason?: string | null } | null;
 };
 

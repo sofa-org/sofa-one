@@ -51,6 +51,8 @@ type ApiKeySigningContext = {
   expiresAt?: Date | string | null;
   canSign?: boolean;
   canUseEoaExecution?: boolean;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
 };
 
 @Injectable()
@@ -140,6 +142,8 @@ export class WalletService {
       executionMode,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedContracts: apiKeyRecord.allowedContracts,
+      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
     };
 
     if (executionMode === 'eoa') {

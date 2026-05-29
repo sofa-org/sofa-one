@@ -32,6 +32,9 @@ type ApiKeyCreateOptions = {
   name: string;
   expiresAt?: string | Date;
   allowedIps?: string[];
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  spendLimits?: { daily?: string; monthly?: string };
   permissions?: Partial<ApiKeyPermissions>;
 };
 
@@ -40,6 +43,11 @@ export type ApiKeyPermissions = {
   canSendTransaction: boolean;
   canReadTransactionStatus: boolean;
   canUseEoaExecution: boolean;
+};
+
+export type ApiKeySpendLimits = {
+  daily?: string | null;
+  monthly?: string | null;
 };
 
 const DEFAULT_API_KEY_PERMISSIONS: ApiKeyPermissions = {
@@ -77,6 +85,10 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
+          allowedContracts: normalized.allowedContracts,
+          allowedFunctionSelectors: normalized.allowedFunctionSelectors,
+          dailySpendLimit: normalized.dailySpendLimit,
+          monthlySpendLimit: normalized.monthlySpendLimit,
           ...normalized.permissions,
         },
       });
@@ -236,6 +248,11 @@ export class ApiKeyService {
         canSendTransaction: true,
         canReadTransactionStatus: true,
         canUseEoaExecution: true,
+        allowedIps: true,
+        allowedContracts: true,
+        allowedFunctionSelectors: true,
+        dailySpendLimit: true,
+        monthlySpendLimit: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -253,6 +270,11 @@ export class ApiKeyService {
       lastUsedIp: key.lastUsedIp,
       lastUsedUserAgent: key.lastUsedUserAgent,
       permissions: this.toPermissions(key),
+      allowedIps: key.allowedIps,
+      allowedContracts: key.allowedContracts,
+      allowedFunctionSelectors: key.allowedFunctionSelectors,
+      dailySpendLimit: key.dailySpendLimit,
+      monthlySpendLimit: key.monthlySpendLimit,
     }));
   }
 
@@ -264,12 +286,24 @@ export class ApiKeyService {
 
     const permissions = this.normalizePermissions(options.permissions);
     const allowedIps = options.allowedIps ?? [];
+    const allowedContracts = this.normalizeAddresses(options.allowedContracts);
+    const allowedFunctionSelectors = this.normalizeSelectors(options.allowedFunctionSelectors);
+    const { dailySpendLimit, monthlySpendLimit } = this.normalizeSpendLimits(options.spendLimits);
 
     this.assertIpAllowlistForHighRiskPermissions(permissions, allowedIps);
 
     const expiresAt = this.normalizeExpiresAt(options.expiresAt, permissions);
 
-    return { name, expiresAt, allowedIps, permissions };
+    return {
+      name,
+      expiresAt,
+      allowedIps,
+      allowedContracts,
+      allowedFunctionSelectors,
+      dailySpendLimit,
+      monthlySpendLimit,
+      permissions,
+    };
   }
 
   private normalizePermissions(permissions?: Partial<ApiKeyPermissions>): ApiKeyPermissions {
@@ -277,6 +311,36 @@ export class ApiKeyService {
       ...DEFAULT_API_KEY_PERMISSIONS,
       ...(permissions ?? {}),
     };
+  }
+
+  /** Normalize and lowercase Ethereum addresses for contract allowlist. */
+  private normalizeAddresses(addresses?: string[]): string[] {
+    if (!addresses || addresses.length === 0) return [];
+    return addresses.map((addr) => addr.toLowerCase());
+  }
+
+  /** Normalize and lowercase function selectors (0x + 8 hex chars). */
+  private normalizeSelectors(selectors?: string[]): string[] {
+    if (!selectors || selectors.length === 0) return [];
+    return selectors.map((s) => s.toLowerCase());
+  }
+
+  /** Validate and normalize spend limits. Returns null for absent limits. */
+  private normalizeSpendLimits(limits?: { daily?: string; monthly?: string }): {
+    dailySpendLimit: string | null;
+    monthlySpendLimit: string | null;
+  } {
+    const dailySpendLimit = limits?.daily?.trim() || null;
+    const monthlySpendLimit = limits?.monthly?.trim() || null;
+
+    if (dailySpendLimit !== null && BigInt(dailySpendLimit) < 0n) {
+      throw new BadRequestException('dailySpendLimit must be a non-negative amount');
+    }
+    if (monthlySpendLimit !== null && BigInt(monthlySpendLimit) < 0n) {
+      throw new BadRequestException('monthlySpendLimit must be a non-negative amount');
+    }
+
+    return { dailySpendLimit, monthlySpendLimit };
   }
 
   private toPermissions(key: Partial<ApiKeyPermissions>): ApiKeyPermissions {

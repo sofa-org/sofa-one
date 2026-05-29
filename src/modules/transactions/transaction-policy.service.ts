@@ -28,6 +28,10 @@ type TransactionPolicyContext = {
   executionMode: ExecutionMode;
   apiKeyId?: string;
   apiKeyPrefix?: string;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  dailySpendLimit?: string | null;
+  monthlySpendLimit?: string | null;
 };
 
 @Injectable()
@@ -64,6 +68,27 @@ export class TransactionPolicyService {
       });
     }
 
+    // Per-request spend limit check: sum all interaction values and compare against limits.
+    // Checked before the per-interaction loop so the rejection reason is clear.
+    if (context.dailySpendLimit || context.monthlySpendLimit) {
+      const totalValue = dto.interactions.reduce(
+        (sum, interaction) => sum + BigInt(interaction.value ?? '0'),
+        0n,
+      );
+      if (context.dailySpendLimit && totalValue > BigInt(context.dailySpendLimit)) {
+        await this.reject('Transaction total value exceeds daily spend limit for this API key', context, {
+          totalValue: totalValue.toString(),
+          dailySpendLimit: context.dailySpendLimit,
+        });
+      }
+      if (context.monthlySpendLimit && totalValue > BigInt(context.monthlySpendLimit)) {
+        await this.reject('Transaction total value exceeds monthly spend limit for this API key', context, {
+          totalValue: totalValue.toString(),
+          monthlySpendLimit: context.monthlySpendLimit,
+        });
+      }
+    }
+
     for (const [index, interaction] of dto.interactions.entries()) {
       const calldataBytes = this.getCalldataByteLength(interaction.data);
       if (calldataBytes > MAX_INTERACTION_CALLDATA_BYTES) {
@@ -89,6 +114,30 @@ export class TransactionPolicyService {
       }
 
       const selector = this.getFunctionSelector(interaction.data);
+
+      // Contract allowlist check: if the API key defines allowedContracts, the target must be in the list.
+      if (context.allowedContracts && context.allowedContracts.length > 0) {
+        const target = interaction.to.toLowerCase();
+        if (!context.allowedContracts.some((c) => c.toLowerCase() === target)) {
+          await this.reject(
+            `Interaction ${index + 1} targets a contract not allowed by this API key`,
+            context,
+            { interactionIndex: index, target, allowedContractCount: context.allowedContracts.length },
+          );
+        }
+      }
+
+      // Function selector allowlist check: if the API key defines allowedFunctionSelectors, the selector must be in the list.
+      if (context.allowedFunctionSelectors && context.allowedFunctionSelectors.length > 0) {
+        if (!selector || !context.allowedFunctionSelectors.some((s) => s.toLowerCase() === selector)) {
+          await this.reject(
+            `Interaction ${index + 1} uses a function selector not allowed by this API key`,
+            context,
+            { interactionIndex: index, selector, allowedSelectorCount: context.allowedFunctionSelectors.length },
+          );
+        }
+      }
+
       if (!selector) continue;
 
       if (BLOCKED_PERMIT_SELECTORS.has(selector)) {

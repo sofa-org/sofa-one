@@ -28,6 +28,8 @@ export type SigningPolicyContext = {
   executionMode: 'session_key' | 'eoa';
   apiKeyId?: string;
   apiKeyPrefix?: string;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
 };
 
 @Injectable()
@@ -154,6 +156,33 @@ export class SigningPolicyService {
           domainNameLength: domainName.length,
         },
       );
+    }
+
+    // Contract allowlist: if the API key defines allowedContracts, the
+    // verifyingContract must be in the list.
+    if (context.allowedContracts && context.allowedContracts.length > 0) {
+      if (typeof verifyingContract !== 'string') {
+        await this.reject(
+          'typedData.domain.verifyingContract is required when API key allowed contracts are configured',
+          context,
+          {
+            typedDataPrimaryType: primaryType,
+            allowedContractCount: context.allowedContracts.length,
+          },
+        );
+      }
+      const normalizedContract = (verifyingContract as string).toLowerCase();
+      if (!context.allowedContracts.some((c) => c.toLowerCase() === normalizedContract)) {
+        await this.reject(
+          'typedData.domain.verifyingContract is not in the API key allowed contracts',
+          context,
+          {
+            typedDataPrimaryType: primaryType,
+            verifyingContract: normalizedContract,
+            allowedContractCount: context.allowedContracts.length,
+          },
+        );
+      }
     }
 
     const result: SigningPolicyResult = {

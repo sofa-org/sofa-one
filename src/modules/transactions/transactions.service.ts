@@ -29,6 +29,10 @@ type ApiKeyTransactionContext = {
   canSendTransaction?: boolean;
   canReadTransactionStatus?: boolean;
   canUseEoaExecution?: boolean;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  dailySpendLimit?: string | null;
+  monthlySpendLimit?: string | null;
 };
 
 @Injectable()
@@ -85,6 +89,10 @@ export class TransactionsService {
       executionMode,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedContracts: apiKeyRecord.allowedContracts,
+      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
+      dailySpendLimit: apiKeyRecord.dailySpendLimit,
+      monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },

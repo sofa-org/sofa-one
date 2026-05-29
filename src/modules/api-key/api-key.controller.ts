@@ -25,6 +25,9 @@ export class ApiKeyController {
       name: dto.name,
       expiresAt: dto.expiresAt,
       allowedIps: dto.allowedIps,
+      allowedContracts: dto.allowedContracts,
+      allowedFunctionSelectors: dto.allowedFunctionSelectors,
+      spendLimits: dto.spendLimits,
       permissions: dto.permissions,
     });
   }

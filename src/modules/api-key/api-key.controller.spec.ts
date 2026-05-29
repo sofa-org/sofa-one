@@ -48,6 +48,9 @@ describe('ApiKeyController', () => {
       name: 'My Key',
       expiresAt: undefined,
       allowedIps: undefined,
+      allowedContracts: undefined,
+      allowedFunctionSelectors: undefined,
+      spendLimits: undefined,
       permissions: undefined,
     });
   });
@@ -64,6 +67,26 @@ describe('ApiKeyController', () => {
       'user-1',
       expect.objectContaining({
         permissions: { canSign: true, canReadTransactionStatus: true },
+      }),
+    );
+  });
+
+  it('passes restriction fields to apiKeyService.createApiKey', async () => {
+    apiKeyService.createApiKey.mockResolvedValue({ rawKey: 'sk_test' });
+
+    await controller.create('user-1', {
+      name: 'Restricted',
+      allowedContracts: ['0x1111111111111111111111111111111111111111'],
+      allowedFunctionSelectors: ['0xa9059cbb'],
+      spendLimits: { daily: '1000', monthly: '5000' },
+    } as any);
+
+    expect(apiKeyService.createApiKey).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        allowedContracts: ['0x1111111111111111111111111111111111111111'],
+        allowedFunctionSelectors: ['0xa9059cbb'],
+        spendLimits: { daily: '1000', monthly: '5000' },
       }),
     );
   });
