@@ -1,8 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { ApiKeyThrottlerGuard } from './common/guards/api-key-throttler.guard';
+import { AppThrottlerModule } from './common/throttler/throttler.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { PrismaModule } from './core/database/prisma.module';
@@ -25,10 +25,7 @@ import { RequestContextModule } from './common/request-context/request-context.m
       load: [configuration],
       validate,
     }),
-    ThrottlerModule.forRoot([
-      { name: 'short', ttl: 10000, limit: 20 },
-      { name: 'medium', ttl: 60000, limit: 100 },
-    ]),
+    AppThrottlerModule,
     RequestContextModule,
     PrismaModule,
     OpenfortModule,

@@ -16,4 +16,7 @@ export default () => ({
   chain: {
     defaultChainId: parseInt(process.env.DEFAULT_CHAIN_ID || '84532', 10),
   },
+  redis: {
+    url: process.env.REDIS_URL,
+  },
 });
