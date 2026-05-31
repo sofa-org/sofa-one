@@ -19,6 +19,7 @@ import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 import { TransactionSimulationService } from './transaction-simulation.service';
+import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -47,6 +48,8 @@ export class TransactionsService {
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
     private readonly transactionSimulation?: TransactionSimulationService,
+    @Optional()
+    private readonly riskEvaluation?: RiskEvaluationService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -94,6 +97,21 @@ export class TransactionsService {
       dailySpendLimit: apiKeyRecord.dailySpendLimit,
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
+    // Evaluate multi-factor risk before proceeding
+    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      walletId: undefined,
+      operationType: 'transaction_send',
+    });
+    if (riskAssessment && riskAssessment.action !== 'allow') {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+        userId,
+        apiKeyId: apiKeyRecord.id,
+        walletId: undefined,
+        operationType: 'transaction_send',
+      });
+    }
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
       include: {

@@ -28,7 +28,7 @@ export type ListSecurityNotificationsQuery = {
 const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'api_key.created',
   'api_key.first_used',
-  'api_key.suspicious_use',
+  'api_key_suspicious_use',
   'api_key_frozen',
   'api_key.ip_rejected',
   'login.new_ip',
@@ -39,6 +39,9 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'withdrawal_address.removed',
   'eoa_execution_denied',
   'signing.policy_denied',
+  'risk.blocked',
+  'risk.critical_frozen',
+  'risk.step_up_required',
 ]);
 
 const NOTIFY_RISK_LEVELS = new Set(['medium', 'high', 'critical']);
@@ -100,7 +103,9 @@ export class SecurityNotificationService {
   }
 
   private shouldNotify(event: CreatedSecurityEvent) {
-    return ALWAYS_NOTIFY_EVENT_TYPES.has(event.eventType) || NOTIFY_RISK_LEVELS.has(event.riskLevel);
+    return (
+      ALWAYS_NOTIFY_EVENT_TYPES.has(event.eventType) || NOTIFY_RISK_LEVELS.has(event.riskLevel)
+    );
   }
 
   private buildMessage(event: CreatedSecurityEvent) {
@@ -115,7 +120,7 @@ export class SecurityNotificationService {
           title: 'API key used for the first time',
           body: 'An API key was used for the first time.',
         };
-      case 'api_key.suspicious_use':
+      case 'api_key_suspicious_use':
       case 'api_key_frozen':
         return {
           title: 'Suspicious API key activity',

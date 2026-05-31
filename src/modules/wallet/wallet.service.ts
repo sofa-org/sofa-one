@@ -32,6 +32,7 @@ import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
+import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -70,6 +71,8 @@ export class WalletService {
     private readonly signingPolicy?: SigningPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
+    @Optional()
+    private readonly riskEvaluation?: RiskEvaluationService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -157,7 +160,13 @@ export class WalletService {
     }
 
     // Apply signing policy checks
-    let typedDataSummary: { typedDataPrimaryType?: string; typedDataVerifyingContract?: string; typedDataDomainName?: string } | undefined = undefined;
+    let typedDataSummary:
+      | {
+          typedDataPrimaryType?: string;
+          typedDataVerifyingContract?: string;
+          typedDataDomainName?: string;
+        }
+      | undefined = undefined;
     if (params.type === 'message') {
       await this.signingPolicy?.assertMessageSigningPolicy(params.message!, policyContext);
     } else if (params.type === 'typed_data') {
@@ -165,6 +174,22 @@ export class WalletService {
         params.typedData!,
         policyContext,
       );
+    }
+
+    // Evaluate multi-factor risk before proceeding
+    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      walletId: undefined,
+      operationType: 'signing',
+    });
+    if (riskAssessment && riskAssessment.action !== 'allow') {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+        userId,
+        apiKeyId: apiKeyRecord.id,
+        walletId: undefined,
+        operationType: 'signing',
+      });
     }
 
     const wallet = await this.prisma.userWallet.findUnique({
@@ -401,7 +426,11 @@ export class WalletService {
     agentOpenfortAccountId?: string | null;
     agentWalletAddress?: string | null;
   }): void {
-    if (wallet.status !== 'active' || !wallet.agentOpenfortAccountId || !wallet.agentWalletAddress) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
   }
@@ -443,7 +472,10 @@ export class WalletService {
     this.logger.warn(this.logContext({ event: 'security', ...extra }));
   }
 
-  private assertWalletNotFrozen(wallet: { frozenAt?: Date | string | null; frozenReason?: string | null }): void {
+  private assertWalletNotFrozen(wallet: {
+    frozenAt?: Date | string | null;
+    frozenReason?: string | null;
+  }): void {
     if (wallet.frozenAt) {
       throw new ForbiddenException(wallet.frozenReason ?? 'Wallet is frozen');
     }
@@ -567,6 +599,22 @@ export class WalletService {
       walletAddress: wallet.walletAddress,
       stepUpVerified: options?.stepUpVerified,
     });
+
+    // Evaluate multi-factor risk before proceeding
+    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+      userId,
+      walletId: wallet.id,
+      operationType: 'withdrawal',
+    });
+    const riskStepUpSatisfied =
+      riskAssessment?.action === 'require_step_up' && options?.stepUpVerified === true;
+    if (riskAssessment && riskAssessment.action !== 'allow' && !riskStepUpSatisfied) {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+        userId,
+        walletId: wallet.id,
+        operationType: 'withdrawal',
+      });
+    }
 
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
@@ -694,7 +742,13 @@ export class WalletService {
 
   private async assertWithdrawalPolicy(
     params: WithdrawDto,
-    context: { userId: string; chainId: number; walletId?: string; walletAddress?: string; stepUpVerified?: boolean },
+    context: {
+      userId: string;
+      chainId: number;
+      walletId?: string;
+      walletAddress?: string;
+      stepUpVerified?: boolean;
+    },
   ): Promise<void> {
     await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context);
   }

@@ -59,7 +59,7 @@ describe('SecurityEventService', () => {
       userId: 'user-1',
       apiKeyId: 'key-1',
       walletId: 'wallet-1',
-      eventType: 'api_key.suspicious_use',
+      eventType: 'api_key_suspicious_use',
       riskLevel: 'high',
       ip: '203.0.113.10',
       userAgent: 'agent',
@@ -75,7 +75,7 @@ describe('SecurityEventService', () => {
         userId: 'user-1',
         apiKeyId: 'key-1',
         walletId: 'wallet-1',
-        eventType: 'api_key.suspicious_use',
+        eventType: 'api_key_suspicious_use',
         riskLevel: 'high',
         ip: '203.0.113.10',
         userAgent: 'agent',
@@ -140,7 +140,12 @@ describe('SecurityEventService', () => {
   });
 
   it('asks the notification service to create user-facing notifications', async () => {
-    const event = { id: 'event-4', userId: 'user-1', eventType: 'api_key.created', riskLevel: 'low' };
+    const event = {
+      id: 'event-4',
+      userId: 'user-1',
+      eventType: 'api_key.created',
+      riskLevel: 'low',
+    };
     prisma.securityEvent.create.mockResolvedValue(event);
     service = new SecurityEventService(
       prisma as never,
@@ -157,7 +162,12 @@ describe('SecurityEventService', () => {
   });
 
   it('does not fail security-event writes when notification creation fails', async () => {
-    const event = { id: 'event-5', userId: 'user-1', eventType: 'api_key.created', riskLevel: 'low' };
+    const event = {
+      id: 'event-5',
+      userId: 'user-1',
+      eventType: 'api_key.created',
+      riskLevel: 'low',
+    };
     prisma.securityEvent.create.mockResolvedValue(event);
     notifications.notifyForSecurityEvent.mockRejectedValue(new Error('delivery unavailable'));
     service = new SecurityEventService(
@@ -165,7 +175,9 @@ describe('SecurityEventService', () => {
       requestContext as never,
       notifications as never,
     );
-    const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+    const errorSpy = jest
+      .spyOn((service as any).logger, 'error')
+      .mockImplementation(() => undefined);
 
     await expect(
       service.record({ actorType: 'user', userId: 'user-1', eventType: 'api_key.created' }),
@@ -177,7 +189,12 @@ describe('SecurityEventService', () => {
   });
 
   it('exports security events to configured SIEM integrations after persistence', async () => {
-    const event = { id: 'event-6', userId: 'user-1', eventType: 'api_key_frozen', riskLevel: 'critical' };
+    const event = {
+      id: 'event-6',
+      userId: 'user-1',
+      eventType: 'api_key_frozen',
+      riskLevel: 'critical',
+    };
     prisma.securityEvent.create.mockResolvedValue(event);
     service = new SecurityEventService(
       prisma as never,
@@ -193,7 +210,12 @@ describe('SecurityEventService', () => {
   });
 
   it('does not fail security-event writes when SIEM export fails', async () => {
-    const event = { id: 'event-7', userId: 'user-1', eventType: 'api_key_frozen', riskLevel: 'critical' };
+    const event = {
+      id: 'event-7',
+      userId: 'user-1',
+      eventType: 'api_key_frozen',
+      riskLevel: 'critical',
+    };
     prisma.securityEvent.create.mockResolvedValue(event);
     exporter.exportSecurityEvent.mockRejectedValue(new Error('siem unavailable'));
     service = new SecurityEventService(
@@ -203,7 +225,9 @@ describe('SecurityEventService', () => {
       undefined,
       exporter as never,
     );
-    const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+    const errorSpy = jest
+      .spyOn((service as any).logger, 'error')
+      .mockImplementation(() => undefined);
 
     await expect(
       service.record({ actorType: 'api_key', userId: 'user-1', eventType: 'api_key_frozen' }),

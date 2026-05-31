@@ -39,10 +39,12 @@ import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { SecurityEventService } from '../security-events/security-event.service';
+import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 const WALLET = {
+  id: 'wallet-1',
   userId: 'user-1',
   walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
   openfortAccountId: 'acc-1',
@@ -103,6 +105,8 @@ describe('WalletService.withdraw()', () => {
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
   const mockAssertWithdrawalAllowed = jest.fn();
+  const mockEvaluateRisk = jest.fn();
+  const mockEnforceRiskAction = jest.fn();
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
@@ -120,6 +124,14 @@ describe('WalletService.withdraw()', () => {
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
+    mockEvaluateRisk.mockResolvedValue({
+      riskLevel: 'low',
+      score: 0,
+      action: 'allow',
+      factors: [],
+      reason: 'No risk factors detected',
+    });
+    mockEnforceRiskAction.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -138,6 +150,10 @@ describe('WalletService.withdraw()', () => {
         {
           provide: WithdrawalPolicyService,
           useValue: { assertWithdrawalAllowed: mockAssertWithdrawalAllowed },
+        },
+        {
+          provide: RiskEvaluationService,
+          useValue: { evaluateRisk: mockEvaluateRisk, enforceRiskAction: mockEnforceRiskAction },
         },
       ],
     }).compile();
@@ -223,7 +239,11 @@ describe('WalletService.withdraw()', () => {
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'submitting',
+    });
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
     expect(mockSendUserOperation).not.toHaveBeenCalled();
@@ -237,7 +257,11 @@ describe('WalletService.withdraw()', () => {
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
-    expect(result).toEqual({ transactionId: 'tx-existing', transactionHash: null, status: 'submitting' });
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'submitting',
+    });
     expect(mockReadContract).toHaveBeenCalledTimes(1);
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
@@ -293,6 +317,59 @@ describe('WalletService.withdraw()', () => {
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(VALID_DTO.to);
     expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-require step-up when dashboard withdrawal risk is medium and step-up is verified', async () => {
+    mockEvaluateRisk.mockResolvedValue({
+      riskLevel: 'medium',
+      score: 30,
+      action: 'require_step_up',
+      factors: [
+        {
+          category: 'identity',
+          name: 'consecutive_auth_failures',
+          weight: 30,
+          description: '3 authentication failures in the last hour',
+        },
+      ],
+      reason: 'consecutive_auth_failures(30)',
+    });
+
+    await service.withdraw('user-1', VALID_DTO, { stepUpVerified: true });
+
+    expect(mockEnforceRiskAction).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires step-up when dashboard withdrawal risk is medium and step-up is not verified', async () => {
+    const assessment = {
+      riskLevel: 'medium',
+      score: 30,
+      action: 'require_step_up',
+      factors: [
+        {
+          category: 'identity',
+          name: 'consecutive_auth_failures',
+          weight: 30,
+          description: '3 authentication failures in the last hour',
+        },
+      ],
+      reason: 'consecutive_auth_failures(30)',
+    };
+    mockEvaluateRisk.mockResolvedValue(assessment);
+    mockEnforceRiskAction.mockRejectedValue(
+      new ForbiddenException('Additional verification required'),
+    );
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(ForbiddenException);
+
+    expect(mockEnforceRiskAction).toHaveBeenCalledWith(assessment, {
+      userId: 'user-1',
+      walletId: WALLET.id,
+      operationType: 'withdrawal',
+    });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   // ── 5. Insufficient USDC balance ─────────────────────────────────────────────
@@ -429,7 +506,12 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: WithdrawalPolicyService,
-          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
+          useValue: {
+            assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined),
+            listWithdrawalAddresses: jest.fn(),
+            addWithdrawalAddress: jest.fn(),
+            removeWithdrawalAddress: jest.fn(),
+          },
         },
         SigningPolicyService,
       ],
@@ -531,10 +613,14 @@ describe('WalletService.sign()', () => {
 
   it('rejects signing when the API key lacks sign permission', async () => {
     await expect(
-      service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any, {
-        ...API_KEY_CONTEXT,
-        canSign: false,
-      }),
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        {
+          ...API_KEY_CONTEXT,
+          canSign: false,
+        },
+      ),
     ).rejects.toThrow(ForbiddenException);
 
     expect(mockFindUnique).not.toHaveBeenCalled();
@@ -560,7 +646,12 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
+        {
+          type: 'message',
+          message: 'Hello, SOFA ONE!',
+          chainId: 84532,
+          executionMode: 'eoa',
+        } as any,
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(ForbiddenException);
@@ -579,7 +670,12 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
+        {
+          type: 'message',
+          message: 'Hello, SOFA ONE!',
+          chainId: 84532,
+          executionMode: 'eoa',
+        } as any,
         { ...API_KEY_CONTEXT, canUseEoaExecution: true },
       ),
     ).rejects.toThrow('EOA execution is disabled');
@@ -653,7 +749,9 @@ describe('WalletService.sign()', () => {
   });
 
   it('rejects signing when the agent key is not registered on-chain before creating an audit record', async () => {
-    mockVerifyAgentKeyRegistration.mockRejectedValue(new BadRequestException('Agent key is not ready'));
+    mockVerifyAgentKeyRegistration.mockRejectedValue(
+      new BadRequestException('Agent key is not ready'),
+    );
 
     await expect(
       service.sign(
@@ -822,7 +920,11 @@ describe('WalletService.sign()', () => {
     };
 
     await expect(
-      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, API_KEY_CONTEXT),
+      service.sign(
+        'user-1',
+        { type: 'typed_data', typedData, chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
     ).rejects.toThrow('Permit typed data signing is not allowed');
 
     expect(mockFindUnique).not.toHaveBeenCalled();
@@ -859,7 +961,11 @@ describe('WalletService.sign()', () => {
     const typedData = createTypedData(84532, 'not-an-address');
 
     await expect(
-      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, API_KEY_CONTEXT),
+      service.sign(
+        'user-1',
+        { type: 'typed_data', typedData, chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
     ).rejects.toThrow('typedData.domain.verifyingContract must be a valid address');
 
     expect(mockFindUnique).not.toHaveBeenCalled();
@@ -968,7 +1074,12 @@ describe('WalletService.getBalances()', () => {
         },
         {
           provide: WithdrawalPolicyService,
-          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
+          useValue: {
+            assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined),
+            listWithdrawalAddresses: jest.fn(),
+            addWithdrawalAddress: jest.fn(),
+            removeWithdrawalAddress: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -1046,7 +1157,12 @@ describe('WalletService.getDepositInfo()', () => {
         },
         {
           provide: WithdrawalPolicyService,
-          useValue: { assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined), listWithdrawalAddresses: jest.fn(), addWithdrawalAddress: jest.fn(), removeWithdrawalAddress: jest.fn() },
+          useValue: {
+            assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined),
+            listWithdrawalAddresses: jest.fn(),
+            addWithdrawalAddress: jest.fn(),
+            removeWithdrawalAddress: jest.fn(),
+          },
         },
       ],
     }).compile();

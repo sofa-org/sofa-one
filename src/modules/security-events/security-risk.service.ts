@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type {
-  RecordSecurityEventInput,
-  SecurityEventRiskLevel,
-} from './security-event.service';
+import type { RecordSecurityEventInput, SecurityEventRiskLevel } from './security-event.service';
 
 export type SecurityRiskScore = {
   riskLevel: SecurityEventRiskLevel;
@@ -25,7 +22,7 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'api_key_frozen_rejected', riskLevel: 'critical' },
   { eventType: 'api_key_user_frozen_rejected', riskLevel: 'critical' },
   { eventType: 'eoa_execution_denied', riskLevel: 'critical' },
-  { eventType: 'api_key.suspicious_use', riskLevel: 'high' },
+  { eventType: 'api_key_suspicious_use', riskLevel: 'high' },
   { eventType: 'transaction.policy_denied', riskLevel: 'high' },
   { eventType: 'transaction.simulation_denied', riskLevel: 'high' },
   { eventType: 'withdrawal.policy_denied', riskLevel: 'high' },
@@ -40,6 +37,9 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'signing.message_allowed', riskLevel: 'low' },
   { eventType: 'signing.typed_data_allowed', riskLevel: 'low' },
   { eventType: 'api_key.ip_rejected', riskLevel: 'high' },
+  { eventType: 'risk.blocked', riskLevel: 'high' },
+  { eventType: 'risk.critical_frozen', riskLevel: 'critical' },
+  { eventType: 'risk.step_up_required', riskLevel: 'medium' },
 ];
 
 @Injectable()
