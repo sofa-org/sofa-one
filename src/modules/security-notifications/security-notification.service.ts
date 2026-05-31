@@ -42,6 +42,8 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
   'risk.blocked',
   'risk.critical_frozen',
   'risk.step_up_required',
+  'session_key.denied',
+  'session_key.policy_drift',
 ]);
 
 const NOTIFY_RISK_LEVELS = new Set(['medium', 'high', 'critical']);

@@ -40,6 +40,10 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'risk.blocked', riskLevel: 'high' },
   { eventType: 'risk.critical_frozen', riskLevel: 'critical' },
   { eventType: 'risk.step_up_required', riskLevel: 'medium' },
+  { eventType: 'session_key.denied', riskLevel: 'high' },
+  { eventType: 'session_key.policy_drift', riskLevel: 'medium' },
+  { eventType: 'session_key.expiration_mismatch', riskLevel: 'medium' },
+  { eventType: 'session_key.allowed', riskLevel: 'low' },
 ];
 
 @Injectable()

@@ -47,7 +47,7 @@ export type CaliburSessionAccountParams = {
 const STUB_SIGNATURE =
   '0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c' as const;
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 
 const CALIBUR_KEY_ABI = [
   {
@@ -137,6 +137,33 @@ export function getAgentKeyUsabilityFailure(
   if (settings.hook !== ZERO_ADDRESS) return 'Agent key hook is not supported';
 
   return null;
+}
+
+export function packSettings(settings: CaliburKeySettings): bigint {
+  const admin = settings.isAdmin ? 1n : 0n;
+  const expiration = BigInt(settings.expiration);
+  const hook = BigInt(getAddress(settings.hook));
+
+  return (admin << 200n) | (expiration << 160n) | hook;
+}
+
+export function encodeUpdateKeySettings(keyHash: Hex, settings: CaliburKeySettings): Hex {
+  return encodeFunctionData({
+    abi: [
+      {
+        type: 'function',
+        name: 'update',
+        inputs: [
+          { name: 'keyHash', type: 'bytes32' },
+          { name: 'settings', type: 'uint256' },
+        ],
+        outputs: [],
+        stateMutability: 'nonpayable',
+      },
+    ],
+    functionName: 'update',
+    args: [keyHash, packSettings(settings)],
+  });
 }
 
 export function encodeRegisterKey(key: CaliburKey): Hex {

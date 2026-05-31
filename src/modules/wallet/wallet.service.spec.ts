@@ -40,6 +40,7 @@ import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy
 import { SigningPolicyService } from './signing-policy.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,8 @@ const API_KEY_CONTEXT = {
   expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   canSign: true,
   canUseEoaExecution: false,
+  allowedContracts: undefined,
+  allowedFunctionSelectors: undefined,
 };
 const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
 const WRAPPED_SIGNATURE = encodeAbiParameters(
@@ -462,6 +465,7 @@ describe('WalletService.sign()', () => {
   const mockFindUnique = jest.fn();
   const mockSignData = jest.fn();
   const mockVerifyAgentKeyRegistration = jest.fn();
+  const mockAssertSessionKeyAllowed = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
   const mockAssertEoaExecutionAllowed = jest.fn();
@@ -474,6 +478,7 @@ describe('WalletService.sign()', () => {
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
+    mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
@@ -499,6 +504,10 @@ describe('WalletService.sign()', () => {
         {
           provide: EoaExecutionPolicyService,
           useValue: { assertAllowed: mockAssertEoaExecutionAllowed },
+        },
+        {
+          provide: SessionKeyPolicyService,
+          useValue: { assertSessionKeyAllowed: mockAssertSessionKeyAllowed },
         },
         {
           provide: SecurityEventService,
@@ -536,10 +545,18 @@ describe('WalletService.sign()', () => {
       WALLET.agentOpenfortAccountId,
       hashMessage('Hello, SOFA ONE!'),
     );
-    expect(mockVerifyAgentKeyRegistration).toHaveBeenCalledWith({
-      accountAddress: WALLET.walletAddress,
+    expect(mockAssertSessionKeyAllowed).toHaveBeenCalledWith({
+      userId: 'user-1',
+      walletId: WALLET.id,
+      apiKeyId: 'api-key-1',
+      apiKeyPrefix: API_KEY_PREFIX,
       chainId: 84532,
+      accountAddress: WALLET.walletAddress,
       keyHash: WALLET.agentKeyHash,
+      operation: 'sign',
+      allowedContracts: API_KEY_CONTEXT.allowedContracts,
+      allowedFunctionSelectors: API_KEY_CONTEXT.allowedFunctionSelectors,
+      apiKeyExpiresAt: API_KEY_CONTEXT.expiresAt,
     });
     expect(result).toEqual({
       signature: WRAPPED_SIGNATURE,
@@ -578,7 +595,7 @@ describe('WalletService.sign()', () => {
       WALLET.agentOpenfortAccountId,
       hashMessage('Hello, SOFA ONE!'),
     );
-    expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(mockAssertEoaExecutionAllowed).toHaveBeenCalledWith({
       operation: 'sign',
       userId: 'user-1',
@@ -743,13 +760,13 @@ describe('WalletService.sign()', () => {
     ).rejects.toThrow(UnauthorizedException);
 
     expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockVerifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
   it('rejects signing when the agent key is not registered on-chain before creating an audit record', async () => {
-    mockVerifyAgentKeyRegistration.mockRejectedValue(
+    mockAssertSessionKeyAllowed.mockRejectedValueOnce(
       new BadRequestException('Agent key is not ready'),
     );
 

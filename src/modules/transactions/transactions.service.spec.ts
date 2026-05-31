@@ -12,12 +12,14 @@ jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
 
+import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { TransactionsService } from './transactions.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 
 describe('TransactionsService', () => {
   const apiKeyPrefix = 'sk_1234567890abcdef12345678';
   const wallet = {
+    id: 'wallet-1',
     openfortAccountId: 'acc-1',
     walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
     agentOpenfortAccountId: 'agent-acc-1',
@@ -51,6 +53,10 @@ describe('TransactionsService', () => {
     canSendTransaction: true,
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
+    allowedContracts: undefined,
+    allowedFunctionSelectors: undefined,
+    dailySpendLimit: undefined,
+    monthlySpendLimit: undefined,
   };
 
   const prisma = {
@@ -72,6 +78,7 @@ describe('TransactionsService', () => {
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
   const transactionSimulation = { assertSimulatable: jest.fn() } as any;
   const transactionPolicy = new TransactionPolicyService();
+  const mockAssertSessionKeyAllowed = jest.fn();
 
   let service: TransactionsService;
   let loggerWarnSpy: jest.SpyInstance;
@@ -97,6 +104,7 @@ describe('TransactionsService', () => {
     });
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
+    mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
     transactionSimulation.assertSimulatable.mockResolvedValue(undefined);
     service = new TransactionsService(
@@ -105,6 +113,8 @@ describe('TransactionsService', () => {
       transactionPolicy,
       eoaExecutionPolicy,
       transactionSimulation,
+      undefined, // riskEvaluation
+      { assertSessionKeyAllowed: mockAssertSessionKeyAllowed } as any, // sessionKeyPolicy
     );
   });
 
@@ -115,10 +125,20 @@ describe('TransactionsService', () => {
   it('uses requested chainId and creates idempotency record before sending', async () => {
     await service.send('user-1', dto as any, apiKeyContext);
 
-    expect(openfort.verifyAgentKeyRegistration).toHaveBeenCalledWith({
-      accountAddress: wallet.walletAddress,
+    expect(mockAssertSessionKeyAllowed).toHaveBeenCalledWith({
+      userId: 'user-1',
+      walletId: wallet.id,
+      apiKeyId: 'api-key-1',
+      apiKeyPrefix,
       chainId: 8453,
+      accountAddress: wallet.walletAddress,
       keyHash: wallet.agentKeyHash,
+      operation: 'send_transaction',
+      allowedContracts: apiKeyContext.allowedContracts,
+      allowedFunctionSelectors: apiKeyContext.allowedFunctionSelectors,
+      dailySpendLimit: apiKeyContext.dailySpendLimit,
+      monthlySpendLimit: apiKeyContext.monthlySpendLimit,
+      apiKeyExpiresAt: apiKeyContext.expiresAt,
     });
 
     expect(transactionSimulation.assertSimulatable).toHaveBeenCalledWith(dto, {
@@ -190,7 +210,7 @@ describe('TransactionsService', () => {
       canUseEoaExecution: true,
     });
 
-    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(eoaExecutionPolicy.assertAllowed).toHaveBeenCalledWith({
       operation: 'send_transaction',
       userId: 'user-1',
@@ -531,7 +551,7 @@ describe('TransactionsService', () => {
 
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
-    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -563,7 +583,7 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
 
-    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -579,7 +599,7 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
 
-    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 

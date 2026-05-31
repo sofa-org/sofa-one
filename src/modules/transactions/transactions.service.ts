@@ -20,6 +20,7 @@ import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy
 import { TransactionPolicyService } from './transaction-policy.service';
 import { TransactionSimulationService } from './transaction-simulation.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -50,6 +51,8 @@ export class TransactionsService {
     private readonly transactionSimulation?: TransactionSimulationService,
     @Optional()
     private readonly riskEvaluation?: RiskEvaluationService,
+    @Optional()
+    private readonly sessionKeyPolicy?: SessionKeyPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
   ) {}
@@ -125,10 +128,20 @@ export class TransactionsService {
     const accountAddress = wallet.walletAddress!;
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
-      await this.openfort.verifyAgentKeyRegistration({
-        accountAddress,
+      await this.sessionKeyPolicy?.assertSessionKeyAllowed({
+        userId,
+        walletId: wallet.id,
+        apiKeyId: apiKeyRecord.id,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
         chainId,
+        accountAddress,
         keyHash: wallet.agentKeyHash!,
+        operation: 'send_transaction',
+        allowedContracts: apiKeyRecord.allowedContracts,
+        allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
+        dailySpendLimit: apiKeyRecord.dailySpendLimit,
+        monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
+        apiKeyExpiresAt: apiKeyRecord.expiresAt,
       });
     } else {
       this.assertBackendWalletReady(wallet);

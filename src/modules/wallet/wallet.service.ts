@@ -33,6 +33,7 @@ import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -73,6 +74,8 @@ export class WalletService {
     private readonly requestContext?: RequestContextService,
     @Optional()
     private readonly riskEvaluation?: RiskEvaluationService,
+    @Optional()
+    private readonly sessionKeyPolicy?: SessionKeyPolicyService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -206,10 +209,18 @@ export class WalletService {
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet);
       this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
-      await this.openfort.verifyAgentKeyRegistration({
-        accountAddress: wallet.walletAddress,
+      await this.sessionKeyPolicy?.assertSessionKeyAllowed({
+        userId,
+        walletId: wallet.id,
+        apiKeyId: apiKeyRecord?.id,
+        apiKeyPrefix: apiKeyRecord?.keyPrefix,
         chainId,
+        accountAddress: wallet.walletAddress,
         keyHash: wallet.agentKeyHash!,
+        operation: 'sign',
+        allowedContracts: apiKeyRecord?.allowedContracts,
+        allowedFunctionSelectors: apiKeyRecord?.allowedFunctionSelectors,
+        apiKeyExpiresAt: apiKeyRecord?.expiresAt,
       });
     } else {
       this.assertBackendWalletReady(wallet);

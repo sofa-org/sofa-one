@@ -6,9 +6,10 @@ import { SigningPolicyService } from './signing-policy.service';
 import { StepUpModule } from '../step-up/step-up.module';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
+import { SessionKeyModule } from '../session-key/session-key.module';
 
 @Module({
-  imports: [StepUpModule, SecurityEventModule, EoaExecutionModule],
+  imports: [StepUpModule, SecurityEventModule, EoaExecutionModule, SessionKeyModule],
   controllers: [WalletController],
   providers: [WalletService, WithdrawalPolicyService, SigningPolicyService],
 })
