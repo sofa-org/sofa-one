@@ -5,6 +5,7 @@ describe('EoaExecutionPolicyService', () => {
   const config = { get: jest.fn() } as any;
   const prisma = { securityEvent: { count: jest.fn() } } as any;
   const securityEvents = { record: jest.fn() } as any;
+  const ipAllowlist = { assertIpAllowed: jest.fn(), isIpAllowed: jest.fn() } as any;
   let service: EoaExecutionPolicyService;
 
   const baseContext = {
@@ -13,6 +14,7 @@ describe('EoaExecutionPolicyService', () => {
     apiKeyId: 'api-key-1',
     apiKeyPrefix: 'sk_1234567890abcdef12345678',
     allowedIps: ['203.0.113.10'],
+    clientIp: '203.0.113.10',
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     chainId: 84532,
   };
@@ -22,7 +24,8 @@ describe('EoaExecutionPolicyService', () => {
     config.get.mockReturnValue('true');
     prisma.securityEvent.count.mockResolvedValue(0);
     securityEvents.record.mockResolvedValue({ id: 'event-1' });
-    service = new EoaExecutionPolicyService(config, prisma, securityEvents);
+    ipAllowlist.assertIpAllowed.mockResolvedValue(undefined);
+    service = new EoaExecutionPolicyService(config, prisma, securityEvents, ipAllowlist);
   });
 
   it('denies EOA execution when globally disabled by default', async () => {
@@ -103,5 +106,66 @@ describe('EoaExecutionPolicyService', () => {
         }),
       }),
     );
+  });
+
+  describe('IP allowlist validation', () => {
+    it('allows when clientIp is in the allowlist', async () => {
+      await expect(
+        service.assertAllowed({ ...baseContext, clientIp: '203.0.113.10' }),
+      ).resolves.toBeUndefined();
+
+      expect(ipAllowlist.assertIpAllowed).toHaveBeenCalledWith(
+        '203.0.113.10',
+        ['203.0.113.10'],
+        expect.objectContaining({
+          actorType: 'api_key',
+          apiKeyId: 'api-key-1',
+          clientIp: '203.0.113.10',
+          allowedIpCount: 1,
+        }),
+      );
+      expect(securityEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({ result: 'allowed', reason: 'eoa_execution_allowed' }),
+      );
+    });
+
+    it('rejects when clientIp is not in the allowlist', async () => {
+      ipAllowlist.assertIpAllowed.mockRejectedValue(
+        new ForbiddenException('IP address not allowed for this API key'),
+      );
+
+      await expect(
+        service.assertAllowed({ ...baseContext, clientIp: '198.51.100.1' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(ipAllowlist.assertIpAllowed).toHaveBeenCalledWith(
+        '198.51.100.1',
+        ['203.0.113.10'],
+        expect.objectContaining({ clientIp: '198.51.100.1' }),
+      );
+    });
+
+    it('rejects when request IP is missing', async () => {
+      await expect(service.assertAllowed({ ...baseContext, clientIp: undefined })).rejects.toThrow(
+        ForbiddenException,
+      );
+
+      expect(securityEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'eoa_execution_requires_request_ip' }),
+      );
+      expect(prisma.securityEvent.count).not.toHaveBeenCalled();
+    });
+
+    it('rejects when ipAllowlist is not available', async () => {
+      service = new EoaExecutionPolicyService(config, prisma, securityEvents);
+
+      await expect(
+        service.assertAllowed({ ...baseContext, clientIp: '198.51.100.1' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(securityEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({ result: 'denied', reason: 'eoa_execution_ip_allowlist_unavailable' }),
+      );
+    });
   });
 });

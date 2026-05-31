@@ -39,7 +39,15 @@ describe('EitherAuthGuard API key authentication', () => {
       apiKey: {
         findMany: jest.fn().mockResolvedValue(keyRecords),
         update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
+      securityEvent: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+
+    const securityEvents = {
+      record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
     };
 
     const ipAllowlist = {
@@ -55,9 +63,10 @@ describe('EitherAuthGuard API key authentication', () => {
       prisma as any,
       { verifyIamSession: jest.fn() } as any,
       ipAllowlist as any,
+      securityEvents as any,
     );
 
-    return { guard, prisma, ipAllowlist };
+    return { guard, prisma, ipAllowlist, securityEvents };
   }
 
   beforeEach(() => {
@@ -111,11 +120,15 @@ describe('EitherAuthGuard API key authentication', () => {
     const ipAllowlist = {
       assertIpAllowed: jest.fn().mockResolvedValue(undefined),
     };
+    const securityEvents = {
+      record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
       ipAllowlist as any,
+      securityEvents as any,
     );
     const request: any = {
       headers: { authorization: 'Bearer bearer-token' },
@@ -160,11 +173,15 @@ describe('EitherAuthGuard API key authentication', () => {
     const ipAllowlist = {
       assertIpAllowed: jest.fn().mockResolvedValue(undefined),
     };
+    const securityEvents = {
+      record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
       ipAllowlist as any,
+      securityEvents as any,
     );
     const request: any = {
       headers: { authorization: 'Bearer bearer-token', 'x-api-key': 'sk_test_123' },
@@ -198,11 +215,15 @@ describe('EitherAuthGuard API key authentication', () => {
     const ipAllowlist = {
       assertIpAllowed: jest.fn().mockResolvedValue(undefined),
     };
+    const securityEvents = {
+      record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
+    };
     const guard = new EitherAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       openfort as any,
       ipAllowlist as any,
+      securityEvents as any,
     );
     const request: any = {
       headers: { 'x-api-key': 'sk_test_456' },
@@ -451,5 +472,57 @@ describe('EitherAuthGuard API key authentication', () => {
       }),
     );
     expect(prisma.apiKey.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects a frozen API key with ForbiddenException("API key is frozen")', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      frozenAt: new Date(),
+      frozenReason: 'test_frozen',
+      user: { id: 'user-1' },
+    };
+    const { guard, securityEvents } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate(contextWithApiKey(rawKey))).rejects.toThrow(
+      'API key is frozen',
+    );
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key_frozen_rejected',
+        apiKeyId: 'key-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'test_frozen',
+      }),
+    );
+  });
+
+  it('rejects a key whose user is frozen with ForbiddenException("User account is frozen")', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      user: { id: 'user-1', frozenAt: new Date(), frozenReason: 'user_frozen' },
+    };
+    const { guard, securityEvents } = createGuard([keyRecord]);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate(contextWithApiKey(rawKey))).rejects.toThrow(
+      'User account is frozen',
+    );
+
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'api_key_user_frozen_rejected',
+        apiKeyId: 'key-1',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'user_frozen',
+      }),
+    );
   });
 });

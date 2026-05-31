@@ -6,6 +6,7 @@ import {
   type SendTransactionDto,
 } from './dto/send-transaction.dto';
 import { SecurityEventService } from '../security-events/security-event.service';
+import { PrismaService } from '../../core/database/prisma.service';
 
 const MAX_TRANSACTION_CALLDATA_BYTES = 64 * 1024;
 const MAX_DISTINCT_TARGETS = 5;
@@ -38,7 +39,10 @@ type TransactionPolicyContext = {
 export class TransactionPolicyService {
   private readonly logger = new Logger(TransactionPolicyService.name);
 
-  constructor(private readonly securityEvents?: SecurityEventService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly securityEvents?: SecurityEventService,
+  ) {}
 
   async assertAllowed(dto: SendTransactionDto, context: TransactionPolicyContext): Promise<void> {
     if (dto.interactions.length > MAX_TRANSACTION_INTERACTIONS) {
@@ -60,7 +64,9 @@ export class TransactionPolicyService {
       });
     }
 
-    const distinctTargets = new Set(dto.interactions.map((interaction) => interaction.to.toLowerCase()));
+    const distinctTargets = new Set(
+      dto.interactions.map((interaction) => interaction.to.toLowerCase()),
+    );
     if (distinctTargets.size > MAX_DISTINCT_TARGETS) {
       await this.reject('Transaction targets too many distinct contracts', context, {
         interactionCount: dto.interactions.length,
@@ -68,42 +74,74 @@ export class TransactionPolicyService {
       });
     }
 
-    // Per-request spend limit check: sum all interaction values and compare against limits.
-    // Checked before the per-interaction loop so the rejection reason is clear.
+    // Cumulative spend limit check: sum past transactions + current value against limits
     if (context.dailySpendLimit || context.monthlySpendLimit) {
+      const now = new Date();
       const totalValue = dto.interactions.reduce(
         (sum, interaction) => sum + BigInt(interaction.value ?? '0'),
         0n,
       );
-      if (context.dailySpendLimit && totalValue > BigInt(context.dailySpendLimit)) {
-        await this.reject('Transaction total value exceeds daily spend limit for this API key', context, {
-          totalValue: totalValue.toString(),
-          dailySpendLimit: context.dailySpendLimit,
-        });
+
+      if (context.dailySpendLimit) {
+        const dailyLimit = BigInt(context.dailySpendLimit);
+        const dayStart = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+        );
+        const dailySpent = await this.getSpentInPeriod(context.apiKeyId, dayStart, null);
+        if (dailySpent + totalValue > dailyLimit) {
+          await this.reject(
+            'Transaction would exceed daily spend limit for this API key',
+            context,
+            {
+              totalValue: totalValue.toString(),
+              dailySpent: dailySpent.toString(),
+              dailyLimit: context.dailySpendLimit,
+            },
+          );
+        }
       }
-      if (context.monthlySpendLimit && totalValue > BigInt(context.monthlySpendLimit)) {
-        await this.reject('Transaction total value exceeds monthly spend limit for this API key', context, {
-          totalValue: totalValue.toString(),
-          monthlySpendLimit: context.monthlySpendLimit,
-        });
+
+      if (context.monthlySpendLimit) {
+        const monthlyLimit = BigInt(context.monthlySpendLimit);
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const monthlySpent = await this.getSpentInPeriod(context.apiKeyId, monthStart, null);
+        if (monthlySpent + totalValue > monthlyLimit) {
+          await this.reject(
+            'Transaction would exceed monthly spend limit for this API key',
+            context,
+            {
+              totalValue: totalValue.toString(),
+              monthlySpent: monthlySpent.toString(),
+              monthlyLimit: context.monthlySpendLimit,
+            },
+          );
+        }
       }
     }
 
     for (const [index, interaction] of dto.interactions.entries()) {
       const calldataBytes = this.getCalldataByteLength(interaction.data);
       if (calldataBytes > MAX_INTERACTION_CALLDATA_BYTES) {
-        await this.reject(`Interaction ${index + 1} calldata exceeds maximum size of 64 KB`, context, {
-          interactionIndex: index,
-          calldataBytes,
-        });
+        await this.reject(
+          `Interaction ${index + 1} calldata exceeds maximum size of 64 KB`,
+          context,
+          {
+            interactionIndex: index,
+            calldataBytes,
+          },
+        );
       }
 
       const value = BigInt(interaction.value ?? '0');
       if (value !== ZERO_NATIVE_VALUE) {
-        await this.reject('Native value transfers are not allowed for API key transactions', context, {
-          interactionIndex: index,
-          hasNativeValue: true,
-        });
+        await this.reject(
+          'Native value transfers are not allowed for API key transactions',
+          context,
+          {
+            interactionIndex: index,
+            hasNativeValue: true,
+          },
+        );
       }
 
       if (interaction.data.length > 2 && interaction.data.length < 10) {
@@ -122,18 +160,29 @@ export class TransactionPolicyService {
           await this.reject(
             `Interaction ${index + 1} targets a contract not allowed by this API key`,
             context,
-            { interactionIndex: index, target, allowedContractCount: context.allowedContracts.length },
+            {
+              interactionIndex: index,
+              target,
+              allowedContractCount: context.allowedContracts.length,
+            },
           );
         }
       }
 
       // Function selector allowlist check: if the API key defines allowedFunctionSelectors, the selector must be in the list.
       if (context.allowedFunctionSelectors && context.allowedFunctionSelectors.length > 0) {
-        if (!selector || !context.allowedFunctionSelectors.some((s) => s.toLowerCase() === selector)) {
+        if (
+          !selector ||
+          !context.allowedFunctionSelectors.some((s) => s.toLowerCase() === selector)
+        ) {
           await this.reject(
             `Interaction ${index + 1} uses a function selector not allowed by this API key`,
             context,
-            { interactionIndex: index, selector, allowedSelectorCount: context.allowedFunctionSelectors.length },
+            {
+              interactionIndex: index,
+              selector,
+              allowedSelectorCount: context.allowedFunctionSelectors.length,
+            },
           );
         }
       }
@@ -164,6 +213,36 @@ export class TransactionPolicyService {
         });
       }
     }
+
+    await this.recordAllowed(context, {
+      interactionCount: dto.interactions.length,
+      distinctTargetCount: distinctTargets.size,
+      totalCalldataBytes,
+    });
+  }
+
+  private async recordAllowed(
+    context: TransactionPolicyContext,
+    extra: Record<string, unknown>,
+  ): Promise<void> {
+    await this.securityEvents?.record({
+      actorType: 'api_key',
+      eventType: 'transaction.policy_allowed',
+      userId: context.userId,
+      apiKeyId: context.apiKeyId ?? null,
+      riskLevel: 'low',
+      result: 'allowed',
+      reason: 'transaction_policy_allowed',
+      metadata: {
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        apiKeyPrefix: context.apiKeyPrefix ?? null,
+        hasContractAllowlist: Boolean(context.allowedContracts?.length),
+        hasSelectorAllowlist: Boolean(context.allowedFunctionSelectors?.length),
+        hasSpendLimit: Boolean(context.dailySpendLimit || context.monthlySpendLimit),
+        ...extra,
+      },
+    });
   }
 
   private async reject(
@@ -224,5 +303,41 @@ export class TransactionPolicyService {
     const end = start + 64;
     if (data.length < end) return null;
     return data.slice(start, end);
+  }
+
+  private async getSpentInPeriod(
+    apiKeyId: string | undefined,
+    since: Date,
+    until: Date | null,
+  ): Promise<bigint> {
+    if (!apiKeyId) return 0n;
+
+    const where: Record<string, unknown> = {
+      apiKeyId,
+      status: { in: ['submitting', 'pending', 'confirmed', 'unknown'] },
+      createdAt: { gte: since },
+    };
+    if (until) {
+      (where.createdAt as Record<string, unknown>).lte = until;
+    }
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: where as any,
+      select: { details: true },
+    });
+
+    return transactions.reduce((total, tx) => total + this.extractTransactionValue(tx.details), 0n);
+  }
+
+  private extractTransactionValue(details: unknown): bigint {
+    if (!details || typeof details !== 'object' || Array.isArray(details)) return 0n;
+    const interactions = (details as { interactions?: unknown }).interactions;
+    if (!Array.isArray(interactions)) return 0n;
+    return interactions.reduce((sum: bigint, interaction: unknown) => {
+      if (!interaction || typeof interaction !== 'object') return sum;
+      const value = (interaction as { value?: unknown }).value;
+      if (typeof value !== 'string' || !/^\d+$/.test(value)) return sum;
+      return sum + BigInt(value);
+    }, 0n);
   }
 }

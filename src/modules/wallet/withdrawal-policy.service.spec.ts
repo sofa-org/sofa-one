@@ -20,6 +20,7 @@ describe('WithdrawalPolicyService', () => {
   const mockWithdrawalAddressCreate = jest.fn();
   const mockWithdrawalAddressDeleteMany = jest.fn();
   const mockTransactionFindMany = jest.fn();
+  const mockQueryRaw = jest.fn();
   const securityEvents = { record: jest.fn() };
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -42,6 +43,7 @@ describe('WithdrawalPolicyService', () => {
     }));
     mockWithdrawalAddressDeleteMany.mockResolvedValue({ count: 1 });
     mockTransactionFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
 
     service = new WithdrawalPolicyService(
       {
@@ -53,6 +55,7 @@ describe('WithdrawalPolicyService', () => {
           deleteMany: mockWithdrawalAddressDeleteMany,
         },
         transaction: { findMany: mockTransactionFindMany },
+        $queryRaw: mockQueryRaw,
       } as unknown as PrismaService,
       securityEvents as never,
     );
@@ -135,6 +138,41 @@ describe('WithdrawalPolicyService', () => {
         }),
         select: { details: true },
       }),
+    );
+  });
+
+  it('checks daily limits while holding a withdrawal policy row lock', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000',
+      dailyWithdrawalLimit: '2000000',
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+    mockTransactionFindMany.mockResolvedValue([{ details: { amount: '500000' } }]);
+
+    await expect(
+      service.assertDailyLimitWithUserLock(
+        'user-1',
+        VALID_DTO,
+        { chainId: VALID_DTO.chainId, walletId: 'wallet-1' },
+        {
+          withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique },
+          transaction: { findMany: mockTransactionFindMany },
+          $queryRaw: mockQueryRaw,
+        } as never,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(mockQueryRaw).toHaveBeenCalledTimes(1);
+    expect(mockTransactionFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ userId: 'user-1', operationType: 'withdraw' }),
+      }),
+    );
+    expect(mockQueryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTransactionFindMany.mock.invocationCallOrder[0],
     );
   });
 

@@ -293,6 +293,7 @@ export class TransactionsService {
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
       allowedIps: apiKeyRecord.allowedIps,
+      clientIp: this.requestContext?.getClientIp(),
       expiresAt: apiKeyRecord.expiresAt,
       chainId: context.chainId,
       metadata: context.metadata as any,

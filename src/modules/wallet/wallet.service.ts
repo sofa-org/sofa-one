@@ -7,6 +7,7 @@ import {
   Optional,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import {
   createPublicClient,
   encodeAbiParameters,
@@ -415,6 +416,7 @@ export class WalletService {
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
       allowedIps: apiKeyRecord.allowedIps,
+      clientIp: this.requestContext?.getClientIp(),
       expiresAt: apiKeyRecord.expiresAt,
       chainId: context.chainId,
       metadata: context.metadata as any,
@@ -609,7 +611,7 @@ export class WalletService {
       walletId: wallet.id,
       walletAddress: wallet.walletAddress,
       stepUpVerified: options?.stepUpVerified,
-    });
+    }, { skipDailyLimit: true });
 
     // Evaluate multi-factor risk before proceeding
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
@@ -671,23 +673,53 @@ export class WalletService {
       }
     }
 
-    const { tx, created } = await this.createPendingWithdrawalOrReturnExisting(userId, {
-      idempotencyKey: params.idempotencyKey!,
-      chainId,
-      requestHash,
-      walletAddress: wallet.walletAddress,
-      details: {
-        type: 'withdraw',
-        execution: 'calibur_agent_user_operation',
-        to: params.to,
-        amount: params.amount,
-        token: params.token,
-        contractAddress: usdcAddressHex,
-        agentWalletAddress: wallet.agentWalletAddress,
-        agentKeyHash: wallet.agentKeyHash,
-        idempotencyKey: params.idempotencyKey,
-        requestHash,
-      },
+    const { tx, created } = await this.prisma.$transaction(async (txClient) => {
+      const existing = await this.findExistingWithdrawal(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey!,
+          chainId,
+          requestHash,
+        },
+        txClient,
+      );
+      if (existing) {
+        return { tx: existing, created: false };
+      }
+
+      await this.withdrawalPolicy.assertDailyLimitWithUserLock(
+        userId,
+        params,
+        {
+          chainId,
+          walletId: wallet.id,
+          walletAddress,
+        },
+        txClient,
+      );
+
+      return this.createPendingWithdrawalOrReturnExisting(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey!,
+          chainId,
+          requestHash,
+          walletAddress,
+          details: {
+            type: 'withdraw',
+            execution: 'calibur_agent_user_operation',
+            to: params.to,
+            amount: params.amount,
+            token: params.token,
+            contractAddress: usdcAddressHex,
+            agentWalletAddress: wallet.agentWalletAddress,
+            agentKeyHash: wallet.agentKeyHash,
+            idempotencyKey: params.idempotencyKey,
+            requestHash,
+          },
+        },
+        txClient,
+      );
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
@@ -760,8 +792,9 @@ export class WalletService {
       walletAddress?: string;
       stepUpVerified?: boolean;
     },
+    options: { skipDailyLimit?: boolean } = {},
   ): Promise<void> {
-    await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context);
+    await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context, options);
   }
 
   private async createPendingWithdrawalOrReturnExisting(
@@ -773,9 +806,10 @@ export class WalletService {
       walletAddress: string;
       details: Record<string, unknown>;
     },
+    prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     try {
-      const tx = await this.prisma.transaction.create({
+      const tx = await prisma.transaction.create({
         data: {
           userId,
           status: 'submitting',
@@ -791,11 +825,15 @@ export class WalletService {
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
-      const existing = await this.findExistingWithdrawal(userId, {
-        idempotencyKey: params.idempotencyKey,
-        chainId: params.chainId,
-        requestHash: params.requestHash,
-      });
+      const existing = await this.findExistingWithdrawal(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey,
+          chainId: params.chainId,
+          requestHash: params.requestHash,
+        },
+        prisma,
+      );
       if (!existing) throw error;
       return { tx: existing, created: false };
     }
@@ -804,8 +842,9 @@ export class WalletService {
   private async findExistingWithdrawal(
     userId: string,
     params: { idempotencyKey: string; chainId: number; requestHash: string },
+    prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
-    const existing = await this.prisma.transaction.findFirst({
+    const existing = await prisma.transaction.findFirst({
       where: {
         userId,
         operationType: 'withdraw',

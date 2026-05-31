@@ -1,7 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
+import { IpAllowlistService } from '../../common/guards/ip-allowlist.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 
 const EOA_EXECUTION_MAX_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -22,6 +23,7 @@ export type EoaExecutionPolicyContext = {
   apiKeyId?: string | null;
   apiKeyPrefix?: string | null;
   allowedIps?: string[] | null;
+  clientIp?: string;
   expiresAt?: Date | string | null;
   chainId: number;
   metadata?: Prisma.InputJsonValue;
@@ -33,6 +35,7 @@ export class EoaExecutionPolicyService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly securityEvents: SecurityEventService,
+    @Optional() private readonly ipAllowlist?: IpAllowlistService,
   ) {}
 
   async assertAllowed(context: EoaExecutionPolicyContext): Promise<void> {
@@ -45,6 +48,25 @@ export class EoaExecutionPolicyService {
       await this.recordDecision(context, 'denied', 'eoa_execution_requires_ip_allowlist');
       throw new ForbiddenException('EOA execution requires an API key IP allowlist');
     }
+
+    if (!context.clientIp) {
+      await this.recordDecision(context, 'denied', 'eoa_execution_requires_request_ip');
+      throw new ForbiddenException('EOA execution requires a verifiable request IP');
+    }
+
+    if (!this.ipAllowlist) {
+      await this.recordDecision(context, 'denied', 'eoa_execution_ip_allowlist_unavailable');
+      throw new ForbiddenException('EOA execution IP allowlist validation is unavailable');
+    }
+
+    await this.ipAllowlist.assertIpAllowed(context.clientIp, context.allowedIps, {
+      actorType: 'api_key',
+      apiKeyId: context.apiKeyId ?? undefined,
+      apiKeyPrefix: context.apiKeyPrefix ?? undefined,
+      userId: context.userId,
+      clientIp: context.clientIp,
+      allowedIpCount: context.allowedIps.length,
+    });
 
     if (!this.hasShortTtl(context.expiresAt)) {
       await this.recordDecision(context, 'denied', 'eoa_execution_requires_short_ttl');

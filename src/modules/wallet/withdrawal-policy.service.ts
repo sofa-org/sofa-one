@@ -23,6 +23,8 @@ type WithdrawalAddressRecord = {
   createdAt: Date;
 };
 
+type WithdrawalPolicyClient = PrismaService | Prisma.TransactionClient;
+
 const WITHDRAWAL_COUNTED_STATUSES = ['submitting', 'pending', 'confirmed', 'unknown'] as const;
 
 @Injectable()
@@ -137,8 +139,10 @@ export class WithdrawalPolicyService {
     userId: string,
     params: WithdrawDto,
     context: { chainId: number; walletId?: string; walletAddress?: string; stepUpVerified?: boolean },
+    options: { skipDailyLimit?: boolean; prisma?: WithdrawalPolicyClient } = {},
   ): Promise<void> {
-    const policy = await this.getPolicy(userId);
+    const client = options.prisma ?? this.prisma;
+    const policy = await this.getPolicy(userId, client);
     const amount = this.parseAmount(params.amount);
     const singleLimit = this.parsePositiveLimit(
       policy?.singleWithdrawalLimit,
@@ -168,8 +172,10 @@ export class WithdrawalPolicyService {
       });
     }
 
-    await this.assertDailyLimit(userId, params, amount, policy, context);
-    await this.assertAddressAllowed(userId, params, policy, context);
+    if (!options.skipDailyLimit) {
+      await this.assertDailyLimit(userId, params, amount, policy, context, client);
+    }
+    await this.assertAddressAllowed(userId, params, policy, context, client);
 
     if (amount >= USDC_HIGH_VALUE_AMOUNT) {
       this.logger.warn({
@@ -200,8 +206,23 @@ export class WithdrawalPolicyService {
     }
   }
 
-  private async getPolicy(userId: string): Promise<WithdrawalPolicyRecord | null> {
-    return this.prisma.withdrawalPolicy.findUnique({ where: { userId } }) as Promise<WithdrawalPolicyRecord | null>;
+  async assertDailyLimitWithUserLock(
+    userId: string,
+    params: WithdrawDto,
+    context: { chainId: number; walletId?: string; walletAddress?: string },
+    prisma: WithdrawalPolicyClient,
+  ): Promise<void> {
+    await prisma.$queryRaw`SELECT id FROM withdrawal_policies WHERE user_id = ${userId}::uuid FOR UPDATE`;
+    const policy = await this.getPolicy(userId, prisma);
+    if (!policy?.dailyWithdrawalLimit) return;
+    await this.assertDailyLimit(userId, params, this.parseAmount(params.amount), policy, context, prisma);
+  }
+
+  private async getPolicy(
+    userId: string,
+    prisma: WithdrawalPolicyClient = this.prisma,
+  ): Promise<WithdrawalPolicyRecord | null> {
+    return prisma.withdrawalPolicy.findUnique({ where: { userId } }) as Promise<WithdrawalPolicyRecord | null>;
   }
 
   private toWithdrawalAddressResponse(address: WithdrawalAddressRecord) {
@@ -237,12 +258,13 @@ export class WithdrawalPolicyService {
     amount: bigint,
     policy: WithdrawalPolicyRecord | null,
     context: { chainId: number; walletId?: string; walletAddress?: string },
+    prisma: WithdrawalPolicyClient = this.prisma,
   ): Promise<void> {
     if (!policy?.dailyWithdrawalLimit) return;
 
     const dailyLimit = this.parsePositiveLimit(policy.dailyWithdrawalLimit, null, 'dailyWithdrawalLimit');
     const dayStart = this.startOfUtcDay(new Date());
-    const withdrawals = await this.prisma.transaction.findMany({
+    const withdrawals = await prisma.transaction.findMany({
       where: {
         userId,
         operationType: 'withdraw',
@@ -272,11 +294,12 @@ export class WithdrawalPolicyService {
     params: WithdrawDto,
     policy: WithdrawalPolicyRecord | null,
     context: { chainId: number; walletId?: string; walletAddress?: string },
+    prisma: WithdrawalPolicyClient = this.prisma,
   ): Promise<void> {
     if (policy?.requireAddressAllowlist !== true) return;
 
     const address = params.to.toLowerCase();
-    const allowlisted = (await this.prisma.withdrawalAddress.findUnique({
+    const allowlisted = (await prisma.withdrawalAddress.findUnique({
       where: { userId_address: { userId, address } },
     })) as WithdrawalAddressRecord | null;
 

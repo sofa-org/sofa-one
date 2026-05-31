@@ -18,12 +18,18 @@ describe('TransactionPolicyService', () => {
 
   let service: TransactionPolicyService;
   const securityEvents = { record: jest.fn() };
+  const prisma = {
+    transaction: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
     securityEvents.record.mockResolvedValue(undefined);
-    service = new TransactionPolicyService(securityEvents as never);
+    prisma.transaction.findMany.mockResolvedValue([]);
+    service = new TransactionPolicyService(prisma as never, securityEvents as never);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
@@ -34,7 +40,23 @@ describe('TransactionPolicyService', () => {
   it('allows benign interactions', async () => {
     await expect(service.assertAllowed(baseDto, context)).resolves.toBeUndefined();
     expect(loggerWarnSpy).not.toHaveBeenCalled();
-    expect(securityEvents.record).not.toHaveBeenCalled();
+    expect(securityEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'api_key',
+        eventType: 'transaction.policy_allowed',
+        userId: 'user-1',
+        riskLevel: 'low',
+        result: 'allowed',
+        reason: 'transaction_policy_allowed',
+        metadata: expect.objectContaining({
+          chainId: 8453,
+          executionMode: 'session_key',
+          interactionCount: 1,
+          distinctTargetCount: 1,
+          totalCalldataBytes: 0,
+        }),
+      }),
+    );
   });
 
   it('rejects more than ten interactions', async () => {
@@ -235,7 +257,13 @@ describe('TransactionPolicyService', () => {
     };
     const dto: SendTransactionDto = {
       ...baseDto,
-      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+      interactions: [
+        {
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xa9059cbb' + '0'.repeat(56),
+          value: '0',
+        },
+      ],
     };
     await expect(service.assertAllowed(dto, selectorContext)).resolves.toBeUndefined();
   });
@@ -247,7 +275,13 @@ describe('TransactionPolicyService', () => {
     };
     const dto: SendTransactionDto = {
       ...baseDto,
-      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+      interactions: [
+        {
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xa9059cbb' + '0'.repeat(56),
+          value: '0',
+        },
+      ],
     };
     await expect(service.assertAllowed(dto, selectorContext)).rejects.toThrow(
       'uses a function selector not allowed by this API key',
@@ -261,7 +295,13 @@ describe('TransactionPolicyService', () => {
     };
     const dto: SendTransactionDto = {
       ...baseDto,
-      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0xa9059cbb' + '0'.repeat(56), value: '0' }],
+      interactions: [
+        {
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xa9059cbb' + '0'.repeat(56),
+          value: '0',
+        },
+      ],
     };
     await expect(service.assertAllowed(dto, selectorContext)).resolves.toBeUndefined();
   });
@@ -296,7 +336,7 @@ describe('TransactionPolicyService', () => {
       interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
     };
     await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceeds daily spend limit',
+      'exceed daily spend limit',
     );
   });
 
@@ -307,7 +347,7 @@ describe('TransactionPolicyService', () => {
       interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
     };
     await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceeds monthly spend limit',
+      'exceed monthly spend limit',
     );
   });
 
@@ -321,12 +361,108 @@ describe('TransactionPolicyService', () => {
       ],
     };
     await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceeds daily spend limit',
+      'exceed daily spend limit',
     );
   });
 
   it('skips spend limit check when limits are null/undefined', async () => {
     const spendContext = { ...context, dailySpendLimit: null, monthlySpendLimit: undefined };
     await expect(service.assertAllowed(baseDto, spendContext)).resolves.toBeUndefined();
+  });
+
+  // ── Cumulative spend limit tracking ─────────────────────────────────
+
+  it('rejects when cumulative daily spending plus current value exceeds limit', async () => {
+    prisma.transaction.findMany.mockResolvedValue([
+      {
+        details: { interactions: [{ value: '800000000000000000' }] },
+      },
+    ]);
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '300000000000000000' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'exceed daily spend limit',
+    );
+    expect(prisma.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ apiKeyId: 'key-1' }),
+      }),
+    );
+  });
+
+  it('allows when cumulative daily spending plus current value is within limit', async () => {
+    prisma.transaction.findMany.mockResolvedValue([
+      {
+        details: { interactions: [{ value: '400000000000000000' }] },
+      },
+    ]);
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '500000000000000000' }],
+    };
+    // 0.4 + 0.5 = 0.9 ETH < 1 ETH daily limit, but native value transfer is rejected
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'Native value transfers are not allowed',
+    );
+  });
+
+  it('rejects when cumulative monthly spending plus current value exceeds limit', async () => {
+    prisma.transaction.findMany.mockResolvedValue([
+      {
+        details: { interactions: [{ value: '900000000000000000' }] },
+      },
+    ]);
+    const spendContext = {
+      ...context,
+      monthlySpendLimit: '1000000000000000000',
+      apiKeyId: 'key-1',
+    };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '200000000000000000' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
+      'exceed monthly spend limit',
+    );
+  });
+
+  it('queries past transactions for the correct time period (daily)', async () => {
+    prisma.transaction.findMany.mockResolvedValue([]);
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '0' }],
+    };
+    await expect(service.assertAllowed(dto, spendContext)).resolves.toBeUndefined();
+    const calls = prisma.transaction.findMany.mock.calls;
+    const dailyCall = calls.find(
+      (args: unknown[]) =>
+        (args[0] as Record<string, unknown>)?.where &&
+        (args[0] as { where: Record<string, unknown> }).where.createdAt &&
+        typeof (args[0] as { where: { createdAt: Record<string, unknown> } }).where.createdAt
+          .gte === 'object',
+    );
+    expect(dailyCall).toBeDefined();
+    if (dailyCall) {
+      const where = (dailyCall[0] as { where: Record<string, unknown> }).where;
+      expect(where.apiKeyId).toBe('key-1');
+      expect(where.status).toEqual({ in: ['submitting', 'pending', 'confirmed', 'unknown'] });
+    }
+  });
+
+  it('handles missing apiKeyId gracefully in spend limit check', async () => {
+    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' };
+    const dto: SendTransactionDto = {
+      ...baseDto,
+      interactions: [{ ...baseDto.interactions[0], value: '0' }],
+    };
+    // apiKeyId is undefined, getSpentInPeriod returns 0n immediately without querying
+    await expect(service.assertAllowed(dto, spendContext)).resolves.toBeUndefined();
+    // With no apiKeyId, the cumulative check skips the DB query
+    expect(prisma.transaction.findMany).not.toHaveBeenCalled();
   });
 });

@@ -94,13 +94,18 @@ describe('SecurityNotificationService', () => {
   });
 
   it('marks one or all notifications as read for the owning user', async () => {
-    prisma.securityNotification.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 3 });
+    prisma.securityNotification.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 3 });
 
     await expect(service.markRead('user-1', 'notification-1')).resolves.toEqual({
       success: true,
       updatedCount: 1,
     });
-    await expect(service.markAllRead('user-1')).resolves.toEqual({ success: true, updatedCount: 3 });
+    await expect(service.markAllRead('user-1')).resolves.toEqual({
+      success: true,
+      updatedCount: 3,
+    });
 
     expect(prisma.securityNotification.updateMany).toHaveBeenNthCalledWith(1, {
       where: { id: 'notification-1', userId: 'user-1', readAt: null },

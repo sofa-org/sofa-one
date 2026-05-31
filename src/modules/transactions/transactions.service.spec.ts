@@ -77,7 +77,7 @@ describe('TransactionsService', () => {
 
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
   const transactionSimulation = { assertSimulatable: jest.fn() } as any;
-  const transactionPolicy = new TransactionPolicyService();
+  const transactionPolicy = new TransactionPolicyService(prisma, undefined as any);
   const mockAssertSessionKeyAllowed = jest.fn();
 
   let service: TransactionsService;

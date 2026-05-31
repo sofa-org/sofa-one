@@ -108,6 +108,8 @@ describe('WalletService.withdraw()', () => {
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
   const mockAssertWithdrawalAllowed = jest.fn();
+  const mockAssertDailyLimitWithUserLock = jest.fn();
+  const mockTransaction = jest.fn();
   const mockEvaluateRisk = jest.fn();
   const mockEnforceRiskAction = jest.fn();
 
@@ -127,6 +129,10 @@ describe('WalletService.withdraw()', () => {
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
+    mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
+    mockTransaction.mockImplementation(async (callback) => callback({
+      transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+    }));
     mockEvaluateRisk.mockResolvedValue({
       riskLevel: 'low',
       score: 0,
@@ -144,6 +150,7 @@ describe('WalletService.withdraw()', () => {
           useValue: {
             userWallet: { findUnique: mockFindUnique },
             transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+            $transaction: mockTransaction,
           },
         },
         {
@@ -152,7 +159,10 @@ describe('WalletService.withdraw()', () => {
         },
         {
           provide: WithdrawalPolicyService,
-          useValue: { assertWithdrawalAllowed: mockAssertWithdrawalAllowed },
+          useValue: {
+            assertWithdrawalAllowed: mockAssertWithdrawalAllowed,
+            assertDailyLimitWithUserLock: mockAssertDailyLimitWithUserLock,
+          },
         },
         {
           provide: RiskEvaluationService,
@@ -317,6 +327,7 @@ describe('WalletService.withdraw()', () => {
         chainId: VALID_DTO.chainId,
         walletAddress: WALLET.walletAddress,
       }),
+      { skipDailyLimit: true },
     );
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(VALID_DTO.to);
     expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
