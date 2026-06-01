@@ -711,11 +711,13 @@ export default function WalletPage() {
       }
 
       if (!result) {
+        setAgentRegistrationCheckStatus('timed_out');
         setWalletSetupSuccess(`Authorization pending. We are still checking on-chain: ${txHash}`);
         return;
       }
 
       setWallet(result.wallet);
+      setAgentRegistrationCheckStatus('idle');
       const confirmedAuthorization = result.wallet.chainAuthorizations.find(
         (item) => item.chainId === agentChainId,
       );
@@ -745,7 +747,7 @@ export default function WalletPage() {
   const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
-  const authorizeSubmitDisabled = registrationBusy || (isSelectedChainRegistered && !shouldPromptReauthorization);
+  const authorizeSubmitDisabled = registrationBusy;
   const showAgentRegistrationSpinner = walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !wallet?.walletAddress
     ? {

@@ -94,7 +94,7 @@ export function Step2AuthorizeAccess({
         </div>
         <p className="mt-2 text-sm text-blue-800">
           {isSelectedChainRegistered
-            ? `${agentChainName} is already authorized for API access.`
+            ? `${agentChainName} is already authorized for API access. Choose a new expiry and re-authorize to renew the session key.`
             : isAgentRegistrationChecking
               ? 'Authorization is checking on-chain. We will update this page automatically; do not submit another authorization.'
               : 'This one-time on-chain approval lets your backend submit transactions through API keys.'}
@@ -241,11 +241,9 @@ export function Step2AuthorizeAccess({
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">This submission will</p>
           <p className="mt-1 font-semibold">
-            {isSelectedChainRegistered && shouldPromptReauthorization
+            {isSelectedChainRegistered
               ? 'Renew API access'
-              : isSelectedChainRegistered
-                ? 'Keep access unchanged'
-                : 'Authorize API access'}
+              : 'Authorize API access'}
           </p>
         </div>
         <p className="sm:col-span-3 text-xs leading-5 text-blue-700">
@@ -326,11 +324,9 @@ export function Step2AuthorizeAccess({
           >
             {showAgentRegistrationSpinner && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>
-              {isSelectedChainRegistered && shouldPromptReauthorization
+              {isSelectedChainRegistered
                 ? 'Re-authorize API Access'
-                : isSelectedChainRegistered
-                  ? 'Authorized'
-                  : isAgentRegistrationChecking
+                : isAgentRegistrationChecking
                     ? 'Authorization pending'
                     : 'Authorize API Access'}
             </span>

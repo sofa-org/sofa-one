@@ -717,6 +717,8 @@ export default function ApiKeysPage() {
               const lastUsed = getRelativeDateSummary(key.lastUsedAt, 'Never');
               const created = getRelativeDateSummary(key.createdAt, 'Unknown');
               const expiry = getKeyExpirySummary(key.expiresAt);
+              const allowedContracts = key.allowedContracts ?? [];
+              const allowedFunctionSelectors = key.allowedFunctionSelectors ?? [];
 
               return (
                 <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(160px,1fr)_minmax(150px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
@@ -745,16 +747,16 @@ export default function ApiKeysPage() {
                       !key.permissions.canSendTransaction &&
                       !key.permissions.canUseEoaExecution && <span>none</span>}
                   </span>
-                  {(key.allowedContracts.length > 0 || key.allowedFunctionSelectors.length > 0) && (
+                  {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
                     <span className="mt-1 flex flex-wrap gap-1 text-[10px] text-brand-muted">
-                      {key.allowedContracts.length > 0 && (
-                        <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={key.allowedContracts.join(', ')}>
-                          {key.allowedContracts.length} contract{key.allowedContracts.length > 1 ? 's' : ''}
+                      {allowedContracts.length > 0 && (
+                        <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
+                          {allowedContracts.length} contract{allowedContracts.length > 1 ? 's' : ''}
                         </span>
                       )}
-                      {key.allowedFunctionSelectors.length > 0 && (
-                        <span className="rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={key.allowedFunctionSelectors.join(', ')}>
-                          {key.allowedFunctionSelectors.length} selector{key.allowedFunctionSelectors.length > 1 ? 's' : ''}
+                      {allowedFunctionSelectors.length > 0 && (
+                        <span className="rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
+                          {allowedFunctionSelectors.length} selector{allowedFunctionSelectors.length > 1 ? 's' : ''}
                         </span>
                       )}
                     </span>
