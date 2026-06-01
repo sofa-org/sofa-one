@@ -237,7 +237,7 @@ export function WithdrawForm({
             Send only to a 0x EVM address on the selected network. Double-check the chain before submitting.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start">
           <div className="w-full sm:w-48">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Chain</label>
             <select

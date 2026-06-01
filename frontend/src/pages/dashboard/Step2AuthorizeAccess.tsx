@@ -252,7 +252,7 @@ export function Step2AuthorizeAccess({
         </p>
       </div>
 
-      <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-end">
+      <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-100/30 p-4 md:grid-cols-[180px_180px_1fr_auto] md:items-start">
         <div>
           <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-brand-muted">
             Network
@@ -316,7 +316,7 @@ export function Step2AuthorizeAccess({
             </button>
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end md:pt-[22px]">
           <button
             type="submit"
             disabled={authorizeSubmitDisabled}
