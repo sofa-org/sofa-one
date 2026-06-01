@@ -6,6 +6,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const location = useLocation();
   const reloadPage = () => window.location.reload();
 
+  if (user) {
+    return <>{children}</>;
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-bg px-6 text-brand-text">
@@ -34,9 +38,5 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!user) {
-    return <Navigate to="/sign-in" replace state={{ from: location }} />;
-  }
-
-  return <>{children}</>;
+  return <Navigate to="/sign-in" replace state={{ from: location }} />;
 }
