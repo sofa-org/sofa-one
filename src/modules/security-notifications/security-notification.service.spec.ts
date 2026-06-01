@@ -34,7 +34,50 @@ describe('SecurityNotificationService', () => {
         type: 'api_key.created',
         title: 'New API key created',
         riskLevel: 'low',
-        metadata: { eventType: 'api_key.created', reason: 'created' },
+        metadata: { eventType: 'api_key.created', result: null, reason: 'created' },
+      }),
+    });
+  });
+
+  it('includes safe event context that helps users investigate notifications', async () => {
+    prisma.securityNotification.create.mockResolvedValue({ id: 'notification-1' });
+
+    await service.notifyForSecurityEvent({
+      id: 'event-1',
+      actorType: 'api_key',
+      userId: 'user-1',
+      eventType: 'transaction.policy_denied',
+      riskLevel: 'high',
+      ip: '203.0.113.42',
+      userAgent: 'Mozilla/5.0',
+      requestId: 'req-1',
+      result: 'denied',
+      reason: 'Contract is not allowlisted',
+      metadata: {
+        apiKeyPrefix: 'sk_1234',
+        chainId: 84532,
+        executionMode: 'contract',
+        target: '0x1111111111111111111111111111111111111111',
+        calldataPreview: '0xabcdef',
+        nested: { shouldNotLeak: true },
+      },
+    });
+
+    expect(prisma.securityNotification.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        metadata: {
+          eventType: 'transaction.policy_denied',
+          result: 'denied',
+          reason: 'Contract is not allowlisted',
+          actorType: 'api_key',
+          ip: '203.0.113.42',
+          userAgent: 'Mozilla/5.0',
+          requestId: 'req-1',
+          apiKeyPrefix: 'sk_1234',
+          chainId: 84532,
+          executionMode: 'contract',
+          target: '0x1111111111111111111111111111111111111111',
+        },
       }),
     });
   });

@@ -13,9 +13,14 @@ type NotificationPrismaClient = {
 
 type CreatedSecurityEvent = {
   id: string;
+  actorType?: string | null;
   userId?: string | null;
   eventType: string;
   riskLevel: SecurityEventRiskLevel | string;
+  ip?: string | null;
+  userAgent?: string | null;
+  requestId?: string | null;
+  result?: string | null;
   reason?: string | null;
   metadata?: unknown;
 };
@@ -49,6 +54,31 @@ const ALWAYS_NOTIFY_EVENT_TYPES = new Set([
 const NOTIFY_RISK_LEVELS = new Set(['medium', 'high', 'critical']);
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+const SAFE_CONTEXT_FIELDS = [
+  'apiKeyPrefix',
+  'keyPrefix',
+  'keyName',
+  'chainId',
+  'executionMode',
+  'operation',
+  'interactionCount',
+  'interactionIndex',
+  'functionSelector',
+  'selector',
+  'target',
+  'token',
+  'amountUnits',
+  'maxAmountUnits',
+  'thresholdUnits',
+  'address',
+  'availableAt',
+  'cooldownHours',
+  'hasContractAllowlist',
+  'hasSelectorAllowlist',
+  'hasSpendLimit',
+] as const;
+
+type SafeMetadataValue = string | number | boolean | null;
 
 @Injectable()
 export class SecurityNotificationService {
@@ -187,10 +217,39 @@ export class SecurityNotificationService {
   }
 
   private safeNotificationMetadata(event: CreatedSecurityEvent): Prisma.InputJsonValue {
-    return {
+    const metadata: Record<string, SafeMetadataValue> = {
       eventType: event.eventType,
+      result: event.result ?? null,
       reason: event.reason ?? null,
     };
+
+    this.addIfPresent(metadata, 'actorType', event.actorType);
+    this.addIfPresent(metadata, 'ip', event.ip);
+    this.addIfPresent(metadata, 'userAgent', event.userAgent);
+    this.addIfPresent(metadata, 'requestId', event.requestId);
+
+    const eventMetadata = this.asRecord(event.metadata);
+    for (const field of SAFE_CONTEXT_FIELDS) {
+      this.addIfPresent(metadata, field, eventMetadata[field]);
+    }
+
+    return metadata;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return value as Record<string, unknown>;
+  }
+
+  private addIfPresent(
+    metadata: Record<string, SafeMetadataValue>,
+    key: string,
+    value: unknown,
+  ): void {
+    if (value === undefined || value === null) return;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      metadata[key] = value;
+    }
   }
 
   private normalizeLimit(limit: number | undefined) {

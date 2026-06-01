@@ -5,7 +5,7 @@ Dashboard-facing security notifications derived from unified `SecurityEvent` row
 
 ## Design/Patterns
 - `SecurityNotificationService.notifyForSecurityEvent()` turns selected user-attributed security events into safe, short notification records.
-- Notification metadata is intentionally minimal (`eventType`, `reason`) and never includes raw API keys, wallet secrets, full calldata, or full typed data.
+- Notification metadata includes display-safe investigation context (result/reason, request context, key prefixes/names, chain/operation, policy amounts/addresses) and never includes raw API keys, wallet secrets, full calldata, or full typed data.
 - Dashboard APIs are frontend-only Openfort IAM routes and are not part of `openapi.yaml`.
 
 ## Flow

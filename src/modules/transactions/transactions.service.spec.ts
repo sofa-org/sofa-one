@@ -12,7 +12,6 @@ jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
 
-import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { TransactionsService } from './transactions.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 

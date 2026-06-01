@@ -40,6 +40,68 @@ function riskBadgeClasses(riskLevel: string) {
   }
 }
 
+const DETAIL_FIELD_LABELS: Record<string, string> = {
+  result: 'Result',
+  reason: 'Policy reason',
+  actorType: 'Actor',
+  ip: 'IP address',
+  userAgent: 'Device',
+  requestId: 'Request ID',
+  apiKeyPrefix: 'API key',
+  keyPrefix: 'API key',
+  keyName: 'API key name',
+  chainId: 'Chain',
+  executionMode: 'Execution mode',
+  operation: 'Operation',
+  interactionCount: 'Interactions',
+  interactionIndex: 'Interaction',
+  functionSelector: 'Function selector',
+  selector: 'Function selector',
+  target: 'Target contract',
+  token: 'Token',
+  amountUnits: 'Amount',
+  maxAmountUnits: 'Limit',
+  thresholdUnits: 'Threshold',
+  address: 'Address',
+  availableAt: 'Available after',
+  cooldownHours: 'Cooldown',
+  hasContractAllowlist: 'Contract allowlist',
+  hasSelectorAllowlist: 'Selector allowlist',
+  hasSpendLimit: 'Spend limit',
+};
+
+const HIDDEN_DETAIL_FIELDS = new Set(['eventType']);
+
+function humanizeDetailKey(key: string) {
+  return (
+    DETAIL_FIELD_LABELS[key] ??
+    key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/[_-]+/g, ' ')
+      .replace(/^./, (char) => char.toUpperCase())
+  );
+}
+
+function formatDetailValue(key: string, value: unknown) {
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'number') return String(value);
+  if (typeof value !== 'string') return JSON.stringify(value);
+
+  if (key === 'availableAt') {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  }
+  if (key === 'cooldownHours') return `${value}h`;
+  return value;
+}
+
+function getDetailEntries(metadata: SecurityNotificationRecord['metadata']) {
+  if (!metadata) return [];
+  return Object.entries(metadata).filter(
+    ([key, value]) => !HIDDEN_DETAIL_FIELDS.has(key) && value !== null && value !== undefined && value !== '',
+  );
+}
+
 export default function SecurityNotificationsPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
   const getToken = useCallback(async () => {
@@ -199,13 +261,16 @@ export default function SecurityNotificationsPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`flex items-start gap-4 px-2 py-4 transition-colors sm:px-4 ${
-                  !notification.readAt ? 'bg-brand-accent/[0.03]' : ''
-                }`}
-              >
+            {notifications.map((notification) => {
+              const detailEntries = getDetailEntries(notification.metadata);
+
+              return (
+                <div
+                  key={notification.id}
+                  className={`flex items-start gap-4 px-2 py-4 transition-colors sm:px-4 ${
+                    !notification.readAt ? 'bg-brand-accent/[0.03]' : ''
+                  }`}
+                >
                 {/* Unread indicator */}
                 <div className="mt-2 shrink-0">
                   {!notification.readAt ? (
@@ -236,14 +301,21 @@ export default function SecurityNotificationsPage() {
                     {notification.title}
                   </h3>
                   <p className="mt-0.5 text-sm text-brand-muted">{notification.body}</p>
-                  {notification.metadata && Object.keys(notification.metadata).length > 0 && (
+                  {detailEntries.length > 0 && (
                     <details className="mt-2">
                       <summary className="cursor-pointer text-xs text-brand-muted hover:text-brand-text">
                         Details
                       </summary>
-                      <pre className="mt-2 overflow-x-auto rounded-lg bg-brand-bg p-3 font-mono text-xs text-brand-text">
-                        {JSON.stringify(notification.metadata, null, 2)}
-                      </pre>
+                      <dl className="mt-2 grid gap-2 rounded-lg bg-brand-bg p-3 text-xs sm:grid-cols-2">
+                        {detailEntries.map(([key, value]) => (
+                          <div key={key} className="min-w-0">
+                            <dt className="font-medium text-brand-muted">{humanizeDetailKey(key)}</dt>
+                            <dd className="mt-0.5 break-words font-mono text-brand-text">
+                              {formatDetailValue(key, value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </details>
                   )}
                 </div>
@@ -262,8 +334,9 @@ export default function SecurityNotificationsPage() {
                     </button>
                   ) : null}
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </DashboardCard>
