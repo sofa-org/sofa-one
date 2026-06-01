@@ -43,7 +43,7 @@ import {
   hashKey,
   type CaliburKey,
 } from '@/lib/calibur';
-import { AlertCircle, BanknoteArrowUp, RotateCcw, X } from 'lucide-react';
+import { AlertCircle, RotateCcw } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import { WalletLoadingState } from './WalletLoadingState';
@@ -851,14 +851,6 @@ export default function WalletPage() {
                     {wallet.walletAddress && (
                       <CopyButton text={wallet.walletAddress} className="shrink-0" />
                     )}
-                    <button
-                      type="button"
-                      disabled={!wallet.walletAddress}
-                      onClick={() => setShowWithdraw((v) => !v)}
-                      className="shrink-0 rounded-full border border-brand-border p-1.5 text-brand-text hover:bg-brand-bg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {showWithdraw ? <X className="h-4 w-4" /> : <BanknoteArrowUp className="h-4 w-4" />}
-                    </button>
                   </div>
                 </div>
 
@@ -944,6 +936,9 @@ export default function WalletPage() {
                   selectedChainId={selectedChainId}
                   setSelectedChainId={setSelectedChainId}
                   onRetryBalances={retryBalances}
+                  canWithdraw={Boolean(wallet.walletAddress)}
+                  showWithdraw={showWithdraw}
+                  onToggleWithdraw={() => setShowWithdraw((v) => !v)}
                 />
 
                 {showWithdraw && (

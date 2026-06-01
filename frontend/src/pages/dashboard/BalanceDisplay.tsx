@@ -1,4 +1,4 @@
-import { Loader2, RotateCcw } from 'lucide-react';
+import { BanknoteArrowUp, Loader2, RotateCcw, X } from 'lucide-react';
 import { TokenIcon } from './WalletIcons';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
 import type { BalanceChain } from '@/lib/api';
@@ -10,6 +10,9 @@ interface BalanceDisplayProps {
   selectedChainId: number;
   setSelectedChainId: (chainId: number) => void;
   onRetryBalances: () => void;
+  canWithdraw: boolean;
+  showWithdraw: boolean;
+  onToggleWithdraw: () => void;
 }
 
 export function BalanceDisplay({
@@ -19,6 +22,9 @@ export function BalanceDisplay({
   selectedChainId,
   setSelectedChainId,
   onRetryBalances,
+  canWithdraw,
+  showWithdraw,
+  onToggleWithdraw,
 }: BalanceDisplayProps) {
   return (
     <div className="pt-6 border-t border-brand-border">
@@ -38,6 +44,15 @@ export function BalanceDisplay({
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Retry
+          </button>
+          <button
+            type="button"
+            onClick={onToggleWithdraw}
+            disabled={!canWithdraw}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {showWithdraw ? <X className="h-3.5 w-3.5" /> : <BanknoteArrowUp className="h-3.5 w-3.5" />}
+            {showWithdraw ? 'Close withdraw' : 'Withdraw'}
           </button>
           <select
             value={selectedChainId}
