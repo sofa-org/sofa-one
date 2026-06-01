@@ -11,9 +11,18 @@
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Newsreader', serif;
+  --font-mono: 'Source Code Pro', monospace;
+  --font-code: 'Source Code Pro', monospace;
 }
 
 body {
   background-color: var(--color-brand-bg);
   color: var(--color-brand-text);
+}
+
+code,
+pre,
+.code-block,
+.code-block code {
+  font-family: 'Source Code Pro', monospace;
 }

@@ -4,7 +4,7 @@ import { SUPPORTED_CHAINS } from "@/lib/chains";
 import { DashboardPage } from "./components/DashboardPage";
 
 const codeClass =
-  "rounded-xl bg-brand-text p-5 text-sm text-brand-bg font-mono overflow-x-auto shadow-sm";
+  "code-block rounded-xl bg-brand-text p-5 text-sm text-brand-bg overflow-x-auto shadow-sm";
 
 const tagClass =
   "inline-flex rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-800";
@@ -24,11 +24,6 @@ const routeSections = [
     label: "Status",
     href: "#status",
     description: "Safe transaction polling",
-  },
-  {
-    label: "Dashboard APIs",
-    href: "#dashboard-only",
-    description: "JWT-only browser routes",
   },
 ];
 
@@ -69,7 +64,7 @@ function CodeBlock({ children }: { children: string }) {
 
 function CopyableCodeBlock({
   children,
-  label = "Copy example",
+  label = "Example",
 }: {
   children: string;
   label?: string;
@@ -178,46 +173,6 @@ export default function APIDocsPage() {
   const statusExample = `curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \\
   -H "X-API-Key: sk_your_key_here"`;
 
-  const dashboardBalancesExample = `const balances = await authFetch('/v1/wallets/balances?chainId=84532', getToken);`;
-  const dashboardWithdrawExample = `const { challengeId } = await authFetch('/v1/auth/step-up/challenge', getToken, {
-  method: 'POST',
-  body: JSON.stringify({ type: 'email_otp' }),
-});
-const { proofToken } = await authFetch('/v1/auth/step-up/verify', getToken, {
-  method: 'POST',
-  body: JSON.stringify({ challengeId, code: userEnteredCode }),
-});
-const withdrawal = await authFetch('/v1/wallets/withdraw', getToken, {
-  method: 'POST',
-  headers: { 'X-Step-Up-Token': proofToken },
-  body: JSON.stringify({
-    chainId: 84532,
-    to: '0x1111111111111111111111111111111111111111',
-    amount: '1000000',
-    token: 'USDC',
-    idempotencyKey: crypto.randomUUID(),
-  }),
-});`;
-  const dashboardApiKeysExample = `const keys = await authFetch('/v1/api-keys', getToken);
-
-const { challengeId } = await authFetch('/v1/auth/step-up/challenge', getToken, {
-  method: 'POST',
-  body: JSON.stringify({ type: 'email_otp' }),
-});
-const { proofToken } = await authFetch('/v1/auth/step-up/verify', getToken, {
-  method: 'POST',
-  body: JSON.stringify({ challengeId, code: userEnteredCode }),
-});
-const created = await authFetch('/v1/api-keys', getToken, {
-  method: 'POST',
-  headers: { 'X-Step-Up-Token': proofToken },
-  body: JSON.stringify({ name: 'Production backend' }),
-});`;
-
-  const dashboardTxHistoryExample = `const transactions = await authFetch('/v1/transactions?status=confirmed&chainId=84532&page=1&limit=20', getToken);`;
-
-  const dashboardSigningRequestsExample = `const signingRequests = await authFetch('/v1/wallets/signing-requests?type=message&status=signed&chainId=84532&page=1&limit=20', getToken);`;
-
   return (
     <DashboardPage
       title="API Documentation"
@@ -275,11 +230,10 @@ const created = await authFetch('/v1/api-keys', getToken, {
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-brand-muted">
-            Public backend routes use <span className="font-mono text-brand-text">X-API-Key</span>;
-            dashboard-only routes use the signed-in browser session.
+            Public backend routes use <span className="font-mono text-brand-text">X-API-Key</span>.
           </p>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {routeSections.map((section) => (
             <a
               key={section.href}
@@ -308,7 +262,7 @@ const created = await authFetch('/v1/api-keys', getToken, {
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-brand-muted">
-            Use these chain IDs in public requests and dashboard examples. Testnets include faucet help in the
+            Use these chain IDs in public requests. Testnets include faucet help in the
             wallet setup flow; mainnets require funding the EOA with real native gas.
           </p>
         </div>
@@ -333,96 +287,6 @@ const created = await authFetch('/v1/api-keys', getToken, {
       </section>
 
       <CodeBlock>{apiKeyHeader}</CodeBlock>
-
-      <section
-        id="dashboard-only"
-        className="scroll-mt-24 rounded-2xl border border-brand-border bg-white p-6 shadow-sm"
-      >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
-              Dashboard-only APIs
-            </p>
-            <h2 className="mt-2 font-serif text-xl font-bold text-brand-text">
-              Browser calls use Openfort IAM, not API keys
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
-              Wallet balances, withdrawals, transaction history, signing requests, and API-key management are intentionally dashboard-only. Call them
-              from the signed-in SPA with <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">authFetch</code>
-              and the current Openfort IAM token; never expose or reuse a backend <span className="font-mono text-brand-text">X-API-Key</span>
-              for these routes.
-            </p>
-          </div>
-          <span className="w-fit rounded-full bg-brand-bg px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-muted">
-            Frontend only
-          </span>
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Balances</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/wallets/balances</p>
-            </div>
-            <p className="text-sm leading-6 text-brand-muted">
-              Refresh dashboard balances for the selected chain while keeping RPC errors safely shaped.
-            </p>
-            <CopyableCodeBlock label="JWT example">{dashboardBalancesExample}</CopyableCodeBlock>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Withdraw</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">POST /v1/wallets/withdraw</p>
-            </div>
-            <p className="text-sm leading-6 text-brand-muted">
-              Submit a dashboard USDC or native-token withdrawal with a fresh idempotency key and Openfort IAM session.
-            </p>
-            <CopyableCodeBlock label="JWT example">{dashboardWithdrawExample}</CopyableCodeBlock>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">API keys</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">/v1/api-keys/*</p>
-            </div>
-            <p className="text-sm leading-6 text-brand-muted">
-              List and create dashboard-managed API keys. The raw key is returned once and must be stored server-side.
-            </p>
-            <CopyableCodeBlock label="JWT example">{dashboardApiKeysExample}</CopyableCodeBlock>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Transaction History</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/transactions</p>
-            </div>
-            <p className="text-sm leading-6 text-brand-muted">
-              List all transactions for the authenticated user with optional status and chain filtering. Supports pagination.
-            </p>
-            <CopyableCodeBlock label="JWT example">{dashboardTxHistoryExample}</CopyableCodeBlock>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/50 p-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Signing Requests</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-text">GET /v1/wallets/signing-requests</p>
-            </div>
-            <p className="text-sm leading-6 text-brand-muted">
-              List all signing requests for the authenticated user with optional type, status, and chain filtering. Supports pagination.
-            </p>
-            <CopyableCodeBlock label="JWT example">{dashboardSigningRequestsExample}</CopyableCodeBlock>
-          </div>
-        </div>
-
-        <p className="mt-4 text-sm leading-6 text-brand-muted">
-          Individual transaction and signing request details can be fetched via{" "}
-          <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">GET /v1/transactions/:id/detail</code>{" "}
-          (dashboard-only transaction detail) and{" "}
-          <code className="rounded bg-brand-bg px-1.5 py-0.5 font-mono text-xs text-brand-text">GET /v1/wallets/signing-requests/:id</code>{" "}
-          (dashboard-only signing request detail).
-        </p>
-      </section>
 
       <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -454,9 +318,8 @@ const created = await authFetch('/v1/api-keys', getToken, {
             <FieldTable rows={fieldRows.sign} />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CopyableCodeBlock>{signExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
@@ -485,9 +348,8 @@ const created = await authFetch('/v1/api-keys', getToken, {
             Idempotency is required: reusing the same key with the same request returns the existing transaction; reusing it with a different request returns <span className="font-mono text-brand-text">400</span>.
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CopyableCodeBlock>{sendExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
@@ -514,9 +376,8 @@ const created = await authFetch('/v1/api-keys', getToken, {
             <FieldTable rows={fieldRows.status} />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Example</h4>
               <CopyableCodeBlock>{statusExample}</CopyableCodeBlock>
             </div>
             <div className="space-y-2">
