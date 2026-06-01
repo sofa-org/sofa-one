@@ -2,7 +2,14 @@ import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/commo
 import { Prisma } from '@prisma/client';
 import { getAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
-import { USDC_HIGH_VALUE_AMOUNT, USDC_MAX_AMOUNT, type WithdrawDto } from './dto/withdraw.dto';
+import {
+  NATIVE_HIGH_VALUE_AMOUNT,
+  NATIVE_MAX_AMOUNT,
+  USDC_HIGH_VALUE_AMOUNT,
+  USDC_MAX_AMOUNT,
+  type WithdrawalToken,
+  type WithdrawDto,
+} from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { SecurityEventService } from '../security-events/security-event.service';
 
@@ -138,15 +145,21 @@ export class WithdrawalPolicyService {
   async assertWithdrawalAllowed(
     userId: string,
     params: WithdrawDto,
-    context: { chainId: number; walletId?: string; walletAddress?: string; stepUpVerified?: boolean },
+    context: {
+      chainId: number;
+      walletId?: string;
+      walletAddress?: string;
+      stepUpVerified?: boolean;
+    },
     options: { skipDailyLimit?: boolean; prisma?: WithdrawalPolicyClient } = {},
   ): Promise<void> {
     const client = options.prisma ?? this.prisma;
     const policy = await this.getPolicy(userId, client);
     const amount = this.parseAmount(params.amount);
+    const defaultSingleLimit = this.getDefaultSingleLimit(params.token);
     const singleLimit = this.parsePositiveLimit(
       policy?.singleWithdrawalLimit,
-      USDC_MAX_AMOUNT,
+      defaultSingleLimit,
       'singleWithdrawalLimit',
     );
 
@@ -177,7 +190,8 @@ export class WithdrawalPolicyService {
     }
     await this.assertAddressAllowed(userId, params, policy, context, client);
 
-    if (amount >= USDC_HIGH_VALUE_AMOUNT) {
+    const highValueThreshold = this.getHighValueThreshold(params.token);
+    if (amount >= highValueThreshold) {
       this.logger.warn({
         event: 'security',
         message: 'High-value withdrawal requested',
@@ -185,7 +199,7 @@ export class WithdrawalPolicyService {
         chainId: context.chainId,
         token: params.token,
         amountUnits: params.amount,
-        thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
+        thresholdUnits: highValueThreshold.toString(),
         policyId: policy?.id,
       });
       await this.recordSecurityEvent({
@@ -199,7 +213,7 @@ export class WithdrawalPolicyService {
           chainId: context.chainId,
           token: params.token,
           amountUnits: params.amount,
-          thresholdUnits: USDC_HIGH_VALUE_AMOUNT.toString(),
+          thresholdUnits: highValueThreshold.toString(),
           policyId: policy?.id ?? null,
         },
       });
@@ -215,14 +229,23 @@ export class WithdrawalPolicyService {
     await prisma.$queryRaw`SELECT id FROM withdrawal_policies WHERE user_id = ${userId}::uuid FOR UPDATE`;
     const policy = await this.getPolicy(userId, prisma);
     if (!policy?.dailyWithdrawalLimit) return;
-    await this.assertDailyLimit(userId, params, this.parseAmount(params.amount), policy, context, prisma);
+    await this.assertDailyLimit(
+      userId,
+      params,
+      this.parseAmount(params.amount),
+      policy,
+      context,
+      prisma,
+    );
   }
 
   private async getPolicy(
     userId: string,
     prisma: WithdrawalPolicyClient = this.prisma,
   ): Promise<WithdrawalPolicyRecord | null> {
-    return prisma.withdrawalPolicy.findUnique({ where: { userId } }) as Promise<WithdrawalPolicyRecord | null>;
+    return prisma.withdrawalPolicy.findUnique({
+      where: { userId },
+    }) as Promise<WithdrawalPolicyRecord | null>;
   }
 
   private toWithdrawalAddressResponse(address: WithdrawalAddressRecord) {
@@ -245,10 +268,14 @@ export class WithdrawalPolicyService {
     }
   }
 
-  private isPrismaUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  private isPrismaUniqueConstraintError(
+    error: unknown,
+  ): error is Prisma.PrismaClientKnownRequestError {
     return (
       error instanceof Prisma.PrismaClientKnownRequestError ||
-      (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002')
+      (typeof error === 'object' &&
+        error !== null &&
+        (error as { code?: unknown }).code === 'P2002')
     );
   }
 
@@ -262,7 +289,11 @@ export class WithdrawalPolicyService {
   ): Promise<void> {
     if (!policy?.dailyWithdrawalLimit) return;
 
-    const dailyLimit = this.parsePositiveLimit(policy.dailyWithdrawalLimit, null, 'dailyWithdrawalLimit');
+    const dailyLimit = this.parsePositiveLimit(
+      policy.dailyWithdrawalLimit,
+      null,
+      'dailyWithdrawalLimit',
+    );
     const dayStart = this.startOfUtcDay(new Date());
     const withdrawals = await prisma.transaction.findMany({
       where: {
@@ -271,11 +302,15 @@ export class WithdrawalPolicyService {
         chainId: BigInt(params.chainId),
         status: { in: [...WITHDRAWAL_COUNTED_STATUSES] },
         createdAt: { gte: dayStart },
+        details: { path: ['token'], equals: params.token },
       },
       select: { details: true },
     });
 
-    const usedToday = withdrawals.reduce((total, tx) => total + this.extractWithdrawalAmount(tx.details), 0n);
+    const usedToday = withdrawals.reduce(
+      (total, tx) => total + this.extractWithdrawalAmount(tx.details),
+      0n,
+    );
     if (usedToday + amount > dailyLimit) {
       await this.reject('Withdrawal amount exceeds daily withdrawal limit', {
         ...context,
@@ -331,7 +366,11 @@ export class WithdrawalPolicyService {
     }
   }
 
-  private parsePositiveLimit(value: string | null | undefined, fallback: bigint | null, field: string): bigint {
+  private parsePositiveLimit(
+    value: string | null | undefined,
+    fallback: bigint | null,
+    field: string,
+  ): bigint {
     if (!value) {
       if (fallback !== null) return fallback;
       throw new BadRequestException(`Withdrawal policy ${field} is not configured`);
@@ -348,6 +387,14 @@ export class WithdrawalPolicyService {
     const amount = (details as { amount?: unknown }).amount;
     if (typeof amount !== 'string' || !/^\d+$/.test(amount)) return 0n;
     return BigInt(amount);
+  }
+
+  private getDefaultSingleLimit(token: WithdrawalToken): bigint {
+    return token === 'NATIVE' ? NATIVE_MAX_AMOUNT : USDC_MAX_AMOUNT;
+  }
+
+  private getHighValueThreshold(token: WithdrawalToken): bigint {
+    return token === 'NATIVE' ? NATIVE_HIGH_VALUE_AMOUNT : USDC_HIGH_VALUE_AMOUNT;
   }
 
   private startOfUtcDay(date: Date): Date {

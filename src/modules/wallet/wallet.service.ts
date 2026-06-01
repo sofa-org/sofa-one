@@ -605,13 +605,17 @@ export class WalletService {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    await this.assertWithdrawalPolicy(params, {
-      userId,
-      chainId,
-      walletId: wallet.id,
-      walletAddress: wallet.walletAddress,
-      stepUpVerified: options?.stepUpVerified,
-    }, { skipDailyLimit: true });
+    await this.assertWithdrawalPolicy(
+      params,
+      {
+        userId,
+        chainId,
+        walletId: wallet.id,
+        walletAddress: wallet.walletAddress,
+        stepUpVerified: options?.stepUpVerified,
+      },
+      { skipDailyLimit: true },
+    );
 
     // Evaluate multi-factor risk before proceeding
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
@@ -629,6 +633,7 @@ export class WalletService {
       });
     }
 
+    const isNativeWithdrawal = params.token === 'NATIVE';
     const usdcAddressHex = supportedChain.usdcAddress;
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
@@ -638,7 +643,7 @@ export class WalletService {
       to: params.to,
       amount: params.amount,
       token: params.token,
-      contractAddress: usdcAddressHex,
+      contractAddress: isNativeWithdrawal ? null : usdcAddressHex,
     });
 
     const existingWithdrawal = await this.findExistingWithdrawal(userId, {
@@ -650,25 +655,29 @@ export class WalletService {
       return this.toWithdrawalResponse(existingWithdrawal);
     }
 
-    // Guard: verify on-chain USDC balance is sufficient before submitting intent
+    // Guard: verify on-chain balance is sufficient before submitting intent
     {
       const publicClient = this.getPublicClient(chainId);
-      let usdcBalance: bigint;
+      let balance: bigint;
       try {
-        usdcBalance = await publicClient.readContract({
-          address: usdcAddressHex,
-          abi: ERC20_BALANCE_ABI,
-          functionName: 'balanceOf',
-          args: [walletAddress],
-        });
+        balance = isNativeWithdrawal
+          ? await publicClient.getBalance({ address: walletAddress })
+          : await publicClient.readContract({
+              address: usdcAddressHex,
+              abi: ERC20_BALANCE_ABI,
+              functionName: 'balanceOf',
+              args: [walletAddress],
+            });
       } catch {
-        throw new BadRequestException('Unable to verify USDC balance — please retry');
+        throw new BadRequestException(
+          `Unable to verify ${this.getWithdrawalTokenLabel(params.token, supportedChain.nativeCurrencySymbol)} balance — please retry`,
+        );
       }
 
       const requestedAmount = BigInt(params.amount);
-      if (usdcBalance < requestedAmount) {
+      if (balance < requestedAmount) {
         throw new BadRequestException(
-          `Insufficient USDC balance: have ${usdcBalance.toString()} units, requested ${params.amount} units`,
+          `Insufficient ${this.getWithdrawalTokenLabel(params.token, supportedChain.nativeCurrencySymbol)} balance: have ${balance.toString()} units, requested ${params.amount} units`,
         );
       }
     }
@@ -711,7 +720,7 @@ export class WalletService {
             to: params.to,
             amount: params.amount,
             token: params.token,
-            contractAddress: usdcAddressHex,
+            contractAddress: isNativeWithdrawal ? null : usdcAddressHex,
             agentWalletAddress: wallet.agentWalletAddress,
             agentKeyHash: wallet.agentKeyHash,
             idempotencyKey: params.idempotencyKey,
@@ -727,34 +736,38 @@ export class WalletService {
     }
 
     try {
-      const transferData = encodeFunctionData({
-        abi: [
-          {
-            inputs: [
-              { name: 'to', type: 'address' },
-              { name: 'amount', type: 'uint256' },
-            ],
-            name: 'transfer',
-            outputs: [{ type: 'bool' }],
-            type: 'function',
-          },
-        ],
-        functionName: 'transfer',
-        args: [params.to, BigInt(params.amount)],
-      });
+      const interaction = isNativeWithdrawal
+        ? {
+            to: params.to as `0x${string}`,
+            data: '0x' as Hex,
+            value: params.amount,
+          }
+        : {
+            to: usdcAddressHex,
+            data: encodeFunctionData({
+              abi: [
+                {
+                  inputs: [
+                    { name: 'to', type: 'address' },
+                    { name: 'amount', type: 'uint256' },
+                  ],
+                  name: 'transfer',
+                  outputs: [{ type: 'bool' }],
+                  type: 'function',
+                },
+              ],
+              functionName: 'transfer',
+              args: [params.to, BigInt(params.amount)],
+            }),
+            value: '0',
+          };
 
       const submission = await this.openfort.sendUserOperation({
         chainId,
         agentAccountId: wallet.agentOpenfortAccountId,
         accountAddress: wallet.walletAddress,
         keyHash: wallet.agentKeyHash,
-        interactions: [
-          {
-            to: usdcAddressHex,
-            data: transferData,
-            value: '0',
-          },
-        ],
+        interactions: [interaction],
       });
 
       const updated = await this.prisma.transaction.update({
@@ -867,6 +880,10 @@ export class WalletService {
       transactionHash: tx.txHash,
       status: tx.status,
     };
+  }
+
+  private getWithdrawalTokenLabel(token: WithdrawDto['token'], nativeCurrencySymbol: string) {
+    return token === 'NATIVE' ? nativeCurrencySymbol : token;
   }
 
   private resolveSigningChainId(params: SignDto): number | undefined {

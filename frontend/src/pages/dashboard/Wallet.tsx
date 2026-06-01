@@ -23,12 +23,14 @@ import {
   type BalanceChain,
   type ListWithdrawalAddressesResponse,
   type WalletInfo,
+  type WithdrawalToken,
 } from '@/lib/api';
 import {
   SUPPORTED_CHAINS,
   getChainGasHelpUrl,
   getExplorerAddressUrl,
   getExplorerTransactionUrl,
+  getNativeCurrencySymbol,
 } from '@/lib/chains';
 import {
   CALIBUR_ADDRESS,
@@ -71,7 +73,7 @@ import {
   getDefaultAgentExpiryLocal,
   getOpenfortUserOperationGasPrice,
   getStoredChainId,
-  parseUsdcAmount,
+  parseWithdrawalAmount,
   persistChainId,
   resolveEmbeddedWallet,
 } from './wallet-helpers';
@@ -130,7 +132,7 @@ export default function WalletPage() {
 
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
-  const [token, setToken] = useState('USDC');
+  const [token, setToken] = useState<WithdrawalToken>('USDC');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
@@ -395,7 +397,7 @@ export default function WalletPage() {
     setWithdrawResult(null);
     setWithdrawError(null);
     try {
-      const baseUnits = parseUsdcAmount(amount);
+      const baseUnits = parseWithdrawalAmount(amount, token);
       const chainId = selectedChainId;
       const stepUpToken = await requestStepUpToken(getToken);
       const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken);
@@ -960,6 +962,7 @@ export default function WalletPage() {
                     newWithdrawalAddressLabel={newWithdrawalAddressLabel}
                     withdrawalAddressLoadingId={withdrawalAddressLoadingId}
                     withdrawExplorerUrl={withdrawExplorerUrl}
+                    nativeCurrencySymbol={getNativeCurrencySymbol(selectedChainId)}
                     setTo={setTo}
                     setAmount={setAmount}
                     setToken={setToken}

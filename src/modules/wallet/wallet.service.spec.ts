@@ -73,6 +73,13 @@ const VALID_DTO: WithdrawDto = {
   idempotencyKey: 'idem-key-123',
 };
 
+const VALID_NATIVE_DTO: WithdrawDto = {
+  ...VALID_DTO,
+  amount: '100000000000000000', // 0.1 native token in wei
+  token: 'NATIVE',
+  idempotencyKey: 'native-idem-key-123',
+};
+
 // Sufficient balance (2 USDC in micro-units)
 const SUFFICIENT_BALANCE = BigInt('2000000');
 const API_KEY_PREFIX = 'sk_1234567890abcdef12345678';
@@ -125,14 +132,17 @@ describe('WalletService.withdraw()', () => {
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
+    mockGetBalance.mockResolvedValue(BigInt('200000000000000000'));
     mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: '0xhash' });
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
     mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
-    mockTransaction.mockImplementation(async (callback) => callback({
-      transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
-    }));
+    mockTransaction.mockImplementation(async (callback) =>
+      callback({
+        transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+      }),
+    );
     mockEvaluateRisk.mockResolvedValue({
       riskLevel: 'low',
       score: 0,
@@ -409,6 +419,49 @@ describe('WalletService.withdraw()', () => {
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(
       /Unable to verify USDC balance/i,
     );
+  });
+
+  it('withdraws native token with a value transfer interaction', async () => {
+    const result = await service.withdraw('user-1', VALID_NATIVE_DTO);
+
+    expect(mockGetBalance).toHaveBeenCalledWith({ address: WALLET.walletAddress });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          details: expect.objectContaining({
+            token: 'NATIVE',
+            contractAddress: null,
+          }),
+        }),
+      }),
+    );
+    expect(mockSendUserOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interactions: [
+          {
+            to: VALID_NATIVE_DTO.to,
+            data: '0x',
+            value: VALID_NATIVE_DTO.amount,
+          },
+        ],
+      }),
+    );
+    expect(result).toEqual({
+      transactionId: 'tx-1',
+      transactionHash: '0xhash',
+      status: 'pending',
+    });
+  });
+
+  it('rejects native withdrawals when native balance is insufficient', async () => {
+    mockGetBalance.mockResolvedValue(BigInt('99999999999999999'));
+
+    await expect(service.withdraw('user-1', VALID_NATIVE_DTO)).rejects.toThrow(
+      /Insufficient ETH balance/i,
+    );
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
   // ── 7. Happy path ─────────────────────────────────────────────────────────────

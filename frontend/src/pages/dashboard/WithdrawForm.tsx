@@ -1,13 +1,13 @@
 import { AlertCircle, CheckCircle2, Loader2, ExternalLink, ShieldCheck, Trash2 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
-import type { ListWithdrawalAddressesResponse } from '@/lib/api';
+import type { ListWithdrawalAddressesResponse, WithdrawalToken } from '@/lib/api';
 import type { WithdrawSuccess } from './wallet-helpers';
 
 interface WithdrawFormProps {
   to: string;
   amount: string;
-  token: string;
+  token: WithdrawalToken;
   selectedChainId: number;
   withdrawLoading: boolean;
   withdrawResult: WithdrawSuccess | null;
@@ -19,9 +19,10 @@ interface WithdrawFormProps {
   newWithdrawalAddressLabel: string;
   withdrawalAddressLoadingId: string | null;
   withdrawExplorerUrl: string | null;
+  nativeCurrencySymbol: string;
   setTo: (value: string) => void;
   setAmount: (value: string) => void;
-  setToken: (value: string) => void;
+  setToken: (value: WithdrawalToken) => void;
   setSelectedChainId: (chainId: number) => void;
   setNewWithdrawalAddress: (value: string) => void;
   setNewWithdrawalAddressLabel: (value: string) => void;
@@ -46,6 +47,7 @@ export function WithdrawForm({
   newWithdrawalAddressLabel,
   withdrawalAddressLoadingId,
   withdrawExplorerUrl,
+  nativeCurrencySymbol,
   setTo,
   setAmount,
   setToken,
@@ -58,6 +60,10 @@ export function WithdrawForm({
   onReset,
 }: WithdrawFormProps) {
   const cooldownHours = withdrawalAllowlist?.policy.newAddressCooldownHours ?? 24;
+  const amountLabel = token === 'NATIVE' ? `Amount (${nativeCurrencySymbol})` : 'Amount (USDC)';
+  const amountHelp = token === 'NATIVE'
+    ? `Enter a ${nativeCurrencySymbol} amount in native token units. Leave enough ${nativeCurrencySymbol} for gas.`
+    : 'Enter a USDC amount. Keep enough native gas on this chain for the transaction.';
 
   return (
     <div className="pt-6 border-t border-brand-border">
@@ -248,7 +254,7 @@ export function WithdrawForm({
           </div>
           <div className="flex-1">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">
-              Amount (USDC)
+              {amountLabel}
             </label>
             <input
               type="text"
@@ -260,17 +266,18 @@ export function WithdrawForm({
               className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm"
             />
             <p className="mt-2 text-xs text-brand-muted">
-              Enter a USDC amount. Keep enough native gas on this chain for the transaction.
+              {amountHelp}
             </p>
           </div>
           <div className="w-full sm:w-32">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">Token</label>
             <select
               value={token}
-              onChange={(e) => setToken(e.target.value)}
+              onChange={(e) => setToken(e.target.value as WithdrawalToken)}
               className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
             >
               <option value="USDC">USDC</option>
+              <option value="NATIVE">{nativeCurrencySymbol}</option>
             </select>
           </div>
         </div>

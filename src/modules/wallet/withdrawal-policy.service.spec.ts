@@ -11,6 +11,13 @@ const VALID_DTO: WithdrawDto = {
   idempotencyKey: 'idem-key-123',
 };
 
+const VALID_NATIVE_DTO: WithdrawDto = {
+  ...VALID_DTO,
+  amount: '100000000000000000',
+  token: 'NATIVE',
+  idempotencyKey: 'native-idem-key-123',
+};
+
 describe('WithdrawalPolicyService', () => {
   let service: WithdrawalPolicyService;
   const mockWithdrawalPolicyFindUnique = jest.fn();
@@ -47,7 +54,10 @@ describe('WithdrawalPolicyService', () => {
 
     service = new WithdrawalPolicyService(
       {
-        withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique, upsert: mockWithdrawalPolicyUpsert },
+        withdrawalPolicy: {
+          findUnique: mockWithdrawalPolicyFindUnique,
+          upsert: mockWithdrawalPolicyUpsert,
+        },
         withdrawalAddress: {
           findUnique: mockWithdrawalAddressFindUnique,
           findMany: mockWithdrawalAddressFindMany,
@@ -86,7 +96,10 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).rejects.toThrow('Withdrawal amount exceeds single-withdrawal limit');
 
     expect(loggerWarnSpy).toHaveBeenCalledWith(
@@ -125,7 +138,10 @@ describe('WithdrawalPolicyService', () => {
     ]);
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).rejects.toThrow('Withdrawal amount exceeds daily withdrawal limit');
 
     expect(mockTransactionFindMany).toHaveBeenCalledWith(
@@ -135,8 +151,46 @@ describe('WithdrawalPolicyService', () => {
           operationType: 'withdraw',
           chainId: BigInt(VALID_DTO.chainId),
           status: { in: ['submitting', 'pending', 'confirmed', 'unknown'] },
+          details: { path: ['token'], equals: 'USDC' },
         }),
         select: { details: true },
+      }),
+    );
+  });
+
+  it('allows native withdrawals under the native default single-withdrawal limit', async () => {
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_NATIVE_DTO, {
+        chainId: VALID_NATIVE_DTO.chainId,
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('applies daily limits per withdrawal token', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '100000000000000000000',
+      dailyWithdrawalLimit: '1000000000000000000',
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+    mockTransactionFindMany.mockResolvedValue([
+      { details: { amount: '500000000000000000', token: 'NATIVE' } },
+    ]);
+
+    await expect(
+      service.assertWithdrawalAllowed('user-1', VALID_NATIVE_DTO, {
+        chainId: VALID_NATIVE_DTO.chainId,
+        stepUpVerified: true,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(mockTransactionFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          details: { path: ['token'], equals: 'NATIVE' },
+        }),
       }),
     );
   });
@@ -187,7 +241,10 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).rejects.toThrow('Withdrawal address is not allowlisted');
 
     expect(mockWithdrawalAddressFindUnique).toHaveBeenCalledWith({
@@ -210,7 +267,10 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).rejects.toThrow('Withdrawal address is still in cooldown');
   });
 
@@ -267,7 +327,10 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -353,13 +416,15 @@ describe('WithdrawalPolicyService', () => {
   it('rejects duplicate withdrawal addresses', async () => {
     mockWithdrawalAddressCreate.mockRejectedValue({ code: 'P2002' });
 
-    await expect(
-      service.addWithdrawalAddress('user-1', { address: VALID_DTO.to }),
-    ).rejects.toThrow('Withdrawal address is already allowlisted');
+    await expect(service.addWithdrawalAddress('user-1', { address: VALID_DTO.to })).rejects.toThrow(
+      'Withdrawal address is already allowlisted',
+    );
   });
 
   it('removes a withdrawal address owned by the user', async () => {
-    await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).resolves.toEqual({ success: true });
+    await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).resolves.toEqual({
+      success: true,
+    });
 
     expect(mockWithdrawalAddressDeleteMany).toHaveBeenCalledWith({
       where: { id: 'addr-1', userId: 'user-1' },
@@ -421,7 +486,10 @@ describe('WithdrawalPolicyService', () => {
     });
 
     await expect(
-      service.assertWithdrawalAllowed('user-1', VALID_DTO, { chainId: VALID_DTO.chainId, stepUpVerified: true }),
+      service.assertWithdrawalAllowed('user-1', VALID_DTO, {
+        chainId: VALID_DTO.chainId,
+        stepUpVerified: true,
+      }),
     ).resolves.toBeUndefined();
   });
 

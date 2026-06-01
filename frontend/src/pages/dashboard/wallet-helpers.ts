@@ -39,6 +39,21 @@ export function parseUsdcAmount(input: string): string {
   return baseUnits.toString();
 }
 
+export function parseNativeAmount(input: string): string {
+  const trimmed = input.trim();
+  if (!/^\d+(\.\d{0,18})?$/.test(trimmed)) {
+    throw new Error('Enter a valid native token amount (e.g. 0.01)');
+  }
+  const [intPart, fracPart = ''] = trimmed.split('.');
+  const frac = fracPart.padEnd(18, '0');
+  const baseUnits = BigInt(intPart) * 1_000_000_000_000_000_000n + BigInt(frac);
+  return baseUnits.toString();
+}
+
+export function parseWithdrawalAmount(input: string, token: string): string {
+  return token === 'NATIVE' ? parseNativeAmount(input) : parseUsdcAmount(input);
+}
+
 export function parseRpcBigInt(value: unknown): bigint | null {
   if (typeof value === 'bigint') return value;
   if (typeof value !== 'string' && typeof value !== 'number') return null;

@@ -73,6 +73,8 @@ export interface WithdrawResponse {
   status: string;
 }
 
+export type WithdrawalToken = 'USDC' | 'NATIVE';
+
 export interface WithdrawalAddressRecord {
   id: string;
   address: string;
@@ -540,7 +542,7 @@ export async function withdrawAuth(
   getToken: () => Promise<string | null>,
   to: string,
   amount: string,
-  token: string,
+  token: WithdrawalToken,
   chainId = DEFAULT_CHAIN_ID,
   stepUpToken?: string,
 ) {
