@@ -467,7 +467,8 @@ export default function ApiKeysPage() {
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
             <p className="text-xs leading-5 text-brand-muted">
-              Restrict this key to trusted backend egress IPs. Leave blank only for local development or rotating IP environments.
+              Restrict this key to trusted backend egress IPs. To open access to all IPv4 addresses, enter 0.0.0.0/0.
+              Leave blank only for local development or rotating IP environments.
             </p>
           </div>
           <div className="space-y-2 lg:flex-1">
