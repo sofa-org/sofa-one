@@ -25,6 +25,11 @@ export class TransactionSimulationService {
     dto: SendTransactionDto,
     context: TransactionSimulationContext,
   ): Promise<void> {
+    if (dto.interactions.length > 1) {
+      await this.recordAllowedSimulation(dto, context, 'batch_simulation_deferred_to_bundler');
+      return;
+    }
+
     const client = this.getPublicClient(context.chainId);
     const account = getAddress(context.from);
 
@@ -41,6 +46,14 @@ export class TransactionSimulationService {
       }
     }
 
+    await this.recordAllowedSimulation(dto, context, 'simulation_passed');
+  }
+
+  private async recordAllowedSimulation(
+    dto: SendTransactionDto,
+    context: TransactionSimulationContext,
+    reason: 'simulation_passed' | 'batch_simulation_deferred_to_bundler',
+  ): Promise<void> {
     await this.securityEvents?.record({
       actorType: 'api_key',
       eventType: 'transaction.simulation_allowed',
@@ -48,12 +61,13 @@ export class TransactionSimulationService {
       apiKeyId: context.apiKeyId ?? null,
       riskLevel: 'low',
       result: 'allowed',
-      reason: 'simulation_passed',
+      reason,
       metadata: {
         chainId: context.chainId,
         executionMode: context.executionMode,
         apiKeyPrefix: context.apiKeyPrefix ?? null,
         interactionCount: dto.interactions.length,
+        ...(dto.interactions.length > 1 ? { simulationMode: 'bundler_batch' } : {}),
       },
     });
   }

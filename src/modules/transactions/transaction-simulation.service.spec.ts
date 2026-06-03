@@ -67,6 +67,41 @@ describe('TransactionSimulationService', () => {
     });
   });
 
+  it('defers multi-interaction batch simulation to the bundler', async () => {
+    const service = new TransactionSimulationService(securityEvents as any);
+    const batchDto = {
+      ...dto,
+      interactions: [
+        dto.interactions[0],
+        {
+          to: '0x3333333333333333333333333333333333333333',
+          data: '0xabcdef12',
+          value: '0',
+        },
+      ],
+    };
+
+    await expect(service.assertSimulatable(batchDto, context)).resolves.toBeUndefined();
+
+    expect(mockCall).not.toHaveBeenCalled();
+    expect(securityEvents.record).toHaveBeenCalledWith({
+      actorType: 'api_key',
+      eventType: 'transaction.simulation_allowed',
+      userId: 'user-1',
+      apiKeyId: 'api-key-1',
+      riskLevel: 'low',
+      result: 'allowed',
+      reason: 'batch_simulation_deferred_to_bundler',
+      metadata: expect.objectContaining({
+        chainId: 8453,
+        executionMode: 'session_key',
+        apiKeyPrefix: context.apiKeyPrefix,
+        interactionCount: 2,
+        simulationMode: 'bundler_batch',
+      }),
+    });
+  });
+
   it('rejects failed simulations without logging full calldata', async () => {
     const fullCalldata = `0x${'11'.repeat(64)}`;
     mockCall.mockRejectedValueOnce(new Error(`execution reverted with calldata ${fullCalldata}`));
