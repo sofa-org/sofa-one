@@ -13,6 +13,7 @@ import {
   getApiErrorMessage,
   getMfaStatusAuth,
   setupTotpAuth,
+  syncSession,
   verifyTotpAuth,
   type MfaStatusResponse,
   type TotpSetupResponse,
@@ -71,6 +72,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     setSetupData(null);
 
     try {
+      await syncSession(getToken);
       const status = await getMfaStatusAuth(getToken);
       setMfaStatus(status);
 
