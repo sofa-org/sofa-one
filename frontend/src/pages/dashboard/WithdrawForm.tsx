@@ -60,10 +60,10 @@ export function WithdrawForm({
   onReset,
 }: WithdrawFormProps) {
   const cooldownHours = withdrawalAllowlist?.policy.newAddressCooldownHours ?? 24;
-  const amountLabel = token === 'NATIVE' ? `Amount (${nativeCurrencySymbol})` : 'Amount (USDC)';
+  const amountLabel = token === 'NATIVE' ? `Amount (${nativeCurrencySymbol})` : `Amount (${token})`;
   const amountHelp = token === 'NATIVE'
     ? `Enter a ${nativeCurrencySymbol} amount in native token units. Leave enough ${nativeCurrencySymbol} for gas.`
-    : 'Enter a USDC amount. Keep enough native gas on this chain for the transaction.';
+    : `Enter a ${token} amount. Keep enough native gas on this chain for the transaction.`;
 
   return (
     <div className="pt-6 border-t border-brand-border">
@@ -277,6 +277,7 @@ export function WithdrawForm({
               className="block w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white shadow-sm"
             >
               <option value="USDC">USDC</option>
+              <option value="USDT">USDT</option>
               <option value="NATIVE">{nativeCurrencySymbol}</option>
             </select>
           </div>

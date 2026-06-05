@@ -54,7 +54,7 @@ describe('WithdrawDto', () => {
     }
   });
 
-  it('requires amount to be a numeric string within USDC micro-unit bounds', async () => {
+  it('requires amount to be a numeric string within stablecoin micro-unit bounds', async () => {
     const invalidInputs = ['9999', '10000000001', 'abc', '10.5', '-10000'];
 
     for (const amount of invalidInputs) {
@@ -70,6 +70,18 @@ describe('WithdrawDto', () => {
     }
   });
 
+  it('accepts USDT withdrawals with stablecoin micro-unit bounds', async () => {
+    const errors = await validateDto({
+      chainId: 84532,
+      to: '0x1111111111111111111111111111111111111111',
+      amount: '10000',
+      token: 'USDT',
+      idempotencyKey: 'withdraw-usdt',
+    });
+
+    expect(errors).toHaveLength(0);
+  });
+
   it('accepts the maximum single-withdrawal amount', async () => {
     const errors = await validateDto({
       chainId: 84532,
@@ -82,12 +94,12 @@ describe('WithdrawDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('requires token to be USDC', async () => {
+  it('requires token to be USDC, USDT, or NATIVE', async () => {
     const errors = await validateDto({
       chainId: 84532,
       to: '0x1111111111111111111111111111111111111111',
       amount: '10000',
-      token: 'USDT',
+      token: 'DAI',
       idempotencyKey: 'withdraw-token',
     });
 

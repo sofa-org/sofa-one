@@ -73,7 +73,7 @@ export interface WithdrawResponse {
   status: string;
 }
 
-export type WithdrawalToken = 'USDC' | 'NATIVE';
+export type WithdrawalToken = 'USDC' | 'USDT' | 'NATIVE';
 
 export interface WithdrawalAddressRecord {
   id: string;

@@ -28,10 +28,10 @@ export const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 export const BALANCE_CHAIN_STORAGE_KEY = 'sofa-one.wallet.balanceChainId';
 export const AGENT_CHAIN_STORAGE_KEY = 'sofa-one.wallet.agentChainId';
 
-export function parseUsdcAmount(input: string): string {
+export function parseStablecoinAmount(input: string, token: string): string {
   const trimmed = input.trim();
   if (!/^\d+(\.\d{0,6})?$/.test(trimmed)) {
-    throw new Error('Enter a valid USDC amount (e.g. 1.50)');
+    throw new Error(`Enter a valid ${token} amount (e.g. 1.50)`);
   }
   const [intPart, fracPart = ''] = trimmed.split('.');
   const frac = fracPart.padEnd(6, '0');
@@ -51,7 +51,7 @@ export function parseNativeAmount(input: string): string {
 }
 
 export function parseWithdrawalAmount(input: string, token: string): string {
-  return token === 'NATIVE' ? parseNativeAmount(input) : parseUsdcAmount(input);
+  return token === 'NATIVE' ? parseNativeAmount(input) : parseStablecoinAmount(input, token);
 }
 
 export function parseRpcBigInt(value: unknown): bigint | null {

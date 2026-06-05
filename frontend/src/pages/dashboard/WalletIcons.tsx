@@ -27,7 +27,20 @@ export function UsdcIcon() {
   );
 }
 
+export function UsdtIcon() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <circle cx="16" cy="16" r="16" fill="#26A17B" />
+      <path
+        fill="#fff"
+        d="M17.92 13.97v-2.38h5.44V7.96H8.64v3.63h5.44v2.38c-4.42.2-7.74 1.08-7.74 2.14s3.32 1.94 7.74 2.14v7.62h3.84v-7.62c4.42-.2 7.74-1.08 7.74-2.14s-3.32-1.94-7.74-2.14zm0 3.65v-.01c-.11.01-.7.05-1.92.05-.98 0-1.67-.03-1.92-.05v.01c-3.76-.17-6.56-.82-6.56-1.6s2.8-1.43 6.56-1.6v2.57c.26.02.97.06 1.94.06 1.16 0 1.74-.05 1.9-.06v-2.57c3.75.17 6.55.82 6.55 1.6s-2.8 1.43-6.55 1.6z"
+      />
+    </svg>
+  );
+}
+
 export function TokenIcon({ token }: { token: string }) {
   if (token.toUpperCase() === 'USDC') return <UsdcIcon />;
+  if (token.toUpperCase() === 'USDT') return <UsdtIcon />;
   return <EthIcon />;
 }

@@ -1169,15 +1169,16 @@ describe('WalletService.getBalances()', () => {
   });
 
   it('returns display balances without raw values or token contracts', async () => {
-    const result = await service.getBalances('user-1', 84532);
+    const result = await service.getBalances('user-1', 8453);
 
     expect(result).toEqual({
       chains: [
         expect.objectContaining({
-          chainId: 84532,
+          chainId: 8453,
           balances: [
             { token: expect.any(String), formatted: '1' },
             { token: 'USDC', formatted: '2.5' },
+            { token: 'USDT', formatted: '2.5' },
           ],
         }),
       ],
@@ -1191,11 +1192,12 @@ describe('WalletService.getBalances()', () => {
     mockGetBalance.mockRejectedValue(new Error('native rpc failure with internal URL'));
     mockReadContract.mockRejectedValue(new Error('usdc rpc failure with raw calldata'));
 
-    const result = await service.getBalances('user-1', 84532);
+    const result = await service.getBalances('user-1', 8453);
 
     expect(result.chains[0].balances).toEqual([
       { token: expect.any(String), formatted: null, error: 'fetch failed' },
       { token: 'USDC', formatted: null, error: 'fetch failed' },
+      { token: 'USDT', formatted: null, error: 'fetch failed' },
     ]);
     expect(JSON.stringify(result)).not.toContain('internal URL');
     expect(JSON.stringify(result)).not.toContain('raw calldata');
@@ -1260,6 +1262,18 @@ describe('WalletService.getDepositInfo()', () => {
       chainName: supportedChain.name,
       status: 'active',
       supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
+    });
+  });
+
+  it('includes USDT in deposit tokens when the chain supports it', async () => {
+    const supportedChain = getSupportedChain(8453);
+
+    await expect(service.getDepositInfo('user-1', 8453)).resolves.toEqual({
+      walletAddress: WALLET.walletAddress,
+      chainId: 8453,
+      chainName: supportedChain.name,
+      status: 'active',
+      supportedTokens: ['USDC', 'USDT', supportedChain.nativeCurrencySymbol],
     });
   });
 

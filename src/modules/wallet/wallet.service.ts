@@ -22,7 +22,7 @@ import {
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
-import { getSupportedChain } from '../../common/chains/supported-chains';
+import { getSupportedChain, type SupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
@@ -103,7 +103,11 @@ export class WalletService {
       chainId,
       chainName: supportedChain.name,
       status: wallet.status,
-      supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
+      supportedTokens: [
+        'USDC',
+        ...(supportedChain.usdtAddress ? ['USDT'] : []),
+        supportedChain.nativeCurrencySymbol,
+      ],
     };
   }
 
@@ -507,7 +511,7 @@ export class WalletService {
     }
   }
 
-  /** Return native token and USDC balances for the user's wallet on the requested chain. */
+  /** Return native token and stablecoin balances for the user's wallet on the requested chain. */
   async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
@@ -520,13 +524,16 @@ export class WalletService {
 
     const supportedChain = getSupportedChain(chainId);
     const publicClient = this.getPublicClient(chainId);
-    const usdcAddress = supportedChain.usdcAddress;
+    const stablecoins = [
+      { token: 'USDC', address: supportedChain.usdcAddress },
+      ...(supportedChain.usdtAddress ? [{ token: 'USDT', address: supportedChain.usdtAddress }] : []),
+    ];
 
     type BalanceEntry =
       | { token: string; formatted: string }
       | { token: string; formatted: null; error: string };
 
-    const [ethResult, usdcResult] = await Promise.all([
+    const [ethResult, ...stablecoinResults] = await Promise.all([
       publicClient
         .getBalance({ address: walletAddress })
         .then(
@@ -543,32 +550,31 @@ export class WalletService {
           }),
         ),
 
-      usdcAddress
-        ? publicClient
-            .readContract({
-              address: usdcAddress,
-              abi: ERC20_BALANCE_ABI,
-              functionName: 'balanceOf',
-              args: [walletAddress],
-            })
-            .then(
-              (raw): BalanceEntry => ({
-                token: 'USDC',
-                formatted: formatUnits(raw, 6),
-              }),
-            )
-            .catch(
-              (): BalanceEntry => ({
-                token: 'USDC',
-                formatted: null,
-                error: 'fetch failed',
-              }),
-            )
-        : Promise.resolve(null),
+      ...stablecoins.map(({ token, address }) =>
+        publicClient
+          .readContract({
+            address,
+            abi: ERC20_BALANCE_ABI,
+            functionName: 'balanceOf',
+            args: [walletAddress],
+          })
+          .then(
+            (raw): BalanceEntry => ({
+              token,
+              formatted: formatUnits(raw, 6),
+            }),
+          )
+          .catch(
+            (): BalanceEntry => ({
+              token,
+              formatted: null,
+              error: 'fetch failed',
+            }),
+          ),
+      ),
     ]);
 
-    const balances: BalanceEntry[] = [ethResult];
-    if (usdcResult !== null) balances.push(usdcResult);
+    const balances: BalanceEntry[] = [ethResult, ...stablecoinResults];
 
     const chains = [{ chainId, chainName: supportedChain.name, balances }];
 
@@ -634,7 +640,7 @@ export class WalletService {
     }
 
     const isNativeWithdrawal = params.token === 'NATIVE';
-    const usdcAddressHex = supportedChain.usdcAddress;
+    const tokenAddress = this.getWithdrawalTokenAddress(params.token, supportedChain);
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
     const requestHash = hashRequest({
@@ -643,7 +649,7 @@ export class WalletService {
       to: params.to,
       amount: params.amount,
       token: params.token,
-      contractAddress: isNativeWithdrawal ? null : usdcAddressHex,
+      contractAddress: tokenAddress,
     });
 
     const existingWithdrawal = await this.findExistingWithdrawal(userId, {
@@ -663,7 +669,7 @@ export class WalletService {
         balance = isNativeWithdrawal
           ? await publicClient.getBalance({ address: walletAddress })
           : await publicClient.readContract({
-              address: usdcAddressHex,
+              address: tokenAddress!,
               abi: ERC20_BALANCE_ABI,
               functionName: 'balanceOf',
               args: [walletAddress],
@@ -720,7 +726,7 @@ export class WalletService {
             to: params.to,
             amount: params.amount,
             token: params.token,
-            contractAddress: isNativeWithdrawal ? null : usdcAddressHex,
+            contractAddress: tokenAddress,
             agentWalletAddress: wallet.agentWalletAddress,
             agentKeyHash: wallet.agentKeyHash,
             idempotencyKey: params.idempotencyKey,
@@ -743,7 +749,7 @@ export class WalletService {
             value: params.amount,
           }
         : {
-            to: usdcAddressHex,
+            to: tokenAddress!,
             data: encodeFunctionData({
               abi: [
                 {
@@ -884,6 +890,16 @@ export class WalletService {
 
   private getWithdrawalTokenLabel(token: WithdrawDto['token'], nativeCurrencySymbol: string) {
     return token === 'NATIVE' ? nativeCurrencySymbol : token;
+  }
+
+  private getWithdrawalTokenAddress(
+    token: WithdrawDto['token'],
+    chain: SupportedChain,
+  ): `0x${string}` | null {
+    if (token === 'NATIVE') return null;
+    if (token === 'USDC') return chain.usdcAddress;
+    if (chain.usdtAddress) return chain.usdtAddress;
+    throw new BadRequestException(`USDT is not supported on ${chain.name}`);
   }
 
   private resolveSigningChainId(params: SignDto): number | undefined {

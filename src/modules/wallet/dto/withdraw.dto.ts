@@ -11,13 +11,13 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
-export type WithdrawalToken = 'USDC' | 'NATIVE';
+export type WithdrawalToken = 'USDC' | 'USDT' | 'NATIVE';
 
-/** USDC uses 6 decimals. Max single withdrawal: 10,000 USDC = 10_000_000_000 units. */
+/** Stablecoins use 6 decimals. Max single withdrawal: 10,000 units = 10_000_000_000 base units. */
 export const USDC_MAX_AMOUNT = BigInt('10000000000'); // 10k USDC in micro-units
-/** High-value withdrawal threshold: 1,000 USDC = 1_000_000_000 units. */
+/** High-value stablecoin withdrawal threshold: 1,000 units = 1_000_000_000 base units. */
 export const USDC_HIGH_VALUE_AMOUNT = BigInt('1000000000');
-/** Minimum withdrawal: 0.01 USDC = 10_000 units. */
+/** Minimum stablecoin withdrawal: 0.01 units = 10_000 base units. */
 export const USDC_MIN_AMOUNT = BigInt('10000');
 /** Native tokens use 18 decimals. Max single withdrawal: 100 native tokens in wei. */
 export const NATIVE_MAX_AMOUNT = BigInt('100000000000000000000');
@@ -31,7 +31,7 @@ function getWithdrawalAmountBounds(token: unknown) {
     return { min: NATIVE_MIN_AMOUNT, max: NATIVE_MAX_AMOUNT, label: 'native token wei' };
   }
 
-  return { min: USDC_MIN_AMOUNT, max: USDC_MAX_AMOUNT, label: 'USDC micro-units' };
+  return { min: USDC_MIN_AMOUNT, max: USDC_MAX_AMOUNT, label: 'stablecoin micro-units' };
 }
 
 function IsWithdrawalAmount(validationOptions?: ValidationOptions) {
@@ -78,7 +78,7 @@ export class WithdrawDto {
   @IsWithdrawalAmount()
   amount: string;
 
-  @IsIn(['USDC', 'NATIVE'], { message: 'Token must be USDC or NATIVE' })
+  @IsIn(['USDC', 'USDT', 'NATIVE'], { message: 'Token must be USDC, USDT, or NATIVE' })
   token: WithdrawalToken;
 
   /** Required client-supplied idempotency key (UUID or similar, max 64 chars). */

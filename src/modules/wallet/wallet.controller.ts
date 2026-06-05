@@ -19,7 +19,7 @@ import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.d
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
-  /** GET /v1/wallets/balances — frontend only: return ETH and USDC balances. */
+  /** GET /v1/wallets/balances — frontend only: return native and stablecoin balances. */
   @Get('balances')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
