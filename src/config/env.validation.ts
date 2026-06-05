@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  Matches,
   IsString,
   Max,
   Min,
@@ -84,6 +85,11 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SECURITY_EVENTS_SIEM_WEBHOOK_SECRET?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/, { message: 'MFA_SECRET_ENCRYPTION_KEY must not be blank' })
+  MFA_SECRET_ENCRYPTION_KEY: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -103,6 +109,7 @@ export function validate(config: Record<string, unknown>) {
     'SECURITY_EVENTS_SIEM_WEBHOOK_URL',
   );
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
+  validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
   return validatedConfig;
 }
 
@@ -145,5 +152,12 @@ function validateDefaultChain(rawChainId: string | undefined) {
     throw new Error(
       `DEFAULT_CHAIN_ID must be one of the supported chains: ${SUPPORTED_CHAIN_IDS.join(', ')}`,
     );
+  }
+}
+
+function validateMfaSecretEncryptionKey(rawKey: string) {
+  const key = Buffer.from(rawKey, 'base64');
+  if (key.length !== 32) {
+    throw new Error('MFA_SECRET_ENCRYPTION_KEY must be 32 base64-encoded bytes');
   }
 }

@@ -5,6 +5,7 @@ import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu
 import { CopyButton } from '@/components/CopyButton';
 import { listSecurityNotificationsAuth } from '@/lib/api';
 import { onSecurityNotificationsChanged } from './notification-events';
+import { clearDashboardStepUpProof } from './step-up-session';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
@@ -69,6 +70,7 @@ export default function DashboardLayout() {
     setSignOutError(null);
 
     try {
+      clearDashboardStepUpProof();
       await signOut();
       navigate('/sign-in', { replace: true });
     } catch (err: unknown) {

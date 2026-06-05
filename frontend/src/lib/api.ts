@@ -218,6 +218,25 @@ export interface StepUpVerifyResponse {
   expiresAt: string;
 }
 
+export interface MfaStatusResponse {
+  enabled: boolean;
+  recoveryCodesRemaining: number;
+}
+
+export interface TotpSetupResponse {
+  otpauthUrl: string;
+  secret: string;
+}
+
+export interface TotpEnableResponse {
+  recoveryCodes: string[];
+}
+
+export interface TotpVerifyResponse {
+  proofToken: string;
+  expiresAt: string;
+}
+
 export interface SecurityNotificationRecord {
   id: string;
   type: string;
@@ -441,6 +460,48 @@ export async function verifyStepUpChallengeAuth(
   return authFetch<StepUpVerifyResponse>('/v1/auth/step-up/verify', getToken, {
     method: 'POST',
     body: JSON.stringify({ challengeId, code }),
+  });
+}
+
+// --- Dashboard MFA (TOTP) ---
+
+export async function getMfaStatusAuth(getToken: () => Promise<string | null>) {
+  return authFetch<MfaStatusResponse>('/v1/auth/mfa/status', getToken);
+}
+
+export async function setupTotpAuth(getToken: () => Promise<string | null>) {
+  return authFetch<TotpSetupResponse>('/v1/auth/mfa/totp/setup', getToken, {
+    method: 'POST',
+  });
+}
+
+export async function enableTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<TotpEnableResponse>('/v1/auth/mfa/totp/enable', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function verifyTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<TotpVerifyResponse>('/v1/auth/mfa/totp/verify', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function disableTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<void>('/v1/auth/mfa/totp/disable', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
   });
 }
 

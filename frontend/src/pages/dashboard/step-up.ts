@@ -27,3 +27,11 @@ export async function requestStepUpToken(getToken: () => Promise<string | null>)
   );
   return verification.proofToken;
 }
+
+export async function verifyStepUpCode(
+  getToken: () => Promise<string | null>,
+  challengeId: string,
+  code: string,
+) {
+  return verifyStepUpChallengeAuth(getToken, challengeId, code.trim());
+}

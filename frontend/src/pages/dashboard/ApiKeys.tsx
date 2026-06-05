@@ -15,6 +15,7 @@ import {
   type ApiKeyRecord,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
+import { getDashboardStepUpToken } from './step-up-session';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
@@ -264,7 +265,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       const result = await createApiKeyAuth(
         getToken,
         {
@@ -307,7 +308,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       await revokeApiKeyAuth(getToken, key.id, stepUpToken);
       await fetchKeys();
     } catch (err: unknown) {
@@ -350,7 +351,7 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       await revokeAllApiKeysAuth(getToken, stepUpToken);
       setNewRawKey(null);
       setNewKeyExpiresAt(null);

@@ -55,6 +55,7 @@ import { Step2AuthorizeAccess } from './Step2AuthorizeAccess';
 import { BalanceDisplay } from './BalanceDisplay';
 import { WithdrawForm } from './WithdrawForm';
 import { requestStepUpToken } from './step-up';
+import { getDashboardStepUpToken } from './step-up-session';
 import {
   AGENT_CHAIN_STORAGE_KEY,
   AGENT_AUTHORIZATION_MAX_TTL_MS,
@@ -399,7 +400,7 @@ export default function WalletPage() {
     try {
       const baseUnits = parseWithdrawalAmount(amount, token);
       const chainId = selectedChainId;
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken);
       setWithdrawResult({
         message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
@@ -428,7 +429,7 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       await addWithdrawalAddressAuth(
         getToken,
         {
@@ -452,7 +453,7 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
       await removeWithdrawalAddressAuth(getToken, id, stepUpToken);
       await loadWithdrawalAllowlist();
     } catch (err: unknown) {

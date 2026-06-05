@@ -171,6 +171,31 @@ export class StepUpService {
     return true;
   }
 
+  async createProof(userId: string, type: string = 'totp_mfa'): Promise<{ proofToken: string; expiresAt: Date }> {
+    const proofToken = randomBytes(32).toString('hex');
+    const proofExpiresAt = new Date(Date.now() + PROOF_TTL_MS);
+
+    await this.prisma.stepUpChallenge.create({
+      data: {
+        userId,
+        type,
+        challengeCodeHash: await argon2.hash(randomBytes(16).toString('hex'), {
+          type: argon2.argon2id,
+          memoryCost: 65536,
+          timeCost: 3,
+          parallelism: 1,
+        }),
+        proofToken,
+        verified: true,
+        attempts: 0,
+        expiresAt: proofExpiresAt,
+        verifiedAt: new Date(),
+      },
+    });
+
+    return { proofToken, expiresAt: proofExpiresAt };
+  }
+
   /**
    * Clean up expired challenges.
    * Should be called periodically (e.g., via cron job).

@@ -25,6 +25,7 @@ model User {
   transactions    Transaction[]
   signingRequests SigningRequest[]
   stepUpChallenges StepUpChallenge[]
+  mfaTotpCredential UserMfaTotpCredential?
   knownIps         UserKnownIp[]
 
   @@map("users")
@@ -285,4 +286,33 @@ model StepUpChallenge {
   @@index([proofToken])
   @@index([userId, createdAt])
   @@map("step_up_challenges")
+}
+
+model UserMfaTotpCredential {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  encryptedSecret String   @map("encrypted_secret") @db.Text
+  status          String   @default("pending") @db.VarChar(20)
+  enabledAt       DateTime? @map("enabled_at") @db.Timestamptz()
+  disabledAt      DateTime? @map("disabled_at") @db.Timestamptz()
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recoveryCodes UserMfaTotpRecoveryCode[]
+
+  @@map("user_mfa_totp_credentials")
+}
+
+model UserMfaTotpRecoveryCode {
+  id           String   @id @default(uuid()) @db.Uuid
+  credentialId  String   @map("credential_id") @db.Uuid
+  codeHash     String   @map("code_hash") @db.Text
+  usedAt       DateTime? @map("used_at") @db.Timestamptz()
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  credential UserMfaTotpCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@index([credentialId, usedAt])
+  @@map("user_mfa_totp_recovery_codes")
 }
