@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toDataURL } from 'qrcode';
 import {
   AlertCircle,
   CheckCircle2,
@@ -37,6 +38,18 @@ function splitRecoveryCodes(codes: string[]) {
   return codes.map((code) => code.trim()).filter(Boolean);
 }
 
+function createAuthenticatorQrCodeDataUrl(otpauthUrl: string) {
+  return toDataURL(otpauthUrl, {
+    errorCorrectionLevel: 'M',
+    margin: 3,
+    width: 220,
+    color: {
+      dark: '#332924',
+      light: '#ffffff',
+    },
+  });
+}
+
 export default function DashboardStepUpGate({ children }: { children: React.ReactNode }) {
   const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
   const codeInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +65,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [proofReady, setProofReady] = useState(false);
+  const [authenticatorQrCodeUrl, setAuthenticatorQrCodeUrl] = useState('');
 
   const getToken = useCallback(async () => {
     const token = await getAccessToken();
@@ -114,6 +128,25 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     if (stage !== 'recovery' || !proofReady) return;
     continueButtonRef.current?.focus();
   }, [proofReady, stage]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!setupData) {
+      setAuthenticatorQrCodeUrl('');
+      return;
+    }
+
+    void createAuthenticatorQrCodeDataUrl(setupData.otpauthUrl).then((dataUrl) => {
+      if (!cancelled) {
+        setAuthenticatorQrCodeUrl(dataUrl);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setupData]);
 
   const title = useMemo(() => {
     switch (stage) {
@@ -244,38 +277,42 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
         )}
 
         {setupData && stage === 'setup' && (
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-brand-border bg-brand-bg/50 p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
-                    Authenticator link
-                  </p>
-                  <a
-                    href={setupData.otpauthUrl}
-                    className="mt-2 block break-all rounded-xl border border-brand-border bg-white px-3 py-3 font-mono text-xs leading-5 text-brand-text transition-colors hover:border-brand-accent hover:text-brand-accent"
-                  >
-                    {setupData.otpauthUrl}
-                  </a>
-                </div>
-                <CopyButton text={setupData.otpauthUrl} />
+          <div className="mt-8 rounded-2xl border border-brand-border bg-brand-bg/50 p-5 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
+              Authenticator setup
+            </p>
+
+            <div className="mt-4 flex justify-center">
+              <div className="inline-flex rounded-2xl border border-brand-border bg-white p-3 shadow-sm">
+                {authenticatorQrCodeUrl ? (
+                  <img
+                    src={authenticatorQrCodeUrl}
+                    alt="Authenticator setup QR code"
+                    className="h-[220px] w-[220px] rounded-xl"
+                  />
+                ) : (
+                  <div className="flex h-[220px] w-[220px] items-center justify-center rounded-xl bg-brand-bg text-xs text-brand-muted">
+                    Generating QR code...
+                  </div>
+                )}
               </div>
-              <p className="mt-3 text-xs leading-5 text-brand-muted">
-                Open the link on a trusted device or paste the secret manually if your authenticator app asks for it.
-              </p>
             </div>
 
-            <div className="rounded-2xl border border-brand-border bg-brand-bg/50 p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
-                    Manual secret
-                  </p>
-                  <p className="mt-2 break-all rounded-xl border border-brand-border bg-white px-3 py-3 font-mono text-sm tracking-[0.18em] text-brand-text">
+            <p className="mx-auto mt-4 max-w-md text-xs leading-5 text-brand-muted">
+              Scan the QR code with Google Authenticator, Authy, or another TOTP app.
+            </p>
+
+            <div className="mx-auto mt-5 max-w-md">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
+                Manual secret
+              </p>
+              <div className="mt-2 flex justify-center">
+                <div className="flex max-w-full items-center gap-3 rounded-xl border border-brand-border bg-white px-3 py-3">
+                  <p className="min-w-0 break-all text-left font-mono text-sm tracking-[0.18em] text-brand-text">
                     {setupData.secret}
                   </p>
+                  <CopyButton text={setupData.secret} />
                 </div>
-                <CopyButton text={setupData.secret} />
               </div>
               <p className="mt-3 text-xs leading-5 text-brand-muted">
                 Keep this secret private. It can be used to generate codes for your account.
