@@ -108,6 +108,7 @@ export function validate(config: Record<string, unknown>) {
     validatedConfig.SECURITY_EVENTS_SIEM_WEBHOOK_URL,
     'SECURITY_EVENTS_SIEM_WEBHOOK_URL',
   );
+  validateOptionalHttpsUrl(validatedConfig.STEP_UP_OTP_WEBHOOK_URL, 'STEP_UP_OTP_WEBHOOK_URL');
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
   validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
   return validatedConfig;
@@ -120,18 +121,6 @@ function validateProductionConfig(config: EnvironmentVariables) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
 
-  if (!config.STEP_UP_OTP_WEBHOOK_URL?.trim()) {
-    throw new Error('STEP_UP_OTP_WEBHOOK_URL must be set in production');
-  }
-
-  try {
-    const url = new URL(config.STEP_UP_OTP_WEBHOOK_URL);
-    if (url.protocol !== 'https:') {
-      throw new Error();
-    }
-  } catch {
-    throw new Error('STEP_UP_OTP_WEBHOOK_URL must be a valid https URL');
-  }
 }
 
 function validateOptionalHttpsUrl(rawUrl: string | undefined, name: string) {

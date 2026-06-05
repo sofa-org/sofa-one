@@ -12,10 +12,21 @@ jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
 
+jest.mock('../../common/guards/openfort-user.guard', () => ({
+  OpenfortUserGuard: class OpenfortUserGuard {},
+}));
+
+jest.mock('../../common/guards/step-up.guard', () => ({
+  StepUpGuard: class StepUpGuard {},
+}));
+
 import { AuthController } from './auth.controller';
 import { OpenfortAuthGuard } from '../../common/guards/openfort-auth.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
+import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
+import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
 
 describe('AuthController', () => {
   const authService = {
@@ -49,8 +60,11 @@ describe('AuthController', () => {
   it('uses frontend-only guard on refreshApiKey', () => {
     const guards = Reflect.getMetadata(GUARDS_METADATA, controller.refreshApiKey) ?? [];
 
+    expect(guards).toContain(OpenfortUserGuard);
+    expect(guards).toContain(StepUpGuard);
     expect(guards).toContain(FrontendOnlyGuard);
     expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.refreshApiKey)).toBe(true);
+    expect(Reflect.getMetadata(STEP_UP_KEY, controller.refreshApiKey)).toBe(true);
   });
 
   it.each([

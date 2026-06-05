@@ -31,8 +31,6 @@ describe('StepUpGuard', () => {
 
   beforeEach(() => {
     mockStepUpService = {
-      createChallenge: jest.fn(),
-      verifyChallenge: jest.fn(),
       validateProof: jest.fn(),
       cleanupExpiredChallenges: jest.fn(),
     } as any;
@@ -55,6 +53,7 @@ describe('StepUpGuard', () => {
       expect(mockStepUpService.validateProof).toHaveBeenCalledWith(
         mockProofToken,
         mockUserId,
+        'totp_mfa',
       );
     });
 
@@ -104,6 +103,7 @@ describe('StepUpGuard', () => {
       expect(mockStepUpService.validateProof).toHaveBeenCalledWith(
         mockProofToken,
         mockUserId,
+        'totp_mfa',
       );
     });
 
@@ -130,6 +130,7 @@ describe('StepUpGuard', () => {
       expect(mockStepUpService.validateProof).toHaveBeenCalledWith(
         customToken,
         mockUserId,
+        'totp_mfa',
       );
     });
   });

@@ -1,37 +1,16 @@
 import {
-  createStepUpChallengeAuth,
-  verifyStepUpChallengeAuth,
-  type StepUpChallengeResponse,
+  verifyTotpAuth,
 } from '@/lib/api';
-
-function getStepUpPromptMessage(challenge: StepUpChallengeResponse) {
-  if (challenge.code) {
-    return `Enter verification code. Development code: ${challenge.code}`;
-  }
-
-  return 'Enter the verification code sent to your email.';
-}
+import { storeDashboardStepUpProof } from './step-up-session';
 
 export async function requestStepUpToken(getToken: () => Promise<string | null>) {
-  const challenge = await createStepUpChallengeAuth(getToken);
-  const code = window.prompt(getStepUpPromptMessage(challenge));
+  const code = window.prompt('Enter your 6-digit authenticator code.');
 
   if (!code?.trim()) {
     throw new Error('Step-up verification cancelled.');
   }
 
-  const verification = await verifyStepUpChallengeAuth(
-    getToken,
-    challenge.challengeId,
-    code.trim(),
-  );
+  const verification = await verifyTotpAuth(getToken, code.trim());
+  storeDashboardStepUpProof(verification);
   return verification.proofToken;
-}
-
-export async function verifyStepUpCode(
-  getToken: () => Promise<string | null>,
-  challengeId: string,
-  code: string,
-) {
-  return verifyStepUpChallengeAuth(getToken, challengeId, code.trim());
 }

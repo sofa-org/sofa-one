@@ -3,7 +3,10 @@ import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { OpenfortAuthGuard } from '../../common/guards/openfort-auth.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
+import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
+import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 import { AgentRegistrationResultDto } from './dto/agent-registration-result.dto';
 import { AgentRegistrationTransactionDto } from './dto/agent-registration-transaction.dto';
@@ -53,10 +56,11 @@ export class AuthController {
    */
   @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
   @FrontendOnly()
-  @UseGuards(FrontendOnlyGuard)
+  @RequireStepUp()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
   @Post('refresh-api-key')
   async refreshApiKey(@Req() req: any) {
-    return this.authService.refreshApiKey(req.openfortUserId);
+    return this.authService.refreshApiKey(req.user.socialId);
   }
 
   /**

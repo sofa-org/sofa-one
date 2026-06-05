@@ -411,8 +411,14 @@ export async function getMe(getToken: () => Promise<string | null>, signal?: Abo
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
-export async function refreshApiKey(getToken: () => Promise<string | null>) {
-  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, { method: 'POST' });
+export async function refreshApiKey(
+  getToken: () => Promise<string | null>,
+  stepUpToken: string,
+) {
+  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
+    method: 'POST',
+    headers: { 'X-Step-Up-Token': stepUpToken },
+  });
 }
 
 export async function authorizeEmbeddedWallet(
@@ -442,24 +448,6 @@ export async function markAgentRegistrationTransaction(
   return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-transaction', getToken, {
     method: 'POST',
     body: JSON.stringify(body),
-  });
-}
-
-export async function createStepUpChallengeAuth(getToken: () => Promise<string | null>) {
-  return authFetch<StepUpChallengeResponse>('/v1/auth/step-up/challenge', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ type: 'email_otp' }),
-  });
-}
-
-export async function verifyStepUpChallengeAuth(
-  getToken: () => Promise<string | null>,
-  challengeId: string,
-  code: string,
-) {
-  return authFetch<StepUpVerifyResponse>('/v1/auth/step-up/verify', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ challengeId, code }),
   });
 }
 

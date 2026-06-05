@@ -28,7 +28,7 @@ export class StepUpGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const proofToken = request.headers['x-step-up-token'] as string | undefined;
-    const userId = request.user?.id as string | undefined;
+    const userId = request.user?.id;
 
     if (!proofToken) {
       throw new ForbiddenException('Step-up verification required. Provide X-Step-Up-Token header.');
@@ -38,7 +38,7 @@ export class StepUpGuard implements CanActivate {
       throw new ForbiddenException('Authentication required before step-up verification.');
     }
 
-    const isValid = await this.stepUpService.validateProof(proofToken, userId);
+    const isValid = await this.stepUpService.validateProof(proofToken, userId, 'totp_mfa');
     if (!isValid) {
       throw new ForbiddenException('Invalid or expired step-up verification. Please verify again.');
     }

@@ -329,7 +329,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const result = await refreshApiKeyApi(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
+      const result = await refreshApiKeyApi(getToken, stepUpToken);
       setNewRawKey(result.apiKey);
       await fetchKeys();
     } catch (err: unknown) {
