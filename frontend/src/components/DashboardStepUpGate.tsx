@@ -25,6 +25,8 @@ import {
 } from '@/pages/dashboard/step-up-session';
 
 type GateStage = 'checking' | 'setup' | 'verify' | 'recovery' | 'ready' | 'error';
+type VerificationMode = 'authenticator' | 'recovery';
+const RECOVERY_CODE_PART_COUNT = 3;
 
 function normalizeMfaCode(value: string) {
   return value.trim().toUpperCase();
@@ -52,14 +54,17 @@ function createAuthenticatorQrCodeDataUrl(otpauthUrl: string) {
 
 export default function DashboardStepUpGate({ children }: { children: React.ReactNode }) {
   const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
-  const codeInputRef = useRef<HTMLInputElement>(null);
+  const authenticatorInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const recoveryCodeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
 
   const [stage, setStage] = useState<GateStage>('checking');
   const [mfaStatus, setMfaStatus] = useState<MfaStatusResponse | null>(null);
   const [setupData, setSetupData] = useState<TotpSetupResponse | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [code, setCode] = useState('');
+  const [authenticatorCode, setAuthenticatorCode] = useState('');
+  const [recoveryCodeParts, setRecoveryCodeParts] = useState<string[]>(Array(RECOVERY_CODE_PART_COUNT).fill(''));
+  const [verificationMode, setVerificationMode] = useState<VerificationMode>('authenticator');
   const [statusError, setStatusError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
@@ -120,9 +125,13 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
 
   useEffect(() => {
     if (stage === 'setup' || stage === 'verify' || (stage === 'recovery' && !proofReady)) {
-      codeInputRef.current?.focus();
+      if (verificationMode === 'recovery') {
+        recoveryCodeInputRefs.current[0]?.focus();
+      } else {
+        authenticatorInputRefs.current[0]?.focus();
+      }
     }
-  }, [proofReady, setupData?.otpauthUrl, stage]);
+  }, [proofReady, setupData?.otpauthUrl, stage, verificationMode]);
 
   useEffect(() => {
     if (stage !== 'recovery' || !proofReady) return;
@@ -168,7 +177,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
       case 'setup':
         return 'Scan the setup link with Google Authenticator, Authy, or another TOTP app, then enter the 6-digit code it shows.';
       case 'verify':
-        return `MFA is already enabled. Enter a 6-digit authenticator code or a recovery code to continue.${
+        return `MFA is already enabled. Enter the 6-digit code from your authenticator app to continue.${
           mfaStatus ? ` ${mfaStatus.recoveryCodesRemaining} recovery code${mfaStatus.recoveryCodesRemaining === 1 ? '' : 's'} remain.` : ''
         }`;
       case 'recovery':
@@ -185,6 +194,8 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   const canContinue = stage === 'recovery' && proofReady;
   const showVerificationForm = stage === 'setup' || stage === 'verify' || (stage === 'recovery' && !proofReady);
   const isSetupStage = stage === 'setup';
+  const showRecoveryCodeLink = stage === 'verify' && verificationMode === 'authenticator';
+  const activeCode = verificationMode === 'recovery' ? recoveryCodeParts.join('-') : authenticatorCode;
 
   async function verifyCodeForAccess(codeValue: string) {
     const verification = await verifyTotpAuth(getToken, codeValue);
@@ -195,13 +206,17 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     e.preventDefault();
     if (isSubmitting) return;
 
-    const nextCode = normalizeMfaCode(code);
+    const nextCode = normalizeMfaCode(activeCode);
     if (!nextCode) {
-      setFormError('Enter a verification code before continuing.');
+      setFormError(
+        verificationMode === 'recovery'
+          ? 'Enter a recovery code before continuing.'
+          : 'Enter the 6-digit code from your authenticator app.',
+      );
       return;
     }
 
-    if (isSetupStage && !isSixDigitCode(nextCode)) {
+    if (verificationMode === 'authenticator' && !isSixDigitCode(nextCode)) {
       setFormError('Enter the 6-digit code from your authenticator app.');
       return;
     }
@@ -228,7 +243,8 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
         setStage('ready');
       }
 
-      setCode('');
+      setAuthenticatorCode('');
+      setRecoveryCodeParts(Array(RECOVERY_CODE_PART_COUNT).fill(''));
     } catch (err: unknown) {
       setFormError(getApiErrorMessage(err));
     } finally {
@@ -253,6 +269,71 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     ) : (
       <KeyRound className="h-6 w-6" />
     );
+
+  function handleAuthenticatorDigitChange(index: number, value: string) {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const digits = authenticatorCode.padEnd(6, ' ').split('');
+    digits[index] = digit || ' ';
+    const nextCode = digits.join('').replace(/\s/g, '').slice(0, 6);
+    setAuthenticatorCode(nextCode);
+    setFormError(null);
+
+    if (digit && index < 5) {
+      authenticatorInputRefs.current[index + 1]?.focus();
+    }
+  }
+
+  function handleAuthenticatorKeyDown(index: number, event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Backspace' || authenticatorCode[index]) return;
+    authenticatorInputRefs.current[index - 1]?.focus();
+  }
+
+  function handleAuthenticatorPaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const pastedCode = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pastedCode) return;
+
+    setAuthenticatorCode(pastedCode);
+    setFormError(null);
+    authenticatorInputRefs.current[Math.min(pastedCode.length, 6) - 1]?.focus();
+  }
+
+  function selectVerificationMode(mode: VerificationMode) {
+    setVerificationMode(mode);
+    setFormError(null);
+  }
+
+  function handleRecoveryCodePartChange(index: number, value: string) {
+    const nextParts = [...recoveryCodeParts];
+    const part = normalizeMfaCode(value).replace(/[^A-HJ-NP-Z2-9]/g, '').slice(0, 4);
+    nextParts[index] = part;
+    setRecoveryCodeParts(nextParts);
+    setFormError(null);
+
+    if (part.length === 4 && index < RECOVERY_CODE_PART_COUNT - 1) {
+      recoveryCodeInputRefs.current[index + 1]?.focus();
+    }
+  }
+
+  function handleRecoveryCodeKeyDown(index: number, event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Backspace' || recoveryCodeParts[index]) return;
+    recoveryCodeInputRefs.current[index - 1]?.focus();
+  }
+
+  function handleRecoveryCodePaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const pastedCode = normalizeMfaCode(event.clipboardData.getData('text'))
+      .replace(/[^A-HJ-NP-Z2-9]/g, '')
+      .slice(0, RECOVERY_CODE_PART_COUNT * 4);
+    if (!pastedCode) return;
+
+    const nextParts = Array.from({ length: RECOVERY_CODE_PART_COUNT }, (_, index) =>
+      pastedCode.slice(index * 4, index * 4 + 4),
+    );
+    setRecoveryCodeParts(nextParts);
+    setFormError(null);
+    recoveryCodeInputRefs.current[Math.min(Math.ceil(pastedCode.length / 4), RECOVERY_CODE_PART_COUNT) - 1]?.focus();
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-6 py-10 text-brand-text">
@@ -351,19 +432,76 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
         {showVerificationForm && (
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
-                {isSetupStage ? '6-digit authenticator code' : 'Authenticator or recovery code'}
-              </label>
-              <input
-                ref={codeInputRef}
-                type="text"
-                value={code}
-                onChange={(event) => setCode(normalizeMfaCode(event.target.value))}
-                inputMode={isSetupStage ? 'numeric' : 'text'}
-                autoComplete="one-time-code"
-                placeholder={isSetupStage ? '123456' : 'Enter your code'}
-                className="w-full rounded-2xl border border-brand-border bg-brand-bg/50 px-4 py-3 text-sm text-brand-text outline-none transition focus:border-brand-accent focus:bg-white focus:ring-2 focus:ring-brand-accent/15"
-              />
+              {verificationMode === 'authenticator' ? (
+                <div>
+                  <label className="mb-3 block text-center text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
+                    6-digit authenticator code
+                  </label>
+                  <div className="mx-auto grid max-w-xs grid-cols-6 gap-1.5 sm:gap-2" onPaste={handleAuthenticatorPaste}>
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <input
+                        // eslint-disable-next-line react/no-array-index-key
+                        key={index}
+                        ref={(element) => {
+                          authenticatorInputRefs.current[index] = element;
+                        }}
+                        type="text"
+                        value={authenticatorCode[index] ?? ''}
+                        onChange={(event) => handleAuthenticatorDigitChange(index, event.target.value)}
+                        onKeyDown={(event) => handleAuthenticatorKeyDown(index, event)}
+                        inputMode="numeric"
+                        autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                        aria-label={`Authenticator code digit ${index + 1}`}
+                        className="h-11 rounded-xl border border-brand-border bg-brand-bg/50 text-center text-base font-bold text-brand-text outline-none transition focus:border-brand-accent focus:bg-white focus:ring-2 focus:ring-brand-accent/15 sm:h-12"
+                      />
+                    ))}
+                  </div>
+
+                  {showRecoveryCodeLink && (
+                    <button
+                      type="button"
+                      onClick={() => selectVerificationMode('recovery')}
+                      className="mx-auto mt-4 block text-sm font-semibold text-brand-accent transition hover:text-brand-text"
+                    >
+                      Lost access to your authenticator? Use recovery code
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-3 block text-center text-[11px] font-bold uppercase tracking-[0.24em] text-brand-muted">
+                    Recovery code
+                  </label>
+                  <div className="mx-auto grid max-w-md grid-cols-3 gap-2" onPaste={handleRecoveryCodePaste}>
+                    {Array.from({ length: RECOVERY_CODE_PART_COUNT }).map((_, index) => (
+                      <input
+                        // eslint-disable-next-line react/no-array-index-key
+                        key={index}
+                        ref={(element) => {
+                          recoveryCodeInputRefs.current[index] = element;
+                        }}
+                        type="text"
+                        value={recoveryCodeParts[index] ?? ''}
+                        onChange={(event) => handleRecoveryCodePartChange(index, event.target.value)}
+                        onKeyDown={(event) => handleRecoveryCodeKeyDown(index, event)}
+                        inputMode="text"
+                        autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                        aria-label={`Recovery code part ${index + 1}`}
+                        placeholder="XXXX"
+                        className="h-12 rounded-xl border border-brand-border bg-brand-bg/50 text-center font-mono text-sm font-bold uppercase tracking-[0.12em] text-brand-text outline-none transition focus:border-brand-accent focus:bg-white focus:ring-2 focus:ring-brand-accent/15"
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => selectVerificationMode('authenticator')}
+                    className="mx-auto mt-4 block text-sm font-semibold text-brand-accent transition hover:text-brand-text"
+                  >
+                    Back to authenticator code
+                  </button>
+                </div>
+              )}
             </div>
 
             {formError && (
@@ -375,7 +513,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
 
             <button
               type="submit"
-              disabled={isSubmitting || !code.trim()}
+              disabled={isSubmitting || !activeCode.trim()}
               className="inline-flex w-full items-center justify-center rounded-full bg-brand-text px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-text/10 transition-all hover:-translate-y-0.5 hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting
