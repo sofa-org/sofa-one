@@ -587,7 +587,7 @@ export default function ApiKeysPage() {
       </DashboardCard>
 
       <div className="rounded-2xl border border-brand-border bg-white shadow-xl relative overflow-hidden ring-1 ring-black/5">
-        <div className="p-7 border-b border-brand-border">
+        <div className="p-5 border-b border-brand-border sm:p-7">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
@@ -706,7 +706,9 @@ export default function ApiKeysPage() {
           </div>
         ) : (
           <div className="divide-y divide-brand-border">
-            <div className="hidden grid-cols-[140px_84px_minmax(160px,1fr)_minmax(150px,1fr)_110px_120px_110px_36px] items-center gap-4 px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted md:grid">
+            <div
+              className="hidden grid-cols-[minmax(128px,0.9fr)_80px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] items-center gap-3 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted xl:grid xl:px-7"
+            >
               <span>Key</span>
               <span>Status</span>
               <span>Name</span>
@@ -724,8 +726,11 @@ export default function ApiKeysPage() {
               const allowedFunctionSelectors = key.allowedFunctionSelectors ?? [];
 
               return (
-                <div key={key.id} className="grid gap-3 px-7 py-4 transition-colors hover:bg-brand-surface md:grid-cols-[140px_84px_minmax(160px,1fr)_minmax(150px,1fr)_110px_120px_110px_36px] md:items-center md:gap-4">
-                  <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text">
+                <div
+                  key={key.id}
+                  className="grid min-w-0 gap-3 px-5 py-4 transition-colors hover:bg-brand-surface sm:grid-cols-2 sm:gap-x-4 xl:grid-cols-[minmax(128px,0.9fr)_80px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] xl:items-center xl:gap-3 xl:px-7"
+                >
+                  <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text sm:col-span-2 xl:col-span-1">
                     <span className="min-w-0 truncate">{key.displayPrefix}</span>
                     <CopyButton
                       text={key.displayPrefix}
@@ -736,54 +741,54 @@ export default function ApiKeysPage() {
                     {key.revoked ? 'Revoked' : 'Active'}
                   </span>
                   <span className="min-w-0 truncate text-sm text-brand-muted">
-                    <span className="font-semibold text-brand-text md:hidden">Name: </span>
+                    <span className="font-semibold text-brand-text xl:hidden">Name: </span>
                     {key.name || '—'}
                   </span>
-                  <span className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-brand-muted">
-                    <span className="font-semibold text-brand-text md:hidden">Permissions: </span>
-                    {key.permissions.canReadTransactionStatus && <span className="rounded-full bg-brand-bg px-2 py-0.5">status</span>}
-                    {key.permissions.canSign && <span className="rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
-                    {key.permissions.canSendTransaction && <span className="rounded-full bg-brand-bg px-2 py-0.5">send</span>}
-                    {key.permissions.canUseEoaExecution && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
+                  <span className="flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[11px] font-semibold text-brand-muted sm:col-span-2 xl:col-span-1">
+                    <span className="shrink-0 font-semibold text-brand-text xl:hidden">Permissions: </span>
+                    {key.permissions.canReadTransactionStatus && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">status</span>}
+                    {key.permissions.canSign && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
+                    {key.permissions.canSendTransaction && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">send</span>}
+                    {key.permissions.canUseEoaExecution && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
                     {!key.permissions.canReadTransactionStatus &&
                       !key.permissions.canSign &&
                       !key.permissions.canSendTransaction &&
-                      !key.permissions.canUseEoaExecution && <span>none</span>}
-                  </span>
-                  {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
-                    <span className="mt-1 flex flex-wrap gap-1 text-[10px] text-brand-muted">
+                      !key.permissions.canUseEoaExecution && <span className="shrink-0">none</span>}
+                    {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
+                      <>
                       {allowedContracts.length > 0 && (
-                        <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
+                        <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
                           {allowedContracts.length} contract{allowedContracts.length > 1 ? 's' : ''}
                         </span>
                       )}
                       {allowedFunctionSelectors.length > 0 && (
-                        <span className="rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
+                        <span className="shrink-0 rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
                           {allowedFunctionSelectors.length} selector{allowedFunctionSelectors.length > 1 ? 's' : ''}
                         </span>
                       )}
-                    </span>
-                  )}
-                  {(key.dailySpendLimit || key.monthlySpendLimit) && (
-                    <span className="mt-1 flex flex-wrap gap-1 text-[10px] text-brand-muted">
+                      </>
+                    )}
+                    {(key.dailySpendLimit || key.monthlySpendLimit) && (
+                      <>
                       {key.dailySpendLimit && (
-                        <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                        <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
                           Daily: {BigInt(key.dailySpendLimit) >= 1_000_000_000_000_000_000n
                             ? `${(Number(BigInt(key.dailySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
                             : `${Number(key.dailySpendLimit).toLocaleString()} wei`}
                         </span>
                       )}
                       {key.monthlySpendLimit && (
-                        <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                        <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
                           Monthly: {BigInt(key.monthlySpendLimit) >= 1_000_000_000_000_000_000n
                             ? `${(Number(BigInt(key.monthlySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
                             : `${Number(key.monthlySpendLimit).toLocaleString()} wei`}
                         </span>
                       )}
-                    </span>
-                  )}
+                      </>
+                    )}
+                  </span>
                   <span className={`text-xs ${lastUsed.tone}`}>
-                    <span className="font-semibold text-brand-text md:hidden">Last used: </span>
+                    <span className="font-semibold text-brand-text xl:hidden">Last used: </span>
                     <span className="font-semibold">{lastUsed.label}</span>
                     {lastUsed.detail && <span className="block text-[11px] opacity-80">{lastUsed.detail}</span>}
                     {key.lastUsedIp && (
@@ -798,12 +803,12 @@ export default function ApiKeysPage() {
                     )}
                   </span>
                   <span className={`text-xs ${expiry.tone}`}>
-                    <span className="font-semibold text-brand-text md:hidden">Expires: </span>
+                    <span className="font-semibold text-brand-text xl:hidden">Expires: </span>
                     <span className="font-semibold">{expiry.label}</span>
                     <span className="block text-[11px] opacity-80">{expiry.detail}</span>
                   </span>
                   <span className={`text-xs ${created.tone}`}>
-                    <span className="font-semibold text-brand-text md:hidden">Created: </span>
+                    <span className="font-semibold text-brand-text xl:hidden">Created: </span>
                     <span className="font-semibold">{created.label}</span>
                     {created.detail && <span className="block text-[11px] opacity-80">{created.detail}</span>}
                   </span>
@@ -811,12 +816,12 @@ export default function ApiKeysPage() {
                     <button
                       onClick={() => handleRevoke(key)}
                       disabled={actionLoading}
-                      className="rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 md:justify-self-end"
+                      className="w-fit rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 xl:justify-self-end"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   ) : (
-                    <span className="hidden h-7 w-7 md:block" />
+                    <span className="hidden h-7 w-7 xl:block" />
                   )}
                 </div>
               );
