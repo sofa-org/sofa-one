@@ -3,7 +3,20 @@ import { AccountTypeEnum, AuthProvider, ChainTypeEnum, OpenfortProvider, Recover
 import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, WagmiProvider } from 'wagmi';
-import { base, baseSepolia, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
+import {
+  arbitrum,
+  arbitrumSepolia,
+  base,
+  baseSepolia,
+  bsc,
+  bscTestnet,
+  mainnet,
+  optimism,
+  optimismSepolia,
+  polygon,
+  polygonAmoy,
+  sepolia,
+} from 'viem/chains';
 import { DEFAULT_CHAIN_ID } from '../lib/api';
 import { OpenfortConfigError } from './OpenfortConfigError';
 
@@ -11,7 +24,20 @@ const OPENFORT_KEY = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
 const OPENFORT_SHIELD_KEY = import.meta.env.VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY;
 
 const queryClient = new QueryClient();
-const supportedChains = [baseSepolia, base, mainnet, sepolia, polygon, polygonAmoy] as const;
+const supportedChains = [
+  baseSepolia,
+  base,
+  mainnet,
+  sepolia,
+  polygon,
+  polygonAmoy,
+  arbitrum,
+  arbitrumSepolia,
+  optimism,
+  optimismSepolia,
+  bsc,
+  bscTestnet,
+] as const;
 const wagmiConfig = createConfig(
   getDefaultConfig({
     appName: 'SOFA ONE',
@@ -32,6 +58,22 @@ const wagmiConfig = createConfig(
       ),
       [polygonAmoy.id]: http(
         import.meta.env.VITE_POLYGON_AMOY_RPC_URL ?? 'https://polygon-amoy-bor-rpc.publicnode.com',
+      ),
+      [arbitrum.id]: http(
+        import.meta.env.VITE_ARBITRUM_RPC_URL ?? 'https://arbitrum-one-rpc.publicnode.com',
+      ),
+      [arbitrumSepolia.id]: http(
+        import.meta.env.VITE_ARBITRUM_SEPOLIA_RPC_URL ?? 'https://sepolia-rollup.arbitrum.io/rpc',
+      ),
+      [optimism.id]: http(
+        import.meta.env.VITE_OPTIMISM_RPC_URL ?? 'https://optimism-rpc.publicnode.com',
+      ),
+      [optimismSepolia.id]: http(
+        import.meta.env.VITE_OPTIMISM_SEPOLIA_RPC_URL ?? 'https://sepolia.optimism.io',
+      ),
+      [bsc.id]: http(import.meta.env.VITE_BSC_RPC_URL ?? 'https://bsc-rpc.publicnode.com'),
+      [bscTestnet.id]: http(
+        import.meta.env.VITE_BSC_TESTNET_RPC_URL ?? 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
       ),
     },
     ssr: false,
