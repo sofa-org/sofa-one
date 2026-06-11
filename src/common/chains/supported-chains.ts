@@ -8,6 +8,8 @@ import {
   bsc,
   bscTestnet,
   mainnet,
+  monad,
+  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -20,7 +22,7 @@ export type SupportedChain = {
   name: string;
   chain: Chain;
   nativeCurrencySymbol: string;
-  usdcAddress: `0x${string}`;
+  usdcAddress?: `0x${string}`;
   usdtAddress?: `0x${string}`;
 };
 
@@ -117,6 +119,18 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     nativeCurrencySymbol: 'tBNB',
     usdcAddress: '0x64544969ed7EBf5f083679233325356EbE738930',
     usdtAddress: '0x7ef95a0Fee0FBDD40eD8b6C78740125E4A6Abe7f',
+  },
+  143: {
+    chainId: 143,
+    name: 'Monad',
+    chain: monad,
+    nativeCurrencySymbol: 'MON',
+  },
+  10143: {
+    chainId: 10143,
+    name: 'Monad Testnet',
+    chain: monadTestnet,
+    nativeCurrencySymbol: 'MON',
   },
 };
 

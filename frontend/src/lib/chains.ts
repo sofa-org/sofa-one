@@ -47,6 +47,14 @@ export const SUPPORTED_CHAINS = [
     explorerBaseUrl: 'https://testnet.bscscan.com',
     gasHelpUrl: 'https://www.bnbchain.org/en/testnet-faucet',
   },
+  { id: 143, name: 'Monad', nativeCurrencySymbol: 'MON', explorerBaseUrl: 'https://monadscan.com' },
+  {
+    id: 10143,
+    name: 'Monad Testnet',
+    nativeCurrencySymbol: 'MON',
+    explorerBaseUrl: 'https://testnet.monadexplorer.com',
+    gasHelpUrl: 'https://testnet.monad.xyz/',
+  },
 ] as const;
 
 function getSupportedChain(chainId: number) {

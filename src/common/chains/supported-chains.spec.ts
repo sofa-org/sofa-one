@@ -4,6 +4,8 @@ import {
   arbitrumSepolia,
   bsc,
   bscTestnet,
+  monad,
+  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -91,6 +93,21 @@ describe('supported chains', () => {
       nativeCurrencySymbol: 'tBNB',
       usdcAddress: '0x64544969ed7EBf5f083679233325356EbE738930',
       usdtAddress: '0x7ef95a0Fee0FBDD40eD8b6C78740125E4A6Abe7f',
+    });
+  });
+
+  it('includes Monad mainnet and testnet', () => {
+    expect(getSupportedChain(143)).toEqual({
+      chainId: 143,
+      name: 'Monad',
+      chain: monad,
+      nativeCurrencySymbol: 'MON',
+    });
+    expect(getSupportedChain(10143)).toEqual({
+      chainId: 10143,
+      name: 'Monad Testnet',
+      chain: monadTestnet,
+      nativeCurrencySymbol: 'MON',
     });
   });
 

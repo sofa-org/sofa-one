@@ -104,7 +104,7 @@ export class WalletService {
       chainName: supportedChain.name,
       status: wallet.status,
       supportedTokens: [
-        'USDC',
+        ...(supportedChain.usdcAddress ? ['USDC'] : []),
         ...(supportedChain.usdtAddress ? ['USDT'] : []),
         supportedChain.nativeCurrencySymbol,
       ],
@@ -525,7 +525,7 @@ export class WalletService {
     const supportedChain = getSupportedChain(chainId);
     const publicClient = this.getPublicClient(chainId);
     const stablecoins = [
-      { token: 'USDC', address: supportedChain.usdcAddress },
+      ...(supportedChain.usdcAddress ? [{ token: 'USDC', address: supportedChain.usdcAddress }] : []),
       ...(supportedChain.usdtAddress ? [{ token: 'USDT', address: supportedChain.usdtAddress }] : []),
     ];
 
@@ -897,7 +897,8 @@ export class WalletService {
     chain: SupportedChain,
   ): `0x${string}` | null {
     if (token === 'NATIVE') return null;
-    if (token === 'USDC') return chain.usdcAddress;
+    if (token === 'USDC' && chain.usdcAddress) return chain.usdcAddress;
+    if (token === 'USDC') throw new BadRequestException(`USDC is not supported on ${chain.name}`);
     if (chain.usdtAddress) return chain.usdtAddress;
     throw new BadRequestException(`USDT is not supported on ${chain.name}`);
   }
