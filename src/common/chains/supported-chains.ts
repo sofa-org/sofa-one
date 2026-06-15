@@ -2,14 +2,12 @@ import { BadRequestException } from '@nestjs/common';
 import type { Chain } from 'viem';
 import {
   arbitrum,
-  arbitrumSepolia,
   base,
   baseSepolia,
   bsc,
   bscTestnet,
   mainnet,
   monad,
-  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -82,13 +80,6 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     usdcAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     usdtAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
   },
-  421614: {
-    chainId: 421614,
-    name: 'Arbitrum Sepolia',
-    chain: arbitrumSepolia,
-    nativeCurrencySymbol: 'ETH',
-    usdcAddress: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
-  },
   10: {
     chainId: 10,
     name: 'OP Mainnet',
@@ -124,12 +115,6 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chainId: 143,
     name: 'Monad',
     chain: monad,
-    nativeCurrencySymbol: 'MON',
-  },
-  10143: {
-    chainId: 10143,
-    name: 'Monad Testnet',
-    chain: monadTestnet,
     nativeCurrencySymbol: 'MON',
   },
 };

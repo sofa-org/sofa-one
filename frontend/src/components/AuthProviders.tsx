@@ -5,14 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, WagmiProvider } from 'wagmi';
 import {
   arbitrum,
-  arbitrumSepolia,
   base,
   baseSepolia,
   bsc,
   bscTestnet,
   mainnet,
   monad,
-  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -34,13 +32,11 @@ const supportedChains = [
   polygon,
   polygonAmoy,
   arbitrum,
-  arbitrumSepolia,
   optimism,
   optimismSepolia,
   bsc,
   bscTestnet,
   monad,
-  monadTestnet,
 ] as const;
 const wagmiConfig = createConfig(
   getDefaultConfig({
@@ -66,9 +62,6 @@ const wagmiConfig = createConfig(
       [arbitrum.id]: http(
         import.meta.env.VITE_ARBITRUM_RPC_URL ?? 'https://arbitrum-one-rpc.publicnode.com',
       ),
-      [arbitrumSepolia.id]: http(
-        import.meta.env.VITE_ARBITRUM_SEPOLIA_RPC_URL ?? 'https://sepolia-rollup.arbitrum.io/rpc',
-      ),
       [optimism.id]: http(
         import.meta.env.VITE_OPTIMISM_RPC_URL ?? 'https://optimism-rpc.publicnode.com',
       ),
@@ -80,9 +73,6 @@ const wagmiConfig = createConfig(
         import.meta.env.VITE_BSC_TESTNET_RPC_URL ?? 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
       ),
       [monad.id]: http(import.meta.env.VITE_MONAD_RPC_URL ?? 'https://rpc.monad.xyz'),
-      [monadTestnet.id]: http(
-        import.meta.env.VITE_MONAD_TESTNET_RPC_URL ?? 'https://testnet-rpc.monad.xyz',
-      ),
     },
     ssr: false,
   }),

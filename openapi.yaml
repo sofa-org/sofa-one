@@ -28,13 +28,11 @@ info:
     | `137` | Polygon Mainnet（Polymarket） |
     | `80002` | Polygon Amoy（Polymarket 测试网） |
     | `42161` | Arbitrum One |
-    | `421614` | Arbitrum Sepolia（测试网） |
     | `10` | OP Mainnet |
     | `11155420` | OP Sepolia（测试网） |
     | `56` | BNB Smart Chain Mainnet |
     | `97` | BNB Smart Chain Testnet（测试网） |
     | `143` | Monad Mainnet |
-    | `10143` | Monad Testnet（测试网） |
 
     ## 快速开始
 

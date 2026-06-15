@@ -24,13 +24,6 @@ export const SUPPORTED_CHAINS = [
     gasHelpUrl: 'https://faucet.polygon.technology/',
   },
   { id: 42161, name: 'Arbitrum One', nativeCurrencySymbol: 'ETH', explorerBaseUrl: 'https://arbiscan.io' },
-  {
-    id: 421614,
-    name: 'Arbitrum Sepolia',
-    nativeCurrencySymbol: 'ETH',
-    explorerBaseUrl: 'https://sepolia.arbiscan.io',
-    gasHelpUrl: 'https://faucet.quicknode.com/arbitrum/sepolia',
-  },
   { id: 10, name: 'OP Mainnet', nativeCurrencySymbol: 'ETH', explorerBaseUrl: 'https://optimistic.etherscan.io' },
   {
     id: 11155420,
@@ -48,13 +41,6 @@ export const SUPPORTED_CHAINS = [
     gasHelpUrl: 'https://www.bnbchain.org/en/testnet-faucet',
   },
   { id: 143, name: 'Monad', nativeCurrencySymbol: 'MON', explorerBaseUrl: 'https://monadscan.com' },
-  {
-    id: 10143,
-    name: 'Monad Testnet',
-    nativeCurrencySymbol: 'MON',
-    explorerBaseUrl: 'https://testnet.monadexplorer.com',
-    gasHelpUrl: 'https://testnet.monad.xyz/',
-  },
 ] as const;
 
 function getSupportedChain(chainId: number) {

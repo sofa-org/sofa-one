@@ -1,11 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   arbitrum,
-  arbitrumSepolia,
   bsc,
   bscTestnet,
   monad,
-  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -41,7 +39,7 @@ describe('supported chains', () => {
     });
   });
 
-  it('includes Arbitrum mainnet and Sepolia', () => {
+  it('includes Arbitrum mainnet', () => {
     expect(getSupportedChain(42161)).toEqual({
       chainId: 42161,
       name: 'Arbitrum One',
@@ -49,13 +47,6 @@ describe('supported chains', () => {
       nativeCurrencySymbol: 'ETH',
       usdcAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
       usdtAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
-    });
-    expect(getSupportedChain(421614)).toEqual({
-      chainId: 421614,
-      name: 'Arbitrum Sepolia',
-      chain: arbitrumSepolia,
-      nativeCurrencySymbol: 'ETH',
-      usdcAddress: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
     });
   });
 
@@ -96,19 +87,18 @@ describe('supported chains', () => {
     });
   });
 
-  it('includes Monad mainnet and testnet', () => {
+  it('includes Monad mainnet', () => {
     expect(getSupportedChain(143)).toEqual({
       chainId: 143,
       name: 'Monad',
       chain: monad,
       nativeCurrencySymbol: 'MON',
     });
-    expect(getSupportedChain(10143)).toEqual({
-      chainId: 10143,
-      name: 'Monad Testnet',
-      chain: monadTestnet,
-      nativeCurrencySymbol: 'MON',
-    });
+  });
+
+  it('rejects chains without Calibur deployment', () => {
+    expect(() => getSupportedChain(421614)).toThrow(BadRequestException);
+    expect(() => getSupportedChain(10143)).toThrow(BadRequestException);
   });
 
   it('keeps every configured chain reachable through SUPPORTED_CHAIN_IDS', () => {
