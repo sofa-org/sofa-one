@@ -4,16 +4,13 @@ import {
   bsc,
   bscTestnet,
   monad,
+  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
   polygonAmoy,
 } from 'viem/chains';
-import {
-  getSupportedChain,
-  SUPPORTED_CHAIN_IDS,
-  SUPPORTED_CHAINS,
-} from './supported-chains';
+import { getSupportedChain, SUPPORTED_CHAIN_IDS, SUPPORTED_CHAINS } from './supported-chains';
 
 describe('supported chains', () => {
   it('includes Polygon mainnet with the canonical USDC contract', () => {
@@ -87,23 +84,30 @@ describe('supported chains', () => {
     });
   });
 
-  it('includes Monad mainnet', () => {
+  it('includes Monad mainnet and testnet', () => {
     expect(getSupportedChain(143)).toEqual({
       chainId: 143,
       name: 'Monad',
       chain: monad,
       nativeCurrencySymbol: 'MON',
     });
+    expect(getSupportedChain(10143)).toEqual({
+      chainId: 10143,
+      name: 'Monad Testnet',
+      chain: monadTestnet,
+      nativeCurrencySymbol: 'MON',
+    });
   });
 
   it('rejects chains without Calibur deployment', () => {
     expect(() => getSupportedChain(421614)).toThrow(BadRequestException);
-    expect(() => getSupportedChain(10143)).toThrow(BadRequestException);
   });
 
   it('keeps every configured chain reachable through SUPPORTED_CHAIN_IDS', () => {
     expect(SUPPORTED_CHAIN_IDS.sort((a, b) => a - b)).toEqual(
-      Object.keys(SUPPORTED_CHAINS).map(Number).sort((a, b) => a - b),
+      Object.keys(SUPPORTED_CHAINS)
+        .map(Number)
+        .sort((a, b) => a - b),
     );
   });
 

@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccountTypeEnum, RecoveryMethod, use7702Authorization, useOpenfort, useUser } from '@openfort/react';
+import {
+  AccountTypeEnum,
+  RecoveryMethod,
+  use7702Authorization,
+  useOpenfort,
+  useUser,
+} from '@openfort/react';
 import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
 import { usePublicClient } from 'wagmi';
 import { http, padHex, zeroAddress, type Address, type Hex, type PublicClient } from 'viem';
@@ -56,6 +62,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { WithdrawForm } from './WithdrawForm';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
+import { isMonadChain } from '@/lib/chains';
 import {
   AGENT_CHAIN_STORAGE_KEY,
   AGENT_AUTHORIZATION_MAX_TTL_MS,
@@ -72,7 +79,8 @@ import {
   delay,
   formatAuthorizationExpiry,
   getDefaultAgentExpiryLocal,
-  getOpenfortUserOperationGasPrice,
+  getMonadPimlicoRpcUrl,
+  getUserOperationGasPrice,
   getStoredChainId,
   parseWithdrawalAmount,
   persistChainId,
@@ -102,11 +110,12 @@ export default function WalletPage() {
   );
   const selectedAuthorizationExpiry = formatAuthorizationExpiry(selectedAuthorization?.expiresAt);
   const pendingAuthorization = wallet?.chainAuthorizations.find(
-    (authorization) => authorization.status === 'pending_registration' && authorization.registrationTxHash,
+    (authorization) =>
+      authorization.status === 'pending_registration' && authorization.registrationTxHash,
   );
-  const hasRegisteredAuthorization = wallet?.chainAuthorizations.some(
-    (authorization) => authorization.status === 'registered',
-  ) ?? false;
+  const hasRegisteredAuthorization =
+    wallet?.chainAuthorizations.some((authorization) => authorization.status === 'registered') ??
+    false;
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
   const walletExplorerUrl = getExplorerAddressUrl(agentChainId, wallet?.walletAddress);
   const pendingAuthorizationExplorerUrl = getExplorerTransactionUrl(
@@ -137,7 +146,8 @@ export default function WalletPage() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
-  const [withdrawalAllowlist, setWithdrawalAllowlist] = useState<ListWithdrawalAddressesResponse | null>(null);
+  const [withdrawalAllowlist, setWithdrawalAllowlist] =
+    useState<ListWithdrawalAddressesResponse | null>(null);
   const [withdrawalAllowlistLoading, setWithdrawalAllowlistLoading] = useState(false);
   const [withdrawalAllowlistError, setWithdrawalAllowlistError] = useState<string | null>(null);
   const [newWithdrawalAddress, setNewWithdrawalAddress] = useState('');
@@ -178,7 +188,10 @@ export default function WalletPage() {
         try {
           return await markAgentRegistrationResult(getToken, { chainId, txHash, status });
         } catch (err: unknown) {
-          if (status === 'registration_failed' || !hasApiErrorCode(err, 'AGENT_REGISTRATION_PENDING')) {
+          if (
+            status === 'registration_failed' ||
+            !hasApiErrorCode(err, 'AGENT_REGISTRATION_PENDING')
+          ) {
             throw err;
           }
           await delay(AGENT_REGISTRATION_RESULT_RETRY_DELAY_MS);
@@ -202,7 +215,12 @@ export default function WalletPage() {
         () => Date.now() < deadline,
       );
     },
-    [confirmAgentRegistration, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, publicClient],
+    [
+      confirmAgentRegistration,
+      pendingAuthorization?.chainId,
+      pendingAuthorization?.registrationTxHash,
+      publicClient,
+    ],
   );
 
   useEffect(() => {
@@ -366,7 +384,13 @@ export default function WalletPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, publicClient, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, confirmAgentRegistration]);
+  }, [
+    user,
+    publicClient,
+    pendingAuthorization?.chainId,
+    pendingAuthorization?.registrationTxHash,
+    confirmAgentRegistration,
+  ]);
 
   async function handleRetryAgentRegistrationCheck() {
     setAgentRegistrationCheckStatus('checking');
@@ -400,7 +424,7 @@ export default function WalletPage() {
     try {
       const baseUnits = parseWithdrawalAmount(amount, token);
       const chainId = selectedChainId;
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
       const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken);
       setWithdrawResult({
         message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
@@ -429,7 +453,7 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
       await addWithdrawalAddressAuth(
         getToken,
         {
@@ -453,7 +477,7 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
       await removeWithdrawalAddressAuth(getToken, id, stepUpToken);
       await loadWithdrawalAllowlist();
     } catch (err: unknown) {
@@ -487,7 +511,11 @@ export default function WalletPage() {
         refreshedAccounts = await openfort.updateEmbeddedAccounts({ silent: true });
       }
 
-      const { address, accountId } = resolveEmbeddedWallet(createdAccount, embeddedWallet, refreshedAccounts);
+      const { address, accountId } = resolveEmbeddedWallet(
+        createdAccount,
+        embeddedWallet,
+        refreshedAccounts,
+      );
       await embeddedWallet.setActive({
         address,
         chainId: agentChainId,
@@ -511,7 +539,9 @@ export default function WalletPage() {
       }
 
       setWallet(authorized.wallet);
-      setWalletSetupSuccess('Agent wallet created. Choose a network below, add gas, then authorize API access.');
+      setWalletSetupSuccess(
+        'Agent wallet created. Choose a network below, add gas, then authorize API access.',
+      );
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
@@ -557,7 +587,11 @@ export default function WalletPage() {
       const walletAddressChanged = wallet.walletAddress.toLowerCase() !== address.toLowerCase();
       let authorization = walletAddressChanged ? undefined : selectedAuthorization;
       let currentWallet = wallet;
-      if (!authorization || authorization.status === 'registered' || authorization.status === 'registration_failed') {
+      if (
+        !authorization ||
+        authorization.status === 'registered' ||
+        authorization.status === 'registration_failed'
+      ) {
         const initialized = await authorizeEmbeddedWallet(getToken, {
           embeddedWalletAddress: address,
           embeddedOpenfortAccountId: activeEmbeddedWallet.accountId,
@@ -567,7 +601,9 @@ export default function WalletPage() {
         currentWallet = initialized.wallet;
         setWallet(currentWallet);
         address = currentWallet.walletAddress as Address;
-        authorization = currentWallet.chainAuthorizations.find((item) => item.chainId === agentChainId);
+        authorization = currentWallet.chainAuthorizations.find(
+          (item) => item.chainId === agentChainId,
+        );
       }
 
       if (!authorization?.expiresAt) {
@@ -582,7 +618,16 @@ export default function WalletPage() {
       });
 
       if (!publicClient) {
-        throw new Error('Cannot check gas balance for this chain. Please retry after the network is ready.');
+        throw new Error(
+          'Cannot check gas balance for this chain. Please retry after the network is ready.',
+        );
+      }
+
+      const caliburCode = await publicClient.getCode({ address: CALIBUR_ADDRESS });
+      if (!caliburCode || caliburCode === '0x') {
+        throw new Error(
+          `${agentChainName} is not available for API access yet because Calibur is not deployed on this network.`,
+        );
       }
 
       const feeSponsorshipId = import.meta.env.VITE_OPENFORT_FEE_SPONSORSHIP_ID;
@@ -615,8 +660,14 @@ export default function WalletPage() {
       ];
 
       const walletCode = await publicClient.getCode({ address });
-      if (walletCode && walletCode !== '0x' && walletCode.toLowerCase() !== CALIBUR_DELEGATION_CODE.toLowerCase()) {
-        throw new Error('This wallet is delegated to an unsupported contract. Please contact support.');
+      if (
+        walletCode &&
+        walletCode !== '0x' &&
+        walletCode.toLowerCase() !== CALIBUR_DELEGATION_CODE.toLowerCase()
+      ) {
+        throw new Error(
+          'This wallet is delegated to an unsupported contract. Please contact support.',
+        );
       }
       const eip7702Authorization =
         !walletCode || walletCode === '0x'
@@ -646,7 +697,9 @@ export default function WalletPage() {
           }) as Promise<Hex>;
         },
         async signTransaction() {
-          throw new Error('Openfort embedded wallet transaction signing is not used for Calibur UserOperations.');
+          throw new Error(
+            'Openfort embedded wallet transaction signing is not used for Calibur UserOperations.',
+          );
         },
         async signTypedData(typedData) {
           const payload = typedData as {
@@ -662,52 +715,70 @@ export default function WalletPage() {
         },
       });
       const caliburAccount = await createCaliburAccount({ client: publicClient, owner });
+      const usePimlico = isMonadChain(agentChainId);
       const openfortPublishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
-      if (!openfortPublishableKey) {
+      if (!usePimlico && !openfortPublishableKey) {
         throw new Error('Openfort publishable key is not configured.');
       }
-      const openfortRpcUrl = `https://api.openfort.io/rpc/${agentChainId}`;
-      const openfortRpcTransport = http(openfortRpcUrl, {
-        fetchOptions: {
-          headers: { Authorization: `Bearer ${openfortPublishableKey}` },
-        },
-      });
-      const paymaster = feeSponsorshipId
-        ? createPaymasterClient({ transport: openfortRpcTransport })
-        : undefined;
+      const bundlerRpcUrl = usePimlico
+        ? getMonadPimlicoRpcUrl(agentChainId)
+        : `https://api.openfort.io/rpc/${agentChainId}`;
+      const bundlerRpcTransport = http(
+        bundlerRpcUrl,
+        usePimlico
+          ? undefined
+          : { fetchOptions: { headers: { Authorization: `Bearer ${openfortPublishableKey}` } } },
+      );
+      const paymaster =
+        feeSponsorshipId && !usePimlico
+          ? createPaymasterClient({ transport: bundlerRpcTransport })
+          : undefined;
       const bundlerClient = createBundlerClient({
         account: caliburAccount,
         chain: publicClient.chain,
         client: publicClient,
         ...(paymaster ? { paymaster } : {}),
-        transport: openfortRpcTransport,
+        transport: bundlerRpcTransport,
       } as never);
-      const fees = await getOpenfortUserOperationGasPrice(openfortRpcUrl, openfortPublishableKey);
+      const fees = await getUserOperationGasPrice(
+        agentChainId,
+        bundlerRpcUrl,
+        openfortPublishableKey,
+      );
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
         ...(eip7702Authorization ? { authorization: eip7702Authorization } : {}),
         maxFeePerGas: fees.maxFeePerGas,
         maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-        ...(feeSponsorshipId ? { paymasterContext: { policyId: feeSponsorshipId } } : {}),
+        ...(feeSponsorshipId && !usePimlico
+          ? { paymasterContext: { policyId: feeSponsorshipId } }
+          : {}),
       } as never);
       const userOpReceipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
-      const txHash = (
-        userOpReceipt as { receipt?: { transactionHash?: Hex }; transactionHash?: Hex }
-      ).receipt?.transactionHash ??
-        (userOpReceipt as { transactionHash?: Hex }).transactionHash;
+      const txHash =
+        (userOpReceipt as { receipt?: { transactionHash?: Hex }; transactionHash?: Hex }).receipt
+          ?.transactionHash ?? (userOpReceipt as { transactionHash?: Hex }).transactionHash;
       if (!txHash) {
         throw new Error(
           `Agent registration UserOperation was submitted but no transaction hash was returned: ${userOpHash}`,
         );
       }
-      const pending = await markAgentRegistrationTransaction(getToken, { chainId: agentChainId, txHash });
+      const pending = await markAgentRegistrationTransaction(getToken, {
+        chainId: agentChainId,
+        txHash,
+      });
       setWallet(pending.wallet);
 
       let result: AuthSessionResponse | null;
       try {
         let attempts = 0;
-        result = await confirmAgentRegistration(publicClient, agentChainId, txHash, () => attempts++ < 3);
+        result = await confirmAgentRegistration(
+          publicClient,
+          agentChainId,
+          txHash,
+          () => attempts++ < 3,
+        );
       } catch {
         setWalletSetupSuccess(`Authorization pending. We will check again next time: ${txHash}`);
         return;
@@ -751,7 +822,8 @@ export default function WalletPage() {
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
   const authorizeSubmitDisabled = registrationBusy;
-  const showAgentRegistrationSpinner = walletSetupLoading || agentRegistrationCheckStatus === 'checking';
+  const showAgentRegistrationSpinner =
+    walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !wallet?.walletAddress
     ? {
         title: 'Create agent EOA',
@@ -770,14 +842,12 @@ export default function WalletPage() {
         ? {
             title: 'Authorization pending',
             tone: 'blue',
-            description:
-              'The authorization transaction was submitted and is being checked.',
+            description: 'The authorization transaction was submitted and is being checked.',
           }
         : {
             title: 'Authorize API access',
             tone: 'blue',
-            description:
-              'Choose a network, add gas, unlock the wallet, and authorize API access.',
+            description: 'Choose a network, add gas, unlock the wallet, and authorize API access.',
           };
   const setupStatusClasses =
     setupStatus.tone === 'green'

@@ -1,5 +1,5 @@
 import type { Address } from 'viem';
-import { SUPPORTED_CHAINS } from '@/lib/chains';
+import { isMonadChain, SUPPORTED_CHAINS } from '@/lib/chains';
 
 export type OpenfortGasPriceResponse = {
   result?: {
@@ -63,7 +63,10 @@ export function parseRpcBigInt(value: unknown): bigint | null {
   return null;
 }
 
-export async function getOpenfortUserOperationGasPrice(openfortRpcUrl: string, publishableKey: string) {
+export async function getOpenfortUserOperationGasPrice(
+  openfortRpcUrl: string,
+  publishableKey: string,
+) {
   const response = await fetch(openfortRpcUrl, {
     method: 'POST',
     headers: {
@@ -93,6 +96,52 @@ export async function getOpenfortUserOperationGasPrice(openfortRpcUrl: string, p
   const maxPriorityFeePerGas = parseRpcBigInt(candidate?.maxPriorityFeePerGas);
   if (!maxFeePerGas || !maxPriorityFeePerGas) {
     throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC.');
+  }
+
+  return { maxFeePerGas, maxPriorityFeePerGas };
+}
+
+export function getMonadPimlicoRpcUrl(chainId: number) {
+  const override = import.meta.env[`VITE_PIMLICO_RPC_URL_${chainId}`];
+  if (override) return override;
+
+  const apiKey = import.meta.env.VITE_PIMLICO_API_KEY;
+  if (!apiKey) {
+    throw new Error('Pimlico API key is not configured for Monad UserOperations.');
+  }
+  return `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${encodeURIComponent(apiKey)}`;
+}
+
+export async function getUserOperationGasPrice(
+  chainId: number,
+  rpcUrl: string,
+  publishableKey?: string,
+) {
+  const usePimlico = isMonadChain(chainId);
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      ...(usePimlico ? {} : { Authorization: `Bearer ${publishableKey}` }),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: usePimlico ? 'pimlico_getUserOperationGasPrice' : 'openfort_getUserOperationGasPrice',
+      params: [],
+    }),
+  });
+  if (!response.ok) throw new Error('Unable to estimate UserOperation fee parameters.');
+
+  const payload = (await response.json()) as OpenfortGasPriceResponse;
+  if (payload.error)
+    throw new Error(payload.error.message ?? 'Unable to estimate UserOperation fee parameters.');
+
+  const candidate = payload.result?.fast ?? payload.result?.standard ?? payload.result;
+  const maxFeePerGas = parseRpcBigInt(candidate?.maxFeePerGas);
+  const maxPriorityFeePerGas = parseRpcBigInt(candidate?.maxPriorityFeePerGas);
+  if (!maxFeePerGas || !maxPriorityFeePerGas) {
+    throw new Error('Unable to estimate UserOperation fee parameters.');
   }
 
   return { maxFeePerGas, maxPriorityFeePerGas };

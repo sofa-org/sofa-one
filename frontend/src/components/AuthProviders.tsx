@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
-import { AccountTypeEnum, AuthProvider, ChainTypeEnum, OpenfortProvider, RecoveryMethod } from '@openfort/react';
+import {
+  AccountTypeEnum,
+  AuthProvider,
+  ChainTypeEnum,
+  OpenfortProvider,
+  RecoveryMethod,
+} from '@openfort/react';
 import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, WagmiProvider } from 'wagmi';
@@ -11,6 +17,7 @@ import {
   bscTestnet,
   mainnet,
   monad,
+  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -37,6 +44,7 @@ const supportedChains = [
   bsc,
   bscTestnet,
   monad,
+  monadTestnet,
 ] as const;
 const wagmiConfig = createConfig(
   getDefaultConfig({
@@ -70,9 +78,13 @@ const wagmiConfig = createConfig(
       ),
       [bsc.id]: http(import.meta.env.VITE_BSC_RPC_URL ?? 'https://bsc-rpc.publicnode.com'),
       [bscTestnet.id]: http(
-        import.meta.env.VITE_BSC_TESTNET_RPC_URL ?? 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+        import.meta.env.VITE_BSC_TESTNET_RPC_URL ??
+          'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
       ),
       [monad.id]: http(import.meta.env.VITE_MONAD_RPC_URL ?? 'https://rpc.monad.xyz'),
+      [monadTestnet.id]: http(
+        import.meta.env.VITE_MONAD_TESTNET_RPC_URL ?? 'https://testnet-rpc.monad.xyz',
+      ),
     },
     ssr: false,
   }),

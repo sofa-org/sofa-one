@@ -7,6 +7,13 @@ export default () => ({
     walletSecret: process.env.OPENFORT_WALLET_SECRET,
     timeoutMs: parseInt(process.env.OPENFORT_TIMEOUT_MS || '15000', 10),
   },
+  pimlico: {
+    apiKey: process.env.PIMLICO_API_KEY,
+    rpcUrls: {
+      143: process.env.PIMLICO_RPC_URL_143,
+      10143: process.env.PIMLICO_RPC_URL_10143,
+    },
+  },
   database: {
     url: process.env.DATABASE_URL,
   },

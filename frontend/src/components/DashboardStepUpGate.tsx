@@ -440,7 +440,6 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
                   <div className="mx-auto grid max-w-xs grid-cols-6 gap-1.5 sm:gap-2" onPaste={handleAuthenticatorPaste}>
                     {Array.from({ length: 6 }).map((_, index) => (
                       <input
-                        // eslint-disable-next-line react/no-array-index-key
                         key={index}
                         ref={(element) => {
                           authenticatorInputRefs.current[index] = element;
@@ -475,7 +474,6 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
                   <div className="mx-auto grid max-w-md grid-cols-3 gap-2" onPaste={handleRecoveryCodePaste}>
                     {Array.from({ length: RECOVERY_CODE_PART_COUNT }).map((_, index) => (
                       <input
-                        // eslint-disable-next-line react/no-array-index-key
                         key={index}
                         ref={(element) => {
                           recoveryCodeInputRefs.current[index] = element;

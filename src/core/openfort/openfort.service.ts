@@ -13,13 +13,14 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getTransactionReceipt } from 'viem/actions';
+import { getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
-import { getSupportedChain } from '../../common/chains/supported-chains';
+import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
+  CALIBUR_ADDRESS,
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
@@ -203,13 +204,13 @@ export class OpenfortService {
     interactions: Array<{ to: string; data: string; value?: string }>;
     sponsorship?: 'required' | 'none';
   }): Promise<{ userOpHash: string; transactionHash: string | null }> {
-    const publishableKey = this.configService.get<string>('openfort.publishableKey');
-    if (!publishableKey) {
-      throw new ServiceUnavailableException('Openfort publishable key is required for UserOps');
-    }
-
     try {
       const { chain } = getSupportedChain(params.chainId);
+      const usesPimlico = isMonadChain(params.chainId);
+      const publishableKey = this.configService.get<string>('openfort.publishableKey');
+      if (!usesPimlico && !publishableKey) {
+        throw new ServiceUnavailableException('Openfort publishable key is required for UserOps');
+      }
       const backendAccount = (await this.withTimeout(
         this.client.accounts.evm.backend.get({ id: params.agentAccountId }),
         'getAgentWallet',
@@ -228,19 +229,26 @@ export class OpenfortService {
         accountAddress: getAddress(params.accountAddress),
         keyHash: params.keyHash as Hex,
       });
-      const sponsorshipMode = params.sponsorship ?? 'none';
-      const openfortRpcUrl = `https://api.openfort.io/rpc/${params.chainId}`;
-      const gasPrice = await this.estimateUserOperationFees({ openfortRpcUrl, publishableKey });
-      const openfortRpcTransport = http(openfortRpcUrl, {
-        fetchOptions: {
-          headers: { Authorization: `Bearer ${publishableKey}` },
-        },
-      });
+      if (usesPimlico && params.sponsorship === 'required') {
+        throw new ServiceUnavailableException(
+          'Openfort fee sponsorship is not available for Monad UserOperations',
+        );
+      }
+      const sponsorshipMode = usesPimlico ? 'none' : (params.sponsorship ?? 'none');
+      const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
+      await this.assertCaliburContractAvailable(client, params.chainId);
+      const gasPrice = await this.estimateUserOperationFees(rpc);
+      const bundlerTransport = http(
+        rpc.url,
+        rpc.authorizationHeader
+          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
+          : undefined,
+      );
       const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
         client,
-        transport: openfortRpcTransport,
+        transport: bundlerTransport,
         interactions: params.interactions,
         sponsorshipMode,
         chainId: params.chainId,
@@ -254,6 +262,9 @@ export class OpenfortService {
         transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
       };
     } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       if (params.sponsorship === 'required' && this.isMissingPaymasterPolicyError(error)) {
         throw this.createPaymasterPolicyException(params.chainId);
       }
@@ -262,6 +273,15 @@ export class OpenfortService {
         interactionCount: params.interactions.length,
       });
       throw this.createOpenfortApiException('sendUserOperation', error);
+    }
+  }
+
+  private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
+    const code = await getCode(client, { address: CALIBUR_ADDRESS });
+    if (!code || code === '0x') {
+      throw new ServiceUnavailableException(
+        `Calibur is not deployed on chain ${chainId}; EIP-7702 authorization is unavailable for this network.`,
+      );
     }
   }
 
@@ -331,20 +351,22 @@ export class OpenfortService {
   }
 
   private async estimateUserOperationFees(params: {
-    openfortRpcUrl: string;
-    publishableKey: string;
+    url: string;
+    gasPriceMethod: string;
+    authorizationHeader?: string;
+    providerName: string;
   }): Promise<UserOperationGasPrice> {
     const response = await this.withTimeout(
-      fetch(params.openfortRpcUrl, {
+      fetch(params.url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${params.publishableKey}`,
+          ...(params.authorizationHeader ? { Authorization: params.authorizationHeader } : {}),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
-          method: 'openfort_getUserOperationGasPrice',
+          method: params.gasPriceMethod,
           params: [],
         }),
       }),
@@ -352,24 +374,58 @@ export class OpenfortService {
     );
 
     if (!response.ok) {
-      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
     }
 
     const payload = (await response.json()) as OpenfortGasPriceRpcResponse;
     if (payload.error) {
-      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
     }
 
     const recommendedFees = this.selectOpenfortUserOperationGasPrice(payload.result);
 
     if (!recommendedFees?.maxFeePerGas || !recommendedFees?.maxPriorityFeePerGas) {
-      throw new Error('Unable to estimate UserOperation fee parameters from Openfort RPC');
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
     }
 
     return {
       maxFeePerGas: recommendedFees.maxFeePerGas,
       maxPriorityFeePerGas: recommendedFees.maxPriorityFeePerGas,
     };
+  }
+
+  private getUserOperationRpc(chainId: number, publishableKey?: string) {
+    if (!isMonadChain(chainId)) {
+      return {
+        url: `https://api.openfort.io/rpc/${chainId}`,
+        authorizationHeader: `Bearer ${publishableKey}`,
+        gasPriceMethod: 'openfort_getUserOperationGasPrice',
+        providerName: 'Openfort',
+      };
+    }
+
+    return {
+      url: this.getMonadPimlicoRpcUrl(chainId),
+      gasPriceMethod: 'pimlico_getUserOperationGasPrice',
+      providerName: 'Pimlico',
+    };
+  }
+
+  private getMonadPimlicoRpcUrl(chainId: number): string {
+    const override = this.configService.get<string>(`pimlico.rpcUrls.${chainId}`);
+    if (override) return override;
+
+    const apiKey = this.configService.get<string>('pimlico.apiKey');
+    if (!apiKey) {
+      throw new ServiceUnavailableException('Pimlico API key is required for Monad UserOperations');
+    }
+    return `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${encodeURIComponent(apiKey)}`;
   }
 
   private selectOpenfortUserOperationGasPrice(
@@ -549,15 +605,14 @@ export class OpenfortService {
     }
 
     const message = this.getErrorText(error).toLowerCase();
-    const baseMessage =
-      this.isGasFeeTooLowError(message)
-        ? 'UserOperation rejected by bundler: gas price is below the required network minimum.'
-        : message.includes('simulation') ||
-            message.includes('revert') ||
-            message.includes('unrecognized selector') ||
-            message.includes('execution reverted')
-          ? 'UserOperation rejected by bundler: simulation failed. Check target contract calldata and session key permissions.'
-          : 'UserOperation rejected by bundler. Check chainId, target contract calldata, value, gas sponsorship, and session key authorization.';
+    const baseMessage = this.isGasFeeTooLowError(message)
+      ? 'UserOperation rejected by bundler: gas price is below the required network minimum.'
+      : message.includes('simulation') ||
+          message.includes('revert') ||
+          message.includes('unrecognized selector') ||
+          message.includes('execution reverted')
+        ? 'UserOperation rejected by bundler: simulation failed. Check target contract calldata and session key permissions.'
+        : 'UserOperation rejected by bundler. Check chainId, target contract calldata, value, gas sponsorship, and session key authorization.';
 
     return new HttpException(
       {

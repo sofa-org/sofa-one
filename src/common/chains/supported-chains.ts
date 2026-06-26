@@ -8,6 +8,7 @@ import {
   bscTestnet,
   mainnet,
   monad,
+  monadTestnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -117,6 +118,12 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chain: monad,
     nativeCurrencySymbol: 'MON',
   },
+  10143: {
+    chainId: 10143,
+    name: 'Monad Testnet',
+    chain: monadTestnet,
+    nativeCurrencySymbol: 'MON',
+  },
 };
 
 export const SUPPORTED_CHAIN_IDS = Object.keys(SUPPORTED_CHAINS).map(Number);
@@ -127,4 +134,8 @@ export function getSupportedChain(chainId: number): SupportedChain {
     throw new BadRequestException(`Chain ${chainId} is not supported`);
   }
   return chain;
+}
+
+export function isMonadChain(chainId: number): boolean {
+  return chainId === 143 || chainId === 10143;
 }
