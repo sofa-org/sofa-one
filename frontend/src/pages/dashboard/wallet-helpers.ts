@@ -1,4 +1,5 @@
 import type { Address } from 'viem';
+import { DEFAULT_CHAIN_ID } from '@/lib/api';
 import { isMonadChain, SUPPORTED_CHAINS } from '@/lib/chains';
 
 export type OpenfortGasPriceResponse = {
@@ -99,6 +100,16 @@ export async function getOpenfortUserOperationGasPrice(
   }
 
   return { maxFeePerGas, maxPriorityFeePerGas };
+}
+
+// Openfort's embedded signer service rejects Monad mainnet (143) with
+// "unsupported chain id"; Monad testnet (10143) is supported. On Monad the
+// signer is only used for raw-hash signatures (EIP-7702 authorization and
+// UserOperation hashes), which are chain-agnostic — the target chainId is
+// embedded in the signed payload — so the signer session can stay on a chain
+// Openfort supports.
+export function getOpenfortSignerChainId(chainId: number) {
+  return chainId === 143 ? DEFAULT_CHAIN_ID : chainId;
 }
 
 export function getMonadPimlicoRpcUrl(chainId: number) {

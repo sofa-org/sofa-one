@@ -80,6 +80,7 @@ import {
   formatAuthorizationExpiry,
   getDefaultAgentExpiryLocal,
   getMonadPimlicoRpcUrl,
+  getOpenfortSignerChainId,
   getUserOperationGasPrice,
   getStoredChainId,
   parseWithdrawalAmount,
@@ -127,7 +128,8 @@ export default function WalletPage() {
     wallet?.chainAuthorizations.map((authorization) => authorization.chainId).join(', ') ?? '';
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
-  const embeddedWallet = useEthereumEmbeddedWallet({ chainId: agentChainId });
+  const signerChainId = getOpenfortSignerChainId(agentChainId);
+  const embeddedWallet = useEthereumEmbeddedWallet({ chainId: signerChainId });
   const agentNativeSymbol = publicClient?.chain?.nativeCurrency.symbol ?? 'native gas token';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -503,7 +505,7 @@ export default function WalletPage() {
       let refreshedAccounts: unknown[] | undefined;
       if (!embeddedWallet.address) {
         createdAccount = await embeddedWallet.create({
-          chainId: agentChainId,
+          chainId: signerChainId,
           accountType: AccountTypeEnum.EOA,
           recoveryMethod: RecoveryMethod.PASSWORD,
           password: recoveryPassword,
@@ -518,7 +520,7 @@ export default function WalletPage() {
       );
       await embeddedWallet.setActive({
         address,
-        chainId: agentChainId,
+        chainId: signerChainId,
         recoveryMethod: RecoveryMethod.PASSWORD,
         password: recoveryPassword,
       });
@@ -612,7 +614,7 @@ export default function WalletPage() {
 
       await embeddedWallet.setActive({
         address,
-        chainId: agentChainId,
+        chainId: signerChainId,
         recoveryMethod: RecoveryMethod.PASSWORD,
         password: recoveryPassword,
       });
