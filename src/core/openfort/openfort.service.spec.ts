@@ -13,6 +13,7 @@ const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
 const mockGetTransactionReceipt = jest.fn();
+const mockGetCode = jest.fn();
 const originalFetch = globalThis.fetch;
 const mockFetch = jest.fn();
 
@@ -48,6 +49,7 @@ jest.mock('../../common/calibur/calibur', () => {
 
 jest.mock('viem/actions', () => ({
   ...jest.requireActual('viem/actions'),
+  getCode: mockGetCode,
   getTransactionReceipt: mockGetTransactionReceipt,
 }));
 
@@ -323,8 +325,10 @@ describe('OpenfortService', () => {
     const service = new OpenfortService(configService as any) as any;
 
     const gasPrice = await service.estimateUserOperationFees({
-      openfortRpcUrl: 'https://api.openfort.io/rpc/137',
-      publishableKey: 'pk_test',
+      url: 'https://api.openfort.io/rpc/137',
+      authorizationHeader: 'Bearer pk_test',
+      gasPriceMethod: 'openfort_getUserOperationGasPrice',
+      providerName: 'Openfort',
     });
 
     expect(gasPrice.maxFeePerGas.toString()).toBe('250000000000');
@@ -396,6 +400,29 @@ describe('OpenfortService', () => {
       code: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
       message: 'Unable to estimate UserOperation fee parameters from Openfort RPC.',
     });
+  });
+
+  it('prefers the new Calibur deployment and falls back to the legacy deployment', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+
+    mockGetCode.mockResolvedValueOnce('0x6000');
+    await expect(service.assertCaliburContractAvailable({}, 84532)).resolves.toBeUndefined();
+    expect(mockGetCode).toHaveBeenCalledTimes(1);
+    expect(mockGetCode.mock.calls[0][1]).toEqual({
+      address: '0x000000005c84F8Fd50b21CAC312528A64437030e',
+    });
+
+    mockGetCode.mockClear();
+    mockGetCode.mockResolvedValueOnce('0x').mockResolvedValueOnce('0x6000');
+    await expect(service.assertCaliburContractAvailable({}, 84532)).resolves.toBeUndefined();
+    expect(mockGetCode.mock.calls.map((call) => call[1].address)).toEqual([
+      '0x000000005c84F8Fd50b21CAC312528A64437030e',
+      '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00',
+    ]);
   });
 
   it('maps bundler rejections to a specific sanitized API error', () => {

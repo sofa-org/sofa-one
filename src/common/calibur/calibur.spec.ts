@@ -6,11 +6,14 @@ jest.mock('viem/actions', () => ({
 }));
 
 import {
+  CALIBUR_ADDRESSES,
   CALIBUR_ADDRESS,
   encodeCaliburExecuteUserOpCalls,
   EIP7702_DELEGATION_PREFIX,
+  getCaliburDelegationCodes,
   getCaliburDelegationCode,
   hasCaliburDelegation,
+  LEGACY_CALIBUR_ADDRESS,
 } from './calibur';
 
 describe('Calibur delegation helpers', () => {
@@ -22,13 +25,23 @@ describe('Calibur delegation helpers', () => {
     expect(getCaliburDelegationCode()).toBe(
       `${EIP7702_DELEGATION_PREFIX}${CALIBUR_ADDRESS.slice(2)}`,
     );
+    expect(getCaliburDelegationCode(LEGACY_CALIBUR_ADDRESS)).toBe(
+      `${EIP7702_DELEGATION_PREFIX}${LEGACY_CALIBUR_ADDRESS.slice(2)}`,
+    );
+    expect(getCaliburDelegationCodes()).toEqual(
+      CALIBUR_ADDRESSES.map(
+        (address) => `${EIP7702_DELEGATION_PREFIX}${address.slice(2)}`,
+      ),
+    );
   });
 
   it('detects whether an EOA is delegated to Calibur', async () => {
     const account = '0x1111111111111111111111111111111111111111';
     mockGetCode.mockResolvedValueOnce(getCaliburDelegationCode());
+    mockGetCode.mockResolvedValueOnce(getCaliburDelegationCode(LEGACY_CALIBUR_ADDRESS));
     mockGetCode.mockResolvedValueOnce('0x');
 
+    await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(true);
     await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(true);
     await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(false);
   });

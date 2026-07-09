@@ -27,8 +27,13 @@ const STUB_SIG =
   '0xfffffffffffffffffffffff0000000000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c' as const;
 const CALIBUR_EXECUTE_USER_OP_SELECTOR = '0x8dd7712f' as const;
 
-export const CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
+export const CALIBUR_ADDRESS = '0x000000005c84F8Fd50b21CAC312528A64437030e' as const;
+export const LEGACY_CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
+export const CALIBUR_ADDRESSES = [CALIBUR_ADDRESS, LEGACY_CALIBUR_ADDRESS] as const;
 export const CALIBUR_DELEGATION_CODE = `0xef0100${CALIBUR_ADDRESS.slice(2)}` as const;
+export const CALIBUR_DELEGATION_CODES = CALIBUR_ADDRESSES.map(
+  (address) => `0xef0100${address.slice(2)}` as const,
+);
 
 export enum KeyType {
   P256 = 0,
@@ -119,7 +124,15 @@ function normalizeSignature(sig: Hex): Hex {
   return serializeSignature({ r, s, v: BigInt(v) });
 }
 
-export async function createCaliburAccount({ client, owner }: { client: Client<any, any, any>; owner: Account }) {
+export async function createCaliburAccount({
+  client,
+  owner,
+  authorizationAddress = CALIBUR_ADDRESS,
+}: {
+  client: Client<any, any, any>;
+  owner: Account;
+  authorizationAddress?: Address;
+}) {
   return toSmartAccount({
     client,
     entryPoint: {
@@ -128,7 +141,7 @@ export async function createCaliburAccount({ client, owner }: { client: Client<a
       version: '0.8',
     },
     authorization: {
-      address: CALIBUR_ADDRESS,
+      address: authorizationAddress,
       account: owner as never,
     },
     getAddress: async () => getAddress(owner.address),

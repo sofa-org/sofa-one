@@ -20,7 +20,7 @@ import { getSupportedChain, isMonadChain } from '../../common/chains/supported-c
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
-  CALIBUR_ADDRESS,
+  CALIBUR_ADDRESSES,
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
@@ -277,12 +277,16 @@ export class OpenfortService {
   }
 
   private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
-    const code = await getCode(client, { address: CALIBUR_ADDRESS });
-    if (!code || code === '0x') {
-      throw new ServiceUnavailableException(
-        `Calibur is not deployed on chain ${chainId}; EIP-7702 authorization is unavailable for this network.`,
-      );
+    for (const address of CALIBUR_ADDRESSES) {
+      const code = await getCode(client, { address });
+      if (code && code !== '0x') {
+        return;
+      }
     }
+
+    throw new ServiceUnavailableException(
+      `Calibur is not deployed on chain ${chainId}; EIP-7702 authorization is unavailable for this network.`,
+    );
   }
 
   private createBundlerClient(params: {

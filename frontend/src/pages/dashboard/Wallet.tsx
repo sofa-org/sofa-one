@@ -39,8 +39,8 @@ import {
   getNativeCurrencySymbol,
 } from '@/lib/chains';
 import {
-  CALIBUR_ADDRESS,
-  CALIBUR_DELEGATION_CODE,
+  CALIBUR_ADDRESSES,
+  CALIBUR_DELEGATION_CODES,
   KeyType,
   createCaliburAccount,
   encodeRegisterKey,
@@ -625,8 +625,15 @@ export default function WalletPage() {
         );
       }
 
-      const caliburCode = await publicClient.getCode({ address: CALIBUR_ADDRESS });
-      if (!caliburCode || caliburCode === '0x') {
+      let activeCaliburAddress: Address | null = null;
+      for (const caliburAddress of CALIBUR_ADDRESSES) {
+        const caliburCode = await publicClient.getCode({ address: caliburAddress });
+        if (caliburCode && caliburCode !== '0x') {
+          activeCaliburAddress = caliburAddress;
+          break;
+        }
+      }
+      if (!activeCaliburAddress) {
         throw new Error(
           `${agentChainName} is not available for API access yet because Calibur is not deployed on this network.`,
         );
@@ -665,7 +672,9 @@ export default function WalletPage() {
       if (
         walletCode &&
         walletCode !== '0x' &&
-        walletCode.toLowerCase() !== CALIBUR_DELEGATION_CODE.toLowerCase()
+        !CALIBUR_DELEGATION_CODES.some(
+          (delegationCode) => walletCode.toLowerCase() === delegationCode.toLowerCase(),
+        )
       ) {
         throw new Error(
           'This wallet is delegated to an unsupported contract. Please contact support.',
@@ -676,7 +685,7 @@ export default function WalletPage() {
           ? await signOpenfortAuthorization({
               chainId: agentChainId,
               nonce: await publicClient.getTransactionCount({ address, blockTag: 'pending' }),
-              contractAddress: CALIBUR_ADDRESS,
+              contractAddress: activeCaliburAddress,
             })
           : undefined;
 
@@ -716,7 +725,11 @@ export default function WalletPage() {
           ) as Promise<Hex>;
         },
       });
-      const caliburAccount = await createCaliburAccount({ client: publicClient, owner });
+      const caliburAccount = await createCaliburAccount({
+        client: publicClient,
+        owner,
+        authorizationAddress: activeCaliburAddress,
+      });
       const usePimlico = isMonadChain(agentChainId);
       const openfortPublishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
       if (!usePimlico && !openfortPublishableKey) {
