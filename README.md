@@ -16,6 +16,9 @@ This repository keeps detailed guidance in focused top-level documents:
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Environment variables, local infrastructure, production checklist, and runtime commands |
 | [RUNBOOK.md](./RUNBOOK.md) | Local development, common operations, checks, and troubleshooting |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Coding standards, module boundaries, testing, and documentation rules |
+| [PRICING.md](./PRICING.md) | Chinese pricing plan with free tier, outbound volume allowances, decreasing overage tiers, and plan-level service differences |
+| [SOFA_ONE.md](./SOFA_ONE.md) | Chinese external project introduction, positioning, supported chains, and value |
+| [SOFA_ONE_EN.md](./SOFA_ONE_EN.md) | English external project introduction, positioning, supported chains, and value |
 | [codemap.md](./codemap.md) | Generated repository atlas for code navigation |
 
 Historical design notes are archived under [`docs/archive/`](./docs/archive/) and are not current implementation guidance.
