@@ -1,11 +1,22 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { BillingService } from './billing.service';
+import { BillingReconciliationService } from './billing-reconciliation.service';
 import { GetSummaryQueryDto } from './dto/get-summary-query.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
+import { ReconcileBodyDto } from './dto/reconcile-body.dto';
 
 /**
  * Frontend-only billing routes. These are intentionally NOT part of the public
@@ -14,7 +25,10 @@ import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
  */
 @Controller('v1/billing')
 export class BillingController {
-  constructor(private readonly billingService: BillingService) {}
+  constructor(
+    private readonly billingService: BillingService,
+    private readonly reconciliationService: BillingReconciliationService,
+  ) {}
 
   /** GET /v1/billing/plans — current plan + plan catalog. */
   @Get('plans')
@@ -49,5 +63,19 @@ export class BillingController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.billingService.getInvoice(userId, id);
+  }
+
+  /**
+   * POST /v1/billing/reconcile — protected internal trigger seam that scans the
+   * current user's receipt-confirmed outbound transactions and appends
+   * evidence-backed posted/quarantined ledger events. Scoped to the current
+   * user only; returns scan statistics and never exposes receipt logs,
+   * calldata, or secrets. Not part of the public API-key spec.
+   */
+  @Post('reconcile')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async reconcile(@CurrentUser('id') userId: string, @Body() body: ReconcileBodyDto) {
+    return this.reconciliationService.reconcile(userId, { limit: body.limit });
   }
 }

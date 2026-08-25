@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -182,25 +183,32 @@ export class ApiKeyAuthGuard implements CanActivate {
       })
       .catch((err) => this.logger.warn('lastUsedAt update failed', err));
 
-    // Meter the authenticated API call. Fire-and-forget: a metering failure must
-    // never block an already-authenticated request. sourceKey/requestId are
-    // server-generated (never a client X-Request-Id); metadata carries only safe
-    // fields (method/route/apiKeyId) — never the raw API key, calldata, or keys.
-    this.recordApiCallUsage(request, keyRecord);
+    // Meter the authenticated API call. This is a durable accounting event and
+    // must persist successfully before the public handler is allowed to run.
+    // sourceKey/requestId are server-generated (never a client X-Request-Id);
+    // metadata carries only safe fields (method/route/apiKeyId) — never the raw
+    // API key, calldata, or keys. A missing/unavailable BillingService or a
+    // failed write surfaces as a controlled HTTP 503 rather than silently
+    // undercounting usage.
+    await this.recordApiCallUsage(request, keyRecord);
 
     return true;
   }
 
-  private recordApiCallUsage(request: any, keyRecord: ApiKeyAuthRecord): void {
-    if (!this.billing) return;
+  private async recordApiCallUsage(request: any, keyRecord: ApiKeyAuthRecord): Promise<void> {
+    if (!this.billing) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
     const userId = keyRecord.user?.id ?? keyRecord.userId ?? null;
-    if (!userId) return;
+    if (!userId) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
 
     const method = typeof request.method === 'string' ? request.method : undefined;
     const route = request.route?.path ?? request.url;
 
-    void this.billing
-      .recordApiCall({
+    try {
+      await this.billing.recordApiCall({
         userId,
         sourceKey: `api:${randomUUID()}`,
         requestId: `api:${randomUUID()}`,
@@ -210,8 +218,12 @@ export class ApiKeyAuthGuard implements CanActivate {
           route,
           apiKeyId: keyRecord.id,
         },
-      })
-      .catch((err) => this.logger.warn('API call metering failed', err));
+      });
+    } catch {
+      // Never leak the raw error, API key, or request headers into the response
+      // or logs. A metering failure must not let the handler run un-metered.
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
   }
 
   private getUserAgent(request: {

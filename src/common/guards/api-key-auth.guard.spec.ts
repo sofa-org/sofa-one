@@ -1,4 +1,9 @@
-import { ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { ApiKeyAuthGuard } from './api-key-auth.guard';
@@ -446,7 +451,66 @@ describe('ApiKeyAuthGuard', () => {
     expect(call.requestId).not.toContain('client-request-id-123');
   });
 
-  it('does not block an authenticated request when metering rejects', async () => {
+  it('waits for billing persistence before authenticating a successful request', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    let resolveBilling!: () => void;
+    const billingGate = new Promise<void>((resolve) => {
+      resolveBilling = resolve;
+    });
+    const { guard, billing } = createGuard([keyRecord], {
+      recordApiCall: jest.fn().mockImplementation(() => billingGate),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    let resolved = false;
+    const pending = guard
+      .canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any)
+      .then((value) => {
+        resolved = true;
+        return value;
+      });
+
+    // Give the guard a chance to run; it must not resolve until billing persists.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+
+    resolveBilling();
+    await expect(pending).resolves.toBe(true);
+    expect(billing.recordApiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call billing when authentication fails', async () => {
+    const { guard, billing } = createGuard([
+      { id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [], user: { id: 'user-1' } },
+    ]);
+    jest.mocked(argon2.verify).mockResolvedValue(false as never);
+
+    await expect(guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }))).rejects.toThrow(
+      UnauthorizedException,
+    );
+
+    expect(billing.recordApiCall).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and does not authenticate when metering rejects', async () => {
     const keyRecord = {
       id: 'key-1',
       apiKeyHash: 'hash-1',
@@ -472,14 +536,12 @@ describe('ApiKeyAuthGuard', () => {
         getClass: jest.fn(),
         switchToHttp: () => ({ getRequest: () => request }),
       } as any),
-    ).resolves.toBe(true);
+    ).rejects.toThrow(ServiceUnavailableException);
 
     expect(billing.recordApiCall).toHaveBeenCalledTimes(1);
-    expect(request.user).toEqual({ id: 'user-1' });
-    expect(request.apiKeyRecord).toBe(keyRecord);
   });
 
-  it('does not meter when no billing service is injected', async () => {
+  it('returns 503 when no billing service is injected', async () => {
     const keyRecord = {
       id: 'key-1',
       apiKeyHash: 'hash-1',
@@ -510,7 +572,7 @@ describe('ApiKeyAuthGuard', () => {
 
     await expect(
       guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }, '203.0.113.10')),
-    ).resolves.toBe(true);
+    ).rejects.toThrow(ServiceUnavailableException);
 
     expect(prisma.apiKey.update).toHaveBeenCalled();
   });

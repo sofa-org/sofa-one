@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -104,15 +109,108 @@ export interface RecordOutboundInput {
   requestId?: string;
   occurredAt?: Date;
   metadata?: Record<string, unknown>;
+  /** Optional reconciliation run that confirmed this event. */
+  reconciliationRunId?: string;
+  // ── Evidence-aware (receipt-confirmed) fields ─────────────────────────────
+  // When `receipt` is present the row is written as `posted`/`quarantined` with
+  // sourceType `openfort_receipt` and full evidence. When absent the row is the
+  // legacy caller-supplied hook: explicitly `unverified` + `legacy_import` and
+  // never treated as receipt-confirmed.
+  status?: 'posted' | 'quarantined';
+  periodStart?: Date;
+  quantity?: bigint;
+  chainId?: bigint;
+  walletAddress?: string;
+  assetId?: string | null;
+  assetDecimals?: number | null;
+  baseUnitAmount?: bigint | null;
+  unitPriceMicros?: bigint | null;
+  priceSource?: string | null;
+  receipt?: ReceiptUsageEvidence;
+}
+
+/** Result of an outbound append: a fresh insert or an idempotent replay. */
+export type RecordOutboundOutcome = { outcome: 'inserted' | 'replayed' };
+
+/**
+ * Evidence for a single receipt-confirmed outbound component (one Transfer log
+ * or a native-withdrawal quarantine). All bigint-derived values are serialized
+ * as strings so the payload is JSON-safe.
+ */
+export interface ReceiptUsageEvidence {
+  txHash: string;
+  /** Canonical receipt-component identity: tx hash + log index (or `:native`). */
+  receiptRef: string;
+  receiptLogIndex: number | null;
+  receiptBlockNumber: bigint;
+  receiptBlockHash: string;
+  receiptBlockTimestamp: bigint;
+  receiptStatus: string;
+  /** JSON-safe receipt snapshot (no BigInt). */
+  receiptData: Record<string, unknown>;
+  reconciledAt: Date;
 }
 
 type PlanVersion = Prisma.BillingPlanVersionGetPayload<Record<string, never>>;
+type UsageEventRow = Prisma.BillingUsageEventGetPayload<Record<string, never>>;
+
+/** A token contract address is exactly 20 bytes (40 hex chars) after 0x. */
+const TOKEN_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class BillingService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Shared billing-period lock seam (Phase 1E). Ensures the BillingAccount,
+   * opens a Prisma interactive transaction at Serializable isolation, acquires
+   * a PostgreSQL transaction-scoped advisory lock keyed deterministically by
+   * billingAccountId + UTC periodStart, then invokes `work(tx, billingAccountId)`.
+   *
+   * The advisory lock serializes all writers for the same account+period, so
+   * reconciliation evidence appends and invoice finalization cannot interleave.
+   * The lock key is passed as a bound parameter (never interpolated SQL).
+   * Phase 2 reconciliation-run creation will consume this same seam.
+   */
+  async withBillingPeriodLock<T>(
+    userId: string,
+    periodStart: Date,
+    work: (tx: Prisma.TransactionClient, billingAccountId: string) => Promise<T>,
+  ): Promise<T> {
+    const account = await this.ensureAccount(userId);
+    const lockKey = this.periodLockKey(account.id, periodStart);
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+        return work(tx, account.id);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
+  /**
+   * Retries a serialized transaction a small bounded number of times on Prisma
+   * serialization/deadlock/write-conflict errors (P2034 / PostgreSQL 40001).
+   * Each retry opens a fresh transaction, so no partial invoice/line state is
+   * left behind. Business ConflictExceptions and unique-constraint P2002 are
+   * never swallowed here.
+   */
+  private async withRetryOnSerialization<T>(work: () => Promise<T>): Promise<T> {
+    const MAX_ATTEMPTS = 3;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await work();
+      } catch (err) {
+        if (attempt >= MAX_ATTEMPTS || !isSerializationError(err)) throw err;
+      }
+    }
+  }
+
+  private periodLockKey(billingAccountId: string, periodStart: Date): string {
+    return `${billingAccountId}:${periodStart.toISOString()}`;
+  }
 
   // ── Plans ───────────────────────────────────────────────────────────────────
 
@@ -175,23 +273,139 @@ export class BillingService {
   }
 
   /**
-   * Records a successful outbound transfer (metric = outbound_volume). Only
-   * accepts a non-negative bigint amount; the caller must guarantee the receipt
-   * status is success. Idempotent on sourceKey. Unsupported assets are never
-   * silently converted to 0.
+   * Records an outbound transfer (metric = outbound_volume). Only accepts a
+   * non-negative bigint amount; the caller must guarantee the receipt status is
+   * success. Idempotent on sourceKey. Unsupported assets are never silently
+   * converted to 0.
+   *
+   * Evidence-aware: when `input.receipt` is present the row is written as
+   * `posted`/`quarantined` with sourceType `openfort_receipt` and full receipt
+   * evidence in the dedicated columns (JSON-safe; BigInt is only used
+   * internally / in Prisma). Both posted and quarantined rows reference the
+   * Transaction to satisfy the outbound DB CHECK, and the Transaction is
+   * verified to belong to `input.userId` with matching txHash/chainId/
+   * walletAddress. `posted` requires a successful receipt; `quarantined`
+   * requires zero volume.
+   *
+   * Legacy hook: when `input.receipt` is absent the row is explicitly
+   * `unverified` + `legacy_import` and is never treated as receipt-confirmed.
+   *
+   * A unique-constraint conflict is only treated as an idempotent replay when
+   * the existing row's canonical payload matches exactly; any divergence throws
+   * ConflictException and never modifies the existing posted row.
    */
-  async recordSuccessfulOutbound(input: RecordOutboundInput): Promise<void> {
+  async recordSuccessfulOutbound(input: RecordOutboundInput): Promise<RecordOutboundOutcome> {
     if (typeof input.amountUsdMicros !== 'bigint' || input.amountUsdMicros < 0n) {
       throw new BadRequestException('amountUsdMicros must be a non-negative bigint');
     }
-    const account = await this.ensureAccount(input.userId);
     const occurredAt = input.occurredAt ?? new Date();
-    const periodStart = this.monthStart(occurredAt);
+    const periodStart = input.periodStart ?? this.monthStart(occurredAt);
+
+    const isReceiptConfirmed = input.receipt !== undefined;
+    if (!isReceiptConfirmed) {
+      // Legacy caller-supplied hook: unchanged, no period lock (it never races
+      // finalize because legacy rows are unverified and excluded from both the
+      // quarantine gate and the posted aggregation).
+      const account = await this.ensureAccount(input.userId);
+      return this.recordLegacyOutbound(input, account.id, occurredAt, periodStart);
+    }
+
+    // Receipt-backed appends serialize on the resolved accounting period so
+    // reconciliation evidence cannot race invoice finalization. Validation,
+    // ownership/evidence checks, and the append all run inside the locked
+    // transaction; a serialization conflict retries with a fresh transaction.
+    return this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(input.userId, periodStart, async (tx, billingAccountId) => {
+        this.assertReceiptBackedInput(input);
+        await this.assertTransactionOwnershipAndEvidence(input, tx);
+        if (input.status === 'posted') {
+          this.assertPostedPricingEvidence(input);
+          this.assertPostedPeriod(input);
+        }
+        if (input.receipt?.receiptData !== undefined) {
+          assertJsonSafe(input.receipt.receiptData, 'receiptData');
+        }
+        if (input.metadata !== undefined) {
+          assertJsonSafe(input.metadata, 'metadata');
+        }
+
+        // Canonical lookup before the finalized barrier: an exact replay of
+        // existing evidence is a no-op even for a finalized period (the row is
+        // returned unchanged, never rewritten). A divergent existing row is a
+        // conflict. Only genuinely new evidence is then subject to the
+        // period-close barrier.
+        const existing = await this.findExistingCanonical(input, billingAccountId, tx);
+        if (existing) {
+          return this.compareCanonicalPayload(input, existing);
+        }
+
+        // Period-close barrier (P0): a finalized invoice for this account+period
+        // means late receipt evidence must be reviewed/adjusted, never appended.
+        // Runs for both posted and quarantined appends, inside the same period
+        // lock as finalizeInvoice, so the two concurrent directions are safe.
+        await this.assertPeriodNotFinalized(tx, billingAccountId, periodStart);
+
+        const status = input.status!;
+        try {
+          await tx.billingUsageEvent.create({
+            data: {
+              billingAccountId,
+              metric: 'outbound_volume',
+              entryType: 'usage',
+              sourceType: 'openfort_receipt',
+              status,
+              sourceKey: input.sourceKey,
+              periodStart,
+              occurredAt,
+              quantity: input.quantity ?? 1n,
+              volumeUsdMicros: input.amountUsdMicros,
+              baseUnitAmount: input.baseUnitAmount ?? null,
+              assetId: input.assetId ?? null,
+              assetDecimals: input.assetDecimals ?? null,
+              unitPriceMicros: input.unitPriceMicros ?? null,
+              priceSource: input.priceSource ?? null,
+              chainId: input.chainId ?? null,
+              walletAddress: input.walletAddress ?? null,
+              txHash: input.receipt?.txHash ?? null,
+              receiptRef: input.receipt?.receiptRef ?? null,
+              receiptLogIndex: input.receipt?.receiptLogIndex ?? null,
+              receiptBlockNumber: input.receipt?.receiptBlockNumber ?? null,
+              receiptBlockHash: input.receipt?.receiptBlockHash ?? null,
+              receiptBlockTimestamp: input.receipt?.receiptBlockTimestamp ?? null,
+              receiptStatus: input.receipt?.receiptStatus ?? null,
+              receiptData: input.receipt?.receiptData as Prisma.InputJsonValue | undefined,
+              reconciledAt: input.receipt?.reconciledAt ?? null,
+              reconciliationRunId: input.reconciliationRunId ?? null,
+              transactionId: input.transactionId,
+              requestId: input.requestId,
+              metadata: input.metadata as Prisma.InputJsonValue | undefined,
+            },
+          });
+          return { outcome: 'inserted' };
+        } catch (err) {
+          if (isUniqueConstraintError(err)) {
+            return this.resolveOutboundConflict(input, billingAccountId, tx);
+          }
+          throw err;
+        }
+      }),
+    );
+  }
+
+  private async recordLegacyOutbound(
+    input: RecordOutboundInput,
+    billingAccountId: string,
+    occurredAt: Date,
+    periodStart: Date,
+  ): Promise<RecordOutboundOutcome> {
     try {
       await this.prisma.billingUsageEvent.create({
         data: {
-          billingAccountId: account.id,
+          billingAccountId,
           metric: 'outbound_volume',
+          entryType: 'usage',
+          sourceType: 'legacy_import',
+          status: 'unverified',
           sourceKey: input.sourceKey,
           periodStart,
           occurredAt,
@@ -202,10 +416,274 @@ export class BillingService {
           metadata: input.metadata as Prisma.InputJsonValue | undefined,
         },
       });
+      return { outcome: 'inserted' };
     } catch (err) {
-      if (isUniqueConstraintError(err)) return; // idempotent
+      if (isUniqueConstraintError(err)) {
+        // Exact replay is idempotent; a divergent legacy payload is a conflict.
+        return this.resolveOutboundConflict(input, billingAccountId);
+      }
       throw err;
     }
+  }
+
+  private assertReceiptBackedInput(input: RecordOutboundInput): void {
+    if (!input.transactionId) {
+      throw new BadRequestException(
+        'transactionId is required for receipt-confirmed outbound usage',
+      );
+    }
+    if (!input.sourceKey) {
+      throw new BadRequestException('sourceKey is required for receipt-confirmed outbound usage');
+    }
+    if (input.status !== 'posted' && input.status !== 'quarantined') {
+      throw new BadRequestException(
+        'status is required and must be posted or quarantined for receipt-confirmed outbound usage',
+      );
+    }
+    const receipt = input.receipt!;
+    if (!receipt.txHash || !receipt.receiptRef) {
+      throw new BadRequestException(
+        'receipt txHash and receiptRef are required for receipt-confirmed outbound usage',
+      );
+    }
+    // Block evidence must be present (synthetic quarantines may carry empty
+    // placeholders for chains that cannot be queried, but never undefined).
+    if (
+      receipt.receiptBlockNumber === undefined ||
+      receipt.receiptBlockNumber === null ||
+      receipt.receiptBlockHash === undefined ||
+      receipt.receiptBlockHash === null ||
+      receipt.receiptBlockTimestamp === undefined ||
+      receipt.receiptBlockTimestamp === null ||
+      receipt.receiptStatus === undefined ||
+      receipt.receiptStatus === null ||
+      receipt.receiptData === undefined ||
+      receipt.receiptData === null ||
+      receipt.reconciledAt === undefined ||
+      receipt.reconciledAt === null
+    ) {
+      throw new BadRequestException(
+        'receipt block evidence is incomplete for receipt-confirmed outbound usage',
+      );
+    }
+    if (input.chainId === undefined || input.chainId === null) {
+      throw new BadRequestException('chainId is required for receipt-confirmed outbound usage');
+    }
+    if (!input.walletAddress) {
+      throw new BadRequestException(
+        'walletAddress is required for receipt-confirmed outbound usage',
+      );
+    }
+    if (input.status === 'posted' && receipt.receiptStatus !== 'success') {
+      throw new ConflictException('posted outbound usage requires a successful receipt');
+    }
+    if (input.status === 'quarantined' && input.amountUsdMicros !== 0n) {
+      throw new ConflictException('quarantined outbound usage must have zero volume');
+    }
+  }
+
+  /**
+   * Posted rows carry complete deterministic pricing evidence and the amount
+   * must equal the billing-pricing half-up formula
+   * `baseUnitAmount * unitPriceMicros / 10^assetDecimals` computed in BigInt
+   * (never Number/float). Large amounts and zero/negative inputs are handled
+   * exactly.
+   */
+  private assertPostedPricingEvidence(input: RecordOutboundInput): void {
+    const { assetId, assetDecimals, baseUnitAmount, unitPriceMicros, priceSource } = input;
+    if (typeof assetId !== 'string' || !TOKEN_ADDRESS_REGEX.test(assetId)) {
+      throw new BadRequestException(
+        'assetId must be a valid token address for posted outbound usage',
+      );
+    }
+    if (
+      typeof assetDecimals !== 'number' ||
+      !Number.isSafeInteger(assetDecimals) ||
+      assetDecimals < 0
+    ) {
+      throw new BadRequestException(
+        'assetDecimals must be a non-negative safe integer for posted outbound usage',
+      );
+    }
+    if (typeof baseUnitAmount !== 'bigint' || baseUnitAmount < 0n) {
+      throw new BadRequestException(
+        'baseUnitAmount must be a non-negative bigint for posted outbound usage',
+      );
+    }
+    if (typeof unitPriceMicros !== 'bigint' || unitPriceMicros < 0n) {
+      throw new BadRequestException(
+        'unitPriceMicros must be a non-negative bigint for posted outbound usage',
+      );
+    }
+    if (typeof priceSource !== 'string' || priceSource.length === 0) {
+      throw new BadRequestException('priceSource is required for posted outbound usage');
+    }
+    const scale = 10n ** BigInt(assetDecimals);
+    const expected = roundHalfUp(baseUnitAmount * unitPriceMicros, scale);
+    if (input.amountUsdMicros !== expected) {
+      throw new ConflictException(
+        'amountUsdMicros does not match the deterministic pricing formula',
+      );
+    }
+  }
+
+  /**
+   * Posted rows must carry a periodStart that exactly equals the UTC month
+   * start derived from the receipt block timestamp. Invalid/missing block
+   * timestamps or invalid dates are rejected; the reconciler caller is never
+   * trusted for the accounting period.
+   */
+  private assertPostedPeriod(input: RecordOutboundInput): void {
+    const blockTimestamp = input.receipt!.receiptBlockTimestamp;
+    if (typeof blockTimestamp !== 'bigint' || blockTimestamp < 0n) {
+      throw new BadRequestException(
+        'receiptBlockTimestamp must be a non-negative bigint for posted outbound usage',
+      );
+    }
+    const blockDate = new Date(Number(blockTimestamp) * 1000);
+    if (!Number.isFinite(blockDate.getTime())) {
+      throw new BadRequestException(
+        'receiptBlockTimestamp is not a valid date for posted outbound usage',
+      );
+    }
+    const expectedMonthStart = new Date(
+      Date.UTC(blockDate.getUTCFullYear(), blockDate.getUTCMonth(), 1),
+    );
+    if (!input.periodStart || input.periodStart.getTime() !== expectedMonthStart.getTime()) {
+      throw new ConflictException('periodStart must match the receipt block timestamp UTC month');
+    }
+  }
+
+  /**
+   * Period-close barrier: a finalized invoice for this account+period rejects
+   * any late receipt-backed append (posted or quarantined). The finalized
+   * invoice is never modified; the caller (reconciliation) surfaces the
+   * ConflictException as a conflict/review outcome.
+   */
+  private async assertPeriodNotFinalized(
+    tx: Prisma.TransactionClient,
+    billingAccountId: string,
+    periodStart: Date,
+  ): Promise<void> {
+    const invoice = await tx.billingInvoice.findUnique({
+      where: {
+        billingAccountId_periodStart: { billingAccountId, periodStart },
+      },
+      select: { id: true, status: true },
+    });
+    if (invoice && invoice.status === 'finalized') {
+      throw new ConflictException(
+        'Cannot append receipt evidence: the billing period is already finalized',
+      );
+    }
+  }
+
+  private async assertTransactionOwnershipAndEvidence(
+    input: RecordOutboundInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    const transaction = await tx.transaction.findUnique({
+      where: { id: input.transactionId! },
+    });
+    if (!transaction) {
+      throw new BadRequestException('transaction not found for receipt-confirmed outbound usage');
+    }
+    if (transaction.userId !== input.userId) {
+      throw new ConflictException('transaction does not belong to the user');
+    }
+    if (
+      !transaction.txHash ||
+      transaction.txHash.toLowerCase() !== input.receipt!.txHash.toLowerCase()
+    ) {
+      throw new ConflictException('transaction txHash does not match the receipt');
+    }
+    if (transaction.chainId !== input.chainId!) {
+      throw new ConflictException('transaction chainId does not match the receipt');
+    }
+    if (transaction.walletAddress.toLowerCase() !== input.walletAddress!.toLowerCase()) {
+      throw new ConflictException('transaction walletAddress does not match the receipt');
+    }
+  }
+
+  /**
+   * Finds an existing canonical usage event for the same receipt component.
+   * Lookup is by sourceKey first (globally unique); a sourceKey row belonging to
+   * another billing account is a collision and is never treated as a replay.
+   * Falls back to billingAccountId + receiptRef + receiptLogIndex for
+   * receipt-backed input. Returns null when no existing row matches.
+   */
+  private async findExistingCanonical(
+    input: RecordOutboundInput,
+    billingAccountId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<UsageEventRow | null> {
+    const bySourceKey = await tx.billingUsageEvent.findUnique({
+      where: { sourceKey: input.sourceKey },
+    });
+    if (bySourceKey) {
+      if (bySourceKey.billingAccountId !== billingAccountId) {
+        throw new ConflictException('Billing usage event sourceKey belongs to another account');
+      }
+      return bySourceKey;
+    }
+    if (input.receipt) {
+      const byReceipt = await tx.billingUsageEvent.findFirst({
+        where: {
+          billingAccountId,
+          receiptRef: input.receipt.receiptRef,
+          receiptLogIndex: input.receipt.receiptLogIndex,
+        },
+      });
+      if (byReceipt) return byReceipt;
+    }
+    return null;
+  }
+
+  private async resolveOutboundConflict(
+    input: RecordOutboundInput,
+    billingAccountId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<RecordOutboundOutcome> {
+    const existing = await this.findExistingCanonical(input, billingAccountId, tx);
+    if (!existing) {
+      throw new ConflictException('Billing usage event conflicts with an existing row');
+    }
+    return this.compareCanonicalPayload(input, existing);
+  }
+
+  private compareCanonicalPayload(
+    input: RecordOutboundInput,
+    existing: UsageEventRow,
+  ): RecordOutboundOutcome {
+    const isReceiptConfirmed = input.receipt !== undefined;
+    const expectedStatus = isReceiptConfirmed ? input.status! : 'unverified';
+    // reconciliationRunId is provenance only and never part of the canonical
+    // replay identity; the volatile per-processing reconciledAt is also not
+    // compared. Same receipt/account/source/evidence replayed by a later run
+    // must return { outcome: 'replayed' } without touching the original row.
+    const matches =
+      existing.metric === 'outbound_volume' &&
+      existing.transactionId === (input.transactionId ?? null) &&
+      existing.sourceKey === input.sourceKey &&
+      existing.receiptRef === (input.receipt?.receiptRef ?? null) &&
+      existing.receiptLogIndex === (input.receipt?.receiptLogIndex ?? null) &&
+      existing.txHash === (input.receipt?.txHash ?? null) &&
+      existing.chainId === (input.chainId ?? null) &&
+      existing.walletAddress === (input.walletAddress ?? null) &&
+      existing.receiptBlockNumber === (input.receipt?.receiptBlockNumber ?? null) &&
+      existing.receiptBlockHash === (input.receipt?.receiptBlockHash ?? null) &&
+      existing.receiptBlockTimestamp === (input.receipt?.receiptBlockTimestamp ?? null) &&
+      existing.receiptStatus === (input.receipt?.receiptStatus ?? null) &&
+      existing.status === expectedStatus &&
+      existing.volumeUsdMicros === input.amountUsdMicros &&
+      existing.assetId === (input.assetId ?? null) &&
+      existing.assetDecimals === (input.assetDecimals ?? null) &&
+      existing.baseUnitAmount === (input.baseUnitAmount ?? null) &&
+      existing.unitPriceMicros === (input.unitPriceMicros ?? null) &&
+      existing.priceSource === (input.priceSource ?? null);
+
+    if (matches) return { outcome: 'replayed' };
+    throw new ConflictException('Billing usage event conflicts with an existing row');
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────────
@@ -241,8 +719,15 @@ export class BillingService {
     let outboundVolume = 0n;
     let apiCalls = 0;
     for (const ev of usageEvents) {
-      if (ev.metric === 'outbound_volume') outboundVolume += ev.volumeUsdMicros;
-      else if (ev.metric === 'api_call') apiCalls += Number(ev.quantity);
+      if (ev.metric === 'outbound_volume') {
+        // Only posted, usage-type outbound events count toward gross outbound.
+        // unverified/legacy_import, quarantined, and reversed rows are excluded.
+        if (ev.status === 'posted' && ev.entryType === 'usage') {
+          outboundVolume += ev.volumeUsdMicros;
+        }
+      } else if (ev.metric === 'api_call') {
+        apiCalls += Number(ev.quantity);
+      }
     }
 
     const totals = calculateInvoiceTotals({
@@ -323,12 +808,20 @@ export class BillingService {
    * period (including a concurrent unique-conflict race), the existing invoice
    * is returned unchanged. Finalized history is never modified. Ensures the plan
    * catalog exists so the in-effect plan can be resolved on first access.
+   *
+   * Fail-closed guards (Phase 1E): a period can only be finalized after it has
+   * ended plus a 24h UTC grace window; Enterprise custom/null plan terms are
+   * rejected; quarantined outbound usage or unresolved reconciliation runs block
+   * auto-finalize. These business exceptions are never swallowed by the
+   * concurrent unique-conflict handler.
    */
   async finalizeInvoice(userId: string, period?: string): Promise<BillingInvoiceDto> {
     const account = await this.ensureAccount(userId);
     await this.ensurePlanVersions();
     const { period: periodStr, start, end } = parsePeriod(period);
 
+    // Cheap pre-check (never relied on alone): an already-finalized invoice is
+    // immutable and returned unchanged without acquiring the period lock.
     const existing = await this.prisma.billingInvoice.findUnique({
       where: {
         billingAccountId_periodStart: { billingAccountId: account.id, periodStart: start },
@@ -336,105 +829,300 @@ export class BillingService {
     });
     if (existing) return this.toInvoiceDto(existing);
 
-    const planVersion = await this.resolvePlanVersion(account.id, start);
-    const plan = planVersionToConfig(planVersion);
+    // Close/grace boundary: future/current unended periods and the 24h grace
+    // window after UTC period end cannot be finalized.
+    this.assertFinalizablePeriod(end);
 
-    const [usageEvents, activeWallets] = await Promise.all([
-      this.prisma.billingUsageEvent.findMany({
-        where: {
-          billingAccountId: account.id,
-          periodStart: start,
-          occurredAt: { gte: start, lt: end },
-        },
-      }),
-      this.prisma.userWallet.count({
-        where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
-      }),
-    ]);
-
-    let outboundVolume = 0n;
-    let apiCalls = 0;
-    for (const ev of usageEvents) {
-      if (ev.metric === 'outbound_volume') outboundVolume += ev.volumeUsdMicros;
-      else if (ev.metric === 'api_call') apiCalls += Number(ev.quantity);
-    }
-
-    const totals = calculateInvoiceTotals({
-      plan,
-      grossOutboundMicros: outboundVolume,
-      activeWallets,
-      apiCallsTotal: apiCalls,
-      apiOverageRateMicros: planVersion.apiOverageRateMicros,
-      walletOverageRateMicros: planVersion.walletOverageRateMicros,
-    });
-
-    const snapshot = this.buildSnapshot({
-      period: periodStr,
-      planVersion,
-      plan,
-      outboundVolume,
-      apiCalls,
-      activeWallets,
-      totals,
-    });
-    const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
-
-    try {
-      const invoice = await this.prisma.$transaction(async (tx) => {
-        const created = await tx.billingInvoice.create({
-          data: {
-            billingAccountId: account.id,
-            planVersionId: planVersion.id,
-            periodStart: start,
-            periodEnd: end,
-            status: 'finalized',
-            currency: 'USD',
-            grossOutboundMicros: outboundVolume,
-            includedOutboundMicros: plan.includedOutboundMicros,
-            billableOutboundMicros: totals.billableOutboundMicros,
-            apiCalls: BigInt(apiCalls),
-            includedApiCalls:
-              plan.includedApiCallsPerMonth !== null ? BigInt(plan.includedApiCallsPerMonth) : null,
-            activeWallets,
-            includedWallets: plan.includedWallets,
-            monthlyFeeMicros: totals.monthlyFeeMicros,
-            outboundOverageMicros: totals.outboundOverageMicros,
-            apiOverageMicros: totals.apiOverageMicros,
-            walletOverageMicros: totals.walletOverageMicros,
-            totalMicros: totals.totalMicros,
-            snapshotJson: snapshot as Prisma.InputJsonValue,
-            snapshotHash,
-            finalizedAt: new Date(),
+    // The entire serialized finalization — re-check inside the lock, plan
+    // resolution, Enterprise null-term check, risk checks, [start,end) usage
+    // aggregation, active-wallet count, calculator snapshot, invoice create,
+    // and invoice-line create — runs inside one Serializable advisory-locked
+    // transaction. A serialization conflict retries with a fresh transaction
+    // (no partial invoice/line state). Business ConflictExceptions and unique
+    // P2002 are never swallowed by the retry loop.
+    return this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
+        // Re-check inside the lock so a waiter returns the existing invoice.
+        const lockedExisting = await tx.billingInvoice.findUnique({
+          where: {
+            billingAccountId_periodStart: { billingAccountId, periodStart: start },
           },
         });
-        const lines = this.buildInvoiceLines({
-          invoiceId: created.id,
+        if (lockedExisting) return this.toInvoiceDto(lockedExisting);
+
+        const planVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
+        const plan = planVersionToConfig(planVersion);
+
+        // Enterprise custom/null terms fail closed — never convert null to 0.
+        this.assertPlanFinalizable(planVersion);
+
+        // Unresolved accounting risk (quarantined usage + reconciliation runs)
+        // blocks auto-finalize, evaluated inside the locked transaction.
+        await this.assertNoUnresolvedBillingRisk(tx, billingAccountId, start, end, userId);
+
+        const [usageEvents, activeWallets] = await Promise.all([
+          tx.billingUsageEvent.findMany({
+            where: {
+              billingAccountId,
+              periodStart: start,
+              occurredAt: { gte: start, lt: end },
+            },
+          }),
+          tx.userWallet.count({
+            where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
+          }),
+        ]);
+
+        let outboundVolume = 0n;
+        let apiCalls = 0;
+        for (const ev of usageEvents) {
+          if (ev.metric === 'outbound_volume') {
+            // Only posted, usage-type outbound events count toward gross
+            // outbound. unverified/legacy_import, quarantined, and reversed
+            // rows are excluded.
+            if (ev.status === 'posted' && ev.entryType === 'usage') {
+              outboundVolume += ev.volumeUsdMicros;
+            }
+          } else if (ev.metric === 'api_call') {
+            apiCalls += Number(ev.quantity);
+          }
+        }
+
+        const totals = calculateInvoiceTotals({
+          plan,
+          grossOutboundMicros: outboundVolume,
+          activeWallets,
+          apiCallsTotal: apiCalls,
+          apiOverageRateMicros: planVersion.apiOverageRateMicros,
+          walletOverageRateMicros: planVersion.walletOverageRateMicros,
+        });
+
+        const snapshot = this.buildSnapshot({
+          period: periodStr,
           planVersion,
           plan,
+          outboundVolume,
           apiCalls,
           activeWallets,
           totals,
         });
-        if (lines.length > 0) {
-          await tx.billingInvoiceLine.createMany({ data: lines });
+        const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+
+        try {
+          const created = await tx.billingInvoice.create({
+            data: {
+              billingAccountId,
+              planVersionId: planVersion.id,
+              periodStart: start,
+              periodEnd: end,
+              status: 'finalized',
+              currency: 'USD',
+              grossOutboundMicros: outboundVolume,
+              includedOutboundMicros: plan.includedOutboundMicros,
+              billableOutboundMicros: totals.billableOutboundMicros,
+              apiCalls: BigInt(apiCalls),
+              includedApiCalls:
+                plan.includedApiCallsPerMonth !== null
+                  ? BigInt(plan.includedApiCallsPerMonth)
+                  : null,
+              activeWallets,
+              includedWallets: plan.includedWallets,
+              monthlyFeeMicros: totals.monthlyFeeMicros,
+              outboundOverageMicros: totals.outboundOverageMicros,
+              apiOverageMicros: totals.apiOverageMicros,
+              walletOverageMicros: totals.walletOverageMicros,
+              totalMicros: totals.totalMicros,
+              snapshotJson: snapshot as Prisma.InputJsonValue,
+              snapshotHash,
+              finalizedAt: new Date(),
+            },
+          });
+          const lines = this.buildInvoiceLines({
+            invoiceId: created.id,
+            planVersion,
+            plan,
+            apiCalls,
+            activeWallets,
+            totals,
+          });
+          if (lines.length > 0) {
+            await tx.billingInvoiceLine.createMany({ data: lines });
+          }
+          return this.toInvoiceDto(created);
+        } catch (err) {
+          if (isUniqueConstraintError(err)) {
+            const again = await tx.billingInvoice.findUnique({
+              where: {
+                billingAccountId_periodStart: { billingAccountId, periodStart: start },
+              },
+            });
+            if (again) return this.toInvoiceDto(again);
+          }
+          throw err;
         }
-        return created;
-      });
-      return this.toInvoiceDto(invoice);
-    } catch (err) {
-      if (isUniqueConstraintError(err)) {
-        const again = await this.prisma.billingInvoice.findUnique({
-          where: {
-            billingAccountId_periodStart: { billingAccountId: account.id, periodStart: start },
-          },
-        });
-        if (again) return this.toInvoiceDto(again);
-      }
-      throw err;
-    }
+      }),
+    );
   }
 
   // ── Internal helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Close/grace boundary: a UTC period can only be finalized after it has ended
+   * AND at least 24 hours of grace have passed since the UTC period end
+   * (`end` is the exclusive first instant of the following month). Future and
+   * current unended periods are rejected. Deterministic; no external
+   * payment/cron/config is involved.
+   */
+  private assertFinalizablePeriod(end: Date): void {
+    const graceEnd = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+    if (new Date().getTime() < graceEnd.getTime()) {
+      throw new ConflictException(
+        'Cannot finalize invoice: period has not ended or is within the 24h grace window',
+      );
+    }
+  }
+
+  /**
+   * Enterprise custom/null plan terms fail closed: any null monthly fee,
+   * included outbound, included wallets, or included API calls cannot be
+   * silently treated as zero and turned into a finalized invoice. Existing
+   * finalized history remains immutable.
+   */
+  private assertPlanFinalizable(planVersion: PlanVersion): void {
+    if (
+      planVersion.monthlyFeeMicros === null ||
+      planVersion.includedOutboundMicros === null ||
+      planVersion.includedWallets === null ||
+      planVersion.includedApiCalls === null
+    ) {
+      throw new ConflictException(
+        'Cannot finalize invoice: plan has Enterprise custom/null terms requiring review',
+      );
+    }
+  }
+
+  /**
+   * Unresolved accounting risk blocks auto-finalize, evaluated inside the
+   * locked transaction:
+   * 1. Any quarantined outbound usage in the accounting period requires review.
+   * 2. Reconciliation runs that wrote usage for this account in the period,
+   *    plus operational runs in the target month, must be clean. A run is
+   *    unresolved when it is running/failed, or its summary has errors,
+   *    conflicts, notFound, or transientError > 0, or it lacks the exhaustive
+   *    `complete: true` completion marker. replayed/casNoops are not errors.
+   *
+   * Completion-marker semantics: the next reconciliation lane writes
+   * `summary.userId`, `summary.complete` (candidate scan exhausted), and an
+   * optional `summary.highWaterMark`. The newest relevant run for this user
+   * decides: a later clean exhaustive run supersedes earlier retryable
+   * failures. Legacy summaries without `userId` are conservatively treated as
+   * global. BillingReconciliationRun has no billingAccountId, so the
+   * operational-run check is intentionally conservative (global for the target
+   * month) rather than pretending a user scope the schema cannot express.
+   */
+  private async assertNoUnresolvedBillingRisk(
+    tx: Prisma.TransactionClient,
+    accountId: string,
+    start: Date,
+    end: Date,
+    userId: string,
+  ): Promise<void> {
+    const quarantined = await tx.billingUsageEvent.findFirst({
+      where: {
+        billingAccountId: accountId,
+        periodStart: start,
+        metric: 'outbound_volume',
+        entryType: 'usage',
+        status: 'quarantined',
+      },
+      select: { id: true },
+    });
+    if (quarantined) {
+      throw new ConflictException(
+        'Cannot finalize invoice: quarantined outbound usage requires review',
+      );
+    }
+
+    const associated = await tx.billingUsageEvent.findMany({
+      where: {
+        billingAccountId: accountId,
+        periodStart: start,
+        reconciliationRunId: { not: null },
+      },
+      select: { reconciliationRunId: true },
+      distinct: ['reconciliationRunId'],
+    });
+    const runIds = associated
+      .map((e) => e.reconciliationRunId)
+      .filter((id): id is string => id !== null);
+
+    const candidateRuns = await tx.billingReconciliationRun.findMany({
+      where: {
+        OR: [
+          // Runs linked to this account's usage events in the target period are
+          // always relevant.
+          { id: { in: runIds } },
+          // Broad discovery of operational runs that could affect the target
+          // cutoff: a run with operational scan month >= target month could
+          // have written usage for the target (receipts mined at or before the
+          // scan). This deliberately does NOT filter on summary.accountingPeriods
+          // — missing/legacy/malformed coverage must be discovered and evaluated
+          // in TypeScript, never SQL-filtered into fail-open.
+          { periodStart: { gte: start } },
+        ],
+      },
+      orderBy: { startedAt: 'desc' },
+      select: { id: true, status: true, completedAt: true, summary: true },
+    });
+
+    // Newest-first: pick the first run relevant to this user AND this target
+    // accounting period. Usage-linked runs are always relevant; unlinked runs
+    // are scoped by userId and validated accountingPeriods coverage, with
+    // missing/legacy/malformed coverage or unresolved risk kept conservatively
+    // relevant (never SQL-filtered or skipped into fail-open).
+    const relevant = candidateRuns.find((run) =>
+      this.isRunRelevantToPeriod(run, start, userId, runIds),
+    );
+
+    if (relevant && isRiskyReconciliationRun(relevant, end)) {
+      throw new ConflictException(
+        'Cannot finalize invoice: reconciliation has unresolved errors or conflicts',
+      );
+    }
+  }
+
+  /**
+   * Period-relevance selection for a candidate run. Usage-linked target runs
+   * (run id from the target period's BillingUsageEvent.reconciliationRunId) are
+   * always relevant — the association is stronger than summary user metadata.
+   *
+   * For unlinked operational runs: an explicit different summary.userId is
+   * skipped; missing userId is treated as global. A run that is not a clean
+   * exhaustive completion marker (running/failed/incomplete or any unresolved
+   * notFound/transient/errors/conflicts) has receipt uncertainty and cannot be
+   * scoped by createdAt-derived coverage — it is conservatively relevant. A
+   * clean run is relevant only when its accountingPeriods is a valid canonical
+   * UTC month-start array that includes the target month; missing/legacy/
+   * malformed coverage is conservatively relevant (and isRiskyReconciliationRun
+   * then blocks). createdAt is never treated as proof of the receipt accounting
+   * period.
+   */
+  private isRunRelevantToPeriod(
+    run: { id: string; status: string; summary: unknown },
+    start: Date,
+    userId: string,
+    runIds: string[],
+  ): boolean {
+    if (runIds.includes(run.id)) return true;
+    const summary = (run.summary ?? {}) as Record<string, unknown>;
+    const runUserId = summary.userId;
+    if (typeof runUserId === 'string' && runUserId !== userId) return false;
+    if (summary.complete !== true) return true;
+    if (hasUnresolvedRunRisk(run)) return true;
+    const accountingPeriods = summary.accountingPeriods;
+    if (!isValidAccountingPeriods(accountingPeriods)) return true;
+    return (accountingPeriods as string[]).includes(start.toISOString());
+  }
 
   private async ensureAccount(
     userId: string,
@@ -543,14 +1231,18 @@ export class BillingService {
   }
 
   /** Resolves the plan version in effect at `start`, falling back to Free. */
-  private async resolvePlanVersion(accountId: string, start: Date): Promise<PlanVersion> {
-    const assignment = await this.prisma.billingPlanAssignment.findFirst({
+  private async resolvePlanVersion(
+    accountId: string,
+    start: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<PlanVersion> {
+    const assignment = await tx.billingPlanAssignment.findFirst({
       where: { billingAccountId: accountId, periodStart: { lte: start } },
       orderBy: { periodStart: 'desc' },
       include: { planVersion: true },
     });
     if (assignment) return assignment.planVersion;
-    const freePlan = await this.prisma.billingPlanVersion.findFirst({
+    const freePlan = await tx.billingPlanVersion.findFirst({
       where: { code: 'free' },
       orderBy: { version: 'desc' },
     });
@@ -727,6 +1419,144 @@ export class BillingService {
 
 function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+}
+
+/**
+ * True for Prisma serialization/deadlock/write-conflict errors (P2034) and
+ * PostgreSQL 40001 serialization failures. These are retryable; business
+ * ConflictExceptions and unique-constraint P2002 are not.
+ */
+function isSerializationError(err: unknown): boolean {
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2034') {
+    return true;
+  }
+  const text = String((err as { message?: unknown })?.message ?? '');
+  return text.includes('40001') || text.includes('could not serialize access');
+}
+
+/**
+ * A reconciliation run is unresolved when it is running/failed, its summary has
+ * errors/conflicts/notFound/transientError > 0, or it lacks the exhaustive
+ * `complete: true` completion marker. replayed/casNoops are not errors.
+ *
+ * High-water close predicate: a `complete: true` run only clears risk when its
+ * `completedAt` exists and is not earlier than the target accounting period's
+ * `periodEnd` (finalization cutoff), its `highWaterMark` is either null (empty
+ * candidate set) or a valid `{ createdAt: valid UTC date string, id }`, and its
+ * `accountingPeriods` is a valid JSON array of UTC month-start strings
+ * (missing/malformed period metadata is conservatively risky). A non-empty run
+ * (scanned > 0) must carry a valid highWaterMark. The highWaterMark is the
+ * maximum (createdAt, id) of the exhaustive candidate scan — never the last row
+ * in priority order.
+ */
+function isRiskyReconciliationRun(
+  run: { status: string; completedAt: Date | null; summary: unknown },
+  periodEnd: Date,
+): boolean {
+  if (run.status === 'running' || run.status === 'failed') return true;
+  const summary = (run.summary ?? {}) as Record<string, unknown>;
+  const errors = typeof summary.errors === 'number' ? summary.errors : 0;
+  const conflicts = typeof summary.conflicts === 'number' ? summary.conflicts : 0;
+  const notFound = typeof summary.notFound === 'number' ? summary.notFound : 0;
+  const transientError = typeof summary.transientError === 'number' ? summary.transientError : 0;
+  if (errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0) return true;
+  // A run is only clean when it is an exhaustive completion marker.
+  if (summary.complete !== true) return true;
+  // completedAt must exist and not be earlier than the period-end cutoff.
+  if (!(run.completedAt instanceof Date) || Number.isNaN(run.completedAt.getTime())) return true;
+  if (run.completedAt.getTime() < periodEnd.getTime()) return true;
+  // highWaterMark must be valid when present; a non-empty run must carry one.
+  const scanned = typeof summary.scanned === 'number' ? summary.scanned : 0;
+  const hwm = summary.highWaterMark;
+  if (hwm !== undefined && hwm !== null && !isValidHighWaterMark(hwm)) return true;
+  if (scanned > 0 && (hwm === undefined || hwm === null)) return true;
+  // accountingPeriods must be a valid array of UTC month-start strings;
+  // missing/malformed period metadata is conservatively risky.
+  if (!isValidAccountingPeriods(summary.accountingPeriods)) return true;
+  return false;
+}
+
+/** True when `value` is a JSON-safe `{ createdAt: valid UTC date, id: string }`. */
+function isValidHighWaterMark(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const hwm = value as Record<string, unknown>;
+  if (typeof hwm.createdAt !== 'string' || typeof hwm.id !== 'string') return false;
+  return !Number.isNaN(Date.parse(hwm.createdAt));
+}
+
+/**
+ * True when a run carries unresolved risk (running/failed status or any
+ * notFound/transientError/errors/conflicts counter > 0). Such runs have receipt
+ * uncertainty and must never be scoped out by createdAt-derived coverage.
+ */
+function hasUnresolvedRunRisk(run: { status: string; summary: unknown }): boolean {
+  if (run.status === 'running' || run.status === 'failed') return true;
+  const summary = (run.summary ?? {}) as Record<string, unknown>;
+  const errors = typeof summary.errors === 'number' ? summary.errors : 0;
+  const conflicts = typeof summary.conflicts === 'number' ? summary.conflicts : 0;
+  const notFound = typeof summary.notFound === 'number' ? summary.notFound : 0;
+  const transientError = typeof summary.transientError === 'number' ? summary.transientError : 0;
+  return errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0;
+}
+
+/**
+ * True when `value` is a JSON array of canonical UTC month-start ISO strings
+ * (e.g. `2026-07-01T00:00:00.000Z`): each value must round-trip exactly through
+ * `Date.toISOString()` and be UTC day 1 with zero hours/minutes/seconds/ms.
+ * Missing/malformed period metadata is conservatively risky.
+ */
+function isValidAccountingPeriods(value: unknown): boolean {
+  if (!Array.isArray(value)) return false;
+  for (const period of value) {
+    if (typeof period !== 'string') return false;
+    const date = new Date(period);
+    if (Number.isNaN(date.getTime())) return false;
+    if (date.toISOString() !== period) return false;
+    if (date.getUTCDate() !== 1) return false;
+    if (
+      date.getUTCHours() !== 0 ||
+      date.getUTCMinutes() !== 0 ||
+      date.getUTCSeconds() !== 0 ||
+      date.getUTCMilliseconds() !== 0
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * BigInt half-up rounding matching billing-pricing's deterministic formula:
+ * `(numerator * 2 + denominator) / (2 * denominator)`. Never uses Number/float.
+ */
+function roundHalfUp(numerator: bigint, denominator: bigint): bigint {
+  if (numerator < 0n || denominator <= 0n) {
+    throw new RangeError(
+      'roundHalfUp requires a non-negative numerator and a positive denominator',
+    );
+  }
+  return (numerator * 2n + denominator) / (2n * denominator);
+}
+
+/**
+ * Rejects any BigInt (or other non-JSON value) nested inside a payload that is
+ * about to be persisted as JSON. BigInt must never leak into receiptData or
+ * metadata columns.
+ */
+function assertJsonSafe(value: unknown, path: string): void {
+  if (value === null || value === undefined) return;
+  if (typeof value === 'bigint') {
+    throw new BadRequestException(`${path} must be JSON-safe (BigInt is not allowed)`);
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertJsonSafe(item, `${path}[${index}]`));
+    return;
+  }
+  if (typeof value === 'object') {
+    for (const [key, val] of Object.entries(value)) {
+      assertJsonSafe(val, `${path}.${key}`);
+    }
+  }
 }
 
 function planVersionToConfig(v: PlanVersion): BillingPlanConfig {

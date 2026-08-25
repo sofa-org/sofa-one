@@ -18,6 +18,27 @@ enum BillingInvoiceStatus {
   void
 }
 
+enum BillingUsageEventStatus {
+  unverified
+  posted
+  quarantined
+  reversed
+}
+
+enum BillingUsageEntryType {
+  usage
+  reversal
+  adjustment
+}
+
+enum BillingUsageSourceType {
+  legacy_import
+  api_request
+  openfort_receipt
+  reconciliation
+  manual_adjustment
+}
+
 model User {
   id             String    @id @default(uuid()) @db.Uuid
   socialProvider String    @map("social_provider") @db.VarChar(20)
@@ -362,9 +383,10 @@ model BillingPlanVersion {
   effectiveFrom           DateTime @map("effective_from") @db.Timestamptz()
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  tiers       BillingPlanTier[]
-  assignments BillingPlanAssignment[]
-  invoices    BillingInvoice[]
+  tiers              BillingPlanTier[]
+  assignments        BillingPlanAssignment[]
+  invoices           BillingInvoice[]
+  billingUsageEvents BillingUsageEvent[]
 
   @@unique([code, version])
   @@map("billing_plan_versions")
@@ -399,26 +421,80 @@ model BillingPlanAssignment {
   @@map("billing_plan_assignments")
 }
 
-model BillingUsageEvent {
-  id               String             @id @default(uuid()) @db.Uuid
-  billingAccountId String             @map("billing_account_id") @db.Uuid
-  metric           BillingUsageMetric @map("metric")
-  sourceKey        String             @unique @map("source_key") @db.VarChar(255)
-  periodStart      DateTime           @map("period_start") @db.Timestamptz()
-  occurredAt       DateTime           @map("occurred_at") @db.Timestamptz()
-  quantity         BigInt             @default(1) @map("quantity")
-  volumeUsdMicros  BigInt             @default(0) @map("volume_usd_micros")
-  transactionId    String?            @map("transaction_id") @db.Uuid
-  requestId        String?            @map("request_id") @db.VarChar(64)
-  endpoint         String?            @map("endpoint") @db.VarChar(120)
-  statusCode       Int?               @map("status_code")
-  metadata         Json?              @map("metadata")
+model BillingReconciliationRun {
+  id           String    @id @default(uuid()) @db.Uuid
+  status       String    @default("running") @map("status") @db.VarChar(20)
+  runType      String    @map("run_type") @db.VarChar(40)
+  periodStart  DateTime  @map("period_start") @db.Timestamptz()
+  periodEnd    DateTime? @map("period_end") @db.Timestamptz()
+  source       String?   @map("source") @db.VarChar(80)
+  startedAt    DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz()
+  summary      Json?     @map("summary")
+  errorDetails String?   @map("error_details") @db.VarChar(500)
 
-  billingAccount BillingAccount @relation(fields: [billingAccountId], references: [id])
-  transaction    Transaction?   @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  usageEvents BillingUsageEvent[]
+
+  @@index([status, startedAt])
+  @@index([periodStart, periodEnd])
+  @@map("billing_reconciliation_runs")
+}
+
+model BillingUsageEvent {
+  id                    String                  @id @default(uuid()) @db.Uuid
+  billingAccountId      String                  @map("billing_account_id") @db.Uuid
+  metric                BillingUsageMetric      @map("metric")
+  entryType             BillingUsageEntryType   @default(usage) @map("entry_type")
+  sourceType            BillingUsageSourceType  @default(api_request) @map("source_type")
+  status                BillingUsageEventStatus @default(unverified) @map("status")
+  sourceKey             String                  @unique @map("source_key") @db.VarChar(255)
+  periodStart           DateTime                @map("period_start") @db.Timestamptz()
+  occurredAt            DateTime                @map("occurred_at") @db.Timestamptz()
+  quantity              BigInt                  @default(1) @map("quantity")
+  volumeUsdMicros       BigInt                  @default(0) @map("volume_usd_micros")
+  baseUnitAmount        BigInt?                 @map("base_unit_amount")
+  assetId               String?                 @map("asset_id") @db.VarChar(255)
+  assetDecimals         Int?                    @map("asset_decimals")
+  unitPriceMicros       BigInt?                 @map("unit_price_micros")
+  priceSource           String?                 @map("price_source") @db.VarChar(40)
+  chainId               BigInt?                 @map("chain_id")
+  walletAddress         String?                 @map("wallet_address") @db.VarChar(42)
+  txHash                String?                 @map("tx_hash") @db.VarChar(66)
+  receiptRef            String?                 @map("receipt_ref") @db.VarChar(255)
+  receiptLogIndex       Int?                    @map("receipt_log_index")
+  receiptBlockNumber    BigInt?                 @map("receipt_block_number")
+  receiptBlockHash      String?                 @map("receipt_block_hash") @db.VarChar(66)
+  receiptBlockTimestamp BigInt?                 @map("receipt_block_timestamp")
+  receiptStatus         String?                 @map("receipt_status") @db.VarChar(20)
+  receiptData           Json?                   @map("receipt_data")
+  planVersionId         String?                 @map("plan_version_id") @db.Uuid
+  reconciliationRunId   String?                 @map("reconciliation_run_id") @db.Uuid
+  reconciledAt          DateTime?               @map("reconciled_at") @db.Timestamptz()
+  transactionId         String?                 @map("transaction_id") @db.Uuid
+  requestId             String?                 @map("request_id") @db.VarChar(64)
+  endpoint              String?                 @map("endpoint") @db.VarChar(120)
+  statusCode            Int?                    @map("status_code")
+  reversalOfId          String?                 @map("reversal_of_id") @db.Uuid
+  adjustmentOfId        String?                 @map("adjustment_of_id") @db.Uuid
+  metadata              Json?                   @map("metadata")
+
+  billingAccount    BillingAccount            @relation(fields: [billingAccountId], references: [id])
+  transaction       Transaction?              @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  planVersion       BillingPlanVersion?       @relation(fields: [planVersionId], references: [id], onDelete: SetNull)
+  reconciliationRun BillingReconciliationRun? @relation(fields: [reconciliationRunId], references: [id], onDelete: SetNull)
+  reversalOf        BillingUsageEvent?        @relation("UsageEventReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  adjustmentOf      BillingUsageEvent?        @relation("UsageEventAdjustment", fields: [adjustmentOfId], references: [id], onDelete: SetNull)
+  reversals         BillingUsageEvent[]       @relation("UsageEventReversal")
+  adjustments       BillingUsageEvent[]       @relation("UsageEventAdjustment")
 
   @@index([billingAccountId, periodStart, metric])
+  @@index([billingAccountId, status, periodStart])
+  @@index([billingAccountId, receiptRef])
+  @@index([reconciliationRunId])
+  @@index([reversalOfId])
+  @@index([adjustmentOfId])
   @@index([transactionId])
+  @@index([planVersionId])
   @@map("billing_usage_events")
 }
 

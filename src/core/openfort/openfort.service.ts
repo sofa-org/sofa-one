@@ -13,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getCode, getTransactionReceipt } from 'viem/actions';
+import { getBlock, getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
@@ -192,6 +192,76 @@ export class OpenfortService {
       }
       this.logOpenfortError('getTransactionReceiptStatus', error, { chainId, txHash });
       throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  /**
+   * Safe, sanitized transaction-receipt view for billing reconciliation.
+   *
+   * Returns a discriminated result so callers can distinguish a confirmed
+   * success/revert from a retryable not-found or transient RPC/block failure.
+   * Only the fields needed for evidence-backed metering are exposed: status,
+   * transactionHash, from/to, block number/hash/timestamp, gas metadata, and
+   * logs (address/topics/data/logIndex/removed). It never returns calldata,
+   * private keys, API keys, or the raw provider/client object.
+   *
+   * A missing receipt, malformed/missing logs, or a failed receipt/block
+   * lookup returns a retryable result (never a fabricated success). A legal
+   * empty `logs: []` array still yields a normal success/reverted view.
+   */
+  async getTransactionReceipt(chainId: number, txHash: string): Promise<TransactionReceiptResult> {
+    try {
+      const { chain } = getSupportedChain(chainId);
+      const client = createClient({ chain, transport: http() });
+      const receipt = await getTransactionReceipt(client, { hash: txHash as Hex });
+      if (!receipt) return { status: 'not_found' };
+
+      if (!Array.isArray(receipt.logs)) {
+        return { status: 'error', message: 'receipt logs missing or malformed' };
+      }
+
+      let blockTimestamp: bigint;
+      try {
+        const block = await getBlock(client, { blockNumber: receipt.blockNumber });
+        blockTimestamp = block.timestamp;
+      } catch (error: any) {
+        this.logOpenfortError('getTransactionReceipt', error, {
+          chainId,
+          txHash,
+          phase: 'block',
+        });
+        return { status: 'error', message: 'block lookup failed' };
+      }
+
+      const status: 'success' | 'reverted' = receipt.status === 'success' ? 'success' : 'reverted';
+
+      const sanitized: SanitizedReceipt = {
+        status,
+        transactionHash: receipt.transactionHash,
+        from: receipt.from,
+        to: receipt.to ?? null,
+        blockNumber: receipt.blockNumber,
+        blockHash: receipt.blockHash,
+        blockTimestamp,
+        gasUsed: receipt.gasUsed,
+        effectiveGasPrice: receipt.effectiveGasPrice ?? null,
+        logs: receipt.logs.map((log) => ({
+          address: log.address,
+          topics: log.topics,
+          data: log.data,
+          logIndex: log.logIndex,
+          removed: log.removed,
+        })),
+      };
+
+      return { status, receipt: sanitized };
+    } catch (error: any) {
+      const message = String(error?.message ?? '');
+      if (message.includes('Transaction receipt not found') || message.includes('not found')) {
+        return { status: 'not_found' };
+      }
+      this.logOpenfortError('getTransactionReceipt', error, { chainId, txHash });
+      return { status: 'error', message: 'receipt lookup failed' };
     }
   }
 
@@ -722,3 +792,37 @@ type UserOperationGasPriceLike = {
   maxFeePerGas?: bigint | number | string;
   maxPriorityFeePerGas?: bigint | number | string;
 };
+
+/** A single sanitized receipt log (no calldata, no raw provider objects). */
+export interface SanitizedReceiptLog {
+  address: string;
+  topics: string[];
+  data: string;
+  logIndex: number;
+  removed: boolean;
+}
+
+/** Sanitized, evidence-safe view of an on-chain transaction receipt. */
+export interface SanitizedReceipt {
+  status: 'success' | 'reverted';
+  transactionHash: string;
+  from: string;
+  to: string | null;
+  blockNumber: bigint;
+  blockHash: string;
+  blockTimestamp: bigint;
+  gasUsed: bigint;
+  effectiveGasPrice: bigint | null;
+  logs: SanitizedReceiptLog[];
+}
+
+/**
+ * Discriminated result of a receipt lookup. `not_found` and `error` are
+ * retryable (the transaction should stay pending); `success`/`reverted` are
+ * final and carry the sanitized receipt.
+ */
+export type TransactionReceiptResult =
+  | { status: 'success'; receipt: SanitizedReceipt }
+  | { status: 'reverted'; receipt: SanitizedReceipt }
+  | { status: 'not_found' }
+  | { status: 'error'; message: string };

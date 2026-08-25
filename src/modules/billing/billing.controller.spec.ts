@@ -3,6 +3,9 @@ import { GUARDS_METADATA } from '@nestjs/common/constants';
 jest.mock('./billing.service', () => ({
   BillingService: class BillingService {},
 }));
+jest.mock('./billing-reconciliation.service', () => ({
+  BillingReconciliationService: class BillingReconciliationService {},
+}));
 jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
@@ -22,12 +25,15 @@ describe('BillingController', () => {
     listInvoices: jest.fn(),
     getInvoice: jest.fn(),
   };
+  const reconciliationService = {
+    reconcile: jest.fn(),
+  };
 
   let controller: BillingController;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    controller = new BillingController(billingService as any);
+    controller = new BillingController(billingService as any, reconciliationService as any);
   });
 
   it('delegates getPlans to the service with the current user id', async () => {
@@ -66,12 +72,30 @@ describe('BillingController', () => {
     expect(result).toEqual({ id: 'inv-1' });
   });
 
+  it('delegates reconcile to the reconciliation service scoped to the current user', async () => {
+    reconciliationService.reconcile.mockResolvedValue({ runId: 'run-1', scanned: 3 });
+
+    const result = await controller.reconcile('user-1', { limit: 25 } as any);
+
+    expect(reconciliationService.reconcile).toHaveBeenCalledWith('user-1', { limit: 25 });
+    expect(result).toEqual({ runId: 'run-1', scanned: 3 });
+  });
+
+  it('delegates reconcile with no body (default limit)', async () => {
+    reconciliationService.reconcile.mockResolvedValue({ runId: 'run-2' });
+
+    await controller.reconcile('user-1', {} as any);
+
+    expect(reconciliationService.reconcile).toHaveBeenCalledWith('user-1', { limit: undefined });
+  });
+
   it('protects every route with OpenfortUserGuard and FrontendOnlyGuard', () => {
     const routes = [
       controller.getPlans,
       controller.getSummary,
       controller.listInvoices,
       controller.getInvoice,
+      controller.reconcile,
     ];
 
     for (const route of routes) {

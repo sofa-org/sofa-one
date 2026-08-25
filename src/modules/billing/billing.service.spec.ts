@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -40,6 +40,87 @@ const STARTER_VERSION = {
 
 const ACCOUNT = { id: 'acc-1', userId: 'user-1', currency: 'USD' };
 
+const TX = {
+  id: 'tx-1',
+  userId: 'user-1',
+  txHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+  chainId: 8453n,
+  walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+};
+
+const RECEIPT = {
+  txHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+  receiptRef: '0x1111111111111111111111111111111111111111111111111111111111111111:log:0',
+  receiptLogIndex: 0,
+  receiptBlockNumber: 12345n,
+  receiptBlockHash: '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  // 2026-08-10T00:00:00Z -> periodStart 2026-08-01 (matches the test inputs)
+  receiptBlockTimestamp: 1_786_320_000n,
+  receiptStatus: 'success',
+  receiptData: {
+    transactionHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    blockNumber: '12345',
+    status: 'success',
+  },
+  reconciledAt: new Date('2026-08-10T00:00:00.000Z'),
+};
+
+/** Canonical posted row that exactly matches the evidence-aware test input. */
+function existingPostedRow(overrides: Record<string, unknown> = {}) {
+  return {
+    billingAccountId: ACCOUNT.id,
+    metric: 'outbound_volume',
+    transactionId: 'tx-1',
+    sourceKey: 'tx:tx-1:log:0',
+    receiptRef: RECEIPT.receiptRef,
+    receiptLogIndex: 0,
+    txHash: RECEIPT.txHash,
+    chainId: 8453n,
+    walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    receiptBlockNumber: 12345n,
+    receiptBlockHash: RECEIPT.receiptBlockHash,
+    receiptBlockTimestamp: 1_786_320_000n,
+    receiptStatus: 'success',
+    status: 'posted',
+    volumeUsdMicros: 1_000_000n,
+    assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    assetDecimals: 6,
+    baseUnitAmount: 1_000_000n,
+    unitPriceMicros: 1_000_000n,
+    priceSource: 'static_usd_peg',
+    reconciliationRunId: null,
+    ...overrides,
+  };
+}
+
+/** Canonical legacy row that exactly matches the legacy idempotency test input. */
+function existingLegacyRow(overrides: Record<string, unknown> = {}) {
+  return {
+    billingAccountId: ACCOUNT.id,
+    metric: 'outbound_volume',
+    transactionId: null,
+    sourceKey: 'out:dup',
+    receiptRef: null,
+    receiptLogIndex: null,
+    txHash: null,
+    chainId: null,
+    walletAddress: null,
+    receiptBlockNumber: null,
+    receiptBlockHash: null,
+    receiptBlockTimestamp: null,
+    receiptStatus: null,
+    status: 'unverified',
+    volumeUsdMicros: 100n,
+    assetId: null,
+    assetDecimals: null,
+    baseUnitAmount: null,
+    unitPriceMicros: null,
+    priceSource: null,
+    reconciliationRunId: null,
+    ...overrides,
+  };
+}
+
 describe('BillingService', () => {
   let service: BillingService;
 
@@ -53,6 +134,10 @@ describe('BillingService', () => {
   const assignmentCreate = jest.fn();
   const usageEventCreate = jest.fn();
   const usageEventFindMany = jest.fn();
+  const usageEventFindUnique = jest.fn();
+  const usageEventFindFirst = jest.fn();
+  const reconciliationRunFindMany = jest.fn();
+  const transactionFindUnique = jest.fn();
   const walletCount = jest.fn();
   const invoiceFindUnique = jest.fn();
   const invoiceFindFirst = jest.fn();
@@ -61,9 +146,10 @@ describe('BillingService', () => {
   const invoiceCreate = jest.fn();
   const lineCreateMany = jest.fn();
   const transaction = jest.fn();
+  const executeRaw = jest.fn();
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -79,7 +165,14 @@ describe('BillingService', () => {
               create: planVersionCreate,
             },
             billingPlanAssignment: { findFirst: assignmentFindFirst, create: assignmentCreate },
-            billingUsageEvent: { create: usageEventCreate, findMany: usageEventFindMany },
+            billingUsageEvent: {
+              create: usageEventCreate,
+              findMany: usageEventFindMany,
+              findUnique: usageEventFindUnique,
+              findFirst: usageEventFindFirst,
+            },
+            billingReconciliationRun: { findMany: reconciliationRunFindMany },
+            transaction: { findUnique: transactionFindUnique },
             userWallet: { count: walletCount },
             billingInvoice: {
               findUnique: invoiceFindUnique,
@@ -96,6 +189,45 @@ describe('BillingService', () => {
     }).compile();
 
     service = module.get<BillingService>(BillingService);
+
+    // Defaults for the Phase 1E fail-closed risk checks: no quarantined usage
+    // and no risky reconciliation runs unless a test overrides them.
+    usageEventFindFirst.mockResolvedValue(null);
+    reconciliationRunFindMany.mockResolvedValue([]);
+
+    // The interactive transaction client used by withBillingPeriodLock. All
+    // model accessors share the same jest.fn() instances as this.prisma so the
+    // production lock path is exercised (never silently skipped).
+    const tx = {
+      $executeRaw: executeRaw,
+      billingAccount: { findUnique: accountFindUnique, create: accountCreate },
+      billingPlanVersion: {
+        findFirst: planVersionFindFirst,
+        findUnique: planVersionFindUnique,
+        findMany: planVersionFindMany,
+        create: planVersionCreate,
+      },
+      billingPlanAssignment: { findFirst: assignmentFindFirst, create: assignmentCreate },
+      billingUsageEvent: {
+        create: usageEventCreate,
+        findMany: usageEventFindMany,
+        findUnique: usageEventFindUnique,
+        findFirst: usageEventFindFirst,
+      },
+      billingReconciliationRun: { findMany: reconciliationRunFindMany },
+      transaction: { findUnique: transactionFindUnique },
+      userWallet: { count: walletCount },
+      billingInvoice: {
+        findUnique: invoiceFindUnique,
+        findFirst: invoiceFindFirst,
+        findMany: invoiceFindMany,
+        count: invoiceCount,
+        create: invoiceCreate,
+      },
+      billingInvoiceLine: { createMany: lineCreateMany },
+    };
+    transaction.mockImplementation(async (cb) => cb(tx));
+    executeRaw.mockResolvedValue(undefined);
   });
 
   describe('getPlans', () => {
@@ -241,9 +373,24 @@ describe('BillingService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('is idempotent on sourceKey (unique conflict is swallowed)', async () => {
+    it('replays an exact legacy duplicate on sourceKey conflict', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingLegacyRow());
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        sourceKey: 'out:dup',
+        amountUsdMicros: 100n,
+      });
+
+      expect(result).toEqual({ outcome: 'replayed' });
+    });
+
+    it('throws ConflictException when a legacy sourceKey conflict differs', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingLegacyRow({ volumeUsdMicros: 999n }));
 
       await expect(
         service.recordSuccessfulOutbound({
@@ -251,7 +398,948 @@ describe('BillingService', () => {
           sourceKey: 'out:dup',
           amountUsdMicros: 100n,
         }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('marks legacy caller-supplied rows as unverified + legacy_import', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        sourceKey: 'out:legacy',
+        amountUsdMicros: 100n,
+      });
+
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'unverified',
+            sourceType: 'legacy_import',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('recordSuccessfulOutbound (evidence-aware)', () => {
+    const receipt = {
+      txHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+      receiptRef: '0x1111111111111111111111111111111111111111111111111111111111111111:log:0',
+      receiptLogIndex: 0,
+      receiptBlockNumber: 12345n,
+      receiptBlockHash: '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      // 2026-08-10T00:00:00Z -> periodStart 2026-08-01 (matches the test inputs)
+      receiptBlockTimestamp: 1_786_320_000n,
+      receiptStatus: 'success',
+      receiptData: {
+        transactionHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+        blockNumber: '12345',
+        status: 'success',
+      },
+      reconciledAt: new Date('2026-08-10T00:00:00.000Z'),
+    };
+
+    it('appends a posted outbound event with full receipt evidence', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+        metadata: { policyVersion: 1 },
+      });
+
+      expect(result).toEqual({ outcome: 'inserted' });
+      expect(transactionFindUnique).toHaveBeenCalledWith({ where: { id: 'tx-1' } });
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            metric: 'outbound_volume',
+            entryType: 'usage',
+            sourceType: 'openfort_receipt',
+            status: 'posted',
+            sourceKey: 'tx:tx-1:log:0',
+            volumeUsdMicros: 1_000_000n,
+            transactionId: 'tx-1',
+            receiptRef: receipt.receiptRef,
+            receiptLogIndex: 0,
+            receiptBlockNumber: 12345n,
+            receiptBlockHash: receipt.receiptBlockHash,
+            receiptBlockTimestamp: 1_786_320_000n,
+            receiptStatus: 'success',
+            reconciledAt: receipt.reconciledAt,
+            baseUnitAmount: 1_000_000n,
+            assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+            assetDecimals: 6,
+            unitPriceMicros: 1_000_000n,
+            priceSource: 'static_usd_peg',
+            chainId: 8453n,
+            walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            txHash: receipt.txHash,
+          }),
+        }),
+      );
+    });
+
+    it('appends a quarantined outbound event with volume 0 and reason metadata', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:native',
+        status: 'quarantined',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 0n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        receipt,
+        metadata: { reason: 'native_asset', amount: '1000000' },
+      });
+
+      expect(result).toEqual({ outcome: 'inserted' });
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'quarantined',
+            sourceType: 'openfort_receipt',
+            volumeUsdMicros: 0n,
+            transactionId: 'tx-1',
+            metadata: { reason: 'native_asset', amount: '1000000' },
+          }),
+        }),
+      );
+    });
+
+    it('rejects negative amounts', async () => {
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: -1n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects receipt-backed outbound without a transactionId', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects receipt-backed outbound with a non-posted/quarantined status', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'unverified' as any,
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('replays an exact receipt-backed duplicate on P2002', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingPostedRow());
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+      });
+
+      expect(result).toEqual({ outcome: 'replayed' });
+    });
+
+    it('throws ConflictException when a P2002 row differs in volume', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ volumeUsdMicros: 999n }));
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException when a P2002 row differs in receipt block evidence', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ receiptBlockNumber: 99999n }));
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException when a P2002 row differs in status', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ status: 'quarantined' }));
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws BadRequest when the transaction does not exist', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(null);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-missing',
+          sourceKey: 'tx:tx-missing:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects binding a receipt-backed event to another user transaction', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue({ ...TX, userId: 'user-other' });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a txHash mismatch between the transaction and the receipt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue({
+        ...TX,
+        txHash: '0x2222222222222222222222222222222222222222222222222222222222222222',
+      });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a chainId mismatch between the transaction and the receipt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue({ ...TX, chainId: 1n });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a walletAddress mismatch between the transaction and the receipt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue({
+        ...TX,
+        walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a posted event backed by a reverted receipt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt: { ...receipt, receiptStatus: 'reverted' },
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a quarantined event with nonzero volume', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'quarantined',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('persists reconciliationRunId on the ledger row', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+        reconciliationRunId: 'run-1',
+      });
+
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ reconciliationRunId: 'run-1' }),
+        }),
+      );
+    });
+
+    it('rejects receipt-backed outbound without an explicit status', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['assetId', { assetId: undefined }],
+      ['assetDecimals', { assetDecimals: undefined }],
+      ['baseUnitAmount', { baseUnitAmount: undefined }],
+      ['unitPriceMicros', { unitPriceMicros: undefined }],
+      ['priceSource', { priceSource: undefined }],
+    ] as const)('rejects posted outbound missing %s', async (_field, overrides) => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+          ...overrides,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a posted amount that does not match the deterministic pricing formula', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 999_999n, // formula gives 1_000_000
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('validates the amount formula exactly for huge BigInt amounts', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+      const huge = 2n ** 100n;
+      // roundHalfUp(huge * 3n, 10^6) = (huge*3*2 + 10^6) / (2*10^6)
+      const expected = (huge * 3n * 2n + 1_000_000n) / 2_000_000n;
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: expected,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: huge,
+        unitPriceMicros: 3n,
+        priceSource: 'static_usd_peg',
+        receipt,
+      });
+
+      expect(result).toEqual({ outcome: 'inserted' });
+    });
+
+    it('rejects a posted periodStart that does not match the receipt block month', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-09-01T00:00:00.000Z'), // wrong month
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a posted event with a missing block timestamp', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt: { ...receipt, receiptBlockTimestamp: undefined as any },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('accepts a quarantined event with zero volume and no pricing fields', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:native',
+        status: 'quarantined',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 0n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        receipt,
+        metadata: { reason: 'native_asset' },
+      });
+
+      expect(result).toEqual({ outcome: 'inserted' });
+    });
+
+    it('replays the same evidence across runs regardless of reconciliationRunId', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      // run-1 wrote the row with runId 'run-1'; run-2 replays with 'run-2'
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ reconciliationRunId: 'run-1' }));
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+        reconciliationRunId: 'run-2',
+      });
+
+      expect(result).toEqual({ outcome: 'replayed' });
+    });
+
+    it('throws ConflictException when a P2002 row differs in a real accounting field', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockRejectedValue(p2002());
+      usageEventFindUnique.mockResolvedValue(
+        existingPostedRow({ assetId: '0x2222222222222222222222222222222222222222' }),
+      );
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('keeps the legacy hook compatible without receipt evidence or status', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        sourceKey: 'out:legacy',
+        amountUsdMicros: 100n,
+      });
+
+      expect(result).toEqual({ outcome: 'inserted' });
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'unverified', sourceType: 'legacy_import' }),
+        }),
+      );
+    });
+
+    it('shares the billing-period lock seam with finalize for the same period', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+      });
+
+      // receipt-backed appends acquire the same advisory lock as finalize
+      expect(executeRaw).toHaveBeenCalled();
+      const lockCall = executeRaw.mock.calls[0];
+      expect(lockCall[0].join('')).toContain('pg_advisory_xact_lock');
+      // the lock key is bound as a parameter (never interpolated SQL)
+      expect(lockCall[1]).toContain(ACCOUNT.id);
+      expect(lockCall[1]).toContain('2026-08-01');
+    });
+
+    it('rejects a posted receipt append when the period is already finalized', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a quarantined receipt append when the period is already finalized', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:native',
+          status: 'quarantined',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 0n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+          metadata: { reason: 'native_asset' },
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('replays exact existing evidence even when the period is finalized', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
+      usageEventFindUnique.mockResolvedValue(existingPostedRow());
+
+      const result = await service.recordSuccessfulOutbound({
+        userId: 'user-1',
+        transactionId: 'tx-1',
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'posted',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+        amountUsdMicros: 1_000_000n,
+        chainId: 8453n,
+        walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        assetDecimals: 6,
+        baseUnitAmount: 1_000_000n,
+        unitPriceMicros: 1_000_000n,
+        priceSource: 'static_usd_peg',
+        receipt,
+      });
+
+      expect(result).toEqual({ outcome: 'replayed' });
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects divergent existing evidence even when the period is finalized', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ volumeUsdMicros: 999n }));
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a sourceKey collision from another billing account', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+      usageEventFindUnique.mockResolvedValue(existingPostedRow({ billingAccountId: 'acc-other' }));
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          assetId: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          assetDecimals: 6,
+          baseUnitAmount: 1_000_000n,
+          unitPriceMicros: 1_000_000n,
+          priceSource: 'static_usd_peg',
+          receipt,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects receiptData that leaks a BigInt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt: { ...receipt, receiptData: { blockNumber: 12345n } },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects metadata that leaks a BigInt', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      transactionFindUnique.mockResolvedValue(TX);
+
+      await expect(
+        service.recordSuccessfulOutbound({
+          userId: 'user-1',
+          transactionId: 'tx-1',
+          sourceKey: 'tx:tx-1:log:0',
+          status: 'posted',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          occurredAt: new Date('2026-08-10T00:00:00.000Z'),
+          amountUsdMicros: 1_000_000n,
+          chainId: 8453n,
+          walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          receipt,
+          metadata: { amount: 100n },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
     });
   });
 
@@ -266,7 +1354,13 @@ describe('BillingService', () => {
         planVersion: FREE_VERSION,
       });
       usageEventFindMany.mockResolvedValue([
-        { metric: 'outbound_volume', volumeUsdMicros: 600_000_000_000n, quantity: 1n },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 600_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
         { metric: 'api_call', quantity: 5n },
       ]);
       walletCount.mockResolvedValue(3);
@@ -339,7 +1433,117 @@ describe('BillingService', () => {
       expect(result.tierBreakdown).toEqual([]);
     });
 
+    it('excludes legacy unverified positive-volume outbound from gross', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 600_000_000_000n,
+          quantity: 1n,
+          status: 'unverified',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      expect(result.outboundVolume).toBe('0');
+      expect(result.outboundOverage).toBe('0');
+      expect(result.estimatedTotal).toBe('0');
+    });
+
+    it('excludes quarantined and reversed outbound from gross', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 100_000_000n,
+          quantity: 1n,
+          status: 'quarantined',
+          entryType: 'usage',
+        },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 200_000_000n,
+          quantity: 1n,
+          status: 'reversed',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      expect(result.outboundVolume).toBe('0');
+      expect(result.outboundOverage).toBe('0');
+    });
+
+    it('counts only posted usage-type outbound and keeps api_call counting intact', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 100_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 50_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'reversal',
+        },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 999_000_000n,
+          quantity: 1n,
+          status: 'unverified',
+          entryType: 'usage',
+        },
+        { metric: 'api_call', quantity: 3n, status: 'unverified', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      // only the posted usage row counts; reversal and unverified are excluded
+      expect(result.outboundVolume).toBe('100');
+      // api_call counting is unaffected by status/entryType
+      expect(result.apiCalls).toBe('3');
+    });
+
     it('rejects an invalid period', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+      });
       await expect(service.getSummary('user-1', '2026-13')).rejects.toThrow(BadRequestException);
       await expect(service.getSummary('user-1', 'not-a-period')).rejects.toThrow(
         BadRequestException,
@@ -497,7 +1701,13 @@ describe('BillingService', () => {
         planVersion: FREE_VERSION,
       });
       usageEventFindMany.mockResolvedValue([
-        { metric: 'outbound_volume', volumeUsdMicros: 600_000_000_000n, quantity: 1n },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 600_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
       ]);
       walletCount.mockResolvedValue(0);
 
@@ -511,12 +1721,6 @@ describe('BillingService', () => {
         createdAt: new Date('2026-06-01T00:00:00.000Z'),
       };
       invoiceCreate.mockResolvedValue(createdInvoice);
-      transaction.mockImplementation(async (cb) =>
-        cb({
-          billingInvoice: { create: invoiceCreate },
-          billingInvoiceLine: { createMany: lineCreateMany },
-        }),
-      );
 
       const result = await service.finalizeInvoice('user-1', '2026-05');
 
@@ -566,7 +1770,8 @@ describe('BillingService', () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
       invoiceFindUnique
-        .mockResolvedValueOnce(null) // first check: none
+        .mockResolvedValueOnce(null) // cheap pre-check: none
+        .mockResolvedValueOnce(null) // re-check inside the lock: none
         .mockResolvedValueOnce({
           id: 'inv-1',
           billingAccountId: ACCOUNT.id,
@@ -575,7 +1780,7 @@ describe('BillingService', () => {
           currency: 'USD',
           totalMicros: 55_000_000n,
           createdAt: new Date('2026-06-01T00:00:00.000Z'),
-        }); // after conflict: found
+        }); // after unique conflict: found
       assignmentFindFirst.mockResolvedValue({
         id: 'assign-1',
         billingAccountId: ACCOUNT.id,
@@ -584,7 +1789,7 @@ describe('BillingService', () => {
       });
       usageEventFindMany.mockResolvedValue([]);
       walletCount.mockResolvedValue(0);
-      transaction.mockRejectedValue(p2002());
+      invoiceCreate.mockRejectedValue(p2002());
 
       const result = await service.finalizeInvoice('user-1', '2026-05');
 
@@ -616,12 +1821,6 @@ describe('BillingService', () => {
         totalMicros: 0n,
         createdAt: new Date('2026-06-01T00:00:00.000Z'),
       });
-      transaction.mockImplementation(async (cb) =>
-        cb({
-          billingInvoice: { create: invoiceCreate },
-          billingInvoiceLine: { createMany: lineCreateMany },
-        }),
-      );
 
       const result = await service.finalizeInvoice('user-1', '2026-05');
 
@@ -631,6 +1830,922 @@ describe('BillingService', () => {
           data: expect.objectContaining({ planVersionId: FREE_VERSION.id, status: 'finalized' }),
         }),
       );
+      expect(result.id).toBe('inv-1');
+    });
+
+    it('blocks finalize when quarantined outbound usage exists', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue({ id: 'quarantined-1' });
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a reconciliation run is failed', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([{ id: 'run-1', status: 'failed' }]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a reconciliation run is still running', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([{ id: 'run-1', status: 'running' }]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a reconciliation summary has conflicts', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        { id: 'run-1', status: 'completed', summary: { conflicts: 1 } },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('allows finalize when reconciliation runs are clean (errors=0, conflicts=0)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany
+        .mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }])
+        .mockResolvedValueOnce([]);
+      // a usage-linked clean exhaustive run (replayed/casNoops are not errors)
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-05-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-05-01T00:00:00.000Z'],
+          },
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+      // candidate runs are fetched newest-first via a broad discovery query (linked
+      // run ids + operational runs with periodStart >= target month); risk is
+      // evaluated in JS, never SQL-filtered by metadata
+      expect(reconciliationRunFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { periodStart: { gte: new Date('2026-05-01T00:00:00.000Z') } },
+            ]),
+          }),
+          orderBy: { startedAt: 'desc' },
+          select: { id: true, status: true, completedAt: true, summary: true },
+        }),
+      );
+    });
+
+    it('does not block finalize on legacy/unverified/reversed outbound', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null); // no quarantined
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 100n,
+          quantity: 1n,
+          status: 'unverified',
+          entryType: 'usage',
+        },
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 200n,
+          quantity: 1n,
+          status: 'reversed',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+    });
+
+    it('blocks finalize for a future/current period', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+
+      await expect(service.finalizeInvoice('user-1', '2026-12')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize within the 24h grace window', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
+      try {
+        accountFindUnique.mockResolvedValue(ACCOUNT);
+        planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+        invoiceFindUnique.mockResolvedValue(null);
+
+        await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(
+          ConflictException,
+        );
+        expect(invoiceCreate).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('blocks finalize when the plan has Enterprise null terms', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: { ...FREE_VERSION, monthlyFeeMicros: null },
+      });
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('returns an existing finalized invoice unchanged even with later risk', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 55_000_000n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      // no risk checks run for an already-finalized invoice
+      expect(usageEventFindFirst).not.toHaveBeenCalled();
+      expect(reconciliationRunFindMany).not.toHaveBeenCalled();
+    });
+
+    it('runs risk checks, aggregation, and invoice creation inside one locked transaction', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]);
+      reconciliationRunFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      await service.finalizeInvoice('user-1', '2026-05');
+
+      // the advisory lock is acquired inside the interactive transaction
+      expect(executeRaw).toHaveBeenCalled();
+      const lockCall = executeRaw.mock.calls[0];
+      expect(lockCall[0].join('')).toContain('pg_advisory_xact_lock');
+      // risk checks, aggregation, and invoice/lines all used the tx client
+      expect(usageEventFindFirst).toHaveBeenCalled();
+      expect(reconciliationRunFindMany).toHaveBeenCalled();
+      expect(usageEventFindMany).toHaveBeenCalled();
+      expect(invoiceCreate).toHaveBeenCalled();
+      expect(lineCreateMany).toHaveBeenCalled();
+    });
+
+    it('retries a serialization conflict without duplicate invoice/lines', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]);
+      reconciliationRunFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate
+        .mockRejectedValueOnce(
+          new Prisma.PrismaClientKnownRequestError('serialization failure', {
+            code: 'P2034',
+            clientVersion: 'test',
+          }),
+        )
+        .mockResolvedValueOnce({
+          id: 'inv-1',
+          billingAccountId: ACCOUNT.id,
+          periodStart: new Date('2026-05-01T00:00:00.000Z'),
+          status: 'finalized',
+          currency: 'USD',
+          totalMicros: 0n,
+          createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+      // two attempts, but only one invoice and one set of lines
+      expect(invoiceCreate).toHaveBeenCalledTimes(2);
+      expect(lineCreateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('blocks finalize when a completed run has notFound > 0', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        { id: 'run-1', status: 'completed', summary: { notFound: 3 } },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a completed run has transientError > 0', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        { id: 'run-1', status: 'completed', summary: { transientError: 1 } },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('allows finalize when a later clean exhaustive run supersedes earlier failures', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany
+        .mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }])
+        .mockResolvedValueOnce([]);
+      // newest first: run-2 is a clean exhaustive completion marker for this
+      // user (completed after the period end, valid highWaterMark) and
+      // supersedes the older run-1 retryable failure
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-2',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-05-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-05-01T00:00:00.000Z'],
+          },
+        },
+        { id: 'run-1', status: 'completed', summary: { userId: 'user-1', notFound: 3 } },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+    });
+
+    it('blocks finalize when the latest run is incomplete (no complete marker)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          summary: { userId: 'user-1', errors: 0, conflicts: 0 },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a complete run completed before the period end', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-05-15T00:00:00.000Z'), // before periodEnd 2026-06-01
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-05-10T00:00:00.000Z', id: 'tx-1' },
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a complete run has a malformed highWaterMark', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: 'not-an-object',
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a non-empty complete run lacks a highWaterMark', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('allows finalize when a valid exhaustive marker is after the cutoff with no risk', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany
+        .mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }])
+        .mockResolvedValueOnce([]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'), // after periodEnd 2026-06-01
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-05-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-05-01T00:00:00.000Z'],
+          },
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-1');
+    });
+
+    it('blocks finalize when a legacy summary lacks userId/highWaterMark', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-06-02T00:00:00.000Z'),
+          summary: { errors: 0, conflicts: 0 }, // no complete marker / userId
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('skips a clean run whose valid coverage does not include the target month', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      // no July usage events are associated with the June run
+      usageEventFindMany.mockResolvedValue([]);
+      // a clean exhaustive run whose valid accountingPeriods covers June, not
+      // the July target — the relevance branch skips it and finalize proceeds
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-06-30T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-06-01T00:00:00.000Z'],
+          },
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-07-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-07');
+
+      expect(result.id).toBe('inv-1');
+      // operational runs are discovered broadly by periodStart >= target month
+      // (never SQL-filtered by accountingPeriods metadata)
+      expect(reconciliationRunFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { periodStart: { gte: new Date('2026-07-01T00:00:00.000Z') } },
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('still blocks finalize when a current-period run has retryable risk', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 2,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-07-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-07-01T00:00:00.000Z'],
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when an unlinked valid run covers the target month with retryable risk', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]); // not usage-linked
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 2,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-07-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-07-01T00:00:00.000Z'], // covers target July
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when an unlinked running run has missing coverage metadata', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]); // not linked to July usage
+      // discovered via the broad periodStart >= target query; no accountingPeriods
+      reconciliationRunFindMany.mockResolvedValue([
+        { id: 'run-1', status: 'running', completedAt: null, summary: {} },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when an unlinked run has malformed coverage and retryable risk', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]);
+      // malformed accountingPeriods must be discovered (broad query) and
+      // evaluated as risky — never SQL-filtered into fail-open
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 1,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-07-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: 'not-an-array',
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects non-canonical accountingPeriods values', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValueOnce([{ reconciliationRunId: 'run-1' }]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-07-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-07-01T00:00:00Z'], // non-canonical (no ms)
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize when a cross-month run has receipt uncertainty for the target', async () => {
+      // transaction created in June (createdAt month A), receipt could be mined
+      // in July (month B); the run scanned in July with notFound. createdAt
+      // coverage must NOT clear the target risk.
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]);
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-1',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: false,
+            scanned: 1,
+            notFound: 1,
+            accountingPeriods: ['2026-06-01T00:00:00.000Z'], // createdAt month, not proof
+          },
+        },
+      ]);
+
+      await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('lets a later clean exhaustive run clear older risk for the target', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany
+        .mockResolvedValueOnce([{ reconciliationRunId: 'run-2' }])
+        .mockResolvedValueOnce([]);
+      // newest first: run-2 is a clean exhaustive marker after the cutoff with
+      // valid coverage/high-water and supersedes the older run-1 retryable risk
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-2',
+          status: 'completed',
+          completedAt: new Date('2026-08-02T00:00:00.000Z'),
+          summary: {
+            userId: 'user-1',
+            complete: true,
+            scanned: 1,
+            errors: 0,
+            conflicts: 0,
+            notFound: 0,
+            transientError: 0,
+            highWaterMark: { createdAt: '2026-07-31T23:59:59.000Z', id: 'tx-1' },
+            accountingPeriods: ['2026-07-01T00:00:00.000Z'],
+          },
+        },
+        { id: 'run-1', status: 'completed', summary: { userId: 'user-1', notFound: 3 } },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-07-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-07');
+
       expect(result.id).toBe('inv-1');
     });
   });
