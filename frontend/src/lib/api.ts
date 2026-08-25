@@ -248,6 +248,70 @@ export interface SecurityNotificationRecord {
   metadata: Record<string, unknown> | null;
 }
 
+// --- Billing ---
+
+export interface BillingPlan {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: string;
+  currency: string;
+  billingPeriod: string;
+  features: string[];
+}
+
+export interface BillingPlanResponse {
+  currentPlanId: string;
+  plans: BillingPlan[];
+}
+
+export interface BillingTierBreakdown {
+  tier: string;
+  from: string;
+  to: string;
+  quantity: string;
+  rate: string;
+  cost: string;
+}
+
+export interface BillingSummary {
+  period: string;
+  planId: string;
+  planName: string;
+  outboundVolume: string;
+  outboundFreeAllowance: string;
+  outboundOverage: string;
+  apiCalls: string;
+  apiCallsFreeAllowance: string;
+  activeWallets: string;
+  activeWalletsFreeAllowance: string;
+  estimatedBaseCost: string;
+  estimatedOverageCost: string;
+  estimatedTotal: string;
+  currency: string;
+  overageRate: string;
+  overageUnit: string;
+  tierBreakdown: BillingTierBreakdown[];
+}
+
+export interface BillingInvoice {
+  id: string;
+  period: string;
+  status: string;
+  amount: string;
+  currency: string;
+  createdAt: string;
+  paidAt: string | null;
+  pdfUrl: string | null;
+}
+
+export interface BillingInvoicesResponse {
+  items: BillingInvoice[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -776,4 +840,44 @@ export async function getSigningRequestDetailAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<SigningRequestDetail>(`/v1/wallets/signing-requests/${signingRequestId}`, getToken, { signal });
+}
+
+export async function getBillingPlansAuth(
+  getToken: () => Promise<string | null>,
+  signal?: AbortSignal,
+) {
+  return authFetch<BillingPlanResponse>('/v1/billing/plans', getToken, { signal });
+}
+
+export async function getBillingSummaryAuth(
+  getToken: () => Promise<string | null>,
+  period: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<BillingSummary>(`/v1/billing/summary?period=${encodeURIComponent(period)}`, getToken, { signal });
+}
+
+export interface ListBillingInvoicesParams {
+  page?: number;
+  limit?: number;
+}
+
+export async function listBillingInvoicesAuth(
+  getToken: () => Promise<string | null>,
+  params?: ListBillingInvoicesParams,
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams();
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<BillingInvoicesResponse>(`/v1/billing/invoices${qs ? `?${qs}` : ''}`, getToken, { signal });
+}
+
+export async function getBillingInvoiceAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<BillingInvoice>(`/v1/billing/invoices/${invoiceId}`, getToken, { signal });
 }

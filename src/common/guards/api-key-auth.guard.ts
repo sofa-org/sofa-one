@@ -4,12 +4,15 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../core/database/prisma.service';
+import { BillingService } from '../../modules/billing/billing.service';
 import { SecurityEventService } from '../../modules/security-events/security-event.service';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -34,7 +37,11 @@ type ApiKeyAuthRecord = {
   allowedFunctionSelectors?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
-  user?: { id?: string | null; frozenAt?: Date | string | null; frozenReason?: string | null } | null;
+  user?: {
+    id?: string | null;
+    frozenAt?: Date | string | null;
+    frozenReason?: string | null;
+  } | null;
 };
 
 /**
@@ -53,6 +60,7 @@ export class ApiKeyAuthGuard implements CanActivate {
     private readonly prisma: PrismaService,
     private readonly securityEvents: SecurityEventService,
     private readonly ipAllowlist: IpAllowlistService,
+    @Optional() private readonly billing?: BillingService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -174,10 +182,41 @@ export class ApiKeyAuthGuard implements CanActivate {
       })
       .catch((err) => this.logger.warn('lastUsedAt update failed', err));
 
+    // Meter the authenticated API call. Fire-and-forget: a metering failure must
+    // never block an already-authenticated request. sourceKey/requestId are
+    // server-generated (never a client X-Request-Id); metadata carries only safe
+    // fields (method/route/apiKeyId) — never the raw API key, calldata, or keys.
+    this.recordApiCallUsage(request, keyRecord);
+
     return true;
   }
 
-  private getUserAgent(request: { headers: Record<string, string | string[] | undefined> }): string | null {
+  private recordApiCallUsage(request: any, keyRecord: ApiKeyAuthRecord): void {
+    if (!this.billing) return;
+    const userId = keyRecord.user?.id ?? keyRecord.userId ?? null;
+    if (!userId) return;
+
+    const method = typeof request.method === 'string' ? request.method : undefined;
+    const route = request.route?.path ?? request.url;
+
+    void this.billing
+      .recordApiCall({
+        userId,
+        sourceKey: `api:${randomUUID()}`,
+        requestId: `api:${randomUUID()}`,
+        endpoint: route,
+        metadata: {
+          method,
+          route,
+          apiKeyId: keyRecord.id,
+        },
+      })
+      .catch((err) => this.logger.warn('API call metering failed', err));
+  }
+
+  private getUserAgent(request: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | null {
     const value = request.headers['user-agent'];
     const userAgent = Array.isArray(value) ? value[0] : value;
     if (!userAgent) return null;
@@ -223,9 +262,13 @@ export class ApiKeyAuthGuard implements CanActivate {
     currentIp: string,
     currentUserAgent: string | null,
   ) {
-    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const ipChanged = Boolean(
+      keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp,
+    );
     const userAgentChanged = Boolean(
-      keyRecord.lastUsedUserAgent && currentUserAgent && keyRecord.lastUsedUserAgent !== currentUserAgent,
+      keyRecord.lastUsedUserAgent &&
+      currentUserAgent &&
+      keyRecord.lastUsedUserAgent !== currentUserAgent,
     );
 
     if (!ipChanged && !userAgentChanged) return;
@@ -256,7 +299,9 @@ export class ApiKeyAuthGuard implements CanActivate {
     this.logApiKeyUsageAnomaly(keyRecord, currentIp, currentUserAgent);
 
     const highRiskKey = this.hasHighRiskPermission(keyRecord);
-    const repeatedSuspiciousUse = highRiskKey ? false : await this.hasRecentSuspiciousUse(keyRecord.id);
+    const repeatedSuspiciousUse = highRiskKey
+      ? false
+      : await this.hasRecentSuspiciousUse(keyRecord.id);
     const shouldFreeze = highRiskKey || repeatedSuspiciousUse;
     const reason = highRiskKey ? 'high_risk_context_changed' : 'repeated_context_changed';
 
@@ -271,7 +316,7 @@ export class ApiKeyAuthGuard implements CanActivate {
         userAgentChanged: anomaly.userAgentChanged,
         previousIp: keyRecord.lastUsedIp ?? null,
         currentIp: currentIp || null,
-        previousUserAgent: anomaly.userAgentChanged ? keyRecord.lastUsedUserAgent ?? null : null,
+        previousUserAgent: anomaly.userAgentChanged ? (keyRecord.lastUsedUserAgent ?? null) : null,
         highRiskKey,
         repeatedSuspiciousUse,
       },
@@ -288,11 +333,13 @@ export class ApiKeyAuthGuard implements CanActivate {
     currentIp: string,
     currentUserAgent: string | null,
   ) {
-    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const ipChanged = Boolean(
+      keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp,
+    );
     const userAgentChanged = Boolean(
       keyRecord.lastUsedUserAgent &&
-        currentUserAgent &&
-        keyRecord.lastUsedUserAgent !== currentUserAgent,
+      currentUserAgent &&
+      keyRecord.lastUsedUserAgent !== currentUserAgent,
     );
 
     return { ipChanged, userAgentChanged, contextChanged: ipChanged || userAgentChanged };

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut, useUser } from '@openfort/react';
-import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell } from 'lucide-react';
+import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell, CreditCard } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { listSecurityNotificationsAuth } from '@/lib/api';
 import { onSecurityNotificationsChanged } from './notification-events';
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/dashboard/transactions', label: 'History', icon: History },
   { href: '/dashboard/notifications', label: 'Alerts', icon: Bell },
+  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 

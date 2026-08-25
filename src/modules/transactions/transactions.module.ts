@@ -6,9 +6,10 @@ import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
 import { SessionKeyModule } from '../session-key/session-key.module';
 import { TransactionPolicyService } from './transaction-policy.service';
 import { TransactionSimulationService } from './transaction-simulation.service';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
-  imports: [SecurityEventModule, EoaExecutionModule, SessionKeyModule],
+  imports: [SecurityEventModule, EoaExecutionModule, SessionKeyModule, BillingModule],
   controllers: [TransactionsController],
   providers: [TransactionsService, TransactionPolicyService, TransactionSimulationService],
 })

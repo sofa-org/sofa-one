@@ -6,27 +6,40 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id             String   @id @default(uuid()) @db.Uuid
-  socialProvider String   @map("social_provider") @db.VarChar(20)
-  socialId       String   @unique @map("social_id") @db.VarChar(255)
-  email          String?  @db.VarChar(255)
-  frozenAt       DateTime? @map("frozen_at") @db.Timestamptz()
-  frozenReason   String?  @map("frozen_reason") @db.VarChar(255)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+enum BillingUsageMetric {
+  outbound_volume
+  api_call
+}
 
-  wallet          UserWallet?
-  withdrawalPolicy WithdrawalPolicy?
-  withdrawalAddresses WithdrawalAddress[]
-  apiKeys         ApiKey[]
-  apiKeyEvents    ApiKeyEvent[]
-  securityEvents  SecurityEvent[]
+enum BillingInvoiceStatus {
+  open
+  finalized
+  needs_review
+  void
+}
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  socialProvider String    @map("social_provider") @db.VarChar(20)
+  socialId       String    @unique @map("social_id") @db.VarChar(255)
+  email          String?   @db.VarChar(255)
+  frozenAt       DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason   String?   @map("frozen_reason") @db.VarChar(255)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  wallet                UserWallet?
+  withdrawalPolicy      WithdrawalPolicy?
+  withdrawalAddresses   WithdrawalAddress[]
+  apiKeys               ApiKey[]
+  apiKeyEvents          ApiKeyEvent[]
+  securityEvents        SecurityEvent[]
   securityNotifications SecurityNotification[]
-  transactions    Transaction[]
-  signingRequests SigningRequest[]
-  stepUpChallenges StepUpChallenge[]
-  mfaTotpCredential UserMfaTotpCredential?
-  knownIps         UserKnownIp[]
+  transactions          Transaction[]
+  signingRequests       SigningRequest[]
+  stepUpChallenges      StepUpChallenge[]
+  mfaTotpCredential     UserMfaTotpCredential?
+  knownIps              UserKnownIp[]
+  billingAccount        BillingAccount?
 
   @@map("users")
 }
@@ -122,24 +135,24 @@ model ApiKeyEvent {
 }
 
 model SecurityEvent {
-  id         String   @id @default(uuid()) @db.Uuid
-  actorType  String   @map("actor_type") @db.VarChar(20)
-  userId     String?  @map("user_id") @db.Uuid
-  apiKeyId   String?  @map("api_key_id") @db.Uuid
-  walletId   String?  @map("wallet_id") @db.Uuid
-  eventType  String   @map("event_type") @db.VarChar(80)
-  riskLevel  String   @default("low") @map("risk_level") @db.VarChar(20)
-  ip         String?  @db.VarChar(64)
-  userAgent  String?  @map("user_agent") @db.VarChar(255)
-  requestId  String?  @map("request_id") @db.VarChar(64)
-  result     String?  @db.VarChar(20)
-  reason     String?  @db.VarChar(255)
-  metadata   Json?
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id        String   @id @default(uuid()) @db.Uuid
+  actorType String   @map("actor_type") @db.VarChar(20)
+  userId    String?  @map("user_id") @db.Uuid
+  apiKeyId  String?  @map("api_key_id") @db.Uuid
+  walletId  String?  @map("wallet_id") @db.Uuid
+  eventType String   @map("event_type") @db.VarChar(80)
+  riskLevel String   @default("low") @map("risk_level") @db.VarChar(20)
+  ip        String?  @db.VarChar(64)
+  userAgent String?  @map("user_agent") @db.VarChar(255)
+  requestId String?  @map("request_id") @db.VarChar(64)
+  result    String?  @db.VarChar(20)
+  reason    String?  @db.VarChar(255)
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  apiKey ApiKey?     @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
-  wallet UserWallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  user          User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKey        ApiKey?                @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  wallet        UserWallet?            @relation(fields: [walletId], references: [id], onDelete: SetNull)
   notifications SecurityNotification[]
 
   @@index([userId, createdAt])
@@ -171,15 +184,15 @@ model SecurityNotification {
 }
 
 model WithdrawalPolicy {
-  id                       String   @id @default(uuid()) @db.Uuid
-  userId                   String   @unique @map("user_id") @db.Uuid
-  singleWithdrawalLimit    String   @default("10000000000") @map("single_withdrawal_limit") @db.VarChar(40)
-  dailyWithdrawalLimit     String?  @map("daily_withdrawal_limit") @db.VarChar(40)
-  requireAddressAllowlist  Boolean  @default(false) @map("require_address_allowlist")
-  newAddressCooldownHours  Int      @default(24) @map("new_address_cooldown_hours")
-  requireStepUp            Boolean  @default(true) @map("require_step_up")
-  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id                      String   @id @default(uuid()) @db.Uuid
+  userId                  String   @unique @map("user_id") @db.Uuid
+  singleWithdrawalLimit   String   @default("10000000000") @map("single_withdrawal_limit") @db.VarChar(40)
+  dailyWithdrawalLimit    String?  @map("daily_withdrawal_limit") @db.VarChar(40)
+  requireAddressAllowlist Boolean  @default(false) @map("require_address_allowlist")
+  newAddressCooldownHours Int      @default(24) @map("new_address_cooldown_hours")
+  requireStepUp           Boolean  @default(true) @map("require_step_up")
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -202,26 +215,27 @@ model WithdrawalAddress {
 }
 
 model Transaction {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  apiKeyId         String?   @map("api_key_id") @db.Uuid
-  authMethod       String    @default("api_key") @map("auth_method") @db.VarChar(20)
-  apiKeyPrefix     String?   @map("api_key_prefix") @db.VarChar(32)
-  apiKeyName       String?   @map("api_key_name") @db.VarChar(100)
-  status           String    @db.VarChar(20)
-  txHash           String?   @map("tx_hash") @db.VarChar(66)
-  chainId          BigInt    @map("chain_id")
-  walletAddress    String    @map("wallet_address") @db.VarChar(42)
-  operationType    String?   @map("operation_type") @db.VarChar(30)
-  idempotencyKey   String?   @map("idempotency_key") @db.VarChar(64)
-  requestHash      String?   @map("request_hash") @db.VarChar(64)
-  failureReason    String?   @map("failure_reason") @db.VarChar(500)
-  details          Json?
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  completedAt      DateTime? @map("completed_at") @db.Timestamptz()
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  apiKeyId       String?   @map("api_key_id") @db.Uuid
+  authMethod     String    @default("api_key") @map("auth_method") @db.VarChar(20)
+  apiKeyPrefix   String?   @map("api_key_prefix") @db.VarChar(32)
+  apiKeyName     String?   @map("api_key_name") @db.VarChar(100)
+  status         String    @db.VarChar(20)
+  txHash         String?   @map("tx_hash") @db.VarChar(66)
+  chainId        BigInt    @map("chain_id")
+  walletAddress  String    @map("wallet_address") @db.VarChar(42)
+  operationType  String?   @map("operation_type") @db.VarChar(30)
+  idempotencyKey String?   @map("idempotency_key") @db.VarChar(64)
+  requestHash    String?   @map("request_hash") @db.VarChar(64)
+  failureReason  String?   @map("failure_reason") @db.VarChar(500)
+  details        Json?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz()
 
-  user   User    @relation(fields: [userId], references: [id])
-  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+  user               User                @relation(fields: [userId], references: [id])
+  apiKey             ApiKey?             @relation(fields: [apiKeyId], references: [id])
+  billingUsageEvents BillingUsageEvent[]
 
   @@unique([userId, operationType, chainId, idempotencyKey])
   @@index([apiKeyId, createdAt])
@@ -289,30 +303,173 @@ model StepUpChallenge {
 }
 
 model UserMfaTotpCredential {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @unique @map("user_id") @db.Uuid
-  encryptedSecret String   @map("encrypted_secret") @db.Text
-  status          String   @default("pending") @db.VarChar(20)
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @unique @map("user_id") @db.Uuid
+  encryptedSecret String    @map("encrypted_secret") @db.Text
+  status          String    @default("pending") @db.VarChar(20)
   enabledAt       DateTime? @map("enabled_at") @db.Timestamptz()
   disabledAt      DateTime? @map("disabled_at") @db.Timestamptz()
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
-  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   recoveryCodes UserMfaTotpRecoveryCode[]
 
   @@map("user_mfa_totp_credentials")
 }
 
 model UserMfaTotpRecoveryCode {
-  id           String   @id @default(uuid()) @db.Uuid
-  credentialId  String   @map("credential_id") @db.Uuid
-  codeHash     String   @map("code_hash") @db.Text
+  id           String    @id @default(uuid()) @db.Uuid
+  credentialId String    @map("credential_id") @db.Uuid
+  codeHash     String    @map("code_hash") @db.Text
   usedAt       DateTime? @map("used_at") @db.Timestamptz()
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   credential UserMfaTotpCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
 
   @@index([credentialId, usedAt])
   @@map("user_mfa_totp_recovery_codes")
+}
+
+model BillingAccount {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  currency  String   @default("USD") @map("currency") @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user        User                    @relation(fields: [userId], references: [id])
+  assignments BillingPlanAssignment[]
+  usageEvents BillingUsageEvent[]
+  invoices    BillingInvoice[]
+
+  @@map("billing_accounts")
+}
+
+model BillingPlanVersion {
+  id                      String   @id @default(uuid()) @db.Uuid
+  code                    String   @map("code") @db.VarChar(80)
+  version                 Int      @map("version")
+  name                    String   @map("name") @db.VarChar(120)
+  description             String?  @map("description") @db.VarChar(255)
+  monthlyFeeMicros        BigInt?  @map("monthly_fee_micros")
+  includedOutboundMicros  BigInt?  @map("included_outbound_micros")
+  includedApiCalls        BigInt?  @map("included_api_calls")
+  includedWallets         Int?     @map("included_wallets")
+  includedTeamMembers     Int?     @map("included_team_members")
+  apiOverageRateMicros    BigInt   @default(0) @map("api_overage_rate_micros")
+  walletOverageRateMicros BigInt   @default(0) @map("wallet_overage_rate_micros")
+  effectiveFrom           DateTime @map("effective_from") @db.Timestamptz()
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tiers       BillingPlanTier[]
+  assignments BillingPlanAssignment[]
+  invoices    BillingInvoice[]
+
+  @@unique([code, version])
+  @@map("billing_plan_versions")
+}
+
+model BillingPlanTier {
+  id               String  @id @default(uuid()) @db.Uuid
+  planVersionId    String  @map("plan_version_id") @db.Uuid
+  lowerBoundMicros BigInt  @map("lower_bound_micros")
+  upperBoundMicros BigInt? @map("upper_bound_micros")
+  ratePpm          Int     @map("rate_ppm")
+
+  plan BillingPlanVersion @relation(fields: [planVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([planVersionId, lowerBoundMicros])
+  @@map("billing_plan_tiers")
+}
+
+model BillingPlanAssignment {
+  id               String   @id @default(uuid()) @db.Uuid
+  billingAccountId String   @map("billing_account_id") @db.Uuid
+  planVersionId    String   @map("plan_version_id") @db.Uuid
+  periodStart      DateTime @map("period_start") @db.Timestamptz()
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  billingAccount BillingAccount     @relation(fields: [billingAccountId], references: [id])
+  planVersion    BillingPlanVersion @relation(fields: [planVersionId], references: [id])
+
+  @@unique([billingAccountId, periodStart])
+  @@index([planVersionId])
+  @@index([billingAccountId, periodStart])
+  @@map("billing_plan_assignments")
+}
+
+model BillingUsageEvent {
+  id               String             @id @default(uuid()) @db.Uuid
+  billingAccountId String             @map("billing_account_id") @db.Uuid
+  metric           BillingUsageMetric @map("metric")
+  sourceKey        String             @unique @map("source_key") @db.VarChar(255)
+  periodStart      DateTime           @map("period_start") @db.Timestamptz()
+  occurredAt       DateTime           @map("occurred_at") @db.Timestamptz()
+  quantity         BigInt             @default(1) @map("quantity")
+  volumeUsdMicros  BigInt             @default(0) @map("volume_usd_micros")
+  transactionId    String?            @map("transaction_id") @db.Uuid
+  requestId        String?            @map("request_id") @db.VarChar(64)
+  endpoint         String?            @map("endpoint") @db.VarChar(120)
+  statusCode       Int?               @map("status_code")
+  metadata         Json?              @map("metadata")
+
+  billingAccount BillingAccount @relation(fields: [billingAccountId], references: [id])
+  transaction    Transaction?   @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@index([billingAccountId, periodStart, metric])
+  @@index([transactionId])
+  @@map("billing_usage_events")
+}
+
+model BillingInvoice {
+  id                     String               @id @default(uuid()) @db.Uuid
+  billingAccountId       String               @map("billing_account_id") @db.Uuid
+  planVersionId          String               @map("plan_version_id") @db.Uuid
+  periodStart            DateTime             @map("period_start") @db.Timestamptz()
+  periodEnd              DateTime             @map("period_end") @db.Timestamptz()
+  status                 BillingInvoiceStatus @default(open) @map("status")
+  currency               String               @default("USD") @map("currency") @db.VarChar(10)
+  grossOutboundMicros    BigInt               @default(0) @map("gross_outbound_micros")
+  includedOutboundMicros BigInt?              @map("included_outbound_micros")
+  billableOutboundMicros BigInt               @default(0) @map("billable_outbound_micros")
+  apiCalls               BigInt               @default(0) @map("api_calls")
+  includedApiCalls       BigInt?              @map("included_api_calls")
+  activeWallets          Int                  @default(0) @map("active_wallets")
+  includedWallets        Int?                 @map("included_wallets")
+  monthlyFeeMicros       BigInt               @default(0) @map("monthly_fee_micros")
+  outboundOverageMicros  BigInt               @default(0) @map("outbound_overage_micros")
+  apiOverageMicros       BigInt               @default(0) @map("api_overage_micros")
+  walletOverageMicros    BigInt               @default(0) @map("wallet_overage_micros")
+  totalMicros            BigInt               @default(0) @map("total_micros")
+  snapshotJson           Json                 @map("snapshot_json")
+  snapshotHash           String               @map("snapshot_hash") @db.VarChar(64)
+  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  finalizedAt            DateTime?            @map("finalized_at") @db.Timestamptz()
+
+  billingAccount BillingAccount       @relation(fields: [billingAccountId], references: [id])
+  planVersion    BillingPlanVersion   @relation(fields: [planVersionId], references: [id])
+  lines          BillingInvoiceLine[]
+
+  @@unique([billingAccountId, periodStart])
+  @@index([billingAccountId, periodStart, periodEnd])
+  @@map("billing_invoices")
+}
+
+model BillingInvoiceLine {
+  id               String  @id @default(uuid()) @db.Uuid
+  invoiceId        String  @map("invoice_id") @db.Uuid
+  lineType         String  @map("line_type") @db.VarChar(40)
+  description      String  @map("description") @db.VarChar(255)
+  quantity         BigInt  @default(0) @map("quantity")
+  unitRatePpm      Int?    @map("unit_rate_ppm")
+  unitAmountMicros BigInt? @map("unit_amount_micros")
+  amountMicros     BigInt  @map("amount_micros")
+  metadata         Json?   @map("metadata")
+
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("billing_invoice_lines")
 }

@@ -7,9 +7,10 @@ import { StepUpModule } from '../step-up/step-up.module';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
 import { SessionKeyModule } from '../session-key/session-key.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
-  imports: [StepUpModule, SecurityEventModule, EoaExecutionModule, SessionKeyModule],
+  imports: [StepUpModule, SecurityEventModule, EoaExecutionModule, SessionKeyModule, BillingModule],
   controllers: [WalletController],
   providers: [WalletService, WithdrawalPolicyService, SigningPolicyService],
 })
