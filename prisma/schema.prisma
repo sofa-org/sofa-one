@@ -11,52 +11,94 @@ model User {
   socialProvider String   @map("social_provider") @db.VarChar(20)
   socialId       String   @unique @map("social_id") @db.VarChar(255)
   email          String?  @db.VarChar(255)
+  frozenAt       DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason   String?  @map("frozen_reason") @db.VarChar(255)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   wallet          UserWallet?
+  withdrawalPolicy WithdrawalPolicy?
+  withdrawalAddresses WithdrawalAddress[]
   apiKeys         ApiKey[]
   apiKeyEvents    ApiKeyEvent[]
+  securityEvents  SecurityEvent[]
+  securityNotifications SecurityNotification[]
   transactions    Transaction[]
-  policies        UserPolicy[]
   signingRequests SigningRequest[]
+  stepUpChallenges StepUpChallenge[]
+  mfaTotpCredential UserMfaTotpCredential?
+  knownIps         UserKnownIp[]
 
   @@map("users")
 }
 
 model UserWallet {
-  id                String   @id @default(uuid()) @db.Uuid
-  userId            String   @unique @map("user_id") @db.Uuid
-  openfortAccountId String?  @unique @map("openfort_account_id") @db.VarChar(255)
-  walletAddress     String?  @unique @map("wallet_address") @db.VarChar(42)
-  chainId           BigInt   @map("chain_id")
-  status            String   @default("active") @db.VarChar(20)
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id                     String    @id @default(uuid()) @db.Uuid
+  userId                 String    @unique @map("user_id") @db.Uuid
+  openfortAccountId      String?   @unique @map("openfort_account_id") @db.VarChar(255)
+  walletAddress          String?   @unique @map("wallet_address") @db.VarChar(42)
+  status                 String    @default("active") @db.VarChar(30)
+  agentOpenfortAccountId String?   @unique @map("agent_openfort_account_id") @db.VarChar(255)
+  agentWalletAddress     String?   @unique @map("agent_wallet_address") @db.VarChar(42)
+  agentKeyHash           String?   @map("agent_key_hash") @db.VarChar(66)
+  frozenAt               DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason           String?   @map("frozen_reason") @db.VarChar(255)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
-  user User @relation(fields: [userId], references: [id])
+  user                User                       @relation(fields: [userId], references: [id])
+  chainAuthorizations WalletChainAuthorization[]
+  securityEvents      SecurityEvent[]
 
+  @@index([userId, frozenAt])
   @@map("user_wallets")
 }
 
+model WalletChainAuthorization {
+  walletId           String    @map("wallet_id") @db.Uuid
+  chainId            BigInt    @map("chain_id")
+  status             String    @db.VarChar(30)
+  registrationTxHash String?   @map("registration_tx_hash") @db.VarChar(66)
+  expiresAt          DateTime? @map("expires_at") @db.Timestamptz()
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  wallet UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@id([walletId, chainId])
+  @@map("wallet_chain_authorizations")
+}
+
 model ApiKey {
-  id            String    @id @default(uuid()) @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  apiKeyHash    String    @map("api_key_hash") @db.Text
-  keyPrefix     String    @map("key_prefix") @db.VarChar(32)
-  name          String?   @db.VarChar(100)
-  expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
-  revoked       Boolean   @default(false)
-  allowedIps    String[]  @map("allowed_ips")
-  allowedChains Int[]     @default([84532]) @map("allowed_chains")
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz()
+  id                       String    @id @default(uuid()) @db.Uuid
+  userId                   String    @map("user_id") @db.Uuid
+  apiKeyHash               String    @map("api_key_hash") @db.Text
+  keyPrefix                String    @map("key_prefix") @db.VarChar(32)
+  name                     String?   @db.VarChar(100)
+  expiresAt                DateTime? @map("expires_at") @db.Timestamptz()
+  revoked                  Boolean   @default(false)
+  frozenAt                 DateTime? @map("frozen_at") @db.Timestamptz()
+  frozenReason             String?   @map("frozen_reason") @db.VarChar(255)
+  canSign                  Boolean   @default(false) @map("can_sign")
+  canSendTransaction       Boolean   @default(false) @map("can_send_transaction")
+  canReadTransactionStatus Boolean   @default(true) @map("can_read_transaction_status")
+  canUseEoaExecution       Boolean   @default(false) @map("can_use_eoa_execution")
+  allowedIps               String[]  @map("allowed_ips")
+  allowedContracts         String[]  @default([]) @map("allowed_contracts")
+  allowedFunctionSelectors String[]  @default([]) @map("allowed_function_selectors")
+  dailySpendLimit          String?   @map("daily_spend_limit") @db.VarChar(40)
+  monthlySpendLimit        String?   @map("monthly_spend_limit") @db.VarChar(40)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastUsedAt               DateTime? @map("last_used_at") @db.Timestamptz()
+  lastUsedIp               String?   @map("last_used_ip") @db.VarChar(64)
+  lastUsedUserAgent        String?   @map("last_used_user_agent") @db.VarChar(255)
 
   user            User             @relation(fields: [userId], references: [id])
   signingRequests SigningRequest[]
   transactions    Transaction[]
   events          ApiKeyEvent[]
+  securityEvents  SecurityEvent[]
 
   @@index([keyPrefix])
   @@index([userId, revoked])
+  @@index([userId, frozenAt])
   @@index([userId])
   @@map("api_keys")
 }
@@ -77,6 +119,86 @@ model ApiKeyEvent {
   @@index([userId, createdAt])
   @@index([apiKeyId, createdAt])
   @@map("api_key_events")
+}
+
+model SecurityEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorType  String   @map("actor_type") @db.VarChar(20)
+  userId     String?  @map("user_id") @db.Uuid
+  apiKeyId   String?  @map("api_key_id") @db.Uuid
+  walletId   String?  @map("wallet_id") @db.Uuid
+  eventType  String   @map("event_type") @db.VarChar(80)
+  riskLevel  String   @default("low") @map("risk_level") @db.VarChar(20)
+  ip         String?  @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  requestId  String?  @map("request_id") @db.VarChar(64)
+  result     String?  @db.VarChar(20)
+  reason     String?  @db.VarChar(255)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKey ApiKey?     @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  wallet UserWallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  notifications SecurityNotification[]
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([riskLevel, createdAt])
+  @@map("security_events")
+}
+
+model SecurityNotification {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  securityEventId String?   @map("security_event_id") @db.Uuid
+  type            String    @db.VarChar(80)
+  title           String    @db.VarChar(120)
+  body            String    @db.VarChar(500)
+  riskLevel       String    @default("medium") @map("risk_level") @db.VarChar(20)
+  readAt          DateTime? @map("read_at") @db.Timestamptz()
+  metadata        Json?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  securityEvent SecurityEvent? @relation(fields: [securityEventId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+  @@index([securityEventId])
+  @@map("security_notifications")
+}
+
+model WithdrawalPolicy {
+  id                       String   @id @default(uuid()) @db.Uuid
+  userId                   String   @unique @map("user_id") @db.Uuid
+  singleWithdrawalLimit    String   @default("10000000000") @map("single_withdrawal_limit") @db.VarChar(40)
+  dailyWithdrawalLimit     String?  @map("daily_withdrawal_limit") @db.VarChar(40)
+  requireAddressAllowlist  Boolean  @default(false) @map("require_address_allowlist")
+  newAddressCooldownHours  Int      @default(24) @map("new_address_cooldown_hours")
+  requireStepUp            Boolean  @default(true) @map("require_step_up")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_policies")
+}
+
+model WithdrawalAddress {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  address     String   @db.VarChar(42)
+  label       String?  @db.VarChar(100)
+  availableAt DateTime @map("available_at") @db.Timestamptz()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+  @@index([userId, availableAt])
+  @@map("withdrawal_addresses")
 }
 
 model Transaction {
@@ -126,7 +248,7 @@ model SigningRequest {
   completedAt   DateTime? @map("completed_at") @db.Timestamptz()
 
   user   User    @relation(fields: [userId], references: [id])
-  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([apiKeyId, createdAt])
@@ -134,14 +256,63 @@ model SigningRequest {
   @@map("signing_requests")
 }
 
-model UserPolicy {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @map("user_id") @db.Uuid
-  openfortPolicyId String   @map("openfort_policy_id") @db.VarChar(255)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+model UserKnownIp {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  ip        String   @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, openfortPolicyId])
-  @@map("user_policies")
+  @@unique([userId, ip])
+  @@index([userId])
+  @@map("user_known_ips")
+}
+
+model StepUpChallenge {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  type              String    @db.VarChar(20)
+  challengeCodeHash String    @map("challenge_code_hash") @db.Text
+  proofToken        String?   @map("proof_token") @db.VarChar(64)
+  verified          Boolean   @default(false)
+  attempts          Int       @default(0)
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz()
+  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz()
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([proofToken])
+  @@index([userId, createdAt])
+  @@map("step_up_challenges")
+}
+
+model UserMfaTotpCredential {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  encryptedSecret String   @map("encrypted_secret") @db.Text
+  status          String   @default("pending") @db.VarChar(20)
+  enabledAt       DateTime? @map("enabled_at") @db.Timestamptz()
+  disabledAt      DateTime? @map("disabled_at") @db.Timestamptz()
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recoveryCodes UserMfaTotpRecoveryCode[]
+
+  @@map("user_mfa_totp_credentials")
+}
+
+model UserMfaTotpRecoveryCode {
+  id           String   @id @default(uuid()) @db.Uuid
+  credentialId  String   @map("credential_id") @db.Uuid
+  codeHash     String   @map("code_hash") @db.Text
+  usedAt       DateTime? @map("used_at") @db.Timestamptz()
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  credential UserMfaTotpCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@index([credentialId, usedAt])
+  @@map("user_mfa_totp_recovery_codes")
 }

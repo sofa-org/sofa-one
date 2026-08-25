@@ -13,6 +13,10 @@ describe('isIpAllowed', () => {
     it('allows when one of several entries matches', () => {
       expect(isIpAllowed('10.0.0.1', ['192.168.1.1', '10.0.0.1'])).toBe(true);
     });
+
+    it('allows exact IPv6 matches with normalized forms', () => {
+      expect(isIpAllowed('2001:db8::1', ['2001:0db8:0:0:0:0:0:1'])).toBe(true);
+    });
   });
 
   describe('CIDR matching', () => {
@@ -41,6 +45,19 @@ describe('isIpAllowed', () => {
     it('allows the broadcast address', () => {
       expect(isIpAllowed('192.168.255.255', ['192.168.0.0/16'])).toBe(true);
     });
+
+    it('allows IPv6 addresses inside an IPv6 CIDR range', () => {
+      expect(isIpAllowed('2001:db8::abcd', ['2001:db8::/64'])).toBe(true);
+    });
+
+    it('rejects IPv6 addresses outside an IPv6 CIDR range', () => {
+      expect(isIpAllowed('2001:db8:1::1', ['2001:db8::/64'])).toBe(false);
+    });
+
+    it('supports IPv6 host CIDR ranges', () => {
+      expect(isIpAllowed('2001:db8::1', ['2001:db8::1/128'])).toBe(true);
+      expect(isIpAllowed('2001:db8::2', ['2001:db8::1/128'])).toBe(false);
+    });
   });
 
   describe('invalid inputs', () => {
@@ -54,6 +71,18 @@ describe('isIpAllowed', () => {
 
     it('returns false when the client IP is not a valid IPv4', () => {
       expect(isIpAllowed('not-an-ip', ['10.0.0.0/8'])).toBe(false);
+    });
+
+    it('returns false for IP version mismatches', () => {
+      expect(isIpAllowed('2001:db8::1', ['0.0.0.0/0'])).toBe(false);
+      expect(isIpAllowed('192.0.2.1', ['2001:db8::/32'])).toBe(false);
+    });
+
+    it('fails closed for malformed CIDR allowlist entries', () => {
+      expect(isIpAllowed('10.0.0.1', ['10.0.0.0/24/extra'])).toBe(false);
+      expect(isIpAllowed('10.0.0.1', ['10.0.0.0/24extra'])).toBe(false);
+      expect(isIpAllowed('10.0.0.1', ['999.0.0.0/8'])).toBe(false);
+      expect(isIpAllowed('2001:db8::1', ['2001:db8::/129'])).toBe(false);
     });
 
     it('returns false for an empty allowlist', () => {

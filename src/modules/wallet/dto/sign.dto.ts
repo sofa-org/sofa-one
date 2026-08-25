@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 
 export type SignMessage = string | { raw: `0x${string}` };
+export type ExecutionMode = 'session_key' | 'eoa';
 
 function isSignMessage(value: unknown): value is SignMessage {
   if (typeof value === 'string') return value.length > 0;
@@ -38,7 +39,14 @@ function IsSignMessage(validationOptions?: ValidationOptions) {
 }
 
 export class SignDto {
-  /** Chain context for API-key authorization. Required for API-key message signing. */
+  /** Which backend wallet authority signs: session key (default) or the user's EOA backend wallet. */
+  @IsOptional()
+  @IsIn(['session_key', 'eoa'], {
+    message: 'executionMode must be session_key or eoa',
+  })
+  executionMode?: ExecutionMode;
+
+  /** Chain context for API-key authorization. Required for message signing; optional for typed data when domain.chainId is present. */
   @IsOptional()
   @IsInt()
   @Min(1)

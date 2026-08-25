@@ -1,7 +1,34 @@
-import { BadGatewayException, Injectable, Logger, Optional } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
+import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
+import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { getCode, getTransactionReceipt } from 'viem/actions';
+import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
+import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
+import { sanitizeErrorMessage } from '../../common/utils/sanitize';
+import {
+  CALIBUR_ADDRESSES,
+  createCaliburSessionAccount,
+  getAgentKeyUsabilityFailure,
+  getCaliburKeySettings,
+  hasCaliburDelegation,
+  hashKey,
+  isCaliburKeyRegistered,
+  KeyType,
+} from '../../common/calibur/calibur';
 
 @Injectable()
 export class OpenfortService {
@@ -15,7 +42,10 @@ export class OpenfortService {
   ) {
     this.client = new Openfort(this.configService.getOrThrow<string>('openfort.apiKey'), {
       walletSecret: this.configService.getOrThrow<string>('openfort.walletSecret'),
-    });
+      ...(this.configService.get<string>('openfort.publishableKey') && {
+        publishableKey: this.configService.get<string>('openfort.publishableKey'),
+      }),
+    } as any);
     this.timeoutMs = this.configService.get<number>('openfort.timeoutMs', 15000);
   }
 
@@ -33,140 +63,471 @@ export class OpenfortService {
     }
   }
 
-  // ─── Policy management ────────────────────────────────────────────────────
-
-  async listPolicies() {
-    return await this.withTimeout(this.client.policies.list(), 'listPolicies');
+  /** Create a backend agent signer that will act as a Calibur session key. */
+  async createAgentWallet(): Promise<{ id: string; address: string; keyHash: Hex }> {
+    const account = await this.createBackendWallet();
+    return {
+      ...account,
+      keyHash: this.computeSecp256k1KeyHash(account.address),
+    };
   }
 
-  async createPolicy(params: {
-    scope: string;
-    accountId?: string;
-    description?: string;
-    enabled?: boolean;
-    rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
+  async verifyIamSession(accessToken: string): Promise<{
+    openfortUserId: string;
+    email?: string;
+    session: unknown;
+  }> {
+    try {
+      const session = (await this.withTimeout(
+        (this.client as any).iam.getSession({ accessToken }),
+        'getOpenfortIamSession',
+      )) as any;
+      const openfortUserId = session?.user?.id ?? session?.id;
+      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+
+      const email =
+        session?.user?.email ??
+        session?.user?.emailAddress ??
+        session?.email ??
+        session?.emailAddress ??
+        undefined;
+
+      return { openfortUserId, email, session };
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('verifyIamSession', error);
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  async authorizeEmbeddedAddress(
+    accessToken: string,
+    walletAddress: string,
+  ): Promise<{ openfortUserId: string; accountId?: string; address: Address }> {
+    try {
+      const { openfortUserId } = await this.verifyIamSession(accessToken);
+
+      const normalizedAddress = getAddress(walletAddress);
+      const accountsResult = (await this.withTimeout(
+        (this.client as any).accounts.list({ user: openfortUserId }),
+        'listOpenfortUserAccounts',
+      )) as
+        | { data?: Array<{ id?: string; address?: string }> }
+        | Array<{ id?: string; address?: string }>;
+      const accounts = Array.isArray(accountsResult) ? accountsResult : (accountsResult.data ?? []);
+      const account = accounts.find((candidate) => {
+        if (!candidate.address) return false;
+        try {
+          return getAddress(candidate.address) === normalizedAddress;
+        } catch {
+          return false;
+        }
+      });
+
+      if (!account) throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
+      return { openfortUserId, accountId: account.id, address: normalizedAddress };
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('authorizeEmbeddedAddress', error);
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  computeSecp256k1KeyHash(agentAddress: string): Hex {
+    return hashKey({
+      keyType: KeyType.Secp256k1,
+      publicKey: padHex(getAddress(agentAddress), { size: 32 }),
+    });
+  }
+
+  async verifyAgentKeyRegistration(params: {
+    accountAddress: string;
+    chainId: number;
+    keyHash: string;
+  }): Promise<void> {
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const client = createClient({ chain, transport: http() });
+      const accountAddress = getAddress(params.accountAddress);
+      const keyHash = params.keyHash as Hex;
+
+      const delegatedToCalibur = await hasCaliburDelegation(client, accountAddress);
+      if (!delegatedToCalibur) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.AGENT_REGISTRATION_PENDING,
+          message: 'Agent registration is still pending on-chain',
+        });
+      }
+
+      const registered = await isCaliburKeyRegistered(client, accountAddress, keyHash);
+      if (!registered) {
+        throw new ForbiddenException('Agent key is not registered on Calibur account');
+      }
+
+      const settings = await getCaliburKeySettings(client, accountAddress, keyHash);
+      const failure = getAgentKeyUsabilityFailure(settings);
+      if (failure) throw new ForbiddenException(failure);
+    } catch (error: any) {
+      if (error instanceof ConflictException || error instanceof ForbiddenException) throw error;
+      this.logOpenfortError('verifyAgentKeyRegistration', error, {
+        chainId: params.chainId,
+      });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  async getTransactionReceiptStatus(
+    chainId: number,
+    txHash: string,
+  ): Promise<'success' | 'reverted' | null> {
+    try {
+      const { chain } = getSupportedChain(chainId);
+      const client = createClient({ chain, transport: http() });
+      const receipt = await getTransactionReceipt(client, { hash: txHash as Hex });
+      return receipt.status ?? null;
+    } catch (error: any) {
+      const message = String(error?.message ?? '');
+      if (message.includes('Transaction receipt not found') || message.includes('not found')) {
+        return null;
+      }
+      this.logOpenfortError('getTransactionReceiptStatus', error, { chainId, txHash });
+      throw new BadGatewayException('Wallet service temporarily unavailable');
+    }
+  }
+
+  /** Execute calls from the user's Calibur account with the registered backend agent key. */
+  async sendUserOperation(params: {
+    agentAccountId: string;
+    accountAddress: string;
+    chainId: number;
+    keyHash: string;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+    sponsorship?: 'required' | 'none';
+  }): Promise<{ userOpHash: string; transactionHash: string | null }> {
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const usesPimlico = isMonadChain(params.chainId);
+      const publishableKey = this.configService.get<string>('openfort.publishableKey');
+      if (!usesPimlico && !publishableKey) {
+        throw new ServiceUnavailableException('Openfort publishable key is required for UserOps');
+      }
+      const backendAccount = (await this.withTimeout(
+        this.client.accounts.evm.backend.get({ id: params.agentAccountId }),
+        'getAgentWallet',
+      )) as any;
+      const signer = toAccount({
+        address: getAddress(backendAccount.address),
+        sign: ({ hash }: { hash: Hex }) => backendAccount.sign({ hash }),
+        signMessage: (args) => backendAccount.signMessage(args),
+        signTransaction: (args) => backendAccount.signTransaction(args),
+        signTypedData: (typedData) => backendAccount.signTypedData(typedData),
+      });
+      const client = createClient({ chain, transport: http() });
+      const sessionAccount = await createCaliburSessionAccount({
+        client,
+        signer,
+        accountAddress: getAddress(params.accountAddress),
+        keyHash: params.keyHash as Hex,
+      });
+      if (usesPimlico && params.sponsorship === 'required') {
+        throw new ServiceUnavailableException(
+          'Openfort fee sponsorship is not available for Monad UserOperations',
+        );
+      }
+      const sponsorshipMode = usesPimlico ? 'none' : (params.sponsorship ?? 'none');
+      const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
+      await this.assertCaliburContractAvailable(client, params.chainId);
+      const gasPrice = await this.estimateUserOperationFees(rpc);
+      const bundlerTransport = http(
+        rpc.url,
+        rpc.authorizationHeader
+          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
+          : undefined,
+      );
+      const submission = await this.sendUserOperationWithSponsorship({
+        account: sessionAccount,
+        chain,
+        client,
+        transport: bundlerTransport,
+        interactions: params.interactions,
+        sponsorshipMode,
+        chainId: params.chainId,
+        gasPrice,
+      });
+      const receipt = (await submission.bundlerClient.waitForUserOperationReceipt({
+        hash: submission.hash as Hex,
+      })) as any;
+      return {
+        userOpHash: submission.hash,
+        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
+      };
+    } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (params.sponsorship === 'required' && this.isMissingPaymasterPolicyError(error)) {
+        throw this.createPaymasterPolicyException(params.chainId);
+      }
+      this.logOpenfortError('sendUserOperation', error, {
+        chainId: params.chainId,
+        interactionCount: params.interactions.length,
+      });
+      throw this.createOpenfortApiException('sendUserOperation', error);
+    }
+  }
+
+  private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
+    for (const address of CALIBUR_ADDRESSES) {
+      const code = await getCode(client, { address });
+      if (code && code !== '0x') {
+        return;
+      }
+    }
+
+    throw new ServiceUnavailableException(
+      `Calibur is not deployed on chain ${chainId}; EIP-7702 authorization is unavailable for this network.`,
+    );
+  }
+
+  private createBundlerClient(params: {
+    account: any;
+    chain: any;
+    client: any;
+    transport: any;
+    includePaymaster: boolean;
   }) {
-    return await this.withTimeout(
-      this.client.policies.create({
-        scope: params.scope as any,
-        ...(params.accountId !== undefined && { accountId: params.accountId }),
-        description: params.description,
-        enabled: params.enabled,
-        rules: (params.rules ?? []) as any,
+    return createBundlerClient({
+      account: params.account,
+      chain: params.chain,
+      client: params.client,
+      ...(params.includePaymaster
+        ? { paymaster: createPaymasterClient({ transport: params.transport }) }
+        : {}),
+      transport: params.transport,
+    } as any);
+  }
+
+  private async sendUserOperationWithSponsorship(params: {
+    account: any;
+    chain: any;
+    client: any;
+    transport: any;
+    interactions: Array<{ to: string; data: string; value?: string }>;
+    sponsorshipMode: 'required' | 'none';
+    chainId: number;
+    gasPrice: UserOperationGasPrice;
+  }): Promise<{ hash: string; bundlerClient: any }> {
+    const calls = params.interactions.map((interaction) => ({
+      to: getAddress(interaction.to),
+      data: interaction.data as Hex,
+      value: interaction.value ? BigInt(interaction.value) : 0n,
+    }));
+    if (params.sponsorshipMode === 'none') {
+      const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: false });
+      const gasLimits = await this.estimateUnsponsoredUserOperationGas(bundlerClient, {
+        account: params.account,
+        calls,
+        maxFeePerGas: params.gasPrice.maxFeePerGas,
+        maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+      });
+      return {
+        hash: await bundlerClient.sendUserOperation({
+          account: params.account,
+          calls,
+          ...gasLimits,
+          maxFeePerGas: params.gasPrice.maxFeePerGas,
+          maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+        } as any),
+        bundlerClient,
+      };
+    }
+
+    const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
+    return {
+      hash: await bundlerClient.sendUserOperation({
+        account: params.account,
+        calls,
+        maxFeePerGas: params.gasPrice.maxFeePerGas,
+        maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
+      } as any),
+      bundlerClient,
+    };
+  }
+
+  private async estimateUserOperationFees(params: {
+    url: string;
+    gasPriceMethod: string;
+    authorizationHeader?: string;
+    providerName: string;
+  }): Promise<UserOperationGasPrice> {
+    const response = await this.withTimeout(
+      fetch(params.url, {
+        method: 'POST',
+        headers: {
+          ...(params.authorizationHeader ? { Authorization: params.authorizationHeader } : {}),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: params.gasPriceMethod,
+          params: [],
+        }),
       }),
-      'createPolicy',
+      'estimateUserOperationFees',
     );
+
+    if (!response.ok) {
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
+    }
+
+    const payload = (await response.json()) as OpenfortGasPriceRpcResponse;
+    if (payload.error) {
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
+    }
+
+    const recommendedFees = this.selectOpenfortUserOperationGasPrice(payload.result);
+
+    if (!recommendedFees?.maxFeePerGas || !recommendedFees?.maxPriorityFeePerGas) {
+      throw new Error(
+        `Unable to estimate UserOperation fee parameters from ${params.providerName} RPC`,
+      );
+    }
+
+    return {
+      maxFeePerGas: recommendedFees.maxFeePerGas,
+      maxPriorityFeePerGas: recommendedFees.maxPriorityFeePerGas,
+    };
   }
 
-  async getPolicy(id: string) {
-    return await this.withTimeout(this.client.policies.get(id), 'getPolicy');
+  private getUserOperationRpc(chainId: number, publishableKey?: string) {
+    if (!isMonadChain(chainId)) {
+      return {
+        url: `https://api.openfort.io/rpc/${chainId}`,
+        authorizationHeader: `Bearer ${publishableKey}`,
+        gasPriceMethod: 'openfort_getUserOperationGasPrice',
+        providerName: 'Openfort',
+      };
+    }
+
+    return {
+      url: this.getMonadPimlicoRpcUrl(chainId),
+      gasPriceMethod: 'pimlico_getUserOperationGasPrice',
+      providerName: 'Pimlico',
+    };
   }
 
-  async updatePolicy(
-    id: string,
-    params: {
-      description?: string;
-      enabled?: boolean;
-      rules?: Array<{ action: string; operation: string; criteria?: Record<string, unknown>[] }>;
+  private getMonadPimlicoRpcUrl(chainId: number): string {
+    const override = this.configService.get<string>(`pimlico.rpcUrls.${chainId}`);
+    if (override) return override;
+
+    const apiKey = this.configService.get<string>('pimlico.apiKey');
+    if (!apiKey) {
+      throw new ServiceUnavailableException('Pimlico API key is required for Monad UserOperations');
+    }
+    return `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${encodeURIComponent(apiKey)}`;
+  }
+
+  private selectOpenfortUserOperationGasPrice(
+    result: OpenfortGasPriceRpcResult | undefined,
+  ): UserOperationGasPrice | null {
+    const candidate = result?.fast ?? result?.standard ?? result;
+    const maxFeePerGas = this.parseRpcBigInt(candidate?.maxFeePerGas);
+    const maxPriorityFeePerGas = this.parseRpcBigInt(candidate?.maxPriorityFeePerGas);
+    if (!maxFeePerGas || !maxPriorityFeePerGas) return null;
+    return { maxFeePerGas, maxPriorityFeePerGas };
+  }
+
+  private parseRpcBigInt(value: unknown): bigint | null {
+    if (typeof value === 'bigint') return value;
+    if (typeof value !== 'string' && typeof value !== 'number') return null;
+    const text = String(value).trim();
+    if (/^0x[0-9a-fA-F]+$/.test(text)) return BigInt(text);
+    if (/^\d+$/.test(text)) return BigInt(text);
+    return null;
+  }
+
+  private async estimateUnsponsoredUserOperationGas(
+    bundlerClient: any,
+    request: {
+      account: any;
+      calls: Array<{ to: Address; data: Hex; value: bigint }>;
+      maxFeePerGas: bigint;
+      maxPriorityFeePerGas: bigint;
     },
-  ) {
-    return await this.withTimeout(
-      this.client.policies.update(id, {
-        description: params.description,
-        enabled: params.enabled,
-        ...(params.rules !== undefined && { rules: params.rules as any }),
-      }),
-      'updatePolicy',
+  ): Promise<UserOperationGasLimits> {
+    const gas = (await this.withTimeout(
+      bundlerClient.estimateUserOperationGas(request),
+      'estimateUserOperationGas',
+    )) as Partial<UserOperationGasLimits> & Record<string, unknown>;
+
+    if (
+      gas.callGasLimit === undefined ||
+      gas.verificationGasLimit === undefined ||
+      gas.preVerificationGas === undefined
+    ) {
+      throw new Error('Unable to estimate UserOperation gas limits from bundler');
+    }
+
+    return {
+      callGasLimit: gas.callGasLimit,
+      verificationGasLimit: gas.verificationGasLimit,
+      preVerificationGas: gas.preVerificationGas,
+    };
+  }
+
+  private isMissingPaymasterPolicyError(error: any): boolean {
+    const text =
+      `${error?.message ?? ''} ${error?.details ?? ''} ${error?.cause?.message ?? ''}`.toLowerCase();
+    return (
+      text.includes('no matching project-scoped policy found') || text.includes('paymaster policy')
     );
   }
 
-  async deletePolicy(id: string) {
-    return await this.withTimeout(this.client.policies.delete(id), 'deletePolicy');
-  }
-
-  async enablePolicy(id: string) {
-    return await this.withTimeout(
-      this.client.policies.update(id, { enabled: true }),
-      'enablePolicy',
+  private createPaymasterPolicyException(chainId: number) {
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.PAYMASTER_POLICY_NOT_CONFIGURED,
+        message: `No gas sponsorship policy is configured for chainId ${chainId}.`,
+      },
+      HttpStatus.FAILED_DEPENDENCY,
     );
   }
 
-  async disablePolicy(id: string) {
-    return await this.withTimeout(
-      this.client.policies.update(id, { enabled: false }),
-      'disablePolicy',
-    );
-  }
-
-  // ─── Policy rules management ──────────────────────────────────────────────
-
-  async listPolicyRules(policyId: string): Promise<any> {
-    const policy = await this.withTimeout(this.client.policies.get(policyId), 'listPolicyRules');
-    return (policy as any).rules ?? [];
-  }
-
-  async createPolicyRule(
-    policyId: string,
-    rule: { action: string; operation: string; criteria?: Record<string, unknown>[] },
-  ): Promise<any> {
-    const policy = await this.withTimeout(
-      this.client.policies.get(policyId),
-      'getPolicyForRuleCreate',
-    );
-    const existingRules: any[] = (policy as any).rules ?? [];
-    return await this.withTimeout(
-      this.client.policies.update(policyId, {
-        rules: [...existingRules, rule] as any,
-      }),
-      'createPolicyRule',
-    );
-  }
-
-  async deletePolicyRule(policyId: string, ruleIndex: number): Promise<any> {
-    const policy = await this.withTimeout(
-      this.client.policies.get(policyId),
-      'getPolicyForRuleDelete',
-    );
-    const existingRules: any[] = (policy as any).rules ?? [];
-    const filteredRules = existingRules.filter((_: any, i: number) => i !== ruleIndex);
-    return await this.withTimeout(
-      this.client.policies.update(policyId, { rules: filteredRules as any }),
-      'deletePolicyRule',
-    );
-  }
-
-  /** Send a raw transaction via a backend wallet (EIP-7702 auto-delegation). */
-  async sendTransaction(params: {
+  /** Execute calls directly from a backend EOA through Openfort. */
+  async sendBackendTransaction(params: {
     accountId: string;
     chainId: number;
     interactions: Array<{ to: string; data: string; value?: string }>;
-    policyId?: string;
   }): Promise<{ transactionHash: string | null }> {
     try {
       const account = await this.withTimeout(
         this.client.accounts.evm.backend.get({ id: params.accountId }),
         'getBackendWallet',
       );
-      const result = await this.withTimeout(
-        this.client.accounts.evm.backend.sendTransaction({
+      const result = (await this.withTimeout(
+        (this.client.accounts.evm.backend as any).sendTransaction({
           account,
           chainId: params.chainId,
-          interactions: params.interactions as any,
-          ...(params.policyId && { policy: params.policyId }),
+          interactions: params.interactions,
         }),
-        'sendTransaction',
-      );
-      const rawResult = result as any;
+        'sendBackendTransaction',
+      )) as any;
+
       return {
-        transactionHash: rawResult.response?.transactionHash ?? rawResult.transactionHash ?? null,
+        transactionHash:
+          result?.response?.transactionHash ?? result?.transactionHash ?? result?.hash ?? null,
       };
     } catch (error: any) {
-      this.logOpenfortError('sendTransaction', error, {
+      this.logOpenfortError('sendBackendTransaction', error, {
         chainId: params.chainId,
         interactionCount: params.interactions.length,
-        policyProvided: Boolean(params.policyId),
       });
-      throw new BadGatewayException('Wallet service temporarily unavailable');
+      throw this.createOpenfortApiException('sendBackendTransaction', error);
     }
   }
 
@@ -199,6 +560,123 @@ export class OpenfortService {
     );
   }
 
+  private createOpenfortApiException(operation: string, error: any): HttpException {
+    if (this.isTimeoutError(error)) {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE,
+          message: 'Wallet service unavailable: Openfort request timed out.',
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    if (operation === 'sendUserOperation') {
+      return this.createUserOperationException(error);
+    }
+
+    if (operation === 'sendBackendTransaction') {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.BACKEND_TRANSACTION_FAILED,
+          message: this.withSafeReason(
+            'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance.',
+            error,
+          ),
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE,
+        message: 'Wallet service unavailable: Openfort request failed.',
+      },
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+
+  private createUserOperationException(error: any): HttpException {
+    if (this.isGasPriceRecommendationError(error)) {
+      return new HttpException(
+        {
+          code: API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE,
+          message: 'Unable to estimate UserOperation fee parameters from Openfort RPC.',
+        },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    const message = this.getErrorText(error).toLowerCase();
+    const baseMessage = this.isGasFeeTooLowError(message)
+      ? 'UserOperation rejected by bundler: gas price is below the required network minimum.'
+      : message.includes('simulation') ||
+          message.includes('revert') ||
+          message.includes('unrecognized selector') ||
+          message.includes('execution reverted')
+        ? 'UserOperation rejected by bundler: simulation failed. Check target contract calldata and session key permissions.'
+        : 'UserOperation rejected by bundler. Check chainId, target contract calldata, value, gas sponsorship, and session key authorization.';
+
+    return new HttpException(
+      {
+        code: API_ERROR_CODES.USER_OPERATION_REJECTED,
+        message: this.withSafeReason(baseMessage, error),
+      },
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+
+  private isGasFeeTooLowError(message: string): boolean {
+    const mentionsFee =
+      message.includes('maxpriorityfeepergas') ||
+      message.includes('maxfeepergas') ||
+      message.includes('gas price');
+    const mentionsMinimum =
+      message.includes('at least') ||
+      message.includes('too low') ||
+      message.includes('underpriced') ||
+      message.includes('minimum');
+    return mentionsFee && mentionsMinimum;
+  }
+
+  private isTimeoutError(error: any): boolean {
+    return this.getErrorText(error).toLowerCase().includes('timed out');
+  }
+
+  private isGasPriceRecommendationError(error: any): boolean {
+    const text = this.getErrorText(error).toLowerCase();
+    return (
+      text.includes('useroperation fee') ||
+      text.includes('estimateuseroperationfees') ||
+      text.includes('estimate fees per gas')
+    );
+  }
+
+  private withSafeReason(message: string, error: any): string {
+    const reason = this.sanitizeExternalErrorMessage(error);
+    return reason ? `${message} Reason: ${reason}` : message;
+  }
+
+  private sanitizeExternalErrorMessage(error: any): string | null {
+    const text = this.getErrorText(error);
+    if (!text) return null;
+    return sanitizeErrorMessage(text, 240);
+  }
+
+  private getErrorText(error: any): string {
+    return [
+      error?.shortMessage,
+      error?.message,
+      error?.details,
+      error?.cause?.shortMessage,
+      error?.cause?.message,
+      error?.cause?.details,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
   private logContext(extra: Record<string, unknown>) {
     return this.requestContext?.getLogContext(extra) ?? extra;
   }
@@ -218,3 +696,29 @@ export class OpenfortService {
     }
   }
 }
+
+type UserOperationGasPrice = {
+  maxFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
+};
+
+type UserOperationGasLimits = {
+  callGasLimit: bigint;
+  verificationGasLimit: bigint;
+  preVerificationGas: bigint;
+};
+
+type OpenfortGasPriceRpcResponse = {
+  result?: OpenfortGasPriceRpcResult;
+  error?: unknown;
+};
+
+type OpenfortGasPriceRpcResult = Partial<UserOperationGasPriceLike> & {
+  standard?: UserOperationGasPriceLike;
+  fast?: UserOperationGasPriceLike;
+};
+
+type UserOperationGasPriceLike = {
+  maxFeePerGas?: bigint | number | string;
+  maxPriorityFeePerGas?: bigint | number | string;
+};

@@ -6,8 +6,9 @@ declare global {
       requestId?: string;
       user?: User;
       apiKeyRecord?: ApiKey & { user?: User };
-      clerkUserId?: string;
-      clerkPayload?: unknown;
+      openfortUserId?: string;
+      openfortEmail?: string;
+      openfortSession?: unknown;
     }
   }
 }

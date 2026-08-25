@@ -1,264 +1,101 @@
 # SOFA ONE
 
-Server-side automated blockchain signing for users authenticated via social OAuth. Users receive a Backend Wallet (managed in TEE via [Openfort](https://www.openfort.io/)) and an API Key for programmatic transaction submission.
+SOFA ONE is a NestJS API plus Vite/React SPA for server-side automated blockchain signing. Users authenticate with Openfort IAM email OTP / embedded wallet, authorize a backend agent signer on-chain, and create API keys for programmatic transaction submission.
 
-## Architecture
+## Documentation
 
-```
-[User Client]
-   ↓ Social OAuth (Google, Twitter/X, Discord, Apple)
-[Frontend — Vite + React SPA + Clerk]
-   ↓ HTTPS + JWT
-[Backend — NestJS]
-   ├── Auth Module        (Clerk social login + user provisioning)
-   ├── Wallet Module      (Openfort SDK — backend wallet lifecycle)
-   ├── Transaction Module (raw transaction submission + signing)
-   └── API Key Module     (generation, validation, rotation, revocation)
-   ↓
-[Openfort SDK → TEE]     [PostgreSQL + Redis]     [EVM Chains]
-  Private key custody      User/wallet/key store    Base · Ethereum
-```
+This repository keeps detailed guidance in focused top-level documents:
 
-### Key Properties
+| Document | Purpose |
+| --- | --- |
+| [REQUIREMENTS.md](./REQUIREMENTS.md) | Product scope, functional requirements, non-functional requirements, constraints, and current exclusions |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System boundaries, modules, data flow, trust model, and extension points |
+| [SECURITY.md](./SECURITY.md) | Key custody, auth model, API-key handling, logging, proxy/CORS, and incident rules |
+| [API.md](./API.md) | Human-readable API guide; `openapi.yaml` remains the public API-key spec |
+| [DATABASE.md](./DATABASE.md) | Prisma model overview, invariants, and migration workflow |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Environment variables, local infrastructure, production checklist, and runtime commands |
+| [RUNBOOK.md](./RUNBOOK.md) | Local development, common operations, checks, and troubleshooting |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Coding standards, module boundaries, testing, and documentation rules |
+| [PRICING.md](./PRICING.md) | Chinese pricing plan with free tier, outbound volume allowances, decreasing overage tiers, and plan-level service differences |
+| [SOFA_ONE.md](./SOFA_ONE.md) | Chinese external project introduction, positioning, supported chains, and value |
+| [SOFA_ONE_EN.md](./SOFA_ONE_EN.md) | English external project introduction, positioning, supported chains, and value |
+| [codemap.md](./codemap.md) | Generated repository atlas for code navigation |
 
-- **Private keys never leave the TEE** — all signing happens inside Openfort / AWS Nitro Enclaves.
-- **Split auth** — public signing/transaction APIs require `X-API-Key`; dashboard-only APIs require Clerk JWT plus frontend-origin checks.
-- **API keys hashed with Argon2** — never stored in plaintext; a 27-character lookup prefix (`sk_` + 24 hex chars) is stored for DB lookup, and every prefix candidate is hash-verified to tolerate collisions/legacy keys.
-- **Gas paid in USDC** — via Openfort `charge_custom_tokens` policy; users don't need native tokens.
+Historical design notes are archived under [`docs/archive/`](./docs/archive/) and are not current implementation guidance.
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Vite 6, React 19, React Router 7, Tailwind CSS 4, Clerk |
-| Backend | NestJS 10, TypeScript 5 |
-| Wallet Core | Openfort Node SDK |
-| Database | PostgreSQL 16, Prisma 5 |
-| Cache / Queue | Redis 7, BullMQ (Phase 2) |
-| Chains | Base (8453), Ethereum (1), Base Sepolia (84532), Ethereum Sepolia (11155111), Polygon (137), Polygon Amoy (80002) |
-
-## Prerequisites
-
-- **Node.js** ≥ 20
-- **Docker** (for PostgreSQL + Redis)
-- **Clerk** account — [clerk.com](https://clerk.com)
-- **Openfort** account — [openfort.io](https://www.openfort.io)
-
-## Getting Started
-
-### 1. Clone and install
+## Quick start
 
 ```bash
-git clone <repo-url> && cd sofa-agent-wallet
 npm install
 cd frontend && npm install && cd ..
-```
 
-### 2. Start infrastructure
-
-```bash
-docker compose up -d
-```
-
-This starts PostgreSQL (port 5432) and Redis (port 6379).
-
-### 3. Configure environment
-
-```bash
 cp .env.example .env
-# Edit .env with your Clerk and Openfort keys
+cp frontend/.env.example frontend/.env
+
+docker compose up -d
+npm run prisma:migrate:dev
+npm run start:dev
 ```
 
-Required variables:
-
-| Variable | Description |
-|----------|-------------|
-| `CLERK_SECRET_KEY` | Clerk backend secret key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key (Vite-prefixed) |
-| `OPENFORT_API_KEY` | Openfort API secret key |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `REDIS_URL` | Redis connection string |
-| `DEFAULT_CHAIN_ID` | Default chain (84532 for Base Sepolia) |
-| `VITE_API_URL` | Backend URL for production (leave empty in dev — Vite proxy handles it) |
-| `CORS_ORIGIN` | Allowed frontend origin(s) for CORS, comma-separated (defaults to `*`) |
-
-### 4. Run database migrations
+In another terminal:
 
 ```bash
+cd frontend
+npm run dev
+```
+
+Default local ports:
+
+- Backend: `PORT` from `.env` (`3100` in `.env.example`; `3001` code default when unset)
+- Frontend: Vite on `3000`
+- Vite proxy: `/api` → `http://localhost:3100` with `/api` stripped
+
+## Core commands
+
+Backend, from repo root:
+
+```bash
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
+npm run prisma:generate
 npm run prisma:migrate:dev
 ```
 
-### 5. Start development servers
+Frontend, from `frontend/`:
 
 ```bash
-# Backend (port 3001)
-npm run start:dev
-
-# Frontend (port 3000, in a separate terminal)
-cd frontend && npm run dev
+npm run build
+npm run lint
 ```
 
-## Scripts
+## API boundary summary
 
-### Backend
+Public API-key endpoints:
 
-| Command | Description |
-|---------|-------------|
-| `npm run start:dev` | Start backend in watch mode |
-| `npm run build` | Compile backend |
-| `npm run start:prod` | Run compiled backend |
-| `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run end-to-end tests |
-| `npm run test:cov` | Run tests with coverage |
-| `npm run lint` | Lint and auto-fix |
-| `npm run format` | Format with Prettier |
-| `npm run prisma:generate` | Regenerate Prisma client |
-| `npm run prisma:migrate:dev` | Create / apply migrations |
-| `npm run prisma:studio` | Open Prisma Studio GUI |
+- `POST /v1/wallets/sign`
+- `POST /v1/transactions/send`
+- `GET /v1/transactions/:id`
 
-### Frontend (`cd frontend`)
+Frontend-only endpoints require an Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks:
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server (port 3000, proxies `/api` to backend) |
-| `npm run build` | Production build → `dist/` (static files, deployable to S3) |
-| `npm run preview` | Preview production build locally |
+- `GET /v1/wallets/balances`
+- `POST /v1/wallets/deposit-info`
+- `POST /v1/wallets/withdraw`
+- `GET/POST/DELETE /v1/api-keys/*`
+- selected `/auth/*` dashboard operations
 
-## API Overview
+See [API.md](./API.md) and [openapi.yaml](./openapi.yaml).
 
-All wallet and transaction endpoints require the `X-API-Key` header:
+## Non-negotiable security rules
 
-```
-X-API-Key: sk_<64-hex-chars>
-```
-
-### Quick example — send USDC on Base Sepolia
-
-```bash
-curl -X POST http://localhost:3001/v1/transactions/send \
-  -H "X-API-Key: sk_your_key_here" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "chainId": 84532,
-    "idempotencyKey": "order-abc-123",
-    "interactions": [{
-      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb000000000000000000000000<recipient>0000000000000000000000000000000000000000000000000000000000000f4240",
-      "value": "0"
-    }]
-  }'
-```
-
-The `data` field is ABI-encoded calldata (`transfer(address,uint256)` in the example above). `value` is wei as a decimal string and defaults to `"0"` if omitted.
-
-Query the returned transaction status without exposing calldata or request hashes:
-
-```bash
-curl http://localhost:3001/v1/transactions/<transactionId> \
-  -H "X-API-Key: sk_your_key_here"
-```
-
-### Core Endpoints
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/auth/social` | Public | Social login → returns `userId`, `walletAddress`, `apiKey` |
-| `POST` | `/auth/refresh-api-key` | JWT | Rotate API key |
-| `POST` | `/v1/transactions/send` | API Key | Submit raw transaction (ABI-encoded calldata) |
-| `GET` | `/v1/transactions/:id` | API Key | Query safe transaction status for the API-key user |
-| `POST` | `/v1/wallets/sign` | API Key | Sign a message or typed data without broadcasting |
-| `GET`  | `/v1/wallets/balances` | JWT + Frontend | ETH + USDC balances across **all** supported chains simultaneously |
-| `POST` | `/v1/wallets/deposit-info` | JWT + Frontend | Get wallet address for deposits |
-| `POST` | `/v1/wallets/withdraw` | JWT + Frontend | Withdraw USDC to an external address |
-| `GET/POST` | `/v1/api-keys/*` | JWT + Frontend | API key management (list, create, revoke) |
-
-> **Access control split**: `POST /v1/wallets/sign`, `POST /v1/transactions/send`, and `GET /v1/transactions/:id` are API-key-only public endpoints. All other `/v1/*` routes are frontend-only and additionally require a Clerk JWT plus a matching `Origin`/`Referer` header.
->
-> API keys cannot manage API keys. `/v1/api-keys/*` is Clerk-dashboard-only, requires unique non-empty key names, enforces a maximum of 10 active keys per user, validates allowed chains/expiry, and returns raw secrets only once on creation/rotation.
-
-### Public API error contract
-
-Errors use a stable machine-readable `code` plus a human-readable `message`:
-
-```json
-{
-  "statusCode": 401,
-  "code": "INVALID_API_KEY",
-  "message": "Invalid API key",
-  "timestamp": "2026-04-20T10:00:00.000Z",
-  "path": "/v1/transactions/send"
-}
-```
-
-Validation errors use `code: "VALIDATION_ERROR"` and include `details` with field-level messages. Common public API codes include `API_KEY_REQUIRED`, `INVALID_API_KEY`, `CHAIN_NOT_ALLOWED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_FOUND`, and `TRANSACTION_NOT_FOUND`.
-
-Full OpenAPI spec (public endpoints only): [`openapi.yaml`](./openapi.yaml)
-
-## Project Structure
-
-```
-sofa-agent-wallet/
-├── src/
-│   ├── main.ts                  # NestJS bootstrap
-│   ├── app.module.ts            # Root module
-│   ├── common/                  # Guards, filters, decorators
-│   ├── config/                  # Environment config
-│   ├── core/                    # Prisma, Openfort providers
-│   └── modules/
-│       ├── auth/                # Clerk social OAuth
-│       ├── wallet/              # Openfort wallet operations
-│       ├── transaction/         # Raw transaction submission & signing
-│       └── api-key/             # Key generation, validation, rotation
-├── prisma/
-│   └── schema.prisma            # Database schema (4 models)
-├── frontend/                    # Vite + React SPA (static, deployable to S3/CloudFront)
-├── test/                        # E2E tests
-├── docker-compose.yml           # PostgreSQL + Redis
-├── openapi.yaml                 # API specification (public endpoints only)
-└── DESIGN.md                    # Full design document
-```
-
-## Data Models
-
-Core tables managed by Prisma:
-
-- **users** — social provider, social ID, email
-- **user_wallets** — 1:1 with user; stores Openfort account ID + on-chain address
-- **api_keys** — Argon2-hashed keys; `keyPrefix` (27 chars for new keys, legacy 11 chars supported) used for lookup before full hash verification; optional IP/expiry allowlists; active key names are unique per user
-- **api_key_events** — immutable audit events for key creation, revocation, and rotation with key prefix/name snapshots
-- **transactions** — Openfort intent ID, tx hash, status, chain ID, wallet address, request/interactions hashes, and API-key attribution snapshot
-
-## Development Phases
-
-| Phase | Scope | Status |
-|-------|-------|--------|
-| **1 — MVP** | Auth + wallet creation + API key middleware + basic transfer/withdraw | In progress |
-| **2** | EIP-7702 delegation, USDC gas policy, batch transactions, webhooks | Planned |
-| **3** | Monitoring, rate limiting, multi-chain, frontend demo | Planned |
-
-## Testing
-
-- **Testnet**: Base Sepolia (chain ID `84532`)
-- **USDC Faucet**: [Circle USDC Faucet](https://faucet.circle.com/)
-- **Load target**: 1,000 concurrent transaction intents
-
-```bash
-npm run test          # Unit tests
-npm run test:e2e      # E2E tests (requires docker compose up -d)
-npm run test:cov      # Coverage report
-```
-
-## Deployment
-
-The frontend is a **pure static SPA** — `npm run build` in `frontend/` produces a `dist/` folder that can be served from any static host:
-
-| Host | Notes |
-|------|-------|
-| **S3 + CloudFront** | Upload `dist/` to S3, set `VITE_API_URL` at build time, configure CloudFront to redirect 404s to `index.html` for SPA routing |
-| **Vercel / Netlify** | Zero-config; add `_redirects` or `vercel.json` for SPA fallback |
-| **Nginx** | `try_files $uri /index.html;` |
-
-Set `CORS_ORIGIN` on the NestJS backend to match the frontend's domain.
+- Private keys must never be stored, logged, returned, or derived outside Openfort TEE-managed custody.
+- Public signing and transaction routes are API-key-only; do not accept frontend IAM tokens there.
+- API-key management is frontend-dashboard-only; API keys must not manage API keys.
+- API keys are Argon2id hashes in storage; raw secrets are returned only once.
+- `UserWallet.openfortAccountId` is the stable Openfort foreign key; do not replace it with wallet address.
+- Public transaction status responses must not expose calldata, request hashes, or interaction hashes.
 
 ## License
 

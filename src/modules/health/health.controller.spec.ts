@@ -1,4 +1,5 @@
 import { HealthController } from './health.controller';
+import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 
 describe('HealthController', () => {
   const healthService = {
@@ -10,6 +11,10 @@ describe('HealthController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     controller = new HealthController(healthService as any);
+  });
+
+  it('keeps health endpoints public', () => {
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, HealthController)).toBe(true);
   });
 
   it('delegates live checks to the health service', () => {

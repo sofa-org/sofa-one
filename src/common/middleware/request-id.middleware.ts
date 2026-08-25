@@ -16,7 +16,7 @@ export class RequestIdMiddleware implements NestMiddleware {
     request.requestId = requestId;
     response.setHeader('X-Request-Id', requestId);
 
-    this.requestContext.run({ requestId }, next);
+    this.requestContext.run({ requestId, clientIp: request.ip }, next);
   }
 
   private resolveRequestId(header: string | string[] | undefined): string {

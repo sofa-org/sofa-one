@@ -1,13 +1,28 @@
 import { BadRequestException } from '@nestjs/common';
 import type { Chain } from 'viem';
-import { base, baseSepolia, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
+import {
+  arbitrum,
+  base,
+  baseSepolia,
+  bsc,
+  bscTestnet,
+  mainnet,
+  monad,
+  monadTestnet,
+  optimism,
+  optimismSepolia,
+  polygon,
+  polygonAmoy,
+  sepolia,
+} from 'viem/chains';
 
 export type SupportedChain = {
   chainId: number;
   name: string;
   chain: Chain;
   nativeCurrencySymbol: string;
-  usdcAddress: `0x${string}`;
+  usdcAddress?: `0x${string}`;
+  usdtAddress?: `0x${string}`;
 };
 
 export const DEFAULT_CHAIN_ID = 84532;
@@ -26,6 +41,7 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chain: base,
     nativeCurrencySymbol: 'ETH',
     usdcAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    usdtAddress: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
   },
   1: {
     chainId: 1,
@@ -33,6 +49,7 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chain: mainnet,
     nativeCurrencySymbol: 'ETH',
     usdcAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    usdtAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   },
   11155111: {
     chainId: 11155111,
@@ -47,6 +64,7 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chain: polygon,
     nativeCurrencySymbol: 'POL',
     usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+    usdtAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
   },
   80002: {
     chainId: 80002,
@@ -54,6 +72,57 @@ export const SUPPORTED_CHAINS: Record<number, SupportedChain> = {
     chain: polygonAmoy,
     nativeCurrencySymbol: 'POL',
     usdcAddress: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
+  },
+  42161: {
+    chainId: 42161,
+    name: 'Arbitrum One',
+    chain: arbitrum,
+    nativeCurrencySymbol: 'ETH',
+    usdcAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    usdtAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+  },
+  10: {
+    chainId: 10,
+    name: 'OP Mainnet',
+    chain: optimism,
+    nativeCurrencySymbol: 'ETH',
+    usdcAddress: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+    usdtAddress: '0x94b008aD8B7A6d11aA617D2bC1864F3A5F71F5E9',
+  },
+  11155420: {
+    chainId: 11155420,
+    name: 'OP Sepolia',
+    chain: optimismSepolia,
+    nativeCurrencySymbol: 'ETH',
+    usdcAddress: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+  },
+  56: {
+    chainId: 56,
+    name: 'BNB Smart Chain',
+    chain: bsc,
+    nativeCurrencySymbol: 'BNB',
+    usdcAddress: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
+    usdtAddress: '0x55d398326f99059fF775485246999027B3197955',
+  },
+  97: {
+    chainId: 97,
+    name: 'BNB Smart Chain Testnet',
+    chain: bscTestnet,
+    nativeCurrencySymbol: 'tBNB',
+    usdcAddress: '0x64544969ed7EBf5f083679233325356EbE738930',
+    usdtAddress: '0x7ef95a0Fee0FBDD40eD8b6C78740125E4A6Abe7f',
+  },
+  143: {
+    chainId: 143,
+    name: 'Monad',
+    chain: monad,
+    nativeCurrencySymbol: 'MON',
+  },
+  10143: {
+    chainId: 10143,
+    name: 'Monad Testnet',
+    chain: monadTestnet,
+    nativeCurrencySymbol: 'MON',
   },
 };
 
@@ -67,12 +136,6 @@ export function getSupportedChain(chainId: number): SupportedChain {
   return chain;
 }
 
-export function assertAllowedApiKeyChain(
-  apiKeyRecord: { allowedChains?: number[] } | undefined,
-  chainId: number,
-) {
-  if (!apiKeyRecord) return;
-  if (!apiKeyRecord.allowedChains?.includes(chainId)) {
-    throw new BadRequestException(`API key is not allowed to use chain ${chainId}`);
-  }
+export function isMonadChain(chainId: number): boolean {
+  return chainId === 143 || chainId === 10143;
 }

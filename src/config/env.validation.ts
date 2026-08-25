@@ -1,10 +1,12 @@
 import { plainToInstance } from 'class-transformer';
 import {
+  IsBooleanString,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  Matches,
   IsString,
   Max,
   Min,
@@ -28,11 +30,11 @@ class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  CLERK_SECRET_KEY: string;
+  OPENFORT_API_KEY: string;
 
   @IsString()
-  @IsNotEmpty()
-  OPENFORT_API_KEY: string;
+  @IsOptional()
+  OPENFORT_PUBLISHABLE_KEY?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -54,10 +56,6 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  CLERK_AUTHORIZED_PARTIES?: string;
-
-  @IsString()
-  @IsOptional()
   REDIS_URL?: string;
 
   @IsString()
@@ -67,6 +65,31 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   TRUST_PROXY?: string;
+
+  @IsString()
+  @IsOptional()
+  STEP_UP_OTP_WEBHOOK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  STEP_UP_OTP_WEBHOOK_SECRET?: string;
+
+  @IsBooleanString()
+  @IsOptional()
+  EOA_EXECUTION_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  SECURITY_EVENTS_SIEM_WEBHOOK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  SECURITY_EVENTS_SIEM_WEBHOOK_SECRET?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/, { message: 'MFA_SECRET_ENCRYPTION_KEY must not be blank' })
+  MFA_SECRET_ENCRYPTION_KEY: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -81,7 +104,13 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(errors.toString());
   }
   validateProductionConfig(validatedConfig);
+  validateOptionalHttpsUrl(
+    validatedConfig.SECURITY_EVENTS_SIEM_WEBHOOK_URL,
+    'SECURITY_EVENTS_SIEM_WEBHOOK_URL',
+  );
+  validateOptionalHttpsUrl(validatedConfig.STEP_UP_OTP_WEBHOOK_URL, 'STEP_UP_OTP_WEBHOOK_URL');
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
+  validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
   return validatedConfig;
 }
 
@@ -92,8 +121,17 @@ function validateProductionConfig(config: EnvironmentVariables) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
 
-  if (!config.CLERK_AUTHORIZED_PARTIES?.trim()) {
-    throw new Error('CLERK_AUTHORIZED_PARTIES must be set in production');
+}
+
+function validateOptionalHttpsUrl(rawUrl: string | undefined, name: string) {
+  if (!rawUrl?.trim()) return;
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:') {
+      throw new Error();
+    }
+  } catch {
+    throw new Error(`${name} must be a valid https URL`);
   }
 }
 
@@ -103,5 +141,12 @@ function validateDefaultChain(rawChainId: string | undefined) {
     throw new Error(
       `DEFAULT_CHAIN_ID must be one of the supported chains: ${SUPPORTED_CHAIN_IDS.join(', ')}`,
     );
+  }
+}
+
+function validateMfaSecretEncryptionKey(rawKey: string) {
+  const key = Buffer.from(rawKey, 'base64');
+  if (key.length !== 32) {
+    throw new Error('MFA_SECRET_ENCRYPTION_KEY must be 32 base64-encoded bytes');
   }
 }

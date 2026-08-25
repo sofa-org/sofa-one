@@ -1,0 +1,23 @@
+# Code Map for /src/common/guards
+
+## Responsibility
+Access control for Openfort IAM auth, API-key auth, API-key route permissions, and frontend-only route restrictions.
+
+## Design/Patterns
+- NestJS guard pattern with route metadata checks.
+- Dual-auth strategy in `EitherAuthGuard` (JWT first, API key fallback) remains available, while public API-key-only routes use dedicated `ApiKeyAuthGuard`.
+- `ApiKeyPermissionGuard` reads `@RequireApiKeyPermission()` metadata and rejects API keys missing the required permission before service code runs.
+- Origin/Referer allowlist enforcement in `FrontendOnlyGuard`.
+
+## Flow
+- Guards read headers and route metadata.
+- JWT paths verify Openfort IAM tokens, reject frozen users, and attach user context.
+- API-key paths query extended and legacy prefix candidates, verify every matching Argon2 hash to avoid prefix-collision failures, reject frozen users/keys, enforce allowed IPs, record first-use and suspicious context changes, freeze high-risk/repeated suspicious usage, and update last-used timestamps.
+- Permission-protected API-key routes require `canSign`, `canSendTransaction`, or `canReadTransactionStatus` at the guard layer; services retain duplicate checks for defense in depth.
+- Frontend-only routes reject requests without an allowed browser origin.
+- API-key-only routes authenticate directly with `ApiKeyAuthGuard` and do not accept IAM bearer tokens.
+- API-key management routes use Openfort IAM/dashboard guards only; an API key cannot create, list, revoke, or rotate API keys.
+
+## Integration
+- Used by controllers via `@UseGuards()` and route decorators.
+- Depends on Openfort IAM verification, PrismaService, SecurityEventService, ConfigService, Argon2, and Reflector.

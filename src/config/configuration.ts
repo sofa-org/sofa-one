@@ -1,16 +1,18 @@
 export default () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  clerk: {
-    secretKey: process.env.CLERK_SECRET_KEY,
-    authorizedParties: process.env.CLERK_AUTHORIZED_PARTIES
-      ? process.env.CLERK_AUTHORIZED_PARTIES.split(',').map((s) => s.trim()).filter(Boolean)
-      : undefined,
-  },
   openfort: {
     apiKey: process.env.OPENFORT_API_KEY,
+    publishableKey: process.env.OPENFORT_PUBLISHABLE_KEY,
     walletSecret: process.env.OPENFORT_WALLET_SECRET,
     timeoutMs: parseInt(process.env.OPENFORT_TIMEOUT_MS || '15000', 10),
+  },
+  pimlico: {
+    apiKey: process.env.PIMLICO_API_KEY,
+    rpcUrls: {
+      143: process.env.PIMLICO_RPC_URL_143,
+      10143: process.env.PIMLICO_RPC_URL_10143,
+    },
   },
   database: {
     url: process.env.DATABASE_URL,
@@ -20,5 +22,8 @@ export default () => ({
   },
   chain: {
     defaultChainId: parseInt(process.env.DEFAULT_CHAIN_ID || '84532', 10),
+  },
+  redis: {
+    url: process.env.REDIS_URL,
   },
 });

@@ -1,28 +1,40 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
   Optional,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import {
   createPublicClient,
+  encodeAbiParameters,
   encodeFunctionData,
   formatEther,
   formatUnits,
   hashMessage,
   hashTypedData,
   http,
+  type Hex,
   type PublicClient,
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
-import { assertAllowedApiKeyChain, getSupportedChain } from '../../common/chains/supported-chains';
+import { getSupportedChain, type SupportedChain } from '../../common/chains/supported-chains';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
-import type { SignDto, SignMessage } from './dto/sign.dto';
+import { AgentStatus } from '../../common/agent/agent-status';
+import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
+import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
+import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
+import { WithdrawalPolicyService } from './withdrawal-policy.service';
+import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
+import { SigningPolicyService } from './signing-policy.service';
+import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -38,7 +50,12 @@ type ApiKeySigningContext = {
   id?: string;
   keyPrefix?: string;
   name?: string | null;
-  allowedChains: number[];
+  allowedIps?: string[] | null;
+  expiresAt?: Date | string | null;
+  canSign?: boolean;
+  canUseEoaExecution?: boolean;
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
 };
 
 @Injectable()
@@ -49,8 +66,17 @@ export class WalletService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
+    private readonly withdrawalPolicy: WithdrawalPolicyService,
+    @Optional()
+    private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
+    @Optional()
+    private readonly signingPolicy?: SigningPolicyService,
     @Optional()
     private readonly requestContext?: RequestContextService,
+    @Optional()
+    private readonly riskEvaluation?: RiskEvaluationService,
+    @Optional()
+    private readonly sessionKeyPolicy?: SessionKeyPolicyService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -62,10 +88,11 @@ export class WalletService {
     return client;
   }
 
-  /** Return the user's wallet address and supported deposit tokens. */
+  /** Return the user's EOA address and supported deposit tokens. */
   async getDepositInfo(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -76,27 +103,135 @@ export class WalletService {
       chainId,
       chainName: supportedChain.name,
       status: wallet.status,
-      supportedTokens: ['USDC', supportedChain.nativeCurrencySymbol],
+      supportedTokens: [
+        ...(supportedChain.usdcAddress ? ['USDC'] : []),
+        ...(supportedChain.usdtAddress ? ['USDT'] : []),
+        supportedChain.nativeCurrencySymbol,
+      ],
     };
   }
 
-  /** Sign data with the user's backend wallet (no transaction broadcast). */
+  async listWithdrawalAddresses(userId: string) {
+    return this.withdrawalPolicy.listWithdrawalAddresses(userId);
+  }
+
+  async addWithdrawalAddress(userId: string, dto: CreateWithdrawalAddressDto) {
+    return this.withdrawalPolicy.addWithdrawalAddress(userId, dto);
+  }
+
+  async removeWithdrawalAddress(userId: string, addressId: string) {
+    return this.withdrawalPolicy.removeWithdrawalAddress(userId, addressId);
+  }
+
+  /** Sign data with the user's backend agent signer (no transaction broadcast). */
   async sign(userId: string, params: SignDto, apiKeyRecord?: ApiKeySigningContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');
     }
-
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
+    this.assertPermission(apiKeyRecord.canSign, 'API key is not allowed to sign messages');
 
     const chainId = this.resolveSigningChainId(params);
-    if (chainId !== undefined) {
-      getSupportedChain(chainId);
-      assertAllowedApiKeyChain(apiKeyRecord, chainId);
+    if (chainId === undefined) {
+      throw new BadRequestException('chainId is required for API-key signing');
     }
+    getSupportedChain(chainId);
+    const executionMode = this.resolveExecutionMode(params.executionMode);
+    const policyContext = {
+      userId,
+      chainId,
+      type: params.type,
+      executionMode,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedContracts: apiKeyRecord.allowedContracts,
+      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
+    };
+
+    if (executionMode === 'eoa') {
+      this.assertPermission(
+        apiKeyRecord.canUseEoaExecution,
+        'API key is not allowed to use EOA execution',
+      );
+      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
+        operation: 'sign',
+        chainId,
+        metadata: { type: params.type },
+      });
+      this.logSecurityWarning({
+        message: 'Privileged EOA signing requested',
+        userId,
+        chainId,
+        type: params.type,
+        executionMode,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+      });
+    }
+
+    // Apply signing policy checks
+    let typedDataSummary:
+      | {
+          typedDataPrimaryType?: string;
+          typedDataVerifyingContract?: string;
+          typedDataDomainName?: string;
+        }
+      | undefined = undefined;
+    if (params.type === 'message') {
+      await this.signingPolicy?.assertMessageSigningPolicy(params.message!, policyContext);
+    } else if (params.type === 'typed_data') {
+      typedDataSummary = await this.signingPolicy?.assertTypedDataSigningPolicy(
+        params.typedData!,
+        policyContext,
+      );
+    }
+
+    // Evaluate multi-factor risk before proceeding
+    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      walletId: undefined,
+      operationType: 'signing',
+    });
+    if (riskAssessment && riskAssessment.action !== 'allow') {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+        userId,
+        apiKeyId: apiKeyRecord.id,
+        walletId: undefined,
+        operationType: 'signing',
+      });
+    }
+
+    const wallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
+    if (wallet.status !== 'active' || !wallet.walletAddress) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+    if (executionMode === 'session_key') {
+      this.assertAgentWalletReady(wallet);
+      this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
+      await this.sessionKeyPolicy?.assertSessionKeyAllowed({
+        userId,
+        walletId: wallet.id,
+        apiKeyId: apiKeyRecord?.id,
+        apiKeyPrefix: apiKeyRecord?.keyPrefix,
+        chainId,
+        accountAddress: wallet.walletAddress,
+        keyHash: wallet.agentKeyHash!,
+        operation: 'sign',
+        allowedContracts: apiKeyRecord?.allowedContracts,
+        allowedFunctionSelectors: apiKeyRecord?.allowedFunctionSelectors,
+        apiKeyExpiresAt: apiKeyRecord?.expiresAt,
+      });
+    } else {
+      this.assertBackendWalletReady(wallet);
+    }
+    const signingWalletAddress =
+      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress;
 
     let data: string;
     switch (params.type) {
@@ -121,8 +256,14 @@ export class WalletService {
         apiKeyName: apiKeyRecord?.name,
         type: params.type,
         chainId: chainId === undefined ? undefined : BigInt(chainId),
-        walletAddress: wallet.walletAddress,
-        requestHash: hashRequest({ type: params.type, chainId, digest: data }),
+        walletAddress: signingWalletAddress,
+        requestHash: hashRequest({
+          type: params.type,
+          chainId,
+          digest: data,
+          executionMode,
+          ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
+        }),
         digest: data,
         status: 'submitting',
       },
@@ -135,13 +276,20 @@ export class WalletService {
         userId,
         chainId,
         type: params.type,
+        executionMode,
+        ...(typedDataSummary ?? {}),
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       }),
     );
 
     let signature: string;
     try {
-      signature = await this.openfort.signData(wallet.openfortAccountId, data);
+      const accountId = wallet.agentOpenfortAccountId!;
+      const rawSignature = await this.openfort.signData(accountId, data);
+      signature =
+        executionMode === 'session_key'
+          ? this.wrapCaliburSignature(wallet.agentKeyHash!, rawSignature)
+          : rawSignature;
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -150,6 +298,7 @@ export class WalletService {
           userId,
           chainId,
           type: params.type,
+          executionMode,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
         err instanceof Error ? err.stack : undefined,
@@ -167,15 +316,151 @@ export class WalletService {
         userId,
         chainId,
         type: params.type,
+        executionMode,
         apiKeyPrefix: apiKeyRecord.keyPrefix,
       }),
     );
 
     return {
       signature,
-      walletAddress: wallet.walletAddress,
+      walletAddress: signingWalletAddress,
       type: params.type,
+      executionMode,
     };
+  }
+
+  /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
+  async getSigningRequestDetail(userId: string, signingRequestId: string) {
+    const sr = await this.prisma.signingRequest.findFirst({
+      where: { id: signingRequestId, userId },
+    });
+    if (!sr) throw new NotFoundException('Signing request not found');
+
+    return {
+      id: sr.id,
+      type: sr.type,
+      chainId: sr.chainId ? Number(sr.chainId) : null,
+      walletAddress: sr.walletAddress,
+      status: sr.status,
+      authMethod: sr.authMethod,
+      apiKeyPrefix: sr.apiKeyPrefix,
+      apiKeyName: sr.apiKeyName,
+      createdAt: sr.createdAt,
+      completedAt: sr.completedAt,
+    };
+  }
+
+  /** List signing requests for a user with optional filtering and pagination. */
+  async listSigningRequests(userId: string, query: ListSigningRequestsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { userId };
+
+    if (query.type) {
+      where.type = query.type;
+    }
+    if (query.status) {
+      where.status = query.status;
+    }
+    if (query.chainId) {
+      where.chainId = BigInt(query.chainId);
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.signingRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.signingRequest.count({ where }),
+    ]);
+
+    return {
+      items: items.map((sr) => ({
+        id: sr.id,
+        type: sr.type,
+        chainId: sr.chainId ? Number(sr.chainId) : null,
+        walletAddress: sr.walletAddress,
+        status: sr.status,
+        apiKeyPrefix: sr.apiKeyPrefix,
+        apiKeyName: sr.apiKeyName,
+        createdAt: sr.createdAt,
+        completedAt: sr.completedAt,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
+    return mode ?? 'session_key';
+  }
+
+  private assertPermission(allowed: boolean | undefined, message: string): void {
+    if (allowed !== true) {
+      throw new ForbiddenException(message);
+    }
+  }
+
+  private async assertEoaExecutionAllowed(
+    userId: string,
+    apiKeyRecord: ApiKeySigningContext,
+    context: { operation: 'sign'; chainId: number; metadata?: Record<string, unknown> },
+  ) {
+    if (!this.eoaExecutionPolicy) {
+      throw new ForbiddenException('EOA execution policy is not available');
+    }
+    await this.eoaExecutionPolicy.assertAllowed({
+      operation: context.operation,
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      allowedIps: apiKeyRecord.allowedIps,
+      clientIp: this.requestContext?.getClientIp(),
+      expiresAt: apiKeyRecord.expiresAt,
+      chainId: context.chainId,
+      metadata: context.metadata as any,
+    });
+  }
+
+  private assertAgentWalletReady(wallet: {
+    status: string;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+    agentKeyHash?: string | null;
+  }): void {
+    if (!wallet.agentOpenfortAccountId || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+  }
+
+  private assertBackendWalletReady(wallet: {
+    status: string;
+    agentOpenfortAccountId?: string | null;
+    agentWalletAddress?: string | null;
+  }): void {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress
+    ) {
+      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    }
+  }
+
+  private wrapCaliburSignature(keyHash: string, signature: string): Hex {
+    return encodeAbiParameters(
+      [
+        { name: 'keyHash', type: 'bytes32' },
+        { name: 'signature', type: 'bytes' },
+        { name: 'hookData', type: 'bytes' },
+      ],
+      [keyHash as Hex, signature as Hex, '0x'],
+    );
   }
 
   private async updateSigningRequestStatus(id: string, status: 'signed' | 'failed'): Promise<void> {
@@ -200,10 +485,37 @@ export class WalletService {
     return this.requestContext?.getLogContext(extra) ?? extra;
   }
 
-  /** Return native token and USDC balances for the user's wallet on the requested chain. */
+  private logSecurityWarning(extra: Record<string, unknown>): void {
+    this.logger.warn(this.logContext({ event: 'security', ...extra }));
+  }
+
+  private assertWalletNotFrozen(wallet: {
+    frozenAt?: Date | string | null;
+    frozenReason?: string | null;
+  }): void {
+    if (wallet.frozenAt) {
+      throw new ForbiddenException(wallet.frozenReason ?? 'Wallet is frozen');
+    }
+  }
+
+  private assertChainAuthorizationReady(
+    authorization?: { status: string; expiresAt?: Date | string | null } | null,
+  ) {
+    if (authorization?.status !== AgentStatus.Registered) {
+      throw new BadRequestException('API access is not authorized for this chain');
+    }
+
+    const expiresAt = authorization.expiresAt ? new Date(authorization.expiresAt) : null;
+    if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      throw new BadRequestException('API access authorization is expired for this chain');
+    }
+  }
+
+  /** Return native token and stablecoin balances for the user's wallet on the requested chain. */
   async getBalances(userId: string, chainId: number) {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -212,85 +524,123 @@ export class WalletService {
 
     const supportedChain = getSupportedChain(chainId);
     const publicClient = this.getPublicClient(chainId);
-    const usdcAddress = supportedChain.usdcAddress;
+    const stablecoins = [
+      ...(supportedChain.usdcAddress ? [{ token: 'USDC', address: supportedChain.usdcAddress }] : []),
+      ...(supportedChain.usdtAddress ? [{ token: 'USDT', address: supportedChain.usdtAddress }] : []),
+    ];
 
     type BalanceEntry =
-      | { token: string; raw: string; formatted: string; contractAddress?: string }
-      | { token: string; raw: null; formatted: null; error: string; contractAddress?: string };
+      | { token: string; formatted: string }
+      | { token: string; formatted: null; error: string };
 
-    const [ethResult, usdcResult] = await Promise.all([
+    const [ethResult, ...stablecoinResults] = await Promise.all([
       publicClient
         .getBalance({ address: walletAddress })
         .then(
           (raw): BalanceEntry => ({
             token: supportedChain.nativeCurrencySymbol,
-            raw: raw.toString(),
             formatted: formatEther(raw),
           }),
         )
         .catch(
           (): BalanceEntry => ({
             token: supportedChain.nativeCurrencySymbol,
-            raw: null,
             formatted: null,
             error: 'fetch failed',
           }),
         ),
 
-      usdcAddress
-        ? publicClient
-            .readContract({
-              address: usdcAddress,
-              abi: ERC20_BALANCE_ABI,
-              functionName: 'balanceOf',
-              args: [walletAddress],
-            })
-            .then(
-              (raw): BalanceEntry => ({
-                token: 'USDC',
-                raw: raw.toString(),
-                formatted: formatUnits(raw, 6),
-                contractAddress: usdcAddress,
-              }),
-            )
-            .catch(
-              (): BalanceEntry => ({
-                token: 'USDC',
-                raw: null,
-                formatted: null,
-                error: 'fetch failed',
-                contractAddress: usdcAddress,
-              }),
-            )
-        : Promise.resolve(null),
+      ...stablecoins.map(({ token, address }) =>
+        publicClient
+          .readContract({
+            address,
+            abi: ERC20_BALANCE_ABI,
+            functionName: 'balanceOf',
+            args: [walletAddress],
+          })
+          .then(
+            (raw): BalanceEntry => ({
+              token,
+              formatted: formatUnits(raw, 6),
+            }),
+          )
+          .catch(
+            (): BalanceEntry => ({
+              token,
+              formatted: null,
+              error: 'fetch failed',
+            }),
+          ),
+      ),
     ]);
 
-    const balances: BalanceEntry[] = [ethResult];
-    if (usdcResult !== null) balances.push(usdcResult);
+    const balances: BalanceEntry[] = [ethResult, ...stablecoinResults];
 
     const chains = [{ chainId, chainName: supportedChain.name, balances }];
 
-    return { walletAddress, chains };
+    return { chains };
   }
 
   /** Submit a withdrawal transaction. */
-  async withdraw(userId: string, params: WithdrawDto) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+  async withdraw(userId: string, params: WithdrawDto, options?: { stepUpVerified?: boolean }) {
+    const chainId = params.chainId;
+    const supportedChain = getSupportedChain(chainId);
+    const wallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
     if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
 
     // Guard: wallet must be active before any outbound transfer
-    if (wallet.status !== 'active' || !wallet.walletAddress || !wallet.openfortAccountId) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.walletAddress ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress ||
+      !wallet.agentKeyHash
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
+    this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
 
     // Guard: prevent self-withdrawal (sending to own wallet address)
     if (params.to.toLowerCase() === wallet.walletAddress.toLowerCase()) {
       throw new BadRequestException('Cannot withdraw to your own wallet address');
     }
 
-    const chainId = params.chainId;
-    const supportedChain = getSupportedChain(chainId);
-    const usdcAddressHex = supportedChain.usdcAddress;
+    await this.assertWithdrawalPolicy(
+      params,
+      {
+        userId,
+        chainId,
+        walletId: wallet.id,
+        walletAddress: wallet.walletAddress,
+        stepUpVerified: options?.stepUpVerified,
+      },
+      { skipDailyLimit: true },
+    );
+
+    // Evaluate multi-factor risk before proceeding
+    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+      userId,
+      walletId: wallet.id,
+      operationType: 'withdrawal',
+    });
+    const riskStepUpSatisfied =
+      riskAssessment?.action === 'require_step_up' && options?.stepUpVerified === true;
+    if (riskAssessment && riskAssessment.action !== 'allow' && !riskStepUpSatisfied) {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+        userId,
+        walletId: wallet.id,
+        operationType: 'withdrawal',
+      });
+    }
+
+    const isNativeWithdrawal = params.token === 'NATIVE';
+    const tokenAddress = this.getWithdrawalTokenAddress(params.token, supportedChain);
     const walletAddress = wallet.walletAddress as `0x${string}`;
 
     const requestHash = hashRequest({
@@ -299,7 +649,7 @@ export class WalletService {
       to: params.to,
       amount: params.amount,
       token: params.token,
-      contractAddress: usdcAddressHex,
+      contractAddress: tokenAddress,
     });
 
     const existingWithdrawal = await this.findExistingWithdrawal(userId, {
@@ -311,43 +661,80 @@ export class WalletService {
       return this.toWithdrawalResponse(existingWithdrawal);
     }
 
-    // Guard: verify on-chain USDC balance is sufficient before submitting intent
+    // Guard: verify on-chain balance is sufficient before submitting intent
     {
       const publicClient = this.getPublicClient(chainId);
-      let usdcBalance: bigint;
+      let balance: bigint;
       try {
-        usdcBalance = await publicClient.readContract({
-          address: usdcAddressHex,
-          abi: ERC20_BALANCE_ABI,
-          functionName: 'balanceOf',
-          args: [walletAddress],
-        });
+        balance = isNativeWithdrawal
+          ? await publicClient.getBalance({ address: walletAddress })
+          : await publicClient.readContract({
+              address: tokenAddress!,
+              abi: ERC20_BALANCE_ABI,
+              functionName: 'balanceOf',
+              args: [walletAddress],
+            });
       } catch {
-        throw new BadRequestException('Unable to verify USDC balance — please retry');
+        throw new BadRequestException(
+          `Unable to verify ${this.getWithdrawalTokenLabel(params.token, supportedChain.nativeCurrencySymbol)} balance — please retry`,
+        );
       }
 
       const requestedAmount = BigInt(params.amount);
-      if (usdcBalance < requestedAmount) {
+      if (balance < requestedAmount) {
         throw new BadRequestException(
-          `Insufficient USDC balance: have ${usdcBalance.toString()} units, requested ${params.amount} units`,
+          `Insufficient ${this.getWithdrawalTokenLabel(params.token, supportedChain.nativeCurrencySymbol)} balance: have ${balance.toString()} units, requested ${params.amount} units`,
         );
       }
     }
 
-    const { tx, created } = await this.createPendingWithdrawalOrReturnExisting(userId, {
-      idempotencyKey: params.idempotencyKey!,
-      chainId,
-      requestHash,
-      walletAddress: wallet.walletAddress,
-      details: {
-        type: 'withdraw',
-        to: params.to,
-        amount: params.amount,
-        token: params.token,
-        contractAddress: usdcAddressHex,
-        idempotencyKey: params.idempotencyKey,
-        requestHash,
-      },
+    const { tx, created } = await this.prisma.$transaction(async (txClient) => {
+      const existing = await this.findExistingWithdrawal(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey!,
+          chainId,
+          requestHash,
+        },
+        txClient,
+      );
+      if (existing) {
+        return { tx: existing, created: false };
+      }
+
+      await this.withdrawalPolicy.assertDailyLimitWithUserLock(
+        userId,
+        params,
+        {
+          chainId,
+          walletId: wallet.id,
+          walletAddress,
+        },
+        txClient,
+      );
+
+      return this.createPendingWithdrawalOrReturnExisting(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey!,
+          chainId,
+          requestHash,
+          walletAddress,
+          details: {
+            type: 'withdraw',
+            execution: 'calibur_agent_user_operation',
+            to: params.to,
+            amount: params.amount,
+            token: params.token,
+            contractAddress: tokenAddress,
+            agentWalletAddress: wallet.agentWalletAddress,
+            agentKeyHash: wallet.agentKeyHash,
+            idempotencyKey: params.idempotencyKey,
+            requestHash,
+          },
+        },
+        txClient,
+      );
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
@@ -355,32 +742,38 @@ export class WalletService {
     }
 
     try {
-      const transferData = encodeFunctionData({
-        abi: [
-          {
-            inputs: [
-              { name: 'to', type: 'address' },
-              { name: 'amount', type: 'uint256' },
-            ],
-            name: 'transfer',
-            outputs: [{ type: 'bool' }],
-            type: 'function',
-          },
-        ],
-        functionName: 'transfer',
-        args: [params.to, BigInt(params.amount)],
-      });
-
-      const submission = await this.openfort.sendTransaction({
-        chainId,
-        accountId: wallet.openfortAccountId,
-        interactions: [
-          {
-            to: usdcAddressHex,
-            data: transferData,
+      const interaction = isNativeWithdrawal
+        ? {
+            to: params.to as `0x${string}`,
+            data: '0x' as Hex,
+            value: params.amount,
+          }
+        : {
+            to: tokenAddress!,
+            data: encodeFunctionData({
+              abi: [
+                {
+                  inputs: [
+                    { name: 'to', type: 'address' },
+                    { name: 'amount', type: 'uint256' },
+                  ],
+                  name: 'transfer',
+                  outputs: [{ type: 'bool' }],
+                  type: 'function',
+                },
+              ],
+              functionName: 'transfer',
+              args: [params.to, BigInt(params.amount)],
+            }),
             value: '0',
-          },
-        ],
+          };
+
+      const submission = await this.openfort.sendUserOperation({
+        chainId,
+        agentAccountId: wallet.agentOpenfortAccountId,
+        accountAddress: wallet.walletAddress,
+        keyHash: wallet.agentKeyHash,
+        interactions: [interaction],
       });
 
       const updated = await this.prisma.transaction.update({
@@ -388,6 +781,10 @@ export class WalletService {
         data: {
           txHash: submission.transactionHash,
           status: 'pending',
+          details: {
+            ...((tx.details as Record<string, unknown>) ?? {}),
+            userOpHash: submission.userOpHash,
+          } as any,
         },
       });
 
@@ -405,6 +802,20 @@ export class WalletService {
     }
   }
 
+  private async assertWithdrawalPolicy(
+    params: WithdrawDto,
+    context: {
+      userId: string;
+      chainId: number;
+      walletId?: string;
+      walletAddress?: string;
+      stepUpVerified?: boolean;
+    },
+    options: { skipDailyLimit?: boolean } = {},
+  ): Promise<void> {
+    await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context, options);
+  }
+
   private async createPendingWithdrawalOrReturnExisting(
     userId: string,
     params: {
@@ -414,9 +825,10 @@ export class WalletService {
       walletAddress: string;
       details: Record<string, unknown>;
     },
+    prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     try {
-      const tx = await this.prisma.transaction.create({
+      const tx = await prisma.transaction.create({
         data: {
           userId,
           status: 'submitting',
@@ -432,11 +844,15 @@ export class WalletService {
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
-      const existing = await this.findExistingWithdrawal(userId, {
-        idempotencyKey: params.idempotencyKey,
-        chainId: params.chainId,
-        requestHash: params.requestHash,
-      });
+      const existing = await this.findExistingWithdrawal(
+        userId,
+        {
+          idempotencyKey: params.idempotencyKey,
+          chainId: params.chainId,
+          requestHash: params.requestHash,
+        },
+        prisma,
+      );
       if (!existing) throw error;
       return { tx: existing, created: false };
     }
@@ -445,8 +861,9 @@ export class WalletService {
   private async findExistingWithdrawal(
     userId: string,
     params: { idempotencyKey: string; chainId: number; requestHash: string },
+    prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
-    const existing = await this.prisma.transaction.findFirst({
+    const existing = await prisma.transaction.findFirst({
       where: {
         userId,
         operationType: 'withdraw',
@@ -471,6 +888,21 @@ export class WalletService {
     };
   }
 
+  private getWithdrawalTokenLabel(token: WithdrawDto['token'], nativeCurrencySymbol: string) {
+    return token === 'NATIVE' ? nativeCurrencySymbol : token;
+  }
+
+  private getWithdrawalTokenAddress(
+    token: WithdrawDto['token'],
+    chain: SupportedChain,
+  ): `0x${string}` | null {
+    if (token === 'NATIVE') return null;
+    if (token === 'USDC' && chain.usdcAddress) return chain.usdcAddress;
+    if (token === 'USDC') throw new BadRequestException(`USDC is not supported on ${chain.name}`);
+    if (chain.usdtAddress) return chain.usdtAddress;
+    throw new BadRequestException(`USDT is not supported on ${chain.name}`);
+  }
+
   private resolveSigningChainId(params: SignDto): number | undefined {
     if ((params as { type: string }).type === 'hash') {
       throw new BadRequestException('hash signing is not allowed');
@@ -479,17 +911,12 @@ export class WalletService {
     const typedDataChainId = params.typedData?.domain?.chainId;
 
     if (params.type === 'typed_data') {
-      if (params.chainId === undefined) {
-        throw new BadRequestException(
-          'chainId is required when signing typed data with an API key',
-        );
-      }
       if (typeof typedDataChainId !== 'number') {
         throw new BadRequestException(
           'typedData.domain.chainId is required when signing typed data with an API key',
         );
       }
-      if (typedDataChainId !== params.chainId) {
+      if (params.chainId !== undefined && typedDataChainId !== params.chainId) {
         throw new BadRequestException('typedData.domain.chainId must match chainId');
       }
     }

@@ -7,18 +7,21 @@ import { IS_FRONTEND_ONLY_KEY } from '../decorators/frontend-only.decorator';
  * Restricts access to routes marked with @FrontendOnly() to requests
  * originating from the configured CORS_ORIGIN allowlist.
  *
- * Checks the `Origin` header first, then falls back to `Referer`.
- * In development (no CORS_ORIGIN set), allows localhost:3000 and localhost:3100.
+ * Checks the `Origin` header first, then falls back to `Referer` outside
+ * production. In development (no CORS_ORIGIN set), allows localhost:3000
+ * and localhost:3100.
  */
 @Injectable()
 export class FrontendOnlyGuard implements CanActivate {
   private readonly allowedOrigins: string[];
+  private readonly isProduction: boolean;
 
   constructor(
     private readonly reflector: Reflector,
     private readonly configService: ConfigService,
   ) {
     const corsOrigin = this.configService.get<string>('CORS_ORIGIN') ?? '';
+    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     this.allowedOrigins = corsOrigin
       ? corsOrigin
           .split(',')
@@ -42,7 +45,7 @@ export class FrontendOnlyGuard implements CanActivate {
     const origin = request.headers['origin'];
     const referer = request.headers['referer'];
 
-    const candidate = origin ?? this.extractOriginFromReferer(referer);
+    const candidate = origin ?? (this.isProduction ? undefined : this.extractOriginFromReferer(referer));
 
     if (candidate && this.isAllowed(candidate)) {
       return true;

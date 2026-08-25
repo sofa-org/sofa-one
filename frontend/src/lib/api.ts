@@ -1,23 +1,44 @@
 const _viteApiUrl: string | undefined = import.meta.env.VITE_API_URL;
 if (!_viteApiUrl && import.meta.env.PROD) {
-  throw new Error('VITE_API_URL must be set in production builds');
+  throw new Error(
+    'VITE_API_URL must be set in production builds to the deployed SOFA ONE API base URL, for example https://api.example.com.',
+  );
 }
 const API_BASE = _viteApiUrl ?? '/api';
 export const DEFAULT_CHAIN_ID = 84532;
+
+export function getApiBaseUrlForDisplay(origin = window.location.origin) {
+  const normalizedBase = API_BASE.replace(/\/$/, '');
+  if (/^https?:\/\//i.test(normalizedBase)) return normalizedBase;
+
+  const path = normalizedBase.startsWith('/') ? normalizedBase : `/${normalizedBase}`;
+  return `${origin}${path}`;
+}
+
+export function getApiBaseUrlModeLabel() {
+  return _viteApiUrl ? 'Configured API URL' : 'Vite proxy';
+}
 
 export interface ApiErrorBody {
   statusCode?: number;
   code?: string;
   message?: string;
   details?: string[];
+  requestId?: string;
   path?: string;
 }
 
 export interface WalletInfo {
-  walletAddress: string;
-  chainId: number;
+  walletAddress: string | null;
   status: string;
-  supportedTokens: string[];
+  agentWalletAddress?: string | null;
+  agentKeyHash?: string | null;
+  chainAuthorizations: Array<{
+    chainId: number;
+    status: string;
+    registrationTxHash: string | null;
+    expiresAt: string | null;
+  }>;
 }
 
 export interface AuthSessionResponse {
@@ -32,9 +53,7 @@ export interface RefreshApiKeyResponse {
 
 export interface BalanceEntry {
   token: string;
-  raw: string | null;
   formatted: string | null;
-  contractAddress?: string;
   error?: string;
 }
 
@@ -45,7 +64,6 @@ export interface BalanceChain {
 }
 
 export interface BalancesResponse {
-  walletAddress: string;
   chains: BalanceChain[];
 }
 
@@ -55,6 +73,25 @@ export interface WithdrawResponse {
   status: string;
 }
 
+export type WithdrawalToken = 'USDC' | 'USDT' | 'NATIVE';
+
+export interface WithdrawalAddressRecord {
+  id: string;
+  address: string;
+  label: string | null;
+  availableAt: string;
+  createdAt: string;
+  isAvailable: boolean;
+}
+
+export interface ListWithdrawalAddressesResponse {
+  policy: {
+    requireAddressAllowlist: boolean;
+    newAddressCooldownHours: number;
+  };
+  addresses: WithdrawalAddressRecord[];
+}
+
 export interface SignMessageRequest {
   chainId: number;
   type: 'message';
@@ -62,7 +99,7 @@ export interface SignMessageRequest {
 }
 
 export interface SignTypedDataRequest {
-  chainId: number;
+  chainId?: number;
   type: 'typed_data';
   typedData: Record<string, unknown>;
 }
@@ -75,6 +112,26 @@ export interface SignResponse {
   type: SignRequest['type'];
 }
 
+export interface AuthorizeEmbeddedWalletRequest {
+  embeddedWalletAddress: string;
+  embeddedOpenfortAccountId?: string;
+  chainId?: number;
+  agentExpiresAt?: string;
+}
+
+export type AuthorizeEmbeddedWalletResponse = AuthSessionResponse;
+
+export interface AgentRegistrationResultRequest {
+  chainId: number;
+  txHash: string;
+  status: 'registered' | 'registration_failed';
+}
+
+export interface AgentRegistrationTransactionRequest {
+  chainId: number;
+  txHash: string;
+}
+
 export interface TransactionInteraction {
   to: string;
   data: string;
@@ -83,8 +140,9 @@ export interface TransactionInteraction {
 
 export interface SendTransactionRequest {
   chainId: number;
+  executionMode?: 'session_key' | 'eoa';
+  sponsorship?: 'required' | 'none';
   interactions: TransactionInteraction[];
-  policyId?: string;
   idempotencyKey?: string;
 }
 
@@ -104,75 +162,97 @@ export interface TransactionStatusResponse extends SendTransactionResponse {
 
 export interface ApiKeyRecord {
   id: string;
-  keyPrefix: string;
+  displayPrefix: string;
   name: string | null;
   revoked: boolean;
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
-  allowedChains: number[];
+  lastUsedIp: string | null;
+  lastUsedUserAgent: string | null;
+  permissions: ApiKeyPermissions;
+  allowedContracts: string[];
+  allowedFunctionSelectors: string[];
+  dailySpendLimit: string | null;
+  monthlySpendLimit: string | null;
+}
+
+export interface ApiKeyPermissions {
+  canSign: boolean;
+  canSendTransaction: boolean;
+  canReadTransactionStatus: boolean;
+  canUseEoaExecution: boolean;
 }
 
 export interface CreateApiKeyResponse {
   rawKey: string;
-}
-
-export type PolicyRuleAction = 'accept' | 'reject';
-export type PolicyRuleOperation =
-  | 'signEvmTransaction'
-  | 'sendEvmTransaction'
-  | 'signEvmMessage'
-  | 'signEvmTypedData'
-  | 'signEvmHash'
-  | 'sponsorEvmTransaction';
-
-export type CriterionType =
-  | 'ethValue'
-  | 'evmAddress'
-  | 'evmNetwork'
-  | 'evmData'
-  | 'evmMessage'
-  | 'evmTypedDataVerifyingContract'
-  | 'evmTypedDataField';
-
-export type CriterionInput = Record<string, unknown> & { type: CriterionType };
-
-export interface PolicyRuleInput {
-  action: PolicyRuleAction;
-  operation: PolicyRuleOperation;
-  criteria?: CriterionInput[];
-}
-
-export interface PolicyRule extends PolicyRuleInput {}
-
-export interface Policy {
   id: string;
-  scope: 'account' | string;
-  description?: string;
+  displayPrefix: string;
+  name: string;
+  expiresAt: string;
+  createdAt: string;
+  permissions: ApiKeyPermissions;
+}
+
+export interface ApiKeySpendLimits {
+  daily?: string;
+  monthly?: string;
+}
+
+export interface CreateApiKeyRequest {
+  name: string;
+  allowedIps?: string[];
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  spendLimits?: ApiKeySpendLimits;
+  permissions?: Partial<ApiKeyPermissions>;
+}
+
+export interface StepUpChallengeResponse {
+  challengeId: string;
+  code?: string;
+}
+
+export interface StepUpVerifyResponse {
+  proofToken: string;
+  expiresAt: string;
+}
+
+export interface MfaStatusResponse {
   enabled: boolean;
-  deleted: boolean;
-  rules?: PolicyRule[];
-  createdAt: number;
+  recoveryCodesRemaining: number;
 }
 
-export interface CreatePolicyRequest {
-  scope: 'account';
-  description?: string;
-  enabled?: boolean;
-  rules?: PolicyRuleInput[];
+export interface TotpSetupResponse {
+  otpauthUrl: string;
+  secret: string;
 }
 
-export interface CreatePolicyResponse extends Policy {
+export interface TotpEnableResponse {
+  recoveryCodes: string[];
+}
+
+export interface TotpVerifyResponse {
+  proofToken: string;
+  expiresAt: string;
+}
+
+export interface SecurityNotificationRecord {
   id: string;
+  type: string;
+  title: string;
+  body: string;
+  riskLevel: string;
+  readAt: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
 }
-
-type DataEnvelope<T> = { data: T };
-type MaybeDataEnvelope<T> = T | DataEnvelope<T>;
 
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly details: string[];
+  readonly requestId?: string;
   readonly path?: string;
 
   constructor(response: Response, body: ApiErrorBody) {
@@ -181,6 +261,7 @@ export class ApiError extends Error {
     this.statusCode = body.statusCode ?? response.status;
     this.code = body.code ?? `HTTP_${response.status}`;
     this.details = body.details ?? [];
+    this.requestId = body.requestId;
     this.path = body.path;
   }
 }
@@ -194,7 +275,9 @@ export function hasApiErrorCode(error: unknown, ...codes: string[]) {
 }
 
 export function getApiErrorMessage(error: unknown) {
-  if (isApiError(error)) return error.message;
+  if (isApiError(error)) {
+    return error.requestId ? `${error.message} Request ID: ${error.requestId}` : error.message;
+  }
   if (error instanceof Error) return error.message;
   return String(error);
 }
@@ -218,8 +301,6 @@ function friendlyErrorMessage(code: string, fallback: string) {
     case 'API_KEY_REQUIRED':
     case 'AUTHENTICATION_REQUIRED':
       return 'Authentication is required. Sign in again or provide a valid API key.';
-    case 'CHAIN_NOT_ALLOWED':
-      return 'This key is not allowed to use the selected chain.';
     case 'CHAIN_NOT_SUPPORTED':
       return 'The selected chain is not supported.';
     case 'IDEMPOTENCY_CONFLICT':
@@ -228,10 +309,10 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'Wallet not found. Sign in again to finish wallet setup.';
     case 'TRANSACTION_NOT_FOUND':
       return 'Transaction not found, or this key does not have access to it.';
-    case 'POLICY_NOT_FOUND':
-      return 'Policy not found.';
     case 'WALLET_NOT_ACTIVE':
       return 'Wallet is not active yet. Try again shortly.';
+    case 'AGENT_REGISTRATION_PENDING':
+      return 'Agent registration is still syncing on-chain. Try again shortly.';
     case 'IP_NOT_ALLOWED':
       return 'This request is blocked by the API key IP allowlist.';
     default:
@@ -241,23 +322,36 @@ function friendlyErrorMessage(code: string, fallback: string) {
 
 async function readJson<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const text = await response.text();
+  if (!text.trim()) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 async function throwApiError(response: Response): Promise<never> {
-  const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
+  const body = await readApiErrorBody(response);
   throw new ApiError(response, body);
 }
 
-function unwrapData<T>(response: MaybeDataEnvelope<T>): T {
-  if (response && typeof response === 'object' && 'data' in response) {
-    return (response as DataEnvelope<T>).data;
+async function readApiErrorBody(response: Response): Promise<ApiErrorBody> {
+  const text = await response.text();
+  if (!text.trim()) {
+    return { message: response.statusText || `Request failed: ${response.status}` };
   }
-  return response as T;
+
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as ApiErrorBody;
+    }
+  } catch {
+    // Fall through to plain-text error handling.
+  }
+
+  return { message: text };
 }
 
 /**
- * Call an auth endpoint (uses Clerk JWT from getToken).
+ * Call an auth endpoint (uses Openfort IAM access token from getToken).
  */
 export async function authFetch<T>(
   path: string,
@@ -265,11 +359,15 @@ export async function authFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const token = await getToken();
+  if (!token) {
+    throw new Error('Openfort session is not ready. Refresh and sign in again.');
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`,
       ...options?.headers,
     },
   });
@@ -299,19 +397,100 @@ export async function apiFetch<T>(path: string, apiKey: string, options?: Reques
 
 // --- Auth ---
 
-export async function socialLogin(
+export async function syncSession(
   getToken: () => Promise<string | null>,
   signal?: AbortSignal,
 ) {
-  return authFetch<AuthSessionResponse>('/auth/social', getToken, { method: 'POST', signal });
+  return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
 }
+
+/** @deprecated Use syncSession. */
+export const socialLogin = syncSession;
 
 export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
-export async function refreshApiKey(getToken: () => Promise<string | null>) {
-  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, { method: 'POST' });
+export async function refreshApiKey(
+  getToken: () => Promise<string | null>,
+  stepUpToken: string,
+) {
+  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
+    method: 'POST',
+    headers: { 'X-Step-Up-Token': stepUpToken },
+  });
+}
+
+export async function authorizeEmbeddedWallet(
+  getToken: () => Promise<string | null>,
+  body: AuthorizeEmbeddedWalletRequest,
+) {
+  return authFetch<AuthorizeEmbeddedWalletResponse>('/auth/embedded-wallet/authorize', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function markAgentRegistrationResult(
+  getToken: () => Promise<string | null>,
+  body: AgentRegistrationResultRequest,
+) {
+  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-result', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function markAgentRegistrationTransaction(
+  getToken: () => Promise<string | null>,
+  body: AgentRegistrationTransactionRequest,
+) {
+  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-transaction', getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+// --- Dashboard MFA (TOTP) ---
+
+export async function getMfaStatusAuth(getToken: () => Promise<string | null>) {
+  return authFetch<MfaStatusResponse>('/v1/auth/mfa/status', getToken);
+}
+
+export async function setupTotpAuth(getToken: () => Promise<string | null>) {
+  return authFetch<TotpSetupResponse>('/v1/auth/mfa/totp/setup', getToken, {
+    method: 'POST',
+  });
+}
+
+export async function enableTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<TotpEnableResponse>('/v1/auth/mfa/totp/enable', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function verifyTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<TotpVerifyResponse>('/v1/auth/mfa/totp/verify', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function disableTotpAuth(
+  getToken: () => Promise<string | null>,
+  code: string,
+) {
+  return authFetch<void>('/v1/auth/mfa/totp/disable', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
 }
 
 // --- Public API-key endpoints ---
@@ -342,29 +521,116 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
 
 export async function createApiKeyAuth(
   getToken: () => Promise<string | null>,
-  name: string,
-  allowedChains?: number[],
+  request: CreateApiKeyRequest,
+  stepUpToken?: string,
 ) {
   return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
     method: 'POST',
-    body: JSON.stringify({ name, allowedChains }),
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+    body: JSON.stringify(request),
   });
 }
 
-export async function revokeApiKeyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<void>(`/v1/api-keys/${id}`, getToken, { method: 'DELETE' });
+export async function revokeApiKeyAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  stepUpToken?: string,
+) {
+  return authFetch<void>(`/v1/api-keys/${id}`, getToken, {
+    method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  });
+}
+
+export async function revokeAllApiKeysAuth(
+  getToken: () => Promise<string | null>,
+  stepUpToken?: string,
+) {
+  return authFetch<{ success: boolean; revokedCount: number }>('/v1/api-keys', getToken, {
+    method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  });
+}
+
+export async function listSecurityNotificationsAuth(
+  getToken: () => Promise<string | null>,
+  params?: { unreadOnly?: boolean; limit?: number },
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams();
+  if (params?.unreadOnly) query.set('unreadOnly', 'true');
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<SecurityNotificationRecord[]>(
+    `/v1/security-notifications${qs ? `?${qs}` : ''}`,
+    getToken,
+    { signal },
+  );
+}
+
+export async function markSecurityNotificationReadAuth(
+  getToken: () => Promise<string | null>,
+  notificationId: string,
+) {
+  return authFetch<{ success: boolean; updatedCount: number }>(
+    `/v1/security-notifications/${notificationId}/read`,
+    getToken,
+    { method: 'POST' },
+  );
+}
+
+export async function markAllSecurityNotificationsReadAuth(getToken: () => Promise<string | null>) {
+  return authFetch<{ success: boolean; updatedCount: number }>(
+    '/v1/security-notifications/read-all',
+    getToken,
+    { method: 'POST' },
+  );
 }
 
 export async function withdrawAuth(
   getToken: () => Promise<string | null>,
   to: string,
   amount: string,
-  token: string,
+  token: WithdrawalToken,
   chainId = DEFAULT_CHAIN_ID,
+  stepUpToken?: string,
 ) {
   return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
     method: 'POST',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
+  });
+}
+
+export async function listWithdrawalAddressesAuth(
+  getToken: () => Promise<string | null>,
+  signal?: AbortSignal,
+) {
+  return authFetch<ListWithdrawalAddressesResponse>('/v1/wallets/withdrawal-addresses', getToken, {
+    signal,
+  });
+}
+
+export async function addWithdrawalAddressAuth(
+  getToken: () => Promise<string | null>,
+  body: { address: string; label?: string },
+  stepUpToken?: string,
+) {
+  return authFetch<WithdrawalAddressRecord>('/v1/wallets/withdrawal-addresses', getToken, {
+    method: 'POST',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function removeWithdrawalAddressAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  stepUpToken?: string,
+) {
+  return authFetch<{ success: boolean }>(`/v1/wallets/withdrawal-addresses/${id}`, getToken, {
+    method: 'DELETE',
+    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
 }
 
@@ -378,57 +644,136 @@ export async function getBalancesAuth(
   });
 }
 
-// --- Policies ---
+// --- Transaction & Signing Request History (dashboard-only) ---
 
-export async function listPoliciesAuth(getToken: () => Promise<string | null>) {
-  const response = await authFetch<MaybeDataEnvelope<Policy[]>>('/v1/policies', getToken);
-  return unwrapData(response);
+export interface TransactionListItem {
+  id: string;
+  status: string;
+  txHash: string | null;
+  chainId: number;
+  walletAddress: string;
+  operationType: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  failureReason: string | null;
 }
 
-export async function createPolicyAuth(getToken: () => Promise<string | null>, body: CreatePolicyRequest) {
-  return authFetch<CreatePolicyResponse>('/v1/policies', getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
+export interface ListTransactionsResponse {
+  items: TransactionListItem[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export async function deletePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<void>(`/v1/policies/${id}`, getToken, { method: 'DELETE' });
+export interface ListTransactionsParams {
+  status?: string;
+  chainId?: number;
+  page?: number;
+  limit?: number;
 }
 
-export async function enablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<Policy>(`/v1/policies/${id}/enable`, getToken, { method: 'POST' });
-}
-
-export async function disablePolicyAuth(getToken: () => Promise<string | null>, id: string) {
-  return authFetch<Policy>(`/v1/policies/${id}/disable`, getToken, { method: 'POST' });
-}
-
-export async function listPolicyRulesAuth(getToken: () => Promise<string | null>, policyId: string) {
-  const response = await authFetch<MaybeDataEnvelope<PolicyRule[]>>(
-    `/v1/policies/${policyId}/rules`,
-    getToken,
-  );
-  return unwrapData(response);
-}
-
-export async function createPolicyRuleAuth(
+export async function listTransactionsAuth(
   getToken: () => Promise<string | null>,
-  policyId: string,
-  body: PolicyRuleInput,
+  params?: ListTransactionsParams,
+  signal?: AbortSignal,
 ) {
-  return authFetch<PolicyRule>(`/v1/policies/${policyId}/rules`, getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
+  const query = new URLSearchParams();
+  if (params?.status) query.set('status', params.status);
+  if (params?.chainId) query.set('chainId', String(params.chainId));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, { signal });
 }
 
-export async function deletePolicyRuleAuth(
+export interface SigningRequestListItem {
+  id: string;
+  type: string;
+  chainId: number | null;
+  walletAddress: string;
+  status: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface ListSigningRequestsResponse {
+  items: SigningRequestListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ListSigningRequestsParams {
+  type?: string;
+  status?: string;
+  chainId?: number;
+  page?: number;
+  limit?: number;
+}
+
+export async function listSigningRequestsAuth(
   getToken: () => Promise<string | null>,
-  policyId: string,
-  ruleIndex: number,
+  params?: ListSigningRequestsParams,
+  signal?: AbortSignal,
 ) {
-  return authFetch<void>(`/v1/policies/${policyId}/rules/${ruleIndex}`, getToken, {
-    method: 'DELETE',
-  });
+  const query = new URLSearchParams();
+  if (params?.type) query.set('type', params.type);
+  if (params?.status) query.set('status', params.status);
+  if (params?.chainId) query.set('chainId', String(params.chainId));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return authFetch<ListSigningRequestsResponse>(`/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`, getToken, { signal });
+}
+
+// --- Transaction & Signing Request Detail (dashboard-only) ---
+
+export interface TransactionDetail {
+  id: string;
+  status: string;
+  txHash: string | null;
+  chainId: number;
+  walletAddress: string;
+  operationType: string;
+  authMethod: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  idempotencyKey: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  withdrawal: { to: string | null; amount: string | null; token: string | null } | null;
+}
+
+export async function getTransactionDetailAuth(
+  getToken: () => Promise<string | null>,
+  transactionId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, { signal });
+}
+
+export interface SigningRequestDetail {
+  id: string;
+  type: string;
+  chainId: number | null;
+  walletAddress: string;
+  status: string;
+  authMethod: string;
+  apiKeyPrefix: string | null;
+  apiKeyName: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export async function getSigningRequestDetailAuth(
+  getToken: () => Promise<string | null>,
+  signingRequestId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<SigningRequestDetail>(`/v1/wallets/signing-requests/${signingRequestId}`, getToken, { signal });
 }

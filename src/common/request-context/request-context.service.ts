@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 type RequestContext = {
   requestId: string;
+  clientIp?: string;
 };
 
 @Injectable()
@@ -15,6 +16,10 @@ export class RequestContextService {
 
   getRequestId(): string | undefined {
     return this.storage.getStore()?.requestId;
+  }
+
+  getClientIp(): string | undefined {
+    return this.storage.getStore()?.clientIp;
   }
 
   getLogContext(extra: Record<string, unknown> = {}) {

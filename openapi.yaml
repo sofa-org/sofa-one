@@ -7,13 +7,15 @@ info:
 
     ## 认证
 
-    所有端点均需要 `X-API-Key` Header 认证：
+    本规格只包含公开 API。所有公开端点均需要 `X-API-Key` Header 认证：
 
     ```
     X-API-Key: sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     ```
 
-    API Key 在首次社交登录时由平台颁发，格式为 `sk_` + 64 位十六进制字符。
+    API Key 在 Dashboard 中显式创建，原文只返回一次，格式为 `sk_` + 64 位十六进制字符。不要在浏览器代码中暴露 API Key。
+
+    Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info` 和 `POST /v1/wallets/withdraw`。这些端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
     ## 支持的链
 
@@ -25,6 +27,12 @@ info:
     | `11155111` | Ethereum Sepolia（测试网） |
     | `137` | Polygon Mainnet（Polymarket） |
     | `80002` | Polygon Amoy（Polymarket 测试网） |
+    | `42161` | Arbitrum One |
+    | `10` | OP Mainnet |
+    | `11155420` | OP Sepolia（测试网） |
+    | `56` | BNB Smart Chain Mainnet |
+    | `97` | BNB Smart Chain Testnet（测试网） |
+    | `143` | Monad Mainnet |
 
     ## 快速开始
 
@@ -38,7 +46,7 @@ info:
         "idempotencyKey": "order-abc-123",
         "interactions": [{
           "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-          "data": "0xa9059cbb000000000000000000000000RecipientAddr0000000000000000000000000000000000000000000000000000000000000f4240",
+          "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
           "value": "0"
         }]
       }'
@@ -61,7 +69,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:3100
     description: 本地开发环境
   - url: https://api.example.com
     description: 生产环境（待配置）
@@ -82,14 +90,16 @@ paths:
       tags: [Signing]
       summary: 签名数据
       description: |
-        使用用户的 Backend Wallet 对数据进行离线签名（不广播交易）。此端点只接受 `X-API-Key`，不接受 Clerk Bearer JWT。
+        使用用户的 backend wallet 对数据进行离线签名（不广播交易）。此端点只接受 `X-API-Key`，不接受 Openfort IAM Bearer token。
+
+        `executionMode` 可选：默认 `session_key`，使用已授权的 Backend Agent Signer，并返回面向用户 EIP-7702 delegated EOA 的 Calibur wrapped signature；`eoa` 使用服务端 backend wallet 直接签名，返回普通 EOA signature。
 
         支持两种签名类型。出于安全原因，原始 hash 签名不开放：
 
         | type | 说明 | 必填字段 |
         |------|------|----------|
-        | `message` | EIP-191 个人消息签名 | `message` |
-        | `typed_data` | EIP-712 结构化数据签名 | `typedData` |
+        | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
+        | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData`；如同时传 `chainId` 必须一致 |
       operationId: signData
       requestBody:
         required: true
@@ -102,6 +112,8 @@ paths:
                 summary: 签名纯文本消息
                 value:
                   type: message
+                  chainId: 84532
+                  executionMode: session_key
                   message: "Hello, SOFA ONE!"
               typedData:
                 summary: 签名 EIP-712 结构化数据
@@ -122,7 +134,7 @@ paths:
                       wallet: "0x1234567890abcdef1234567890abcdef12345678"
       responses:
         '200':
-          description: 签名成功
+          description: 签名成功。`session_key` 返回 Calibur wrapped signature；`eoa` 返回普通 EOA signature。
           content:
             application/json:
               schema:
@@ -131,6 +143,7 @@ paths:
                 signature: "0x1a2b3c4d5e6f..."
                 walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
                 type: "message"
+                executionMode: "session_key"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -144,11 +157,15 @@ paths:
       tags: [Transactions]
       summary: 发送交易
       description: |
-        使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和 Gas 处理。
-        此端点不接受 Clerk Bearer JWT。
+        使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和交易提交。
+        此端点不接受 Openfort IAM Bearer token。
+
+        `executionMode` 可选：默认 `session_key`，通过已授权的 Backend Agent Signer / Calibur UserOperation 从用户 EIP-7702 delegated EOA 执行；`eoa` 通过服务端 backend wallet 直接签名并发送交易。
+
+        `sponsorship` 仅适用于 `executionMode=session_key`：默认 `none` 不使用 Paymaster；`required` 要求必须使用 Openfort Paymaster，且该链必须已配置 fee sponsorship policy。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
-        必填 `chainId` 指定执行链，且必须被 API key 允许；可选 `policyId` 用于 Gas 代付策略；必填 `idempotencyKey` 用于防止重复提交。
+        必填 `chainId` 指定执行链；`session_key` 还要求该链必须已在开发者钱包中完成 API access authorization。必填 `idempotencyKey` 用于防止重复提交。
       operationId: sendTransaction
       requestBody:
         required: true
@@ -161,20 +178,12 @@ paths:
                 summary: USDC transfer（ABI-encoded）
                 value:
                   chainId: 84532
+                  executionMode: session_key
+                  sponsorship: none
                   idempotencyKey: "order-abc-123"
                   interactions:
                     - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                      data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
-                      value: "0"
-              withPolicy:
-                summary: 使用 Gas 代付策略 + 幂等键
-                value:
-                  chainId: 84532
-                  policyId: "pol_usdc-gas-policy"
-                  idempotencyKey: "order-abc-123"
-                  interactions:
-                    - to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-                      data: "0xa9059cbb000000000000000000000000AbCdEf1234567890aBcDeF1234567890AbCdEf120000000000000000000000000000000000000000000000000000000000000f4240"
+                      data: "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240"
                       value: "0"
       responses:
         '201':
@@ -185,8 +194,8 @@ paths:
                 $ref: '#/components/schemas/SendTransactionResponse'
               example:
                 transactionId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-                transactionHash: "0xabc123def456..."
-                status: "confirmed"
+                transactionHash: null
+                status: "pending"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -201,6 +210,20 @@ paths:
                 statusCode: 400
                 code: IDEMPOTENCY_CONFLICT
                 message: "Idempotency key already used with different request payload"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/transactions/send"
+        '424':
+          description: 当 `sponsorship=required` 且该链未配置 Openfort Paymaster policy 时返回
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 424
+                code: PAYMASTER_POLICY_NOT_CONFIGURED
+                message: "No gas sponsorship policy is configured for chainId 137."
+                requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/transactions/send"
 
@@ -209,9 +232,7 @@ paths:
       tags: [Transactions]
       summary: 查询交易状态
       description: |
-        使用 `X-API-Key` 查询当前用户的交易状态。响应只返回安全状态字段，不返回 calldata 或 requestHash。
-
-        如交易记录仍处于 `submitting` / `pending` 且包含 Openfort intent id，服务会尝试从 Openfort 刷新状态。
+        使用 `X-API-Key` 查询当前用户通过公开 `POST /v1/transactions/send` 创建的交易状态。状态来自 SOFA ONE 本地交易记录；响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。Dashboard withdrawal 等 frontend-only 交易不通过此公开接口查询。
       operationId: getTransactionStatus
       parameters:
         - name: transactionId
@@ -230,7 +251,7 @@ paths:
                 $ref: '#/components/schemas/TransactionStatusResponse'
               example:
                 transactionId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-                transactionHash: "0xabc123def456..."
+                transactionHash: "0xabc123def456abc123def456abc123def456abc123def456abc123def456abcd"
                 status: "confirmed"
                 chainId: 84532
                 walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
@@ -251,13 +272,13 @@ components:
       name: X-API-Key
       description: |
         API Key，格式：`sk_<64位十六进制字符>`。  
-        首次社交登录时由平台颁发。
+        在 Dashboard API Keys 页面创建，原文只返回一次。
 
   schemas:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [type, chainId]
+      required: [type]
       properties:
         type:
           type: string
@@ -266,13 +287,32 @@ components:
             签名类型：
             - `message` — 纯文本消息（EIP-191）
             - `typed_data` — 结构化数据（EIP-712）
-        message:
+        executionMode:
           type: string
-          description: 纯文本消息（`type=message` 时必填）
+          enum: [session_key, eoa]
+          default: session_key
+          description: |
+            签名执行身份：
+            - `session_key` — 默认，Backend Agent Signer 签名并返回 Calibur wrapped signature
+            - `eoa` — 服务端 backend wallet 直接签名，返回普通 EOA signature
+        message:
+          oneOf:
+            - type: string
+              minLength: 1
+              description: 非空纯文本消息
+            - type: object
+              required: [raw]
+              additionalProperties: false
+              properties:
+                raw:
+                  type: string
+                  pattern: '^0x([a-fA-F0-9]{2})*$'
+                  description: 0x 前缀、偶数长度的原始字节 hex 数据
+          description: 纯文本消息或原始字节（`type=message` 时必填）
         chainId:
           type: integer
           minimum: 1
-          description: 必填链上下文；必须在 API Key 允许的链范围内。`typed_data.domain.chainId` 如存在必须与该值一致。
+          description: 链上下文。`message` 签名必填；`typed_data` 可省略并从 `typedData.domain.chainId` 推导。如两者同时存在，必须一致。`session_key` 模式要求该链必须已在开发者钱包中完成 API access authorization。
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:
@@ -282,8 +322,13 @@ components:
       properties:
         domain:
           type: object
+          required: [chainId]
           additionalProperties: true
-          description: EIP-712 domain 数据
+          properties:
+            chainId:
+              type: integer
+              minimum: 1
+          description: EIP-712 domain 数据；`chainId` 必填，用作 typed_data 签名的链上下文。
         types:
           type: object
           additionalProperties:
@@ -311,14 +356,17 @@ components:
       properties:
         signature:
           type: string
-          description: 十六进制编码的 ECDSA 签名
+          description: 当 `executionMode=session_key` 时为 Calibur wrapped signature，ABI 编码为 `(bytes32 keyHash, bytes signature, bytes hookData)`；当 `executionMode=eoa` 时为普通 EOA signature。
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 签名所用的钱包地址
+          description: 实际签名地址。`session_key` 为用户 EIP-7702 delegated EOA 地址；`eoa` 为服务端 backend wallet 地址。
         type:
           type: string
           enum: [message, typed_data]
+        executionMode:
+          type: string
+          enum: [session_key, eoa]
 
     # ──────────── Transactions ────────────
     SendTransactionRequest:
@@ -328,18 +376,31 @@ components:
         chainId:
           type: integer
           minimum: 1
-          description: 执行链 ID，必须是平台支持且被 API key 允许的链
+          description: 执行链 ID，必须是平台支持且已在开发者钱包中完成 API access authorization 的链
           example: 84532
+        executionMode:
+          type: string
+          enum: [session_key, eoa]
+          default: session_key
+          description: |
+            交易执行身份：
+            - `session_key` — 默认，通过已授权的 Backend Agent Signer / Calibur UserOperation 执行，需要该链 API access authorization
+            - `eoa` — 服务端 backend wallet 直接签名并发送交易
+        sponsorship:
+          type: string
+          enum: [required, none]
+          default: none
+          description: |
+            仅适用于 `executionMode=session_key` 的 Gas sponsorship 策略：
+            - `none` — 默认，不使用 Paymaster，直接提交非 sponsored UserOperation
+            - `required` — 必须使用 Openfort Paymaster；无匹配 policy 时返回 `PAYMASTER_POLICY_NOT_CONFIGURED`
         interactions:
           type: array
           minItems: 1
+          maxItems: 10
           items:
             $ref: '#/components/schemas/RawInteraction'
-          description: 合约交互列表（至少一个）
-        policyId:
-          type: string
-          description: Gas 代付策略 ID（可选）
-          example: "pol_usdc-gas-policy"
+          description: 合约交互列表（1-10 个；服务端还会限制总 calldata 大小和目标合约 fanout）
         idempotencyKey:
           type: string
           maxLength: 64
@@ -357,8 +418,9 @@ components:
           description: 目标合约地址
         data:
           type: string
-          pattern: '^0x[a-fA-F0-9]*$'
-          description: ABI-encoded calldata（0x 前缀十六进制）
+          maxLength: 131074
+          pattern: '^0x([a-fA-F0-9]{2})*$'
+          description: ABI-encoded calldata（0x 前缀、byte-aligned 十六进制，单个 interaction 最大 64 KB）
         value:
           type: string
           pattern: '^\d+$'
@@ -434,9 +496,7 @@ components:
             - IP_NOT_ALLOWED
             - WALLET_NOT_FOUND
             - TRANSACTION_NOT_FOUND
-            - POLICY_NOT_FOUND
             - CHAIN_NOT_SUPPORTED
-            - CHAIN_NOT_ALLOWED
             - IDEMPOTENCY_CONFLICT
             - RAW_HASH_SIGNING_DISABLED
             - WALLET_NOT_ACTIVE
@@ -451,6 +511,9 @@ components:
           items:
             type: string
           description: 验证错误详情；仅 validation errors 返回
+        requestId:
+          type: string
+          description: 请求追踪 ID
         timestamp:
           type: string
           format: date-time
@@ -475,6 +538,9 @@ components:
           items:
             type: string
           description: 验证错误列表
+        requestId:
+          type: string
+          description: 请求追踪 ID
         timestamp:
           type: string
           format: date-time
@@ -492,6 +558,7 @@ components:
             statusCode: 401
             code: INVALID_API_KEY
             message: "Invalid API key"
+            requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
             path: "/v1/transactions/send"
 
@@ -505,6 +572,7 @@ components:
             statusCode: 404
             code: WALLET_NOT_FOUND
             message: "Wallet not found"
+            requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
             path: "/v1/transactions/send"
 
@@ -521,5 +589,6 @@ components:
             details:
               - "interactions must contain at least 1 elements"
               - "interactions.0.to must be a valid Ethereum address"
+            requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
             path: "/v1/transactions/send"

@@ -2,11 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
-import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import * as express from 'express';
 
-function parseTrustProxy(
+export function parseTrustProxy(
   value: string | undefined,
   nodeEnv: string | undefined,
 ): string | string[] | false {
@@ -32,6 +31,7 @@ function parseTrustProxy(
 }
 
 async function bootstrap() {
+  const { AppModule } = await import('./app.module');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
 
@@ -74,4 +74,6 @@ async function bootstrap() {
   logger.log(`SOFA ONE API running on port ${port}`);
 }
 
-bootstrap();
+if (require.main === module) {
+  void bootstrap();
+}

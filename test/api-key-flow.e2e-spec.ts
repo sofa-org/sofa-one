@@ -16,7 +16,6 @@ import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
-process.env.CLERK_SECRET_KEY = 'sk_test_fake_clerk_key_for_testing';
 process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
@@ -25,7 +24,6 @@ process.env.DATABASE_URL =
 const TEST_WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
 const TEST_TARGET_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const TEST_CHAIN_ID = 84532;
-const DISALLOWED_CHAIN_ID = 8453;
 const TEST_TX_HASH = `0x${'1'.repeat(64)}`;
 const TEST_SIGNATURE = `0x${'2'.repeat(130)}`;
 
@@ -34,7 +32,12 @@ const mockOpenfortService = {
     id: 'ofa_test_account_123',
     address: TEST_WALLET_ADDRESS,
   }),
-  sendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
+  verifyAgentKeyRegistration: jest.fn().mockResolvedValue(undefined),
+  sendUserOperation: jest.fn().mockResolvedValue({
+    userOpHash: `0x${'4'.repeat(64)}`,
+    transactionHash: TEST_TX_HASH,
+  }),
+  sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
 
@@ -83,7 +86,7 @@ describe('API-key public security flow (e2e)', () => {
     throttlerStorage.storage?.clear();
     await cleanDatabase();
 
-    const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key', [TEST_CHAIN_ID]);
+    const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key');
     testUserId = seeded.userId;
     testApiKey = seeded.rawKey;
     testKeyId = seeded.keyId;
@@ -132,12 +135,13 @@ describe('API-key public security flow (e2e)', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        signature: TEST_SIGNATURE,
+        signature: expect.stringMatching(/^0x[0-9a-fA-F]+$/),
         walletAddress: TEST_WALLET_ADDRESS,
         type: 'message',
+        executionMode: 'session_key',
       });
       expect(mockOpenfortService.signData).toHaveBeenCalledWith(
-        'ofa_test_account_123',
+        'ofa_test_agent_account_123',
         expect.stringMatching(/^0x[0-9a-f]{64}$/),
       );
 
@@ -169,12 +173,18 @@ describe('API-key public security flow (e2e)', () => {
         transactionHash: TEST_TX_HASH,
         status: 'confirmed',
       });
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledWith({
-        accountId: 'ofa_test_account_123',
-        chainId: TEST_CHAIN_ID,
-        interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
-        policyId: undefined,
-      });
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agentAccountId: 'ofa_test_agent_account_123',
+          accountAddress: TEST_WALLET_ADDRESS,
+          chainId: TEST_CHAIN_ID,
+          keyHash: `0x${'3'.repeat(64)}`,
+          interactions: [
+            expect.objectContaining({ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }),
+          ],
+          sponsorship: 'none',
+        }),
+      );
 
       const tx = await prisma.transaction.findFirstOrThrow({ where: { userId: testUserId } });
       expect(tx.apiKeyId).toBe(testKeyId);
@@ -206,7 +216,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect(201);
 
       expect(second.body).toEqual(first.body);
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
       await expect(
         prisma.transaction.count({
           where: {
@@ -219,13 +229,15 @@ describe('API-key public security flow (e2e)', () => {
     });
 
     it('GET /v1/transactions/:id returns safe transaction status for the API-key user', async () => {
+      const calldata = '0xdeadbeefcafebabefeedface';
+
       const created = await request(app.getHttpServer())
         .post('/v1/transactions/send')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
           idempotencyKey: 'status-abc-123',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef', value: '0' }],
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: calldata, value: '0' }],
         })
         .expect(201);
 
@@ -246,6 +258,9 @@ describe('API-key public security flow (e2e)', () => {
       );
       expect(res.body).not.toHaveProperty('details');
       expect(res.body).not.toHaveProperty('requestHash');
+      expect(res.body).not.toHaveProperty('interactionsHash');
+      expect(res.body).not.toHaveProperty('interactions');
+      expect(JSON.stringify(res.body)).not.toContain(calldata);
     });
   });
 
@@ -268,7 +283,7 @@ describe('API-key public security flow (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/api-keys')
         .set('X-API-Key', testApiKey)
-        .send({ name: 'Illegitimate child key', allowedChains: [TEST_CHAIN_ID] })
+        .send({ name: 'Illegitimate child key' })
         .expect(401);
       await request(app.getHttpServer())
         .post('/v1/wallets/deposit-info')
@@ -304,7 +319,6 @@ describe('API-key public security flow (e2e)', () => {
       const expired = await seedUserWithKey(
         'expired_social_id_e2e',
         'Expired Key',
-        [TEST_CHAIN_ID],
         {
           openfortAccountId: 'ofa_expired_account_123',
           walletAddress: '0x2222222222222222222222222222222222222222',
@@ -319,28 +333,6 @@ describe('API-key public security flow (e2e)', () => {
         .set('X-API-Key', expired.rawKey)
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'expired' })
         .expect(401);
-    });
-
-    it('rejects disallowed chains for sign and send', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/wallets/sign')
-        .set('X-API-Key', testApiKey)
-        .send({ chainId: DISALLOWED_CHAIN_ID, type: 'message', message: 'hello' })
-        .expect(400)
-        .expect((res) => expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/wallets/sign'));
-
-      await request(app.getHttpServer())
-        .post('/v1/transactions/send')
-        .set('X-API-Key', testApiKey)
-        .send({
-          chainId: DISALLOWED_CHAIN_ID,
-          idempotencyKey: 'wrong-chain',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
-        })
-        .expect(400)
-        .expect((res) =>
-          expectApiError(res.body, 400, 'CHAIN_NOT_ALLOWED', '/v1/transactions/send'),
-        );
     });
 
     it('rejects raw hash signing before creating a signing audit row', async () => {
@@ -382,7 +374,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect((res) =>
           expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions/send'),
         );
-      expect(mockOpenfortService.sendTransaction).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
     });
 
     it('does not allow an API key to read another user transaction status', async () => {
@@ -405,7 +397,7 @@ describe('API-key public security flow (e2e)', () => {
         },
       });
 
-      const other = await seedUserWithKey('other_social_id_e2e', 'Other E2E Key', [TEST_CHAIN_ID], {
+      const other = await seedUserWithKey('other_social_id_e2e', 'Other E2E Key', {
         openfortAccountId: 'ofa_other_account_123',
         walletAddress: '0x3333333333333333333333333333333333333333',
       });
@@ -442,8 +434,13 @@ describe('API-key public security flow (e2e)', () => {
   async function seedUserWithKey(
     socialId: string,
     keyName: string,
-    allowedChains: number[],
-    wallet: { openfortAccountId: string; walletAddress: string } = {
+    wallet: {
+      openfortAccountId: string;
+      walletAddress: string;
+      agentOpenfortAccountId?: string;
+      agentWalletAddress?: string;
+      agentKeyHash?: string;
+    } = {
       openfortAccountId: 'ofa_test_account_123',
       walletAddress: TEST_WALLET_ADDRESS,
     },
@@ -456,18 +453,53 @@ describe('API-key public security flow (e2e)', () => {
       },
     });
 
-    await prisma.userWallet.create({
+    const userWallet = await prisma.userWallet.create({
       data: {
         userId: user.id,
         openfortAccountId: wallet.openfortAccountId,
         walletAddress: wallet.walletAddress,
+        agentOpenfortAccountId: wallet.agentOpenfortAccountId ?? defaultAgentOpenfortAccountId(socialId),
+        agentWalletAddress: wallet.agentWalletAddress ?? defaultAgentWalletAddress(socialId),
+        agentKeyHash: wallet.agentKeyHash ?? defaultAgentKeyHash(socialId),
+      },
+    });
+    await prisma.walletChainAuthorization.create({
+      data: {
+        walletId: userWallet.id,
         chainId: BigInt(TEST_CHAIN_ID),
+        status: 'registered',
+        expiresAt: new Date(Date.now() + 86_400_000),
       },
     });
 
-    const key = await apiKeyService.createApiKey(user.id, { name: keyName, allowedChains });
+    const key = await apiKeyService.createApiKey(user.id, { name: keyName });
+    const storedKey = await prisma.apiKey.findFirstOrThrow({
+      where: { userId: user.id, name: keyName },
+    });
 
-    return { userId: user.id, keyId: key.id, rawKey: key.rawKey };
+    return { userId: user.id, keyId: storedKey.id, rawKey: key.rawKey };
+  }
+
+  function defaultAgentOpenfortAccountId(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? 'ofa_test_agent_account_123'
+      : `ofa_${socialId}_agent_account_123`;
+  }
+
+  function defaultAgentWalletAddress(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? `0x${'4'.repeat(40)}`
+      : `0x${hexFromText(socialId, 40)}`;
+  }
+
+  function defaultAgentKeyHash(socialId: string): string {
+    return socialId === 'test_social_id_e2e'
+      ? `0x${'3'.repeat(64)}`
+      : `0x${hexFromText(`${socialId}_agent_key`, 64)}`;
+  }
+
+  function hexFromText(value: string, length: number): string {
+    return Buffer.from(value).toString('hex').padEnd(length, '0').slice(0, length);
   }
 
   async function cleanDatabase() {

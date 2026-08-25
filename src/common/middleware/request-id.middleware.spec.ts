@@ -36,4 +36,58 @@ describe('RequestIdMiddleware', () => {
     expect(response.setHeader).toHaveBeenCalledWith('X-Request-Id', request.requestId);
     expect(next).toHaveBeenCalledTimes(1);
   });
+
+  it('trims an inbound X-Request-Id before storing and returning it', () => {
+    const request = { headers: { 'x-request-id': '  req-trimmed  ' } } as any;
+    const response = { setHeader: jest.fn() } as any;
+    const next = jest.fn();
+
+    middleware.use(request, response, next);
+
+    expect(request.requestId).toBe('req-trimmed');
+    expect(response.setHeader).toHaveBeenCalledWith('X-Request-Id', 'req-trimmed');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the first value when X-Request-Id is received as an array header', () => {
+    const request = {
+      headers: { 'x-request-id': ['req-first', 'req-second'] },
+    } as any;
+    const response = { setHeader: jest.fn() } as any;
+    const next = jest.fn();
+
+    middleware.use(request, response, next);
+
+    expect(request.requestId).toBe('req-first');
+    expect(response.setHeader).toHaveBeenCalledWith('X-Request-Id', 'req-first');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('generates a new request id when the inbound header is blank', () => {
+    const request = { headers: { 'x-request-id': '   ' } } as any;
+    const response = { setHeader: jest.fn() } as any;
+    const next = jest.fn();
+
+    middleware.use(request, response, next);
+
+    expect(request.requestId).toEqual(expect.any(String));
+    expect(request.requestId).not.toHaveLength(0);
+    expect(request.requestId).not.toBe('');
+    expect(response.setHeader).toHaveBeenCalledWith('X-Request-Id', request.requestId);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('generates a new request id when the inbound header is too long', () => {
+    const tooLongRequestId = 'r'.repeat(129);
+    const request = { headers: { 'x-request-id': tooLongRequestId } } as any;
+    const response = { setHeader: jest.fn() } as any;
+    const next = jest.fn();
+
+    middleware.use(request, response, next);
+
+    expect(request.requestId).toEqual(expect.any(String));
+    expect(request.requestId).not.toBe(tooLongRequestId);
+    expect(response.setHeader).toHaveBeenCalledWith('X-Request-Id', request.requestId);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
 });

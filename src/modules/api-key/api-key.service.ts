@@ -3,24 +3,68 @@ import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
-import { DEFAULT_CHAIN_ID, getSupportedChain } from '../../common/chains/supported-chains';
 import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 const MAX_ACTIVE_API_KEYS = 10;
+const DEFAULT_API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_API_KEY_TTL_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Maximum TTL per permission level.
+ * The most restrictive high-risk permission determines the cap.
+ * Read-only keys (canReadTransactionStatus only) get the full 365-day window.
+ */
+const PERMISSION_MAX_TTL_MS: Record<string, number> = {
+  canUseEoaExecution: 30 * 24 * 60 * 60 * 1000, // 30 days
+  canSign: 90 * 24 * 60 * 60 * 1000, // 90 days
+  canSendTransaction: 90 * 24 * 60 * 60 * 1000, // 90 days
+  canReadTransactionStatus: 365 * 24 * 60 * 60 * 1000, // 365 days (read-only default)
+};
+
+const HIGH_RISK_PERMISSIONS: (keyof ApiKeyPermissions)[] = [
+  'canSign',
+  'canSendTransaction',
+  'canUseEoaExecution',
+];
 
 type ApiKeyCreateOptions = {
   name: string;
-  allowedChains?: number[];
   expiresAt?: string | Date;
   allowedIps?: string[];
+  allowedContracts?: string[];
+  allowedFunctionSelectors?: string[];
+  spendLimits?: { daily?: string; monthly?: string };
+  permissions?: Partial<ApiKeyPermissions>;
+};
+
+export type ApiKeyPermissions = {
+  canSign: boolean;
+  canSendTransaction: boolean;
+  canReadTransactionStatus: boolean;
+  canUseEoaExecution: boolean;
+};
+
+export type ApiKeySpendLimits = {
+  daily?: string | null;
+  monthly?: string | null;
+};
+
+const DEFAULT_API_KEY_PERMISSIONS: ApiKeyPermissions = {
+  canSign: false,
+  canSendTransaction: false,
+  canReadTransactionStatus: true,
+  canUseEoaExecution: false,
 };
 
 type PrismaTransaction = Prisma.TransactionClient;
 
 @Injectable()
 export class ApiKeyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly securityEvents: SecurityEventService,
+  ) {}
 
   /**
    * Generate a new API key for the given user.
@@ -30,7 +74,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
 
-    const apiKey = await this.prisma.$transaction(async (tx) => {
+    const createdKey = await this.prisma.$transaction(async (tx) => {
       await this.assertCanCreateKey(tx, userId, normalized.name);
 
       const created = await tx.apiKey.create({
@@ -41,7 +85,11 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
-          allowedChains: normalized.allowedChains,
+          allowedContracts: normalized.allowedContracts,
+          allowedFunctionSelectors: normalized.allowedFunctionSelectors,
+          dailySpendLimit: normalized.dailySpendLimit,
+          monthlySpendLimit: normalized.monthlySpendLimit,
+          ...normalized.permissions,
         },
       });
 
@@ -49,9 +97,9 @@ export class ApiKeyService {
         keyPrefix: created.keyPrefix,
         keyName: created.name,
         metadata: {
-          allowedChains: created.allowedChains,
           allowedIps: created.allowedIps,
           expiresAt: created.expiresAt?.toISOString() ?? null,
+          permissions: this.toPermissions(created),
         },
       });
 
@@ -59,13 +107,13 @@ export class ApiKeyService {
     });
 
     return {
-      id: apiKey.id,
       rawKey: keyMaterial.rawKey,
-      keyPrefix: apiKey.keyPrefix,
-      name: apiKey.name,
-      allowedChains: apiKey.allowedChains,
-      expiresAt: apiKey.expiresAt,
-      createdAt: apiKey.createdAt,
+      id: createdKey.id,
+      displayPrefix: this.toDisplayPrefix(createdKey.keyPrefix),
+      name: createdKey.name,
+      expiresAt: createdKey.expiresAt,
+      createdAt: createdKey.createdAt,
+      permissions: this.toPermissions(createdKey),
     };
   }
 
@@ -125,7 +173,7 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions({ name });
     const keyMaterial = await this.generateKeyMaterial();
 
-    const apiKey = await this.prisma.$transaction(async (tx) => {
+    const createdKey = await this.prisma.$transaction(async (tx) => {
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -152,7 +200,7 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: [],
-          allowedChains: normalized.allowedChains,
+          ...normalized.permissions,
         },
       });
 
@@ -161,7 +209,8 @@ export class ApiKeyService {
         keyName: created.name,
         metadata: {
           revokedKeyCount: activeKeys.length,
-          allowedChains: created.allowedChains,
+          expiresAt: created.expiresAt?.toISOString() ?? null,
+          permissions: this.toPermissions(created),
         },
       });
 
@@ -169,33 +218,64 @@ export class ApiKeyService {
     });
 
     return {
-      id: apiKey.id,
       rawKey: keyMaterial.rawKey,
-      keyPrefix: apiKey.keyPrefix,
-      name: apiKey.name,
-      allowedChains: apiKey.allowedChains,
-      expiresAt: apiKey.expiresAt,
-      createdAt: apiKey.createdAt,
+      id: createdKey.id,
+      displayPrefix: this.toDisplayPrefix(createdKey.keyPrefix),
+      name: createdKey.name,
+      expiresAt: createdKey.expiresAt,
+      createdAt: createdKey.createdAt,
+      permissions: this.toPermissions(createdKey),
     };
   }
 
   /** List all API keys (metadata only — no secrets). */
   async listApiKeys(userId: string) {
-    return this.prisma.apiKey.findMany({
+    const keys = await this.prisma.apiKey.findMany({
       where: { userId },
       select: {
         id: true,
         keyPrefix: true,
         name: true,
         revoked: true,
+        frozenAt: true,
+        frozenReason: true,
         expiresAt: true,
-        allowedIps: true,
-        allowedChains: true,
         createdAt: true,
         lastUsedAt: true,
+        lastUsedIp: true,
+        lastUsedUserAgent: true,
+        canSign: true,
+        canSendTransaction: true,
+        canReadTransactionStatus: true,
+        canUseEoaExecution: true,
+        allowedIps: true,
+        allowedContracts: true,
+        allowedFunctionSelectors: true,
+        dailySpendLimit: true,
+        monthlySpendLimit: true,
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return keys.map((key) => ({
+      id: key.id,
+      displayPrefix: this.toDisplayPrefix(key.keyPrefix),
+      name: key.name,
+      revoked: key.revoked,
+      frozenAt: key.frozenAt,
+      frozenReason: key.frozenReason,
+      expiresAt: key.expiresAt,
+      createdAt: key.createdAt,
+      lastUsedAt: key.lastUsedAt,
+      lastUsedIp: key.lastUsedIp,
+      lastUsedUserAgent: key.lastUsedUserAgent,
+      permissions: this.toPermissions(key),
+      allowedIps: key.allowedIps,
+      allowedContracts: key.allowedContracts,
+      allowedFunctionSelectors: key.allowedFunctionSelectors,
+      dailySpendLimit: key.dailySpendLimit,
+      monthlySpendLimit: key.monthlySpendLimit,
+    }));
   }
 
   private normalizeCreateOptions(options: ApiKeyCreateOptions) {
@@ -204,19 +284,84 @@ export class ApiKeyService {
       throw new BadRequestException('API key name is required');
     }
 
-    const allowedChains = options.allowedChains?.length
-      ? [...new Set(options.allowedChains)]
-      : [DEFAULT_CHAIN_ID];
-    allowedChains.forEach(getSupportedChain);
-
-    const expiresAt = this.normalizeExpiresAt(options.expiresAt);
+    const permissions = this.normalizePermissions(options.permissions);
     const allowedIps = options.allowedIps ?? [];
+    const allowedContracts = this.normalizeAddresses(options.allowedContracts);
+    const allowedFunctionSelectors = this.normalizeSelectors(options.allowedFunctionSelectors);
+    const { dailySpendLimit, monthlySpendLimit } = this.normalizeSpendLimits(options.spendLimits);
 
-    return { name, allowedChains, expiresAt, allowedIps };
+    this.assertIpAllowlistForHighRiskPermissions(permissions, allowedIps);
+
+    const expiresAt = this.normalizeExpiresAt(options.expiresAt, permissions);
+
+    return {
+      name,
+      expiresAt,
+      allowedIps,
+      allowedContracts,
+      allowedFunctionSelectors,
+      dailySpendLimit,
+      monthlySpendLimit,
+      permissions,
+    };
   }
 
-  private normalizeExpiresAt(expiresAt?: string | Date) {
-    if (!expiresAt) return undefined;
+  private normalizePermissions(permissions?: Partial<ApiKeyPermissions>): ApiKeyPermissions {
+    return {
+      ...DEFAULT_API_KEY_PERMISSIONS,
+      ...(permissions ?? {}),
+    };
+  }
+
+  /** Normalize and lowercase Ethereum addresses for contract allowlist. */
+  private normalizeAddresses(addresses?: string[]): string[] {
+    if (!addresses || addresses.length === 0) return [];
+    return addresses.map((addr) => addr.toLowerCase());
+  }
+
+  /** Normalize and lowercase function selectors (0x + 8 hex chars). */
+  private normalizeSelectors(selectors?: string[]): string[] {
+    if (!selectors || selectors.length === 0) return [];
+    return selectors.map((s) => s.toLowerCase());
+  }
+
+  /** Validate and normalize spend limits. Returns null for absent limits. */
+  private normalizeSpendLimits(limits?: { daily?: string; monthly?: string }): {
+    dailySpendLimit: string | null;
+    monthlySpendLimit: string | null;
+  } {
+    const dailySpendLimit = limits?.daily?.trim() || null;
+    const monthlySpendLimit = limits?.monthly?.trim() || null;
+
+    if (dailySpendLimit !== null && BigInt(dailySpendLimit) < 0n) {
+      throw new BadRequestException('dailySpendLimit must be a non-negative amount');
+    }
+    if (monthlySpendLimit !== null && BigInt(monthlySpendLimit) < 0n) {
+      throw new BadRequestException('monthlySpendLimit must be a non-negative amount');
+    }
+
+    return { dailySpendLimit, monthlySpendLimit };
+  }
+
+  private toPermissions(key: Partial<ApiKeyPermissions>): ApiKeyPermissions {
+    return {
+      canSign: key.canSign ?? DEFAULT_API_KEY_PERMISSIONS.canSign,
+      canSendTransaction:
+        key.canSendTransaction ?? DEFAULT_API_KEY_PERMISSIONS.canSendTransaction,
+      canReadTransactionStatus:
+        key.canReadTransactionStatus ?? DEFAULT_API_KEY_PERMISSIONS.canReadTransactionStatus,
+      canUseEoaExecution:
+        key.canUseEoaExecution ?? DEFAULT_API_KEY_PERMISSIONS.canUseEoaExecution,
+    };
+  }
+
+  private normalizeExpiresAt(expiresAt?: string | Date, permissions?: ApiKeyPermissions) {
+    const maxTtl = permissions ? this.getMaxTtlForPermissions(permissions) : MAX_API_KEY_TTL_MS;
+    const defaultTtl = permissions
+      ? Math.min(DEFAULT_API_KEY_TTL_MS, maxTtl)
+      : DEFAULT_API_KEY_TTL_MS;
+
+    if (!expiresAt) return new Date(Date.now() + defaultTtl);
 
     const date = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
     if (Number.isNaN(date.getTime())) {
@@ -228,11 +373,41 @@ export class ApiKeyService {
       throw new BadRequestException('expiresAt must be in the future');
     }
 
-    if (date.getTime() - now > MAX_API_KEY_TTL_MS) {
-      throw new BadRequestException('expiresAt must be within 365 days');
+    if (date.getTime() - now > maxTtl) {
+      const maxDays = Math.round(maxTtl / (24 * 60 * 60 * 1000));
+      throw new BadRequestException(
+        `expiresAt must be within ${maxDays} days for this permission level`,
+      );
     }
 
     return date;
+  }
+
+  private toDisplayPrefix(keyPrefix: string) {
+    return `${keyPrefix.slice(0, 11)}...`;
+  }
+
+  /** Throw if high-risk permissions are enabled without an IP allowlist. */
+  private assertIpAllowlistForHighRiskPermissions(
+    permissions: ApiKeyPermissions,
+    allowedIps: string[],
+  ) {
+    const hasHighRiskPermission = HIGH_RISK_PERMISSIONS.some(
+      (perm) => permissions[perm] === true,
+    );
+    if (hasHighRiskPermission && allowedIps.length === 0) {
+      throw new BadRequestException(
+        'IP allowlist is required when requesting high-risk permissions (canSign, canSendTransaction, canUseEoaExecution)',
+      );
+    }
+  }
+
+  /** Return the maximum TTL allowed for the given permission set. */
+  private getMaxTtlForPermissions(permissions: ApiKeyPermissions): number {
+    if (permissions.canUseEoaExecution) return PERMISSION_MAX_TTL_MS.canUseEoaExecution;
+    if (permissions.canSendTransaction) return PERMISSION_MAX_TTL_MS.canSendTransaction;
+    if (permissions.canSign) return PERMISSION_MAX_TTL_MS.canSign;
+    return PERMISSION_MAX_TTL_MS.canReadTransactionStatus;
   }
 
   private async assertCanCreateKey(tx: PrismaTransaction, userId: string, name: string) {
@@ -277,15 +452,33 @@ export class ApiKeyService {
       metadata?: Prisma.InputJsonValue;
     } = {},
   ) {
-    return tx.apiKeyEvent.create({
-      data: {
-        userId,
-        apiKeyId,
-        action,
-        keyPrefix: data.keyPrefix,
-        keyName: data.keyName,
-        metadata: data.metadata ?? Prisma.JsonNull,
-      },
-    });
+    return Promise.all([
+      tx.apiKeyEvent.create({
+        data: {
+          userId,
+          apiKeyId,
+          action,
+          keyPrefix: data.keyPrefix,
+          keyName: data.keyName,
+          metadata: data.metadata ?? Prisma.JsonNull,
+        },
+      }),
+      this.securityEvents.record(
+        {
+          actorType: 'user',
+          userId,
+          apiKeyId,
+          eventType: action,
+          riskLevel: 'low',
+          result: 'allowed',
+          metadata: {
+            keyPrefix: data.keyPrefix ?? null,
+            keyName: data.keyName ?? null,
+            details: data.metadata ?? null,
+          },
+        },
+        tx as unknown as Parameters<SecurityEventService['record']>[1],
+      ),
+    ]);
   }
 }

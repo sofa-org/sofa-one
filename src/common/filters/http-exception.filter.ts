@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { resolveApiErrorCode } from '../errors/api-error-codes';
+import { sanitizeErrorMessage } from '../utils/sanitize';
 
 type ExceptionResponse = {
   code?: string;
@@ -58,17 +59,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (typeof exceptionResponse === 'string') {
       return {
         code: resolveApiErrorCode(status, exceptionResponse),
-        message: exceptionResponse,
+        message: sanitizeErrorMessage(exceptionResponse),
       };
     }
 
     const response = exceptionResponse as ExceptionResponse;
     const rawMessage = response.message ?? response.error ?? 'Unexpected error';
     const details = Array.isArray(rawMessage) ? rawMessage : undefined;
-    const message = details ? 'Validation failed' : rawMessage;
+    const message = details
+      ? 'Validation failed'
+      : sanitizeErrorMessage(String(rawMessage));
+    // Pass the original rawMessage (array or string) to resolveApiErrorCode
+    // so it can correctly identify validation errors
+    const codeSource: string | string[] = details ?? String(rawMessage);
 
     return {
-      code: response.code ?? resolveApiErrorCode(status, rawMessage),
+      code: response.code ?? resolveApiErrorCode(status, codeSource),
       message,
       ...(details ? { details } : {}),
     };
