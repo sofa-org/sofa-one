@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { ApiKeyAuthGuard } from './api-key-auth.guard';
+import { BillingQuotaExceededException } from '../../modules/billing/billing-quota.exception';
 import { API_KEY_PREFIX_LENGTH } from '../api-key/api-key-prefix';
 
 jest.mock('argon2', () => ({
@@ -58,7 +59,7 @@ describe('ApiKeyAuthGuard', () => {
     const billingMock =
       billing ??
       ({
-        recordApiCall: jest.fn().mockResolvedValue(undefined),
+        assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined),
       } as any);
     const guard = new ApiKeyAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
@@ -405,8 +406,8 @@ describe('ApiKeyAuthGuard', () => {
       } as any),
     ).resolves.toBe(true);
 
-    expect(billing.recordApiCall).toHaveBeenCalledTimes(1);
-    const call = billing.recordApiCall.mock.calls[0][0];
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+    const call = billing.assertAndRecordApiCall.mock.calls[0][0];
     expect(call.userId).toBe('user-1');
     expect(call.sourceKey).toMatch(/^api:[0-9a-f-]{36}$/);
     expect(call.requestId).toMatch(/^api:[0-9a-f-]{36}$/);
@@ -444,7 +445,7 @@ describe('ApiKeyAuthGuard', () => {
       } as any),
     ).resolves.toBe(true);
 
-    const call = billing.recordApiCall.mock.calls[0][0];
+    const call = billing.assertAndRecordApiCall.mock.calls[0][0];
     expect(call.sourceKey).not.toBe('client-request-id-123');
     expect(call.requestId).not.toBe('client-request-id-123');
     expect(call.sourceKey).not.toContain('client-request-id-123');
@@ -464,7 +465,7 @@ describe('ApiKeyAuthGuard', () => {
       resolveBilling = resolve;
     });
     const { guard, billing } = createGuard([keyRecord], {
-      recordApiCall: jest.fn().mockImplementation(() => billingGate),
+      assertAndRecordApiCall: jest.fn().mockImplementation(() => billingGate),
     });
     const request: any = {
       method: 'POST',
@@ -494,7 +495,7 @@ describe('ApiKeyAuthGuard', () => {
 
     resolveBilling();
     await expect(pending).resolves.toBe(true);
-    expect(billing.recordApiCall).toHaveBeenCalledTimes(1);
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
   });
 
   it('does not call billing when authentication fails', async () => {
@@ -507,7 +508,7 @@ describe('ApiKeyAuthGuard', () => {
       UnauthorizedException,
     );
 
-    expect(billing.recordApiCall).not.toHaveBeenCalled();
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
   });
 
   it('returns 503 and does not authenticate when metering rejects', async () => {
@@ -519,7 +520,7 @@ describe('ApiKeyAuthGuard', () => {
       user: { id: 'user-1' },
     };
     const { guard, billing } = createGuard([keyRecord], {
-      recordApiCall: jest.fn().mockRejectedValue(new Error('metering down')),
+      assertAndRecordApiCall: jest.fn().mockRejectedValue(new Error('metering down')),
     });
     const request: any = {
       method: 'POST',
@@ -538,7 +539,7 @@ describe('ApiKeyAuthGuard', () => {
       } as any),
     ).rejects.toThrow(ServiceUnavailableException);
 
-    expect(billing.recordApiCall).toHaveBeenCalledTimes(1);
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
   });
 
   it('returns 503 when no billing service is injected', async () => {
@@ -575,5 +576,69 @@ describe('ApiKeyAuthGuard', () => {
     ).rejects.toThrow(ServiceUnavailableException);
 
     expect(prisma.apiKey.update).toHaveBeenCalled();
+  });
+
+  it('rethrows a quota-exceeded exception as 429 and does not authenticate', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest
+        .fn()
+        .mockRejectedValue(new BillingQuotaExceededException('api_call', 10_000, '2026-08', 3600)),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(BillingQuotaExceededException);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not authenticate when the atomic metering write fails', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest.fn().mockRejectedValue(new Error('db down')),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(ServiceUnavailableException);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
   });
 });

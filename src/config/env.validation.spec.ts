@@ -66,15 +66,16 @@ describe('environment validation', () => {
 
   it('rejects MFA_SECRET_ENCRYPTION_KEY values that are not 32 bytes', () => {
     expect(() =>
-      validate({ ...baseConfig, MFA_SECRET_ENCRYPTION_KEY: Buffer.alloc(16, 1).toString('base64') }),
+      validate({
+        ...baseConfig,
+        MFA_SECRET_ENCRYPTION_KEY: Buffer.alloc(16, 1).toString('base64'),
+      }),
     ).toThrow('MFA_SECRET_ENCRYPTION_KEY must be 32 base64-encoded bytes');
   });
 
   it('rejects invalid Openfort timeout values', () => {
     expect(() => validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '0' })).toThrow();
-    expect(() =>
-      validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '120001' }),
-    ).toThrow();
+    expect(() => validate({ ...baseConfig, OPENFORT_TIMEOUT_MS: '120001' })).toThrow();
   });
 
   it('rejects unsupported default chains', () => {
@@ -103,7 +104,55 @@ describe('environment validation', () => {
     );
 
     expect(() =>
-      validate({ ...baseConfig, SECURITY_EVENTS_SIEM_WEBHOOK_URL: 'http://siem.example.com/events' }),
+      validate({
+        ...baseConfig,
+        SECURITY_EVENTS_SIEM_WEBHOOK_URL: 'http://siem.example.com/events',
+      }),
     ).toThrow('SECURITY_EVENTS_SIEM_WEBHOOK_URL must be a valid https URL');
+  });
+
+  it('starts without Stripe configuration', () => {
+    expect(validate(baseConfig)).toEqual(expect.objectContaining(baseConfig));
+  });
+
+  it('requires success/cancel URLs when Stripe is configured', () => {
+    expect(() => validate({ ...baseConfig, STRIPE_SECRET_KEY: 'sk_test_123' })).toThrow(
+      'STRIPE_SUCCESS_URL must be set when Stripe is configured',
+    );
+    expect(() =>
+      validate({
+        ...baseConfig,
+        STRIPE_SECRET_KEY: 'sk_test_123',
+        STRIPE_SUCCESS_URL: 'https://app.example.com/billing?checkout=success',
+      }),
+    ).toThrow('STRIPE_CANCEL_URL must be set when Stripe is configured');
+  });
+
+  it('rejects non-https Stripe redirect URLs', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        STRIPE_SECRET_KEY: 'sk_test_123',
+        STRIPE_SUCCESS_URL: 'http://app.example.com/billing',
+        STRIPE_CANCEL_URL: 'https://app.example.com/billing',
+      }),
+    ).toThrow('STRIPE_SUCCESS_URL must be a valid https URL');
+  });
+
+  it('accepts a complete Stripe configuration', () => {
+    expect(
+      validate({
+        ...baseConfig,
+        STRIPE_SECRET_KEY: 'sk_test_123',
+        STRIPE_WEBHOOK_SECRET: 'whsec_test',
+        STRIPE_SUCCESS_URL: 'https://app.example.com/billing?checkout=success',
+        STRIPE_CANCEL_URL: 'https://app.example.com/billing?checkout=cancelled',
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        STRIPE_SECRET_KEY: 'sk_test_123',
+        STRIPE_SUCCESS_URL: 'https://app.example.com/billing?checkout=success',
+      }),
+    );
   });
 });

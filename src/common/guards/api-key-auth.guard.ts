@@ -14,6 +14,7 @@ import * as argon2 from 'argon2';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingService } from '../../modules/billing/billing.service';
+import { BillingQuotaExceededException } from '../../modules/billing/billing-quota.exception';
 import { SecurityEventService } from '../../modules/security-events/security-event.service';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -208,7 +209,7 @@ export class ApiKeyAuthGuard implements CanActivate {
     const route = request.route?.path ?? request.url;
 
     try {
-      await this.billing.recordApiCall({
+      await this.billing.assertAndRecordApiCall({
         userId,
         sourceKey: `api:${randomUUID()}`,
         requestId: `api:${randomUUID()}`,
@@ -219,7 +220,13 @@ export class ApiKeyAuthGuard implements CanActivate {
           apiKeyId: keyRecord.id,
         },
       });
-    } catch {
+    } catch (err) {
+      // A genuine quota rejection surfaces as HTTP 429 and is never converted
+      // to 503. Its Retry-After value (if any) comes from the server-computed
+      // quota exception / period end — never from the client.
+      if (err instanceof BillingQuotaExceededException) {
+        throw err;
+      }
       // Never leak the raw error, API key, or request headers into the response
       // or logs. A metering failure must not let the handler run un-metered.
       throw new ServiceUnavailableException('Billing service unavailable');

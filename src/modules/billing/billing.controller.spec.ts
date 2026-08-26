@@ -6,6 +6,9 @@ jest.mock('./billing.service', () => ({
 jest.mock('./billing-reconciliation.service', () => ({
   BillingReconciliationService: class BillingReconciliationService {},
 }));
+jest.mock('./stripe/stripe-payment.service', () => ({
+  StripePaymentService: class StripePaymentService {},
+}));
 jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
@@ -24,16 +27,24 @@ describe('BillingController', () => {
     getSummary: jest.fn(),
     listInvoices: jest.fn(),
     getInvoice: jest.fn(),
+    assignPlan: jest.fn(),
   };
   const reconciliationService = {
     reconcile: jest.fn(),
+  };
+  const stripePaymentService = {
+    createCheckoutSession: jest.fn(),
   };
 
   let controller: BillingController;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    controller = new BillingController(billingService as any, reconciliationService as any);
+    controller = new BillingController(
+      billingService as any,
+      reconciliationService as any,
+      stripePaymentService as any,
+    );
   });
 
   it('delegates getPlans to the service with the current user id', async () => {
@@ -89,6 +100,38 @@ describe('BillingController', () => {
     expect(reconciliationService.reconcile).toHaveBeenCalledWith('user-1', { limit: undefined });
   });
 
+  it('delegates assignPlan to the service with the current user id and plan code', async () => {
+    billingService.assignPlan.mockResolvedValue({
+      planCode: 'starter',
+      planName: 'Starter',
+      effectivePeriod: '2026-09',
+      effectiveFrom: '2026-09-01T00:00:00.000Z',
+      outcome: 'changed',
+    });
+
+    const result = await controller.assignPlan('user-1', { planCode: 'starter' } as any);
+
+    expect(billingService.assignPlan).toHaveBeenCalledWith('user-1', 'starter');
+    expect(result).toMatchObject({ planCode: 'starter', outcome: 'changed' });
+  });
+
+  it('delegates checkoutInvoice to the Stripe payment service scoped to the current user', async () => {
+    stripePaymentService.createCheckoutSession.mockResolvedValue({
+      invoiceId: 'inv-1',
+      sessionId: 'cs_123',
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_123',
+    });
+
+    const result = await controller.checkoutInvoice('user-1', 'inv-1');
+
+    expect(stripePaymentService.createCheckoutSession).toHaveBeenCalledWith('user-1', 'inv-1');
+    expect(result).toEqual({
+      invoiceId: 'inv-1',
+      sessionId: 'cs_123',
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_123',
+    });
+  });
+
   it('protects every route with OpenfortUserGuard and FrontendOnlyGuard', () => {
     const routes = [
       controller.getPlans,
@@ -96,6 +139,8 @@ describe('BillingController', () => {
       controller.listInvoices,
       controller.getInvoice,
       controller.reconcile,
+      controller.assignPlan,
+      controller.checkoutInvoice,
     ];
 
     for (const route of routes) {

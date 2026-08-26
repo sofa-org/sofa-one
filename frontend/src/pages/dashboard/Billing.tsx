@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUser } from '@openfort/react';
 import {
   Activity,
@@ -14,9 +15,11 @@ import {
 } from 'lucide-react';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
+  createBillingCheckoutSessionAuth,
   getApiErrorMessage,
   getBillingPlansAuth,
   getBillingSummaryAuth,
+  isApiError,
   listBillingInvoicesAuth,
   type BillingInvoice,
   type BillingPlanResponse,
@@ -65,6 +68,8 @@ function formatInvoiceStatus(status: string): string {
   switch (status) {
     case 'paid':
       return 'Paid';
+    case 'finalized':
+      return 'Finalized';
     case 'open':
       return 'Open';
     case 'void':
@@ -80,6 +85,8 @@ function statusTone(status: string): string {
   switch (status) {
     case 'paid':
       return 'bg-green-100 text-green-700';
+    case 'finalized':
+      return 'bg-blue-100 text-blue-700';
     case 'open':
       return 'bg-amber-100 text-amber-700';
     case 'void':
@@ -88,6 +95,35 @@ function statusTone(status: string): string {
     default:
       return 'bg-gray-100 text-gray-700';
   }
+}
+
+function isPositiveDecimal(value: string | null | undefined): boolean {
+  if (value === null || value === undefined || value === '') return false;
+  const trimmed = value.trim();
+  if (!/^-?\d+(\.\d+)?$/.test(trimmed)) return false;
+  if (trimmed.startsWith('-')) return false;
+  const [integerPart, fractionalPart] = trimmed.split('.');
+  const normalizedInteger = integerPart.replace(/^0+/, '') || '0';
+  if (normalizedInteger !== '0') return true;
+  if (!fractionalPart) return false;
+  return fractionalPart.split('').some((char) => char !== '0');
+}
+
+function isInvoicePaid(invoice: BillingInvoice): boolean {
+  return invoice.status === 'paid' || invoice.paidAt !== null;
+}
+
+function isInvoicePayable(invoice: BillingInvoice): boolean {
+  return (
+    invoice.status === 'finalized' && invoice.paidAt === null && isPositiveDecimal(invoice.amount)
+  );
+}
+
+function friendlyCheckoutError(error: unknown): string {
+  if (isApiError(error) && error.statusCode === 503) {
+    return 'Checkout is temporarily unavailable. Please try again in a moment.';
+  }
+  return 'Could not start checkout. Please check the invoice and try again.';
 }
 
 function getCurrentUtcMonth(): string {
@@ -150,11 +186,7 @@ function MetricCard({
   tone?: 'muted' | 'amber' | 'red';
 }) {
   const toneClasses =
-    tone === 'red'
-      ? 'text-red-700'
-      : tone === 'amber'
-        ? 'text-amber-700'
-        : 'text-brand-muted';
+    tone === 'red' ? 'text-red-700' : tone === 'amber' ? 'text-amber-700' : 'text-brand-muted';
   return (
     <div className="rounded-xl border border-brand-border bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-center gap-3">
@@ -162,7 +194,9 @@ function MetricCard({
           <Icon className="h-5 w-5 text-brand-accent" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">{label}</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+            {label}
+          </p>
           <p className="mt-1 truncate text-2xl font-semibold text-brand-text">{value}</p>
           <p className={`mt-0.5 text-xs ${toneClasses}`}>{subtext}</p>
         </div>
@@ -197,6 +231,15 @@ export default function BillingPage() {
   const [invoicesLoading, setInvoicesLoading] = useState(true);
   const [invoicesError, setInvoicesError] = useState<string | null>(null);
   const [invoicesRetryNonce, setInvoicesRetryNonce] = useState(0);
+
+  const [checkoutLoadingId, setCheckoutLoadingId] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [paymentNotice, setPaymentNotice] = useState<{
+    type: 'success' | 'cancel';
+    message: string;
+  } | null>(null);
 
   const currentPlan = useMemo(() => {
     if (!plans) return null;
@@ -252,6 +295,48 @@ export default function BillingPage() {
   );
 
   useEffect(() => {
+    const hasSuccess = searchParams.has('success');
+    const hasCanceled = searchParams.has('canceled');
+    if (!hasSuccess && !hasCanceled) return;
+
+    if (hasSuccess) {
+      setPaymentNotice({
+        type: 'success',
+        message: 'Payment is being processed. Refresh this page to confirm the latest status.',
+      });
+    } else {
+      setPaymentNotice({
+        type: 'cancel',
+        message:
+          'Returned to billing. You can retry payment or refresh to confirm the latest status.',
+      });
+    }
+    setInvoicesRetryNonce((nonce) => nonce + 1);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('success');
+    nextParams.delete('canceled');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handlePayInvoice = useCallback(
+    async (invoice: BillingInvoice) => {
+      if (!isInvoicePayable(invoice)) return;
+      setCheckoutLoadingId(invoice.id);
+      setCheckoutError(null);
+      try {
+        const response = await createBillingCheckoutSessionAuth(getToken, invoice.id);
+        window.location.href = response.checkoutUrl;
+      } catch (err: unknown) {
+        setCheckoutError(friendlyCheckoutError(err));
+      } finally {
+        setCheckoutLoadingId(null);
+      }
+    },
+    [getToken],
+  );
+
+  useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
       setPlansLoading(false);
@@ -265,16 +350,22 @@ export default function BillingPage() {
     void loadSummary(controller.signal);
     void loadInvoices(controller.signal);
     return () => controller.abort();
-  }, [authLoading, isAuthenticated, loadPlans, loadSummary, loadInvoices, plansRetryNonce, summaryRetryNonce, invoicesRetryNonce]);
+  }, [
+    authLoading,
+    isAuthenticated,
+    loadPlans,
+    loadSummary,
+    loadInvoices,
+    plansRetryNonce,
+    summaryRetryNonce,
+    invoicesRetryNonce,
+  ]);
 
   const isLoading = plansLoading || summaryLoading;
   const anyError = plansError || summaryError;
 
   return (
-    <DashboardPage
-      title="Billing"
-      description="Review your plan, monthly usage, and invoices."
-    >
+    <DashboardPage title="Billing" description="Review your plan, monthly usage, and invoices.">
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
         <p className="font-medium">Usage preview only</p>
         <p className="mt-1 text-amber-700">
@@ -282,6 +373,39 @@ export default function BillingPage() {
           usage and estimated charges for the selected billing period.
         </p>
       </div>
+
+      {paymentNotice && (
+        <div
+          className={`rounded-xl border p-4 text-sm shadow-sm ${
+            paymentNotice.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : 'border-brand-border bg-brand-surface text-brand-text'
+          }`}
+        >
+          <p className="font-medium">
+            {paymentNotice.type === 'success' ? 'Payment processing' : 'Returned to billing'}
+          </p>
+          <p className={paymentNotice.type === 'success' ? 'text-green-700' : 'text-brand-muted'}>
+            {paymentNotice.message}
+          </p>
+        </div>
+      )}
+
+      {checkoutError && (
+        <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+            <span>{checkoutError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCheckoutError(null)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {anyError && !isLoading && (
         <PageError
@@ -374,7 +498,9 @@ export default function BillingPage() {
             <div className="space-y-5">
               <p className="text-sm text-brand-muted">
                 Showing usage for{' '}
-                <span className="font-semibold text-brand-text">{formatPeriodLabel(summary.period)}</span>
+                <span className="font-semibold text-brand-text">
+                  {formatPeriodLabel(summary.period)}
+                </span>
                 . Allowances reset at the start of each UTC month.
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,11 +509,7 @@ export default function BillingPage() {
                   label="Outbound volume"
                   value={formatCount(summary.outboundVolume)}
                   subtext={`${formatCount(summary.outboundFreeAllowance)} included`}
-                  tone={
-                    (summary.outboundOverage || '0') !== '0'
-                      ? 'amber'
-                      : 'muted'
-                  }
+                  tone={(summary.outboundOverage || '0') !== '0' ? 'amber' : 'muted'}
                 />
                 <MetricCard
                   icon={Activity}
@@ -433,25 +555,29 @@ export default function BillingPage() {
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-brand-border bg-brand-bg/60 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Base cost</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                  Base cost
+                </p>
                 <p className="mt-1 text-xl font-semibold text-brand-text">
                   {formatAmount(summary.estimatedBaseCost, summary.currency)}
                 </p>
               </div>
               <div className="rounded-xl border border-brand-border bg-brand-bg/60 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Overage</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                  Overage
+                </p>
                 <p
                   className={`mt-1 text-xl font-semibold ${
-                    (summary.outboundOverage || '0') !== '0'
-                      ? 'text-amber-700'
-                      : 'text-brand-text'
+                    (summary.outboundOverage || '0') !== '0' ? 'text-amber-700' : 'text-brand-text'
                   }`}
                 >
                   {formatAmount(summary.estimatedOverageCost, summary.currency)}
                 </p>
               </div>
               <div className="rounded-xl border border-brand-border bg-brand-bg/60 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Estimated total</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                  Estimated total
+                </p>
                 <p className="mt-1 text-xl font-semibold text-brand-text">
                   {formatAmount(summary.estimatedTotal, summary.currency)}
                 </p>
@@ -525,40 +651,70 @@ export default function BillingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="transition-colors hover:bg-brand-surface">
-                    <td className="px-4 py-3 font-medium text-brand-text">
-                      {formatPeriodLabel(invoice.period)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone(invoice.status)}`}
-                      >
-                        {formatInvoiceStatus(invoice.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-brand-text">
-                      {formatAmount(invoice.amount, invoice.currency)}
-                    </td>
-                    <td className="px-4 py-3 text-brand-muted">
-                      {new Date(invoice.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {invoice.pdfUrl ? (
-                        <a
-                          href={invoice.pdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent hover:underline"
+                {invoices.map((invoice) => {
+                  const paid = isInvoicePaid(invoice);
+                  const payable = isInvoicePayable(invoice);
+                  const isLoadingCheckout = checkoutLoadingId === invoice.id;
+                  return (
+                    <tr key={invoice.id} className="transition-colors hover:bg-brand-surface">
+                      <td className="px-4 py-3 font-medium text-brand-text">
+                        {formatPeriodLabel(invoice.period)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            paid ? statusTone('paid') : statusTone(invoice.status)
+                          }`}
                         >
-                          View <ArrowRight className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        <span className="text-xs text-brand-muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {paid ? 'Paid' : formatInvoiceStatus(invoice.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-brand-text">
+                        {formatAmount(invoice.amount, invoice.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-brand-muted">
+                        {new Date(invoice.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {paid ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700">
+                              <Check className="h-3.5 w-3.5" />
+                              Paid
+                            </span>
+                          ) : payable ? (
+                            <button
+                              type="button"
+                              onClick={() => handlePayInvoice(invoice)}
+                              disabled={isLoadingCheckout}
+                              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isLoadingCheckout ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <CreditCard className="h-3.5 w-3.5" />
+                              )}
+                              {isLoadingCheckout ? 'Redirecting…' : 'Pay'}
+                            </button>
+                          ) : null}
+                          {invoice.pdfUrl && (
+                            <a
+                              href={invoice.pdfUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent hover:underline"
+                            >
+                              View <ArrowRight className="h-3 w-3" />
+                            </a>
+                          )}
+                          {!paid && !payable && !invoice.pdfUrl && (
+                            <span className="text-xs text-brand-muted">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -568,21 +724,15 @@ export default function BillingPage() {
   );
 }
 
-function TierRow({
-  tier,
-  currency,
-}: {
-  tier: BillingTierBreakdown;
-  currency: string;
-}) {
-  const range = [tier.from, tier.to]
-    .map((value) => formatCount(value))
-    .join(' – ');
+function TierRow({ tier, currency }: { tier: BillingTierBreakdown; currency: string }) {
+  const range = [tier.from, tier.to].map((value) => formatCount(value)).join(' – ');
   return (
     <tr className="transition-colors hover:bg-brand-surface">
       <td className="px-4 py-3 font-medium text-brand-text">{tier.tier}</td>
       <td className="px-4 py-3 text-brand-muted">{range}</td>
-      <td className="px-4 py-3 text-right font-mono text-brand-text">{formatCount(tier.quantity)}</td>
+      <td className="px-4 py-3 text-right font-mono text-brand-text">
+        {formatCount(tier.quantity)}
+      </td>
       <td className="px-4 py-3 text-right font-mono text-brand-muted">
         {formatAmount(tier.rate, currency)}
       </td>

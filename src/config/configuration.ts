@@ -17,6 +17,12 @@ export default () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    successUrl: process.env.STRIPE_SUCCESS_URL,
+    cancelUrl: process.env.STRIPE_CANCEL_URL,
+  },
   security: {
     trustProxy: process.env.TRUST_PROXY,
   },

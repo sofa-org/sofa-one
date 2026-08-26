@@ -312,6 +312,12 @@ export interface BillingInvoicesResponse {
   limit: number;
 }
 
+export interface BillingCheckoutResponse {
+  invoiceId: string;
+  sessionId: string;
+  checkoutUrl: string;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -461,10 +467,7 @@ export async function apiFetch<T>(path: string, apiKey: string, options?: Reques
 
 // --- Auth ---
 
-export async function syncSession(
-  getToken: () => Promise<string | null>,
-  signal?: AbortSignal,
-) {
+export async function syncSession(getToken: () => Promise<string | null>, signal?: AbortSignal) {
   return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
 }
 
@@ -475,10 +478,7 @@ export async function getMe(getToken: () => Promise<string | null>, signal?: Abo
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
-export async function refreshApiKey(
-  getToken: () => Promise<string | null>,
-  stepUpToken: string,
-) {
+export async function refreshApiKey(getToken: () => Promise<string | null>, stepUpToken: string) {
   return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
     method: 'POST',
     headers: { 'X-Step-Up-Token': stepUpToken },
@@ -509,10 +509,14 @@ export async function markAgentRegistrationTransaction(
   getToken: () => Promise<string | null>,
   body: AgentRegistrationTransactionRequest,
 ) {
-  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-transaction', getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
+  return authFetch<AuthSessionResponse>(
+    '/auth/embedded-wallet/registration-transaction',
+    getToken,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 // --- Dashboard MFA (TOTP) ---
@@ -527,30 +531,21 @@ export async function setupTotpAuth(getToken: () => Promise<string | null>) {
   });
 }
 
-export async function enableTotpAuth(
-  getToken: () => Promise<string | null>,
-  code: string,
-) {
+export async function enableTotpAuth(getToken: () => Promise<string | null>, code: string) {
   return authFetch<TotpEnableResponse>('/v1/auth/mfa/totp/enable', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
   });
 }
 
-export async function verifyTotpAuth(
-  getToken: () => Promise<string | null>,
-  code: string,
-) {
+export async function verifyTotpAuth(getToken: () => Promise<string | null>, code: string) {
   return authFetch<TotpVerifyResponse>('/v1/auth/mfa/totp/verify', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
   });
 }
 
-export async function disableTotpAuth(
-  getToken: () => Promise<string | null>,
-  code: string,
-) {
+export async function disableTotpAuth(getToken: () => Promise<string | null>, code: string) {
   return authFetch<void>('/v1/auth/mfa/totp/disable', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
@@ -749,7 +744,9 @@ export async function listTransactionsAuth(
   if (params?.page) query.set('page', String(params.page));
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
-  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, { signal });
+  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, {
+    signal,
+  });
 }
 
 export interface SigningRequestListItem {
@@ -791,7 +788,11 @@ export async function listSigningRequestsAuth(
   if (params?.page) query.set('page', String(params.page));
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
-  return authFetch<ListSigningRequestsResponse>(`/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`, getToken, { signal });
+  return authFetch<ListSigningRequestsResponse>(
+    `/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`,
+    getToken,
+    { signal },
+  );
 }
 
 // --- Transaction & Signing Request Detail (dashboard-only) ---
@@ -818,7 +819,9 @@ export async function getTransactionDetailAuth(
   transactionId: string,
   signal?: AbortSignal,
 ) {
-  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, { signal });
+  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, {
+    signal,
+  });
 }
 
 export interface SigningRequestDetail {
@@ -839,7 +842,11 @@ export async function getSigningRequestDetailAuth(
   signingRequestId: string,
   signal?: AbortSignal,
 ) {
-  return authFetch<SigningRequestDetail>(`/v1/wallets/signing-requests/${signingRequestId}`, getToken, { signal });
+  return authFetch<SigningRequestDetail>(
+    `/v1/wallets/signing-requests/${signingRequestId}`,
+    getToken,
+    { signal },
+  );
 }
 
 export async function getBillingPlansAuth(
@@ -854,7 +861,11 @@ export async function getBillingSummaryAuth(
   period: string,
   signal?: AbortSignal,
 ) {
-  return authFetch<BillingSummary>(`/v1/billing/summary?period=${encodeURIComponent(period)}`, getToken, { signal });
+  return authFetch<BillingSummary>(
+    `/v1/billing/summary?period=${encodeURIComponent(period)}`,
+    getToken,
+    { signal },
+  );
 }
 
 export interface ListBillingInvoicesParams {
@@ -871,7 +882,9 @@ export async function listBillingInvoicesAuth(
   if (params?.page) query.set('page', String(params.page));
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
-  return authFetch<BillingInvoicesResponse>(`/v1/billing/invoices${qs ? `?${qs}` : ''}`, getToken, { signal });
+  return authFetch<BillingInvoicesResponse>(`/v1/billing/invoices${qs ? `?${qs}` : ''}`, getToken, {
+    signal,
+  });
 }
 
 export async function getBillingInvoiceAuth(
@@ -880,4 +893,19 @@ export async function getBillingInvoiceAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<BillingInvoice>(`/v1/billing/invoices/${invoiceId}`, getToken, { signal });
+}
+
+export async function createBillingCheckoutSessionAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<BillingCheckoutResponse>(
+    `/v1/billing/invoices/${invoiceId}/checkout`,
+    getToken,
+    {
+      method: 'POST',
+      signal,
+    },
+  );
 }

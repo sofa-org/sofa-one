@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
@@ -23,6 +24,7 @@ import {
   parsePeriod,
   ppmToPercentString,
 } from './billing.utils';
+import { BillingQuotaExceededException } from './billing-quota.exception';
 
 // ── JSON-safe DTO shapes (no BigInt leaks) ────────────────────────────────────
 
@@ -39,6 +41,12 @@ export interface BillingPlanDto {
 export interface GetPlansResult {
   currentPlanId: string;
   plans: BillingPlanDto[];
+  /** Future scheduled plan (next assignment after the current UTC month), if any. */
+  scheduledPlan?: {
+    planCode: string;
+    planName: string;
+    effectivePeriod: string;
+  };
 }
 
 export interface BillingTierBreakdownDto {
@@ -86,6 +94,16 @@ export interface ListInvoicesResult {
   total: number;
   page: number;
   limit: number;
+}
+
+/** JSON-safe result of a self-service plan change. */
+export interface AssignPlanResult {
+  planCode: string;
+  planName: string;
+  /** YYYY-MM the new plan takes effect (always the next UTC month). */
+  effectivePeriod: string;
+  effectiveFrom: string;
+  outcome: 'changed' | 'unchanged';
 }
 
 export interface RecordApiCallInput {
@@ -151,7 +169,7 @@ export interface ReceiptUsageEvidence {
   reconciledAt: Date;
 }
 
-type PlanVersion = Prisma.BillingPlanVersionGetPayload<Record<string, never>>;
+export type PlanVersion = Prisma.BillingPlanVersionGetPayload<Record<string, never>>;
 type UsageEventRow = Prisma.BillingUsageEventGetPayload<Record<string, never>>;
 
 /** A token contract address is exactly 20 bytes (40 hex chars) after 0x. */
@@ -219,22 +237,290 @@ export class BillingService {
    * default Free account/assignment and initializes the plan catalog on first
    * access. Plan versions are only created when missing; used versions are
    * never updated.
+   *
+   * Current-plan semantics (Phase 2 Oracle gate): the current plan is only the
+   * assignment effective at or before the current UTC month — a future
+   * scheduled assignment never overrides it. If no current assignment exists, a
+   * current-month Free assignment is created/returned rather than reusing a
+   * future one. The future schedule is exposed separately as `scheduledPlan`.
+   * Unknown/malformed persisted plans fail closed (never silently Free).
    */
   async getPlans(userId: string): Promise<GetPlansResult> {
     const account = await this.ensureAccount(userId);
     await this.ensurePlanVersions();
-    const assignment = await this.ensureDefaultAssignment(account.id);
+    const currentMonthStart = this.monthStart(new Date());
 
-    const currentPlan = await this.prisma.billingPlanVersion.findUnique({
-      where: { id: assignment.planVersionId },
+    const currentAssignment = await this.ensureDefaultAssignment(account.id);
+    const currentPlan = currentAssignment.planVersion;
+    validatePlanVersion(currentPlan);
+
+    const futureAssignment = await this.prisma.billingPlanAssignment.findFirst({
+      where: { billingAccountId: account.id, periodStart: { gt: currentMonthStart } },
+      orderBy: { periodStart: 'asc' },
+      include: { planVersion: true },
     });
+    if (futureAssignment?.planVersion) {
+      validatePlanVersion(futureAssignment.planVersion);
+    }
+
     const versions = await this.prisma.billingPlanVersion.findMany({
       orderBy: [{ code: 'asc' }, { version: 'asc' }],
     });
 
     return {
-      currentPlanId: currentPlan?.code ?? 'free',
-      plans: versions.map((v) => this.toPlanDto(v)),
+      currentPlanId: currentPlan.code,
+      plans: versions.map((v) => {
+        // Every catalog row is validated before exposure — a malformed known
+        // row or an unknown row fails closed (never silently filtered/safe).
+        validatePlanVersion(v);
+        return this.toPlanDto(v);
+      }),
+      ...(futureAssignment?.planVersion
+        ? {
+            scheduledPlan: {
+              planCode: futureAssignment.planVersion.code,
+              planName: futureAssignment.planVersion.name,
+              effectivePeriod: formatUtcMonth(futureAssignment.periodStart),
+            },
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * Self-service plan change (Phase 2A). The authenticated dashboard user picks
+   * a plan code; it takes effect at the next UTC month (never prorated, never
+   * client-supplied). The assignment uses the existing
+   * `BillingPlanAssignment` unique `(billingAccountId, periodStart)`: the same
+   * target plan is an idempotent no-op, and a different plan for the same
+   * future period safely replaces the not-yet-effective assignment row. The
+   * future period's `BillingInvoice` is created/updated as `open` (zero-usage
+   * estimate matching the new assignment); finalized/needs_review/void invoices
+   * are immutable and rejected. Enterprise/custom null terms cannot be
+   * activated by self-service. No payment provider is involved — selecting a
+   * paid plan does not imply payment.
+   */
+  async assignPlan(userId: string, planCode: string): Promise<AssignPlanResult> {
+    // Static own-property whitelist validation BEFORE any DB read/write: an
+    // unknown/empty/inherited-key request is a 4xx with zero DB calls.
+    if (!isOwnPlanCode(planCode)) {
+      throw new BadRequestException(`Unknown plan code: ${planCode}`);
+    }
+
+    await this.ensurePlanVersions();
+
+    const planVersion = await this.prisma.billingPlanVersion.findFirst({
+      where: { code: planCode },
+      orderBy: { version: 'desc' },
+    });
+    if (!planVersion) {
+      throw new BadRequestException(`Unknown plan code: ${planCode}`);
+    }
+    // Fail closed on malformed persisted terms (e.g. Enterprise with finite
+    // fields); Enterprise custom/null terms cannot be activated by self-service.
+    validatePlanVersion(planVersion);
+    this.assertPlanFinalizable(planVersion);
+
+    const now = new Date();
+    const effectivePeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    const effectivePeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+
+    return this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, effectivePeriodStart, async (tx, billingAccountId) => {
+        // Immutable future invoice rejects the plan change before any write.
+        const existingInvoice = await tx.billingInvoice.findUnique({
+          where: {
+            billingAccountId_periodStart: {
+              billingAccountId,
+              periodStart: effectivePeriodStart,
+            },
+          },
+        });
+        if (existingInvoice && existingInvoice.status !== 'open') {
+          throw new ConflictException(
+            'Cannot change plan: the future invoice is immutable (finalized/needs_review/void)',
+          );
+        }
+
+        const existingAssignment = await tx.billingPlanAssignment.findUnique({
+          where: {
+            billingAccountId_periodStart: {
+              billingAccountId,
+              periodStart: effectivePeriodStart,
+            },
+          },
+        });
+
+        if (existingAssignment && existingAssignment.planVersionId === planVersion.id) {
+          // Same target plan: idempotent no-op; keep the open invoice consistent.
+          await this.upsertOpenInvoice(
+            tx,
+            billingAccountId,
+            planVersion,
+            effectivePeriodStart,
+            effectivePeriodEnd,
+          );
+          return this.toAssignPlanResult(planVersion, effectivePeriodStart, 'unchanged');
+        }
+
+        if (existingAssignment) {
+          // Replace the not-yet-effective assignment for the same future period.
+          await tx.billingPlanAssignment.update({
+            where: {
+              billingAccountId_periodStart: {
+                billingAccountId,
+                periodStart: effectivePeriodStart,
+              },
+            },
+            data: { planVersionId: planVersion.id },
+          });
+        } else {
+          await tx.billingPlanAssignment.create({
+            data: {
+              billingAccountId,
+              planVersionId: planVersion.id,
+              periodStart: effectivePeriodStart,
+            },
+          });
+        }
+
+        await this.upsertOpenInvoice(
+          tx,
+          billingAccountId,
+          planVersion,
+          effectivePeriodStart,
+          effectivePeriodEnd,
+        );
+
+        return this.toAssignPlanResult(planVersion, effectivePeriodStart, 'changed');
+      }),
+    );
+  }
+
+  /**
+   * Creates or updates the future period's `open` invoice to match the new
+   * assignment (zero-usage estimate, plan snapshot, and line items). Only
+   * `open` invoices can be updated; finalized/needs_review/void are immutable
+   * and rejected. Never creates a duplicate invoice.
+   */
+  private async upsertOpenInvoice(
+    tx: Prisma.TransactionClient,
+    billingAccountId: string,
+    planVersion: PlanVersion,
+    start: Date,
+    end: Date,
+  ): Promise<void> {
+    const plan = planVersionToConfig(planVersion);
+    const existing = await tx.billingInvoice.findUnique({
+      where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
+    });
+    if (existing) {
+      if (existing.status !== 'open') {
+        throw new ConflictException(
+          'Cannot update invoice: only open invoices can be changed by a plan change',
+        );
+      }
+      const data = this.buildOpenInvoiceData(planVersion, plan, start, end);
+      await tx.billingInvoice.update({
+        where: { id: existing.id },
+        data: { ...data, status: 'open' },
+      });
+      await tx.billingInvoiceLine.deleteMany({ where: { invoiceId: existing.id } });
+      const lines = this.buildInvoiceLines({
+        invoiceId: existing.id,
+        planVersion,
+        plan,
+        apiCalls: 0,
+        activeWallets: 0,
+        totals: this.zeroUsageTotals(planVersion, plan),
+      });
+      if (lines.length > 0) {
+        await tx.billingInvoiceLine.createMany({ data: lines });
+      }
+      return;
+    }
+
+    const data = this.buildOpenInvoiceData(planVersion, plan, start, end);
+    const created = await tx.billingInvoice.create({
+      data: { ...data, billingAccountId, status: 'open' },
+    });
+    const lines = this.buildInvoiceLines({
+      invoiceId: created.id,
+      planVersion,
+      plan,
+      apiCalls: 0,
+      activeWallets: 0,
+      totals: this.zeroUsageTotals(planVersion, plan),
+    });
+    if (lines.length > 0) {
+      await tx.billingInvoiceLine.createMany({ data: lines });
+    }
+  }
+
+  /** Zero-usage invoice totals for an open invoice estimate. */
+  private zeroUsageTotals(planVersion: PlanVersion, plan: BillingPlanConfig) {
+    return calculateInvoiceTotals({
+      plan,
+      grossOutboundMicros: 0n,
+      activeWallets: 0,
+      apiCallsTotal: 0,
+      apiOverageRateMicros: planVersion.apiOverageRateMicros,
+      walletOverageRateMicros: planVersion.walletOverageRateMicros,
+    });
+  }
+
+  /** JSON-safe open-invoice data (zero-usage estimate + plan snapshot). */
+  private buildOpenInvoiceData(
+    planVersion: PlanVersion,
+    plan: BillingPlanConfig,
+    start: Date,
+    end: Date,
+  ): Omit<Prisma.BillingInvoiceUncheckedCreateInput, 'billingAccountId'> {
+    const totals = this.zeroUsageTotals(planVersion, plan);
+    const snapshot = this.buildSnapshot({
+      period: formatUtcMonth(start),
+      planVersion,
+      plan,
+      outboundVolume: 0n,
+      apiCalls: 0,
+      activeWallets: 0,
+      totals,
+    });
+    const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+    return {
+      planVersionId: planVersion.id,
+      periodStart: start,
+      periodEnd: end,
+      currency: 'USD',
+      grossOutboundMicros: 0n,
+      includedOutboundMicros: plan.includedOutboundMicros,
+      billableOutboundMicros: 0n,
+      apiCalls: 0n,
+      includedApiCalls:
+        plan.includedApiCallsPerMonth !== null ? BigInt(plan.includedApiCallsPerMonth) : null,
+      activeWallets: 0,
+      includedWallets: plan.includedWallets,
+      monthlyFeeMicros: totals.monthlyFeeMicros,
+      outboundOverageMicros: 0n,
+      apiOverageMicros: 0n,
+      walletOverageMicros: 0n,
+      totalMicros: totals.totalMicros,
+      snapshotJson: snapshot as Prisma.InputJsonValue,
+      snapshotHash,
+    };
+  }
+
+  private toAssignPlanResult(
+    planVersion: PlanVersion,
+    effectivePeriodStart: Date,
+    outcome: 'changed' | 'unchanged',
+  ): AssignPlanResult {
+    return {
+      planCode: planVersion.code,
+      planName: planVersion.name,
+      effectivePeriod: formatUtcMonth(effectivePeriodStart),
+      effectiveFrom: effectivePeriodStart.toISOString(),
+      outcome,
     };
   }
 
@@ -270,6 +556,97 @@ export class BillingService {
       if (isUniqueConstraintError(err)) return; // idempotent
       throw err;
     }
+  }
+
+  /**
+   * Atomic API-call quota check-and-record (Phase 2B). Runs inside the shared
+   * billing-period lock (Serializable + advisory lock) so N concurrent requests
+   * can never exceed the included API-call limit. The period is the UTC
+   * calendar month of the request. Only `metric=api_call AND entryType=usage`
+   * events count; reversal/adjustment/non-usage rows never consume quota.
+   *
+   * The plan in effect for the period is resolved first; Enterprise/custom null
+   * terms fail closed (never treated as 0 or infinite). When the existing count
+   * is >= the included limit, a `BillingQuotaExceededException` (HTTP 429) is
+   * thrown and NO event is written. Otherwise a
+   * `status=posted, entryType=usage, sourceType=api_request` event is written.
+   * A serialization conflict retries with a fresh transaction (no double count).
+   */
+  async assertAndRecordApiCall(input: RecordApiCallInput): Promise<void> {
+    await this.ensurePlanVersions();
+    const occurredAt = input.occurredAt ?? new Date();
+    const periodStart = this.monthStart(occurredAt);
+
+    return this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(input.userId, periodStart, async (tx, billingAccountId) => {
+        const planVersion = await this.resolvePlanVersion(billingAccountId, periodStart, tx);
+        // Fail closed on unknown/malformed persisted plans (never 0/infinite).
+        validatePlanVersion(planVersion);
+        const includedApiCalls = planVersion.includedApiCalls;
+        if (includedApiCalls === null) {
+          // Enterprise/custom null terms fail closed — never 0 or infinite.
+          throw new ServiceUnavailableException('Billing service unavailable');
+        }
+        // Keep the quota limit and the used count in bigint — never Number —
+        // so counts above Number.MAX_SAFE_INTEGER are compared exactly.
+        const limit = includedApiCalls;
+
+        // Fetch and validate each included usage row before reduction: only
+        // metric=api_call AND entryType=usage counts; a negative or non-bigint
+        // quantity fails closed instead of silently reducing usage.
+        const usageRows = await tx.billingUsageEvent.findMany({
+          where: {
+            billingAccountId,
+            periodStart,
+            metric: 'api_call',
+            entryType: 'usage',
+          },
+          select: { quantity: true },
+        });
+        let used = 0n;
+        for (const row of usageRows) {
+          if (typeof row.quantity !== 'bigint' || row.quantity < 0n) {
+            throw new ConflictException('Usage quantity is invalid');
+          }
+          used += row.quantity;
+        }
+
+        if (used >= limit) {
+          const periodEnd = new Date(
+            Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1),
+          );
+          const retryAfterSeconds = Math.max(
+            1,
+            Math.ceil((periodEnd.getTime() - Date.now()) / 1000),
+          );
+          throw new BillingQuotaExceededException(
+            'api_call',
+            limit,
+            formatUtcMonth(periodStart),
+            retryAfterSeconds,
+          );
+        }
+
+        await tx.billingUsageEvent.create({
+          data: {
+            billingAccountId,
+            metric: 'api_call',
+            entryType: 'usage',
+            sourceType: 'api_request',
+            status: 'posted',
+            sourceKey: input.sourceKey,
+            periodStart,
+            occurredAt,
+            quantity: 1n,
+            volumeUsdMicros: 0n,
+            requestId: input.requestId,
+            endpoint: input.endpoint,
+            statusCode: input.statusCode,
+            metadata: input.metadata as Prisma.InputJsonValue | undefined,
+          },
+        });
+      }),
+    );
   }
 
   /**
@@ -702,6 +1079,8 @@ export class BillingService {
 
     const planVersion = await this.resolvePlanVersion(account.id, start);
     const plan = planVersionToConfig(planVersion);
+    // Enterprise/custom null terms cannot be summarized as an executable plan.
+    this.assertPlanFinalizable(planVersion);
 
     const [usageEvents, activeWallets] = await Promise.all([
       this.prisma.billingUsageEvent.findMany({
@@ -717,7 +1096,7 @@ export class BillingService {
     ]);
 
     let outboundVolume = 0n;
-    let apiCalls = 0;
+    let apiCalls = 0n;
     for (const ev of usageEvents) {
       if (ev.metric === 'outbound_volume') {
         // Only posted, usage-type outbound events count toward gross outbound.
@@ -726,7 +1105,15 @@ export class BillingService {
           outboundVolume += ev.volumeUsdMicros;
         }
       } else if (ev.metric === 'api_call') {
-        apiCalls += Number(ev.quantity);
+        // One API usage policy: only entryType=usage counts; reversal/adjustment/
+        // non-usage rows are excluded. A negative or non-bigint quantity fails
+        // closed instead of reducing usage.
+        if (ev.entryType === 'usage') {
+          if (typeof ev.quantity !== 'bigint' || ev.quantity < 0n) {
+            throw new ConflictException('Usage quantity is invalid');
+          }
+          apiCalls += ev.quantity;
+        }
       }
     }
 
@@ -734,7 +1121,7 @@ export class BillingService {
       plan,
       grossOutboundMicros: outboundVolume,
       activeWallets,
-      apiCallsTotal: apiCalls,
+      apiCallsTotal: toSafeCount(apiCalls),
       apiOverageRateMicros: planVersion.apiOverageRateMicros,
       walletOverageRateMicros: planVersion.walletOverageRateMicros,
     });
@@ -820,14 +1207,15 @@ export class BillingService {
     await this.ensurePlanVersions();
     const { period: periodStr, start, end } = parsePeriod(period);
 
-    // Cheap pre-check (never relied on alone): an already-finalized invoice is
-    // immutable and returned unchanged without acquiring the period lock.
+    // Cheap pre-check (never relied on alone): finalized/needs_review/void
+    // invoices are immutable and returned unchanged. An `open` invoice (created
+    // by a self-service plan change) proceeds to finalization.
     const existing = await this.prisma.billingInvoice.findUnique({
       where: {
         billingAccountId_periodStart: { billingAccountId: account.id, periodStart: start },
       },
     });
-    if (existing) return this.toInvoiceDto(existing);
+    if (existing && existing.status !== 'open') return this.toInvoiceDto(existing);
 
     // Close/grace boundary: future/current unended periods and the 24h grace
     // window after UTC period end cannot be finalized.
@@ -842,13 +1230,16 @@ export class BillingService {
     // P2002 are never swallowed by the retry loop.
     return this.withRetryOnSerialization(() =>
       this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
-        // Re-check inside the lock so a waiter returns the existing invoice.
+        // Re-check inside the lock so a waiter returns the existing immutable
+        // invoice. An `open` invoice proceeds to finalization.
         const lockedExisting = await tx.billingInvoice.findUnique({
           where: {
             billingAccountId_periodStart: { billingAccountId, periodStart: start },
           },
         });
-        if (lockedExisting) return this.toInvoiceDto(lockedExisting);
+        if (lockedExisting && lockedExisting.status !== 'open') {
+          return this.toInvoiceDto(lockedExisting);
+        }
 
         const planVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
         const plan = planVersionToConfig(planVersion);
@@ -874,7 +1265,7 @@ export class BillingService {
         ]);
 
         let outboundVolume = 0n;
-        let apiCalls = 0;
+        let apiCalls = 0n;
         for (const ev of usageEvents) {
           if (ev.metric === 'outbound_volume') {
             // Only posted, usage-type outbound events count toward gross
@@ -884,15 +1275,23 @@ export class BillingService {
               outboundVolume += ev.volumeUsdMicros;
             }
           } else if (ev.metric === 'api_call') {
-            apiCalls += Number(ev.quantity);
+            // One API usage policy: only entryType=usage counts; a negative or
+            // non-bigint quantity fails closed instead of reducing usage.
+            if (ev.entryType === 'usage') {
+              if (typeof ev.quantity !== 'bigint' || ev.quantity < 0n) {
+                throw new ConflictException('Usage quantity is invalid');
+              }
+              apiCalls += ev.quantity;
+            }
           }
         }
+        const apiCallsSafe = toSafeCount(apiCalls);
 
         const totals = calculateInvoiceTotals({
           plan,
           grossOutboundMicros: outboundVolume,
           activeWallets,
-          apiCallsTotal: apiCalls,
+          apiCallsTotal: apiCallsSafe,
           apiOverageRateMicros: planVersion.apiOverageRateMicros,
           walletOverageRateMicros: planVersion.walletOverageRateMicros,
         });
@@ -902,13 +1301,55 @@ export class BillingService {
           planVersion,
           plan,
           outboundVolume,
-          apiCalls,
+          apiCalls: apiCallsSafe,
           activeWallets,
           totals,
         });
         const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
 
         try {
+          if (lockedExisting) {
+            // Update the pre-existing open invoice and replace its lines.
+            const updated = await tx.billingInvoice.update({
+              where: { id: lockedExisting.id },
+              data: {
+                planVersionId: planVersion.id,
+                status: 'finalized',
+                grossOutboundMicros: outboundVolume,
+                includedOutboundMicros: plan.includedOutboundMicros,
+                billableOutboundMicros: totals.billableOutboundMicros,
+                apiCalls: BigInt(apiCalls),
+                includedApiCalls:
+                  plan.includedApiCallsPerMonth !== null
+                    ? BigInt(plan.includedApiCallsPerMonth)
+                    : null,
+                activeWallets,
+                includedWallets: plan.includedWallets,
+                monthlyFeeMicros: totals.monthlyFeeMicros,
+                outboundOverageMicros: totals.outboundOverageMicros,
+                apiOverageMicros: totals.apiOverageMicros,
+                walletOverageMicros: totals.walletOverageMicros,
+                totalMicros: totals.totalMicros,
+                snapshotJson: snapshot as Prisma.InputJsonValue,
+                snapshotHash,
+                finalizedAt: new Date(),
+              },
+            });
+            await tx.billingInvoiceLine.deleteMany({ where: { invoiceId: lockedExisting.id } });
+            const lines = this.buildInvoiceLines({
+              invoiceId: lockedExisting.id,
+              planVersion,
+              plan,
+              apiCalls: apiCallsSafe,
+              activeWallets,
+              totals,
+            });
+            if (lines.length > 0) {
+              await tx.billingInvoiceLine.createMany({ data: lines });
+            }
+            return this.toInvoiceDto(updated);
+          }
+
           const created = await tx.billingInvoice.create({
             data: {
               billingAccountId,
@@ -941,7 +1382,7 @@ export class BillingService {
             invoiceId: created.id,
             planVersion,
             plan,
-            apiCalls,
+            apiCalls: apiCallsSafe,
             activeWallets,
             totals,
           });
@@ -1197,13 +1638,20 @@ export class BillingService {
     }
   }
 
-  /** Ensures the account has a default Free assignment for the current month. */
+  /**
+   * Ensures the account has a default Free assignment for the current UTC
+   * month. Only assignments effective at or before the current month are
+   * considered — a future scheduled assignment never satisfies this. Returns
+   * the assignment with its plan version included.
+   */
   private async ensureDefaultAssignment(
     accountId: string,
-  ): Promise<Prisma.BillingPlanAssignmentGetPayload<Record<string, never>>> {
+  ): Promise<Prisma.BillingPlanAssignmentGetPayload<{ include: { planVersion: true } }>> {
+    const currentMonthStart = this.monthStart(new Date());
     const existing = await this.prisma.billingPlanAssignment.findFirst({
-      where: { billingAccountId: accountId },
+      where: { billingAccountId: accountId, periodStart: { lte: currentMonthStart } },
       orderBy: { periodStart: 'desc' },
+      include: { planVersion: true },
     });
     if (existing) return existing;
 
@@ -1213,16 +1661,21 @@ export class BillingService {
     });
     if (!freePlan) throw new Error('Free plan not initialized');
 
-    const periodStart = this.monthStart(new Date());
     try {
       return await this.prisma.billingPlanAssignment.create({
-        data: { billingAccountId: accountId, planVersionId: freePlan.id, periodStart },
+        data: {
+          billingAccountId: accountId,
+          planVersionId: freePlan.id,
+          periodStart: currentMonthStart,
+        },
+        include: { planVersion: true },
       });
     } catch (err) {
       if (isUniqueConstraintError(err)) {
         const again = await this.prisma.billingPlanAssignment.findFirst({
-          where: { billingAccountId: accountId },
+          where: { billingAccountId: accountId, periodStart: { lte: currentMonthStart } },
           orderBy: { periodStart: 'desc' },
+          include: { planVersion: true },
         });
         if (again) return again;
       }
@@ -1297,7 +1750,9 @@ export class BillingService {
       amount: microsToDecimalUsd(inv.totalMicros),
       currency: inv.currency,
       createdAt: inv.createdAt.toISOString(),
-      paidAt: null,
+      // Real payment timestamp confirmed by the signed Stripe webhook.
+      paidAt: inv.paidAt ? inv.paidAt.toISOString() : null,
+      // No Stripe hosted invoice PDF is used; keep null.
       pdfUrl: null,
     };
   }
@@ -1559,7 +2014,108 @@ function assertJsonSafe(value: unknown, path: string): void {
   }
 }
 
+/**
+ * Own-property safe lookup into the static `PLANS` whitelist. Rejects
+ * non-strings, empty strings, and inherited keys (`toString`, `constructor`,
+ * `__proto__`, ...) so a crafted code can never resolve to a prototype member.
+ */
+function isOwnPlanCode(code: unknown): code is PlanId {
+  if (typeof code !== 'string' || code.length === 0) return false;
+  return Object.prototype.hasOwnProperty.call(PLANS, code);
+}
+
+/**
+ * Shared plan-boundary validation (Phase 2 Oracle gate). A persisted plan
+ * version is only executable when its code is an own property of the static
+ * `PLANS` whitelist AND its term shape is computable with strict runtime types:
+ * BigInt monetary/quota fields must be bigint and non-negative; Int/rate/counter
+ * fields must be safe integers and non-negative; undefined/number/negative/
+ * unsafe values are never implicitly coerced. Enterprise must keep the full
+ * custom/null contract (all four terms null) and is listable but never
+ * executable. Unknown codes, empty/unsupported codes, and malformed rows fail
+ * closed with a business ConflictException — never treated as Free, 0, or
+ * infinite. Returns the canonical static config for the code (DB values remain
+ * the price snapshot used by the calculator).
+ */
+export function validatePlanVersion(planVersion: PlanVersion): BillingPlanConfig {
+  const code = planVersion.code;
+  if (!isOwnPlanCode(code)) {
+    throw new ConflictException(`Plan code is not supported: ${String(code)}`);
+  }
+  const config = PLANS[code];
+
+  // Runtime type + computability checks (never implicitly coerce).
+  assertNonNegativeBigint(planVersion.apiOverageRateMicros, 'apiOverageRateMicros', code);
+  assertNonNegativeBigint(planVersion.walletOverageRateMicros, 'walletOverageRateMicros', code);
+  if (
+    typeof planVersion.version !== 'number' ||
+    !Number.isSafeInteger(planVersion.version) ||
+    planVersion.version < 0
+  ) {
+    throw new ConflictException(`Plan terms are invalid: ${code}.version`);
+  }
+
+  const isEnterprise = config.id === 'enterprise';
+  if (isEnterprise) {
+    if (
+      planVersion.monthlyFeeMicros !== null ||
+      planVersion.includedOutboundMicros !== null ||
+      planVersion.includedWallets !== null ||
+      planVersion.includedApiCalls !== null
+    ) {
+      throw new ConflictException('Enterprise plan terms are malformed');
+    }
+  } else {
+    assertNonNegativeBigint(planVersion.monthlyFeeMicros, 'monthlyFeeMicros', code);
+    assertNonNegativeBigint(planVersion.includedOutboundMicros, 'includedOutboundMicros', code);
+    assertNonNegativeSafeInt(planVersion.includedWallets, 'includedWallets', code);
+    assertNonNegativeBigint(planVersion.includedApiCalls, 'includedApiCalls', code);
+    // includedApiCalls is converted to Number at the calculator/DTO boundary;
+    // reject values above Number.MAX_SAFE_INTEGER before any imprecise
+    // conversion (never weaken valid historical finite snapshots).
+    if (planVersion.includedApiCalls > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new ConflictException(`Plan terms are invalid: ${code}.includedApiCalls`);
+    }
+  }
+  return config;
+}
+
+function assertNonNegativeBigint(
+  value: unknown,
+  field: string,
+  code: string,
+): asserts value is bigint {
+  if (typeof value !== 'bigint' || value < 0n) {
+    throw new ConflictException(`Plan terms are invalid: ${code}.${field}`);
+  }
+}
+
+function assertNonNegativeSafeInt(
+  value: unknown,
+  field: string,
+  code: string,
+): asserts value is number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new ConflictException(`Plan terms are invalid: ${code}.${field}`);
+  }
+}
+
+/**
+ * Converts a bigint usage count to a Number only at a safe boundary (the pure
+ * calculator / snapshot / line builder). Fails closed when the count is
+ * negative or exceeds Number.MAX_SAFE_INTEGER so accounting never truncates,
+ * misreports, or reduces usage. All ledger aggregation and quota comparison
+ * stay in bigint.
+ */
+function toSafeCount(value: bigint): number {
+  if (value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new ConflictException('Usage count is invalid or exceeds the safe integer range');
+  }
+  return Number(value);
+}
+
 function planVersionToConfig(v: PlanVersion): BillingPlanConfig {
+  validatePlanVersion(v);
   return {
     id: v.code as PlanId,
     name: v.name,

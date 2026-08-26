@@ -39,6 +39,17 @@ enum BillingUsageSourceType {
   manual_adjustment
 }
 
+enum BillingPaymentAttemptStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum StripeWebhookEventStatus {
+  processed
+  ignored
+}
+
 model User {
   id             String    @id @default(uuid()) @db.Uuid
   socialProvider String    @map("social_provider") @db.VarChar(20)
@@ -353,11 +364,12 @@ model UserMfaTotpRecoveryCode {
 }
 
 model BillingAccount {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
-  currency  String   @default("USD") @map("currency") @db.VarChar(10)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  stripeCustomerId String?  @unique @map("stripe_customer_id") @db.VarChar(255)
+  currency         String   @default("USD") @map("currency") @db.VarChar(10)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   user        User                    @relation(fields: [userId], references: [id])
   assignments BillingPlanAssignment[]
@@ -523,10 +535,12 @@ model BillingInvoice {
   createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt              DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
   finalizedAt            DateTime?            @map("finalized_at") @db.Timestamptz()
+  paidAt                 DateTime?            @map("paid_at") @db.Timestamptz()
 
   billingAccount BillingAccount       @relation(fields: [billingAccountId], references: [id])
   planVersion    BillingPlanVersion   @relation(fields: [planVersionId], references: [id])
   lines          BillingInvoiceLine[]
+  paymentAttempts BillingPaymentAttempt[]
 
   @@unique([billingAccountId, periodStart])
   @@index([billingAccountId, periodStart, periodEnd])
@@ -548,4 +562,40 @@ model BillingInvoiceLine {
 
   @@index([invoiceId])
   @@map("billing_invoice_lines")
+}
+
+model BillingPaymentAttempt {
+  id                      String                     @id @default(uuid()) @db.Uuid
+  invoiceId               String                     @map("invoice_id") @db.Uuid
+  status                  BillingPaymentAttemptStatus @default(pending) @map("status")
+  amountMicros            BigInt                     @map("amount_micros")
+  currency                String                     @default("USD") @map("currency") @db.VarChar(10)
+  stripeCheckoutSessionId String?                    @unique @map("stripe_checkout_session_id") @db.VarChar(255)
+  stripePaymentIntentId   String?                    @unique @map("stripe_payment_intent_id") @db.VarChar(255)
+  checkoutUrl             String?                    @map("checkout_url") @db.VarChar(2048)
+  failureCode             String?                    @map("failure_code") @db.VarChar(80)
+  failureMessage          String?                    @map("failure_message") @db.VarChar(500)
+  createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
+  succeededAt             DateTime?                  @map("succeeded_at") @db.Timestamptz()
+  failedAt                DateTime?                  @map("failed_at") @db.Timestamptz()
+
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, status])
+  @@index([invoiceId, createdAt])
+  @@map("billing_payment_attempts")
+}
+
+model StripeWebhookEvent {
+  id            String                  @id @default(uuid()) @db.Uuid
+  stripeEventId String                  @unique @map("stripe_event_id") @db.VarChar(255)
+  type          String                  @db.VarChar(120)
+  status        StripeWebhookEventStatus @map("status")
+  objectId      String?                 @map("object_id") @db.VarChar(255)
+  receivedAt    DateTime                @default(now()) @map("received_at") @db.Timestamptz()
+  processedAt   DateTime?               @map("processed_at") @db.Timestamptz()
+
+  @@index([type, receivedAt])
+  @@map("stripe_webhook_events")
 }

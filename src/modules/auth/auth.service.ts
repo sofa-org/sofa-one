@@ -15,6 +15,7 @@ import { AgentStatus, type AgentStatusValue } from '../../common/agent/agent-sta
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { ApiKeyService } from '../api-key/api-key.service';
+import { BillingEntitlementService } from '../billing/billing-entitlement.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
 type WalletResponse = {
@@ -45,6 +46,7 @@ export class AuthService {
     private readonly openfort: OpenfortService,
     private readonly apiKeyService: ApiKeyService,
     private readonly configService: ConfigService,
+    private readonly billingEntitlements: BillingEntitlementService,
     @Optional()
     private readonly requestContext?: RequestContextService,
     @Optional()
@@ -138,7 +140,9 @@ export class AuthService {
         }
         if (!wallet) throw dbErr;
       }
-      this.logger.log(this.logContext({ message: 'Created pending wallet for existing user', userId }));
+      this.logger.log(
+        this.logContext({ message: 'Created pending wallet for existing user', userId }),
+      );
     } else {
       // 3c. Returning user with wallet — nothing to provision
       userId = existing.id;
@@ -180,11 +184,28 @@ export class AuthService {
       throw new NotFoundException('Openfort session does not match current user');
     }
     const chainId = dto.chainId;
-    const agent = await this.ensureAgentWallet(user.wallet);
+    // Phase 2C quota preflight: reject before any external Openfort wallet
+    // creation/ensure so an exhausted active-wallet quota never orphans a TEE
+    // agent wallet. Read-only check against the same entitlement facade; the
+    // authoritative in-transaction check below still guards the
+    // preflight/activation race. Infra errors propagate untouched.
+    await this.billingEntitlements.assertWalletActivationAllowed(user.id, this.prisma);
+    // Validate the agent expiry locally before any external Openfort wallet
+    // ensure/create so an expired or >30-day agentExpiresAt can never orphan a
+    // freshly created TEE agent wallet.
     const expiresAt = chainId ? this.agentExpiration(dto.agentExpiresAt) : null;
+    const agent = await this.ensureAgentWallet(user.wallet);
     const wallet = await this.prisma.$transaction(async (tx) => {
+      // Phase 2C active-wallet hard-quota seam: the decision runs inside the
+      // same transaction as the activation so the count and the upsert share
+      // one snapshot (no check-then-act race). Re-authorizing an already-active
+      // wallet is idempotent; only a new activation is gated by the plan's
+      // includedWallets. Enterprise/custom null terms fail closed.
+      await this.billingEntitlements.assertWalletActivationAllowed(user.id, tx);
+
       const walletAddressChanged = Boolean(
-        user.wallet?.walletAddress && user.wallet.walletAddress.toLowerCase() !== authorized.address.toLowerCase(),
+        user.wallet?.walletAddress &&
+        user.wallet.walletAddress.toLowerCase() !== authorized.address.toLowerCase(),
       );
 
       const updatedWallet = await tx.userWallet.upsert({
@@ -388,15 +409,17 @@ export class AuthService {
   private hasAgentRegistrationContext(wallet: UserWallet) {
     return Boolean(
       wallet.status === 'active' &&
-        wallet.walletAddress &&
-        wallet.agentOpenfortAccountId &&
-        wallet.agentWalletAddress &&
-        wallet.agentKeyHash,
+      wallet.walletAddress &&
+      wallet.agentOpenfortAccountId &&
+      wallet.agentWalletAddress &&
+      wallet.agentKeyHash,
     );
   }
 
   private findChainAuthorization(wallet: WalletWithAuthorizations, chainId: number) {
-    return wallet.chainAuthorizations?.find((authorization) => Number(authorization.chainId) === chainId);
+    return wallet.chainAuthorizations?.find(
+      (authorization) => Number(authorization.chainId) === chainId,
+    );
   }
 
   private async findWalletWithAuthorizations(userId: string) {

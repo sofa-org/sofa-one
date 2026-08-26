@@ -87,6 +87,22 @@ class EnvironmentVariables {
   SECURITY_EVENTS_SIEM_WEBHOOK_SECRET?: string;
 
   @IsString()
+  @IsOptional()
+  STRIPE_SECRET_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  STRIPE_WEBHOOK_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  STRIPE_SUCCESS_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  STRIPE_CANCEL_URL?: string;
+
+  @IsString()
   @IsNotEmpty()
   @Matches(/\S/, { message: 'MFA_SECRET_ENCRYPTION_KEY must not be blank' })
   MFA_SECRET_ENCRYPTION_KEY: string;
@@ -111,6 +127,7 @@ export function validate(config: Record<string, unknown>) {
   validateOptionalHttpsUrl(validatedConfig.STEP_UP_OTP_WEBHOOK_URL, 'STEP_UP_OTP_WEBHOOK_URL');
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
   validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
+  validateStripeConfig(validatedConfig);
   return validatedConfig;
 }
 
@@ -120,7 +137,6 @@ function validateProductionConfig(config: EnvironmentVariables) {
   if (!config.CORS_ORIGIN?.trim()) {
     throw new Error('CORS_ORIGIN must be set in production');
   }
-
 }
 
 function validateOptionalHttpsUrl(rawUrl: string | undefined, name: string) {
@@ -149,4 +165,22 @@ function validateMfaSecretEncryptionKey(rawKey: string) {
   if (key.length !== 32) {
     throw new Error('MFA_SECRET_ENCRYPTION_KEY must be 32 base64-encoded bytes');
   }
+}
+
+/**
+ * Stripe billing is optional: with no `STRIPE_SECRET_KEY` the app and all
+ * non-payment functionality start normally. When Stripe IS configured, the
+ * server-side success/cancel URLs are required and must be valid https URLs —
+ * they are never accepted from the client.
+ */
+function validateStripeConfig(config: EnvironmentVariables) {
+  if (!config.STRIPE_SECRET_KEY?.trim()) return;
+  if (!config.STRIPE_SUCCESS_URL?.trim()) {
+    throw new Error('STRIPE_SUCCESS_URL must be set when Stripe is configured');
+  }
+  if (!config.STRIPE_CANCEL_URL?.trim()) {
+    throw new Error('STRIPE_CANCEL_URL must be set when Stripe is configured');
+  }
+  validateOptionalHttpsUrl(config.STRIPE_SUCCESS_URL, 'STRIPE_SUCCESS_URL');
+  validateOptionalHttpsUrl(config.STRIPE_CANCEL_URL, 'STRIPE_CANCEL_URL');
 }
