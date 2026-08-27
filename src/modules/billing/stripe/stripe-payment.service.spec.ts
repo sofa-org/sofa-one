@@ -61,6 +61,7 @@ function attempt(overrides: Record<string, unknown> = {}) {
   return {
     id: 'att-1',
     invoiceId: 'inv-1',
+    method: 'stripe',
     status: 'pending',
     amountMicros: 49_000_000n,
     currency: 'USD',
@@ -297,6 +298,54 @@ describe('StripePaymentService', () => {
       });
     });
 
+    it('creates the pending attempt on the stripe rail and scopes pending lookups to stripe', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptFindFirst.mockResolvedValue(null);
+      attemptCreate.mockResolvedValue(attempt());
+      userFindUnique.mockResolvedValue(null);
+      customerCreate.mockResolvedValue({ id: 'cus_123' });
+      accountUpdate.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_123' });
+      sessionCreate.mockResolvedValue({
+        id: 'cs_123',
+        url: 'https://checkout.stripe.com/c/pay/cs_123',
+        payment_intent: 'pi_123',
+      });
+      attemptUpdate.mockResolvedValue(
+        attempt({
+          stripeCheckoutSessionId: 'cs_123',
+          stripePaymentIntentId: 'pi_123',
+          checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_123',
+        }),
+      );
+
+      await service.createCheckoutSession('user-1', 'inv-1');
+
+      // The pending attempt is explicitly created on the stripe rail so a
+      // USDC pending attempt can coexist for the same invoice.
+      expect(attemptCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          invoiceId: 'inv-1',
+          method: 'stripe',
+          status: 'pending',
+          amountMicros: 49_000_000n,
+          currency: 'USD',
+        }),
+      });
+      // The reusable-pending lookup is scoped to the stripe rail so a USDC
+      // pending attempt is never reused as a Stripe checkout session.
+      expect(attemptFindFirst).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          where: expect.objectContaining({
+            invoiceId: 'inv-1',
+            method: 'stripe',
+            status: 'pending',
+          }),
+        }),
+      );
+    });
+
     it('reuses an existing Stripe customer id without calling Stripe customers.create', async () => {
       accountFindUnique.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_existing' });
       invoiceFindFirst.mockResolvedValue(invoice());
@@ -386,7 +435,7 @@ describe('StripePaymentService', () => {
       );
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-1', status: { not: 'succeeded' } },
+        where: { id: 'att-1', status: 'pending' },
         data: expect.objectContaining({
           status: 'failed',
           failureCode: 'card_declined',
@@ -409,10 +458,10 @@ describe('StripePaymentService', () => {
         'request timed out',
       );
 
-      // The failure update is conditional on the attempt not being succeeded,
-      // so a webhook-confirmed success racing this failure can never regress.
+      // The failure update is a pending-only CAS, so a webhook-confirmed
+      // success racing this failure can never regress the attempt.
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-1', status: { not: 'succeeded' } },
+        where: { id: 'att-1', status: 'pending' },
         data: expect.objectContaining({ status: 'failed' }),
       });
     });

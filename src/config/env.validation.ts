@@ -106,6 +106,42 @@ class EnvironmentVariables {
   @IsNotEmpty()
   @Matches(/\S/, { message: 'MFA_SECRET_ENCRYPTION_KEY must not be blank' })
   MFA_SECRET_ENCRYPTION_KEY: string;
+
+  // ── USDC billing (Phase 3B foundation — optional) ─────────────────────────
+  // Feature is off unless BILLING_USDC_ENABLED=true; when off, none of the
+  // USDC variables are required and the app starts normally. When on, both
+  // per-chain treasuries and RPC URLs are required and format-validated.
+  @IsBooleanString()
+  @IsOptional()
+  BILLING_USDC_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_TREASURY_ADDRESS_8453?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_TREASURY_ADDRESS_84532?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_RPC_URL_8453?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_RPC_URL_84532?: string;
+
+  @IsInt()
+  @Min(5)
+  @Max(100)
+  @IsOptional()
+  BILLING_USDC_REQUIRED_CONFIRMATIONS?: number = 5;
+
+  @IsInt()
+  @Min(1)
+  @Max(604800)
+  @IsOptional()
+  BILLING_USDC_QUOTE_TTL_SECONDS?: number = 86400;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -128,6 +164,7 @@ export function validate(config: Record<string, unknown>) {
   validateDefaultChain(validatedConfig.DEFAULT_CHAIN_ID);
   validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
   validateStripeConfig(validatedConfig);
+  validateUsdcConfig(validatedConfig);
   return validatedConfig;
 }
 
@@ -183,4 +220,89 @@ function validateStripeConfig(config: EnvironmentVariables) {
   }
   validateOptionalHttpsUrl(config.STRIPE_SUCCESS_URL, 'STRIPE_SUCCESS_URL');
   validateOptionalHttpsUrl(config.STRIPE_CANCEL_URL, 'STRIPE_CANCEL_URL');
+}
+
+/**
+ * USDC billing is optional: with `BILLING_USDC_ENABLED` unset/false the app
+ * and all non-USDC functionality start normally. When enabled, both supported
+ * USDC chains (Base 8453 and Base Sepolia 84532) must have a static treasury
+ * address (EVM format, never the zero address) and an HTTPS RPC URL;
+ * confirmations (minimum 5) and quote TTL are validated by the class
+ * decorators with defaults of 5 and 86400.
+ *
+ * Treasury addresses and RPC URLs are format-validated whenever they are
+ * provided (even while the feature is disabled) so a misconfigured value never
+ * silently passes; only required-ness is gated on the enabled flag.
+ *
+ * Token addresses are intentionally NOT configured here — they are derived
+ * from the existing `SUPPORTED_CHAINS` registry at runtime. Addresses are
+ * format-validated only; no cross-assertion against user wallets is made at
+ * env-validation time (that belongs to runtime/operator checks).
+ */
+function validateUsdcConfig(config: EnvironmentVariables) {
+  for (const chain of USDC_BILLING_CHAINS) {
+    const treasury = config[chain.treasuryKey] as string | undefined;
+    const rpc = config[chain.rpcKey] as string | undefined;
+
+    if (treasury?.trim()) validateEthereumAddress(treasury, chain.treasuryKey);
+    if (rpc?.trim()) validateRpcUrl(rpc, chain.rpcKey);
+  }
+
+  if (config.BILLING_USDC_ENABLED !== 'true') return;
+
+  for (const chain of USDC_BILLING_CHAINS) {
+    const treasury = config[chain.treasuryKey] as string | undefined;
+    const rpc = config[chain.rpcKey] as string | undefined;
+
+    if (!treasury?.trim()) {
+      throw new Error(`${chain.treasuryKey} must be set when BILLING_USDC_ENABLED=true`);
+    }
+    if (!rpc?.trim()) {
+      throw new Error(`${chain.rpcKey} must be set when BILLING_USDC_ENABLED=true`);
+    }
+  }
+}
+
+/** USDC billing chains (Base + Base Sepolia). Both are in SUPPORTED_CHAINS. */
+const USDC_BILLING_CHAINS: ReadonlyArray<{
+  chainId: number;
+  treasuryKey: keyof EnvironmentVariables;
+  rpcKey: keyof EnvironmentVariables;
+}> = [
+  {
+    chainId: 8453,
+    treasuryKey: 'BILLING_USDC_TREASURY_ADDRESS_8453',
+    rpcKey: 'BILLING_USDC_RPC_URL_8453',
+  },
+  {
+    chainId: 84532,
+    treasuryKey: 'BILLING_USDC_TREASURY_ADDRESS_84532',
+    rpcKey: 'BILLING_USDC_RPC_URL_84532',
+  },
+];
+
+/** A token/treasury contract address is exactly 20 bytes (40 hex chars). */
+const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
+
+/** The burn/zero address is never a valid treasury. */
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+function validateEthereumAddress(address: string, name: string): void {
+  if (!EVM_ADDRESS_REGEX.test(address)) {
+    throw new Error(`${name} must be a valid EVM address (0x + 40 hex characters)`);
+  }
+  if (address.toLowerCase() === ZERO_ADDRESS) {
+    throw new Error(`${name} must not be the zero address`);
+  }
+}
+
+function validateRpcUrl(rawUrl: string, name: string): void {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:') {
+      throw new Error();
+    }
+  } catch {
+    throw new Error(`${name} must be a valid https URL`);
+  }
 }

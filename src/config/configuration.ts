@@ -23,6 +23,21 @@ export default () => ({
     successUrl: process.env.STRIPE_SUCCESS_URL,
     cancelUrl: process.env.STRIPE_CANCEL_URL,
   },
+  billing: {
+    usdc: {
+      enabled: process.env.BILLING_USDC_ENABLED === 'true',
+      treasuryAddresses: {
+        8453: process.env.BILLING_USDC_TREASURY_ADDRESS_8453,
+        84532: process.env.BILLING_USDC_TREASURY_ADDRESS_84532,
+      },
+      rpcUrls: {
+        8453: process.env.BILLING_USDC_RPC_URL_8453,
+        84532: process.env.BILLING_USDC_RPC_URL_84532,
+      },
+      requiredConfirmations: parseInt(process.env.BILLING_USDC_REQUIRED_CONFIRMATIONS || '5', 10),
+      quoteTtlSeconds: parseInt(process.env.BILLING_USDC_QUOTE_TTL_SECONDS || '86400', 10),
+    },
+  },
   security: {
     trustProxy: process.env.TRUST_PROXY,
   },

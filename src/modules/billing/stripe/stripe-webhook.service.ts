@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { InvoiceSettlementService } from '../invoice-settlement.service';
 import * as Stripe from 'stripe';
 import { STRIPE_CLIENT, STRIPE_WEBHOOK_EVENT_TYPES } from './stripe.constants';
 
@@ -36,6 +37,7 @@ export class StripeWebhookService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe | null,
+    private readonly settlementService: InvoiceSettlementService,
   ) {}
 
   async handleWebhook(rawBody: Buffer | undefined, signature: string | undefined): Promise<void> {
@@ -138,21 +140,48 @@ export class StripeWebhookService {
             },
           });
         }
-        // Set paidAt only once; never clear it.
-        if (!attempt.invoice.paidAt) {
-          await tx.billingInvoice.update({
+        // Atomic first-rail-wins settlement: sets paidAt/paidVia/pointer once.
+        // A duplicate replay of this attempt is an idempotent no-op, and a
+        // settlement already won by another rail is never overwritten.
+        const result = await this.settlementService.settleInvoice(tx, {
+          id: attempt.id,
+          invoiceId: attempt.invoiceId,
+          method: 'stripe',
+        });
+        if (!result.settled) {
+          // This Stripe success lost the settlement race. Only when the
+          // invoice's settlement pointer clearly belongs to a different
+          // attempt is the succeeded Stripe payment recorded as a
+          // duplicate/unallocated review — mirroring the USDC losing path. A
+          // precondition failure (invoice unsettled) or this attempt's own
+          // idempotent replay never changes the attempt, and the winning
+          // attempt/invoice is never touched.
+          const settledInvoice = await tx.billingInvoice.findUnique({
             where: { id: attempt.invoiceId },
-            data: { paidAt: new Date() },
+            select: { settlementAttemptId: true },
           });
+          if (
+            settledInvoice?.settlementAttemptId &&
+            settledInvoice.settlementAttemptId !== attempt.id
+          ) {
+            await tx.billingPaymentAttempt.update({
+              where: { id: attempt.id },
+              data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
+            });
+          }
         }
         return;
       }
 
-      // Failure: never regress a succeeded attempt, never clear paidAt.
+      // Failure: only a pending attempt may transition to failed. The CAS
+      // predicate (status = 'pending') makes the transition atomic under Read
+      // Committed — a concurrent success that already committed can never be
+      // regressed, and a stale read of a pending attempt cannot overwrite a
+      // succeeded/confirming attempt or the attempt that settled the invoice.
       if (attempt.status === 'succeeded') return;
       const { code, message } = extractFailureDetails(event);
-      await tx.billingPaymentAttempt.update({
-        where: { id: attempt.id },
+      await tx.billingPaymentAttempt.updateMany({
+        where: { id: attempt.id, status: 'pending' },
         data: {
           status: 'failed',
           failedAt: new Date(),
@@ -175,49 +204,49 @@ export class StripeWebhookService {
    * 3. `client_reference_id` (Checkout sessions only) — the invoice id we set
    *    at session creation, as a final fallback.
    *
+   * Every lookup path is restricted to `method = stripe` — the persisted
+   * object-id and metadata-attemptId lookups included — so a Stripe event can
+   * never resolve to a USDC attempt, even when a USDC row happens to carry the
+   * same PaymentIntent/Checkout id or the same attempt id in metadata
+   * (dual-rail isolation).
+   *
    * A verified event with no local match is handled by the caller as ignored
    * + 2xx.
    */
   private async findAttemptForEvent(
     tx: Tx,
     event: Stripe.Event,
-  ): Promise<(PaymentAttemptRow & { invoice: { paidAt: Date | null } }) | null> {
+  ): Promise<PaymentAttemptRow | null> {
     const object = event.data.object as Stripe.Checkout.Session | Stripe.PaymentIntent;
     if (!object || typeof object.id !== 'string') return null;
-
-    const include = { invoice: { select: { paidAt: true } } } as const;
 
     // 1. Persisted object id.
     if (event.type.startsWith('checkout.session')) {
       const bySession = await tx.billingPaymentAttempt.findFirst({
-        where: { stripeCheckoutSessionId: object.id },
-        include,
+        where: { stripeCheckoutSessionId: object.id, method: 'stripe' },
       });
       if (bySession) return bySession;
     }
     if (event.type.startsWith('payment_intent')) {
       const byPi = await tx.billingPaymentAttempt.findFirst({
-        where: { stripePaymentIntentId: object.id },
-        include,
+        where: { stripePaymentIntentId: object.id, method: 'stripe' },
       });
       if (byPi) return byPi;
     }
 
     // 2. Verified metadata (attemptId is authoritative; invoiceId is a
-    //    fallback for the most recent pending attempt of that invoice).
+    //    fallback for the most recent pending Stripe attempt of that invoice).
     const metadata = extractSafeMetadata(object);
     if (metadata.attemptId) {
       const byAttempt = await tx.billingPaymentAttempt.findFirst({
-        where: { id: metadata.attemptId },
-        include,
+        where: { id: metadata.attemptId, method: 'stripe' },
       });
       if (byAttempt) return byAttempt;
     }
     if (metadata.invoiceId) {
       const byInvoice = await tx.billingPaymentAttempt.findFirst({
-        where: { invoiceId: metadata.invoiceId, status: 'pending' },
+        where: { invoiceId: metadata.invoiceId, status: 'pending', method: 'stripe' },
         orderBy: { createdAt: 'desc' },
-        include,
       });
       if (byInvoice) return byInvoice;
     }
@@ -227,9 +256,8 @@ export class StripeWebhookService {
       const referenceId = (object as Stripe.Checkout.Session).client_reference_id;
       if (isUuid(referenceId)) {
         const byReference = await tx.billingPaymentAttempt.findFirst({
-          where: { invoiceId: referenceId, status: 'pending' },
+          where: { invoiceId: referenceId, status: 'pending', method: 'stripe' },
           orderBy: { createdAt: 'desc' },
-          include,
         });
         if (byReference) return byReference;
       }

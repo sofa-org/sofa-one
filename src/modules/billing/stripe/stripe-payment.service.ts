@@ -37,11 +37,12 @@ export interface CheckoutSessionResult {
  * USD, cent-aligned invoices are payable; anything else fails closed 4xx.
  * The success/cancel URLs come from server configuration only.
  *
- * Concurrency: a partial unique index on `billing_payment_attempts(invoice_id)
- * WHERE status = 'pending'` guarantees at most one visible pending attempt per
- * invoice. A repeated request reuses the valid pending Checkout session; a
- * concurrent request that loses the insert race waits briefly for the winner's
- * session id and reuses it.
+ * Concurrency: a partial unique index on
+ * `billing_payment_attempts(invoice_id, method) WHERE status = 'pending'`
+ * guarantees at most one visible pending Stripe attempt per invoice (USDC
+ * pending attempts coexist on the same invoice). A repeated request reuses the
+ * valid pending Checkout session; a concurrent request that loses the insert
+ * race waits briefly for the winner's session id and reuses it.
  */
 @Injectable()
 export class StripePaymentService {
@@ -202,12 +203,17 @@ export class StripePaymentService {
 
   // ── Attempt lifecycle ──────────────────────────────────────────────────────
 
-  /** A pending attempt with a persisted session id younger than the TTL. */
+  /**
+   * A pending Stripe attempt with a persisted session id younger than the TTL.
+   * Scoped to `method = stripe` so a USDC pending attempt is never reused as a
+   * Stripe checkout session.
+   */
   private async findReusablePendingAttempt(invoiceId: string): Promise<PaymentAttemptRow | null> {
     const cutoff = new Date(Date.now() - PENDING_SESSION_REUSE_TTL_MS);
     return this.prisma.billingPaymentAttempt.findFirst({
       where: {
         invoiceId,
+        method: 'stripe',
         status: 'pending',
         stripeCheckoutSessionId: { not: null },
         checkoutUrl: { not: null },
@@ -218,14 +224,16 @@ export class StripePaymentService {
   }
 
   /**
-   * Inserts a pending attempt for the invoice. On a unique-constraint race
-   * (partial pending index) the existing pending attempt is re-fetched: if it
-   * already carries a session id it is reused; if the winner released the slot
-   * (failed) a fresh attempt is created; a clearly stale attempt (older than
-   * the reuse TTL) is released and replaced. A young pending attempt that is
-   * still being created by a legitimate slow Stripe request is never
-   * disturbed — the caller gets a retryable conflict instead of a second
-   * pending attempt/session.
+   * Inserts a pending Stripe attempt for the invoice. On a unique-constraint
+   * race (partial pending index per invoice + method) the existing pending
+   * Stripe attempt is re-fetched: if it already carries a session id it is
+   * reused; if the winner released the slot (failed) a fresh attempt is
+   * created; a clearly stale attempt (older than the reuse TTL) is released
+   * and replaced. A young pending attempt that is still being created by a
+   * legitimate slow Stripe request is never disturbed — the caller gets a
+   * retryable conflict instead of a second pending attempt/session. A USDC
+   * pending attempt never blocks or satisfies a Stripe request (method-scoped
+   * lookups).
    */
   private async createPendingAttemptOrReuseInFlight(
     invoice: Prisma.BillingInvoiceGetPayload<Record<string, never>>,
@@ -234,6 +242,7 @@ export class StripePaymentService {
       return await this.prisma.billingPaymentAttempt.create({
         data: {
           invoiceId: invoice.id,
+          method: 'stripe',
           status: 'pending',
           amountMicros: invoice.totalMicros,
           currency: invoice.currency,
@@ -243,11 +252,11 @@ export class StripePaymentService {
       if (!isUniqueConstraintError(err)) throw err;
     }
 
-    // A concurrent request holds the single pending slot. Wait briefly for its
-    // session id to appear before deciding how to proceed.
+    // A concurrent request holds the single pending Stripe slot. Wait briefly
+    // for its session id to appear before deciding how to proceed.
     for (let attempt = 0; attempt < IN_FLIGHT_POLL_ATTEMPTS; attempt++) {
       const existing = await this.prisma.billingPaymentAttempt.findFirst({
-        where: { invoiceId: invoice.id, status: 'pending' },
+        where: { invoiceId: invoice.id, method: 'stripe', status: 'pending' },
         orderBy: { createdAt: 'desc' },
       });
       if (!existing) {
@@ -255,6 +264,7 @@ export class StripePaymentService {
         return this.prisma.billingPaymentAttempt.create({
           data: {
             invoiceId: invoice.id,
+            method: 'stripe',
             status: 'pending',
             amountMicros: invoice.totalMicros,
             currency: invoice.currency,
@@ -274,7 +284,7 @@ export class StripePaymentService {
 
     // Re-check after the poll: the winner may have just persisted its session.
     const pending = await this.prisma.billingPaymentAttempt.findFirst({
-      where: { invoiceId: invoice.id, status: 'pending' },
+      where: { invoiceId: invoice.id, method: 'stripe', status: 'pending' },
       orderBy: { createdAt: 'desc' },
     });
     if (pending?.stripeCheckoutSessionId && pending.checkoutUrl) {
@@ -293,6 +303,7 @@ export class StripePaymentService {
       return this.prisma.billingPaymentAttempt.create({
         data: {
           invoiceId: invoice.id,
+          method: 'stripe',
           status: 'pending',
           amountMicros: invoice.totalMicros,
           currency: invoice.currency,
@@ -309,15 +320,16 @@ export class StripePaymentService {
 
   /**
    * Marks an attempt failed with a safe, truncated failure code/message. The
-   * update is conditional on the attempt not being `succeeded`, so a Stripe
-   * call failure racing a webhook-confirmed success can never regress the
-   * attempt. Never touches `paidAt`.
+   * update is a pending-only compare-and-set: only a `pending` attempt may
+   * transition to `failed`, so a Stripe call failure racing a webhook-confirmed
+   * success (or any other non-pending state) can never regress the attempt.
+   * Never touches `paidAt`.
    */
   private async markAttemptFailed(attemptId: string, err: unknown): Promise<void> {
     const { code, message } = extractSafeFailure(err);
     try {
       await this.prisma.billingPaymentAttempt.updateMany({
-        where: { id: attemptId, status: { not: 'succeeded' } },
+        where: { id: attemptId, status: 'pending' },
         data: {
           status: 'failed',
           failedAt: new Date(),

@@ -39,10 +39,19 @@ enum BillingUsageSourceType {
   manual_adjustment
 }
 
+enum BillingPaymentMethod {
+  stripe
+  usdc
+}
+
 enum BillingPaymentAttemptStatus {
   pending
+  confirming
   succeeded
   failed
+  expired
+  needs_review
+  reorged
 }
 
 enum StripeWebhookEventStatus {
@@ -536,11 +545,14 @@ model BillingInvoice {
   updatedAt              DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
   finalizedAt            DateTime?            @map("finalized_at") @db.Timestamptz()
   paidAt                 DateTime?            @map("paid_at") @db.Timestamptz()
+  paidVia                BillingPaymentMethod? @map("paid_via")
+  settlementAttemptId    String?              @unique @map("settlement_attempt_id") @db.Uuid
 
-  billingAccount BillingAccount       @relation(fields: [billingAccountId], references: [id])
-  planVersion    BillingPlanVersion   @relation(fields: [planVersionId], references: [id])
-  lines          BillingInvoiceLine[]
-  paymentAttempts BillingPaymentAttempt[]
+  billingAccount   BillingAccount       @relation(fields: [billingAccountId], references: [id])
+  planVersion      BillingPlanVersion   @relation(fields: [planVersionId], references: [id])
+  lines            BillingInvoiceLine[]
+  paymentAttempts  BillingPaymentAttempt[]
+  settlementAttempt BillingPaymentAttempt? @relation("InvoiceSettlement", fields: [settlementAttemptId], references: [id], onDelete: SetNull)
 
   @@unique([billingAccountId, periodStart])
   @@index([billingAccountId, periodStart, periodEnd])
@@ -567,6 +579,7 @@ model BillingInvoiceLine {
 model BillingPaymentAttempt {
   id                      String                     @id @default(uuid()) @db.Uuid
   invoiceId               String                     @map("invoice_id") @db.Uuid
+  method                  BillingPaymentMethod       @default(stripe) @map("method")
   status                  BillingPaymentAttemptStatus @default(pending) @map("status")
   amountMicros            BigInt                     @map("amount_micros")
   currency                String                     @default("USD") @map("currency") @db.VarChar(10)
@@ -575,14 +588,49 @@ model BillingPaymentAttempt {
   checkoutUrl             String?                    @map("checkout_url") @db.VarChar(2048)
   failureCode             String?                    @map("failure_code") @db.VarChar(80)
   failureMessage          String?                    @map("failure_message") @db.VarChar(500)
+  // ── USDC quote/evidence (Phase 3B foundation; nullable, only populated for
+  //    method = usdc). Precise PostgreSQL types; no full sensitive payloads.
+  chainId                 BigInt?                    @map("chain_id")
+  tokenAddress            String?                    @map("token_address") @db.VarChar(42)
+  treasuryAddress         String?                    @map("treasury_address") @db.VarChar(42)
+  tokenDecimals           Int?                       @map("token_decimals")
+  expectedBaseUnits       BigInt?                    @map("expected_base_units")
+  quoteExpiresAt          DateTime?                  @map("quote_expires_at") @db.Timestamptz()
+  priceSource             String?                    @map("price_source") @db.VarChar(40)
+  // ── USDC quote snapshots (Phase 2; immutable, only populated for
+  //    method = usdc). The claim path reads these, never the client, so a
+  //    later wallet/chain/config change cannot alter an in-flight payment's
+  //    expected payer or finality threshold.
+  expectedPayerAddress    String?                    @map("expected_payer_address") @db.VarChar(42)
+  requiredConfirmations   Int?                       @map("required_confirmations")
+  // Non-secret digest derived from the per-chain RPC URL at quote time. The
+  // raw URL (which may embed an API key) is never persisted, logged, or
+  // returned; the claim path recomputes the digest from current config and
+  // fails closed when the snapshot no longer matches the operational provider.
+  providerIdentity        String?                    @map("provider_identity") @db.VarChar(64)
+  txHash                  String?                    @map("tx_hash") @db.VarChar(66)
+  logIndex                Int?                       @map("log_index")
+  payerAddress            String?                    @map("payer_address") @db.VarChar(42)
+  actualBaseUnits         BigInt?                    @map("actual_base_units")
+  blockNumber             BigInt?                    @map("block_number")
+  blockHash               String?                    @map("block_hash") @db.VarChar(66)
+  blockTimestamp          BigInt?                    @map("block_timestamp")
+  receiptEvidence         Json?                      @map("receipt_evidence")
+  reviewReason            String?                    @map("review_reason") @db.VarChar(255)
+  lastCheckedAt           DateTime?                  @map("last_checked_at") @db.Timestamptz()
   createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
   succeededAt             DateTime?                  @map("succeeded_at") @db.Timestamptz()
   failedAt                DateTime?                  @map("failed_at") @db.Timestamptz()
 
-  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice        BillingInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  settledInvoice BillingInvoice? @relation("InvoiceSettlement")
 
+  // USDC Transfer evidence uniqueness: only populated for method='usdc' rows;
+  // Postgres treats NULLs as distinct, so partial evidence never conflicts.
+  @@unique([chainId, tokenAddress, txHash, logIndex])
   @@index([invoiceId, status])
+  @@index([invoiceId, method, status])
   @@index([invoiceId, createdAt])
   @@map("billing_payment_attempts")
 }

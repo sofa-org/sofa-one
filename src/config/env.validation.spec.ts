@@ -155,4 +155,149 @@ describe('environment validation', () => {
       }),
     );
   });
+
+  it('starts without USDC billing configuration', () => {
+    expect(validate(baseConfig)).toEqual(
+      expect.objectContaining({
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: 5,
+        BILLING_USDC_QUOTE_TTL_SECONDS: 86400,
+      }),
+    );
+  });
+
+  it('requires both treasuries and RPC URLs when USDC billing is enabled', () => {
+    expect(() => validate({ ...baseConfig, BILLING_USDC_ENABLED: 'true' })).toThrow(
+      'BILLING_USDC_TREASURY_ADDRESS_8453 must be set when BILLING_USDC_ENABLED=true',
+    );
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_RPC_URL_84532 must be set when BILLING_USDC_ENABLED=true');
+  });
+
+  it('rejects malformed treasury addresses when USDC billing is enabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: 'not-an-address',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+        BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_TREASURY_ADDRESS_8453 must be a valid EVM address');
+  });
+
+  it('rejects malformed RPC URLs when USDC billing is enabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'ftp://base.example.com/rpc',
+        BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_RPC_URL_8453 must be a valid https URL');
+  });
+
+  it('rejects non-https RPC URLs when USDC billing is enabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'http://base.example.com/rpc',
+        BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_RPC_URL_8453 must be a valid https URL');
+  });
+
+  it('rejects a non-https RPC URL even while USDC billing is disabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_RPC_URL_8453: 'http://base.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_RPC_URL_8453 must be a valid https URL');
+  });
+
+  it('rejects a zero-address treasury when USDC billing is enabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x0000000000000000000000000000000000000000',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+        BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+      }),
+    ).toThrow('BILLING_USDC_TREASURY_ADDRESS_8453 must not be the zero address');
+  });
+
+  it('rejects a zero-address treasury even while USDC billing is disabled', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x0000000000000000000000000000000000000000',
+      }),
+    ).toThrow('BILLING_USDC_TREASURY_ADDRESS_8453 must not be the zero address');
+  });
+
+  it('rejects fewer than 5 required confirmations', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: '4',
+      }),
+    ).toThrow();
+    expect(
+      validate({
+        ...baseConfig,
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: '5',
+      }),
+    ).toEqual(expect.objectContaining({ BILLING_USDC_REQUIRED_CONFIRMATIONS: 5 }));
+  });
+
+  it('accepts a complete USDC billing configuration', () => {
+    expect(
+      validate({
+        ...baseConfig,
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+        BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: '10',
+        BILLING_USDC_QUOTE_TTL_SECONDS: '3600',
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        BILLING_USDC_ENABLED: 'true',
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: 10,
+        BILLING_USDC_QUOTE_TTL_SECONDS: 3600,
+      }),
+    );
+  });
+
+  it('rejects invalid USDC confirmation/TTL values', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_REQUIRED_CONFIRMATIONS: '0',
+      }),
+    ).toThrow();
+    expect(() =>
+      validate({
+        ...baseConfig,
+        BILLING_USDC_QUOTE_TTL_SECONDS: '0',
+      }),
+    ).toThrow();
+  });
 });

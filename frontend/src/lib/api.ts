@@ -318,6 +318,51 @@ export interface BillingCheckoutResponse {
   checkoutUrl: string;
 }
 
+export interface UsdcQuoteResponse {
+  invoiceId: string;
+  paymentAttemptId: string;
+  chainId: number;
+  tokenAddress: string;
+  tokenDecimals: number;
+  treasuryAddress: string;
+  expectedPayerAddress: string;
+  amountBaseUnits: string;
+  amountUsd: string;
+  currency: string;
+  quoteExpiresAt: string;
+  requiredConfirmations: number;
+}
+
+export interface UsdcClaimRequest {
+  paymentAttemptId: string;
+  txHash: string;
+}
+
+export type UsdcClaimStatus =
+  | 'pending' // receipt not found yet — retryable
+  | 'rpc_error' // transient RPC error — retryable
+  | 'confirming' // valid transfer detected, below the confirmation threshold
+  | 'succeeded' // settled (invoice paid by this attempt)
+  | 'expired' // quote expired — re-quote to retry
+  | 'needs_review' // mismatch/manual review — never auto-settled
+  | 'failed'; // reverted receipt — re-quote to retry
+
+export interface UsdcClaimResponse {
+  invoiceId: string;
+  paymentAttemptId: string;
+  status: UsdcClaimStatus;
+  paid: boolean;
+  txHash: string | null;
+  chainId: number | null;
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+  blockNumber: string | null;
+  blockHash: string | null;
+  blockTimestamp: string | null;
+  reviewReason: string | null;
+  retryable: boolean;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -905,6 +950,44 @@ export async function createBillingCheckoutSessionAuth(
     getToken,
     {
       method: 'POST',
+      signal,
+    },
+  );
+}
+
+export async function createUsdcQuoteAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  chainId?: number,
+  signal?: AbortSignal,
+) {
+  const body: { chainId?: number } = {};
+  if (chainId !== undefined) body.chainId = chainId;
+  return authFetch<UsdcQuoteResponse>(
+    `/v1/billing/invoices/${invoiceId}/usdc/quote`,
+    getToken,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+}
+
+export async function createUsdcClaimAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  paymentAttemptId: string,
+  txHash: string,
+  signal?: AbortSignal,
+) {
+  const body: UsdcClaimRequest = { paymentAttemptId, txHash };
+  return authFetch<UsdcClaimResponse>(
+    `/v1/billing/invoices/${invoiceId}/usdc/claim`,
+    getToken,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
       signal,
     },
   );

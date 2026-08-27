@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUser } from '@openfort/react';
 import {
@@ -6,6 +6,7 @@ import {
   AlertCircle,
   ArrowRight,
   Check,
+  Coins,
   CreditCard,
   Loader2,
   Receipt,
@@ -14,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
+import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
   createBillingCheckoutSessionAuth,
   getApiErrorMessage,
@@ -97,26 +99,42 @@ function statusTone(status: string): string {
   }
 }
 
-function isPositiveDecimal(value: string | null | undefined): boolean {
-  if (value === null || value === undefined || value === '') return false;
+function usdStringToMicros(value: string | null | undefined): bigint | null {
+  if (value === null || value === undefined || value === '') return null;
   const trimmed = value.trim();
-  if (!/^-?\d+(\.\d+)?$/.test(trimmed)) return false;
-  if (trimmed.startsWith('-')) return false;
-  const [integerPart, fractionalPart] = trimmed.split('.');
-  const normalizedInteger = integerPart.replace(/^0+/, '') || '0';
-  if (normalizedInteger !== '0') return true;
-  if (!fractionalPart) return false;
-  return fractionalPart.split('').some((char) => char !== '0');
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) return null;
+  const [integerPart, fractionalPart = ''] = trimmed.split('.');
+  const normalizedFraction = (fractionalPart + '000000').slice(0, 6);
+  const combined = integerPart + normalizedFraction;
+  try {
+    return BigInt(combined);
+  } catch {
+    return null;
+  }
 }
 
 function isInvoicePaid(invoice: BillingInvoice): boolean {
   return invoice.status === 'paid' || invoice.paidAt !== null;
 }
 
+/** Base eligibility: backend is the final authority; frontend only gates visibility. */
 function isInvoicePayable(invoice: BillingInvoice): boolean {
-  return (
-    invoice.status === 'finalized' && invoice.paidAt === null && isPositiveDecimal(invoice.amount)
-  );
+  if (invoice.status !== 'finalized') return false;
+  if (invoice.paidAt !== null) return false;
+  if (invoice.currency !== 'USD') return false;
+  const micros = usdStringToMicros(invoice.amount);
+  return micros !== null && micros > 0n;
+}
+
+/** Stripe additionally requires cent-aligned amounts and at least 1 cent. */
+function isInvoicePayableByCard(invoice: BillingInvoice): boolean {
+  if (!isInvoicePayable(invoice)) return false;
+  const micros = usdStringToMicros(invoice.amount);
+  return micros !== null && micros % 10000n === 0n && micros >= 10000n;
+}
+
+function isInvoicePayableByUsdc(invoice: BillingInvoice): boolean {
+  return isInvoicePayable(invoice);
 }
 
 function friendlyCheckoutError(error: unknown): string {
@@ -235,6 +253,12 @@ export default function BillingPage() {
   const [checkoutLoadingId, setCheckoutLoadingId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  const [usdcPanelInvoiceId, setUsdcPanelInvoiceId] = useState<string | null>(null);
+
+  // Refs for silent invoice refresh: abort previous in-flight request and ignore stale responses.
+  const invoicesRefreshIdRef = useRef(0);
+  const silentRefreshAbortRef = useRef<AbortController | null>(null);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [paymentNotice, setPaymentNotice] = useState<{
     type: 'success' | 'cancel';
@@ -294,6 +318,36 @@ export default function BillingPage() {
     [getToken],
   );
 
+  const refreshInvoicesSilently = useCallback(
+    async (signal?: AbortSignal): Promise<boolean> => {
+      // Abort any previous silent refresh so only the latest response can update state.
+      silentRefreshAbortRef.current?.abort();
+      const controller = new AbortController();
+      silentRefreshAbortRef.current = controller;
+      const requestId = (invoicesRefreshIdRef.current += 1);
+
+      try {
+        const data = await listBillingInvoicesAuth(
+          getToken,
+          { limit: INVOICE_PAGE_SIZE },
+          signal ?? controller.signal,
+        );
+        if (controller.signal.aborted) return false;
+        if (requestId !== invoicesRefreshIdRef.current) return false; // stale response
+        setInvoices(data.items);
+        return true;
+      } catch {
+        // Silent refresh: do not swap the table for a spinner or unmount open panels.
+        return false;
+      } finally {
+        if (silentRefreshAbortRef.current === controller) {
+          silentRefreshAbortRef.current = null;
+        }
+      }
+    },
+    [getToken],
+  );
+
   useEffect(() => {
     const hasSuccess = searchParams.has('success');
     const hasCanceled = searchParams.has('canceled');
@@ -319,9 +373,25 @@ export default function BillingPage() {
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  // Abort any in-flight silent refresh when the page unmounts.
+  useEffect(() => {
+    return () => {
+      silentRefreshAbortRef.current?.abort();
+    };
+  }, []);
+
+  // Close the USDC panel automatically once its invoice is paid by any method (Stripe/USDC/server refresh).
+  useEffect(() => {
+    if (!usdcPanelInvoiceId) return;
+    const invoice = invoices.find((inv) => inv.id === usdcPanelInvoiceId);
+    if (!invoice || isInvoicePaid(invoice)) {
+      setUsdcPanelInvoiceId(null);
+    }
+  }, [invoices, usdcPanelInvoiceId]);
+
   const handlePayInvoice = useCallback(
     async (invoice: BillingInvoice) => {
-      if (!isInvoicePayable(invoice)) return;
+      if (!isInvoicePayableByCard(invoice)) return;
       setCheckoutLoadingId(invoice.id);
       setCheckoutError(null);
       try {
@@ -367,10 +437,10 @@ export default function BillingPage() {
   return (
     <DashboardPage title="Billing" description="Review your plan, monthly usage, and invoices.">
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
-        <p className="font-medium">Usage preview only</p>
+        <p className="font-medium">Secure checkout</p>
         <p className="mt-1 text-amber-700">
-          Payments and automatic plan upgrades are not enabled yet. This page shows your current
-          usage and estimated charges for the selected billing period.
+          Eligible invoices can be paid by card or USDC on Base. All payment amounts and recipient
+          addresses are set by the server. Automatic plan upgrades are not enabled.
         </p>
       </div>
 
@@ -653,66 +723,104 @@ export default function BillingPage() {
               <tbody className="divide-y divide-brand-border">
                 {invoices.map((invoice) => {
                   const paid = isInvoicePaid(invoice);
-                  const payable = isInvoicePayable(invoice);
+                  const canPayCard = isInvoicePayableByCard(invoice);
+                  const canPayUsdc = isInvoicePayableByUsdc(invoice);
+                  const hasActions = canPayCard || canPayUsdc;
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
+                  const usdcPanelOpen = usdcPanelInvoiceId === invoice.id;
                   return (
-                    <tr key={invoice.id} className="transition-colors hover:bg-brand-surface">
-                      <td className="px-4 py-3 font-medium text-brand-text">
-                        {formatPeriodLabel(invoice.period)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            paid ? statusTone('paid') : statusTone(invoice.status)
-                          }`}
-                        >
-                          {paid ? 'Paid' : formatInvoiceStatus(invoice.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-brand-text">
-                        {formatAmount(invoice.amount, invoice.currency)}
-                      </td>
-                      <td className="px-4 py-3 text-brand-muted">
-                        {new Date(invoice.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {paid ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700">
-                              <Check className="h-3.5 w-3.5" />
-                              Paid
-                            </span>
-                          ) : payable ? (
-                            <button
-                              type="button"
-                              onClick={() => handlePayInvoice(invoice)}
-                              disabled={isLoadingCheckout}
-                              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isLoadingCheckout ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <CreditCard className="h-3.5 w-3.5" />
-                              )}
-                              {isLoadingCheckout ? 'Redirecting…' : 'Pay'}
-                            </button>
-                          ) : null}
-                          {invoice.pdfUrl && (
-                            <a
-                              href={invoice.pdfUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent hover:underline"
-                            >
-                              View <ArrowRight className="h-3 w-3" />
-                            </a>
-                          )}
-                          {!paid && !payable && !invoice.pdfUrl && (
-                            <span className="text-xs text-brand-muted">—</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                    <Fragment key={invoice.id}>
+                      <tr className="transition-colors hover:bg-brand-surface">
+                        <td className="px-4 py-3 font-medium text-brand-text">
+                          {formatPeriodLabel(invoice.period)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              paid ? statusTone('paid') : statusTone(invoice.status)
+                            }`}
+                          >
+                            {paid ? 'Paid' : formatInvoiceStatus(invoice.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-brand-text">
+                          {formatAmount(invoice.amount, invoice.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-brand-muted">
+                          {new Date(invoice.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {paid ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700">
+                                <Check className="h-3.5 w-3.5" />
+                                Paid
+                              </span>
+                            ) : hasActions ? (
+                              <>
+                                {canPayCard && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePayInvoice(invoice)}
+                                    disabled={isLoadingCheckout}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {isLoadingCheckout ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <CreditCard className="h-3.5 w-3.5" />
+                                    )}
+                                    {isLoadingCheckout ? 'Redirecting…' : 'Card'}
+                                  </button>
+                                )}
+                                {canPayUsdc && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUsdcPanelInvoiceId((current) =>
+                                        current === invoice.id ? null : invoice.id,
+                                      )
+                                    }
+                                    className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                                      usdcPanelOpen
+                                        ? 'border border-brand-border bg-brand-surface text-brand-text'
+                                        : 'border border-brand-border bg-white text-brand-text hover:bg-brand-surface'
+                                    }`}
+                                  >
+                                    <Coins className="h-3.5 w-3.5" />
+                                    {usdcPanelOpen ? 'Close' : 'USDC'}
+                                  </button>
+                                )}
+                              </>
+                            ) : null}
+                            {invoice.pdfUrl && (
+                              <a
+                                href={invoice.pdfUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent hover:underline"
+                              >
+                                View <ArrowRight className="h-3 w-3" />
+                              </a>
+                            )}
+                            {!paid && !hasActions && !invoice.pdfUrl && (
+                              <span className="text-xs text-brand-muted">—</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {usdcPanelOpen && !paid && (
+                        <tr>
+                          <td colSpan={5} className="bg-brand-bg/30 px-4 py-4">
+                            <UsdcPaymentPanel
+                              invoice={invoice}
+                              getToken={getToken}
+                              onChange={refreshInvoicesSilently}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
