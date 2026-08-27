@@ -1,17 +1,26 @@
 # Code Map for /src/modules/security-notifications
 
 ## Responsibility
-Dashboard-facing security notifications derived from unified `SecurityEvent` rows.
+Dashboard-facing security notifications derived from unified `SecurityEvent` rows. The module (1) turns selected user-attributed security events into short, display-safe notification records, and (2) exposes frontend-only APIs to list notifications, filter unread, and mark them read. It never stores or returns secrets; it is a read-side projection of `security_events`, not a source of truth.
 
 ## Design/Patterns
-- `SecurityNotificationService.notifyForSecurityEvent()` turns selected user-attributed security events into safe, short notification records.
-- Notification metadata includes display-safe investigation context (result/reason, request context, key prefixes/names, chain/operation, policy amounts/addresses) and never includes raw API keys, wallet secrets, full calldata, or full typed data.
-- Dashboard APIs are frontend-only Openfort IAM routes and are not part of `openapi.yaml`.
+- **Generation hook**: `SecurityNotificationService.notifyForSecurityEvent(event, tx?)` is invoked by `SecurityEventService.record()` immediately after the canonical `security_event` row is created. It accepts an optional `tx` (a `NotificationPrismaClient` duck type) so the notification can be created in the same transaction as the event; it falls back to `this.prisma` when no tx is passed.
+- **Filtering** (`shouldNotify`): a notification is created only when the event has a `userId` AND either the event type is in `ALWAYS_NOTIFY_EVENT_TYPES` (18 curated types: api-key lifecycle/suspicion/IP-rejection, new-IP login, policy denials for transaction/withdrawal/signing/EOA/session-key, high-value withdrawal, withdrawal-address changes, risk block/freeze/step-up) OR the risk level is in `{medium, high, critical}`. `low`-risk events are notified only if their type is in the always-notify set.
+- **Message mapping** (`buildMessage`): a `switch` on `eventType` produces a fixed `{title, body}` pair; unknown types fall back to a generic "Security event detected" message. No event data is interpolated into the body.
+- **Safe metadata** (`safeNotificationMetadata`): always includes `eventType`, `result`, `reason`; conditionally adds `actorType`, `ip`, `userAgent`, `requestId`; then copies only fields from a fixed `SAFE_CONTEXT_FIELDS` allowlist (key prefixes/names, chainId, executionMode, operation, selectors, targets, token, amounts/thresholds, addresses, cooldown, allowlist flags) out of the event's `metadata`. `addIfPresent` admits only `string | number | boolean` values — raw API keys, wallet secrets, full calldata, and full typed data are never persisted.
+- **Failure isolation**: `SecurityEventService.record()` wraps the notification call in try/catch; a notification failure is logged (`Security notification creation failed`) and does not fail event recording or SIEM export.
+- **Read-status**: `markRead`/`markAllRead` use `updateMany` scoped to `userId` (and `readAt: null`), returning `{ success: true, updatedCount }`. Idempotent: already-read or non-existent notifications yield `updatedCount: 0` rather than an error/404.
+- **Query**: `listForUser` orders by `createdAt desc`, applies `readAt: null` when `unreadOnly` is true, and clamps `limit` via `normalizeLimit` to `[1, 50]` with a default of 20.
+- **Controller**: all routes are `@FrontendOnly()` and guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; they are intentionally omitted from `openapi.yaml`.
 
 ## Flow
-- `SecurityEventService.record()` writes the canonical event and asks `SecurityNotificationService` to create a dashboard notification when the event is user-facing.
-- Users can list recent notifications, filter unread notifications, mark a single notification read, or mark all notifications read.
+1. **Generation**: A security event is recorded via `SecurityEventService.record()` (risk scored by `SecurityRiskService`). The `security_event` row is created, then `notifications?.notifyForSecurityEvent(event, client)` runs in the same transaction. `notifyForSecurityEvent` returns `null` when the event has no `userId` or fails `shouldNotify`; otherwise it builds title/body + safe metadata and inserts a `security_notifications` row linked by `securityEventId`.
+2. **Query**: `GET /v1/security-notifications?unreadOnly=true&limit=N` → `listForUser(userId, query)` returns the user's notifications, newest first.
+3. **Read status**: `POST /v1/security-notifications/:id/read` → `markRead(userId, id)` sets `readAt` only if the row belongs to the user and is unread. `POST /v1/security-notifications/read-all` → `markAllRead(userId)` sets `readAt` on all of the user's unread rows.
 
 ## Integration
-- Prisma model is `SecurityNotification` mapped to `security_notifications`.
-- `SecurityNotificationModule` exports the service and exposes `GET /v1/security-notifications`, `POST /v1/security-notifications/:id/read`, and `POST /v1/security-notifications/read-all` behind `OpenfortUserGuard` + `FrontendOnlyGuard`.
+- **Prisma**: model `SecurityNotification` maps to `security_notifications`. `userId` → `users` (`onDelete: Cascade`); `securityEventId` → `security_events` (`onDelete: SetNull`). Indexes: `[userId, readAt, createdAt]` and `[securityEventId]`.
+- **Module wiring**: `SecurityNotificationModule` declares the controller, provides and exports `SecurityNotificationService`. It is imported by `SecurityEventModule` (for generation) and by `AppModule`.
+- **Dependencies**: `SecurityNotificationService` depends only on `PrismaService`. It imports the `SecurityEventRiskLevel` type from `../security-events/security-event.service`. `SecurityEventService` injects it as `@Optional()`.
+- **Auth**: `OpenfortUserGuard` authenticates via Openfort IAM bearer token (never API keys) and attaches `request.user`; `FrontendOnlyGuard` restricts to the configured `CORS_ORIGIN` allowlist (dev fallback: localhost:3000/3100). `@CurrentUser('id')` reads the authenticated user id.
+- **API surface** (frontend-only, not in `openapi.yaml`): `GET /v1/security-notifications`, `POST /v1/security-notifications/:id/read`, `POST /v1/security-notifications/read-all`.

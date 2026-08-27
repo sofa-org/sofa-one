@@ -1,0 +1,292 @@
+# src/modules/billing/
+
+Commercial billing subsystem for SOFA ONE: plan catalog and self-service plan
+changes, usage metering (API calls, outbound volume, active wallets), quota
+enforcement, monthly invoice finalization, two payment rails (Stripe Checkout
+and native USDC on Base), receipt-confirmed reconciliation, and an atomic
+first-rail-wins settlement boundary. All monetary math is bigint microdollars;
+all persisted/returned payloads are JSON-safe (no BigInt leaks).
+
+## Responsibility
+
+| File | Responsibility |
+| --- | --- |
+| `billing.module.ts` | Nest module wiring: imports `PrismaModule`, registers 3 controllers + 8 providers, exports the services consumed by other modules. |
+| `billing.controller.ts` | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, reconcile). |
+| `billing.service.ts` | Core service: plan catalog seeding/validation, plan assignment, usage recording + API-call quota, outbound metering (legacy + receipt-confirmed), summary aggregation, invoice list/get/finalize, and the shared billing-period lock seam. |
+| `billing-calculator.ts` | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`. |
+| `billing-catalog.ts` | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values. |
+| `billing-pricing.ts` | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results. |
+| `billing-entitlement.service.ts` | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and the transaction-aware `assertWalletActivationAllowed` hard-quota seam. |
+| `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers. |
+| `invoice-settlement.service.ts` | Shared atomic invoice-settlement boundary (`settleInvoice`): row-locked, first-rail-wins CAS used by both Stripe and USDC rails. |
+| `billing-quota.exception.ts` | `BillingQuotaExceededException` — HTTP 429 with machine-readable `BILLING_API_QUOTA_EXCEEDED` code, metric, limit, period, retryAfter. |
+| `billing.utils.ts` | Pure helpers: `parsePeriod`, `formatUtcMonth`, `microsToDecimalUsd`, `ppmToPercentString`, `safeNumber`. |
+| `dto/` | Request DTOs for the four dashboard billing routes (see `dto/codemap.md`). |
+| `stripe/` | Stripe Checkout rail: client provider, payment service, signature-verified webhook controller/service, constants (see `stripe/codemap.md`). |
+| `onchain/` | Native USDC rail: quote/claim controller + service, viem receipt provider, constants (see `onchain/codemap.md`). |
+
+## Design/Patterns
+
+- **Bigint microdollar accounting.** Every amount is a bigint in microdollars
+  (1 USD = 1_000_000 microdollars); rates are ppm. `billing-calculator.ts`,
+  `billing-pricing.ts`, and `billing.utils.ts` are pure and never use floats.
+  BigInt is converted to `Number` only at safe boundaries (`toSafeCount`) and
+  serialized as strings in every DTO/result (`microsToDecimalUsd`).
+- **Static plan whitelist + versioned DB snapshot.** `PLANS` in
+  `billing-calculator.ts` is the canonical price table; `PLAN_CATALOG` carries
+  marketing copy. `BillingService.ensurePlanVersions()` seeds
+  `BillingPlanVersion` + `BillingPlanTier` rows on first access (only when
+  missing; used versions are never updated). `validatePlanVersion` is the
+  fail-closed gate: unknown codes, malformed terms, and Enterprise custom/null
+  terms are rejected with `ConflictException` — never silently treated as Free,
+  0, or infinite.
+- **Billing-period lock seam.** `withBillingPeriodLock` opens a Prisma
+  interactive transaction at `Serializable` isolation and takes a
+  PostgreSQL transaction-scoped advisory lock keyed deterministically by
+  `billingAccountId + periodStart`. All writers for the same account+period
+  (quota check-and-record, receipt evidence appends, reconciliation-run
+  creation, invoice finalization) serialize on this seam; `withRetryOnSerialization`
+  retries P2034/40001 a bounded number of times with fresh transactions.
+- **Usage ledger as an append-only event table.** `BillingUsageEvent` rows
+  carry `metric` (`api_call` | `outbound_volume`), `entryType` (`usage`),
+  `sourceType` (`api_request` | `openfort_receipt` | `legacy_import`), and
+  `status` (`posted` | `quarantined` | `unverified`). Idempotency is a unique
+  `sourceKey` (server-generated, never a client `X-Request-Id`); receipt-backed
+  rows additionally dedupe on `(billingAccountId, receiptRef, receiptLogIndex)`.
+  Only `posted + usage` rows count toward invoices; `quarantined` blocks
+  finalization; `unverified`/`legacy_import` rows are excluded from billing.
+- **Fail-closed receipt evidence.** `recordSuccessfulOutbound` with a `receipt`
+  requires transaction ownership/evidence match, complete block evidence,
+  deterministic pricing (`assertPostedPricingEvidence` — the amount must equal
+  `roundHalfUp(baseUnitAmount * unitPriceMicros / 10^decimals)`), and a
+  `periodStart` equal to the receipt block timestamp's UTC month. A finalized
+  invoice is a period-close barrier: late evidence is rejected, never appended.
+- **Invoice lifecycle.** `open` (zero-usage estimate created by a plan change)
+  → `finalized` (immutable, after period end + 24h grace, with SHA-256
+  `snapshotHash` over a JSON snapshot) → `paid` (set only by the settlement
+  boundary). `finalized`/`needs_review`/`void` invoices are immutable; only
+  `open` invoices can be updated by a plan change.
+- **Dual-rail payment attempts + first-rail-wins settlement.** `BillingPaymentAttempt`
+  rows are method-scoped (`stripe` | `usdc`); a partial unique index keeps at
+  most one active pending attempt per invoice+method. `InvoiceSettlementService.settleInvoice`
+  takes stable PostgreSQL row locks (attempt → invoice, matching the webhook's
+  natural order to avoid deadlocks) and performs an atomic CAS guarded by
+  `paidAt IS NULL AND settlementAttemptId IS NULL` plus re-checked predicates.
+  Precondition failures are no-ops (`settled: false`), never throws; a lost
+  rail race is recorded as `needs_review`/`duplicate_unallocated`, never an
+  overwrite of the paid invoice.
+- **Reconciliation runs with completion markers.** `BillingReconciliationRun`
+  rows carry a JSON `summary` with counters, `userId`, `complete: true` (only
+  when the bounded scan was exhausted with zero errors/conflicts), a
+  `highWaterMark` (max `(createdAt, id)` across candidates), and
+  `accountingPeriods`. `isRiskyReconciliationRun` treats missing/malformed
+  metadata, running/failed status, and any error/conflict/notFound/transient
+  counter as unresolved risk that blocks invoice finalization.
+- **JSON-safe by construction.** Every result type serializes bigints as
+  strings; `assertJsonSafe` rejects BigInt nested in `receiptData`/`metadata`;
+  reconciliation and claim results never expose logs, calldata, RPC details,
+  Openfort IDs, or secrets.
+
+## Flow
+
+### Controller wiring
+
+- `BillingController` (`v1/billing`, all routes `@FrontendOnly()` +
+  `OpenfortUserGuard` + `FrontendOnlyGuard`, user id from `@CurrentUser('id')`):
+  - `GET /plans` → `billingService.getPlans`
+  - `POST /plan` → `billingService.assignPlan(userId, body.planCode)`
+  - `GET /summary?period=` → `billingService.getSummary`
+  - `GET /invoices?page=&limit=` → `billingService.listInvoices`
+  - `GET /invoices/:id` → `billingService.getInvoice`
+  - `POST /invoices/:id/checkout` → `stripePaymentService.createCheckoutSession`
+  - `POST /reconcile` → `reconciliationService.reconcile(userId, { limit })`
+- `StripeWebhookController` (`POST v1/billing/webhooks/stripe`): `@Public()`,
+  `@SkipThrottle({ short, medium })`, verifies the signature from `req.rawBody`
+  (never re-parsed) → `stripeWebhookService.handleWebhook`.
+- `UsdcPaymentController` (`v1/billing/invoices/:id/usdc`, dashboard guards):
+  - `POST /quote` → `usdcPaymentService.quote(userId, id, body.chainId)`
+  - `POST /claim` → `usdcPaymentService.claim(userId, id, body)` with a tight
+    route throttle (`5/60s`, `20/3600s`) to bound RPC amplification.
+
+### Plans
+
+```
+GET /v1/billing/plans
+  → ensureAccount (lazy BillingAccount create, P2002-tolerant)
+  → ensurePlanVersions (seed catalog from PLANS + PLAN_CATALOG)
+  → ensureDefaultAssignment (current-month Free assignment if none ≤ now)
+  → current plan = assignment effective ≤ current UTC month (future scheduled
+    assignment never overrides); future assignment exposed as scheduledPlan
+  → validatePlanVersion on every persisted row (fail closed)
+
+POST /v1/billing/plan { planCode }
+  → isOwnPlanCode whitelist check (no DB calls on unknown code)
+  → ensurePlanVersions + validatePlanVersion + assertPlanFinalizable
+  → effective period = next UTC month (never client-supplied)
+  → withBillingPeriodLock: reject immutable future invoice; idempotent no-op on
+    same plan; replace/create BillingPlanAssignment; upsertOpenInvoice
+    (zero-usage estimate + lines + snapshotHash)
+```
+
+### Metering
+
+```
+API-key request → ApiKeyAuthGuard.recordApiCallUsage
+  → billing.assertAndRecordApiCall({ sourceKey: api:<uuid>, ... })
+  → withBillingPeriodLock: resolve plan, fail closed on null includedApiCalls
+  → sum only metric=api_call AND entryType=usage quantities (bigint)
+  → used ≥ limit → BillingQuotaExceededException (429, Retry-After = period end)
+  → else insert posted/usage/api_request event (atomic, no double count)
+
+Wallet activation → AuthService (preflight + in-transaction)
+  → billingEntitlements.assertWalletActivationAllowed(userId, tx)
+  → resolve entitlements; Enterprise null includedWallets → ConflictException
+  → already-active wallet is idempotent; else count active wallets and reject
+    with 429 when count ≥ includedWallets (same transaction snapshot)
+
+Outbound transfer (receipt-confirmed) → BillingReconciliationService
+  → billing.recordSuccessfulOutbound({ ...receipt evidence })
+  → withBillingPeriodLock: validate evidence, ownership, pricing, period;
+    canonical lookup (sourceKey then receiptRef+logIndex) → replay or conflict;
+    finalized-period barrier; insert posted/quarantined event
+```
+
+### Invoices
+
+```
+GET /v1/billing/summary?period=YYYY-MM
+  → ensureAccount/planVersions/defaultAssignment; resolvePlanVersion
+  → aggregate usage (posted outbound + usage api_call) and active-wallet count
+  → calculateInvoiceTotals → decimal-string BillingSummaryDto + tier breakdown
+
+GET /v1/billing/invoices, GET /v1/billing/invoices/:id
+  → account-scoped paginated list / single invoice (NotFound if not owned)
+
+finalizeInvoice (service-internal, no route)
+  → pre-check: non-open invoice returned unchanged
+  → assertFinalizablePeriod (period ended + 24h UTC grace)
+  → withBillingPeriodLock: re-check, resolve plan, assertPlanFinalizable,
+    assertNoUnresolvedBillingRisk (quarantined usage + risky reconciliation
+    runs), aggregate usage, calculateInvoiceTotals, build snapshot + SHA-256
+    hash, create/update finalized invoice + lines (P2002 race returns existing)
+```
+
+### Reconciliation
+
+```
+POST /v1/billing/reconcile { limit ≤ 200 }
+  → withBillingPeriodLock: create running BillingReconciliationRun
+  → selectCandidates: non-confirmed (submitting/pending/unknown) first, then
+    confirmed fill, both (createdAt, id) asc, bounded by limit
+  → per candidate: OpenfortService.getTransactionReceipt
+      not_found/error → retryable counters, keep pending
+      reverted → markReverted (CAS), never metered
+      success → txHash match check; EOA sender mismatch / native withdrawal →
+        quarantined; else parse each Transfer log (strict runtime validation)
+        → evaluatePricing → posted (recordSuccessfulOutbound) or quarantined
+      → markConfirmed (CAS updateMany)
+  → build highWaterMark + accountingPeriods; persist completed summary with
+    complete flag (or failed summary with sanitized errorDetails)
+```
+
+### Stripe rail
+
+```
+POST /v1/billing/invoices/:id/checkout
+  → stripeClientProvider (null when STRIPE_SECRET_KEY unset → 503)
+  → assertCheckoutEligible (finalized, unpaid, USD, positive, cent-aligned)
+  → reuse valid pending attempt (TTL 24h) or createPendingAttemptOrReuseInFlight
+    (partial pending index + in-flight poll, stale release, never a second
+    pending attempt)
+  → ensureStripeCustomer (idempotency key `customer:<accountId>`)
+  → stripe.checkout.sessions.create with idempotencyKey `checkout:<attemptId>`,
+    metadata { invoiceId, attemptId, period }, client_reference_id = invoiceId
+  → persist session/PI ids + checkoutUrl; failure marks attempt failed (CAS)
+
+POST /v1/billing/webhooks/stripe (signed, raw body)
+  → constructEventAsync; unknown event type → record ignored, 2xx
+  → processKnownEvent in one transaction: insert StripeWebhookEvent (unique
+    event id = atomic idempotency), findAttemptForEvent (persisted object id →
+    verified metadata attemptId/invoiceId → client_reference_id, all
+    method=stripe scoped), persistEventIds, resolveTransition
+    (checkout.session.completed only succeeds when payment_status=paid)
+  → succeeded → forward-only attempt update + settlementService.settleInvoice
+    (lost race → duplicate_unallocated review); failed → pending-only CAS
+```
+
+### USDC rail
+
+```
+POST /v1/billing/invoices/:id/usdc/quote { chainId? }
+  → assertEnabled (BILLING_USDC_ENABLED); loadOwnedInvoice; assertInvoiceEligible
+  → resolveChain (allowlist 8453/84532 + configured treasury/RPC; default chain
+    or Base Sepolia); canonical token from SUPPORTED_CHAINS; expected payer =
+    active user wallet; requiredConfirmations (≥5); quoteExpiresAt (TTL)
+  → reuse/release active pending/confirming attempt (confirming never released;
+    expired pending released before chain-conflict check; different-chain active
+    = conflict); else create attempt with full immutable quote snapshot
+    (providerIdentity = sha256 of RPC URL, never the raw URL)
+
+POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
+  → assertSnapshotComplete (every snapshot field present + consistent with
+    current config/allowlist — fail closed)
+  → canonicalize txHash; terminal states returned as-is; evidence-conflict →
+    review
+  → receiptProvider.getTransactionReceipt (null → pending/expired; RPC error →
+    retryable); receipt hash match; block timestamp; reorg detection;
+    receipt_predates_attempt; status success; parseTransfer (unique canonical
+    Transfer from payer → treasury for exact amount; removed/malformed/
+    ambiguous → review)
+  → confirmations vs chain head (getBlockNumber); below threshold →
+    markConfirming (evidence-aware CAS); at/above → settleConfirmed: row-locked
+    transaction (attempt → invoice), evidence re-verified under lock, attempt →
+    succeeded, settlementService.settleInvoice; lost race / duplicate evidence →
+    needs_review/duplicate_unallocated
+```
+
+## Integration
+
+- **Module wiring.** `BillingModule` imports `PrismaModule` and is imported by
+  `AppModule`, `AuthModule`, `WalletModule`, and `TransactionsModule`. It
+  exports `BillingService`, `BillingReconciliationService`,
+  `BillingEntitlementService`, `InvoiceSettlementService`, and
+  `StripePaymentService`; `UsdcPaymentService` and the webhook/controller
+  services stay module-internal.
+- **Consumers outside the module.**
+  - `src/common/guards/api-key-auth.guard.ts` calls
+    `billing.assertAndRecordApiCall` on every authenticated API-key request
+    (metering failure → 503; genuine quota → 429).
+  - `src/modules/auth/auth.service.ts` calls
+    `billingEntitlements.assertWalletActivationAllowed` (preflight + inside the
+    activation transaction) so an exhausted wallet quota never orphans a TEE
+    agent wallet.
+- **External dependencies.**
+  - `OpenfortService.getTransactionReceipt` (sanitized receipts) in
+    `billing-reconciliation.service.ts`.
+  - `SUPPORTED_CHAINS` registry for chain/token resolution in
+    `billing-pricing.ts`, `billing-reconciliation.service.ts`, and
+    `onchain/usdc-payment.service.ts`.
+  - `ConfigService` for `stripe.*` (secretKey/webhookSecret/successUrl/cancelUrl)
+    and `billing.usdc.*` (enabled, per-chain treasuryAddresses/rpcUrls,
+    requiredConfirmations, quoteTtlSeconds); both rails are optional and fail
+    closed with 503 when unconfigured.
+  - Stripe SDK (pinned `2025-03-31.basil`) and viem public clients
+    (`ViemUsdcReceiptProvider`).
+- **Persistence (Prisma).** `BillingAccount`, `BillingPlanVersion`,
+  `BillingPlanTier`, `BillingPlanAssignment`, `BillingUsageEvent`,
+  `BillingInvoice`, `BillingInvoiceLine`, `BillingPaymentAttempt`,
+  `BillingReconciliationRun`, `StripeWebhookEvent` — plus `Transaction` and
+  `UserWallet` reads for reconciliation and payer resolution. Key constraints:
+  unique `(code, version)` plans, unique `(billingAccountId, periodStart)`
+  assignments and invoices, unique `sourceKey` usage events, unique
+  `(chainId, tokenAddress, txHash, logIndex)` USDC evidence, unique
+  `settlementAttemptId` on invoices, and unique `stripeEventId` webhook rows.
+- **Security scope.** All `v1/billing` dashboard routes are intentionally
+  omitted from `openapi.yaml` (public spec is API-key-only) and require an
+  Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks.
+  The Stripe webhook is the only public route in the module — it is
+  signature-verified from the raw body, `@Public()`, and exempt from
+  throttling so Stripe retries are never rate-limited. Reconciliation and
+  claim responses never expose receipt logs, calldata, RPC details, Openfort
+  IDs, or secrets.

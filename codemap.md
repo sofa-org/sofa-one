@@ -1,14 +1,17 @@
 # Repository Atlas: sofa-agent-wallet (SOFA ONE)
 
 ## Project Responsibility
-Server-side automated blockchain signing service. Users authenticate via Openfort IAM (email OTP / embedded wallet), receive a TEE-managed wallet (Openfort), and an API key for programmatic transaction submission. NestJS backend + Vite/React 19 SPA.
+Server-side automated blockchain signing service. Users authenticate via Openfort IAM (email OTP / embedded wallet), receive a TEE-managed wallet (Openfort), and an API key for programmatic transaction submission. The repository also owns usage-based billing with Stripe and native USDC settlement. NestJS backend + Vite/React 19 SPA.
 
 ## System Entry Points
-- `src/main.ts` — NestJS bootstrap, global middleware, Swagger, port 3100
+- `src/main.ts` — NestJS bootstrap, global middleware, Swagger, and env-selected port (default 3001; local `.env` uses 3100)
 - `src/app.module.ts` — Root module composition
 - `frontend/src/main.tsx` — React SPA entry, Openfort + Router providers
 - `prisma/schema.prisma` — Data model definition
 - `openapi.yaml` — REST API specification
+- `package.json` — backend scripts, dependencies, and Jest configuration
+- `frontend/package.json` — independent SPA scripts and dependencies
+- `docker-compose.yml` — local Postgres 16 and Redis 7 services
 
 ## Key Architecture Constraints
 - Private keys never leave TEE (Openfort). Never store, log, or return them.
@@ -29,17 +32,33 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 |-----------|------------------------|--------------|
 | `src/` | Application bootstrap, global module composition, NestJS entry point | [View Map](src/codemap.md) |
 | `src/config/` | Environment variable loading and validation via class-validator | [View Map](src/config/codemap.md) |
-| `src/common/` | Shared utilities container (decorators, filters, guards) | [View Map](src/common/codemap.md) |
+| `src/common/` | Shared cross-cutting layer: auth/permission guards, request plumbing, registries, throttling, and pure security utilities | [View Map](src/common/codemap.md) |
+| `src/common/agent/` | Agent-registration status vocabulary and lifecycle type derivation | [View Map](src/common/agent/codemap.md) |
+| `src/common/api-key/` | API-key prefix and lookup-prefix derivation | [View Map](src/common/api-key/codemap.md) |
+| `src/common/calibur/` | Calibur EIP-7702 ABI, key hashing, settings, and viem account helpers | [View Map](src/common/calibur/codemap.md) |
+| `src/common/chains/` | Supported-chain registry and chain classification helpers | [View Map](src/common/chains/codemap.md) |
 | `src/common/decorators/` | Custom parameter decorators: `@CurrentUser()`, `@Public()` | [View Map](src/common/decorators/codemap.md) |
+| `src/common/errors/` | Stable machine-readable API error-code vocabulary | [View Map](src/common/errors/codemap.md) |
 | `src/common/filters/` | Global HTTP exception filter for standardized error responses | [View Map](src/common/filters/codemap.md) |
 | `src/common/guards/` | Auth guards: Openfort IAM verification + API key validation | [View Map](src/common/guards/codemap.md) |
+| `src/common/middleware/` | Request-ID resolution and AsyncLocalStorage context seeding | [View Map](src/common/middleware/codemap.md) |
+| `src/common/request-context/` | Request-scoped correlation context backed by AsyncLocalStorage | [View Map](src/common/request-context/codemap.md) |
+| `src/common/throttler/` | Redis-backed throttling with in-memory fallback | [View Map](src/common/throttler/codemap.md) |
+| `src/common/utils/` | Pure IP/CIDR, request-hash, and sanitization helpers | [View Map](src/common/utils/codemap.md) |
 | `src/core/` | Infrastructure layer: database + Openfort client, globally exported | [View Map](src/core/codemap.md) |
 | `src/core/database/` | Prisma ORM service with lifecycle hooks (onModuleInit/onModuleDestroy) | [View Map](src/core/database/codemap.md) |
 | `src/core/openfort/` | Openfort SDK wrapper for TEE wallet creation and transaction intents | [View Map](src/core/openfort/codemap.md) |
+| `src/types/` | Express request ambient type augmentation for middleware and guards | [View Map](src/types/codemap.md) |
 | `src/modules/` | Feature modules container | [View Map](src/modules/codemap.md) |
 | `src/modules/auth/` | Social OAuth via Openfort, user sync, and wallet provisioning | [View Map](src/modules/auth/codemap.md) |
+| `src/modules/auth/dto/` | Embedded-wallet authorization and agent-registration request DTOs | [View Map](src/modules/auth/dto/codemap.md) |
 | `src/modules/api-key/` | API key lifecycle: create (Argon2 hash), list metadata, revoke | [View Map](src/modules/api-key/codemap.md) |
 | `src/modules/api-key/dto/` | Input DTOs for API key creation with class-validator decorators | [View Map](src/modules/api-key/dto/codemap.md) |
+| `src/modules/billing/` | Plans, usage metering, quotas, invoices, Stripe/USDC payment rails, and reconciliation | [View Map](src/modules/billing/codemap.md) |
+| `src/modules/billing/dto/` | Validated request bodies and queries for dashboard billing operations | [View Map](src/modules/billing/dto/codemap.md) |
+| `src/modules/billing/stripe/` | Stripe Checkout client and signature-verified webhook processing | [View Map](src/modules/billing/stripe/codemap.md) |
+| `src/modules/billing/onchain/` | Native USDC quote/claim flow and strict receipt verification | [View Map](src/modules/billing/onchain/codemap.md) |
+| `src/modules/billing/onchain/dto/` | Validated USDC quote and claim request DTOs | [View Map](src/modules/billing/onchain/dto/codemap.md) |
 | `src/modules/wallet/` | Wallet operations: deposit info, message/typed-data signing, USDC withdrawal | [View Map](src/modules/wallet/codemap.md) |
 | `src/modules/wallet/dto/` | Input DTOs for signing and withdrawal requests with Ethereum address validation | [View Map](src/modules/wallet/dto/codemap.md) |
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
@@ -47,6 +66,11 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
 | `src/modules/security-notifications/` | Dashboard security notifications generated from user-attributed security events | [View Map](src/modules/security-notifications/codemap.md) |
 | `src/modules/eoa-execution/` | Runtime isolation policy for high-privilege backend EOA execution | [View Map](src/modules/eoa-execution/codemap.md) |
+| `src/modules/session-key/` | On-chain Calibur session-key policy gate for delegated execution | [View Map](src/modules/session-key/codemap.md) |
+| `src/modules/step-up/` | Short-lived TOTP step-up proof issuance and validation | [View Map](src/modules/step-up/codemap.md) |
+| `src/modules/mfa/` | TOTP setup, verification, recovery codes, and proof issuance | [View Map](src/modules/mfa/codemap.md) |
+| `src/modules/mfa/dto/` | Validated TOTP and recovery-code request shapes | [View Map](src/modules/mfa/dto/codemap.md) |
+| `src/modules/health/` | Public liveness and readiness probes | [View Map](src/modules/health/codemap.md) |
 
 ### Data Layer
 
@@ -69,7 +93,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, IP allowlist, and optional freeze state in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
 - Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, rule-based risk scoring, request context, safe metadata, optional dashboard notifications, and optional redacted SIEM webhook export.
 - User-facing dashboard alerts are stored in `SecurityNotification` when selected security events require user attention.
-- Transaction submission appends `Transaction` records with intent/hash/status/details for audit and reconciliation.
+- Transaction submission appends `Transaction` records with request/hash/status/details for audit, idempotency, and reconciliation.
 - Agent execution authority is anchored by the Calibur on-chain key registry; no off-chain strategy ownership table is used.
 
 #### `prisma/` Integration
@@ -83,14 +107,32 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 |-----------|------------------------|--------------|
 | `frontend/` | Vite build config, Tailwind CSS 4, path aliasing, dev proxy to port 3100 | [View Map](frontend/codemap.md) |
 | `frontend/src/` | App entry point, React Router routes, Openfort provider composition | [View Map](frontend/src/codemap.md) |
-| `frontend/src/components/` | Shared UI: `ProtectedRoute` HOC for auth-gated navigation | [View Map](frontend/src/components/codemap.md) |
-| `frontend/src/lib/` | API abstraction layer: `authFetch` (JWT) and `apiFetch` (API key) helpers | [View Map](frontend/src/lib/codemap.md) |
-| `frontend/src/pages/` | Public pages: landing, sign-in via Openfort email OTP | [View Map](frontend/src/pages/codemap.md) |
-| `frontend/src/pages/dashboard/` | Authenticated dashboard: wallet info, API key management, docs | [View Map](frontend/src/pages/dashboard/codemap.md) |
+| `frontend/src/components/` | Openfort/provider composition, route guards, MFA step-up gate, and shared UI/diagnostics | [View Map](frontend/src/components/codemap.md) |
+| `frontend/src/lib/` | Typed bearer/API-key HTTP transports, chain metadata, and Calibur encoders | [View Map](frontend/src/lib/codemap.md) |
+| `frontend/src/pages/` | Public landing/sign-in routes and authenticated dashboard boundary | [View Map](frontend/src/pages/codemap.md) |
+| `frontend/src/pages/dashboard/` | Authenticated wallet, API-key, transaction, billing, notification, and docs screens | [View Map](frontend/src/pages/dashboard/codemap.md) |
+
+## Root Assets and Documentation
+
+| Asset | Purpose |
+|-------|---------|
+| `package.json` / `package-lock.json` | Backend NestJS, Prisma, Jest, lint, and formatting scripts plus locked dependencies |
+| `frontend/package.json` / `frontend/package-lock.json` | Independent Vite/React package scripts and locked dependencies |
+| `tsconfig.json`, `tsconfig.build.json`, `nest-cli.json`, `.eslintrc.js` | Backend TypeScript, Nest CLI, and lint/build configuration |
+| `prisma/schema.prisma`, `prisma/migrations/` | Canonical PostgreSQL schema and versioned migration history; see [`prisma/codemap.md`](prisma/codemap.md) |
+| `openapi.yaml` | Public API-key contract only: signing and transaction send/status; dashboard routes are intentionally excluded |
+| `docker-compose.yml` | Local Postgres 16 and Redis 7 services with loopback port bindings and health checks |
+| `.env.example` and runtime env files | Backend configuration template; secrets and local values are not part of the codemap |
+| `test/` and `src/**/*.spec.ts` | E2E/unit tests; excluded from generated codemap analysis, but validate the mapped production code |
+| `README.md`, `API.md`, `ARCHITECTURE.md`, `PRICING.md`, `SECURITY.md`, `DATABASE.md`, `DEPLOYMENT.md`, `RUNBOOK.md`, `REQUIREMENTS.md`, `docs/` | Product, API, architecture, pricing, security, operations, and design documentation |
+
+The generated hierarchy is tracked by `.slim/codemap.json`. This root file is the master
+entry point; each linked child map records the implementation-specific responsibility,
+patterns, flow, and integration points for its directory.
 
 ## Data Flow (High Level)
 ```
-Browser → Openfort IAM → POST /v1/auth/social
+Browser → Openfort IAM → POST /auth/session
   → AuthService: find-or-create User + pending Wallet record
   → Returns { userId, wallet }
 
@@ -108,7 +150,7 @@ Client → POST /v1/transactions/send (X-API-Key only)
   → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
   → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
   → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction before creating a new idempotency row or submitting to Openfort; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
-  → OpenfortService.sendTransaction submits interactions
+  → OpenfortService.sendUserOperation/sendBackendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
@@ -125,8 +167,58 @@ Dashboard → GET /v1/security-notifications (Openfort IAM + FrontendOnly)
   → SecurityNotificationService returns recent user-facing security alerts derived from `SecurityEvent` rows
   → Dashboard can mark individual notifications or all unread notifications as read
 
+Dashboard → `/v1/billing/*` (Openfort IAM + FrontendOnly)
+  → Billing summary/invoice endpoints expose plan, usage, invoice, and payment state
+  → API-key guards meter API calls; auth wallet activation enforces active-wallet quota
+  → BillingReconciliationService matches receipt-confirmed outbound usage to transactions
+  → BillingService computes BigInt microdollar invoice lines and can finalize after the period/grace window
+  → Stripe Checkout or native USDC quote/claim creates payment evidence; InvoiceSettlementService performs atomic first-rail-wins settlement
+  → Finalization and reconciliation are service/controller operations; no production scheduler is wired in this tree
+
+Backend → SecurityEventService
+  → Authentication, API-key lifecycle, policy decisions, withdrawals, billing, and on-chain payment decisions persist safe telemetry
+  → SecurityNotificationService projects selected user-facing alerts and an optional SIEM exporter sends redacted payloads
+
 Client → GET /v1/transactions/:id (X-API-Key only)
   → ApiKeyPermissionGuard requires canReadTransactionStatus before service ownership checks
   → Returns the locally stored sendTransaction result/status
   → Returns safe status fields only; never returns calldata, requestHash, or interactionsHash
 ```
+
+## Integration and Runtime Boundaries
+
+- **Backend composition:** `src/app.module.ts` imports validated global configuration,
+  request context, throttling, Prisma/Openfort infrastructure, and every feature module.
+  `src/main.ts` adds trust-proxy handling, Helmet/CSP, raw-body capture for Stripe, CORS,
+  strict global validation, request correlation, and the sanitized exception filter.
+- **Persistence:** feature services use the global `PrismaService` against PostgreSQL;
+  `prisma/schema.prisma` contains identity, wallet, API-key, transaction, security, MFA,
+  and billing models. Interactive transactions and row locks protect idempotency, quota,
+  withdrawal, usage-ledger, and invoice-settlement races.
+- **Execution:** `OpenfortService` is the only wallet/signing facade. It routes chain
+  execution through Openfort or Pimlico/viem as appropriate; Calibur session-key and the
+  explicitly isolated backend-EOA mode are policy-gated before submission.
+- **Frontend:** `frontend/` is a separate Vite package. Dashboard calls use IAM bearer
+  helpers; only the public signing/transaction examples use API-key helpers. In development
+  Vite proxies `/api` to the backend and strips the prefix.
+- **Public contract:** `openapi.yaml` intentionally documents only `X-API-Key` public
+  signing and transaction routes. Dashboard, billing, auth, health, and webhook routes are
+  internal/frontend-only or independently authenticated and are not added to that spec.
+
+## Operational Constraints
+
+- Private keys never enter this repository's persistence, logs, responses, or local signing
+  code; Openfort TEE owns key management and signing.
+- Public API-key routes and frontend-only IAM routes remain separate. Never add
+  `FrontendOnlyGuard` to public routes or expose API-key management to API keys.
+- API keys are Argon2id hashes; prefix matches are only lookup hints and every candidate must
+  be verified. `request.ip` after Express trust-proxy handling is the source for IP allowlists.
+- Production configuration fails closed: required secrets, explicit CORS origin, explicit
+  trust-proxy values, supported chains, HTTPS optional-integration URLs, and enabled Stripe/
+  USDC prerequisites are validated at startup.
+- Public status/error/billing responses are sanitized: no private keys, API keys, calldata,
+  request/interactions hashes, raw receipts, RPC details, Openfort IDs, or secrets.
+- Redis is used for throttling when available, with an in-memory fallback that still limits;
+  billing metering and high-risk policy checks fail closed rather than bypassing enforcement.
+- Schema changes require `npm run prisma:generate`; use migration deploy for production and
+  preserve migration-only partial indexes/check constraints.

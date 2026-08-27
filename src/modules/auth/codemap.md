@@ -1,17 +1,32 @@
 # Code Map for /src/modules/auth
 
 ## Responsibility
-Social-login onboarding: Openfort user lookup and wallet provisioning.
+Openfort IAM authentication and onboarding: sync Openfort email-OTP sessions into local `User` rows, provision a pending embedded-wallet record, authorize and activate the user's embedded EOA as their asset account, bind a TEE-managed Calibur agent wallet, drive the per-chain agent-key registration lifecycle, refresh API keys, and track login IPs for security telemetry. API keys are never issued during login — only through the explicit refresh flow here or the API-key management module.
 
 ## Design/Patterns
-- Controller/service split with Openfort auth guard.
-- Prisma transaction for atomic user/wallet creation.
-- API keys are issued explicitly through API-key management or refresh flows, not during login.
+- Controller/service split; `AuthController` applies `@UseGuards(OpenfortAuthGuard)` at class level so every route requires a valid Openfort IAM bearer token (attaches `openfortUserId`, `openfortAccessToken`, `openfortEmail` to the request). Per-route `@Throttle` limits (5/60s, 20/60min; 3/60s, 10/60min for refresh).
+- Find-or-create user sync with race handling: `syncOpenfortSession` retries on Prisma `P2002` (unique `socialId`) via depth-limited recursion (max 3), treating the conflict as an existing user.
+- Atomic provisioning with Prisma interactive transactions: new-user + pending-wallet creation in one transaction; wallet activation + billing quota check in one transaction so the active-wallet count and the upsert share a single snapshot (no check-then-act race).
+- Idempotent wallet upsert keyed on `userId`; re-authorizing an already-active wallet is allowed without quota consumption.
+- Agent wallet ensure-or-reuse: `ensureAgentWallet` returns the persisted `agentOpenfortAccountId`/`agentWalletAddress`/`agentKeyHash` if present, otherwise creates a fresh TEE agent wallet via `OpenfortService.createAgentWallet()`.
+- Agent registration state machine (`AgentStatus` from `common/agent/agent-status`): `registration_required` → `pending_registration` → `registered` | `registration_failed`, with `expired` reserved for downstream consumers. `getMe` self-heals stale `pending_registration` rows by checking the on-chain receipt and verifying the Calibur key registration.
+- Fail-closed ordering in `authorizeEmbeddedWallet`: billing quota preflight and agent-expiry validation run before any external Openfort wallet creation so an exhausted quota or invalid expiry can never orphan a freshly created TEE agent wallet; the authoritative quota check runs inside the activation transaction.
+- Optional dependencies (`@Optional()`) for `RequestContextService` (log correlation) and `SecurityEventService` (login-IP telemetry) so the service degrades gracefully when they are absent.
+- Safe response projection: `toWalletResponse` returns only wallet address, status, agent wallet address/hash, and sorted chain authorizations — never Openfort account secrets or private keys.
+- CSRF safety for `refresh-api-key`: requires a bearer token (browsers cannot attach custom Authorization headers cross-origin without preflight) plus `FrontendOnlyGuard` origin/referer checks and `StepUpGuard` TOTP proof.
 
 ## Flow
-- `/auth/social` loads the Openfort profile, finds or creates user, and provisions wallet if needed.
-- `/auth/refresh-api-key` atomically revokes existing keys then issues a replacement through `ApiKeyService.rotateApiKey()`.
-- `/auth/me` returns persisted wallet info only.
+- `POST /auth/session` (and deprecated alias `POST /auth/social`) → `syncOpenfortSession`: look up `User` by `socialId`; if absent, create user + `pending_embedded_wallet` `UserWallet` in one transaction (retry on P2002); if present but walletless, create the pending wallet (re-fetch on P2002); if returning user, update email when changed. Then `trackLoginIp` records a `userKnownIp` row and a `login.new_ip` medium-risk `SecurityEvent` on first-seen IPs. Returns `{ userId, wallet }`.
+- `POST /auth/embedded-wallet/authorize` → `authorizeEmbeddedWallet`: verify the embedded EOA belongs to the Openfort session via `OpenfortService.authorizeEmbeddedAddress` (rejects mismatched `openfortUserId`); run billing quota preflight; validate `agentExpiresAt` (future, ≤30 days, else default 5-min grace); ensure/reuse the agent wallet; inside a transaction re-check quota, upsert `UserWallet` to `active` with `openfortAccountId`, `walletAddress`, and agent fields, delete chain authorizations if the wallet address changed, and upsert a `registration_required` `WalletChainAuthorization` for the requested chain. Returns `{ userId, wallet }`.
+- `POST /auth/embedded-wallet/registration-transaction` → `markAgentRegistrationTransaction`: requires an active wallet with full agent context and a `registration_required` authorization for the chain; sets status to `pending_registration` and stores the submitted `registerKey` tx hash.
+- `POST /auth/embedded-wallet/registration-result` → `markAgentRegistrationResult`: for `registered`, verifies on-chain via `OpenfortService.verifyAgentKeyRegistration` (Calibur delegation + key registered + usable settings) before persisting `registered`; `registration_failed` is persisted as-is.
+- `GET /auth/me` → `getMe`: read-only DB lookup; `selfHealAgentRegistrations` reconciles `pending_registration` rows — missing tx hash reverts to `registration_required`, reverted receipts become `registration_failed`, successful receipts are verified against Calibur and marked `registered` (verification failures stay pending and are logged).
+- `POST /auth/refresh-api-key` → `refreshApiKey`: calls `ApiKeyService.rotateApiKey(userId, 'Refreshed')`, which atomically revokes all active keys and issues a replacement; returns the raw key exactly once.
 
 ## Integration
-- Uses `OpenfortAuthGuard`, `PrismaService`, `OpenfortService`, `ApiKeyService`, and `ConfigService`.
+- Module imports: `ApiKeyModule` (rotate), `SecurityEventModule` (login-IP events), `StepUpModule` (TOTP proof validation), `BillingModule` (wallet activation quota).
+- Guards: `OpenfortAuthGuard` (all routes), plus `OpenfortUserGuard` (DB user + frozen check), `FrontendOnlyGuard` (origin/referer allowlist), and `StepUpGuard` (`X-Step-Up-Token`) on `refresh-api-key`.
+- Services: `PrismaService` (User, UserWallet, WalletChainAuthorization, UserKnownIp), `OpenfortService` (`verifyIamSession`, `authorizeEmbeddedAddress`, `createAgentWallet`, `verifyAgentKeyRegistration`, `getTransactionReceiptStatus`), `ApiKeyService.rotateApiKey`, `BillingEntitlementService.assertWalletActivationAllowed`, `RequestContextService.getLogContext`, `SecurityEventService.record` (`login.new_ip`).
+- DTOs (referenced, not owned): `AuthorizeEmbeddedWalletDto` (embedded address, optional Openfort account id, chainId, agentExpiresAt), `AgentRegistrationTransactionDto` (chainId + 0x64-hex txHash), `AgentRegistrationResultDto` (chainId, txHash, status `registered`|`registration_failed`).
+- Data model: `User` (unique `socialId`, email, freeze state) → 1:1 `UserWallet` (unique `userId`, `openfortAccountId`, `walletAddress`, agent fields, status) → N `WalletChainAuthorization` (composite `walletId_chainId`, status, registrationTxHash, expiresAt); `UserKnownIp` (unique `userId_ip`) for login-IP tracking.
+- Downstream consumers rely on the wallet status and chain-authorization states this module writes: frozen/active wallet checks in wallet/transactions modules, and `registered` chain authorizations gate Calibur agent-key execution.
