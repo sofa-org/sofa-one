@@ -83,12 +83,14 @@ describe('StripePaymentService', () => {
 
   const accountFindUnique = jest.fn();
   const accountUpdate = jest.fn();
+  const accountUpdateMany = jest.fn();
   const userFindUnique = jest.fn();
   const invoiceFindFirst = jest.fn();
   const attemptFindFirst = jest.fn();
   const attemptCreate = jest.fn();
   const attemptUpdate = jest.fn();
   const attemptUpdateMany = jest.fn();
+  const planVersionFindUnique = jest.fn();
   const configGet = jest.fn();
   const customerCreate = jest.fn();
   const sessionCreate = jest.fn();
@@ -100,6 +102,11 @@ describe('StripePaymentService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    accountUpdateMany.mockImplementation((args: { where: { id: string }; data: unknown }) => {
+      accountUpdate({ where: { id: args.where.id }, data: args.data });
+      return Promise.resolve({ count: 1 });
+    });
+    attemptUpdateMany.mockResolvedValue({ count: 1 });
 
     configGet.mockImplementation((key: string) => {
       const values: Record<string, unknown> = {
@@ -115,14 +122,34 @@ describe('StripePaymentService', () => {
         {
           provide: PrismaService,
           useValue: {
-            billingAccount: { findUnique: accountFindUnique, update: accountUpdate },
+            billingAccount: {
+              findUnique: accountFindUnique,
+              update: accountUpdate,
+              updateMany: accountUpdateMany,
+            },
             user: { findUnique: userFindUnique },
             billingInvoice: { findFirst: invoiceFindFirst },
             billingPaymentAttempt: {
               findFirst: attemptFindFirst,
+              findUnique: attemptFindFirst,
               create: attemptCreate,
               update: attemptUpdate,
               updateMany: attemptUpdateMany,
+            },
+            billingPlanVersion: { findUnique: planVersionFindUnique },
+            $transaction: async (work: (tx: any) => Promise<unknown>) => {
+              const attemptState = await Promise.resolve(attemptCreate.mock.results.at(-1)?.value);
+              return work({
+                billingAccount: { findUnique: accountFindUnique, updateMany: accountUpdateMany },
+                billingPaymentAttempt: {
+                  findUnique: jest.fn().mockResolvedValue(attemptState),
+                  updateMany: attemptUpdateMany.mockImplementation(({ data }: any) => {
+                    if (attemptState) Object.assign(attemptState, data);
+                    return Promise.resolve({ count: 1 });
+                  }),
+                },
+                $executeRaw: jest.fn().mockResolvedValue(0),
+              });
             },
           },
         },
@@ -283,14 +310,14 @@ describe('StripePaymentService', () => {
         // Stripe timeout/retry never creates a duplicate Session.
         { idempotencyKey: 'checkout:att-1' },
       );
-      expect(attemptUpdate).toHaveBeenCalledWith({
-        where: { id: 'att-1' },
-        data: {
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ id: 'att-1' }),
+        data: expect.objectContaining({
           stripeCheckoutSessionId: 'cs_123',
           stripePaymentIntentId: 'pi_123',
           checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_123',
-        },
-      });
+        }),
+      }));
       expect(result).toEqual({
         invoiceId: 'inv-1',
         sessionId: 'cs_123',
@@ -458,11 +485,11 @@ describe('StripePaymentService', () => {
         'request timed out',
       );
 
-      // The failure update is a pending-only CAS, so a webhook-confirmed
-      // success racing this failure can never regress the attempt.
+      // A timeout is ambiguous: preserve the pending attempt so the exact
+      // attempt-derived Stripe idempotency key can be retried/recovered.
       expect(attemptUpdateMany).toHaveBeenCalledWith({
         where: { id: 'att-1', status: 'pending' },
-        data: expect.objectContaining({ status: 'failed' }),
+        data: expect.objectContaining({ status: 'pending', failureCode: 'local_persistence_uncertain' }),
       });
     });
   });
@@ -523,8 +550,8 @@ describe('StripePaymentService', () => {
 
       const result = await service.createCheckoutSession('user-1', 'inv-1');
 
-      expect(attemptUpdate).toHaveBeenCalledWith({
-        where: { id: 'att-stale' },
+      expect(attemptUpdateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({ id: 'att-stale', method: 'stripe', status: 'pending' }),
         data: expect.objectContaining({
           status: 'failed',
           failureCode: 'checkout_session_creation_timeout',
@@ -536,6 +563,33 @@ describe('StripePaymentService', () => {
         sessionId: 'cs_2',
         checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_2',
       });
+    });
+
+    it.each([
+      'stripeCheckoutSessionId',
+      'stripePaymentIntentId',
+      'stripeInvoiceId',
+      'stripeSubscriptionId',
+      'checkoutUrl',
+    ])('does not replace a stale attempt bound by %s', async (providerField) => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(
+        attempt({
+          id: 'att-bound',
+          createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+          updatedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+          [providerField]: providerField === 'checkoutUrl' ? 'https://stripe.test/session' : 'provider-id',
+        }),
+      );
+      attemptCreate.mockRejectedValueOnce(p2002());
+
+      await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
+        ConflictException,
+      );
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
     });
 
     it('creates a fresh attempt when the winner released the pending slot', async () => {
@@ -575,6 +629,125 @@ describe('StripePaymentService', () => {
         sessionId: 'cs_2',
         checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_2',
       });
+    });
+  });
+
+  describe('subscription checkout — charge-kind reuse safety + plan/amount fail-closed', () => {
+    const PRO_PLAN = {
+      id: 'plan-pro',
+      code: 'pro',
+      version: 2,
+      name: 'Pro',
+      monthlyFeeMicros: 49_000_000n, // $49.00
+      includedOutboundMicros: 100_000_000n,
+      includedApiCalls: 100_000n,
+      includedWallets: 1,
+    };
+
+    beforeEach(() => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      // The invoice is owned by the account, uses EXACTLY the Pro plan, and
+      // its total equals the fixed fee (no overage) — the only shape that may
+      // proceed to a subscription checkout.
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ planVersionId: PRO_PLAN.id, totalMicros: PRO_PLAN.monthlyFeeMicros }),
+      );
+      planVersionFindUnique.mockResolvedValue(PRO_PLAN);
+      customerCreate.mockResolvedValue({ id: 'cus_123' });
+      attemptUpdate.mockResolvedValue(attempt());
+    });
+
+    it('rejects a one-time pending attempt instead of reusing it for a subscription', async () => {
+      // No reusable fixed-fee attempt. A young one-time (full) pending attempt
+      // occupies the pending slot (P2002 on insert).
+      attemptFindFirst.mockResolvedValue(null); // no reusable fixed-fee session
+      attemptCreate.mockRejectedValueOnce(p2002());
+      attemptFindFirst.mockResolvedValue(
+        attempt({
+          stripeChargeKind: 'full',
+          amountMicros: 49_000_000n,
+          createdAt: new Date(), // young — never treated as stale
+        }),
+      );
+
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro'),
+      ).rejects.toThrow(ConflictException);
+      // The one-time pending attempt was never released or reused.
+      expect(attemptUpdate).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+    });
+
+    it('reuses a fixed-fee pending attempt with a matching amount for a subscription', async () => {
+      attemptFindFirst.mockResolvedValue(
+        attempt({
+          stripeChargeKind: 'fixed_fee',
+          amountMicros: 49_000_000n,
+          stripeCheckoutSessionId: 'cs_sub',
+          checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_sub',
+        }),
+      );
+
+      const result = await service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro');
+
+      expect(result).toEqual({
+        invoiceId: 'inv-1',
+        sessionId: 'cs_sub',
+        checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_sub',
+      });
+      expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('never reuses a fixed-fee pending attempt whose amount differs from the plan fee', async () => {
+      // A pending fixed-fee attempt for a different plan amount must not be
+      // reused for this subscription; the insert races and a mismatch conflict
+      // is raised rather than reusing the wrong amount.
+      attemptFindFirst.mockResolvedValue(
+        attempt({
+          stripeChargeKind: 'fixed_fee',
+          amountMicros: 99_000_000n,
+          stripeCheckoutSessionId: 'cs_sub',
+          checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_sub',
+        }),
+      );
+      attemptCreate.mockRejectedValueOnce(p2002());
+      attemptFindFirst.mockResolvedValue(
+        attempt({
+          stripeChargeKind: 'fixed_fee',
+          amountMicros: 99_000_000n,
+          createdAt: new Date(),
+        }),
+      );
+
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('rejects a selected plan version that does not match the owned invoice plan', async () => {
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ planVersionId: 'plan-other', totalMicros: 49_000_000n }),
+      );
+
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro'),
+      ).rejects.toThrow(ConflictException);
+      // Fail closed before any provider call / local renewal state.
+      expect(sessionCreate).not.toHaveBeenCalled();
+      expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a dynamic/overage invoice rather than attaching a smaller recurring charge', async () => {
+      // Invoice total (99) exceeds the fixed fee (49): dynamic overage.
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ planVersionId: PRO_PLAN.id, totalMicros: 99_000_000n }),
+      );
+
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro'),
+      ).rejects.toThrow(ConflictException);
+      expect(sessionCreate).not.toHaveBeenCalled();
+      expect(attemptCreate).not.toHaveBeenCalled();
     });
   });
 });

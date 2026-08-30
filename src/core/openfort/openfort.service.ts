@@ -266,14 +266,16 @@ export class OpenfortService {
   }
 
   /** Execute calls from the user's Calibur account with the registered backend agent key. */
-  async sendUserOperation(params: {
+  async submitUserOperation(params: {
     agentAccountId: string;
     accountAddress: string;
     chainId: number;
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
     sponsorship?: 'required' | 'none';
-  }): Promise<{ userOpHash: string; transactionHash: string | null }> {
+    /** Called exactly once when the bundler returns its operation identity. */
+    onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
+  }): Promise<{ userOpHash: string }> {
     try {
       const { chain } = getSupportedChain(params.chainId);
       const usesPimlico = isMonadChain(params.chainId);
@@ -323,14 +325,11 @@ export class OpenfortService {
         sponsorshipMode,
         chainId: params.chainId,
         gasPrice,
+        onUserOperationHash: params.onUserOperationHash,
       });
-      const receipt = (await submission.bundlerClient.waitForUserOperationReceipt({
-        hash: submission.hash as Hex,
-      })) as any;
-      return {
-        userOpHash: submission.hash,
-        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
-      };
+      const userOpHash = this.sanitizeUserOperationHash(submission.hash);
+      if (!userOpHash) throw new Error('Bundler returned an invalid UserOperation hash');
+      return { userOpHash };
     } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
@@ -344,6 +343,45 @@ export class OpenfortService {
       });
       throw this.createOpenfortApiException('sendUserOperation', error);
     }
+  }
+
+  async waitForUserOperationReceipt(params: {
+    chainId: number;
+    userOpHash: string;
+  }): Promise<{ success: boolean | null; transactionHash: string | null }> {
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const publishableKey = this.configService.get<string>('openfort.publishableKey');
+      const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
+      const bundlerClient = createBundlerClient({
+        chain,
+        transport: http(
+          rpc.url,
+          rpc.authorizationHeader ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } } : undefined,
+        ),
+      });
+      const receipt = (await this.withTimeout(
+        bundlerClient.waitForUserOperationReceipt({ hash: params.userOpHash as Hex }),
+        'waitForUserOperationReceipt',
+      )) as any;
+      return {
+        success: typeof receipt.success === 'boolean' ? receipt.success : null,
+        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
+      };
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logOpenfortError('waitForUserOperationReceipt', error, { chainId: params.chainId });
+      throw this.createOpenfortApiException('waitForUserOperationReceipt', error);
+    }
+  }
+
+  /** Compatibility wrapper; new callers must persist the hash before waiting. */
+  async sendUserOperation(params: Parameters<OpenfortService['submitUserOperation']>[0]): Promise<{
+    userOpHash: string; transactionHash: string | null; userOperationSuccess: boolean | null;
+  }> {
+    const submitted = await this.submitUserOperation(params);
+    const receipt = await this.waitForUserOperationReceipt({ chainId: params.chainId, userOpHash: submitted.userOpHash });
+    return { ...submitted, transactionHash: receipt.transactionHash, userOperationSuccess: receipt.success };
   }
 
   private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
@@ -386,7 +424,29 @@ export class OpenfortService {
     sponsorshipMode: 'required' | 'none';
     chainId: number;
     gasPrice: UserOperationGasPrice;
+    onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
   }): Promise<{ hash: string; bundlerClient: any }> {
+    const submit = (promise: Promise<string>) => {
+      // Keep the handler attached to the original provider promise. Promise.race
+      // alone would leave a late provider rejection unhandled after a timeout.
+      const observed = promise.then(async (hash) => {
+        const sanitizedHash = this.sanitizeUserOperationHash(hash);
+        if (sanitizedHash && params.onUserOperationHash) {
+          try {
+            await params.onUserOperationHash(sanitizedHash);
+          } catch {
+            // The request may already have timed out; the transaction remains
+            // uncertain and reconciliation can still process an existing hash.
+            this.logger.warn(this.logContext({ message: 'Unable to persist late UserOperation identity' }));
+          }
+        }
+        // The SDK's typed return remains the compatibility result. Only the
+        // callback crosses the persistence boundary and therefore receives the
+        // strict sanitized value above.
+        return hash;
+      });
+      return this.withTimeout(observed, 'submitUserOperation');
+    };
     const calls = params.interactions.map((interaction) => ({
       to: getAddress(interaction.to),
       data: interaction.data as Hex,
@@ -401,27 +461,31 @@ export class OpenfortService {
         maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
       });
       return {
-        hash: await bundlerClient.sendUserOperation({
+        hash: await submit(bundlerClient.sendUserOperation({
           account: params.account,
           calls,
           ...gasLimits,
           maxFeePerGas: params.gasPrice.maxFeePerGas,
           maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-        } as any),
+        } as any)),
         bundlerClient,
       };
     }
 
     const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
     return {
-      hash: await bundlerClient.sendUserOperation({
+      hash: await submit(bundlerClient.sendUserOperation({
         account: params.account,
         calls,
         maxFeePerGas: params.gasPrice.maxFeePerGas,
         maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-      } as any),
+      } as any)),
       bundlerClient,
     };
+  }
+
+  private sanitizeUserOperationHash(value: unknown): string | null {
+    return typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value) ? value.toLowerCase() : null;
   }
 
   private async estimateUserOperationFees(params: {

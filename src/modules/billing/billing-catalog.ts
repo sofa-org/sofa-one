@@ -5,16 +5,16 @@ import type { PlanId } from './billing-calculator';
  * section 5. Monetary values and allowances live in the calculator's PLANS;
  * this file only carries the human-facing marketing copy.
  *
- * API and wallet overage rates are explicitly marked as $0 in the current
- * version (PRICING.md section 7 only provides ranges; v1 bills them at 0).
+ * Resource overage rates are the accepted Phase 1 values: API calls at
+ * $0.001/call and active wallets at $0.01/wallet/month (PRICING.md §7).
  */
 export interface PlanCatalogEntry {
   readonly description: string;
   readonly features: readonly string[];
 }
 
-const OVERAGE_NOTE_API = 'API 超额费率 $0（当前版本）';
-const OVERAGE_NOTE_WALLET = '钱包超额费率 $0（当前版本）';
+const OVERAGE_NOTE_API = 'API 超额费率 $0.001/次';
+const OVERAGE_NOTE_WALLET = '钱包超额费率 $0.01/钱包/月';
 
 export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
   free: {

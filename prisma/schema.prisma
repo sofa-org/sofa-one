@@ -57,6 +57,9 @@ enum BillingPaymentAttemptStatus {
 enum StripeWebhookEventStatus {
   processed
   ignored
+  deferred
+  needs_review
+  failed
 }
 
 model User {
@@ -273,6 +276,15 @@ model Transaction {
   details        Json?
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   completedAt    DateTime? @map("completed_at") @db.Timestamptz()
+  // Set by reconciliation once a transaction's receipt has been processed
+  // (confirmed, reverted, or quarantined). Confirmed rows without this marker
+  // are re-scanned so a large confirmed historical backlog is drained in
+  // bounded pages instead of keeping every run incomplete forever.
+  billingReconciledAt DateTime? @map("billing_reconciled_at") @db.Timestamptz()
+  billingPeriodStart  DateTime? @map("billing_period_start") @db.Timestamptz()
+  billingLastAttemptedAt DateTime? @map("billing_last_attempted_at") @db.Timestamptz()
+  userOpHash       String?   @unique @map("user_op_hash") @db.VarChar(66)
+  userOpSuccess    Boolean?  @map("user_op_success")
 
   user               User                @relation(fields: [userId], references: [id])
   apiKey             ApiKey?             @relation(fields: [apiKeyId], references: [id])
@@ -283,6 +295,8 @@ model Transaction {
   @@index([requestHash])
   @@index([userId, createdAt])
   @@index([userId, status])
+  @@index([userId, status, billingReconciledAt])
+  @@index([userId, billingPeriodStart, billingReconciledAt, billingLastAttemptedAt])
   @@map("transactions")
 }
 
@@ -376,6 +390,20 @@ model BillingAccount {
   id               String   @id @default(uuid()) @db.Uuid
   userId           String   @unique @map("user_id") @db.Uuid
   stripeCustomerId String?  @unique @map("stripe_customer_id") @db.VarChar(255)
+  // Stripe subscription mirror (one active subscription per account). Nullable
+  // so legacy/one-time-checkout accounts remain valid; only populated by the
+  // explicit subscription checkout path.
+  stripeSubscriptionId           String?  @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripeSubscriptionStatus       String?  @map("stripe_subscription_status") @db.VarChar(40)
+  stripeSubscriptionPeriodStart  DateTime? @map("stripe_subscription_period_start") @db.Timestamptz()
+  // Renewal period end + the last subscription event's `created` timestamp
+  // (unix seconds) so subscription bookkeeping is forward/event-order safe even
+  // when renewal events arrive out of order. Nullable for legacy accounts.
+  stripeSubscriptionPeriodEnd  DateTime? @map("stripe_subscription_period_end") @db.Timestamptz()
+  stripeSubscriptionUpdatedAt  DateTime? @map("stripe_subscription_updated_at") @db.Timestamptz()
+  // Tie equal-second Stripe events to a deterministic total order.
+  stripeSubscriptionEventId String? @map("stripe_subscription_event_id") @db.VarChar(255)
+  activeSubscriptionPlanVersionId String? @map("active_subscription_plan_version_id") @db.Uuid
   currency         String   @default("USD") @map("currency") @db.VarChar(10)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
@@ -453,11 +481,24 @@ model BillingReconciliationRun {
   completedAt  DateTime? @map("completed_at") @db.Timestamptz()
   summary      Json?     @map("summary")
   errorDetails String?   @map("error_details") @db.VarChar(500)
+  // ── Cross-instance worker lease / account scope (Phase 1 worker foundation).
+  // billingAccountId/accountUserId scope the run to a single account; the
+  // lease (leaseExpiresAt + heartbeatAt + workerId) lets a stale `running` run
+  // be taken over by another instance. NULL for legacy runs that predate this
+  // column (never backfilled — unprovable scope is kept conservatively risky).
+  billingAccountId String?   @map("billing_account_id") @db.Uuid
+  accountUserId    String?   @map("account_user_id") @db.Uuid
+  workerId         String?   @map("worker_id") @db.VarChar(80)
+  leaseExpiresAt   DateTime? @map("lease_expires_at") @db.Timestamptz()
+  heartbeatAt      DateTime? @map("heartbeat_at") @db.Timestamptz()
 
   usageEvents BillingUsageEvent[]
 
   @@index([status, startedAt])
   @@index([periodStart, periodEnd])
+  @@index([status, leaseExpiresAt])
+  @@index([billingAccountId, periodStart])
+  @@index([billingAccountId, periodStart, runType, status], map: "billing_reconciliation_runs_account_period_runtype_status_idx")
   @@map("billing_reconciliation_runs")
 }
 
@@ -547,6 +588,9 @@ model BillingInvoice {
   paidAt                 DateTime?            @map("paid_at") @db.Timestamptz()
   paidVia                BillingPaymentMethod? @map("paid_via")
   settlementAttemptId    String?              @unique @map("settlement_attempt_id") @db.Uuid
+  // Stripe invoice id for subscription-renewal invoices (unique so a renewal
+  // invoice is materialized exactly once per Stripe invoice).
+  stripeInvoiceId        String?              @unique @map("stripe_invoice_id") @db.VarChar(255)
 
   billingAccount   BillingAccount       @relation(fields: [billingAccountId], references: [id])
   planVersion      BillingPlanVersion   @relation(fields: [planVersionId], references: [id])
@@ -586,6 +630,14 @@ model BillingPaymentAttempt {
   stripeCheckoutSessionId String?                    @unique @map("stripe_checkout_session_id") @db.VarChar(255)
   stripePaymentIntentId   String?                    @unique @map("stripe_payment_intent_id") @db.VarChar(255)
   checkoutUrl             String?                    @map("checkout_url") @db.VarChar(2048)
+  // ── Stripe subscription renewal mapping (Phase 1 worker foundation). A
+  //    renewal invoice is matched by stripeInvoiceId (unique); the
+  //    subscription id and charge kind (fixed_fee vs full) record which rail
+  //    produced the attempt so dynamic overage is never settled by a smaller
+  //    fixed recurring charge.
+  stripeInvoiceId         String?                    @unique @map("stripe_invoice_id") @db.VarChar(255)
+  stripeSubscriptionId    String?                    @map("stripe_subscription_id") @db.VarChar(255)
+  stripeChargeKind        String?                    @map("stripe_charge_kind") @db.VarChar(20)
   failureCode             String?                    @map("failure_code") @db.VarChar(80)
   failureMessage          String?                    @map("failure_message") @db.VarChar(500)
   // ── USDC quote/evidence (Phase 3B foundation; nullable, only populated for
@@ -618,6 +670,16 @@ model BillingPaymentAttempt {
   receiptEvidence         Json?                      @map("receipt_evidence")
   reviewReason            String?                    @map("review_reason") @db.VarChar(255)
   lastCheckedAt           DateTime?                  @map("last_checked_at") @db.Timestamptz()
+  checkoutRetryCount      Int                        @default(0) @map("checkout_retry_count")
+  checkoutNextRetryAt     DateTime?                  @map("checkout_next_retry_at") @db.Timestamptz()
+  checkoutRetryOwnerId    String?                    @map("checkout_retry_owner_id") @db.VarChar(80)
+  checkoutRetryLeaseExpiresAt DateTime?              @map("checkout_retry_lease_expires_at") @db.Timestamptz()
+  // User-submitted USDC hash canonicalized and CAS-persisted BEFORE receipt
+  // verification, so a worker/recovery path can resume a pending/confirming
+  // claim across process restarts by reusing the existing verification path.
+  submittedTxHash         String?                    @map("submitted_tx_hash") @db.VarChar(66)
+  // Backoff schedule for the worker-driven USDC recovery (null for never).
+  nextCheckAt             DateTime?                  @map("next_check_at") @db.Timestamptz()
   createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
   succeededAt             DateTime?                  @map("succeeded_at") @db.Timestamptz()
@@ -632,6 +694,7 @@ model BillingPaymentAttempt {
   @@index([invoiceId, status])
   @@index([invoiceId, method, status])
   @@index([invoiceId, createdAt])
+  @@index([submittedTxHash])
   @@map("billing_payment_attempts")
 }
 
@@ -643,7 +706,18 @@ model StripeWebhookEvent {
   objectId      String?                 @map("object_id") @db.VarChar(255)
   receivedAt    DateTime                @default(now()) @map("received_at") @db.Timestamptz()
   processedAt   DateTime?               @map("processed_at") @db.Timestamptz()
+  // Deferred/unmatched renewal events are retried with bounded backoff by the
+  // worker instead of being silently ignored. Only safe identifiers/error
+  // codes are stored — never the full Stripe payload.
+  retryCount    Int?                    @map("retry_count")
+  nextRetryAt   DateTime?               @map("next_retry_at") @db.Timestamptz()
+  errorType     String?                 @map("error_type") @db.VarChar(80)
+  errorCode     String?                 @map("error_code") @db.VarChar(120)
+  accountUserId String?                 @map("account_user_id") @db.Uuid
+  retryOwnerId String?                  @map("retry_owner_id") @db.VarChar(120)
+  retryLeaseExpiresAt DateTime?         @map("retry_lease_expires_at") @db.Timestamptz()
 
   @@index([type, receivedAt])
+  @@index([status, nextRetryAt])
   @@map("stripe_webhook_events")
 }

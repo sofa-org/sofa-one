@@ -122,6 +122,7 @@ describe('WalletService.withdraw()', () => {
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
+  const mockWaitForUserOperationReceipt = jest.fn();
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(async () => {
@@ -133,14 +134,15 @@ describe('WalletService.withdraw()', () => {
     mockFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
     mockGetBalance.mockResolvedValue(BigInt('200000000000000000'));
-    mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: '0xhash' });
+    mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    mockWaitForUserOperationReceipt.mockResolvedValue({ success: true, transactionHash: '0xhash' });
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
     mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
     mockTransaction.mockImplementation(async (callback) =>
       callback({
-        transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+        transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: jest.fn().mockImplementation(async ({ data }: any) => { mockUpdate({ where: { id: 'tx-1' }, data }); return { count: 1 }; }) },
       }),
     );
     mockEvaluateRisk.mockResolvedValue({
@@ -159,13 +161,13 @@ describe('WalletService.withdraw()', () => {
           provide: PrismaService,
           useValue: {
             userWallet: { findUnique: mockFindUnique },
-            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: jest.fn().mockImplementation(async ({ data }: any) => { mockUpdate({ where: { id: 'tx-1' }, data }); return { count: 1 }; }) },
             $transaction: mockTransaction,
           },
         },
         {
           provide: OpenfortService,
-          useValue: { sendUserOperation: mockSendUserOperation, signData: jest.fn() },
+          useValue: { submitUserOperation: mockSendUserOperation, waitForUserOperationReceipt: mockWaitForUserOperationReceipt, sendUserOperation: mockSendUserOperation, signData: jest.fn() },
         },
         {
           provide: WithdrawalPolicyService,
@@ -512,14 +514,37 @@ describe('WalletService.withdraw()', () => {
     expect(createCall.data.details).toMatchObject({ idempotencyKey: 'unique-key-abc' });
   });
 
+  it('persists typed UserOperation success and safe compatibility details', async () => {
+    await service.withdraw('user-1', VALID_DTO);
+
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        userOpSuccess: true,
+        details: expect.objectContaining({ userOperationSuccess: true }),
+      }),
+    }));
+  });
+
+  it('persists typed UserOperation failure without marking it billable', async () => {
+    mockWaitForUserOperationReceipt.mockResolvedValue({ success: false, transactionHash: '0xbundle' });
+
+    await service.withdraw('user-1', VALID_DTO);
+
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        userOpSuccess: false,
+        details: expect.objectContaining({ userOperationSuccess: false }),
+      }),
+    }));
+  });
+
   it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
     mockSendUserOperation.mockRejectedValue(new Error('Openfort down'));
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: 'tx-1' },
-      data: { status: 'unknown' },
-    });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'unknown' }),
+    }));
   });
 });
 

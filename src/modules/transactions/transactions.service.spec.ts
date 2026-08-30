@@ -63,6 +63,10 @@ describe('TransactionsService', () => {
     transaction: {
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn().mockImplementation(async ({ data }: any) => {
+        prisma.transaction.update({ where: { id: 'tx-1' }, data });
+        return { count: 1 };
+      }),
       findFirst: jest.fn(),
       findMany: jest.fn(),
     },
@@ -70,9 +74,13 @@ describe('TransactionsService', () => {
 
   const openfort = {
     verifyAgentKeyRegistration: jest.fn(),
-    sendUserOperation: jest.fn(),
+    submitUserOperation: jest.fn(),
+    waitForUserOperationReceipt: jest.fn(),
     sendBackendTransaction: jest.fn(),
+    getTransactionReceipt: jest.fn(),
   } as any;
+  // Keep legacy assertions pointed at the split submission seam.
+  openfort.sendUserOperation = openfort.submitUserOperation;
 
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
   const transactionSimulation = { assertSimulatable: jest.fn() } as any;
@@ -97,11 +105,10 @@ describe('TransactionsService', () => {
       status: 'confirmed',
       txHash: '0xhash',
     });
-    openfort.sendUserOperation.mockResolvedValue({
-      userOpHash: '0xuserop',
-      transactionHash: '0xhash',
-    });
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({ success: true, transactionHash: '0xhash' });
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    openfort.getTransactionReceipt.mockResolvedValue({ status: 'success' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
@@ -123,6 +130,10 @@ describe('TransactionsService', () => {
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
     await service.send('user-1', dto as any, apiKeyContext);
+
+    expect(prisma.transaction.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ userOpSuccess: true }),
+    }));
 
     expect(mockAssertSessionKeyAllowed).toHaveBeenCalledWith({
       userId: 'user-1',
@@ -735,7 +746,8 @@ describe('TransactionsService', () => {
   });
 
   it('stores pending status when transaction hash is not available yet', async () => {
-    openfort.sendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: null });
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({ success: null, transactionHash: null });
     prisma.transaction.update.mockResolvedValue({
       id: 'tx-1',
       status: 'pending',
@@ -747,13 +759,27 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'pending',
     });
-    expect(prisma.transaction.update).toHaveBeenCalledWith({
-      where: { id: 'tx-1' },
-      data: expect.objectContaining({
-        txHash: null,
-        status: 'pending',
-      }),
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'pending' }),
+    }));
+  });
+
+  it('does not confirm a reverted UserOperation inside a successful bundle receipt', async () => {
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({ success: false, transactionHash: '0xbundle' });
+    openfort.getTransactionReceipt.mockResolvedValue({ status: 'success' });
+    prisma.transaction.update.mockResolvedValue({ id: 'tx-1', status: 'unknown', txHash: '0xbundle' });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1', transactionHash: '0xbundle', status: 'unknown',
     });
+    expect(prisma.transaction.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'unknown', txHash: '0xbundle',
+        userOpSuccess: false,
+        details: expect.objectContaining({ userOperationSuccess: false }) }),
+    }));
+    const completionWrite = prisma.transaction.updateMany.mock.calls.find((call: any[]) => call[0].data.userOpSuccess === false);
+    expect(completionWrite?.[0].where).toEqual(expect.objectContaining({ userOpSuccess: null, billingReconciledAt: null }));
   });
 
   it('returns a safe status response for an owned transaction', async () => {

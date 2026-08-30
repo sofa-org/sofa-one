@@ -201,6 +201,11 @@ export class TransactionsService {
       return this.toSendResponse(tx);
     }
 
+    let observedUserOpHash = (tx as any).userOpHash ?? (
+      tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details) &&
+      typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
+        ? (tx.details as Record<string, unknown>).userOpHash as string : null
+    );
     try {
       this.logger.log(
         this.logContext({
@@ -215,27 +220,90 @@ export class TransactionsService {
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
-      const submission = await this.submitTransaction(executionMode, {
+      let submission = await this.submitTransaction(executionMode, {
         accountAddress,
         chainId,
         interactions: dto.interactions,
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
         sponsorship,
-      });
-
-      const updated = await this.prisma.transaction.update({
-        where: { id: tx.id },
-        data: {
-          txHash: submission.transactionHash ?? null,
-          status: submission.transactionHash ? 'confirmed' : 'pending',
-          completedAt: submission.transactionHash ? new Date() : null,
-          details: {
-            ...((tx.details as Record<string, unknown>) ?? {}),
-            ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : {}),
-          } as any,
+        onUserOperationHash: async (userOpHash) => {
+          observedUserOpHash = userOpHash;
+          await this.prisma.transaction.updateMany({
+            where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+              billingReconciledAt: null,
+              userOpHash: null,
+              status: { in: ['submitting', 'unknown', 'pending'] },
+            }),
+            data: { userOpHash, status: 'pending', completedAt: null },
+          });
         },
       });
+
+      if (submission.userOpHash) {
+        observedUserOpHash = submission.userOpHash;
+        // Persist the UserOperation identity before any provider wait. A wait
+        // timeout is therefore recoverable without resubmission.
+        await this.prisma.transaction.updateMany({
+          where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+            status: { in: ['submitting', 'unknown', 'pending'] }, userOpHash: null, billingReconciledAt: null,
+          }),
+          data: { userOpHash: submission.userOpHash, status: 'pending', completedAt: null,
+            details: { ...((tx.details as Record<string, unknown>) ?? {}), userOpHash: submission.userOpHash } as any },
+        });
+        try {
+          const receipt = await this.openfort.waitForUserOperationReceipt({ chainId, userOpHash: submission.userOpHash });
+          submission = { ...submission, transactionHash: receipt.transactionHash, userOperationSuccess: receipt.success };
+        } catch (error) {
+          await this.prisma.transaction.updateMany({
+            where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash,
+              { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: { not: true }, billingReconciledAt: null }),
+            data: { status: 'unknown', completedAt: null },
+          });
+          throw error;
+        }
+      }
+
+      let finalStatus: 'confirmed' | 'pending' | 'unknown' = submission.transactionHash ? 'confirmed' : 'pending';
+      if (submission.userOperationSuccess === false) finalStatus = 'unknown';
+      if (submission.transactionHash) {
+        try {
+          const receipt = await this.openfort.getTransactionReceipt(chainId, submission.transactionHash);
+          finalStatus = submission.userOperationSuccess === false
+            ? 'unknown'
+            : receipt.status === 'success' ? 'confirmed' : 'unknown';
+        } catch {
+          // The broadcast already returned a hash; inability to read its receipt
+          // is recoverable uncertainty, never a failed submission.
+          finalStatus = 'unknown';
+        }
+      }
+      const finalData = {
+        ...(submission.transactionHash ? { txHash: submission.transactionHash } : {}),
+        ...(submission.userOpHash ? { userOpSuccess: submission.transactionHash ? submission.userOperationSuccess ?? null : null } : {}),
+        status: submission.userOpHash && submission.userOperationSuccess === true && !submission.transactionHash
+          ? 'unknown' : finalStatus,
+        completedAt: finalStatus === 'confirmed' ? new Date() : null,
+        details: {
+          ...((tx.details as Record<string, unknown>) ?? {}),
+          ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : {}),
+          ...(submission.userOperationSuccess !== undefined ? { userOperationSuccess: submission.userOperationSuccess } : {}),
+        } as any,
+      };
+      const finalWrite = await this.prisma.transaction.updateMany({
+        where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : { txHash: null }),
+          // The completion is only allowed to establish typed truth from the
+          // unresolved state. A reconciler that already wrote true (or false)
+          // wins and this late request becomes a safe CAS no-op.
+          ...(submission.userOpHash ? { userOpSuccess: null } : {}),
+          billingReconciledAt: null,
+        }),
+        data: finalData,
+      });
+      if (finalWrite.count !== 1) return this.toSendResponse(tx);
+      const updated = { ...tx, ...finalData } as any;
 
       this.logger.log(
         this.logContext({
@@ -263,12 +331,19 @@ export class TransactionsService {
         }),
         error instanceof Error ? error.stack : undefined,
       );
-      await this.prisma.transaction.update({
-        where: { id: tx.id },
+      const uncertain = isOpenfortTimeout(error);
+      const knownUserOperation = Boolean(observedUserOpHash);
+      await this.prisma.transaction.updateMany({
+        where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: { not: true }, billingReconciledAt: null,
+          ...(knownUserOperation ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}),
+        }),
         data: {
-          status: 'failed',
-          failureReason: this.toFailureReason(error),
-          completedAt: new Date(),
+          ...(knownUserOperation ? { userOpHash: observedUserOpHash, status: 'unknown', failureReason: null, completedAt: null } : {
+            status: uncertain ? 'unknown' : 'failed',
+            failureReason: uncertain ? null : this.toFailureReason(error),
+            completedAt: uncertain ? null : new Date(),
+          }),
         },
       });
       throw error;
@@ -277,6 +352,10 @@ export class TransactionsService {
 
   private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
     return mode ?? 'session_key';
+  }
+
+  private sendCasWhere(tx: any, userId: string, chainId: number, idempotencyKey: string, requestHash: string, extra: Record<string, unknown>) {
+    return { id: tx.id, userId, operationType: 'send', chainId: BigInt(chainId), idempotencyKey, requestHash, ...extra };
   }
 
   private async assertEoaExecutionAllowed(
@@ -321,8 +400,9 @@ export class TransactionsService {
       agentOpenfortAccountId: string;
       agentKeyHash: string;
       sponsorship?: SendTransactionDto['sponsorship'];
+      onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
     },
-  ): Promise<{ transactionHash: string | null; userOpHash?: string }> {
+  ): Promise<{ transactionHash?: string | null; userOpHash?: string; userOperationSuccess?: boolean | null }> {
     if (executionMode === 'eoa') {
       return this.openfort.sendBackendTransaction({
         accountId: params.agentOpenfortAccountId,
@@ -331,13 +411,14 @@ export class TransactionsService {
       });
     }
 
-    return this.openfort.sendUserOperation({
+    return this.openfort.submitUserOperation({
       agentAccountId: params.agentOpenfortAccountId,
       accountAddress: params.accountAddress,
       chainId: params.chainId,
       keyHash: params.agentKeyHash,
       interactions: params.interactions,
       sponsorship: params.sponsorship,
+      onUserOperationHash: params.onUserOperationHash,
     });
   }
 
@@ -475,6 +556,8 @@ export class TransactionsService {
       details: Record<string, unknown>;
     },
   ) {
+    const createdAt = new Date();
+    const billingPeriodStart = new Date(Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1));
     try {
       const tx = await this.prisma.transaction.create({
         data: {
@@ -489,6 +572,8 @@ export class TransactionsService {
           operationType: params.operationType,
           idempotencyKey: params.idempotencyKey,
           requestHash: params.requestHash,
+          createdAt,
+          billingPeriodStart,
           details: params.details as any,
         },
       });
@@ -622,4 +707,12 @@ export class TransactionsService {
       throw new ForbiddenException(message);
     }
   }
+}
+
+function isOpenfortTimeout(error: unknown): boolean {
+  const candidate = error as { message?: unknown; response?: unknown };
+  const message = [candidate?.message, candidate?.response]
+    .map((value) => typeof value === 'string' ? value : JSON.stringify(value))
+    .join(' ');
+  return /timed out|timeout|timedout/i.test(message);
 }

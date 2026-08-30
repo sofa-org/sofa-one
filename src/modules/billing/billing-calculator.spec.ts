@@ -1,4 +1,6 @@
 import {
+  DEFAULT_API_OVERAGE_RATE_MICROS,
+  DEFAULT_WALLET_OVERAGE_RATE_MICROS,
   MICROS_PER_DOLLAR,
   PLANS,
   STANDARD_OUTBOUND_TIERS,
@@ -171,15 +173,16 @@ describe('billing-calculator', () => {
       expect(totals.totalMicros).toBe(micros(99));
     });
 
-    it('charges no API-call overage by default even when over the allowance', () => {
+    it('charges API-call overage by the accepted default rate when over the allowance', () => {
       const totals = calculateInvoiceTotals({
         plan: PLANS.starter,
         grossOutboundMicros: 0n,
         apiCallsTotal: 500_000,
       });
 
-      expect(totals.apiOverageMicros).toBe(0n);
-      expect(totals.totalMicros).toBe(micros(49));
+      // 400,000 over-limit calls * default $0.001 = $400
+      expect(totals.apiOverageMicros).toBe(micros(400));
+      expect(totals.totalMicros).toBe(micros(449));
     });
 
     it('charges wallet overage when over the allowance and a rate is set', () => {
@@ -215,6 +218,73 @@ describe('billing-calculator', () => {
       });
 
       expect(totals.outboundOverageMicros).toBe(50_000n); // $1,000 * 0.0050% = $0.05
+    });
+  });
+
+  describe('accepted overage rate defaults (Phase 1)', () => {
+    it('ships API $0.001/call and wallet $0.01/wallet/month', () => {
+      expect(DEFAULT_API_OVERAGE_RATE_MICROS).toBe(1_000n);
+      expect(DEFAULT_WALLET_OVERAGE_RATE_MICROS).toBe(10_000n);
+    });
+
+    it('charges exactly the boundary amount at exactly one over the API allowance', () => {
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.free, // 10_000 included API calls
+        grossOutboundMicros: 0n,
+        apiCallsTotal: 10_001, // exactly 1 over
+        apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
+      });
+      // 1 over-limit call * $0.001 = $0.001
+      expect(totals.apiOverageMicros).toBe(1_000n);
+      expect(totals.totalMicros).toBe(1_000n);
+    });
+
+    it('charges nothing at exactly the API allowance', () => {
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.free,
+        grossOutboundMicros: 0n,
+        apiCallsTotal: 10_000,
+        apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
+      });
+      expect(totals.apiOverageMicros).toBe(0n);
+    });
+
+    it('charges exactly one wallet over the allowance', () => {
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.free, // 10 included wallets
+        grossOutboundMicros: 0n,
+        activeWallets: 11, // exactly 1 over
+        walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
+      });
+      // 1 over-limit wallet * $0.01 = $0.01
+      expect(totals.walletOverageMicros).toBe(10_000n);
+    });
+
+    it('charges nothing at exactly the wallet allowance', () => {
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.free,
+        grossOutboundMicros: 0n,
+        activeWallets: 10,
+        walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
+      });
+      expect(totals.walletOverageMicros).toBe(0n);
+    });
+
+    it('scales large API overage in exact BigInt (no float)', () => {
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.starter, // 100_000 included
+        grossOutboundMicros: 0n,
+        apiCallsTotal: 1_000_000_000, // ~1e9 over-limit calls
+        apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
+      });
+      // (1e9 - 100_000) * 1000 micros = 999,900,000,000 micros = $999,900
+      expect(totals.apiOverageMicros).toBe(999_900_000_000n);
+    });
+
+    it('keeps outbound overage exact at one microdollar past the allowance', () => {
+      // Free plan allowance $50K; 1 microdollar over is billed in tier 1 at
+      // 100 ppm and rounds half-up to 0 microdollars (exact, no overflow).
+      expect(calculateOutboundOverage(micros(50_000) + 1n, micros(50_000))).toBe(0n);
     });
   });
 

@@ -142,6 +142,14 @@ class EnvironmentVariables {
   @Max(604800)
   @IsOptional()
   BILLING_USDC_QUOTE_TTL_SECONDS?: number = 86400;
+
+  // ── Billing worker (Phase 1 foundation — default OFF) ────────────────────
+  // The worker is a separate service seam that drains reconciliation,
+  // finalization catch-up, USDC active-claim recovery, and deferred Stripe
+  // renewal retries. It is safely disabled unless explicitly enabled.
+  @IsBooleanString()
+  @IsOptional()
+  BILLING_WORKER_ENABLED?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -3,9 +3,11 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { canonicalBillingJson } from './billing-json';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import {
@@ -25,6 +27,8 @@ import {
   ppmToPercentString,
 } from './billing.utils';
 import { BillingQuotaExceededException } from './billing-quota.exception';
+import { InvoiceSettlementService } from './invoice-settlement.service';
+import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 
 // ── JSON-safe DTO shapes (no BigInt leaks) ────────────────────────────────────
 
@@ -127,8 +131,21 @@ export interface RecordOutboundInput {
   requestId?: string;
   occurredAt?: Date;
   metadata?: Record<string, unknown>;
-  /** Optional reconciliation run that confirmed this event. */
+  /** Reconciliation fence. Required for every receipt-backed event. */
   reconciliationRunId?: string;
+  /** Immutable reconciliation run type included in the ownership fence. */
+  reconciliationRunType?: string;
+  /** Fencing owner for receipt-backed reconciliation writes. */
+  reconciliationOwnerId?: string;
+  /** Account fence supplied by the reconciliation worker. */
+  reconciliationAccountId?: string;
+  reconciliationPeriodStart?: Date;
+  reconciliationPeriodEnd?: Date;
+  reconciliationExpectedTransactionStatus?: string;
+  reconciliationExpectedTxHash?: string;
+  reconciliationExpectedChainId?: bigint;
+  reconciliationExpectedWalletAddress?: string;
+  reconciliationTransactionStatus?: 'confirmed' | 'quarantined';
   // ── Evidence-aware (receipt-confirmed) fields ─────────────────────────────
   // When `receipt` is present the row is written as `posted`/`quarantined` with
   // sourceType `openfort_receipt` and full evidence. When absent the row is the
@@ -179,7 +196,10 @@ const TOKEN_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 
 @Injectable()
 export class BillingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly invoiceSettlement?: InvoiceSettlementService,
+  ) {}
 
   /**
    * Shared billing-period lock seam (Phase 1E). Ensures the BillingAccount,
@@ -198,10 +218,9 @@ export class BillingService {
     work: (tx: Prisma.TransactionClient, billingAccountId: string) => Promise<T>,
   ): Promise<T> {
     const account = await this.ensureAccount(userId);
-    const lockKey = this.periodLockKey(account.id, periodStart);
     return this.prisma.$transaction(
       async (tx) => {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+        await acquireBillingPeriodAdvisoryLock(tx, account.id, periodStart);
         return work(tx, account.id);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -226,8 +245,40 @@ export class BillingService {
     }
   }
 
-  private periodLockKey(billingAccountId: string, periodStart: Date): string {
-    return `${billingAccountId}:${periodStart.toISOString()}`;
+  /**
+   * Ensures a due UTC period has an open local invoice. This is intentionally
+   * separate from finalizeInvoice: materialization may create an invoice for a
+   * period that has started, while finalization is only valid after period end
+   * plus grace and risk checks. The shared period lock makes concurrent worker
+   * invocations observe one account/period and one invoice.
+   */
+  async ensureOpenInvoiceForPeriod(userId: string, period?: string): Promise<BillingInvoiceDto> {
+    await this.ensurePlanVersions();
+    const { start, end } = parsePeriod(period);
+    if (start > new Date()) {
+      throw new ConflictException('Cannot materialize a future billing period');
+    }
+
+    return this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
+        const existing = await tx.billingInvoice.findUnique({
+          where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
+        });
+        if (existing) return this.toInvoiceDto(existing);
+
+        const planVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
+        // Custom/null or malformed plans fail closed; never emit a zero-priced
+        // invoice for an Enterprise/custom plan.
+        this.assertPlanFinalizable(planVersion);
+        await this.upsertOpenInvoice(tx, billingAccountId, planVersion, start, end);
+
+        const created = await tx.billingInvoice.findUnique({
+          where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
+        });
+        if (!created) throw new ConflictException('Open invoice creation was not persisted');
+        return this.toInvoiceDto(created);
+      }),
+    );
   }
 
   // ── Plans ───────────────────────────────────────────────────────────────────
@@ -486,7 +537,7 @@ export class BillingService {
       activeWallets: 0,
       totals,
     });
-    const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+    const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
     return {
       planVersionId: planVersion.id,
       periodStart: start,
@@ -664,8 +715,9 @@ export class BillingService {
    * walletAddress. `posted` requires a successful receipt; `quarantined`
    * requires zero volume.
    *
-   * Legacy hook: when `input.receipt` is absent the row is explicitly
-   * `unverified` + `legacy_import` and is never treated as receipt-confirmed.
+   * Non-receipt imports must use recordUnverifiedOutbound explicitly. This
+   * method is intentionally receipt-only so an evidence-bearing call can never
+   * fall through a partial/legacy fence branch.
    *
    * A unique-constraint conflict is only treated as an idempotent replay when
    * the existing row's canonical payload matches exactly; any divergence throws
@@ -676,16 +728,16 @@ export class BillingService {
       throw new BadRequestException('amountUsdMicros must be a non-negative bigint');
     }
     const occurredAt = input.occurredAt ?? new Date();
-    const periodStart = input.periodStart ?? this.monthStart(occurredAt);
-
+    // Receipt-backed reconciliation is accounted to its original worker target
+    // period, never to a later receipt timestamp.
     const isReceiptConfirmed = input.receipt !== undefined;
     if (!isReceiptConfirmed) {
-      // Legacy caller-supplied hook: unchanged, no period lock (it never races
-      // finalize because legacy rows are unverified and excluded from both the
-      // quarantine gate and the posted aggregation).
-      const account = await this.ensureAccount(input.userId);
-      return this.recordLegacyOutbound(input, account.id, occurredAt, periodStart);
+      throw new BadRequestException(
+        'recordSuccessfulOutbound requires receipt evidence; use recordUnverifiedOutbound for imports',
+      );
     }
+    const periodStart = input.reconciliationPeriodStart ?? input.periodStart;
+    if (!periodStart) throw new ConflictException('Complete reconciliation fence is required');
 
     // Receipt-backed appends serialize on the resolved accounting period so
     // reconciliation evidence cannot race invoice finalization. Validation,
@@ -693,6 +745,40 @@ export class BillingService {
     // transaction; a serialization conflict retries with a fresh transaction.
     return this.withRetryOnSerialization(() =>
       this.withBillingPeriodLock(input.userId, periodStart, async (tx, billingAccountId) => {
+        if (
+          !input.reconciliationRunId || !input.reconciliationRunType ||
+          !input.reconciliationOwnerId || !input.reconciliationAccountId ||
+          !input.reconciliationPeriodStart || !input.reconciliationPeriodEnd ||
+          !input.reconciliationExpectedTransactionStatus || !input.transactionId ||
+          input.reconciliationExpectedTxHash === undefined || input.reconciliationExpectedTxHash === null ||
+          input.reconciliationExpectedChainId === undefined ||
+          !input.reconciliationExpectedWalletAddress ||
+          !isValidFenceDate(input.reconciliationPeriodStart) ||
+          !isValidFenceDate(input.reconciliationPeriodEnd) ||
+          input.reconciliationPeriodEnd.getTime() <= input.reconciliationPeriodStart.getTime() ||
+          !['submitting', 'pending', 'unknown', 'confirmed'].includes(
+            input.reconciliationExpectedTransactionStatus,
+          ) ||
+          input.reconciliationAccountId !== billingAccountId ||
+          input.reconciliationPeriodStart.getTime() !== periodStart.getTime() ||
+          !input.periodStart || input.periodStart.getTime() !== periodStart.getTime()
+        ) {
+          throw new ConflictException('Incomplete reconciliation fence');
+        }
+        const ownerNow = new Date();
+        const owned = await tx.$queryRaw<Array<{ id: string }>>`
+            SELECT "id" FROM "billing_reconciliation_runs"
+            WHERE "id" = ${input.reconciliationRunId}
+              AND "worker_id" = ${input.reconciliationOwnerId}
+              AND "billing_account_id" = ${billingAccountId}
+              AND "account_user_id" = ${input.userId}
+              AND "run_type" = ${input.reconciliationRunType}
+              AND "period_start" = ${input.reconciliationPeriodStart}
+              AND "period_end" = ${input.reconciliationPeriodEnd}
+              AND "status" = 'running'
+              AND "lease_expires_at" > ${ownerNow}
+            FOR UPDATE`;
+        if (owned.length === 0) throw new ConflictException('Reconciliation ownership lost');
         this.assertReceiptBackedInput(input);
         await this.assertTransactionOwnershipAndEvidence(input, tx);
         if (input.status === 'posted') {
@@ -758,6 +844,38 @@ export class BillingService {
               metadata: input.metadata as Prisma.InputJsonValue | undefined,
             },
           });
+          if (
+            (input.reconciliationTransactionStatus === 'confirmed' || input.reconciliationTransactionStatus === 'quarantined') &&
+            input.transactionId &&
+            input.reconciliationExpectedTransactionStatus
+          ) {
+            const changed = await tx.transaction.updateMany({
+              where: {
+                id: input.transactionId,
+                userId: input.userId,
+                status: input.reconciliationExpectedTransactionStatus,
+                ...(input.reconciliationExpectedTxHash !== undefined
+                  ? { txHash: input.reconciliationExpectedTxHash }
+                  : {}),
+                ...(input.reconciliationExpectedChainId !== undefined
+                  ? { chainId: input.reconciliationExpectedChainId }
+                  : {}),
+                ...(input.reconciliationExpectedWalletAddress !== undefined
+                  ? { walletAddress: input.reconciliationExpectedWalletAddress }
+                  : {}),
+              },
+              data: {
+                status: input.reconciliationTransactionStatus === 'confirmed' ? 'confirmed' : 'needs_review',
+                ...(input.reconciliationTransactionStatus === 'quarantined'
+                  ? { failureReason: 'billing_reconciliation_quarantine' }
+                  : {}),
+                billingReconciledAt: new Date(),
+              },
+            });
+            if (changed.count === 0) {
+              throw new ConflictException('Transaction state changed while posting billing evidence');
+            }
+          }
           return { outcome: 'inserted' };
         } catch (err) {
           if (isUniqueConstraintError(err)) {
@@ -767,6 +885,19 @@ export class BillingService {
         }
       }),
     );
+  }
+
+  async recordUnverifiedOutbound(input: RecordOutboundInput): Promise<RecordOutboundOutcome> {
+    if (input.receipt !== undefined) {
+      throw new BadRequestException('Unverified outbound recording cannot accept receipt evidence');
+    }
+    if (typeof input.amountUsdMicros !== 'bigint' || input.amountUsdMicros < 0n) {
+      throw new BadRequestException('amountUsdMicros must be a non-negative bigint');
+    }
+    const occurredAt = input.occurredAt ?? new Date();
+    const periodStart = input.periodStart ?? this.monthStart(occurredAt);
+    const account = await this.ensureAccount(input.userId);
+    return this.recordLegacyOutbound(input, account.id, occurredAt, periodStart);
   }
 
   private async recordLegacyOutbound(
@@ -905,10 +1036,9 @@ export class BillingService {
   }
 
   /**
-   * Posted rows must carry a periodStart that exactly equals the UTC month
-   * start derived from the receipt block timestamp. Invalid/missing block
-   * timestamps or invalid dates are rejected; the reconciler caller is never
-   * trusted for the accounting period.
+   * Receipt timestamps describe when usage occurred. Reconciliation may
+   * explicitly book that evidence to its worker target period, so the target
+   * fence—not the receipt month—is authoritative for periodStart.
    */
   private assertPostedPeriod(input: RecordOutboundInput): void {
     const blockTimestamp = input.receipt!.receiptBlockTimestamp;
@@ -926,8 +1056,17 @@ export class BillingService {
     const expectedMonthStart = new Date(
       Date.UTC(blockDate.getUTCFullYear(), blockDate.getUTCMonth(), 1),
     );
-    if (!input.periodStart || input.periodStart.getTime() !== expectedMonthStart.getTime()) {
-      throw new ConflictException('periodStart must match the receipt block timestamp UTC month');
+    const targetPeriod = input.reconciliationPeriodStart ?? expectedMonthStart;
+    if (!input.periodStart || input.periodStart.getTime() !== targetPeriod.getTime()) {
+      throw new ConflictException('periodStart must match the explicit accounting period');
+    }
+    if (input.reconciliationPeriodStart && input.reconciliationPeriodEnd) {
+      const expectedEnd = new Date(Date.UTC(
+        targetPeriod.getUTCFullYear(), targetPeriod.getUTCMonth() + 1, 1,
+      ));
+      if (input.reconciliationPeriodEnd.getTime() !== expectedEnd.getTime()) {
+        throw new ConflictException('reconciliation period must be a complete UTC month');
+      }
     }
   }
 
@@ -965,6 +1104,9 @@ export class BillingService {
     if (!transaction) {
       throw new BadRequestException('transaction not found for receipt-confirmed outbound usage');
     }
+    // The transaction id is not an ownership proof on its own. Reject a row
+    // resolved under another account user before comparing receipt evidence or
+    // allowing the enclosing transaction to append accounting data.
     if (transaction.userId !== input.userId) {
       throw new ConflictException('transaction does not belong to the user');
     }
@@ -1075,7 +1217,7 @@ export class BillingService {
     const account = await this.ensureAccount(userId);
     await this.ensurePlanVersions();
     await this.ensureDefaultAssignment(account.id);
-    const { period: periodStr, start, end } = parsePeriod(period);
+    const { period: periodStr, start } = parsePeriod(period);
 
     const planVersion = await this.resolvePlanVersion(account.id, start);
     const plan = planVersionToConfig(planVersion);
@@ -1087,7 +1229,6 @@ export class BillingService {
         where: {
           billingAccountId: account.id,
           periodStart: start,
-          occurredAt: { gte: start, lt: end },
         },
       }),
       this.prisma.userWallet.count({
@@ -1228,7 +1369,7 @@ export class BillingService {
     // transaction. A serialization conflict retries with a fresh transaction
     // (no partial invoice/line state). Business ConflictExceptions and unique
     // P2002 are never swallowed by the retry loop.
-    return this.withRetryOnSerialization(() =>
+    const finalized = await this.withRetryOnSerialization(() =>
       this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
         // Re-check inside the lock so a waiter returns the existing immutable
         // invoice. An `open` invoice proceeds to finalization.
@@ -1256,7 +1397,6 @@ export class BillingService {
             where: {
               billingAccountId,
               periodStart: start,
-              occurredAt: { gte: start, lt: end },
             },
           }),
           tx.userWallet.count({
@@ -1305,7 +1445,7 @@ export class BillingService {
           activeWallets,
           totals,
         });
-        const snapshotHash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+        const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
 
         try {
           if (lockedExisting) {
@@ -1403,6 +1543,56 @@ export class BillingService {
         }
       }),
     );
+    // Settlement locks attempt -> invoice. Run this after the invoice
+    // finalization transaction commits so it cannot invert that lock order.
+    if (this.invoiceSettlement) {
+      await this.settleFinalizedRenewalPostCommit(finalized.id);
+    }
+    return finalized;
+  }
+
+  /**
+   * A Stripe renewal can be confirmed before its local open invoice reaches
+   * finalization. Once finalization has frozen the exact amount, give the
+   * shared first-rail settlement boundary one catch-up opportunity.
+   */
+  private async settleFinalizedRenewalPostCommit(invoiceId: string): Promise<void> {
+    if (!this.invoiceSettlement) return;
+    await this.prisma.$transaction(async (tx) => {
+      const attempts = await tx.billingPaymentAttempt.findMany({
+        where: { invoiceId, method: 'stripe', status: 'succeeded', stripeChargeKind: 'fixed_fee' },
+        orderBy: { createdAt: 'asc' },
+      });
+      for (const attempt of attempts) {
+        const settled = await this.invoiceSettlement!.settleInvoice(tx, {
+          id: attempt.id,
+          invoiceId,
+          method: 'stripe',
+        });
+        if (!settled.settled) {
+          const invoice = await tx.billingInvoice.findUnique({
+            where: { id: invoiceId },
+            select: { status: true, paidAt: true, totalMicros: true, currency: true, settlementAttemptId: true },
+          });
+          if (invoice?.settlementAttemptId === attempt.id) continue;
+          const differentWinner = Boolean(
+            invoice?.settlementAttemptId && invoice.settlementAttemptId !== attempt.id,
+          );
+          const exactPayableMismatch = Boolean(
+            invoice &&
+              invoice.status === 'finalized' &&
+              invoice.paidAt === null &&
+              (attempt.amountMicros !== invoice.totalMicros || attempt.currency !== invoice.currency),
+          );
+          if (!differentWinner && !exactPayableMismatch) continue;
+          const reason = differentWinner ? 'duplicate_unallocated' : 'fixed_fee_partial_balance';
+          await tx.billingPaymentAttempt.updateMany({
+            where: { id: attempt.id, status: 'succeeded' },
+            data: { status: 'needs_review', reviewReason: reason },
+          });
+        }
+      }
+    });
   }
 
   // ── Internal helpers ────────────────────────────────────────────────────────
@@ -1509,25 +1699,95 @@ export class BillingService {
           // scan). This deliberately does NOT filter on summary.accountingPeriods
           // — missing/legacy/malformed coverage must be discovered and evaluated
           // in TypeScript, never SQL-filtered into fail-open.
-          { periodStart: { gte: start } },
+          { billingAccountId: accountId, accountUserId: userId, periodStart: { lte: end }, periodEnd: { gte: start } },
+          // An account-scoped row with incomplete period/identity is still
+          // relevant and must be evaluated conservatively; SQL must not hide
+          // nullable periodEnd rows before the TypeScript risk fence sees them.
+          { billingAccountId: accountId, periodEnd: null },
+          { billingAccountId: accountId, accountUserId: null },
+          { billingAccountId: null, accountUserId: userId },
+          // Legacy/unprovable rows remain globally conservative.
+          { billingAccountId: null, accountUserId: null },
         ],
       },
       orderBy: { startedAt: 'desc' },
-      select: { id: true, status: true, completedAt: true, summary: true },
+      select: {
+        id: true,
+        startedAt: true,
+        status: true,
+        completedAt: true,
+        summary: true,
+        billingAccountId: true,
+        accountUserId: true,
+        runType: true,
+        periodStart: true,
+        periodEnd: true,
+      },
     });
 
-    // Newest-first: pick the first run relevant to this user AND this target
+// Newest-first: pick the first run relevant to this user AND this target
     // accounting period. Usage-linked runs are always relevant; unlinked runs
     // are scoped by userId and validated accountingPeriods coverage, with
     // missing/legacy/malformed coverage or unresolved risk kept conservatively
-    // relevant (never SQL-filtered or skipped into fail-open).
-    const relevant = candidateRuns.find((run) =>
-      this.isRunRelevantToPeriod(run, start, userId, runIds),
+    // relevant (never SQL-filtered into fail-open).
+    const relevantRuns = candidateRuns.filter((run) =>
+      this.isRunRelevantToPeriod(run, start, end, userId, accountId, runIds),
     );
 
-    if (relevant && isRiskyReconciliationRun(relevant, end)) {
+    const newestRelevantRun = [...relevantRuns].sort((a, b) => {
+      const aTime = a.startedAt?.getTime() ?? 0;
+      const bTime = b.startedAt?.getTime() ?? 0;
+      return bTime - aTime;
+    })[0];
+    if (newestRelevantRun && isRiskyReconciliationRun(newestRelevantRun, end, {
+      accountId,
+      userId,
+      runType: 'receipt_outbound',
+      periodStart: start,
+      periodEnd: end,
+    })) {
       throw new ConflictException(
         'Cannot finalize invoice: reconciliation has unresolved errors or conflicts',
+      );
+    }
+
+    // No-run / fresh-work barrier: a period with outbound transaction work that
+    // no reconciliation run has proven exhausted (submitting/pending/unknown
+    // rows, or confirmed rows that are unresolved) must not be closed. A
+    // confirmed row is unresolved when it lacks the durable
+    // `billingReconciledAt` marker OR has a NULL `txHash` — the NULL-hash
+    // branch applies REGARDLESS of the marker, because a confirmed transaction
+    // without a hash can never be reconciled and must never be silently
+    // finalized even if a marker was (incorrectly) set. A clean run covers only
+    // what it scanned, and rows created after the last run would otherwise
+    // close without their usage ever reaching the ledger. The worker always
+    // reconciles a period before finalizing it, so this is the closure proof,
+    // not the scheduling driver.
+    const [unresolvedPending, unresolvedConfirmed] = await Promise.all([
+      tx.transaction.count({
+        where: {
+          userId,
+          operationType: { in: ['send', 'withdraw'] },
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          // Typed membership is authoritative. A NULL membership is retained
+          // as unresolved for this account so it blocks closure conservatively,
+          // but a transaction assigned to another period cannot block this one.
+          OR: [{ billingPeriodStart: start }, { billingPeriodStart: null }],
+        },
+      }),
+      tx.transaction.count({
+        where: {
+          userId,
+          operationType: { in: ['send', 'withdraw'] },
+          status: 'confirmed',
+          OR: [{ txHash: null }, { billingReconciledAt: null }],
+          AND: [{ OR: [{ billingPeriodStart: start }, { billingPeriodStart: null }] }],
+        },
+      }),
+    ]);
+    if (unresolvedPending + unresolvedConfirmed > 0) {
+      throw new ConflictException(
+        'Cannot finalize invoice: unresolved outbound transactions require reconciliation',
       );
     }
   }
@@ -1549,15 +1809,42 @@ export class BillingService {
    * period.
    */
   private isRunRelevantToPeriod(
-    run: { id: string; status: string; summary: unknown },
+    run: {
+      id: string;
+      status: string;
+      summary: unknown;
+      billingAccountId?: string | null;
+      accountUserId?: string | null;
+      runType?: string;
+      periodStart?: Date;
+      periodEnd?: Date | null;
+    },
     start: Date,
+    end: Date,
     userId: string,
+    accountId: string,
     runIds: string[],
   ): boolean {
-    if (runIds.includes(run.id)) return true;
+    // Nullable identity is legacy/unprovable, never a global clean run. Check
+    // this before the usage-event run-id shortcut so a linked legacy row cannot
+    // bypass account/user fencing.
+    if (run.billingAccountId !== undefined && run.billingAccountId !== null) {
+      if (run.billingAccountId !== accountId) return false;
+    } else if (run.accountUserId !== undefined && run.accountUserId !== null && run.accountUserId !== userId) {
+      return false;
+    }
     const summary = (run.summary ?? {}) as Record<string, unknown>;
+    // Missing run identity is legacy/unprovable and must remain risky. A
+    // usage-linked run id is evidence of relevance only; it never bypasses
+    // account/user/type/period identity validation.
+    if (run.billingAccountId === undefined || run.accountUserId === undefined) return true;
+    if (run.runType === undefined || run.runType !== 'receipt_outbound') return true;
+    if (run.periodStart !== undefined && run.periodStart.getTime() !== start.getTime()) return true;
+    if (run.periodEnd !== undefined && run.periodEnd !== null && run.periodEnd.getTime() !== end.getTime()) return true;
+    if (run.periodStart === undefined || run.periodEnd === undefined || run.periodEnd === null) return true;
+    if (runIds.includes(run.id)) return true;
     const runUserId = summary.userId;
-    if (typeof runUserId === 'string' && runUserId !== userId) return false;
+    if (typeof runUserId === 'string' && runUserId !== userId) return true;
     if (summary.complete !== true) return true;
     if (hasUnresolvedRunRisk(run)) return true;
     const accountingPeriods = summary.accountingPeriods;
@@ -1770,6 +2057,10 @@ export class BillingService {
     return {
       version: 1,
       period,
+      // Keep the immutable plan identity at the snapshot root as well as in
+      // the human-readable plan object. Stripe bootstrap and the canonical
+      // serializer both validate this exact deterministic payload.
+      planVersionId: planVersion.id,
       plan: {
         code: planVersion.code,
         name: planVersion.name,
@@ -1889,6 +2180,10 @@ function isSerializationError(err: unknown): boolean {
   return text.includes('40001') || text.includes('could not serialize access');
 }
 
+function isValidFenceDate(value: unknown): value is Date {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
 /**
  * A reconciliation run is unresolved when it is running/failed, its summary has
  * errors/conflicts/notFound/transientError > 0, or it lacks the exhaustive
@@ -1905,29 +2200,79 @@ function isSerializationError(err: unknown): boolean {
  * in priority order.
  */
 function isRiskyReconciliationRun(
-  run: { status: string; completedAt: Date | null; summary: unknown },
+  run: {
+    id: string;
+    status: string;
+    completedAt: Date | null;
+    summary: unknown;
+    billingAccountId?: string | null;
+    accountUserId?: string | null;
+    runType?: string;
+    periodStart?: Date;
+    periodEnd?: Date | null;
+  },
   periodEnd: Date,
+  target: { accountId: string; userId: string; runType: string; periodStart: Date; periodEnd: Date },
 ): boolean {
-  if (run.status === 'running' || run.status === 'failed') return true;
+  if (run.status !== 'completed') return true;
+  if (
+    run.billingAccountId !== target.accountId ||
+    run.accountUserId !== target.userId ||
+    run.runType !== target.runType ||
+    !(run.periodStart instanceof Date) || run.periodStart.getTime() !== target.periodStart.getTime() ||
+    !(run.periodEnd instanceof Date) || run.periodEnd.getTime() !== target.periodEnd.getTime()
+  ) return true;
   const summary = (run.summary ?? {}) as Record<string, unknown>;
-  const errors = typeof summary.errors === 'number' ? summary.errors : 0;
-  const conflicts = typeof summary.conflicts === 'number' ? summary.conflicts : 0;
-  const notFound = typeof summary.notFound === 'number' ? summary.notFound : 0;
-  const transientError = typeof summary.transientError === 'number' ? summary.transientError : 0;
-  if (errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0) return true;
+  if (
+    summary.userId !== target.userId ||
+    summary.billingAccountId !== target.accountId ||
+    summary.runId !== run.id ||
+    summary.runType !== target.runType ||
+    summary.periodStart !== target.periodStart.toISOString() ||
+    summary.periodEnd !== target.periodEnd.toISOString()
+  ) return true;
+  const requiredCounters = [
+    'scanned', 'notFound', 'transientError', 'reverted', 'posted', 'quarantined',
+    'updated', 'errors', 'conflicts', 'replayed', 'casNoops', 'noHash', 'retryable',
+    'remainingUnresolved',
+  ];
+  if (!requiredCounters.every((key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0)) return true;
+  const errors = summary.errors as number;
+  const conflicts = summary.conflicts as number;
+  const notFound = summary.notFound as number;
+  const transientError = summary.transientError as number;
+  const noHash = summary.noHash as number;
+  const quarantined = summary.quarantined as number;
+  const retryable = summary.retryable as number;
+  // The final DB exhaustion check: a run whose exact account/period scan was
+  // not exhausted cannot be a clean closure proof.
+  const remainingUnresolved = summary.remainingUnresolved as number;
+  if (
+    errors > 0 ||
+    conflicts > 0 ||
+    notFound > 0 ||
+    transientError > 0 ||
+    noHash > 0 ||
+    quarantined > 0 ||
+    retryable > 0 ||
+    remainingUnresolved > 0
+  ) {
+    return true;
+  }
   // A run is only clean when it is an exhaustive completion marker.
   if (summary.complete !== true) return true;
   // completedAt must exist and not be earlier than the period-end cutoff.
   if (!(run.completedAt instanceof Date) || Number.isNaN(run.completedAt.getTime())) return true;
   if (run.completedAt.getTime() < periodEnd.getTime()) return true;
   // highWaterMark must be valid when present; a non-empty run must carry one.
-  const scanned = typeof summary.scanned === 'number' ? summary.scanned : 0;
+  const scanned = summary.scanned as number;
   const hwm = summary.highWaterMark;
   if (hwm !== undefined && hwm !== null && !isValidHighWaterMark(hwm)) return true;
   if (scanned > 0 && (hwm === undefined || hwm === null)) return true;
   // accountingPeriods must be a valid array of UTC month-start strings;
   // missing/malformed period metadata is conservatively risky.
   if (!isValidAccountingPeriods(summary.accountingPeriods)) return true;
+  if (scanned > 0 && (summary.accountingPeriods as unknown[]).length === 0) return true;
   return false;
 }
 
@@ -1935,8 +2280,10 @@ function isRiskyReconciliationRun(
 function isValidHighWaterMark(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
   const hwm = value as Record<string, unknown>;
-  if (typeof hwm.createdAt !== 'string' || typeof hwm.id !== 'string') return false;
-  return !Number.isNaN(Date.parse(hwm.createdAt));
+  if (typeof hwm.createdAt !== 'string' || typeof hwm.id !== 'string' || hwm.id.length === 0) return false;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(hwm.createdAt)) return false;
+  const parsed = new Date(hwm.createdAt);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString() === hwm.createdAt;
 }
 
 /**
@@ -1945,13 +2292,24 @@ function isValidHighWaterMark(value: unknown): boolean {
  * uncertainty and must never be scoped out by createdAt-derived coverage.
  */
 function hasUnresolvedRunRisk(run: { status: string; summary: unknown }): boolean {
-  if (run.status === 'running' || run.status === 'failed') return true;
+  if (run.status !== 'completed') return true;
   const summary = (run.summary ?? {}) as Record<string, unknown>;
+  const requiredCounters = [
+    'scanned', 'notFound', 'transientError', 'reverted', 'posted', 'quarantined',
+    'updated', 'errors', 'conflicts', 'replayed', 'casNoops', 'noHash', 'retryable',
+    'remainingUnresolved',
+  ];
+  if (!requiredCounters.every((key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0)) return true;
   const errors = typeof summary.errors === 'number' ? summary.errors : 0;
   const conflicts = typeof summary.conflicts === 'number' ? summary.conflicts : 0;
   const notFound = typeof summary.notFound === 'number' ? summary.notFound : 0;
   const transientError = typeof summary.transientError === 'number' ? summary.transientError : 0;
-  return errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0;
+  const noHash = typeof summary.noHash === 'number' ? summary.noHash : 0;
+  const quarantined = typeof summary.quarantined === 'number' ? summary.quarantined : 0;
+  const retryable = typeof summary.retryable === 'number' ? summary.retryable : 0;
+  const remainingUnresolved = typeof summary.remainingUnresolved === 'number' ? summary.remainingUnresolved : 0;
+  return errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0 ||
+    noHash > 0 || quarantined > 0 || retryable > 0 || remainingUnresolved > 0;
 }
 
 /**
@@ -1962,11 +2320,16 @@ function hasUnresolvedRunRisk(run: { status: string; summary: unknown }): boolea
  */
 function isValidAccountingPeriods(value: unknown): boolean {
   if (!Array.isArray(value)) return false;
+  const seen = new Set<string>();
+  let previous = '';
   for (const period of value) {
     if (typeof period !== 'string') return false;
     const date = new Date(period);
     if (Number.isNaN(date.getTime())) return false;
     if (date.toISOString() !== period) return false;
+    if (seen.has(period) || (previous !== '' && period <= previous)) return false;
+    seen.add(period);
+    previous = period;
     if (date.getUTCDate() !== 1) return false;
     if (
       date.getUTCHours() !== 0 ||

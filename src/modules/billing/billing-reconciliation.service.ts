@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import {
@@ -12,19 +13,30 @@ import { SUPPORTED_CHAINS } from '../../common/chains/supported-chains';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 
 /** ERC-20 `Transfer(address,address,uint256)` topic0. */
-const TRANSFER_TOPIC0 = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-/** A uint256 amount is exactly 32 bytes (64 hex chars) after the 0x prefix. */
+const TRANSFER_TOPIC0 = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';/** A uint256 amount is exactly 32 bytes (64 hex chars) after the 0x prefix. */
 const AMOUNT_DATA_REGEX = /^0x[0-9a-fA-F]{64}$/;
 /** An indexed address topic is exactly 32 bytes (64 hex chars) after 0x. */
 const INDEXED_ADDRESS_REGEX = /^0x[0-9a-fA-F]{64}$/;
 /** A token contract address is exactly 20 bytes (40 hex chars) after 0x. */
 const TOKEN_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 
+/** How long a reconciliation run's worker lease is valid before it is stale. */
+export const RECONCILE_LEASE_MS = 5 * 60 * 1000;
+
+/** Lease renewal grace: a run is renewed while at least this much lease remains. */
+export const RECONCILE_LEASE_RENEW_GRACE_MS = 60 * 1000;
+
+/** Run type used for every receipt reconciliation run. */
+export const RECONCILE_RUN_TYPE = 'receipt_outbound';
+
 type TransactionRow = {
   id: string;
   userId: string;
   chainId: bigint;
   txHash: string | null;
+  userOpHash?: string | null;
+  userOpSuccess?: boolean | null;
+  billingPeriodStart?: Date | null;
   walletAddress: string;
   operationType: string | null;
   status: string;
@@ -32,6 +44,24 @@ type TransactionRow = {
   /** Optional for defensive highWaterMark derivation (mocks may omit it). */
   createdAt?: Date;
 };
+
+export interface ReconcileOptions {
+  limit?: number;
+  /**
+   * Lease owner id for this run. When omitted, a fresh owner id is generated
+   * (`reconcile-<uuid>`) so EVERY invocation — including dashboard calls — owns
+   * its run with a real, owner-checked lease. Never null.
+   */
+  workerId?: string;
+  /**
+   * Explicit target accounting period for the scan (UTC month start). The
+   * worker always passes the period of each eligible open invoice it drains;
+   * dashboard callers may default to the current UTC period. Candidate scans
+   * are bounded by `createdAt < targetPeriodEnd`.
+   */
+  targetPeriodStart?: Date;
+  targetPeriodEnd?: Date;
+}
 
 export interface ReconcileResult {
   runId: string;
@@ -42,11 +72,18 @@ export interface ReconcileResult {
   posted: number;
   quarantined: number;
   updated: number;
-  skipped: number;
   errors: number;
   conflicts: number;
   replayed: number;
   casNoops: number;
+  /** Rows still in a non-final state with no txHash yet (retryable work). */
+  noHash: number;
+  /** Recoverable provider/ownership work that prevents closure. */
+  retryable: number;
+  /** True when a concurrent worker owned the active run, so this call skipped. */
+  skipped: boolean;
+  /** True when this worker lost lease ownership mid-run (taken over). */
+  ownershipLost: boolean;
 }
 
 type Summary = {
@@ -57,25 +94,48 @@ type Summary = {
   posted: number;
   quarantined: number;
   updated: number;
-  skipped: number;
   errors: number;
   conflicts: number;
   replayed: number;
   casNoops: number;
+  noHash: number;
+  retryable: number;
+  ownershipLost: boolean;
+};
+
+type AcquiredRun = {
+  id: string;
+  workerId: string;
+  billingAccountId: string;
 };
 
 /**
  * Receipt-confirmed outbound reconciliation (Commercial Billing Phase 1D).
  *
- * Scans persisted Transaction rows that carry a txHash and are still in a
- * non-final state, fetches a sanitized receipt via OpenfortService, and appends
- * evidence-backed `posted`/`quarantined` ledger events through
+ * Scans persisted Transaction rows for one account and one explicit target
+ * accounting period, fetches sanitized receipts via OpenfortService, and
+ * appends evidence-backed `posted`/`quarantined` ledger events through
  * BillingService.recordSuccessfulOutbound. Metering is idempotent on the
  * deterministic sourceKey / receipt-component unique index, so re-scanning
  * confirmed rows is safe and concurrent workers cannot double-count.
  *
- * This is a protected internal trigger seam (dashboard-only), not a public
- * API-key route, and never schedules itself.
+ * Cross-instance correctness (Oracle Gate 1 remediation):
+ * - Runs are acquired account + target-period scoped inside the shared
+ *   billing-period advisory lock. A partial unique index on
+ *   (billing_account_id, period_start, run_type) WHERE status = 'running'
+ *   guarantees at most one active run per account/period/runType.
+ * - A concurrent worker that finds a live running run (valid lease) skips
+ *   without overlapping. A stale running run (expired lease) is taken over via
+ *   an owner-checked compare-and-set; the takeover owner renews the lease with
+ *   heartbeats and the previous owner's completion/failure updates can no
+ *   longer match (owner-checked), so an old owner can never complete a run it
+ *   no longer owns.
+ * - No interactive DB transaction spans Openfort RPC calls: the acquisition
+ *   transaction commits before any RPC, heartbeats are single updates, and
+ *   completion/failure are single owner-checked updates.
+ *
+ * This is a protected internal trigger seam (dashboard-only + worker), not a
+ * public API-key route, and never schedules itself.
  */
 @Injectable()
 export class BillingReconciliationService {
@@ -87,8 +147,23 @@ export class BillingReconciliationService {
     private readonly billing: BillingService,
   ) {}
 
-  async reconcile(userId: string, opts: { limit?: number } = {}): Promise<ReconcileResult> {
+  async reconcile(userId: string, opts: ReconcileOptions = {}): Promise<ReconcileResult> {
     const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+    // Every invocation gets a real owner id (dashboard + worker alike) so every
+    // run is lease/owner-checked end to end.
+    const workerId = opts.workerId ?? `reconcile-${randomUUID()}`;
+    const now = new Date();
+    const targetPeriodStart = opts.targetPeriodStart ?? this.monthStart(now);
+    const targetPeriodEnd =
+      opts.targetPeriodEnd ??
+      new Date(
+        Date.UTC(
+          targetPeriodStart.getUTCFullYear(),
+          targetPeriodStart.getUTCMonth() + 1,
+          1,
+        ),
+      );
+
     const summary: Summary = {
       scanned: 0,
       notFound: 0,
@@ -97,45 +172,44 @@ export class BillingReconciliationService {
       posted: 0,
       quarantined: 0,
       updated: 0,
-      skipped: 0,
       errors: 0,
       conflicts: 0,
       replayed: 0,
       casNoops: 0,
+      noHash: 0,
+      retryable: 0,
+      ownershipLost: false,
     };
 
-    // Operational grouping month for this scan. This is NOT the receipt
-    // accounting period: posted events derive their own periodStart from the
-    // receipt block timestamp's UTC month.
-    const operationalPeriodStart = this.monthStart(new Date());
-
-    // Run creation uses the shared billing-period lock seam so invoice
-    // finalization and the creation of a `running` reconciliation run cannot
-    // pass each other. The run is created inside the provided transaction
-    // client.
-    const run = await this.billing.withBillingPeriodLock(
+    // Account + target-period run acquisition (DB-backed, takeover-aware). The
+    // shared advisory lock serializes acquisition against finalization; a live
+    // competing run makes this call skip without overlapping.
+    const acquired = await this.acquireRun(
       userId,
-      operationalPeriodStart,
-      async (tx) =>
-        tx.billingReconciliationRun.create({
-          data: {
-            status: 'running',
-            runType: 'receipt_outbound',
-            periodStart: operationalPeriodStart,
-            source: 'openfort_receipt',
-          },
-        }),
+      targetPeriodStart,
+      targetPeriodEnd,
+      workerId,
     );
+    if (acquired.kind === 'skip') {
+      return {
+        runId: acquired.runId ?? '',
+        ...zeroCounters(),
+        skipped: true,
+        ownershipLost: false,
+      };
+    }
+    const run = acquired.run;
 
     try {
-      const candidates = await this.selectCandidates(userId, limit);
+      const candidates = await this.selectCandidates(userId, targetPeriodStart, limit);
 
       summary.scanned = candidates.length;
 
       // A candidate with missing/invalid createdAt cannot prove the high-water
       // contract; surface it as a safe error so the run is never treated as
       // clean exhaustive.
-      const invalidCreatedAtCount = candidates.filter((c) => !isValidCreatedAt(c.createdAt)).length;
+      const invalidCreatedAtCount = candidates.filter((c) => !isValidCreatedAt(c.createdAt))
+        .length;
       if (invalidCreatedAtCount > 0) {
         summary.errors += invalidCreatedAtCount;
         this.logger.warn(
@@ -150,13 +224,27 @@ export class BillingReconciliationService {
       const accountingPeriods = this.buildAccountingPeriods(candidates);
 
       for (const tx of candidates) {
+        // Owner-checked heartbeat renewal before each candidate, refreshed with
+        // a fresh timestamp every heartbeat. Losing the lease (a concurrent
+        // takeover) stops this worker immediately; the takeover owner resumes
+        // from the persisted progress markers.
+        const owned = await this.renewLease(run);
+        if (!owned) {
+          summary.ownershipLost = true;
+          break;
+        }
         try {
-          await this.processTransaction(userId, tx, summary, run.id);
+          await this.processTransaction(
+            userId, tx, summary, run.id, run.workerId, run.billingAccountId,
+            targetPeriodStart, targetPeriodEnd,
+          );
+          if (summary.ownershipLost) break;
         } catch (error) {
           if (error instanceof ConflictException) {
             summary.conflicts++;
           } else {
             summary.errors++;
+            summary.retryable++;
           }
           this.logger.error(
             `Reconciliation failed for transaction ${tx.id}`,
@@ -165,46 +253,231 @@ export class BillingReconciliationService {
         }
       }
 
-      const complete = this.isCompleteRun(summary, candidates.length, limit, invalidCreatedAtCount);
+      // Final DB exhaustion check for the exact account/period: the run is
+      // clean only when NO unresolved candidate remains after this scan. This
+      // is the durable closure proof (the JSON high-water mark alone is
+      // coverage metadata, never a closure proof).
+      const remaining = await this.countUnresolvedCandidates(userId, targetPeriodStart);
+      const exhausted = remaining === 0;
+
+      const complete = this.isCompleteRun(summary, invalidCreatedAtCount, exhausted);
       const persistedSummary = this.buildPersistedSummary(
         summary,
         userId,
         complete,
         highWaterMark,
         accountingPeriods,
+        remaining,
+        run.id,
+        run.billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+        RECONCILE_RUN_TYPE,
       );
 
-      await this.prisma.billingReconciliationRun.update({
-        where: { id: run.id },
-        data: { status: 'completed', completedAt: new Date(), summary: persistedSummary as any },
+      // Owner-checked completion: only the current lease owner may complete
+      // the run. A taken-over run (different workerId) never matches, so an
+      // old owner can never overwrite the takeover owner's state.
+      //
+      // The completion CAS count is captured and propagated: if ownership was
+      // lost AFTER the last heartbeat (e.g. a takeover landed between the
+      // heartbeat and this write), the CAS matches zero rows and ownershipLost
+      // is set so callers (the worker) never finalize a period they no longer
+      // own.
+      const completionNow = new Date();
+      const completed = await this.prisma.billingReconciliationRun.updateMany({
+        where: {
+          id: run.id,
+          status: 'running',
+          workerId: run.workerId,
+          leaseExpiresAt: { gt: completionNow },
+        },
+        data: {
+          status: 'completed',
+          completedAt: completionNow,
+          summary: persistedSummary as any,
+        },
       });
+      if (completed.count === 0) {
+        summary.ownershipLost = true;
+      }
     } catch (error) {
       // A failed run is never complete; userId/complete are still persisted.
-      const persistedSummary = this.buildPersistedSummary(summary, userId, false, null, []);
-      await this.prisma.billingReconciliationRun.update({
-        where: { id: run.id },
+      // Owner-checked so a takeover owner's state is never clobbered.
+      const persistedSummary = this.buildPersistedSummary(
+        summary, userId, false, null, [], null, run.id, run.billingAccountId,
+        targetPeriodStart, targetPeriodEnd, RECONCILE_RUN_TYPE,
+      );
+      const failureNow = new Date();
+      const failed = await this.prisma.billingReconciliationRun.updateMany({
+        where: {
+          id: run.id,
+          status: 'running',
+          workerId: run.workerId,
+          leaseExpiresAt: { gt: failureNow },
+        },
         data: {
           status: 'failed',
-          completedAt: new Date(),
+          completedAt: failureNow,
           errorDetails: sanitizeErrorMessage(
             error instanceof Error ? error.message : String(error),
           ),
           summary: persistedSummary as any,
         },
       });
+      if (failed.count === 0) {
+        // Ownership was lost before the failure — the takeover owner owns the
+        // run now. Do not throw a misleading error; return the partial summary.
+        this.logger.warn(
+          `Reconciliation run ${run.id} was taken over before it could be marked failed`,
+        );
+        return { runId: run.id, ...summary, skipped: false, ownershipLost: true };
+      }
       throw error;
     }
 
-    return { runId: run.id, ...summary };
+    return { runId: run.id, ...summary, skipped: false, ownershipLost: summary.ownershipLost };
+  }
+
+  /**
+   * Acquires the account + target-period run inside the shared billing-period
+   * advisory lock. A live running run (valid lease) makes this caller skip; a
+   * stale running run is taken over with an owner-checked compare-and-set; a
+   * free slot is created. A concurrent create is absorbed by the partial
+   * unique active-run index (P2002 → skip).
+   */
+  private async acquireRun(
+    userId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
+    workerId: string,
+  ): Promise<{ kind: 'acquired'; run: AcquiredRun } | { kind: 'skip'; runId: string | null }> {
+    return this.billing.withBillingPeriodLock(
+      userId,
+      targetPeriodStart,
+      async (tx, billingAccountId) => {
+        const existing = await tx.billingReconciliationRun.findFirst({
+          where: {
+            billingAccountId,
+            periodStart: targetPeriodStart,
+            runType: RECONCILE_RUN_TYPE,
+            status: 'running',
+          },
+          select: {
+            id: true,
+            workerId: true,
+            leaseExpiresAt: true,
+            billingAccountId: true,
+          },
+        });
+
+        if (existing) {
+          const leaseValid =
+            existing.leaseExpiresAt !== null && existing.leaseExpiresAt.getTime() > Date.now();
+          if (leaseValid) {
+            // A live concurrent worker owns this run — skip, never overlap.
+            return { kind: 'skip', runId: existing.id } as const;
+          }
+          // Stale running run (expired lease OR a legacy row with a NULL lease):
+          // takeover with an owner-checked compare-and-set that only matches
+          // while the run is still running with the same stale/null lease.
+          const taken = await tx.billingReconciliationRun.updateMany({
+            where: {
+              id: existing.id,
+              status: 'running',
+              OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lte: new Date() } }],
+            },
+            data: {
+              workerId,
+              leaseExpiresAt: new Date(Date.now() + RECONCILE_LEASE_MS),
+              heartbeatAt: new Date(),
+            },
+          });
+          if (taken.count === 0) {
+            // A concurrent worker won the takeover — skip.
+            return { kind: 'skip', runId: existing.id } as const;
+          }
+          return {
+            kind: 'acquired',
+            run: {
+              id: existing.id,
+              workerId,
+              billingAccountId: existing.billingAccountId ?? billingAccountId,
+            },
+          } as const;
+        }
+
+        try {
+          const run = await tx.billingReconciliationRun.create({
+            data: {
+              status: 'running',
+              runType: RECONCILE_RUN_TYPE,
+              periodStart: targetPeriodStart,
+              periodEnd: targetPeriodEnd,
+              source: 'openfort_receipt',
+              billingAccountId,
+              accountUserId: userId,
+              workerId,
+              leaseExpiresAt: new Date(Date.now() + RECONCILE_LEASE_MS),
+              heartbeatAt: new Date(),
+            },
+            select: { id: true, workerId: true, billingAccountId: true },
+          });
+          return {
+            kind: 'acquired',
+            run: { id: run.id, workerId, billingAccountId: run.billingAccountId ?? billingAccountId },
+          } as const;
+        } catch (err) {
+          if (isUniqueConstraintError(err)) {
+            // A concurrent worker created the active run first — skip.
+            const winner = await tx.billingReconciliationRun.findFirst({
+              where: {
+                billingAccountId,
+                periodStart: targetPeriodStart,
+                runType: RECONCILE_RUN_TYPE,
+                status: 'running',
+              },
+              select: { id: true },
+            });
+            return { kind: 'skip', runId: winner?.id ?? null } as const;
+          }
+          throw err;
+        }
+      },
+    );
+  }
+
+  /**
+   * Owner-checked lease heartbeat. Only the recorded owner may renew; a
+   * takeover changes `workerId`, so the old owner's renewal matches zero rows
+   * and the caller stops doing work. The heartbeat timestamp is refreshed with
+   * a FRESH `new Date()` on every call (never a stale captured time). Returns
+   * false when ownership was lost.
+   */
+  private async renewLease(run: AcquiredRun): Promise<boolean> {
+    const now = new Date();
+    const result = await this.prisma.billingReconciliationRun.updateMany({
+      where: {
+        id: run.id,
+        status: 'running',
+        workerId: run.workerId,
+        leaseExpiresAt: { gt: now },
+      },
+      data: {
+        heartbeatAt: now,
+        leaseExpiresAt: new Date(now.getTime() + RECONCILE_LEASE_MS),
+      },
+    });
+    return result.count > 0;
   }
 
   /**
    * JSON-safe persisted summary: all existing counters plus the completion
-   * marker (`userId`, `complete`, `highWaterMark`) and the `accountingPeriods`
-   * this scan's candidates may affect (UTC month-start strings derived from
-   * candidate createdAt). `highWaterMark` is always present — null for an empty
-   * candidate set or when no valid candidate exists. Never serializes BigInt,
-   * receipt logs, calldata, API keys, or provider objects.
+   * marker (`userId`, `complete`, `highWaterMark`), the `accountingPeriods`
+   * this scan's candidates may affect, and the `remainingUnresolved` count of
+   * the final DB exhaustion check. `highWaterMark` is always present — null
+   * for an empty candidate set or when no valid candidate exists. Never
+   * serializes BigInt, receipt logs, calldata, API keys, or provider objects.
    */
   private buildPersistedSummary(
     summary: Summary,
@@ -212,6 +485,12 @@ export class BillingReconciliationService {
     complete: boolean,
     highWaterMark: { createdAt: string; id: string } | null,
     accountingPeriods: string[],
+    remainingUnresolved: number | null,
+    runId?: string,
+    billingAccountId?: string,
+    periodStart?: Date,
+    periodEnd?: Date,
+    runType?: string,
   ): Record<string, unknown> {
     return {
       ...summary,
@@ -219,6 +498,12 @@ export class BillingReconciliationService {
       complete,
       highWaterMark,
       accountingPeriods,
+      remainingUnresolved,
+      runId,
+      billingAccountId,
+      periodStart: periodStart?.toISOString(),
+      periodEnd: periodEnd?.toISOString(),
+      runType,
     };
   }
 
@@ -241,25 +526,33 @@ export class BillingReconciliationService {
   }
 
   /**
-   * A run is complete only when the bounded candidate scan is truly exhausted
-   * (`candidates.length < limit`), every selected candidate has a valid
-   * createdAt (the high-water contract is provable), and there are no
-   * retryable/error/conflict counters. A limit-filled run is never complete
-   * even without errors.
+   * A run is complete only when the final DB exhaustion check found zero
+   * unresolved candidates for the exact account/period, every selected
+   * candidate has a valid createdAt (the high-water contract is provable), and
+   * there are no retryable/error/conflict/no-hash counters.
    */
   private isCompleteRun(
     summary: Summary,
-    candidatesLength: number,
-    limit: number,
     invalidCreatedAtCount: number,
+    exhausted: boolean,
   ): boolean {
+    const counters = [
+      summary.scanned, summary.notFound, summary.transientError, summary.reverted,
+      summary.posted, summary.quarantined, summary.updated, summary.errors,
+      summary.conflicts, summary.replayed, summary.casNoops, summary.noHash,
+      summary.retryable,
+    ];
     return (
-      candidatesLength < limit &&
+      exhausted &&
       invalidCreatedAtCount === 0 &&
+      counters.every((value) => Number.isSafeInteger(value) && value >= 0) &&
       summary.notFound === 0 &&
       summary.transientError === 0 &&
       summary.errors === 0 &&
-      summary.conflicts === 0
+      summary.conflicts === 0 &&
+      summary.noHash === 0 &&
+      summary.retryable === 0 &&
+      summary.quarantined === 0
     );
   }
 
@@ -283,39 +576,117 @@ export class BillingReconciliationService {
   }
 
   /**
-   * Deterministic two-stage candidate selection so a large backlog of confirmed
-   * rows can never starve new pending/submitting/unknown transactions.
-   * Non-confirmed candidates are scanned first (createdAt/id asc); if fewer
-   * than `limit` remain, confirmed rows fill the rest (same sort, excluding ids
-   * already selected). Total is at most `limit`.
+   * Fair two-stage candidate selection scoped to the account and the target
+   * close cutoff (`createdAt < targetPeriodEnd`). Non-confirmed candidates
+   * (including rows with no txHash yet, which are unresolved work) get a
+   * guaranteed slice; confirmed backlog gets a guaranteed slice too, so a
+   * >200-row unresolved backlog can never starve confirmed work. A row with
+   * `status = 'confirmed'` but a NULL `txHash` is data-integrity anomalous and
+   * is treated as unresolved: it is scanned with the confirmed slice, counted
+   * as noHash (never RPC'd — there is no hash), and blocks closure. The
+   * persisted `billingReconciledAt` marker is the durable progress cursor for
+   * confirmed rows; the final DB exhaustion check is the closure proof.
    */
-  private async selectCandidates(userId: string, limit: number): Promise<TransactionRow[]> {
+  private async selectCandidates(
+    userId: string,
+    targetPeriodStart: Date,
+    limit: number,
+  ): Promise<TransactionRow[]> {
+    if (limit <= 0) return [];
+
+    // A one-row page still probes both queues.  Choosing the confirmed row
+    // when both are present prevents an unresolved pending/unknown head from
+    // permanently hiding confirmed backlog; when no confirmed row exists the
+    // pending probe supplies the one available slot.  Larger pages reserve a
+    // slot for each queue and then distribute the remainder to confirmed work.
+    const confirmedSlice = Math.max(1, Math.floor(limit / 2));
+    const nonConfirmedSlice = limit - confirmedSlice;
+
     const nonConfirmed = await this.prisma.transaction.findMany({
       where: {
         userId,
-        txHash: { not: null },
         operationType: { in: ['send', 'withdraw'] },
         status: { in: ['submitting', 'pending', 'unknown'] },
+        OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }],
       },
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      take: limit,
+      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      take: Math.max(1, nonConfirmedSlice),
     });
 
-    if (nonConfirmed.length >= limit) return nonConfirmed;
+    // Slots left over from a sparse non-confirmed set roll into the confirmed
+    // slice so a small pending set never wastes the bounded scan budget.
+    const confirmedTake = confirmedSlice + Math.max(0, nonConfirmedSlice - nonConfirmed.length);
 
+    // A confirmed row is unresolved when it has NO txHash (data-integrity
+    // anomalous) OR it lacks the durable `billingReconciledAt` marker. The
+    // `txHash IS NULL` branch deliberately ignores the marker: a confirmed row
+    // with a NULL hash can never be reconciled and must keep the run/period
+    // from closing even if a marker was (incorrectly) set.
     const confirmed = await this.prisma.transaction.findMany({
       where: {
         userId,
-        txHash: { not: null },
         operationType: { in: ['send', 'withdraw'] },
         status: 'confirmed',
+        AND: [
+          { OR: [{ txHash: null }, { billingReconciledAt: null }] },
+          { OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }] },
+        ],
         id: { notIn: nonConfirmed.map((tx) => tx.id) },
       },
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      take: limit - nonConfirmed.length,
+      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      take: confirmedTake,
     });
 
-    return [...nonConfirmed, ...confirmed];
+    if (limit === 1) {
+      if (confirmed.length === 0) return nonConfirmed.slice(0, 1);
+      if (nonConfirmed.length === 0) return [confirmed[0]];
+      const pending = nonConfirmed[0] as TransactionRow & { billingLastAttemptedAt?: Date | null };
+      const done = confirmed[0] as TransactionRow & { billingLastAttemptedAt?: Date | null };
+      const pendingAt = pending.billingLastAttemptedAt?.getTime() ?? null;
+      const confirmedAt = done.billingLastAttemptedAt?.getTime() ?? null;
+      // Null timestamps are the initial fair turn. Keep confirmed first on
+      // the initial tie; the touch-before-RPC CAS then makes the other lane's
+      // null timestamp win on the next tick.
+      if (pendingAt === null && confirmedAt === null) return [done];
+      if (pendingAt === null) return [pending];
+      if (confirmedAt === null) return [done];
+      return [pendingAt <= confirmedAt ? pending : done];
+    }
+    return [...nonConfirmed, ...confirmed].slice(0, limit);
+  }
+
+  /**
+   * Final DB exhaustion check: counts every unresolved candidate for the exact
+   * account (via the 1:1 user) and target close cutoff that a clean run must
+   * have consumed. Rows still pending (notFound/transient/no-hash), and
+   * confirmed rows that are unresolved — no `billingReconciledAt` marker, OR
+   * a NULL `txHash` REGARDLESS of marker (a confirmed row without a hash can
+   * never be reconciled) — keep the count above zero, so a run is only clean
+   * when the scan was exhaustive.
+   */
+  private async countUnresolvedCandidates(userId: string, targetPeriodStart: Date): Promise<number> {
+    const [nonConfirmed, confirmed] = await Promise.all([
+      this.prisma.transaction.count({
+        where: {
+          userId,
+          operationType: { in: ['send', 'withdraw'] },
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }],
+        },
+      }),
+      this.prisma.transaction.count({
+        where: {
+          userId,
+          operationType: { in: ['send', 'withdraw'] },
+          status: 'confirmed',
+          AND: [
+            { OR: [{ txHash: null }, { billingReconciledAt: null }] },
+            { OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }] },
+          ],
+        },
+      }),
+    ]);
+    return nonConfirmed + confirmed;
   }
 
   private async processTransaction(
@@ -323,9 +694,117 @@ export class BillingReconciliationService {
     tx: TransactionRow,
     summary: Summary,
     runId: string,
+    workerId: string,
+    billingAccountId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
   ): Promise<void> {
+    // Legacy rows without typed membership are ambiguous. They are selected so
+    // the run remains visibly blocked, but never assigned to whichever period
+    // happens to scan them first.
+    if (tx.billingPeriodStart === null) {
+      summary.conflicts++;
+      return;
+    }
     const chainId = Number(tx.chainId);
-    const txHash = tx.txHash!;
+
+    const touched = await this.fencedStateUpdate(
+      tx,
+      { billingLastAttemptedAt: new Date() },
+      runId,
+      workerId,
+      billingAccountId,
+      targetPeriodStart,
+      targetPeriodEnd,
+    );
+    if (touched !== 1) {
+      summary.conflicts++;
+      return;
+    }
+
+    const txDetails = tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details)
+      ? tx.details as Record<string, unknown> : {};
+    const storedUserOpHash = tx.userOpHash ?? (typeof txDetails.userOpHash === 'string' ? txDetails.userOpHash : null);
+    const isUserOperation = Boolean(
+      storedUserOpHash ||
+      txDetails.executionMode === 'session_key' ||
+      txDetails.execution === 'calibur_agent_user_operation',
+    );
+
+    if (isUserOperation && tx.userOpSuccess === false) {
+      const terminal = await this.fencedStateUpdate(
+        tx,
+        { status: 'failed', billingReconciledAt: new Date() },
+        runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+      );
+      if (terminal !== 1) summary.conflicts++;
+      else summary.reverted++;
+      return;
+    }
+
+    // A UserOperation can be included in a successful bundle transaction while
+    // its own execution reverted. The inner result is persisted separately by
+    // TransactionsService; never treat the enclosing receipt as billable.
+    if (isUserOperation && txDetails.userOperationSuccess === false) {
+      summary.conflicts++;
+      return;
+    }
+
+    // A stored UserOperation hash remains recoverable even when an enclosing
+    // bundle transaction hash is already present. The inner result is the only
+    // authority for membership; never meter the outer bundle while unresolved.
+    if (isUserOperation && tx.userOpSuccess !== true) {
+      if (!storedUserOpHash) {
+        summary.transientError++;
+        return;
+      }
+      try {
+        const recovered = await this.openfort.waitForUserOperationReceipt({
+          chainId,
+          userOpHash: storedUserOpHash,
+        });
+        if (recovered.success === false) {
+          const terminal = await this.fencedStateUpdate(
+            tx,
+            { userOpSuccess: false, status: 'failed', billingReconciledAt: new Date() },
+            runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+          );
+          if (terminal === 1) summary.reverted++;
+          else summary.conflicts++;
+          return;
+        }
+        if (recovered.success === true && recovered.transactionHash) {
+          const recoveredUpdate = await this.fencedStateUpdate(
+            tx,
+            { userOpSuccess: true, txHash: recovered.transactionHash, status: 'pending' },
+            runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+          );
+          if (recoveredUpdate !== 1) {
+            summary.conflicts++;
+            return;
+          }
+          tx.txHash = recovered.transactionHash;
+          tx.userOpSuccess = true;
+        }
+      } catch {
+        summary.transientError++;
+        return;
+      }
+      if (tx.userOpSuccess !== true) {
+        summary.transientError++;
+        return;
+      }
+    }
+
+    // A row still in a non-final state with no txHash is unresolved work: it
+    // is scanned but never queried on the RPC (no hash to query). It blocks
+    // closure via the noHash counter so a clean run is never claimed over
+    // unresolved work.
+    if (!tx.txHash) {
+      summary.noHash++;
+      return;
+    }
+    const txHash = tx.txHash;
 
     // A persisted chain no longer in the supported config can never be priced.
     if (!SUPPORTED_CHAINS[chainId]) {
@@ -336,7 +815,7 @@ export class BillingReconciliationService {
           sourceKey: `tx:${tx.id}:unsupported_chain`,
           receiptRef: `${txHash}:unsupported_chain`,
           receiptLogIndex: null,
-          periodStart: this.monthStart(new Date()),
+          periodStart: targetPeriodStart,
           occurredAt: new Date(),
           assetId: null,
           receipt: {
@@ -353,6 +832,10 @@ export class BillingReconciliationService {
           metadata: { reason: 'unsupported_chain' },
         },
         runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
       if (outcome === 'replayed') summary.replayed++;
       else summary.quarantined++;
@@ -385,7 +868,9 @@ export class BillingReconciliationService {
 
     // A reverted receipt is never metered.
     if (result.status === 'reverted') {
-      const count = await this.markReverted(tx, receipt);
+      const count = await this.markReverted(
+        tx, receipt, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+      );
       if (count > 0) summary.reverted++;
       else summary.casNoops++;
       return;
@@ -423,6 +908,10 @@ export class BillingReconciliationService {
           },
         },
         runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
       if (outcome === 'replayed') summary.replayed++;
       else summary.quarantined++;
@@ -457,9 +946,19 @@ export class BillingReconciliationService {
           },
         },
         runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
       if (outcome === 'replayed') summary.replayed++;
       else summary.quarantined++;
+      // The receipt is unsafe for usage metering: STOP processing this
+      // receipt/log set entirely. Subsequent wallet-originated ERC-20 Transfer
+      // logs from the same native-withdrawal receipt must never be metered
+      // (and the transaction is never marked confirmed from this unsafe
+      // receipt). The quarantined event blocks closure until manual review.
+      return;
     }
 
     // Process each wallet-originated ERC-20 Transfer log independently. The
@@ -471,29 +970,238 @@ export class BillingReconciliationService {
       return; // malformed receipt: never confirm
     }
 
-    for (let i = 0; i < receipt.logs.length; i++) {
+    const outcome = await this.processReceiptLogs(
+      userId,
+      tx,
+      receipt,
+      walletAddresses,
+       periodStart,
+      blockDate,
+      runId,
+      workerId,
+      billingAccountId,
+      targetPeriodStart,
+      targetPeriodEnd,
+    );
+    if (outcome === 'posted') summary.posted++;
+    else if (outcome === 'quarantined') summary.quarantined++;
+    else if (outcome === 'replayed') summary.replayed++;
+    if (outcome === 'posted' || outcome === 'replayed') summary.updated++;
+
+  }
+
+  /**
+   * Validates the complete receipt before writing accounting evidence. A
+   * receipt is one reconciliation unit: multiple Transfer logs are aggregated
+   * into one append and the transaction is confirmed once, after the append.
+   * Mixed assets/prices cannot be represented by one canonical usage row and
+   * are therefore quarantined rather than approximated.
+   */
+  private async processReceiptLogs(
+    userId: string,
+    tx: TransactionRow,
+    receipt: SanitizedReceipt,
+    walletAddresses: Set<string>,
+    periodStart: Date,
+    blockDate: Date,
+    runId: string,
+    workerId: string,
+    billingAccountId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
+  ): Promise<'posted' | 'quarantined' | 'replayed' | 'skipped'> {
+    // Preserve the canonical per-log evidence identity for the single-log
+    // receipt case. Multi-log receipts use the aggregate path below so they
+    // cannot perform multiple usage appends or transaction transitions.
+    if (receipt.logs.length === 1) {
       const outcome = await this.processLog(
         userId,
         tx,
         receipt,
-        receipt.logs[i],
+        receipt.logs[0],
         walletAddresses,
-        periodStart,
+         periodStart,
         blockDate,
         runId,
-        i,
+        0,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
-      if (outcome === 'posted') summary.posted++;
-      else if (outcome === 'quarantined') summary.quarantined++;
-      else if (outcome === 'replayed') summary.replayed++;
+      if (outcome === 'skipped') {
+        await this.markConfirmed(
+          tx,
+          receipt,
+          runId,
+          workerId,
+          billingAccountId,
+          targetPeriodStart,
+          targetPeriodEnd,
+        );
+      }
+      return outcome;
+    }
+    const transfers: Array<{ address: string; amount: bigint; log: SanitizedReceiptLog }> = [];
+    for (let i = 0; i < receipt.logs.length; i++) {
+      const parsed = parseReceiptLog(receipt.logs[i], i);
+      if (parsed.kind === 'not_transfer') continue;
+      if (parsed.kind === 'invalid') {
+        return this.quarantine(
+          userId,
+          tx,
+          {
+            sourceKey: `tx:${tx.id}:receipt`,
+            receiptRef: `${receipt.transactionHash}:receipt`,
+            receiptLogIndex: null,
+            periodStart,
+            occurredAt: blockDate,
+            assetId: null,
+            receipt: this.buildReceiptEvidence(receipt, null, `${receipt.transactionHash}:receipt`),
+            metadata: { reason: parsed.reason, logIndex: parsed.arrayIndex },
+          },
+          runId,
+          workerId,
+          billingAccountId,
+          targetPeriodStart,
+          targetPeriodEnd,
+        );
+      }
+      if (parsed.removed) {
+        return this.quarantine(
+          userId,
+          tx,
+          {
+            sourceKey: `tx:${tx.id}:receipt`,
+            receiptRef: `${receipt.transactionHash}:receipt`,
+            receiptLogIndex: null,
+            periodStart,
+            occurredAt: blockDate,
+            assetId: parsed.address,
+            receipt: this.buildReceiptEvidence(receipt, null, `${receipt.transactionHash}:receipt`),
+            metadata: { reason: 'removed_log', logIndex: parsed.logIndex },
+          },
+          runId,
+          workerId,
+          billingAccountId,
+          targetPeriodStart,
+          targetPeriodEnd,
+        );
+      }
+      if (parsed.kind === 'transfer' && walletAddresses.has(parsed.from)) {
+        transfers.push({
+          address: parsed.address,
+          amount: parsed.amount,
+          log: { address: parsed.address, topics: parsed.topics, data: parsed.data, logIndex: parsed.logIndex, removed: false },
+        });
+      }
+    }
+    if (transfers.length === 0) {
+      // A receipt with no billable outbound evidence still gets one fenced
+      // terminal transaction transition, after the complete receipt scan.
+      // Unsafe/quarantined receipts return earlier and deliberately remain
+      // unresolved for operator review.
+      await this.markConfirmed(
+        tx,
+        receipt,
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+      );
+      return 'skipped';
     }
 
-    // Metering append happened before the status update; duplicates are
-    // swallowed by the sourceKey / receipt-component unique index. A count of 0
-    // means a concurrent worker already moved the row — count as a CAS no-op.
-    const count = await this.markConfirmed(tx, receipt);
-    if (count > 0) summary.updated++;
-    else summary.casNoops++;
+    const first = transfers[0];
+    const pricing = transfers.map((item) => evaluatePricing({
+      chainId: Number(tx.chainId),
+      tokenAddress: item.address,
+      amountBaseUnits: item.amount,
+      observedAt: blockDate,
+    }));
+    if (pricing.some((item) => item.status !== 'priced')) {
+      const reason = pricing.find((item) => item.status !== 'priced');
+      return this.quarantine(
+        userId,
+        tx,
+        {
+          sourceKey: `tx:${tx.id}:receipt`,
+          receiptRef: `${receipt.transactionHash}:receipt`,
+          receiptLogIndex: null,
+          periodStart,
+          occurredAt: blockDate,
+          assetId: first.address,
+          receipt: this.buildReceiptEvidence(receipt, null, `${receipt.transactionHash}:receipt`),
+          metadata: { reason: reason?.status === 'quarantined' ? reason.reason : 'mixed_receipt_evidence', logCount: transfers.length },
+        },
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+      );
+    }
+    const priced = pricing as Array<Extract<(typeof pricing)[number], { status: 'priced' }>>;
+    if (priced.some((item) => item.tokenAddress !== priced[0].tokenAddress || item.priceUsdMicros !== priced[0].priceUsdMicros || item.tokenDecimals !== priced[0].tokenDecimals)) {
+      return this.quarantine(
+        userId,
+        tx,
+        {
+          sourceKey: `tx:${tx.id}:receipt`,
+          receiptRef: `${receipt.transactionHash}:receipt`,
+          receiptLogIndex: null,
+          periodStart,
+          occurredAt: blockDate,
+          assetId: first.address,
+          receipt: this.buildReceiptEvidence(receipt, null, `${receipt.transactionHash}:receipt`),
+          metadata: { reason: 'mixed_receipt_assets', logCount: transfers.length },
+        },
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+      );
+    }
+    const amount = priced.reduce((sum, item) => sum + BigInt(item.amountUsdMicros), 0n);
+    const baseAmount = transfers.reduce((sum, item) => sum + item.amount, 0n);
+    const result = await this.billing.recordSuccessfulOutbound({
+      userId,
+      transactionId: tx.id,
+      sourceKey: `tx:${tx.id}:receipt`,
+      status: 'posted',
+      periodStart: targetPeriodStart,
+      occurredAt: blockDate,
+      amountUsdMicros: amount,
+      quantity: BigInt(transfers.length),
+      chainId: tx.chainId,
+      walletAddress: tx.walletAddress,
+      assetId: priced[0].tokenAddress,
+      assetDecimals: priced[0].tokenDecimals,
+      baseUnitAmount: baseAmount,
+      unitPriceMicros: BigInt(priced[0].priceUsdMicros),
+      priceSource: priced[0].priceSource,
+      receipt: this.buildReceiptEvidence(
+        receipt,
+        null,
+        `${receipt.transactionHash}:receipt`,
+        transfers.map((item) => item.log),
+      ),
+      metadata: { policyVersion: priced[0].policyVersion, logCount: transfers.length },
+      reconciliationRunId: runId,
+      reconciliationRunType: RECONCILE_RUN_TYPE,
+      reconciliationOwnerId: workerId,
+      reconciliationAccountId: billingAccountId,
+      reconciliationPeriodStart: targetPeriodStart,
+      reconciliationPeriodEnd: targetPeriodEnd,
+      reconciliationExpectedTransactionStatus: tx.status,
+      reconciliationExpectedTxHash: tx.txHash!,
+      reconciliationExpectedChainId: tx.chainId,
+      reconciliationExpectedWalletAddress: tx.walletAddress,
+      reconciliationTransactionStatus: 'confirmed',
+    });
+    return result.outcome === 'replayed' ? 'replayed' : 'posted';
   }
 
   private async processLog(
@@ -506,6 +1214,10 @@ export class BillingReconciliationService {
     blockDate: Date,
     runId: string,
     arrayIndex: number,
+    workerId: string,
+    billingAccountId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
   ): Promise<'posted' | 'quarantined' | 'replayed' | 'skipped'> {
     const parsed = parseReceiptLog(log, arrayIndex);
 
@@ -533,6 +1245,37 @@ export class BillingReconciliationService {
             metadata: { reason: 'invalid_log_index' },
           },
           runId,
+          workerId,
+          billingAccountId,
+          targetPeriodStart,
+          targetPeriodEnd,
+        );
+      }
+
+      // A Transfer log whose removal flag is missing/non-boolean/true is unsafe
+      // evidence: it is quarantined with the canonical component identity and
+      // never metered.
+      if (parsed.reason === 'unsafe_removed') {
+        const sourceKey = `tx:${tx.id}:log:${parsed.logIndex}`;
+        const receiptRef = `${receipt.transactionHash}:log:${parsed.logIndex}`;
+        return this.quarantine(
+          userId,
+          tx,
+          {
+            sourceKey,
+            receiptRef,
+            receiptLogIndex: parsed.logIndex,
+            periodStart,
+            occurredAt: blockDate,
+            assetId: safeLogAddress(log),
+            receipt: this.buildReceiptEvidence(receipt, null, receiptRef),
+            metadata: { reason: 'unsafe_removed' },
+          },
+          runId,
+          workerId,
+          billingAccountId,
+          targetPeriodStart,
+          targetPeriodEnd,
         );
       }
 
@@ -554,6 +1297,10 @@ export class BillingReconciliationService {
           metadata: { reason: 'incomplete_log' },
         },
         runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
     }
 
@@ -587,6 +1334,10 @@ export class BillingReconciliationService {
           metadata: { reason: 'removed_log' },
         },
         runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
     }
 
@@ -609,7 +1360,7 @@ export class BillingReconciliationService {
         transactionId: tx.id,
         sourceKey,
         status: 'posted',
-        periodStart,
+        periodStart: targetPeriodStart,
         occurredAt: blockDate,
         amountUsdMicros: BigInt(pricing.amountUsdMicros),
         chainId: tx.chainId,
@@ -622,6 +1373,16 @@ export class BillingReconciliationService {
         receipt: this.buildReceiptEvidence(receipt, evidenceLog, receiptRef),
         metadata: { policyVersion: pricing.policyVersion },
         reconciliationRunId: runId,
+        reconciliationRunType: RECONCILE_RUN_TYPE,
+        reconciliationOwnerId: workerId,
+        reconciliationAccountId: billingAccountId,
+        reconciliationPeriodStart: targetPeriodStart,
+        reconciliationPeriodEnd: targetPeriodEnd,
+        reconciliationExpectedTransactionStatus: tx.status,
+        reconciliationExpectedTxHash: tx.txHash!,
+        reconciliationExpectedChainId: tx.chainId,
+        reconciliationExpectedWalletAddress: tx.walletAddress,
+        reconciliationTransactionStatus: 'confirmed',
       });
       return outcome.outcome === 'replayed' ? 'replayed' : 'posted';
     }
@@ -640,6 +1401,10 @@ export class BillingReconciliationService {
         metadata: { reason: pricing.reason, ...(pricing.details ?? {}) },
       },
       runId,
+      workerId,
+      billingAccountId,
+      targetPeriodStart,
+      targetPeriodEnd,
     );
   }
 
@@ -657,13 +1422,18 @@ export class BillingReconciliationService {
       metadata: Record<string, unknown>;
     },
     reconciliationRunId: string,
+    reconciliationOwnerId: string,
+    reconciliationAccountId: string,
+    reconciliationPeriodStart: Date,
+    reconciliationPeriodEnd: Date,
   ): Promise<'quarantined' | 'replayed'> {
     const outcome = await this.billing.recordSuccessfulOutbound({
       userId,
       transactionId: tx.id,
       sourceKey: opts.sourceKey,
       status: 'quarantined',
-      periodStart: opts.periodStart,
+      // The worker target, not receipt block time, determines ledger period.
+      periodStart: reconciliationPeriodStart,
       occurredAt: opts.occurredAt,
       amountUsdMicros: 0n,
       chainId: tx.chainId,
@@ -672,15 +1442,106 @@ export class BillingReconciliationService {
       receipt: opts.receipt,
       metadata: opts.metadata,
       reconciliationRunId,
+      reconciliationRunType: RECONCILE_RUN_TYPE,
+      reconciliationOwnerId,
+      reconciliationAccountId,
+      reconciliationPeriodStart,
+      reconciliationPeriodEnd,
+      reconciliationExpectedTransactionStatus: tx.status,
+      reconciliationExpectedTxHash: tx.txHash!,
+      reconciliationExpectedChainId: tx.chainId,
+      reconciliationExpectedWalletAddress: tx.walletAddress,
+      reconciliationTransactionStatus: 'quarantined',
     });
     return outcome.outcome === 'replayed' ? 'replayed' : 'quarantined';
+  }
+
+  private async assertCurrentOwnership(runId: string, workerId: string): Promise<boolean> {
+    const now = new Date();
+    const result = await this.prisma.billingReconciliationRun.updateMany({
+      where: {
+        id: runId,
+        status: 'running',
+        workerId,
+        leaseExpiresAt: { gt: now },
+      },
+      data: {
+        heartbeatAt: now,
+        leaseExpiresAt: new Date(now.getTime() + RECONCILE_LEASE_MS),
+      },
+    });
+    return result.count > 0;
+  }
+
+  /**
+   * Fenced state-only transaction mutation. This is used before/after UO
+   * recovery where no receipt exists yet, and for the fairness touch. The run
+   * lease fence and the transaction evidence predicates share one DB
+   * transaction, so a takeover cannot interleave with the state transition.
+   */
+  private async fencedStateUpdate(
+    tx: TransactionRow,
+    data: Prisma.TransactionUncheckedUpdateInput,
+    runId: string,
+    workerId: string,
+    billingAccountId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
+  ): Promise<number> {
+    return this.prisma.$transaction(async (db) => {
+      const now = new Date();
+      const fence = await db.billingReconciliationRun.updateMany({
+        where: {
+          id: runId,
+          billingAccountId,
+          accountUserId: tx.userId,
+          runType: RECONCILE_RUN_TYPE,
+          periodStart: targetPeriodStart,
+          periodEnd: targetPeriodEnd,
+          status: 'running',
+          workerId,
+          leaseExpiresAt: { gt: now },
+        },
+        data: {
+          heartbeatAt: now,
+          leaseExpiresAt: new Date(now.getTime() + RECONCILE_LEASE_MS),
+        },
+      });
+      if (fence.count !== 1) return 0;
+
+      const result = await db.transaction.updateMany({
+        where: {
+          id: tx.id,
+          userId: tx.userId,
+          status: tx.status,
+          txHash: tx.txHash,
+          userOpHash: tx.userOpHash ?? null,
+          userOpSuccess: tx.userOpSuccess ?? null,
+          billingPeriodStart: targetPeriodStart,
+          billingReconciledAt: null,
+          chainId: tx.chainId,
+          walletAddress: tx.walletAddress,
+        },
+        data,
+      });
+      return result.count;
+    });
   }
 
   private buildReceiptEvidence(
     receipt: SanitizedReceipt,
     log: SanitizedReceiptLog | null,
     receiptRef: string,
+    logs: SanitizedReceiptLog[] = [],
   ): ReceiptUsageEvidence {
+    const completeLogs = log ? [log] : logs;
+    const serializedLogs = completeLogs.map((item) => ({
+      address: item.address,
+      topics: item.topics,
+      data: item.data,
+      logIndex: item.logIndex,
+      removed: item.removed,
+    }));
     return {
       txHash: receipt.transactionHash,
       receiptRef,
@@ -700,6 +1561,12 @@ export class BillingReconciliationService {
         gasUsed: receipt.gasUsed.toString(),
         effectiveGasPrice: receipt.effectiveGasPrice?.toString() ?? null,
         ...(log ? { logIndex: log.logIndex, tokenAddress: log.address, logData: log.data } : {}),
+        ...(serializedLogs.length > 0
+          ? {
+              logs: serializedLogs,
+              logDigest: createHash('sha256').update(JSON.stringify(serializedLogs)).digest('hex'),
+            }
+          : {}),
       },
       reconciledAt: new Date(),
     };
@@ -709,7 +1576,15 @@ export class BillingReconciliationService {
     return new Date(Number(receipt.blockTimestamp) * 1000);
   }
 
-  private async markReverted(tx: TransactionRow, receipt: SanitizedReceipt): Promise<number> {
+  private async markReverted(
+    tx: TransactionRow,
+    receipt: SanitizedReceipt,
+    runId?: string,
+    workerId?: string,
+    billingAccountId?: string,
+    targetPeriodStart?: Date,
+    targetPeriodEnd?: Date,
+  ): Promise<number> {
     // Preserve safe receipt evidence (hash/block/status/timestamp/reconciledAt;
     // never logs or calldata) in the same CAS update that marks the transaction
     // failed. A reverted receipt is never metered. Returns the number of rows
@@ -724,19 +1599,24 @@ export class BillingReconciliationService {
         reconciledAt: new Date().toISOString(),
       },
     };
-    const result = await this.prisma.transaction.updateMany({
-      where: { id: tx.id, status: { in: ['submitting', 'pending', 'confirmed', 'unknown'] } },
-      data: {
-        status: 'failed',
-        failureReason: 'receipt_reverted',
-        completedAt: new Date(),
-        details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
-      },
-    });
-    return result.count;
+    return this.fencedTransactionUpdate(tx, receipt, {
+      status: 'failed',
+      failureReason: 'receipt_reverted',
+      completedAt: new Date(),
+      billingReconciledAt: new Date(),
+      details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
+    }, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd);
   }
 
-  private async markConfirmed(tx: TransactionRow, receipt: SanitizedReceipt): Promise<number> {
+  private async markConfirmed(
+    tx: TransactionRow,
+    receipt: SanitizedReceipt,
+    runId?: string,
+    workerId?: string,
+    billingAccountId?: string,
+    targetPeriodStart?: Date,
+    targetPeriodEnd?: Date,
+  ): Promise<number> {
     const receiptDetails = {
       receipt: {
         hash: receipt.transactionHash,
@@ -747,20 +1627,96 @@ export class BillingReconciliationService {
         reconciledAt: new Date().toISOString(),
       },
     };
-    const result = await this.prisma.transaction.updateMany({
-      where: { id: tx.id, status: { in: ['submitting', 'pending', 'confirmed', 'unknown'] } },
-      data: {
-        status: 'confirmed',
-        completedAt: new Date(),
-        details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
-      },
+    return this.fencedTransactionUpdate(tx, receipt, {
+      status: 'confirmed',
+      completedAt: new Date(),
+      billingReconciledAt: new Date(),
+      details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
+    }, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd);
+  }
+
+  /**
+   * Fenced post-RPC transaction transition. The lease CAS and transaction CAS
+   * deliberately share one short DB transaction: a takeover cannot land
+   * between an ownership check and this write. Provider calls never enter this
+   * boundary.
+   */
+  private async fencedTransactionUpdate(
+    tx: TransactionRow,
+    receipt: SanitizedReceipt,
+    data: Prisma.TransactionUncheckedUpdateInput,
+    runId: string | undefined,
+    workerId: string | undefined,
+    billingAccountId: string | undefined,
+    targetPeriodStart: Date | undefined,
+    targetPeriodEnd: Date | undefined,
+  ): Promise<number> {
+    if (
+      !runId || !workerId || !billingAccountId || !targetPeriodStart || !targetPeriodEnd ||
+      tx.txHash === null || tx.txHash === undefined || tx.walletAddress === null || tx.walletAddress === undefined ||
+      tx.chainId === null || tx.chainId === undefined
+    ) {
+      return 0;
+    }
+    return this.prisma.$transaction(async (db) => {
+      const now = new Date();
+      const fence = await db.billingReconciliationRun.updateMany({
+        where: {
+          id: runId,
+          billingAccountId,
+          accountUserId: tx.userId,
+          runType: RECONCILE_RUN_TYPE,
+          periodStart: targetPeriodStart,
+          periodEnd: targetPeriodEnd,
+          status: 'running',
+          workerId,
+          leaseExpiresAt: { gt: now },
+        },
+        data: { heartbeatAt: now, leaseExpiresAt: new Date(now.getTime() + RECONCILE_LEASE_MS) },
+      });
+      if (fence.count === 0) return 0;
+      const result = await db.transaction.updateMany({
+        where: {
+          id: tx.id,
+          userId: tx.userId,
+          status: tx.status,
+          txHash: tx.txHash,
+          chainId: tx.chainId,
+          walletAddress: tx.walletAddress,
+        },
+        data,
+      });
+      return result.count;
     });
-    return result.count;
   }
 
   private monthStart(date: Date): Date {
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
   }
+}
+
+/** Zeroed counter map for a skipped (non-overlapping) reconcile call. */
+function zeroCounters(): Summary {
+  return {
+    scanned: 0,
+    notFound: 0,
+    transientError: 0,
+    reverted: 0,
+    posted: 0,
+    quarantined: 0,
+    updated: 0,
+    errors: 0,
+    conflicts: 0,
+    replayed: 0,
+    casNoops: 0,
+    noHash: 0,
+    retryable: 0,
+    ownershipLost: false,
+  };
+}
+
+function isUniqueConstraintError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 
 type ParsedLogResult =
@@ -779,7 +1735,7 @@ type ParsedLogResult =
   | { kind: 'not_transfer' }
   | {
       kind: 'invalid';
-      reason: 'invalid_log_index' | 'incomplete_log';
+      reason: 'invalid_log_index' | 'incomplete_log' | 'unsafe_removed';
       logIndex: number | null;
       arrayIndex: number;
     };
@@ -789,6 +1745,10 @@ type ParsedLogResult =
  * SanitizedReceiptLog is never trusted: providers/tests may return arbitrary
  * values at runtime. Every field is validated before use so no TypeError can
  * escape (topics[0], topics.length, logIndex, address, data, ...).
+ *
+ * A Transfer log is only postable when its removal flag is the explicit
+ * boolean `false`; a missing/non-boolean/true `removed` is `unsafe_removed`
+ * and is quarantined — usage is never metered from an unsafe log.
  */
 function parseReceiptLog(log: unknown, arrayIndex: number): ParsedLogResult {
   if (typeof log !== 'object' || log === null) {
@@ -803,10 +1763,13 @@ function parseReceiptLog(log: unknown, arrayIndex: number): ParsedLogResult {
     return { kind: 'invalid', reason: 'invalid_log_index', logIndex: null, arrayIndex };
   }
 
-  const removed = l.removed === true;
+  // A Transfer log is postable only when `removed === false` (strict boolean).
+  // Missing/non-boolean removal flags are unsafe evidence and are quarantined.
+  const removed = l.removed;
+  const removedIsFalse = removed === false;
 
   // topics must be an array with at least 3 elements.
-  if (!Array.isArray(l.topics) || l.topics.length < 3) {
+  if (!Array.isArray(l.topics) || l.topics.length !== 3) {
     return { kind: 'invalid', reason: 'incomplete_log', logIndex, arrayIndex };
   }
 
@@ -838,6 +1801,12 @@ function parseReceiptLog(log: unknown, arrayIndex: number): ParsedLogResult {
   }
   const amount = BigInt(l.data);
 
+  // A removal flag that is missing, non-boolean, or true makes the log unsafe.
+  // It must never be metered, even when the log is otherwise well-formed.
+  if (!removedIsFalse) {
+    return { kind: 'invalid', reason: 'unsafe_removed', logIndex, arrayIndex };
+  }
+
   return {
     kind: 'transfer',
     from,
@@ -846,7 +1815,7 @@ function parseReceiptLog(log: unknown, arrayIndex: number): ParsedLogResult {
     logIndex,
     address: l.address,
     data: l.data,
-    removed,
+    removed: false,
     topics: [topic0, l.topics[1] as string, l.topics[2] as string],
     arrayIndex,
   };
@@ -886,6 +1855,17 @@ function parseIndexedAddressStrict(topic: unknown): string | null {
 /** True when `value` is a parseable Date (never NaN). */
 function isValidCreatedAt(value: unknown): value is Date {
   return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+/**
+ * Best-effort safe token address from a runtime log object for evidence
+ * identity purposes. Never throws and never fabricates an address: returns
+ * null unless the log carries a valid 20-byte hex `address`.
+ */
+function safeLogAddress(log: unknown): string | null {
+  if (typeof log !== 'object' || log === null) return null;
+  const address = (log as Record<string, unknown>).address;
+  return typeof address === 'string' && TOKEN_ADDRESS_REGEX.test(address) ? address : null;
 }
 
 /**

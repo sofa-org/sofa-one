@@ -37,6 +37,9 @@ export default () => ({
       requiredConfirmations: parseInt(process.env.BILLING_USDC_REQUIRED_CONFIRMATIONS || '5', 10),
       quoteTtlSeconds: parseInt(process.env.BILLING_USDC_QUOTE_TTL_SECONDS || '86400', 10),
     },
+    worker: {
+      enabled: process.env.BILLING_WORKER_ENABLED === 'true',
+    },
   },
   security: {
     trustProxy: process.env.TRUST_PROXY,

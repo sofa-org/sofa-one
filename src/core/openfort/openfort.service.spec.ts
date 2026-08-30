@@ -253,6 +253,57 @@ describe('OpenfortService', () => {
     );
   });
 
+  it('times out the actual final UserOperation submission without retrying', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+    const sendUserOperation = jest.fn().mockReturnValue(new Promise(() => undefined));
+    const client = { sendUserOperation };
+    jest.spyOn(service, 'createBundlerClient').mockReturnValue(client);
+
+    const promise = service.sendUserOperationWithSponsorship({
+      account: {},
+      chain: {},
+      client: {},
+      transport: {},
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
+      sponsorshipMode: 'required',
+      chainId: 137,
+      gasPrice: { maxFeePerGas: 200_000_000_000n, maxPriorityFeePerGas: 178_000_000_000n },
+    });
+    jest.advanceTimersByTime(25);
+
+    await expect(promise).rejects.toThrow('submitUserOperation timed out');
+    expect(sendUserOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists a late provider hash once, without turning a timeout into a retry', async () => {
+    const configService = { getOrThrow: jest.fn(() => 'secret'), get: jest.fn(() => 25) };
+    const service = new OpenfortService(configService as any) as any;
+    let resolveSubmission!: (hash: string) => void;
+    const sendUserOperation = jest.fn().mockReturnValue(
+      new Promise<string>((resolve) => { resolveSubmission = resolve; }),
+    );
+    jest.spyOn(service, 'createBundlerClient').mockReturnValue({ sendUserOperation });
+    const onHash = jest.fn().mockResolvedValue(undefined);
+    const promise = service.sendUserOperationWithSponsorship({
+      account: {}, chain: {}, client: {}, transport: {},
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
+      sponsorshipMode: 'required', chainId: 137,
+      gasPrice: { maxFeePerGas: 1n, maxPriorityFeePerGas: 1n }, onUserOperationHash: onHash,
+    });
+
+    jest.advanceTimersByTime(25);
+    await expect(promise).rejects.toThrow('submitUserOperation timed out');
+    resolveSubmission(`0x${'a'.repeat(64)}`);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onHash).toHaveBeenCalledWith(`0x${'a'.repeat(64)}`);
+    expect(sendUserOperation).toHaveBeenCalledTimes(1);
+  });
+
   it('skips paymaster when sponsorship is none', async () => {
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),

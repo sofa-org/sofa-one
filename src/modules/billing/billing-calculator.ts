@@ -61,9 +61,15 @@ export interface InvoiceTotals {
   readonly outboundTiers: readonly OutboundTierBreakdownEntry[];
 }
 
-/** Default overage rates are 0; PRICING.md only provides ranges, callers pass real rates. */
-export const DEFAULT_API_OVERAGE_RATE_MICROS = 0n;
-export const DEFAULT_WALLET_OVERAGE_RATE_MICROS = 0n;
+/**
+ * Default overage rates from the accepted product boundary (PRICING.md §7
+ * ranges narrowed to fixed values): API calls at $0.001/call (1_000 micros)
+ * and active wallets at $0.01/wallet/month (10_000 micros). Seeded into new
+ * plan versions; existing used plan versions are versioned forward, never
+ * rewritten in place.
+ */
+export const DEFAULT_API_OVERAGE_RATE_MICROS = 1_000n;
+export const DEFAULT_WALLET_OVERAGE_RATE_MICROS = 10_000n;
 
 function micros(dollars: number): bigint {
   return BigInt(dollars) * MICROS_PER_DOLLAR;

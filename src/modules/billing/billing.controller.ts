@@ -19,6 +19,7 @@ import { GetSummaryQueryDto } from './dto/get-summary-query.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
 import { ReconcileBodyDto } from './dto/reconcile-body.dto';
 import { AssignPlanBodyDto } from './dto/assign-plan-body.dto';
+import { CreateSubscriptionCheckoutDto } from './dto/create-subscription-checkout.dto';
 
 /**
  * Frontend-only billing routes. These are intentionally NOT part of the public
@@ -98,6 +99,18 @@ export class BillingController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.stripePaymentService.createCheckoutSession(userId, id);
+  }
+
+  /** Dashboard-only recurring fixed-fee subscription Checkout. */
+  @Post('invoices/:id/subscription-checkout')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async checkoutSubscription(
+    @CurrentUser('id') userId: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: CreateSubscriptionCheckoutDto,
+  ) {
+    return this.stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId);
   }
 
   /**

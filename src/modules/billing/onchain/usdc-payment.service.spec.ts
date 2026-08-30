@@ -771,7 +771,13 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('pending');
       expect(result.retryable).toBe(true);
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      // The user-submitted hash is persisted before verification so a worker
+      // retry can resume this claim across a process restart.
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('returns a retryable rpc_error result on a transient RPC error', async () => {
@@ -784,7 +790,11 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('rpc_error');
       expect(result.retryable).toBe(true);
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('marks the attempt expired when the quote window closed with no receipt', async () => {
@@ -800,7 +810,7 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('expired');
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending'] } },
+        where: { id: 'att-usdc', status: { in: ['pending'] }, submittedTxHash: TX_HASH },
         data: expect.objectContaining({ status: 'expired', reviewReason: 'quote_expired' }),
       });
     });
@@ -817,7 +827,7 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('expired');
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending'] } },
+        where: { id: 'att-usdc', status: { in: ['pending'] }, submittedTxHash: TX_HASH },
         data: expect.objectContaining({ status: 'expired' }),
       });
     });
@@ -842,7 +852,11 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('confirming');
       expect(result.retryable).toBe(true);
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('returns a retryable rpc_error for a confirming attempt on a transient RPC error', async () => {
@@ -856,7 +870,11 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('rpc_error');
       expect(result.retryable).toBe(true);
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+        }),
+      );
     });
   });
 
@@ -877,7 +895,7 @@ describe('UsdcPaymentService', () => {
 
       expect(result.status).toBe('failed');
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending'] } },
+        where: { id: 'att-usdc', status: { in: ['pending'] }, submittedTxHash: TX_HASH },
         data: expect.objectContaining({
           status: 'failed',
           failureCode: 'receipt_reverted',
@@ -904,6 +922,7 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'needs_review', reviewReason: 'reorged' }),
       });
@@ -928,6 +947,7 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({
           status: 'needs_review',
@@ -1007,6 +1027,7 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'needs_review', reviewReason: 'reorged' }),
       });
@@ -1035,7 +1056,10 @@ describe('UsdcPaymentService', () => {
       expect(result.reviewReason).toBe('evidence_changed');
     });
 
-    it('marks needs_review on an evidence conflict (different claimed hash)', async () => {
+    it('returns the owner\'s state untouched on an evidence conflict (different claimed hash)', async () => {
+      // A confirming attempt is bound to recorded evidence 0xe…; the user
+      // claims a different hash. The losing request must not mark review on
+      // the owner's attempt, must not call RPC, and must not mutate anything.
       attemptFindUnique.mockResolvedValue(
         usdcAttempt({ status: 'confirming', txHash: '0x' + 'e'.repeat(64) }),
       );
@@ -1045,8 +1069,8 @@ describe('UsdcPaymentService', () => {
         txHash: TX_HASH,
       });
 
-      expect(result.status).toBe('needs_review');
-      expect(result.reviewReason).toBe('evidence_conflict');
+      expect(result.status).toBe('confirming');
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
       expect(getTransactionReceipt).not.toHaveBeenCalled();
     });
   });
@@ -1307,6 +1331,7 @@ describe('UsdcPaymentService', () => {
               actualBaseUnits: AMOUNT,
             },
           ],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({
           status: 'confirming',
@@ -1333,7 +1358,11 @@ describe('UsdcPaymentService', () => {
       expect(result.status).toBe('rpc_error');
       expect(result.retryable).toBe(true);
       expect(settleInvoice).not.toHaveBeenCalled();
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('settles a fully confirmed exact transfer through the shared boundary', async () => {
@@ -1481,7 +1510,11 @@ describe('UsdcPaymentService', () => {
 
     it('marks duplicate_unallocated when the Transfer evidence is already allocated', async () => {
       getBlockNumber.mockResolvedValue(103n); // confirming path
-      attemptUpdateMany.mockRejectedValueOnce(p2002());
+      // persistSubmittedHash succeeds first; the confirming evidence CAS then
+      // hits the unique-evidence conflict.
+      attemptUpdateMany
+        .mockResolvedValueOnce({ count: 1 })
+        .mockRejectedValueOnce(p2002());
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1495,6 +1528,7 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({
           status: 'needs_review',
@@ -1507,7 +1541,9 @@ describe('UsdcPaymentService', () => {
       // The service canonicalizes the claimed hash to lowercase before the
       // evidence write; the DB unique index then rejects the duplicate.
       getBlockNumber.mockResolvedValue(103n); // confirming path
-      attemptUpdateMany.mockRejectedValueOnce(p2002());
+      attemptUpdateMany
+        .mockResolvedValueOnce({ count: 1 })
+        .mockRejectedValueOnce(p2002());
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1544,6 +1580,7 @@ describe('UsdcPaymentService', () => {
               actualBaseUnits: AMOUNT,
             },
           ],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({
           status: 'needs_review',
@@ -1625,7 +1662,7 @@ describe('UsdcPaymentService', () => {
       // overwrite of the succeeded attempt.
       getTransactionReceipt.mockResolvedValue(receipt());
       getBlockNumber.mockResolvedValue(103n); // confirming path
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       attemptFindUnique
         .mockResolvedValueOnce(usdcAttempt())
         .mockResolvedValue(usdcAttempt({ status: 'succeeded', succeededAt: new Date() }));
@@ -1653,6 +1690,7 @@ describe('UsdcPaymentService', () => {
               actualBaseUnits: AMOUNT,
             },
           ],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'confirming' }),
       });
@@ -1666,7 +1704,7 @@ describe('UsdcPaymentService', () => {
       attemptFindUnique
         .mockResolvedValueOnce(usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }))
         .mockResolvedValue(usdcAttempt({ status: 'succeeded', succeededAt: new Date() }));
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       invoiceFindFirst.mockResolvedValue(invoice({ paidAt: new Date() }));
 
       const result = await service.claim('user-1', 'inv-1', {
@@ -1677,7 +1715,7 @@ describe('UsdcPaymentService', () => {
       expect(result.status).toBe('succeeded');
       expect(result.paid).toBe(true);
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending'] } },
+        where: { id: 'att-usdc', status: { in: ['pending'] }, submittedTxHash: TX_HASH },
         data: expect.objectContaining({ status: 'expired' }),
       });
     });
@@ -1687,7 +1725,7 @@ describe('UsdcPaymentService', () => {
       // concurrent claim settled the invoice before the review CAS ran. The
       // review CAS must match zero rows and the succeeded state returned.
       getTransactionReceipt.mockResolvedValue(receipt({ logs: [] }));
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       attemptFindUnique
         .mockResolvedValueOnce(usdcAttempt())
         .mockResolvedValue(usdcAttempt({ status: 'succeeded', succeededAt: new Date() }));
@@ -1705,6 +1743,7 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'needs_review' }),
       });
@@ -1715,7 +1754,7 @@ describe('UsdcPaymentService', () => {
       // settled before the failed CAS ran. The failed CAS (pending-only) must
       // match zero rows and the succeeded state returned.
       getTransactionReceipt.mockResolvedValue(receipt({ status: 'reverted' }));
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       attemptFindUnique
         .mockResolvedValueOnce(usdcAttempt())
         .mockResolvedValue(usdcAttempt({ status: 'succeeded', succeededAt: new Date() }));
@@ -1729,19 +1768,19 @@ describe('UsdcPaymentService', () => {
       expect(result.status).toBe('succeeded');
       expect(result.paid).toBe(true);
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending'] } },
+        where: { id: 'att-usdc', status: { in: ['pending'] }, submittedTxHash: TX_HASH },
         data: expect.objectContaining({ status: 'failed' }),
       });
     });
 
-    it('returns the real state when a stale evidence-conflict review loses to a concurrent settlement', async () => {
+    it('returns the owner\'s pre-read state when a different claimed hash conflicts (no review write)', async () => {
       // The claim read a confirming attempt bound to hash 0xe… and the user
-      // claimed a different hash; a concurrent claim settled the attempt
-      // before the review CAS ran. The review CAS must match zero rows.
+      // claimed a different hash. The losing request returns the owner's
+      // current state without any review CAS and without RPC.
       attemptFindUnique
         .mockResolvedValueOnce(usdcAttempt({ status: 'confirming', txHash: '0x' + 'e'.repeat(64) }))
         .mockResolvedValue(usdcAttempt({ status: 'succeeded', succeededAt: new Date() }));
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       invoiceFindFirst.mockResolvedValue(invoice({ paidAt: new Date() }));
 
       const result = await service.claim('user-1', 'inv-1', {
@@ -1749,8 +1788,8 @@ describe('UsdcPaymentService', () => {
         txHash: TX_HASH,
       });
 
-      expect(result.status).toBe('succeeded');
-      expect(result.paid).toBe(true);
+      expect(result.status).toBe('confirming');
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
       expect(getTransactionReceipt).not.toHaveBeenCalled();
     });
 
@@ -1763,6 +1802,7 @@ describe('UsdcPaymentService', () => {
       getTransactionReceipt.mockResolvedValue(receipt());
       getBlockNumber.mockResolvedValue(103n); // confirming path
       attemptUpdateMany
+        .mockResolvedValueOnce({ count: 1 }) // persistSubmittedHash succeeds
         .mockResolvedValueOnce({ count: 0 }) // confirming CAS fails (different evidence)
         .mockResolvedValue({ count: 1 }); // duplicate_unallocated marking succeeds
       attemptFindUnique.mockResolvedValueOnce(usdcAttempt()).mockResolvedValue(
@@ -1785,9 +1825,14 @@ describe('UsdcPaymentService', () => {
       expect(result.status).toBe('needs_review');
       expect(result.reviewReason).toBe('duplicate_unallocated');
       // The recorded evidence (0xe…) is preserved: the marking write only sets
-      // status/reviewReason, never the evidence columns.
+      // status/reviewReason, never the evidence columns, and is bound to this
+      // claim's canonical submitted hash.
       expect(attemptUpdateMany).toHaveBeenLastCalledWith({
-        where: { id: 'att-usdc', status: { in: ['pending', 'confirming'] } },
+        where: {
+          id: 'att-usdc',
+          status: { in: ['pending', 'confirming'] },
+          submittedTxHash: TX_HASH,
+        },
         data: expect.objectContaining({
           status: 'needs_review',
           reviewReason: 'duplicate_unallocated',
@@ -1835,6 +1880,7 @@ describe('UsdcPaymentService', () => {
               actualBaseUnits: AMOUNT,
             },
           ],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'confirming' }),
       });
@@ -1886,7 +1932,7 @@ describe('UsdcPaymentService', () => {
       getTransactionReceipt.mockResolvedValue(
         receipt({ logs: [transferLog({ amount: 48_000_000n })] }),
       );
-      attemptUpdateMany.mockResolvedValue({ count: 0 });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 0 });
       attemptFindUnique.mockResolvedValueOnce(usdcAttempt()).mockResolvedValue(
         usdcAttempt({
           status: 'confirming',
@@ -1912,9 +1958,129 @@ describe('UsdcPaymentService', () => {
           id: 'att-usdc',
           status: { in: ['pending', 'confirming'] },
           OR: [{ txHash: null }, { txHash: TX_HASH }],
+          submittedTxHash: TX_HASH,
         },
         data: expect.objectContaining({ status: 'needs_review', reviewReason: 'wrong_amount' }),
       });
+    });
+  });
+
+  describe('claim — submitted hash persistence (Phase 1 worker foundation)', () => {
+    const TX_HASH2 = '0x' + '9'.repeat(64);
+
+    beforeEach(() => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptFindUnique.mockResolvedValue(usdcAttempt());
+    });
+
+    it('persists the canonical submitted hash before verification so a restart can resume the claim', async () => {
+      getTransactionReceipt.mockResolvedValue(null); // receipt not found yet
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: '0x' + 'A'.repeat(64), // uppercase input is canonicalized to lowercase
+      });
+
+      expect(result.status).toBe('pending');
+      expect(result.retryable).toBe(true);
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'att-usdc',
+            status: { in: ['pending', 'confirming'] },
+            OR: [{ submittedTxHash: null }, { submittedTxHash: TX_HASH }],
+          }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('never lets a competing submitted hash overwrite the recorded hash or do provider work', async () => {
+      // A first claim recorded submittedTxHash = TX_HASH (persist CAS matched the
+      // null guard). A competing claim with a DIFFERENT hash must match zero rows
+      // (the OR guard fails) and must not rewrite the recorded hash.
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ submittedTxHash: TX_HASH }));
+      attemptUpdateMany.mockResolvedValue({ count: 0 }); // persist CAS matches nothing
+      getTransactionReceipt.mockClear();
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH2,
+      });
+
+      // The competing hash is not persisted, no RPC is performed, and the
+      // owner's attempt is returned untouched (pending, retryable).
+      expect(result.status).toBe('pending');
+      expect(result.retryable).toBe(true);
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).toHaveBeenCalledTimes(1); // only the persist CAS
+      const persistCall = attemptUpdateMany.mock.calls.find(
+        ([arg]) =>
+          arg?.data &&
+          typeof arg.data === 'object' &&
+          'submittedTxHash' in (arg.data as Record<string, unknown>),
+      );
+      expect(persistCall).toBeDefined();
+      expect((persistCall![0] as { where: Record<string, unknown> }).where).toEqual(
+        expect.objectContaining({
+          OR: [{ submittedTxHash: null }, { submittedTxHash: TX_HASH2 }],
+        }),
+      );
+    });
+
+    it('a losing claim can never expire, review, or bind evidence on the winner\'s attempt', async () => {
+      // The winner owns submittedTxHash = TX_HASH on a pending attempt whose
+      // quote window has expired. The loser claims TX_HASH2: the persist CAS
+      // matches zero rows, so the loser can neither expire the winner (its
+      // expiry CAS is never reached) nor bind/overwrite evidence.
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({
+          status: 'pending',
+          submittedTxHash: TX_HASH,
+          txHash: null,
+          quoteExpiresAt: new Date(Date.now() - 1000),
+        }),
+      );
+      attemptUpdateMany.mockResolvedValue({ count: 0 }); // persist CAS fails
+      getTransactionReceipt.mockClear();
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH2,
+      });
+
+      expect(result.status).toBe('pending');
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      // Only the failed persist CAS ran — never an expiry/review/evidence write.
+      expect(attemptUpdateMany).toHaveBeenCalledTimes(1);
+      expect(
+        attemptUpdateMany.mock.calls.every(
+          ([arg]) =>
+            !(arg?.data && typeof arg.data === 'object' && 'status' in (arg.data as object)),
+        ),
+      ).toBe(true);
+    });
+
+    it('resumes a pending claim from the persisted submitted hash alone after a restart', async () => {
+      // A previous process persisted submittedTxHash = TX_HASH and died before
+      // recording evidence. The recovery path (worker) calls claim() with only
+      // the stored hash: the persist CAS matches the existing submitted hash,
+      // so the claim proceeds to RPC verification using the stored hash.
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ submittedTxHash: TX_HASH }));
+      getTransactionReceipt.mockResolvedValue(null); // still not mined — retryable
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH, // recovered from the persisted hash, not re-derived
+      });
+
+      expect(result.status).toBe('pending');
+      expect(result.retryable).toBe(true);
+      expect(getTransactionReceipt).toHaveBeenCalledWith(8453, TX_HASH);
     });
   });
 });

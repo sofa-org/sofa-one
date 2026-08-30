@@ -3,7 +3,9 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +13,8 @@ import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { getSupportedChain } from '../../../common/chains/supported-chains';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
+import { SecurityEventService } from '../../security-events/security-event.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
 import { microsToDecimalUsd } from '../billing.utils';
 import {
@@ -37,6 +41,9 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 /** States a claim may transition from while the attempt is still active. */
 const ACTIVE_CLAIM_STATES = ['pending', 'confirming'] as const;
+
+/** Backoff before the worker retries a retryable (pending/rpc_error) claim. */
+export const USDC_RETRY_BACKOFF_MS = 60_000;
 
 /** JSON-safe USDC quote (no BigInt, no logs/calldata/RPC/Openfort/secrets). */
 export interface UsdcQuoteResult {
@@ -140,12 +147,64 @@ type TransferParseResult =
  */
 @Injectable()
 export class UsdcPaymentService {
+  private readonly logger = new Logger(UsdcPaymentService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly settlementService: InvoiceSettlementService,
     @Inject(USDC_RECEIPT_PROVIDER) private readonly receiptProvider: UsdcReceiptProvider,
+    @Optional() private readonly securityEvents?: SecurityEventService,
   ) {}
+
+  /**
+   * Public claim entry: runs the evidence-verification pipeline and then
+   * writes a sanitized security audit for material outcomes (settled, and any
+   * high-risk blocked/review/failed outcome). Audit/notification failures are
+   * isolated and never affect the claim result.
+   */
+  async claim(
+    userId: string,
+    invoiceId: string,
+    input: { paymentAttemptId: string; txHash: string },
+  ): Promise<UsdcClaimResult> {
+    const result = await this.claimImpl(userId, invoiceId, input);
+    await this.auditClaim(userId, invoiceId, result);
+    return result;
+  }
+
+  /**
+   * Sanitized audit for material USDC transitions. Never includes receipt
+   * data, RPC details, calldata, or secrets — only safe identifiers/status.
+   */
+  private async auditClaim(
+    userId: string,
+    invoiceId: string,
+    result: UsdcClaimResult,
+  ): Promise<void> {
+    if (!this.securityEvents) return;
+    const highRisk = result.status === 'needs_review' || result.status === 'failed';
+    if (!highRisk && result.status !== 'succeeded') return;
+    try {
+      await this.securityEvents.record({
+        actorType: 'system',
+        eventType: 'billing.usdc.claim',
+        userId,
+        riskLevel: highRisk ? 'high' : 'low',
+        result: result.status === 'succeeded' ? 'allowed' : 'denied',
+        reason: result.reviewReason ?? result.status,
+        metadata: {
+          invoiceId,
+          paymentAttemptId: result.paymentAttemptId,
+          status: result.status,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `USDC claim audit failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+    }
+  }
 
   // ── Quote ───────────────────────────────────────────────────────────────────
 
@@ -293,7 +352,7 @@ export class UsdcPaymentService {
    * this claim a `duplicate_unallocated` review (or returns the real current
    * state), preserving the recorded evidence.
    */
-  async claim(
+  private async claimImpl(
     userId: string,
     invoiceId: string,
     input: { paymentAttemptId: string; txHash: string },
@@ -339,9 +398,24 @@ export class UsdcPaymentService {
     }
 
     // A confirming attempt is bound to its recorded evidence; a different
-    // claimed hash is a conflict for manual review, never an overwrite.
+    // claimed hash is a conflict that must never mutate the owner's state —
+    // the losing request returns the real current state without any write.
     if (attempt.txHash && attempt.txHash !== txHash) {
-      return this.markReview(attempt, 'evidence_conflict', invoice);
+      return this.toClaimResultFromRow(invoice, attempt);
+    }
+
+    // Persist the canonical user-submitted hash BEFORE any RPC verification, so
+    // a process restart / worker retry can resume this pending or confirming
+    // claim by reusing the existing verification path. The write is an
+    // evidence-aware CAS (active states, submittedTxHash null or equal) and
+    // schedules the next retry backoff; it never overwrites a different hash.
+    // The CAS outcome is authoritative: when a competing claim owns a different
+    // submitted hash (or a concurrent transition won), this losing request must
+    // NOT call RPC and must NOT mutate/evaluate the owner's terminal state.
+    const persisted = await this.persistSubmittedHash(attempt.id, txHash, USDC_RETRY_BACKOFF_MS);
+    if (!persisted.matched) {
+      if (!persisted.current) throw new NotFoundException('Payment attempt not found');
+      return this.toClaimResultFromRow(invoice, persisted.current);
     }
 
     // Fetch the receipt. Not-found and transient RPC errors are retryable and
@@ -369,7 +443,7 @@ export class UsdcPaymentService {
         });
       }
       if (attempt.quoteExpiresAt!.getTime() <= Date.now()) {
-        return this.markExpired(attempt, invoice);
+        return this.markExpired(attempt, invoice, txHash);
       }
       return this.toClaimResult(invoice, attempt, {
         status: 'pending',
@@ -537,7 +611,7 @@ export class UsdcPaymentService {
           txHash,
         );
       }
-      return this.markExpired(attempt, invoice);
+      return this.markExpired(attempt, invoice, txHash);
     }
 
     // Confirmations against the current chain head.
@@ -642,9 +716,17 @@ export class UsdcPaymentService {
           } as const;
         }
 
-        // Still active: the recorded evidence (if any) must match the caller's
-        // observed identity before this claim may write or settle. A different
-        // evidence identity is never overwritten and never settled with.
+        // Still active: the attempt must still be owned by this claim's
+        // canonical submitted hash, and its recorded evidence (if any) must
+        // match the caller's observed identity before this claim may write or
+        // settle. A different submitted hash or a different evidence identity
+        // is never overwritten and never settled with.
+        if (
+          typeof current.submittedTxHash === 'string' &&
+          current.submittedTxHash !== identity.txHash
+        ) {
+          return { kind: 'duplicate', row: current } as const;
+        }
         if (current.txHash !== null && !this.evidenceMatches(current, identity)) {
           await tx.billingPaymentAttempt.update({
             where: { id: attempt.id },
@@ -758,6 +840,7 @@ export class UsdcPaymentService {
           lastCheckedAt: new Date(),
         },
         identity,
+        identity.txHash,
       );
       if (current) return this.toClaimResultFromRow(invoice, current);
       return this.toClaimResult(
@@ -842,19 +925,63 @@ export class UsdcPaymentService {
   // ── State transitions ───────────────────────────────────────────────────────
 
   /**
+   * Evidence-aware CAS that persists the canonical user-submitted hash before
+   * verification and schedules the next worker retry. Only matches active
+   * (pending/confirming) attempts whose submitted hash is absent or exactly the
+   * claimed hash, so a stale/competing claim can never overwrite a different
+   * submitted hash or regress a terminal state.
+   *
+   * Returns the CAS outcome: `{ matched: true }` when this claim now owns the
+   * submitted hash, or `{ matched: false, current }` with the current attempt
+   * row when a competing claim owns a different hash or the attempt moved to a
+   * terminal state. The losing caller must not perform RPC work nor mutate the
+   * owner's state.
+   */
+  private async persistSubmittedHash(
+    attemptId: string,
+    txHash: string,
+    backoffMs: number,
+  ): Promise<{ matched: boolean; current: PaymentAttemptRow | null }> {
+    const result = await this.prisma.billingPaymentAttempt.updateMany({
+      where: {
+        id: attemptId,
+        status: { in: [...ACTIVE_CLAIM_STATES] },
+        OR: [{ submittedTxHash: null }, { submittedTxHash: txHash }],
+      },
+      data: {
+        submittedTxHash: txHash,
+        lastCheckedAt: new Date(),
+        nextCheckAt: new Date(Date.now() + backoffMs),
+      },
+    });
+    if (result.count > 0) return { matched: true, current: null };
+    const current = await this.prisma.billingPaymentAttempt.findUnique({
+      where: { id: attemptId },
+    });
+    return { matched: false, current };
+  }
+
+  /**
    * Compare-and-set state transition. The update only matches when the attempt
-   * is still in one of the allowed source states, so a stale claim can never
-   * regress a state it did not observe. Returns the current attempt row when
-   * the CAS matched zero rows (a concurrent transition won) so the caller can
-   * return the real state instead of overwriting it; returns null on success.
+   * is still in one of the allowed source states (and, when supplied, still
+   * bound to the caller's canonical submitted hash), so a stale claim can never
+   * regress a state it did not observe or mutate a competing claim's attempt.
+   * Returns the current attempt row when the CAS matched zero rows (a
+   * concurrent transition won) so the caller can return the real state instead
+   * of overwriting it; returns null on success.
    */
   private async casUpdate(
     attemptId: string,
     sourceStatuses: readonly ('pending' | 'confirming')[],
     data: Prisma.BillingPaymentAttemptUncheckedUpdateInput,
+    submittedTxHash?: string,
   ): Promise<PaymentAttemptRow | null> {
     const result = await this.prisma.billingPaymentAttempt.updateMany({
-      where: { id: attemptId, status: { in: [...sourceStatuses] } },
+      where: {
+        id: attemptId,
+        status: { in: [...sourceStatuses] },
+        ...(submittedTxHash ? { submittedTxHash } : {}),
+      },
       data,
     });
     if (result.count > 0) return null;
@@ -864,22 +991,26 @@ export class UsdcPaymentService {
   /**
    * Evidence-aware compare-and-set. The update only matches when the attempt is
    * still in one of the allowed source states AND its recorded evidence is
-   * either absent or exactly equal to the caller's observed evidence identity.
-   * A stale claim can therefore never overwrite a different evidence identity
-   * or regress a terminal state. Returns the current attempt row when the CAS
-   * matched zero rows; returns null on success.
+   * either absent or exactly equal to the caller's observed evidence identity
+   * AND (when supplied) it is still bound to the caller's canonical submitted
+   * hash. A stale claim can therefore never overwrite a different evidence
+   * identity, never mutate a competing claim's attempt, and never regress a
+   * terminal state. Returns the current attempt row when the CAS matched zero
+   * rows; returns null on success.
    */
   private async casUpdateEvidence(
     attemptId: string,
     sourceStatuses: readonly ('pending' | 'confirming')[],
     data: Prisma.BillingPaymentAttemptUncheckedUpdateInput,
     identity: ClaimEvidence,
+    submittedTxHash?: string,
   ): Promise<PaymentAttemptRow | null> {
     const result = await this.prisma.billingPaymentAttempt.updateMany({
       where: {
         id: attemptId,
         status: { in: [...sourceStatuses] },
         ...this.evidenceGuard(identity),
+        ...(submittedTxHash ? { submittedTxHash } : {}),
       },
       data,
     });
@@ -890,22 +1021,26 @@ export class UsdcPaymentService {
   /**
    * Review compare-and-set. The update only matches when the attempt is still
    * active AND its recorded transaction hash is either absent or the hash this
-   * claim observed. A stale review write can never overwrite a confirming
-   * attempt bound to a different transaction. When `claimedTxHash` is omitted
-   * the guard is skipped (used only by the evidence-conflict path, where the
-   * conflict is precisely that the recorded hash differs from the claimed one).
+   * claim observed AND (when supplied) it is still bound to the caller's
+   * canonical submitted hash. A stale review write can never overwrite a
+   * confirming attempt bound to a different transaction or a competing claim's
+   * attempt. When `claimedTxHash` is omitted the tx-hash guard is skipped
+   * (used only by the evidence-conflict path, where the conflict is precisely
+   * that the recorded hash differs from the claimed one).
    */
   private async casUpdateReview(
     attemptId: string,
     sourceStatuses: readonly ('pending' | 'confirming')[],
     data: Prisma.BillingPaymentAttemptUncheckedUpdateInput,
     claimedTxHash?: string,
+    submittedTxHash?: string,
   ): Promise<PaymentAttemptRow | null> {
     const result = await this.prisma.billingPaymentAttempt.updateMany({
       where: {
         id: attemptId,
         status: { in: [...sourceStatuses] },
         ...(claimedTxHash ? { OR: [{ txHash: null }, { txHash: claimedTxHash }] } : {}),
+        ...(submittedTxHash ? { submittedTxHash } : {}),
       },
       data,
     });
@@ -990,11 +1125,16 @@ export class UsdcPaymentService {
     if (current.txHash === identity.txHash) {
       return this.toClaimResultFromRow(invoice, current);
     }
-    const updated = await this.casUpdate(current.id, ACTIVE_CLAIM_STATES, {
-      status: 'needs_review',
-      reviewReason: 'duplicate_unallocated',
-      lastCheckedAt: new Date(),
-    });
+    const updated = await this.casUpdate(
+      current.id,
+      ACTIVE_CLAIM_STATES,
+      {
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        lastCheckedAt: new Date(),
+      },
+      identity.txHash,
+    );
     if (updated) return this.toClaimResultFromRow(invoice, updated);
     return this.toClaimResultFromRow(invoice, {
       ...current,
@@ -1010,6 +1150,9 @@ export class UsdcPaymentService {
     evidence?: Partial<Prisma.BillingPaymentAttemptUncheckedUpdateInput>,
     claimedTxHash?: string,
   ): Promise<UsdcClaimResult> {
+    // Every post-RPC review write is bound to the claimed canonical submitted
+    // hash so a stale/competing claim can never push the owner's attempt into
+    // review.
     const current = await this.casUpdateReview(
       attempt.id,
       ACTIVE_CLAIM_STATES,
@@ -1020,6 +1163,7 @@ export class UsdcPaymentService {
         ...evidence,
       },
       claimedTxHash,
+      claimedTxHash ?? undefined,
     );
     if (current) {
       // A concurrent transition won (e.g. the attempt was settled or bound to
@@ -1037,14 +1181,17 @@ export class UsdcPaymentService {
   private async markExpired(
     attempt: PaymentAttemptRow,
     invoice: InvoiceRow,
+    txHash: string,
   ): Promise<UsdcClaimResult> {
-    // Only a still-pending attempt may expire; a confirming attempt with
-    // recorded evidence is handled by the caller as review, never expiry.
+    // Only a still-pending attempt bound to this claim's canonical submitted
+    // hash may expire; a confirming attempt with recorded evidence is handled
+    // by the caller as review, never expiry, and a competing claim can never
+    // expire the owner's attempt.
     const current = await this.casUpdate(attempt.id, ['pending'], {
       status: 'expired',
       reviewReason: 'quote_expired',
       lastCheckedAt: new Date(),
-    });
+    }, txHash);
     if (current) return this.toClaimResultFromRow(invoice, current);
     return this.toClaimResult(
       invoice,
@@ -1059,20 +1206,27 @@ export class UsdcPaymentService {
     txHash: string,
     receipt: UsdcReceipt,
   ): Promise<UsdcClaimResult> {
-    // Only a still-pending attempt may fail; a confirming attempt whose
-    // recorded success is now reverted is handled by the caller as review.
-    const current = await this.casUpdate(attempt.id, ['pending'], {
-      status: 'failed',
-      failedAt: new Date(),
-      failureCode: 'receipt_reverted',
-      failureMessage: 'The submitted transaction reverted; no USDC was transferred',
+    // Only a still-pending attempt bound to this claim's canonical submitted
+    // hash may fail; a confirming attempt whose recorded success is now
+    // reverted is handled by the caller as review. A competing claim can never
+    // fail the owner's attempt.
+    const current = await this.casUpdate(
+      attempt.id,
+      ['pending'],
+      {
+        status: 'failed',
+        failedAt: new Date(),
+        failureCode: 'receipt_reverted',
+        failureMessage: 'The submitted transaction reverted; no USDC was transferred',
+        txHash,
+        blockNumber: receipt.blockNumber,
+        blockHash: receipt.blockHash,
+        blockTimestamp: receipt.blockTimestamp,
+        receiptEvidence: this.buildEvidence(receipt, null),
+        lastCheckedAt: new Date(),
+      },
       txHash,
-      blockNumber: receipt.blockNumber,
-      blockHash: receipt.blockHash,
-      blockTimestamp: receipt.blockTimestamp,
-      receiptEvidence: this.buildEvidence(receipt, null),
-      lastCheckedAt: new Date(),
-    });
+    );
     if (current) return this.toClaimResultFromRow(invoice, current);
     return this.toClaimResult(
       invoice,
@@ -1107,6 +1261,7 @@ export class UsdcPaymentService {
           lastCheckedAt: new Date(),
         },
         identity,
+        txHash,
       );
       if (current) {
         // A concurrent transition won: never overwrite a terminal state or a
