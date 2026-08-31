@@ -9,6 +9,9 @@ jest.mock('./billing-reconciliation.service', () => ({
 jest.mock('./stripe/stripe-payment.service', () => ({
   StripePaymentService: class StripePaymentService {},
 }));
+jest.mock('./invoice-pdf.service', () => ({
+  InvoicePdfService: class InvoicePdfService {},
+}));
 jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
@@ -19,6 +22,7 @@ jest.mock('../../common/guards/frontend-only.guard', () => ({
 import { BillingController } from './billing.controller';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
+import { StreamableFile } from '@nestjs/common';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 
 describe('BillingController', () => {
@@ -35,6 +39,9 @@ describe('BillingController', () => {
   const stripePaymentService = {
     createCheckoutSession: jest.fn(),
   };
+  const invoicePdfService = {
+    generate: jest.fn(),
+  };
 
   let controller: BillingController;
 
@@ -44,6 +51,7 @@ describe('BillingController', () => {
       billingService as any,
       reconciliationService as any,
       stripePaymentService as any,
+      invoicePdfService as any,
     );
   });
 
@@ -132,12 +140,57 @@ describe('BillingController', () => {
     });
   });
 
+  it('delegates invoice PDF generation to the service scoped to the current user', async () => {
+    const pdf = Buffer.from('%PDF-1.4 fake', 'ascii');
+    invoicePdfService.generate.mockResolvedValue({
+      pdf,
+      filename: 'invoice-inv-1.pdf',
+      contentType: 'application/pdf',
+    });
+
+    const result = await controller.downloadInvoicePdf('user-1', 'inv-1');
+
+    expect(invoicePdfService.generate).toHaveBeenCalledWith('user-1', 'inv-1');
+    expect(result).toBeInstanceOf(StreamableFile);
+  });
+
+  it('streams the invoice PDF as an attachment', async () => {
+    const pdf = Buffer.from('%PDF-1.4 fake', 'ascii');
+    invoicePdfService.generate.mockResolvedValue({
+      pdf,
+      filename: 'invoice-inv-1.pdf',
+      contentType: 'application/pdf',
+    });
+
+    const result = await controller.downloadInvoicePdf('user-1', 'inv-1');
+
+    expect(result).toBeInstanceOf(StreamableFile);
+    expect(result.getHeaders()).toEqual(
+      expect.objectContaining({
+        type: 'application/pdf',
+        disposition: 'attachment; filename="invoice-inv-1.pdf"',
+      }),
+    );
+  });
+
+  it('sets the no-store and nosniff headers on the PDF route', () => {
+    const headers = Reflect.getMetadata('__headers__', controller.downloadInvoicePdf) ?? [];
+    const flattened = headers.map((h: { name: string; value: string }) => [h.name, h.value]);
+    expect(flattened).toEqual(
+      expect.arrayContaining([
+        ['Cache-Control', 'private, no-store'],
+        ['X-Content-Type-Options', 'nosniff'],
+      ]),
+    );
+  });
+
   it('protects every route with OpenfortUserGuard and FrontendOnlyGuard', () => {
     const routes = [
       controller.getPlans,
       controller.getSummary,
       controller.listInvoices,
       controller.getInvoice,
+      controller.downloadInvoicePdf,
       controller.reconcile,
       controller.assignPlan,
       controller.checkoutInvoice,

@@ -131,9 +131,9 @@ function claimStatusDisplay(
     case 'needs_review':
       return {
         message: result.reviewReason
-          ? `This payment needs manual review: ${result.reviewReason}. Contact support and do not resubmit.`
-          : 'This payment needs manual review. Contact support and do not resubmit.',
-        tone: 'amber',
+          ? `Under manual review: ${result.reviewReason}. This will not auto-settle — contact support and do not resubmit.`
+          : 'Under manual review. This will not auto-settle — contact support and do not resubmit.',
+        tone: 'red',
         retryable,
       };
     case 'expired':

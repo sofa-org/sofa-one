@@ -127,7 +127,20 @@ describe('API-key public security flow (e2e)', () => {
       const res = await request(app.getHttpServer()).get('/health/ready').expect(200);
 
       expect(res.headers['x-request-id']).toEqual(expect.any(String));
-      expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
+      // Includes non-sensitive billing-worker state alongside the DB probe.
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          status: 'ok',
+          timestamp: expect.any(String),
+          checks: expect.objectContaining({
+            database: 'ok',
+            billingWorker: expect.objectContaining({
+              enabled: expect.any(Boolean),
+              status: expect.any(String),
+            }),
+          }),
+        }),
+      );
     });
 
     it('reuses inbound X-Request-Id and includes it in error responses', async () => {

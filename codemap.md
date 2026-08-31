@@ -173,7 +173,7 @@ Dashboard → `/v1/billing/*` (Openfort IAM + FrontendOnly)
   → BillingReconciliationService matches receipt-confirmed outbound usage to transactions
   → BillingService computes BigInt microdollar invoice lines and can finalize after the period/grace window
   → Stripe Checkout or native USDC quote/claim creates payment evidence; InvoiceSettlementService performs atomic first-rail-wins settlement
-  → Finalization and reconciliation are service/controller operations; no production scheduler is wired in this tree
+  → BillingWorkerService (registered in `BillingModule` via `ScheduleModule.forRoot()`, 5-minute `@Interval`) also drives receipt-reconciliation drain, invoice finalization catch-up, recurring-period materialization, USDC claim recovery, deferred Stripe renewal retry, and pending-checkout recovery — but only when `BILLING_WORKER_ENABLED=true` (default safely off). It runs inside the long-running API/worker instance, not a separate process binary
 
 Backend → SecurityEventService
   → Authentication, API-key lifecycle, policy decisions, withdrawals, billing, and on-chain payment decisions persist safe telemetry

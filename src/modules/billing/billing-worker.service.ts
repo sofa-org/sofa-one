@@ -98,6 +98,14 @@ export class BillingWorkerService implements OnModuleInit {
       await this.recoverUsdcClaims();
       await this.retryDeferredStripeEvents();
       if (this.stripePayments) await this.stripePayments.recoverPendingCheckouts(this.workerId);
+    } catch (error) {
+      // Top-level sanitized failure logging: an unexpected failure in one pass
+      // must never kill the scheduler loop or leak secrets/account/user data.
+      // Individual account/attempt scopes already log sanitized failures above;
+      // this catch is the last-resort boundary for anything that escaped them.
+      this.logger.error(
+        `Billing worker tick failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
     } finally {
       this.ticking = false;
     }

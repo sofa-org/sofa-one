@@ -553,6 +553,44 @@ describe('StripeWebhookService', () => {
       );
       expect(invoiceUpdateMany).toHaveBeenCalled();
     });
+
+    it('rejects a fixed-fee attempt completed with a payment-mode Checkout', async () => {
+      constructEventAsync.mockResolvedValue(
+        event('checkout.session.completed', session({ payment_status: 'paid', mode: 'payment' }), 'evt_mode_mismatch'),
+      );
+      webhookEventCreate.mockResolvedValue({});
+      attemptFindFirst.mockResolvedValue(
+        attemptRow({ stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_123' }),
+      );
+
+      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ status: 'needs_review' }),
+      }));
+    });
+
+    it.each([
+      ['full attempt completed with a subscription-mode Checkout', { mode: 'subscription', subscription: 'sub_123' }, {}],
+      ['full attempt completed with a setup-mode Checkout', { mode: 'setup' }, {}],
+      ['fixed-fee attempt completed with a setup-mode Checkout', { mode: 'setup' }, { stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_123' }],
+    ])('rejects %s without settlement', async (_label, sessionOverrides, attemptOverrides) => {
+      constructEventAsync.mockResolvedValue(
+        event('checkout.session.completed', session({ payment_status: 'paid', ...sessionOverrides }), 'evt_mode_reject'),
+      );
+      webhookEventCreate.mockResolvedValue({});
+      attemptFindFirst.mockResolvedValue(attemptRow(attemptOverrides));
+
+      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ status: 'needs_review' }),
+      }));
+    });
   });
 
   describe('idempotency and ordering', () => {
@@ -703,6 +741,60 @@ describe('StripeWebhookService', () => {
         data: expect.objectContaining({ status: 'succeeded' }),
       }));
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ status: 'needs_review' }),
+      }));
+    });
+
+    it('success CAS rejects a conflicting stripeInvoiceId bound after preflight', async () => {
+      // The renewal invoice id matched preflight, but by CAS time the attempt
+      // was rebound to a different invoice — the success must not be applied.
+      constructEventAsync.mockResolvedValue(
+        event('invoice.paid', renewalInvoice({ status: 'paid' }), 'evt_inv_conflict'),
+      );
+      webhookEventCreate.mockResolvedValue({});
+      accountFindFirst.mockResolvedValue({
+        id: 'acct-1',
+        userId: '00000000-0000-4000-8000-000000000001',
+        stripeCustomerId: 'cus_123',
+        stripeSubscriptionId: 'sub_123',
+        stripeSubscriptionStatus: 'active',
+        stripeSubscriptionPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+        stripeSubscriptionUpdatedAt: null,
+        activeSubscriptionPlanVersionId: 'plan-1',
+      });
+      accountFindUnique.mockResolvedValue({
+        id: 'acct-1',
+        userId: '00000000-0000-4000-8000-000000000001',
+        stripeCustomerId: 'cus_123',
+        stripeSubscriptionId: 'sub_123',
+        stripeSubscriptionStatus: 'active',
+        stripeSubscriptionPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+        stripeSubscriptionUpdatedAt: null,
+        activeSubscriptionPlanVersionId: 'plan-1',
+      });
+      attemptFindFirst.mockResolvedValue(
+        attemptRow({
+          stripeChargeKind: 'full',
+          stripeInvoiceId: 'in_123',
+        }),
+      );
+      invoiceFindUnique.mockResolvedValue(invoiceRow());
+      attemptUpdateMany.mockResolvedValueOnce({ count: 0 }); // CAS misses
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
+
+      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+      // The success CAS now also carries the stripeInvoiceId null-or-same fence.
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          status: 'pending',
+          AND: expect.arrayContaining([
+            { OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: 'in_123' }] },
+          ]),
+        }),
+        data: expect.objectContaining({ status: 'succeeded' }),
+      }));
       expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ status: 'needs_review' }),
       }));

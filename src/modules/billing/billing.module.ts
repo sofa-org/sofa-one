@@ -8,6 +8,7 @@ import { BillingReconciliationService } from './billing-reconciliation.service';
 import { BillingEntitlementService } from './billing-entitlement.service';
 import { InvoiceSettlementService } from './invoice-settlement.service';
 import { BillingWorkerService } from './billing-worker.service';
+import { InvoicePdfService } from './invoice-pdf.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
 import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller';
@@ -26,6 +27,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     BillingEntitlementService,
     InvoiceSettlementService,
     BillingWorkerService,
+    InvoicePdfService,
     StripePaymentService,
     StripeWebhookService,
     stripeClientProvider,

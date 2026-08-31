@@ -30,12 +30,13 @@ describe('environment validation', () => {
     ).toThrow('CORS_ORIGIN must be set in production');
   });
 
-  it('accepts production when CORS_ORIGIN is configured', () => {
+  it('accepts production when CORS_ORIGIN and the billing worker are configured', () => {
     expect(
       validate({
         ...baseConfig,
         NODE_ENV: 'production',
         CORS_ORIGIN: 'https://app.example.com',
+        BILLING_WORKER_ENABLED: 'true',
       }),
     ).toEqual(expect.objectContaining({ NODE_ENV: 'production' }));
   });
@@ -46,6 +47,7 @@ describe('environment validation', () => {
         ...baseConfig,
         NODE_ENV: 'production',
         CORS_ORIGIN: 'https://app.example.com',
+        BILLING_WORKER_ENABLED: 'true',
       }),
     ).toEqual(expect.objectContaining({ NODE_ENV: 'production' }));
   });
@@ -299,5 +301,81 @@ describe('environment validation', () => {
         BILLING_USDC_QUOTE_TTL_SECONDS: '0',
       }),
     ).toThrow();
+  });
+
+  describe('billing worker enabled flag', () => {
+    it('accepts an unset BILLING_WORKER_ENABLED in development (safe default off)', () => {
+      expect(validate(baseConfig)).toEqual(expect.objectContaining(baseConfig));
+    });
+
+    it('accepts BILLING_WORKER_ENABLED=false in development', () => {
+      expect(validate({ ...baseConfig, BILLING_WORKER_ENABLED: 'false' })).toEqual(
+        expect.objectContaining({ BILLING_WORKER_ENABLED: 'false' }),
+      );
+    });
+
+    it('accepts BILLING_WORKER_ENABLED=true in development', () => {
+      expect(validate({ ...baseConfig, BILLING_WORKER_ENABLED: 'true' })).toEqual(
+        expect.objectContaining({ BILLING_WORKER_ENABLED: 'true' }),
+      );
+    });
+
+    it('accepts BILLING_WORKER_ENABLED=false in test', () => {
+      expect(validate({ ...baseConfig, NODE_ENV: 'test', BILLING_WORKER_ENABLED: 'false' })).toEqual(
+        expect.objectContaining({ BILLING_WORKER_ENABLED: 'false' }),
+      );
+    });
+
+    it('rejects a non-boolean BILLING_WORKER_ENABLED value', () => {
+      expect(() => validate({ ...baseConfig, BILLING_WORKER_ENABLED: 'yes' })).toThrow();
+    });
+
+    it('requires BILLING_WORKER_ENABLED=true in production (never default-on)', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          NODE_ENV: 'production',
+          CORS_ORIGIN: 'https://app.example.com',
+        }),
+      ).toThrow('BILLING_WORKER_ENABLED must be set to "true" in production');
+    });
+
+    it('rejects an explicit BILLING_WORKER_ENABLED=false in production', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          NODE_ENV: 'production',
+          CORS_ORIGIN: 'https://app.example.com',
+          BILLING_WORKER_ENABLED: 'false',
+        }),
+      ).toThrow('BILLING_WORKER_ENABLED must be set to "true" in production');
+    });
+
+    it('rejects a non-string true (e.g. numeric 1) in production', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          NODE_ENV: 'production',
+          CORS_ORIGIN: 'https://app.example.com',
+          BILLING_WORKER_ENABLED: '1',
+        }),
+      ).toThrow('BILLING_WORKER_ENABLED must be set to "true" in production');
+    });
+
+    it('accepts an explicit BILLING_WORKER_ENABLED=true in production', () => {
+      expect(
+        validate({
+          ...baseConfig,
+          NODE_ENV: 'production',
+          CORS_ORIGIN: 'https://app.example.com',
+          BILLING_WORKER_ENABLED: 'true',
+        }),
+      ).toEqual(
+        expect.objectContaining({
+          NODE_ENV: 'production',
+          BILLING_WORKER_ENABLED: 'true',
+        }),
+      );
+    });
   });
 });

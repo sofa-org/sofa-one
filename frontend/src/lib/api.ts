@@ -263,6 +263,25 @@ export interface BillingPlan {
 export interface BillingPlanResponse {
   currentPlanId: string;
   plans: BillingPlan[];
+  /** Future plan scheduled to take effect at the next UTC month. */
+  scheduledPlan?: {
+    planCode: string;
+    planName: string;
+    effectivePeriod: string;
+  };
+}
+
+export interface AssignBillingPlanRequest {
+  planCode: string;
+}
+
+export interface AssignBillingPlanResponse {
+  planCode: string;
+  planName: string;
+  /** YYYY-MM the new plan takes effect (always the next UTC month). */
+  effectivePeriod: string;
+  effectiveFrom: string;
+  outcome: 'changed' | 'unchanged';
 }
 
 export interface BillingTierBreakdown {
@@ -303,6 +322,8 @@ export interface BillingInvoice {
   createdAt: string;
   paidAt: string | null;
   pdfUrl: string | null;
+  /** Set by the server when the invoice was generated from a plan version. Required for subscription checkout. */
+  planVersionId?: string | null;
 }
 
 export interface BillingInvoicesResponse {
@@ -901,6 +922,16 @@ export async function getBillingPlansAuth(
   return authFetch<BillingPlanResponse>('/v1/billing/plans', getToken, { signal });
 }
 
+export async function assignBillingPlanAuth(
+  getToken: () => Promise<string | null>,
+  planCode: string,
+) {
+  return authFetch<AssignBillingPlanResponse>('/v1/billing/plan', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ planCode } satisfies AssignBillingPlanRequest),
+  });
+}
+
 export async function getBillingSummaryAuth(
   getToken: () => Promise<string | null>,
   period: string,
@@ -940,6 +971,39 @@ export async function getBillingInvoiceAuth(
   return authFetch<BillingInvoice>(`/v1/billing/invoices/${invoiceId}`, getToken, { signal });
 }
 
+export async function getBillingInvoicePdfAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+): Promise<Blob> {
+  const token = await getToken();
+  if (!token) {
+    throw new Error('Openfort session is not ready. Refresh and sign in again.');
+  }
+
+  const res = await fetch(`${API_BASE}/v1/billing/invoices/${invoiceId}/pdf`, {
+    headers: {
+      Accept: 'application/pdf',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    let message = `Could not download invoice PDF (${res.status})`;
+    if (text.trim()) {
+      try {
+        const parsed = JSON.parse(text) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // Keep the generic status message for non-JSON bodies.
+      }
+    }
+    throw new Error(message);
+  }
+
+  return res.blob();
+}
+
 export async function createBillingCheckoutSessionAuth(
   getToken: () => Promise<string | null>,
   invoiceId: string,
@@ -951,6 +1015,21 @@ export async function createBillingCheckoutSessionAuth(
     {
       method: 'POST',
       signal,
+    },
+  );
+}
+
+export async function createBillingSubscriptionCheckoutSessionAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  planVersionId: string,
+) {
+  return authFetch<BillingCheckoutResponse>(
+    `/v1/billing/invoices/${invoiceId}/subscription-checkout`,
+    getToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({ planVersionId }),
     },
   );
 }

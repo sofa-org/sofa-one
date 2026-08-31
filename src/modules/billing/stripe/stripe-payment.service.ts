@@ -80,20 +80,32 @@ export class StripePaymentService {
       include: { invoice: { include: { billingAccount: true } } },
     });
     let recovered = 0; let needsReview = 0;
-    for (const row of rows) {
+    for (let row of rows) {
       const lease = await attempts.updateMany({
         where: { id: row.id, status: 'pending', OR: [{ checkoutRetryLeaseExpiresAt: null }, { checkoutRetryLeaseExpiresAt: { lt: new Date() } }] },
         data: { checkoutRetryOwnerId: workerId, checkoutRetryLeaseExpiresAt: new Date(Date.now() + 2 * 60 * 1000), checkoutRetryCount: { increment: 1 } },
       });
       if (lease.count !== 1) continue;
       try {
+        // The findMany snapshot can go stale between selection and lease
+        // acquisition. Re-read the current attempt + invoice; fail closed before
+        // any provider call unless it is still pending/owned by this lease and
+        // the invoice is still payable/settlement-eligible.
+        const fresh = await attempts.findUnique({
+          where: { id: row.id },
+          include: { invoice: { include: { billingAccount: true } } },
+        });
+        if (!fresh || !this.isRecoveryAttemptEligible(fresh, workerId)) {
+          continue;
+        }
+        row = fresh;
         if (row.stripeCheckoutSessionId) {
           const session = await this.stripe.checkout.sessions.retrieve(row.stripeCheckoutSessionId, { expand: ['subscription'] });
           const url = typeof session.url === 'string' ? session.url : row.checkoutUrl;
           const paymentIntentId = providerObjectId(session.payment_intent, 'payment_intent');
           const subscriptionId = providerObjectId(session.subscription, 'subscription');
           if (!url || !this.isRecoveredSessionCompatible(row, session, paymentIntentId, subscriptionId)) throw new ConflictException('Stripe checkout identity could not be proven');
-          await this.persistRecoveredCheckout(row, url, paymentIntentId, subscriptionId, workerId);
+          await this.persistRecoveredCheckout(row, session.id, url, paymentIntentId, subscriptionId, workerId);
         } else {
           // Renewal attempts are mapped to Stripe invoices, not new Checkout
           // sessions. A missing session on such an attempt is out-of-order or
@@ -116,18 +128,23 @@ export class StripePaymentService {
 
   private async createCheckoutForExistingAttempt(row: PaymentAttemptRow & { invoice: any }, workerId: string): Promise<void> {
     const fixed = row.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE;
+    // All local facts are validated before any provider/customer call: the
+    // amount must be positive, cent-aligned, and safely convertible to Stripe
+    // cents (throws on overflow); currency and fixed-fee invariants were
+    // already proven by isRecoveryAttemptEligible before this path.
+    const cents = this.microsToCents(row.amountMicros);
     const account = row.invoice.billingAccount;
     const customer = await this.ensureStripeCustomer(this.stripe!, account, account.userId);
     const period = formatUtcMonth(row.invoice.periodStart);
     const session = await this.stripe!.checkout.sessions.create(
       fixed ? {
         customer, mode: 'subscription',
-        line_items: [{ quantity: 1, price_data: { currency: 'usd', recurring: { interval: 'month' }, unit_amount: Number(row.amountMicros / MICROS_PER_CENT), product_data: { name: 'SOFA ONE subscription' } } }],
+        line_items: [{ quantity: 1, price_data: { currency: 'usd', recurring: { interval: 'month' }, unit_amount: cents, product_data: { name: 'SOFA ONE subscription' } } }],
         subscription_data: { billing_cycle_anchor: Math.floor(row.invoice.periodStart.getTime() / 1000), proration_behavior: 'none', metadata: { userId: account.userId, billingAccountId: account.id, invoiceId: row.invoiceId, attemptId: row.id, planVersionId: row.invoice.planVersionId } },
         success_url: this.config.get<string>('stripe.successUrl')!, cancel_url: this.config.get<string>('stripe.cancelUrl')!, metadata: { invoiceId: row.invoiceId, attemptId: row.id, period, planVersionId: row.invoice.planVersionId }, client_reference_id: row.invoiceId,
       } : {
         customer, mode: 'payment',
-        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: Number(row.amountMicros / MICROS_PER_CENT), product_data: { name: `SOFA ONE — ${period} invoice` } } }],
+        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: cents, product_data: { name: `SOFA ONE — ${period} invoice` } } }],
         success_url: this.config.get<string>('stripe.successUrl')!, cancel_url: this.config.get<string>('stripe.cancelUrl')!, metadata: { invoiceId: row.invoiceId, attemptId: row.id, period }, payment_intent_data: { metadata: { invoiceId: row.invoiceId, attemptId: row.id } }, client_reference_id: row.invoiceId,
       },
       { idempotencyKey: `${fixed ? 'subscription-' : ''}checkout:${row.id}` },
@@ -135,11 +152,12 @@ export class StripePaymentService {
     const paymentIntentId = providerObjectId(session.payment_intent, 'payment_intent');
     const subscriptionId = providerObjectId(session.subscription, 'subscription');
     if (!session.url || !providerObjectId(session.id, 'checkout_session') || (!fixed && !paymentIntentId)) throw new ConflictException('Stripe checkout returned incomplete identity');
-    await this.persistRecoveredCheckout(row, session.url, paymentIntentId, subscriptionId, workerId);
+    await this.persistRecoveredCheckout(row, session.id, session.url, paymentIntentId, subscriptionId, workerId);
   }
 
   private async persistRecoveredCheckout(
     row: PaymentAttemptRow & { invoice: { periodStart: Date; billingAccountId: string } },
+    sessionId: string,
     checkoutUrl: string,
     paymentIntentId: string | null,
     subscriptionId: string | null,
@@ -147,11 +165,43 @@ export class StripePaymentService {
   ): Promise<void> {
     if (row.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
       await this.persistSubscriptionCheckout(row.invoice.billingAccountId, row.invoice.periodStart, row.id,
-        row.stripeCheckoutSessionId!, checkoutUrl, paymentIntentId, subscriptionId, workerId);
+        sessionId, checkoutUrl, paymentIntentId, subscriptionId, workerId);
     } else {
       await this.persistOneTimeCheckout(row.invoice.billingAccountId, row.invoice.periodStart, row.id,
-        row.stripeCheckoutSessionId!, checkoutUrl, paymentIntentId, workerId);
+        sessionId, checkoutUrl, paymentIntentId, workerId);
     }
+  }
+
+  private isRecoveryAttemptEligible(
+    fresh: PaymentAttemptRow & { invoice: any },
+    workerId: string,
+  ): boolean {
+    // The attempt must still be pending and owned by the lease just acquired.
+    if (fresh.status !== 'pending' || fresh.checkoutRetryOwnerId !== workerId) return false;
+    if (!fresh.checkoutRetryLeaseExpiresAt || fresh.checkoutRetryLeaseExpiresAt.getTime() <= Date.now()) return false;
+    // The invoice must still be settlement-eligible: finalized, unpaid,
+    // unsettled, USD, positive, cent-aligned, and amount-compatible.
+    const inv = fresh.invoice;
+    if (!inv || inv.status !== 'finalized' || inv.paidAt !== null || inv.settlementAttemptId !== null ||
+      inv.currency !== 'USD' || inv.totalMicros <= 0n || inv.totalMicros % MICROS_PER_CENT !== 0n) return false;
+    if (fresh.amountMicros !== inv.totalMicros) return false;
+    // The attempt currency must be USD and match the invoice currency.
+    if (fresh.currency !== 'USD' || fresh.currency !== inv.currency) return false;
+    // The amount must be positive, cent-aligned, and safely convertible to
+    // Stripe cents without unsafe Number(BigInt) overflow. Reuse the exact
+    // microsToCents boundary so recovery and normal creation agree.
+    try {
+      this.microsToCents(fresh.amountMicros);
+    } catch {
+      return false;
+    }
+    // Fixed-fee recovery must match the invoice's plan version; a dynamic/
+    // overage invoice (total != fixed fee) is rejected before any provider call.
+    if (fresh.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
+      if (!inv.planVersionId) return false;
+      if (inv.totalMicros !== fresh.amountMicros || inv.monthlyFeeMicros !== fresh.amountMicros) return false;
+    }
+    return true;
   }
 
   private isRecoveredSessionCompatible(
@@ -177,6 +227,10 @@ export class StripePaymentService {
       const sub = typeof session.subscription === 'object' && session.subscription !== null ? session.subscription as any : null;
       if (!sub || typeof sub.current_period_start !== 'number' || typeof sub.current_period_end !== 'number') return false;
       if (sub.current_period_start * 1000 !== invoice.periodStart.getTime() || sub.current_period_end * 1000 !== invoice.periodEnd.getTime()) return false;
+      // The subscription billing-cycle anchor must EXACTLY match the local
+      // invoice period start; a provider period fabricated outside that cycle
+      // cannot be proven and must not be recovered.
+      if (typeof sub.billing_cycle_anchor !== 'number' || sub.billing_cycle_anchor * 1000 !== invoice.periodStart.getTime()) return false;
     } else if (session.mode !== 'payment' || subscriptionId !== null || !paymentIntentId) return false;
     return true;
   }
@@ -484,7 +538,13 @@ export class StripePaymentService {
     return this.prisma.$transaction(async (tx) => {
       await acquireBillingPeriodAdvisoryLock(tx, accountId, periodStart);
       const attempt = await tx.billingPaymentAttempt.findUnique({ where: { id: attemptId } });
-      if (!attempt || attempt.invoiceId === null) throw new ConflictException('Stripe checkout attempt is unavailable');
+      const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt?.invoiceId } });
+      if (!attempt || attempt.invoiceId === null || !invoice) throw new ConflictException('Stripe checkout attempt is unavailable');
+      // A settled/paid/void/non-finalized invoice must never be rebound by
+      // recovery. Preserve first-rail-wins.
+      if (invoice.status !== 'finalized' || invoice.paidAt !== null || invoice.settlementAttemptId !== null ||
+        invoice.currency !== 'USD' || invoice.totalMicros <= 0n || invoice.totalMicros % MICROS_PER_CENT !== 0n ||
+        attempt.amountMicros !== invoice.totalMicros) throw new ConflictException('Stripe checkout invoice is no longer payable');
       const claimed = await tx.billingPaymentAttempt.updateMany({
         where: {
           id: attemptId,
@@ -526,6 +586,10 @@ export class StripePaymentService {
       const attempt = await tx.billingPaymentAttempt.findUnique({ where: { id: attemptId } });
       const account = await tx.billingAccount.findUnique({ where: { id: accountId } });
       if (!attempt || !account) throw new ConflictException('Stripe subscription checkout state is unavailable');
+      const inv = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
+      if (!inv || inv.status !== 'finalized' || inv.paidAt !== null || inv.settlementAttemptId !== null ||
+        inv.currency !== 'USD' || inv.totalMicros <= 0n || inv.totalMicros % MICROS_PER_CENT !== 0n ||
+        attempt.amountMicros !== inv.totalMicros) throw new ConflictException('Stripe subscription checkout invoice is no longer payable');
       const claimed = await tx.billingPaymentAttempt.updateMany({
         where: { id: attemptId, status: 'pending', ...(workerId ? { checkoutRetryOwnerId: workerId, checkoutRetryLeaseExpiresAt: { gt: new Date() } } : {}), AND: [
           { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: sessionId }] },
@@ -770,8 +834,19 @@ export class StripePaymentService {
     identity: { sessionId: string; checkoutUrl: string; paymentIntentId: string | null; subscriptionId: string | null } | null,
   ): Promise<void> {
     try {
+      // Build a single AND array so every null-or-same identity predicate is
+      // applied simultaneously — spreading separate AND keys would drop the
+      // payment-intent fence when both PI and subscription identities exist.
+      const identityAnd: Array<Record<string, unknown>> = [];
+      if (identity?.sessionId) identityAnd.push({ OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: identity.sessionId }] });
+      if (identity?.paymentIntentId) identityAnd.push({ OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: identity.paymentIntentId }] });
+      if (identity?.subscriptionId) identityAnd.push({ OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: identity.subscriptionId }] });
       await (this.prisma.billingPaymentAttempt as any).updateMany({
-        where: { id: attemptId, status: 'pending' },
+        where: {
+          id: attemptId,
+          status: 'pending',
+          ...(identityAnd.length > 0 ? { AND: identityAnd } : {}),
+        } as any,
         data: {
           status: 'pending',
           ...(identity ? {

@@ -90,9 +90,21 @@ This is intentional. Public status responses are safe by design and must not exp
 - Ensure `.env` `DATABASE_URL` matches compose credentials.
 - PostgreSQL is bound to `127.0.0.1:5432`.
 
+### Billing invoices are never finalized / USDC claims stall
+
+- The billing worker is disabled by default. Set `BILLING_WORKER_ENABLED=true` and confirm
+  the startup log line "Billing worker enabled (workerId=…, interval=300000ms)".
+- The worker runs inside the long-running NestJS API process (no separate binary); it must
+  be enabled on a resident instance.
+- Check `needs_review` rows that block finalization (`stripe_webhook_events`,
+  `billing_payment_attempts`, quarantined `billing_usage_events`); see `DEPLOYMENT.md`
+  section 8 for the full run/monitor guide.
+
 ## 6. Operational safety
 
 - Revoke or rotate API keys through dashboard-only endpoints.
 - Rotate Openfort secrets through deployment secret storage and restart backend instances.
 - Run migrations before deploying code that expects schema changes.
 - Update documentation alongside behavior changes.
+- Treat `BILLING_WORKER_ENABLED=true` as an explicit production opt-in; verify its startup
+  log line after each deployment that changes billing behavior.

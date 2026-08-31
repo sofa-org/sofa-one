@@ -456,9 +456,11 @@ export class StripeWebhookService {
             ? raw.id
             : readProviderId(raw.payment_intent, 'payment_intent');
           const subscriptionId = readProviderId(raw.subscription, 'subscription');
+          const invoiceId = event.type.startsWith('invoice') ? raw.id : readProviderId(raw.invoice, 'invoice');
           const identityAnd: Array<Record<string, unknown>> = [];
           if (paymentIntentId) identityAnd.push({ OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: paymentIntentId }] });
           if (subscriptionId) identityAnd.push({ OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }] });
+          if (invoiceId) identityAnd.push({ OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: invoiceId }] });
           // Do not rely on the preflight snapshot after the advisory/row lock.
           // The success transition is a fact-bound CAS, so a concurrently
           // committed failure (or identity change) can never be overwritten.
@@ -1525,6 +1527,20 @@ export class StripeWebhookService {
       }
       if (typeof rawObject.mode !== 'string' || !['payment', 'subscription', 'setup'].includes(rawObject.mode)) {
         return { ok: false, reason: 'provider_mode_missing' };
+      }
+      // Exact mode/charge-kind identity before any settlement: fixed_fee must
+      // be a subscription Checkout, full-invoice must be a one-time payment
+      // Checkout, and setup mode is never a payment attempt. Any mismatch fails
+      // closed without settlement or recurring bootstrap.
+      const mode = rawObject.mode;
+      if (attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE && mode !== 'subscription') {
+        return { ok: false, reason: 'provider_mode_mismatch' };
+      }
+      if (attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FULL && mode !== 'payment') {
+        return { ok: false, reason: 'provider_mode_mismatch' };
+      }
+      if (mode === 'setup') {
+        return { ok: false, reason: 'provider_mode_mismatch' };
       }
       if (rawObject.lines !== undefined &&
         (!rawObject.lines || !Array.isArray(rawObject.lines.data) || rawObject.lines.data.length === 0)) {

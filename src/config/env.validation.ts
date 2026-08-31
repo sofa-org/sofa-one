@@ -147,6 +147,8 @@ class EnvironmentVariables {
   // The worker is a separate service seam that drains reconciliation,
   // finalization catch-up, USDC active-claim recovery, and deferred Stripe
   // renewal retries. It is safely disabled unless explicitly enabled.
+  // Development/test may leave it unset/false; production MUST set the
+  // literal string "true" (validated in validateBillingWorkerConfig).
   @IsBooleanString()
   @IsOptional()
   BILLING_WORKER_ENABLED?: string;
@@ -173,6 +175,7 @@ export function validate(config: Record<string, unknown>) {
   validateMfaSecretEncryptionKey(validatedConfig.MFA_SECRET_ENCRYPTION_KEY);
   validateStripeConfig(validatedConfig);
   validateUsdcConfig(validatedConfig);
+  validateBillingWorkerConfig(validatedConfig);
   return validatedConfig;
 }
 
@@ -181,6 +184,19 @@ function validateProductionConfig(config: EnvironmentVariables) {
 
   if (!config.CORS_ORIGIN?.trim()) {
     throw new Error('CORS_ORIGIN must be set in production');
+  }
+}
+
+/**
+ * The billing worker must be explicitly enabled in production: the literal
+ * string `true` is required, never a default-on, never a bare truthy value.
+ * Development/test keep the safe default (unset or `false`) so the app starts
+ * normally without the reconciliation/finalization loop.
+ */
+function validateBillingWorkerConfig(config: EnvironmentVariables) {
+  if (config.NODE_ENV !== Environment.Production) return;
+  if (config.BILLING_WORKER_ENABLED !== 'true') {
+    throw new Error('BILLING_WORKER_ENABLED must be set to "true" in production');
   }
 }
 

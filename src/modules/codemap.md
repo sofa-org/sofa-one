@@ -24,7 +24,7 @@ The container is organized around three concerns:
 | `transactions/` | Public send/status API + dashboard history; policy + simulation preflight, idempotency, Openfort submission, safe response shaping | [View Map](transactions/codemap.md) |
 | `transactions/dto/` | Send-transaction + list-transactions validation DTOs and shared interaction constants | [View Map](transactions/dto/codemap.md) |
 | `billing/` | Plan catalog, usage metering, quota enforcement, invoice finalization, Stripe + native USDC payment rails, reconciliation | [View Map](billing/codemap.md) |
-| `billing/dto/` | Validated bodies for the four dashboard billing routes | [View Map](billing/dto/codemap.md) |
+| `billing/dto/` | Validated bodies for the five dashboard billing routes (including subscription checkout) | [View Map](billing/dto/codemap.md) |
 | `billing/stripe/` | Stripe Checkout rail: client provider, payment service, signature-verified webhook | [View Map](billing/stripe/codemap.md) |
 | `billing/onchain/` | Native USDC invoice payment rail: quote/claim + strict receipt verification | [View Map](billing/onchain/codemap.md) |
 | `billing/onchain/dto/` | USDC quote/claim request DTOs | [View Map](billing/onchain/dto/codemap.md) |

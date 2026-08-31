@@ -2313,6 +2313,7 @@ describe('BillingService', () => {
         {
           id: 'inv-1',
           billingAccountId: ACCOUNT.id,
+          planVersionId: 'plan-version-1',
           periodStart: new Date('2026-05-01T00:00:00.000Z'),
           status: 'finalized',
           currency: 'USD',
@@ -2337,7 +2338,28 @@ describe('BillingService', () => {
         status: 'finalized',
         amount: '84',
         currency: 'USD',
+        planVersionId: 'plan-version-1',
       });
+    });
+
+    it('keeps planVersionId null for legacy rows without one', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindMany.mockResolvedValue([
+        {
+          id: 'inv-legacy',
+          billingAccountId: ACCOUNT.id,
+          periodStart: new Date('2026-05-01T00:00:00.000Z'),
+          status: 'finalized',
+          currency: 'USD',
+          totalMicros: 0n,
+          createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        },
+      ]);
+      invoiceCount.mockResolvedValue(1);
+
+      const result = await service.listInvoices('user-1', { page: 1, limit: 20 });
+
+      expect(result.items[0].planVersionId).toBeNull();
     });
 
     it('maps the real paidAt timestamp and keeps pdfUrl null', async () => {
@@ -2841,7 +2863,7 @@ describe('BillingService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              { billingAccountId: 'acc-1', accountUserId: 'user-1', periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') } },
+              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') } },
             ]),
           }),
           orderBy: { startedAt: 'desc' },
@@ -3114,6 +3136,49 @@ describe('BillingService', () => {
       ]);
 
       await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+    });
+
+    it('blocks finalize for a matching-account run with a contradictory user scope', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([]); // not usage-linked
+      // The run belongs to the account but its accountUserId/summary point at
+      // another user. Discovery must still surface it so the TypeScript
+      // relevance/risk fence retains it (never SQL-filtered into fail-open).
+      reconciliationRunFindMany.mockResolvedValue([
+        {
+          id: 'run-other-user',
+          status: 'completed',
+          billingAccountId: ACCOUNT.id,
+          accountUserId: 'user-other',
+          runType: 'receipt_outbound',
+          periodStart: new Date('2026-05-01T00:00:00.000Z'),
+          periodEnd: new Date('2026-06-01T00:00:00.000Z'),
+          summary: { userId: 'user-other', complete: true, notFound: 1, accountingPeriods: ['2026-05-01T00:00:00.000Z'] },
+        },
+      ]);
+      // Discovery must include the account-scoped overlap branch WITHOUT an
+      // accountUserId predicate so contradictory scopes reach the fence.
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(reconciliationRunFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') } },
+            ]),
+          }),
+        }),
+      );
       expect(invoiceCreate).not.toHaveBeenCalled();
     });
 
@@ -3501,11 +3566,13 @@ describe('BillingService', () => {
 
       await expect(service.finalizeInvoice('user-1', '2026-07')).rejects.toThrow(ConflictException);
       // operational runs are scoped to the account and overlapping target period
+      // (no accountUserId predicate — contradictory user scopes must still reach
+      // the TypeScript relevance/risk fence).
       expect(reconciliationRunFindMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              { billingAccountId: 'acc-1', accountUserId: 'user-1', periodStart: { lte: new Date('2026-08-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-07-01T00:00:00.000Z') } },
+              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-08-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-07-01T00:00:00.000Z') } },
             ]),
           }),
         }),

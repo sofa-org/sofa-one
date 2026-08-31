@@ -53,6 +53,7 @@ function invoice(overrides: Record<string, unknown> = {}) {
     updatedAt: new Date('2026-06-01T00:00:00.000Z'),
     finalizedAt: new Date('2026-06-01T00:00:00.000Z'),
     paidAt: null,
+    settlementAttemptId: null,
     ...overrides,
   };
 }
@@ -130,7 +131,7 @@ describe('StripePaymentService', () => {
               updateMany: accountUpdateMany,
             },
             user: { findUnique: userFindUnique },
-            billingInvoice: { findFirst: invoiceFindFirst },
+            billingInvoice: { findFirst: invoiceFindFirst, findUnique: invoiceFindFirst },
             billingPaymentAttempt: {
               findFirst: attemptFindFirst,
               findMany: attemptFindMany,
@@ -144,6 +145,7 @@ describe('StripePaymentService', () => {
               const attemptState = await Promise.resolve(attemptCreate.mock.results.at(-1)?.value);
               return work({
                 billingAccount: { findUnique: accountFindUnique, updateMany: accountUpdateMany },
+                billingInvoice: { findUnique: invoiceFindFirst },
                 billingPaymentAttempt: {
                   findUnique: jest.fn().mockResolvedValue(attemptState),
                   updateMany: attemptUpdateMany.mockImplementation(({ data }: any) => {
@@ -635,6 +637,41 @@ describe('StripePaymentService', () => {
     });
   });
 
+  describe('markAttemptUnknown identity fencing', () => {
+    it('applies every null-or-same identity predicate in a single AND when both PI and subscription exist', async () => {
+      await (service as any).markAttemptUnknown('att-1', {
+        sessionId: 'cs_1', checkoutUrl: 'https://stripe.test/u',
+        paymentIntentId: 'pi_1', subscriptionId: 'sub_1',
+      });
+
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          id: 'att-1',
+          status: 'pending',
+          AND: expect.arrayContaining([
+            { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: 'cs_1' }] },
+            { OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: 'pi_1' }] },
+            { OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: 'sub_1' }] },
+          ]),
+        }),
+        data: expect.objectContaining({ failureCode: 'local_persistence_uncertain' }),
+      }));
+    });
+
+    it('cannot rebind a conflicting payment intent when the subscription predicate is also present', async () => {
+      await (service as any).markAttemptUnknown('att-1', {
+        sessionId: 'cs_1', checkoutUrl: 'https://stripe.test/u',
+        paymentIntentId: 'pi_1', subscriptionId: 'sub_1',
+      });
+
+      // A single AND means a DIFFERENT persisted PI (pi_other) can never match.
+      const where = (attemptUpdateMany.mock.calls.at(-1)?.[0] as any).where;
+      expect(where.AND).toContainEqual({ OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: 'pi_1' }] });
+      expect(where.AND).toContainEqual({ OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: 'sub_1' }] });
+      expect(where.AND).toHaveLength(3);
+    });
+  });
+
   describe('subscription checkout — charge-kind reuse safety + plan/amount fail-closed', () => {
     const PRO_PLAN = {
       id: 'plan-pro',
@@ -794,7 +831,8 @@ describe('StripePaymentService', () => {
           stripePaymentIntentId: 'pi_recover',
           checkoutUrl: null,
           checkoutRetryCount: 0,
-          checkoutRetryLeaseExpiresAt: null,
+          checkoutRetryOwnerId: 'worker-1',
+          checkoutRetryLeaseExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
           ...overrides,
         }),
         invoice: {
@@ -807,6 +845,7 @@ describe('StripePaymentService', () => {
     it('rejects a retrieved session whose complete local identity does not match', async () => {
       const row = recoveryRow();
       attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
       sessionRetrieve.mockResolvedValue({
         id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: 'pi_other',
@@ -826,6 +865,8 @@ describe('StripePaymentService', () => {
     it('persists a fully proven session only while the recovery lease is active', async () => {
       const row = recoveryRow();
       attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      invoiceFindFirst.mockResolvedValue(invoice()); // persistence eligibility
       // The transaction mock obtains the existing attempt from the latest
       // create-result slot; seed it without making recovery create a row.
       attemptCreate.mockResolvedValue(row);
@@ -854,6 +895,8 @@ describe('StripePaymentService', () => {
       accountFindUnique.mockResolvedValue(active);
       const row = recoveryRow({ stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_expanded', stripePaymentIntentId: null });
       attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      invoiceFindFirst.mockResolvedValue(invoice()); // persistence eligibility
       attemptCreate.mockResolvedValue(row);
       await attemptCreate({ data: row });
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
@@ -862,7 +905,8 @@ describe('StripePaymentService', () => {
         id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: null,
         subscription: {
           id: 'sub_expanded', current_period_start: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
-          current_period_end: Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000), extra: 'expanded',
+          current_period_end: Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000),
+          billing_cycle_anchor: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000), extra: 'expanded',
         }, mode: 'subscription', amount_total: 4900, currency: 'usd', customer: 'cus_123',
         client_reference_id: 'inv-1', metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05', planVersionId: 'plan-1' },
       });
@@ -887,6 +931,7 @@ describe('StripePaymentService', () => {
     it('does not create a new Checkout for a renewal attempt without a session', async () => {
       const renewal = recoveryRow({ stripeCheckoutSessionId: null, stripeInvoiceId: 'in_renewal', stripeChargeKind: 'fixed_fee' });
       attemptFindMany.mockResolvedValue([renewal]);
+      attemptFindFirst.mockResolvedValue(renewal); // post-lease re-read
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.recoverPendingCheckouts('worker-1');
@@ -900,6 +945,166 @@ describe('StripePaymentService', () => {
           ]),
         }),
       }));
+    });
+
+    it('persists the newly created session id for a one-time no-session recovery', async () => {
+      const row = recoveryRow({ stripeCheckoutSessionId: null, stripePaymentIntentId: null });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      invoiceFindFirst.mockResolvedValue(invoice()); // persistence eligibility
+      accountFindUnique.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_123' });
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionCreate.mockResolvedValue({
+        id: 'cs_new', url: 'https://stripe.test/new', payment_intent: 'pi_new', subscription: null,
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(1);
+      // The persistence CAS must carry the NEW session id, never the null the
+      // attempt originally had — otherwise one-time recovery would keep
+      // retrying with no local session identity.
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: 'cs_new' }] },
+          ]),
+        }),
+      }));
+    });
+
+    it('persists the new session id and subscription for a fixed-fee no-session recovery', async () => {
+      const row = recoveryRow({ stripeCheckoutSessionId: null, stripePaymentIntentId: null, stripeChargeKind: 'fixed_fee' });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      invoiceFindFirst.mockResolvedValue(invoice()); // persistence eligibility
+      accountFindUnique.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_123' });
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionCreate.mockResolvedValue({
+        id: 'cs_new_sub', url: 'https://stripe.test/new', payment_intent: 'pi_new', subscription: 'sub_new',
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(1);
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: 'cs_new_sub' }] },
+          ]),
+        }),
+      }));
+    });
+
+    it('skips recovery entirely when another rail already settled the invoice (USDC wins)', async () => {
+      const row = {
+        ...recoveryRow(),
+        invoice: { ...invoice({ settlementAttemptId: 'att-usdc', paidAt: new Date('2026-06-02T00:00:00.000Z') }), billingAccount: { ...ACCOUNT, stripeCustomerId: 'cus_123' } },
+      };
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read shows settled invoice
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0 });
+      expect(sessionRetrieve).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['void invoice', { status: 'void' }],
+      ['paid invoice', { paidAt: new Date('2026-06-02T00:00:00.000Z') }],
+      ['settled invoice', { settlementAttemptId: 'att-other' }],
+      ['amount-mismatched invoice', { totalMicros: 99_000_000n }],
+      ['dynamic overage invoice (fixed fee)', { totalMicros: 99_000_000n, monthlyFeeMicros: 49_000_000n }],
+    ])('makes zero Stripe calls for %s', async (_label, invoiceOverrides) => {
+      const row = {
+        ...recoveryRow(),
+        invoice: { ...invoice(invoiceOverrides), billingAccount: { ...ACCOUNT, stripeCustomerId: 'cus_123' } },
+      };
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.recoverPendingCheckouts('worker-1');
+
+      expect(sessionRetrieve).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+    });
+
+    it('does not overwrite settlement when the invoice is settled while provider work is in flight', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read passes
+      // By the time the final persistence transaction runs, another rail settled.
+      invoiceFindFirst.mockResolvedValue(invoice({ settlementAttemptId: 'att-usdc', paidAt: new Date('2026-06-02T00:00:00.000Z') }));
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: 'pi_recover',
+        subscription: null, mode: 'payment', amount_total: 4900, currency: 'usd',
+        customer: 'cus_123', client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(0);
+      expect(attemptUpdateMany).toHaveBeenCalled();
+    });
+
+    it('makes zero Stripe calls for currency mismatch on the attempt', async () => {
+      const row = { ...recoveryRow(), currency: 'EUR', amountMicros: 49_000_000n };
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row);
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.recoverPendingCheckouts('worker-1');
+
+      expect(sessionRetrieve).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+    });
+
+    it('makes zero Stripe calls for a too-large (unsafe) amount', async () => {
+      const row = { ...recoveryRow(), amountMicros: 900_719_925_474_099_300_000n }; // > MAX_SAFE cents
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row);
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.recoverPendingCheckouts('worker-1');
+
+      expect(sessionRetrieve).not.toHaveBeenCalled();
+      expect(sessionCreate).not.toHaveBeenCalled();
+    });
+
+    it('rejects a fixed-fee session whose billing_cycle_anchor does not match the invoice period', async () => {
+      const row = { ...recoveryRow({ stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_anchor', stripePaymentIntentId: null }), invoice: { ...invoice(), billingAccount: { ...ACCOUNT, stripeCustomerId: 'cus_123' } } };
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row);
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      jest.spyOn(service as any, 'persistRecoveredCheckout').mockResolvedValue(undefined);
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: null,
+        subscription: {
+          id: 'sub_anchor', current_period_start: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
+          current_period_end: Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000),
+          billing_cycle_anchor: Math.floor(Date.parse('2026-04-01T00:00:00Z') / 1000), // mismatched anchor
+        }, mode: 'subscription', amount_total: 4900, currency: 'usd', customer: 'cus_123',
+        client_reference_id: 'inv-1', metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05', planVersionId: 'plan-1' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(0);
+      expect((service as any).persistRecoveredCheckout).not.toHaveBeenCalled();
     });
   });
 });

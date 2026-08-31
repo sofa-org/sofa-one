@@ -5,9 +5,11 @@ import {
   Activity,
   AlertCircle,
   ArrowRight,
+  Calendar,
   Check,
   Coins,
   CreditCard,
+  FileDown,
   Loader2,
   Receipt,
   RotateCcw,
@@ -17,8 +19,11 @@ import {
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
+  assignBillingPlanAuth,
   createBillingCheckoutSessionAuth,
+  createBillingSubscriptionCheckoutSessionAuth,
   getApiErrorMessage,
+  getBillingInvoicePdfAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
   isApiError,
@@ -78,6 +83,8 @@ function formatInvoiceStatus(status: string): string {
       return 'Void';
     case 'uncollectible':
       return 'Uncollectible';
+    case 'needs_review':
+      return 'Needs review';
     default:
       return status;
   }
@@ -93,6 +100,7 @@ function statusTone(status: string): string {
       return 'bg-amber-100 text-amber-700';
     case 'void':
     case 'uncollectible':
+    case 'needs_review':
       return 'bg-red-100 text-red-700';
     default:
       return 'bg-gray-100 text-gray-700';
@@ -135,6 +143,11 @@ function isInvoicePayableByCard(invoice: BillingInvoice): boolean {
 
 function isInvoicePayableByUsdc(invoice: BillingInvoice): boolean {
   return isInvoicePayable(invoice);
+}
+
+/** Subscription checkout additionally requires the server-provided plan version id. */
+function isInvoicePayableBySubscription(invoice: BillingInvoice): boolean {
+  return isInvoicePayableByCard(invoice) && Boolean(invoice.planVersionId);
 }
 
 function friendlyCheckoutError(error: unknown): string {
@@ -252,8 +265,18 @@ export default function BillingPage() {
 
   const [checkoutLoadingId, setCheckoutLoadingId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [subscriptionCheckoutLoadingId, setSubscriptionCheckoutLoadingId] = useState<string | null>(null);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const [usdcPanelInvoiceId, setUsdcPanelInvoiceId] = useState<string | null>(null);
+
+  const [planChangeSelectedId, setPlanChangeSelectedId] = useState<string | null>(null);
+  const [planChangeLoading, setPlanChangeLoading] = useState(false);
+  const [planChangeNotice, setPlanChangeNotice] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Refs for silent invoice refresh: abort previous in-flight request and ignore stale responses.
   const invoicesRefreshIdRef = useRef(0);
@@ -269,6 +292,12 @@ export default function BillingPage() {
     if (!plans) return null;
     return plans.plans.find((plan) => plan.id === plans.currentPlanId) ?? null;
   }, [plans]);
+
+  useEffect(() => {
+    if (plans && planChangeSelectedId === null) {
+      setPlanChangeSelectedId(plans.currentPlanId);
+    }
+  }, [plans, planChangeSelectedId]);
 
   const loadPlans = useCallback(
     async (signal?: AbortSignal) => {
@@ -406,6 +435,85 @@ export default function BillingPage() {
     [getToken],
   );
 
+  const handleSubscriptionCheckout = useCallback(
+    async (invoice: BillingInvoice) => {
+      if (!isInvoicePayableBySubscription(invoice) || !invoice.planVersionId) return;
+      setSubscriptionCheckoutLoadingId(invoice.id);
+      setCheckoutError(null);
+      try {
+        const response = await createBillingSubscriptionCheckoutSessionAuth(
+          getToken,
+          invoice.id,
+          invoice.planVersionId,
+        );
+        window.location.href = response.checkoutUrl;
+      } catch (err: unknown) {
+        if (isApiError(err) && err.statusCode === 503) {
+          setCheckoutError('Subscription checkout is temporarily unavailable. Please try again in a moment.');
+        } else {
+          setCheckoutError(
+            getApiErrorMessage(err) ||
+              'Could not start subscription checkout. The invoice must be a finalized fixed-fee plan invoice.',
+          );
+        }
+      } finally {
+        setSubscriptionCheckoutLoadingId(null);
+      }
+    },
+    [getToken],
+  );
+
+  const handleDownloadPdf = useCallback(
+    async (invoice: BillingInvoice) => {
+      if (pdfLoadingId === invoice.id) return;
+      setPdfLoadingId(invoice.id);
+      setPdfError(null);
+      try {
+        const blob = await getBillingInvoicePdfAuth(getToken, invoice.id);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `invoice-${invoice.period}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (err: unknown) {
+        setPdfError(getApiErrorMessage(err) || 'Could not download invoice PDF.');
+      } finally {
+        setPdfLoadingId(null);
+      }
+    },
+    [getToken, pdfLoadingId],
+  );
+
+  const handlePlanChange = useCallback(
+    async (planCode: string) => {
+      if (!planCode || planCode === plans?.currentPlanId || planChangeLoading) return;
+      setPlanChangeLoading(true);
+      setPlanChangeNotice(null);
+      try {
+        const result = await assignBillingPlanAuth(getToken, planCode);
+        setPlanChangeNotice({
+          type: 'success',
+          message:
+            result.outcome === 'changed'
+              ? `Plan scheduled: ${result.planName} takes effect on ${formatPeriodLabel(result.effectivePeriod)}.`
+              : `${result.planName} is already scheduled for ${formatPeriodLabel(result.effectivePeriod)}.`,
+        });
+        setPlansRetryNonce((n) => n + 1);
+      } catch (err: unknown) {
+        setPlanChangeNotice({
+          type: 'error',
+          message: getApiErrorMessage(err) || 'Could not change plan. Please try again.',
+        });
+      } finally {
+        setPlanChangeLoading(false);
+      }
+    },
+    [getToken, plans?.currentPlanId, planChangeLoading],
+  );
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
@@ -477,6 +585,37 @@ export default function BillingPage() {
         </div>
       )}
 
+      {pdfError && (
+        <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+            <span>{pdfError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPdfError(null)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {planChangeNotice && (
+        <div
+          className={`rounded-xl border p-4 text-sm shadow-sm ${
+            planChangeNotice.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : 'border-red-200 bg-red-50 text-red-800'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-current" />
+            <span>{planChangeNotice.message}</span>
+          </div>
+        </div>
+      )}
+
       {anyError && !isLoading && (
         <PageError
           message={plansError ?? summaryError ?? 'Could not load billing data.'}
@@ -536,6 +675,66 @@ export default function BillingPage() {
                   ))}
                 </ul>
               )}
+
+              {plans?.scheduledPlan && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                    <div>
+                      <p className="font-semibold text-blue-800">Scheduled plan</p>
+                      <p className="text-blue-700">
+                        {plans.scheduledPlan.planName} ({plans.scheduledPlan.planCode}) takes
+                        effect on {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4">
+                <label
+                  htmlFor="plan-change-select"
+                  className="text-[11px] font-bold uppercase tracking-widest text-brand-muted"
+                >
+                  Change plan
+                </label>
+                <select
+                  id="plan-change-select"
+                  value={planChangeSelectedId ?? plans?.currentPlanId}
+                  onChange={(event) => setPlanChangeSelectedId(event.target.value)}
+                  disabled={planChangeLoading || !plans || plans.plans.length === 0}
+                  className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
+                >
+                  {plans?.plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name} — {formatAmount(plan.basePrice, plan.currency)}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-brand-muted">
+                  Plan changes take effect at the start of the next UTC month. Your current plan
+                  stays active until then.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selected = planChangeSelectedId ?? plans?.currentPlanId;
+                    if (selected) void handlePlanChange(selected);
+                  }}
+                  disabled={
+                    planChangeLoading ||
+                    (planChangeSelectedId ?? plans?.currentPlanId) === plans?.currentPlanId
+                  }
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {planChangeLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                  {planChangeLoading ? 'Scheduling…' : 'Schedule plan change'}
+                </button>
+              </div>
             </div>
           )}
         </DashboardCard>
@@ -725,8 +924,12 @@ export default function BillingPage() {
                   const paid = isInvoicePaid(invoice);
                   const canPayCard = isInvoicePayableByCard(invoice);
                   const canPayUsdc = isInvoicePayableByUsdc(invoice);
-                  const hasActions = canPayCard || canPayUsdc;
+                  const canPaySubscription = isInvoicePayableBySubscription(invoice);
+                  const hasActions = canPayCard || canPayUsdc || canPaySubscription;
+                  const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
+                  const isLoadingSubscriptionCheckout = subscriptionCheckoutLoadingId === invoice.id;
+                  const isLoadingPdf = pdfLoadingId === invoice.id;
                   const usdcPanelOpen = usdcPanelInvoiceId === invoice.id;
                   return (
                     <Fragment key={invoice.id}>
@@ -762,7 +965,7 @@ export default function BillingPage() {
                                   <button
                                     type="button"
                                     onClick={() => handlePayInvoice(invoice)}
-                                    disabled={isLoadingCheckout}
+                                    disabled={isLoadingCheckout || isLoadingSubscriptionCheckout}
                                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     {isLoadingCheckout ? (
@@ -773,6 +976,21 @@ export default function BillingPage() {
                                     {isLoadingCheckout ? 'Redirecting…' : 'Card'}
                                   </button>
                                 )}
+                                {canPaySubscription && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSubscriptionCheckout(invoice)}
+                                    disabled={isLoadingCheckout || isLoadingSubscriptionCheckout}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text shadow-sm transition-all hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {isLoadingSubscriptionCheckout ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Calendar className="h-3.5 w-3.5" />
+                                    )}
+                                    {isLoadingSubscriptionCheckout ? 'Redirecting…' : 'Subscribe'}
+                                  </button>
+                                )}
                                 {canPayUsdc && (
                                   <button
                                     type="button"
@@ -781,6 +999,7 @@ export default function BillingPage() {
                                         current === invoice.id ? null : invoice.id,
                                       )
                                     }
+                                    disabled={isLoadingSubscriptionCheckout}
                                     className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                                       usdcPanelOpen
                                         ? 'border border-brand-border bg-brand-surface text-brand-text'
@@ -803,7 +1022,22 @@ export default function BillingPage() {
                                 View <ArrowRight className="h-3 w-3" />
                               </a>
                             )}
-                            {!paid && !hasActions && !invoice.pdfUrl && (
+                            {canDownloadPdf && (
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadPdf(invoice)}
+                                disabled={isLoadingPdf}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text shadow-sm transition-all hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isLoadingPdf ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <FileDown className="h-3.5 w-3.5" />
+                                )}
+                                {isLoadingPdf ? 'Downloading…' : 'PDF'}
+                              </button>
+                            )}
+                            {!paid && !hasActions && !invoice.pdfUrl && !canDownloadPdf && (
                               <span className="text-xs text-brand-muted">—</span>
                             )}
                           </div>

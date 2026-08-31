@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Post,
   Query,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
@@ -14,6 +16,7 @@ import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { BillingService } from './billing.service';
 import { BillingReconciliationService } from './billing-reconciliation.service';
+import { InvoicePdfService } from './invoice-pdf.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
 import { GetSummaryQueryDto } from './dto/get-summary-query.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
@@ -32,6 +35,7 @@ export class BillingController {
     private readonly billingService: BillingService,
     private readonly reconciliationService: BillingReconciliationService,
     private readonly stripePaymentService: StripePaymentService,
+    private readonly invoicePdfService: InvoicePdfService,
   ) {}
 
   /** GET /v1/billing/plans — current plan + plan catalog. */
@@ -80,6 +84,31 @@ export class BillingController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.billingService.getInvoice(userId, id);
+  }
+
+  /**
+   * GET /v1/billing/invoices/:id/pdf — downloads the immutable PDF for a
+   * finalized (or paid) invoice owned by the current user. Pricing comes only
+   * from the persisted snapshot/lines, never the current plan; the service
+   * verifies the snapshot hash, non-negative amounts, and line sum = total and
+   * fails closed. The response is served as an attachment with
+   * `private, no-store` and `nosniff` headers. Not part of the public API-key
+   * spec; the IAM token is never placed in the URL.
+   */
+  @Get('invoices/:id/pdf')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async downloadInvoicePdf(
+    @CurrentUser('id') userId: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<StreamableFile> {
+    const { pdf, filename } = await this.invoicePdfService.generate(userId, id);
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   /**

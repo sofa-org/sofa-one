@@ -90,6 +90,8 @@ export interface BillingInvoiceDto {
   currency: string;
   createdAt: string;
   paidAt: string | null;
+  /** Immutable plan version that priced this invoice (null only for legacy rows). */
+  planVersionId: string | null;
   pdfUrl: string | null;
 }
 
@@ -1693,13 +1695,15 @@ export class BillingService {
           // Runs linked to this account's usage events in the target period are
           // always relevant.
           { id: { in: runIds } },
-          // Broad discovery of operational runs that could affect the target
-          // cutoff: a run with operational scan month >= target month could
-          // have written usage for the target (receipts mined at or before the
-          // scan). This deliberately does NOT filter on summary.accountingPeriods
-          // — missing/legacy/malformed coverage must be discovered and evaluated
-          // in TypeScript, never SQL-filtered into fail-open.
-          { billingAccountId: accountId, accountUserId: userId, periodStart: { lte: end }, periodEnd: { gte: start } },
+          // Broad discovery of operational runs for the matching account that
+          // could affect the target cutoff: a run with operational scan month
+          // >= target month could have written usage for the target (receipts
+          // mined at or before the scan). accountUserId is deliberately NOT
+          // filtered here — a contradictory user scope must still reach the
+          // TypeScript relevance/risk fence, which conservatively retains it.
+          // Missing/legacy/malformed coverage is never SQL-filtered into
+          // fail-open.
+          { billingAccountId: accountId, periodStart: { lte: end }, periodEnd: { gte: start } },
           // An account-scoped row with incomplete period/identity is still
           // relevant and must be evaluated conservatively; SQL must not hide
           // nullable periodEnd rows before the TypeScript risk fence sees them.
@@ -2042,6 +2046,8 @@ export class BillingService {
       createdAt: inv.createdAt.toISOString(),
       // Real payment timestamp confirmed by the signed Stripe webhook.
       paidAt: inv.paidAt ? inv.paidAt.toISOString() : null,
+      // Immutable plan version identity; null only for pre-migration rows.
+      planVersionId: inv.planVersionId ?? null,
       // No Stripe hosted invoice PDF is used; keep null.
       pdfUrl: null,
     };

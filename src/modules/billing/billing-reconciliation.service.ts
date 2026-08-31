@@ -827,17 +827,25 @@ export class BillingReconciliationService {
           receiptRef: `${txHash}:unsupported_chain`,
           receiptLogIndex: null,
           periodStart: targetPeriodStart,
-          occurredAt: new Date(),
+          // No receipt exists for an unsupported chain, so the occurrence time
+          // is never fabricated from `now`. Use the real persisted transaction
+          // creation time as the conservative occurrence evidence; the explicit
+          // unknown block sentinels below are NOT receipt/block facts.
+          occurredAt: tx.createdAt ?? new Date(),
           assetId: null,
           receipt: {
             txHash,
             receiptRef: `${txHash}:unsupported_chain`,
             receiptLogIndex: null,
+            // Explicit "no receipt available" sentinels — never real block
+            // facts (the chain cannot be queried, so no block evidence exists).
+            // They satisfy the schema's evidence-shape requirement for the
+            // quarantine row and are never used as an actual block timestamp.
             receiptBlockNumber: 0n,
             receiptBlockHash: '',
             receiptBlockTimestamp: 0n,
             receiptStatus: 'unknown',
-            receiptData: { txHash, chainId: tx.chainId.toString() },
+            receiptData: { txHash, chainId: tx.chainId.toString(), evidence: 'none_unsupported_chain' },
             reconciledAt: new Date(),
           },
           metadata: { reason: 'unsupported_chain' },

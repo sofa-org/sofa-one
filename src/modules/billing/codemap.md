@@ -11,18 +11,19 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 
 | File | Responsibility |
 | --- | --- |
-| `billing.module.ts` | Nest module wiring: imports `PrismaModule`, registers 3 controllers + 8 providers, exports the services consumed by other modules. |
-| `billing.controller.ts` | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, reconcile). |
+| `billing.module.ts` | Nest module wiring: imports `PrismaModule`, `SecurityEventModule`, and `ScheduleModule.forRoot()`; registers 3 controllers + 10 providers, exports the services consumed by other modules. |
+| `billing.controller.ts` | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, subscription-checkout, reconcile). |
 | `billing.service.ts` | Core service: plan catalog seeding/validation, plan assignment, usage recording + API-call quota, outbound metering (legacy + receipt-confirmed), summary aggregation, invoice list/get/finalize, and the shared billing-period lock seam. |
 | `billing-calculator.ts` | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`. |
 | `billing-catalog.ts` | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values. |
 | `billing-pricing.ts` | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results. |
 | `billing-entitlement.service.ts` | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and the transaction-aware `assertWalletActivationAllowed` hard-quota seam. |
+| `billing-worker.service.ts` | Gated 5-minute `@Interval` worker (`BILLING_WORKER_ENABLED`, default off; exposes no route): drains receipt reconciliation per account/period, runs invoice finalization catch-up, materializes due recurring periods, resumes pending/confirming USDC claims, retries deferred Stripe renewal events, and recovers interrupted pending checkouts. Reuses the existing evidence-backed services. |
 | `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers. |
 | `invoice-settlement.service.ts` | Shared atomic invoice-settlement boundary (`settleInvoice`): row-locked, first-rail-wins CAS used by both Stripe and USDC rails. |
 | `billing-quota.exception.ts` | `BillingQuotaExceededException` — HTTP 429 with machine-readable `BILLING_API_QUOTA_EXCEEDED` code, metric, limit, period, retryAfter. |
 | `billing.utils.ts` | Pure helpers: `parsePeriod`, `formatUtcMonth`, `microsToDecimalUsd`, `ppmToPercentString`, `safeNumber`. |
-| `dto/` | Request DTOs for the four dashboard billing routes (see `dto/codemap.md`). |
+| `dto/` | Request DTOs for the five dashboard billing routes (see `dto/codemap.md`). |
 | `stripe/` | Stripe Checkout rail: client provider, payment service, signature-verified webhook controller/service, constants (see `stripe/codemap.md`). |
 | `onchain/` | Native USDC rail: quote/claim controller + service, viem receipt provider, constants (see `onchain/codemap.md`). |
 
@@ -76,6 +77,14 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   Precondition failures are no-ops (`settled: false`), never throws; a lost
   rail race is recorded as `needs_review`/`duplicate_unallocated`, never an
   overwrite of the paid invoice.
+- **Scheduled worker seam (default off).** `BillingWorkerService` ticks every 5
+  minutes via `ScheduleModule.forRoot()` but only acts when `billing.worker.enabled`
+  (`BILLING_WORKER_ENABLED=true`) is set; otherwise the tick returns immediately.
+  Cross-instance correctness comes from the shared PostgreSQL billing-period advisory
+  lock, DB-backed reconciliation-run leases/heartbeats, and Stripe/USDC retry
+  leases — never an in-memory lock or Redis. RPC and Stripe calls are never inside a
+  DB transaction; the worker reuses the existing services instead of duplicating
+  business logic. It is a provider, not a controller — no route.
 - **Reconciliation runs with completion markers.** `BillingReconciliationRun`
   rows carry a JSON `summary` with counters, `userId`, `complete: true` (only
   when the bounded scan was exhausted with zero errors/conflicts), a
@@ -100,6 +109,7 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   - `GET /invoices?page=&limit=` → `billingService.listInvoices`
   - `GET /invoices/:id` → `billingService.getInvoice`
   - `POST /invoices/:id/checkout` → `stripePaymentService.createCheckoutSession`
+  - `POST /invoices/:id/subscription-checkout` → `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)`
   - `POST /reconcile` → `reconciliationService.reconcile(userId, { limit })`
 - `StripeWebhookController` (`POST v1/billing/webhooks/stripe`): `@Public()`,
   `@SkipThrottle({ short, medium })`, verifies the signature from `req.rawBody`
@@ -193,26 +203,54 @@ POST /v1/billing/reconcile { limit ≤ 200 }
 ### Stripe rail
 
 ```
-POST /v1/billing/invoices/:id/checkout
+POST /v1/billing/invoices/:id/checkout (one-time, mode 'payment')
   → stripeClientProvider (null when STRIPE_SECRET_KEY unset → 503)
   → assertCheckoutEligible (finalized, unpaid, USD, positive, cent-aligned)
   → reuse valid pending attempt (TTL 24h) or createPendingAttemptOrReuseInFlight
     (partial pending index + in-flight poll, stale release, never a second
-    pending attempt)
+    pending attempt); a pending attempt of a different stripeChargeKind is
+    never reused or released
   → ensureStripeCustomer (idempotency key `customer:<accountId>`)
   → stripe.checkout.sessions.create with idempotencyKey `checkout:<attemptId>`,
     metadata { invoiceId, attemptId, period }, client_reference_id = invoiceId
   → persist session/PI ids + checkoutUrl; failure marks attempt failed (CAS)
 
-POST /v1/billing/webhooks/stripe (signed, raw body)
+POST /v1/billing/invoices/:id/subscription-checkout { planVersionId } (recurring)
+  → assertCheckoutEligible; selected plan version must EXACTLY match the owned
+    invoice plan and the invoice total must equal the finite, positive,
+    cent-aligned fixed fee (a dynamic/overage invoice is rejected)
+  → reuse only a fixed_fee pending attempt with matching amount (a full
+    pending attempt is a hard conflict, never reused/released)
+  → mode:'subscription' Checkout with billing_cycle_anchor = invoice.periodStart,
+    proration_behavior 'none', idempotencyKey `subscription-checkout:<attemptId>`;
+    persists stripeSubscriptionId and bootstraps the account subscription mirror
+    (status 'incomplete' until webhooks confirm)
+
+POST /v1/billing/webhooks/stripe (signed, raw body; 13 processed event types)
   → constructEventAsync; unknown event type → record ignored, 2xx
   → processKnownEvent in one transaction: insert StripeWebhookEvent (unique
     event id = atomic idempotency), findAttemptForEvent (persisted object id →
     verified metadata attemptId/invoiceId → client_reference_id, all
     method=stripe scoped), persistEventIds, resolveTransition
     (checkout.session.completed only succeeds when payment_status=paid)
+  → renewal events (customer.subscription.* / invoice.created|finalized|paid|
+    payment_failed) drive the subscription mirror + fixed-fee materialization:
+    an unmatched renewal event is `deferred` with bounded exponential backoff
+    and retried by the worker (never silently ignored); an exact UTC-month
+    fixed-fee renewal materializes the local renewal invoice + fixed-fee attempt
+    exactly once (unique stripeInvoiceId), subject to provider-fact validation
   → succeeded → forward-only attempt update + settlementService.settleInvoice
-    (lost race → duplicate_unallocated review); failed → pending-only CAS
+    (lost race → duplicate_unallocated review; fixed-fee partial balance →
+    needs_review); failed → pending-only CAS
+
+Worker recovery (BillingWorkerService, gated by BILLING_WORKER_ENABLED)
+  → retryDeferredStripeEvents: re-fetches deferred events from Stripe by id and
+    re-applies them through the signature/idempotent webhook pipeline under a
+    DB-backed retry lease; bounded retry budget then needs_review
+  → recoverPendingCheckouts: resumes interrupted pending Stripe Checkouts via
+    stripe.checkout.sessions.retrieve (expanded subscription), proving session
+    identity/amount/currency/customer/period compatibility before persisting
+    recovered ids, with checkoutRetry* lease columns; exhaustion → needs_review
 ```
 
 ### USDC rail
@@ -243,16 +281,25 @@ POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
     transaction (attempt → invoice), evidence re-verified under lock, attempt →
     succeeded, settlementService.settleInvoice; lost race / duplicate evidence →
     needs_review/duplicate_unallocated
+
+Worker recovery (BillingWorkerService.recoverUsdcClaims, gated by
+BILLING_WORKER_ENABLED)
+  → scans pending/confirming USDC attempts with a persisted canonical
+    submittedTxHash whose nextCheckAt is due (bounded batch of 100 per tick)
+  → re-runs the existing claim() verification path with the persisted hash
+    (never re-derives or fabricates); terminal/needs_review outcomes are
+    sanitized-audited; transient failures stay retryable via nextCheckAt
 ```
 
 ## Integration
 
-- **Module wiring.** `BillingModule` imports `PrismaModule` and is imported by
-  `AppModule`, `AuthModule`, `WalletModule`, and `TransactionsModule`. It
-  exports `BillingService`, `BillingReconciliationService`,
+- **Module wiring.** `BillingModule` imports `PrismaModule`, `SecurityEventModule`,
+  and `ScheduleModule.forRoot()` (for the gated `BillingWorkerService`), and is
+  imported by `AppModule`, `AuthModule`, `WalletModule`, and `TransactionsModule`.
+  It exports `BillingService`, `BillingReconciliationService`,
   `BillingEntitlementService`, `InvoiceSettlementService`, and
-  `StripePaymentService`; `UsdcPaymentService` and the webhook/controller
-  services stay module-internal.
+  `StripePaymentService`; `UsdcPaymentService`, `BillingWorkerService`, and the
+  webhook/controller services stay module-internal.
 - **Consumers outside the module.**
   - `src/common/guards/api-key-auth.guard.ts` calls
     `billing.assertAndRecordApiCall` on every authenticated API-key request
@@ -282,6 +329,14 @@ POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
   assignments and invoices, unique `sourceKey` usage events, unique
   `(chainId, tokenAddress, txHash, logIndex)` USDC evidence, unique
   `settlementAttemptId` on invoices, and unique `stripeEventId` webhook rows.
+  Worker/recovery plumbing: account-scoped reconciliation runs with
+  `workerId`/`leaseExpiresAt`/`heartbeatAt`, `transactions.billingReconciledAt`/
+  `billingPeriodStart`/`billingLastAttemptedAt` progress markers,
+  `stripe_webhook_events` deferred-retry columns (`retryCount`, `nextRetryAt`,
+  `retryOwnerId`, `retryLeaseExpiresAt`), `billing_payment_attempts`
+  checkout-retry lease columns, the unique `stripeInvoiceId` renewal mapping,
+  `stripeChargeKind`, and the canonical `submittedTxHash`/`nextCheckAt` USDC
+  recovery columns.
 - **Security scope.** All `v1/billing` dashboard routes are intentionally
   omitted from `openapi.yaml` (public spec is API-key-only) and require an
   Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks.

@@ -470,4 +470,28 @@ describe('BillingWorkerService', () => {
       }),
     );
   });
+
+  it('logs a sanitized top-level tick failure and never rethrows', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    const errorSpy = jest.spyOn((service as any).logger, 'error');
+
+    // An unexpected failure at the very top of the pass (before any per-account
+    // scope exists) must be sanitized-logged, not rethrown, so the scheduler
+    // loop survives and the in-process single-flight guard is released.
+    const rawHex = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+    accountFindMany.mockRejectedValue(new Error(`db connection lost ${rawHex}`));
+
+    await expect(service.tick()).resolves.toBeUndefined();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Billing worker tick failed'),
+    );
+    const logged = errorSpy.mock.calls[0][0] as string;
+    expect(logged).not.toContain(rawHex);
+    expect(logged).toContain('[hex]');
+    // The single-flight guard is released after a failed tick.
+    accountFindMany.mockResolvedValueOnce([]);
+    await expect(service.tick()).resolves.toBeUndefined();
+  });
 });

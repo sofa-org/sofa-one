@@ -1286,6 +1286,18 @@ describe('BillingReconciliationService', () => {
         status: 'quarantined',
         reconciliationRunId: 'run-1',
         metadata: { reason: 'unsupported_chain' },
+        // No receipt exists for an unsupported chain: the occurrence time is
+        // the real persisted transaction createdAt (never a fabricated `now`),
+        // and the block evidence is an explicit unknown sentinel — never a
+        // synthetic receipt/block fact.
+        occurredAt: new Date('2026-08-01T00:00:00.000Z'),
+        receipt: expect.objectContaining({
+          receiptBlockNumber: 0n,
+          receiptBlockHash: '',
+          receiptBlockTimestamp: 0n,
+          receiptStatus: 'unknown',
+          receiptData: expect.objectContaining({ evidence: 'none_unsupported_chain' }),
+        }),
       }),
     );
     expect(result).toMatchObject({ quarantined: 1 });
