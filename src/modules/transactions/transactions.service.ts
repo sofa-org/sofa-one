@@ -257,7 +257,7 @@ export class TransactionsService {
         } catch (error) {
           await this.prisma.transaction.updateMany({
             where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash,
-              { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: { not: true }, billingReconciledAt: null }),
+              { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null }),
             data: { status: 'unknown', completedAt: null },
           });
           throw error;
@@ -335,7 +335,7 @@ export class TransactionsService {
       const knownUserOperation = Boolean(observedUserOpHash);
       await this.prisma.transaction.updateMany({
         where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
-          status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: { not: true }, billingReconciledAt: null,
+          status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null,
           ...(knownUserOperation ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}),
         }),
         data: {

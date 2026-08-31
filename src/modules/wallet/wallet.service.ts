@@ -810,7 +810,7 @@ export class WalletService {
         details: { ...((tx.details as Record<string, unknown>) ?? {}), userOpHash: submitted.userOpHash, userOperationSuccess: receipt.success } as any,
       };
       const finalWrite = await this.prisma.transaction.updateMany({
-        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpHash: submitted.userOpHash, userOpSuccess: { not: true }, billingReconciledAt: null }),
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpHash: submitted.userOpHash, userOpSuccess: null, billingReconciledAt: null }),
         data: finalData,
       });
       if (finalWrite.count !== 1) return this.toWithdrawalResponse(tx);
@@ -823,7 +823,7 @@ export class WalletService {
       };
     } catch (error) {
       await this.prisma.transaction.updateMany({
-        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: { not: true }, billingReconciledAt: null, ...(observedUserOpHash ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}) }),
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null, ...(observedUserOpHash ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}) }),
         data: observedUserOpHash ? { userOpHash: observedUserOpHash, status: 'unknown', completedAt: null } : { status: 'unknown', completedAt: null },
       });
       throw error;

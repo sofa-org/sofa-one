@@ -1825,24 +1825,27 @@ export class BillingService {
     accountId: string,
     runIds: string[],
   ): boolean {
-    // Nullable identity is legacy/unprovable, never a global clean run. Check
-    // this before the usage-event run-id shortcut so a linked legacy row cannot
-    // bypass account/user fencing.
+    // A usage event is explicit provenance. A linked run remains relevant even
+    // when stored account/user metadata conflicts; otherwise stale metadata
+    // could hide a run that already touched this invoice. The full identity
+    // fence in isRiskyReconciliationRun below still blocks such a run.
+    if (runIds.includes(run.id)) return true;
+    // The remaining identity checks apply only to unlinked operational runs.
+    // Nullable identity is legacy/unprovable, never a global clean run.
     if (run.billingAccountId !== undefined && run.billingAccountId !== null) {
       if (run.billingAccountId !== accountId) return false;
     } else if (run.accountUserId !== undefined && run.accountUserId !== null && run.accountUserId !== userId) {
       return false;
     }
     const summary = (run.summary ?? {}) as Record<string, unknown>;
-    // Missing run identity is legacy/unprovable and must remain risky. A
-    // usage-linked run id is evidence of relevance only; it never bypasses
-    // account/user/type/period identity validation.
+    // Missing run identity is legacy/unprovable and must remain risky. Linked
+    // runs returned above are also rejected by the full risk fence when their
+    // account/user/type/period identity cannot be proven.
     if (run.billingAccountId === undefined || run.accountUserId === undefined) return true;
     if (run.runType === undefined || run.runType !== 'receipt_outbound') return true;
     if (run.periodStart !== undefined && run.periodStart.getTime() !== start.getTime()) return true;
     if (run.periodEnd !== undefined && run.periodEnd !== null && run.periodEnd.getTime() !== end.getTime()) return true;
     if (run.periodStart === undefined || run.periodEnd === undefined || run.periodEnd === null) return true;
-    if (runIds.includes(run.id)) return true;
     const runUserId = summary.userId;
     if (typeof runUserId === 'string' && runUserId !== userId) return true;
     if (summary.complete !== true) return true;

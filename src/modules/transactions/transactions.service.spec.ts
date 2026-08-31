@@ -782,6 +782,29 @@ describe('TransactionsService', () => {
     expect(completionWrite?.[0].where).toEqual(expect.objectContaining({ userOpSuccess: null, billingReconciledAt: null }));
   });
 
+  it('does not overwrite reconciler-written typed success during a late completion race', async () => {
+    prisma.transaction.updateMany.mockImplementation(async ({ data }: any) => {
+      if (data.userOpSuccess !== undefined) return { count: 0 };
+      prisma.transaction.update({ where: { id: 'tx-1' }, data });
+      return { count: 1 };
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1', transactionHash: null, status: 'submitting',
+    });
+
+    const completionWrite = prisma.transaction.updateMany.mock.calls.find(
+      (call: any[]) => call[0].data.userOpSuccess !== undefined,
+    );
+    expect(completionWrite?.[0].where).toEqual(expect.objectContaining({
+      userOpSuccess: null,
+      billingReconciledAt: null,
+    }));
+    expect(prisma.transaction.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userOpSuccess: true }) }),
+    );
+  });
+
   it('returns a safe status response for an owned transaction', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-1',

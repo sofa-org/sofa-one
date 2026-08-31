@@ -414,8 +414,8 @@ describe('StripeWebhookService', () => {
       expect(attemptFindFirst).toHaveBeenCalledWith({
         where: { stripeCheckoutSessionId: 'cs_123', method: 'stripe' },
       });
-      expect(attemptUpdate).toHaveBeenCalledWith({
-        where: { id: 'att-1' },
+      expect(attemptUpdateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
         data: expect.objectContaining({
           status: 'succeeded',
           succeededAt: expect.any(Date),
@@ -463,9 +463,9 @@ describe('StripeWebhookService', () => {
       expect(attemptFindFirst).toHaveBeenCalledWith({
         where: { stripePaymentIntentId: 'pi_123', method: 'stripe' },
       });
-      expect(attemptUpdate).toHaveBeenCalledWith(
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'att-1' },
+          where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
       );
@@ -546,7 +546,7 @@ describe('StripeWebhookService', () => {
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      expect(attemptUpdate).toHaveBeenCalledWith(
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
@@ -598,7 +598,7 @@ describe('StripeWebhookService', () => {
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      expect(attemptUpdate).toHaveBeenCalledTimes(1); // only the PI event updated
+      expect(attemptUpdateMany).toHaveBeenCalledTimes(1); // only the PI event updated
       expect(invoiceUpdateMany).toHaveBeenCalledTimes(2); // both events attempted settlement
       // Every settlement attempt carries the full CAS guard: an already-settled
       // invoice can never be overwritten (the second call matched 0 rows).
@@ -687,6 +687,27 @@ describe('StripeWebhookService', () => {
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
     });
 
+    it('does not let a stale success overwrite a failure committed after preflight', async () => {
+      constructEventAsync.mockResolvedValue(
+        event('payment_intent.succeeded', paymentIntent({ status: 'succeeded' }), 'evt_stale_success'),
+      );
+      webhookEventCreate.mockResolvedValue({});
+      attemptFindFirst.mockResolvedValue(attemptRow({ status: 'pending' }));
+      // The failure won after the success preflight read and before its CAS.
+      attemptUpdateMany.mockResolvedValueOnce({ count: 0 });
+
+      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
+        data: expect.objectContaining({ status: 'succeeded' }),
+      }));
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ status: 'needs_review' }),
+      }));
+    });
+
     it('marks a succeeded Stripe attempt duplicate_unallocated when another rail already settled the invoice', async () => {
       // A USDC attempt already settled the invoice (paidAt/paidVia/pointer set
       // by the USDC confirmation path). A later Stripe success must mark its
@@ -705,9 +726,9 @@ describe('StripeWebhookService', () => {
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
       // The Stripe attempt's own success fact is recorded...
-      expect(attemptUpdate).toHaveBeenCalledWith(
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'att-1' },
+          where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
       );
@@ -740,7 +761,7 @@ describe('StripeWebhookService', () => {
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      expect(attemptUpdate).toHaveBeenCalledWith(
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
@@ -791,7 +812,7 @@ describe('StripeWebhookService', () => {
       );
       webhookEventCreate.mockResolvedValue({});
       attemptFindFirst.mockResolvedValue(attemptRow());
-      attemptUpdate.mockRejectedValue(new Error('database unavailable'));
+      attemptUpdateMany.mockRejectedValue(new Error('database unavailable'));
 
       await expect(service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig')).rejects.toThrow(
         'database unavailable',
@@ -836,9 +857,9 @@ describe('StripeWebhookService', () => {
         data: { stripePaymentIntentId: 'pi_123' },
       });
       // And the attempt is marked succeeded with the invoice settled.
-      expect(attemptUpdate).toHaveBeenCalledWith(
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: ATTEMPT_UUID },
+          where: expect.objectContaining({ id: ATTEMPT_UUID, status: 'pending' }),
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
       );
@@ -1513,7 +1534,7 @@ describe('StripeWebhookService', () => {
       // The settlement CAS fails AND the attempt update for the lost race
       // throws, rolling the whole transaction back.
       invoiceUpdateMany.mockResolvedValue({ count: 0 });
-      attemptUpdate.mockRejectedValue(new Error('db error'));
+      attemptUpdateMany.mockRejectedValue(new Error('db error'));
 
       await expect(service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig')).rejects.toThrow(
         'db error',

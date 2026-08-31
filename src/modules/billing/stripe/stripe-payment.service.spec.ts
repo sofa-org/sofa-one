@@ -87,6 +87,7 @@ describe('StripePaymentService', () => {
   const userFindUnique = jest.fn();
   const invoiceFindFirst = jest.fn();
   const attemptFindFirst = jest.fn();
+  const attemptFindMany = jest.fn();
   const attemptCreate = jest.fn();
   const attemptUpdate = jest.fn();
   const attemptUpdateMany = jest.fn();
@@ -94,10 +95,11 @@ describe('StripePaymentService', () => {
   const configGet = jest.fn();
   const customerCreate = jest.fn();
   const sessionCreate = jest.fn();
+  const sessionRetrieve = jest.fn();
 
   const stripeMock = {
     customers: { create: customerCreate },
-    checkout: { sessions: { create: sessionCreate } },
+    checkout: { sessions: { create: sessionCreate, retrieve: sessionRetrieve } },
   };
 
   beforeEach(async () => {
@@ -131,6 +133,7 @@ describe('StripePaymentService', () => {
             billingInvoice: { findFirst: invoiceFindFirst },
             billingPaymentAttempt: {
               findFirst: attemptFindFirst,
+              findMany: attemptFindMany,
               findUnique: attemptFindFirst,
               create: attemptCreate,
               update: attemptUpdate,
@@ -748,6 +751,155 @@ describe('StripePaymentService', () => {
       ).rejects.toThrow(ConflictException);
       expect(sessionCreate).not.toHaveBeenCalled();
       expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('does not regress an already-active same-subscription mirror during recovery/persistence', async () => {
+      const activeAccount = {
+        ...ACCOUNT,
+        stripeCustomerId: 'cus_123',
+        stripeSubscriptionId: 'sub_existing',
+        stripeSubscriptionStatus: 'active',
+      };
+      accountFindUnique.mockResolvedValue(activeAccount);
+      attemptFindFirst.mockResolvedValue(null);
+      attemptCreate.mockResolvedValue(attempt({
+        stripeChargeKind: 'fixed_fee',
+      }));
+      sessionCreate.mockResolvedValue({
+        id: 'cs_sub',
+        url: 'https://checkout.stripe.com/c/pay/cs_sub',
+        payment_intent: 'pi_sub',
+        subscription: 'sub_existing',
+      });
+
+      const result = await service.createSubscriptionCheckout('user-1', 'inv-1', PRO_PLAN.id);
+
+      expect(result.sessionId).toBe('cs_sub');
+      expect(sessionCreate).toHaveBeenCalledWith(expect.objectContaining({
+        subscription_data: expect.objectContaining({
+          billing_cycle_anchor: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
+          proration_behavior: 'none',
+        }),
+      }), expect.any(Object));
+      expect(accountUpdateMany).not.toHaveBeenCalled();
+      expect(accountUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('bounded Checkout recovery', () => {
+    function recoveryRow(overrides: Record<string, unknown> = {}) {
+      return {
+        ...attempt({
+          stripeCheckoutSessionId: 'cs_recover',
+          stripePaymentIntentId: 'pi_recover',
+          checkoutUrl: null,
+          checkoutRetryCount: 0,
+          checkoutRetryLeaseExpiresAt: null,
+          ...overrides,
+        }),
+        invoice: {
+          ...invoice(),
+          billingAccount: { ...ACCOUNT, stripeCustomerId: 'cus_123' },
+        },
+      };
+    }
+
+    it('rejects a retrieved session whose complete local identity does not match', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: 'pi_other',
+        subscription: null, mode: 'payment', amount_total: 4900, currency: 'usd',
+        customer: 'cus_123', client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      await service.recoverPendingCheckouts('worker-1');
+
+      expect(sessionRetrieve).toHaveBeenCalledWith('cs_recover', { expand: ['subscription'] });
+      expect(attemptUpdateMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
+      }));
+    });
+
+    it('persists a fully proven session only while the recovery lease is active', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      // The transaction mock obtains the existing attempt from the latest
+      // create-result slot; seed it without making recovery create a row.
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: 'pi_recover',
+        subscription: null, mode: 'payment', amount_total: 4900, currency: 'usd',
+        customer: 'cus_123', client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result).toEqual({ attempted: 1, recovered: 1, needsReview: 0 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          id: 'att-1', status: 'pending', checkoutRetryOwnerId: 'worker-1',
+          checkoutRetryLeaseExpiresAt: expect.objectContaining({ gt: expect.any(Date) }),
+        }),
+      }));
+    });
+
+    it('recovers an expanded fixed-fee subscription session when payment_intent is null', async () => {
+      const active = { ...ACCOUNT, stripeCustomerId: 'cus_123', stripeSubscriptionId: 'sub_expanded', stripeSubscriptionStatus: 'active' };
+      accountFindUnique.mockResolvedValue(active);
+      const row = recoveryRow({ stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_expanded', stripePaymentIntentId: null });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+      jest.spyOn(service as any, 'persistRecoveredCheckout').mockResolvedValue(undefined);
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover', url: 'https://stripe.test/recover', payment_intent: null,
+        subscription: {
+          id: 'sub_expanded', current_period_start: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
+          current_period_end: Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000), extra: 'expanded',
+        }, mode: 'subscription', amount_total: 4900, currency: 'usd', customer: 'cus_123',
+        client_reference_id: 'inv-1', metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05', planVersionId: 'plan-1' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(1);
+      expect(accountUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('does not recover a terminal or lease-lost attempt', async () => {
+      const terminal = recoveryRow({ status: 'succeeded' });
+      attemptFindMany.mockResolvedValue([terminal]);
+      attemptUpdateMany.mockResolvedValue({ count: 0 });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0 });
+      expect(sessionRetrieve).not.toHaveBeenCalled();
+    });
+
+    it('does not create a new Checkout for a renewal attempt without a session', async () => {
+      const renewal = recoveryRow({ stripeCheckoutSessionId: null, stripeInvoiceId: 'in_renewal', stripeChargeKind: 'fixed_fee' });
+      attemptFindMany.mockResolvedValue([renewal]);
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result.recovered).toBe(0);
+      expect(sessionCreate).not.toHaveBeenCalled();
+      expect(attemptFindMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            { OR: [{ stripeInvoiceId: null }, { stripeCheckoutSessionId: { not: null } }] },
+          ]),
+        }),
+      }));
     });
   });
 });

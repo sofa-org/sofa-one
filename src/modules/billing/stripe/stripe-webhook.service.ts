@@ -450,8 +450,27 @@ export class StripeWebhookService {
           throw new ConflictException('Stripe success cannot advance a terminal attempt');
         }
         if (attempt.status === 'pending') {
-          await tx.billingPaymentAttempt.update({
-            where: { id: attempt.id },
+          const raw = event.data.object as StripeObjectLike;
+          const sessionId = event.type.startsWith('checkout.session') ? raw.id : null;
+          const paymentIntentId = event.type.startsWith('payment_intent')
+            ? raw.id
+            : readProviderId(raw.payment_intent, 'payment_intent');
+          const subscriptionId = readProviderId(raw.subscription, 'subscription');
+          const identityAnd: Array<Record<string, unknown>> = [];
+          if (paymentIntentId) identityAnd.push({ OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: paymentIntentId }] });
+          if (subscriptionId) identityAnd.push({ OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }] });
+          // Do not rely on the preflight snapshot after the advisory/row lock.
+          // The success transition is a fact-bound CAS, so a concurrently
+          // committed failure (or identity change) can never be overwritten.
+          const succeeded = await tx.billingPaymentAttempt.updateMany({
+            where: {
+              id: attempt.id,
+              invoiceId: attempt.invoiceId,
+              method: 'stripe',
+              status: 'pending',
+              ...(sessionId ? { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: sessionId }] } : {}),
+              ...(identityAnd.length > 0 ? { AND: identityAnd } : {}),
+            } as any,
             data: {
               status: 'succeeded',
               succeededAt: new Date(),
@@ -460,6 +479,9 @@ export class StripeWebhookService {
               failureMessage: null,
             },
           });
+          if (succeeded.count !== 1) {
+            throw new ConflictException('Stripe success compare-and-set lost');
+          }
         }
         // Atomic first-rail-wins settlement: sets paidAt/paidVia/pointer once.
         // The CAS requires the attempt amount/currency to EXACTLY match the

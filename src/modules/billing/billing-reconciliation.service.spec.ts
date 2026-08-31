@@ -195,7 +195,8 @@ describe('BillingReconciliationService', () => {
         userId: 'user-1',
         operationType: { in: ['send', 'withdraw'] },
         status: { in: ['submitting', 'pending', 'unknown'] },
-        OR: [{ billingPeriodStart: PERIOD_START }, { billingPeriodStart: null }],
+        billingPeriodStart: PERIOD_START,
+        createdAt: { lt: PERIOD_END },
       },
       orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
       take: 5,
@@ -209,7 +210,8 @@ describe('BillingReconciliationService', () => {
         // durable billingReconciledAt marker (NULL-hash ignores the marker).
         AND: [
           { OR: [{ txHash: null }, { billingReconciledAt: null }] },
-          { OR: [{ billingPeriodStart: PERIOD_START }, { billingPeriodStart: null }] },
+          { billingPeriodStart: PERIOD_START },
+          { createdAt: { lt: PERIOD_END } },
         ],
         id: { notIn: [] },
       },

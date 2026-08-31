@@ -114,6 +114,7 @@ describe('WalletService.withdraw()', () => {
   const mockFindFirst = jest.fn();
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
+  const mockUpdateMany = jest.fn();
   const mockAssertWithdrawalAllowed = jest.fn();
   const mockAssertDailyLimitWithUserLock = jest.fn();
   const mockTransaction = jest.fn();
@@ -140,10 +141,12 @@ describe('WalletService.withdraw()', () => {
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
     mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
+    mockUpdateMany.mockImplementation(async ({ data }: any) => {
+      mockUpdate({ where: { id: 'tx-1' }, data });
+      return { count: 1 };
+    });
     mockTransaction.mockImplementation(async (callback) =>
-      callback({
-        transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: jest.fn().mockImplementation(async ({ data }: any) => { mockUpdate({ where: { id: 'tx-1' }, data }); return { count: 1 }; }) },
-      }),
+      callback({ transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: mockUpdateMany } }),
     );
     mockEvaluateRisk.mockResolvedValue({
       riskLevel: 'low',
@@ -161,7 +164,7 @@ describe('WalletService.withdraw()', () => {
           provide: PrismaService,
           useValue: {
             userWallet: { findUnique: mockFindUnique },
-            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: jest.fn().mockImplementation(async ({ data }: any) => { mockUpdate({ where: { id: 'tx-1' }, data }); return { count: 1 }; }) },
+            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: mockUpdateMany },
             $transaction: mockTransaction,
           },
         },
@@ -535,6 +538,13 @@ describe('WalletService.withdraw()', () => {
         userOpSuccess: false,
         details: expect.objectContaining({ userOperationSuccess: false }),
       }),
+    }));
+    const completionWrite = mockUpdateMany.mock.calls.find(
+      (call: any[]) => call[0].data.userOpSuccess === false,
+    );
+    expect(completionWrite?.[0].where).toEqual(expect.objectContaining({
+      userOpSuccess: null,
+      billingReconciledAt: null,
     }));
   });
 

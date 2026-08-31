@@ -201,7 +201,7 @@ export class BillingReconciliationService {
     const run = acquired.run;
 
     try {
-      const candidates = await this.selectCandidates(userId, targetPeriodStart, limit);
+      const candidates = await this.selectCandidates(userId, targetPeriodStart, targetPeriodEnd, limit);
 
       summary.scanned = candidates.length;
 
@@ -257,7 +257,7 @@ export class BillingReconciliationService {
       // clean only when NO unresolved candidate remains after this scan. This
       // is the durable closure proof (the JSON high-water mark alone is
       // coverage metadata, never a closure proof).
-      const remaining = await this.countUnresolvedCandidates(userId, targetPeriodStart);
+      const remaining = await this.countUnresolvedCandidates(userId, targetPeriodStart, targetPeriodEnd);
       const exhausted = remaining === 0;
 
       const complete = this.isCompleteRun(summary, invalidCreatedAtCount, exhausted);
@@ -590,24 +590,32 @@ export class BillingReconciliationService {
   private async selectCandidates(
     userId: string,
     targetPeriodStart: Date,
-    limit: number,
+    targetPeriodEndOrLimit: Date | number,
+    limit?: number,
   ): Promise<TransactionRow[]> {
-    if (limit <= 0) return [];
+    // Keep the private seam tolerant for older unit callers; production always
+    // supplies the explicit target period end.
+    const targetPeriodEnd = targetPeriodEndOrLimit instanceof Date
+      ? targetPeriodEndOrLimit
+      : new Date(Date.UTC(targetPeriodStart.getUTCFullYear(), targetPeriodStart.getUTCMonth() + 1, 1));
+    const pageLimit = typeof targetPeriodEndOrLimit === 'number' ? targetPeriodEndOrLimit : limit ?? 50;
+    if (pageLimit <= 0) return [];
 
     // A one-row page still probes both queues.  Choosing the confirmed row
     // when both are present prevents an unresolved pending/unknown head from
     // permanently hiding confirmed backlog; when no confirmed row exists the
     // pending probe supplies the one available slot.  Larger pages reserve a
     // slot for each queue and then distribute the remainder to confirmed work.
-    const confirmedSlice = Math.max(1, Math.floor(limit / 2));
-    const nonConfirmedSlice = limit - confirmedSlice;
+    const confirmedSlice = Math.max(1, Math.floor(pageLimit / 2));
+    const nonConfirmedSlice = pageLimit - confirmedSlice;
 
     const nonConfirmed = await this.prisma.transaction.findMany({
       where: {
         userId,
         operationType: { in: ['send', 'withdraw'] },
         status: { in: ['submitting', 'pending', 'unknown'] },
-        OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }],
+        billingPeriodStart: targetPeriodStart,
+        createdAt: { lt: targetPeriodEnd },
       },
       orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
       take: Math.max(1, nonConfirmedSlice),
@@ -629,7 +637,8 @@ export class BillingReconciliationService {
         status: 'confirmed',
         AND: [
           { OR: [{ txHash: null }, { billingReconciledAt: null }] },
-          { OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }] },
+          { billingPeriodStart: targetPeriodStart },
+          { createdAt: { lt: targetPeriodEnd } },
         ],
         id: { notIn: nonConfirmed.map((tx) => tx.id) },
       },
@@ -637,7 +646,7 @@ export class BillingReconciliationService {
       take: confirmedTake,
     });
 
-    if (limit === 1) {
+    if (pageLimit === 1) {
       if (confirmed.length === 0) return nonConfirmed.slice(0, 1);
       if (nonConfirmed.length === 0) return [confirmed[0]];
       const pending = nonConfirmed[0] as TransactionRow & { billingLastAttemptedAt?: Date | null };
@@ -652,7 +661,7 @@ export class BillingReconciliationService {
       if (confirmedAt === null) return [done];
       return [pendingAt <= confirmedAt ? pending : done];
     }
-    return [...nonConfirmed, ...confirmed].slice(0, limit);
+    return [...nonConfirmed, ...confirmed].slice(0, pageLimit);
   }
 
   /**
@@ -664,14 +673,15 @@ export class BillingReconciliationService {
    * never be reconciled) — keep the count above zero, so a run is only clean
    * when the scan was exhaustive.
    */
-  private async countUnresolvedCandidates(userId: string, targetPeriodStart: Date): Promise<number> {
+  private async countUnresolvedCandidates(userId: string, targetPeriodStart: Date, targetPeriodEnd: Date): Promise<number> {
     const [nonConfirmed, confirmed] = await Promise.all([
       this.prisma.transaction.count({
         where: {
           userId,
           operationType: { in: ['send', 'withdraw'] },
           status: { in: ['submitting', 'pending', 'unknown'] },
-          OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }],
+          billingPeriodStart: targetPeriodStart,
+          createdAt: { lt: targetPeriodEnd },
         },
       }),
       this.prisma.transaction.count({
@@ -681,7 +691,8 @@ export class BillingReconciliationService {
           status: 'confirmed',
           AND: [
             { OR: [{ txHash: null }, { billingReconciledAt: null }] },
-            { OR: [{ billingPeriodStart: targetPeriodStart }, { billingPeriodStart: null }] },
+            { billingPeriodStart: targetPeriodStart },
+            { createdAt: { lt: targetPeriodEnd } },
           ],
         },
       }),

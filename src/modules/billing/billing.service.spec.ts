@@ -3774,6 +3774,22 @@ describe('BillingService', () => {
       expect(relevant).toBe(true);
     });
 
+    it('keeps a usage-linked run relevant when stored account and user scope conflicts', () => {
+      const relevant = (service as any).isRunRelevantToPeriod({
+        id: 'run-linked',
+        billingAccountId: 'acc-other',
+        accountUserId: 'user-other',
+        runType: 'receipt_outbound',
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        periodEnd: new Date('2026-06-01T00:00:00.000Z'),
+        summary: { userId: 'user-other' },
+      }, new Date('2026-05-01T00:00:00.000Z'), new Date('2026-06-01T00:00:00.000Z'), 'user-1', ACCOUNT.id, ['run-linked']);
+
+      // Relevance is retained from immutable usage provenance; the later risk
+      // fence blocks the contradictory run instead of isolating it.
+      expect(relevant).toBe(true);
+    });
+
     it('keeps matching partial/global legacy scopes relevant but isolates another user', () => {
       const check = (billingAccountId: string | null, accountUserId: string | null) =>
         (service as any).isRunRelevantToPeriod({
