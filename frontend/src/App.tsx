@@ -5,6 +5,7 @@ const AuthProviders = lazy(() => import('./components/AuthProviders'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
 const DashboardStepUpGate = lazy(() => import('./components/DashboardStepUpGate'));
 const LandingPage = lazy(() => import('./pages/Landing'));
+const PricingPage = lazy(() => import('./pages/Pricing'));
 const SignInPage = lazy(() => import('./pages/SignIn'));
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
 const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
@@ -51,6 +52,10 @@ export default function App() {
           <Route
             path="/sign-up/*"
             element={<Navigate to="/sign-in" replace />}
+          />
+          <Route
+            path="/pricing"
+            element={<PricingPage />}
           />
           <Route
             path="/dashboard"

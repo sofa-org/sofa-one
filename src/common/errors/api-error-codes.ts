@@ -37,7 +37,14 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   if (normalized.includes('ip address not allowed')) return API_ERROR_CODES.IP_NOT_ALLOWED;
   if (normalized.includes('wallet not found')) return API_ERROR_CODES.WALLET_NOT_FOUND;
   if (normalized.includes('transaction not found')) return API_ERROR_CODES.TRANSACTION_NOT_FOUND;
-  if (normalized.includes('is not supported')) return API_ERROR_CODES.CHAIN_NOT_SUPPORTED;
+  if (
+    normalized.includes('is not supported') &&
+    (normalized.includes('chain') ||
+      normalized.includes('usdc is not supported') ||
+      normalized.includes('usdt is not supported'))
+  ) {
+    return API_ERROR_CODES.CHAIN_NOT_SUPPORTED;
+  }
   if (normalized.includes('idempotency key')) return API_ERROR_CODES.IDEMPOTENCY_CONFLICT;
   if (
     normalized.includes('hash signing is not allowed') ||

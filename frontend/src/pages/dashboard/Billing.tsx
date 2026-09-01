@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useUser } from '@openfort/react';
 import {
   Activity,
@@ -642,6 +642,15 @@ export default function BillingPage() {
           description="Your active plan and included allowances."
           className="lg:col-span-1"
         >
+          <div className="mb-5 flex justify-end">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent transition-colors hover:text-brand-accent-hover hover:underline underline-offset-4"
+            >
+              Compare all plans
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
           {plansLoading ? (
             <InlineSpinner />
           ) : !currentPlan ? (

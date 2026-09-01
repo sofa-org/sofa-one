@@ -20,6 +20,10 @@ describe('resolveApiErrorCode', () => {
     ['Wallet not found', API_ERROR_CODES.WALLET_NOT_FOUND],
     ['Transaction not found', API_ERROR_CODES.TRANSACTION_NOT_FOUND],
     ['Chain 1 is not supported', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC billing is not supported on chain 1', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC is not supported on chain 1', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC is not supported on Base', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDT is not supported on Arbitrum', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
     ['Idempotency key conflicts with prior request', API_ERROR_CODES.IDEMPOTENCY_CONFLICT],
     ['Hash signing is not allowed', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
     ['Type must be message', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
@@ -44,6 +48,17 @@ describe('resolveApiErrorCode', () => {
   ])('maps "%s" to %s', (message, expectedCode) => {
     expect(resolveApiErrorCode(HttpStatus.BAD_REQUEST, message)).toBe(expectedCode);
   });
+
+  it.each([
+    ['Plan code is not supported: legacy-plan', HttpStatus.CONFLICT],
+    ['Plan code is not supported: enterprise', HttpStatus.CONFLICT],
+    ['Agent key hook is not supported', HttpStatus.BAD_REQUEST],
+  ])(
+    'does not map non-chain unsupported message "%s" to CHAIN_NOT_SUPPORTED; falls back to BAD_REQUEST',
+    (message, statusCode) => {
+      expect(resolveApiErrorCode(statusCode, message)).toBe(API_ERROR_CODES.BAD_REQUEST);
+    },
+  );
 
   it.each([
     [HttpStatus.UNAUTHORIZED, API_ERROR_CODES.UNAUTHORIZED],

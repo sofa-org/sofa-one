@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingService } from './billing.service';
 import { BillingQuotaExceededException } from './billing-quota.exception';
+import { PLANS } from './billing-calculator';
 
 const p2002 = () =>
   new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -387,6 +388,91 @@ describe('BillingService', () => {
         planCode: 'starter',
         planName: 'Starter',
         effectivePeriod: '2026-09',
+      });
+    });
+
+    it('filters stray non-canonical rows out of the catalog listing', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already seeded
+      assignmentFindFirst
+        .mockResolvedValueOnce({
+          id: 'assign-1',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: FREE_VERSION.id,
+          planVersion: FREE_VERSION,
+        })
+        .mockResolvedValue(null); // no future scheduled assignment
+      planVersionFindUnique.mockResolvedValue(FREE_VERSION);
+
+      // Leftover claim-plan-<uuid> row from an interrupted concurrency run
+      const strayRow = { ...FREE_VERSION, id: 'plan-claim-1', code: 'claim-plan-abc123' };
+      // Simulate Prisma's `code in [...]` constraint on the catalog query
+      planVersionFindMany.mockImplementation(
+        async ({ where }: { where: { code: { in: readonly string[] } } }) => {
+          const rows = [FREE_VERSION, STARTER_VERSION, strayRow];
+          return rows.filter((row) => where.code.in.includes(row.code));
+        },
+      );
+
+      const result = await service.getPlans('user-1');
+
+      // the catalog query is constrained to canonical PLANS codes
+      expect(planVersionFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { code: { in: expect.arrayContaining(Object.keys(PLANS)) } },
+        }),
+      );
+      // the stray row is excluded; canonical plans are still listed
+      expect(result.plans.map((p) => p.id)).toEqual(['free', 'starter']);
+      expect(result.plans.map((p) => p.id)).not.toContain('claim-plan-abc123');
+    });
+
+    it('returns one latest-version DTO per plan code when v1/v2 coexist', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already seeded
+      assignmentFindFirst
+        .mockResolvedValueOnce({
+          id: 'assign-1',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: FREE_VERSION.id,
+          planVersion: FREE_VERSION,
+        })
+        .mockResolvedValue(null); // no future scheduled assignment
+      planVersionFindUnique.mockResolvedValue(FREE_VERSION);
+
+      // Same 'free' code with v1 + v2; the catalog query sorts code asc,
+      // version desc so v2 is returned before v1.
+      const FREE_V2 = {
+        ...FREE_VERSION,
+        id: 'plan-free-2',
+        version: 2,
+        name: 'Free v2',
+        monthlyFeeMicros: 10_000_000n, // $10
+      };
+      planVersionFindMany.mockResolvedValue([FREE_V2, FREE_VERSION, STARTER_VERSION]);
+
+      const result = await service.getPlans('user-1');
+
+      // the catalog listing query keeps version-desc ordering per code
+      expect(planVersionFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ code: 'asc' }, { version: 'desc' }],
+        }),
+      );
+      // exactly one DTO per canonical plan code, no duplicate option ids
+      const ids = result.plans.map((p) => p.id);
+      expect(ids).toEqual(['free', 'starter']);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(result.plans).toHaveLength(2);
+
+      // the surviving 'free' DTO is built from the latest (v2) version
+      const freeDto = result.plans.find((p) => p.id === 'free');
+      expect(freeDto).toMatchObject({
+        id: 'free',
+        name: 'Free v2',
+        basePrice: '10',
+        currency: 'USD',
+        billingPeriod: 'Monthly',
       });
     });
 

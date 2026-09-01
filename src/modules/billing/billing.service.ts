@@ -316,18 +316,37 @@ export class BillingService {
       validatePlanVersion(futureAssignment.planVersion);
     }
 
+    // The catalog listing is constrained to canonical plan codes: database
+    // rows whose `code` is not an own key of the static PLANS whitelist (e.g.
+    // stray claim-plan-<uuid>/test-plan-<uuid> rows left behind by interrupted
+    // runs) are excluded at the query and never validated/exposed here.
+    // Unknown/malformed assigned plans still fail closed via
+    // validatePlanVersion on the assignment paths above.
     const versions = await this.prisma.billingPlanVersion.findMany({
-      orderBy: [{ code: 'asc' }, { version: 'asc' }],
+      where: { code: { in: Object.keys(PLANS) } },
+      // Newest version first per code so the listing below can keep exactly
+      // one row per canonical plan code — matching assignPlan()'s
+      // version-desc semantics instead of exposing stale v1 duplicates.
+      orderBy: [{ code: 'asc' }, { version: 'desc' }],
     });
+
+    // One DTO per canonical plan code, always the latest version. The
+    // code-asc/version-desc ordering guarantees the first row seen per code
+    // is its newest version; a v1/v2 pair never produces duplicate ids.
+    const seenCodes = new Set<string>();
+    const plans: BillingPlanDto[] = [];
+    for (const v of versions) {
+      if (seenCodes.has(v.code)) continue;
+      seenCodes.add(v.code);
+      // Rows reaching here are canonical PLANS codes; a malformed known row
+      // still fails closed before exposure (never silently filtered/safe).
+      validatePlanVersion(v);
+      plans.push(this.toPlanDto(v));
+    }
 
     return {
       currentPlanId: currentPlan.code,
-      plans: versions.map((v) => {
-        // Every catalog row is validated before exposure — a malformed known
-        // row or an unknown row fails closed (never silently filtered/safe).
-        validatePlanVersion(v);
-        return this.toPlanDto(v);
-      }),
+      plans,
       ...(futureAssignment?.planVersion
         ? {
             scheduledPlan: {
