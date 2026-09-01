@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useOpenfort, useSignOut, useUser } from '@openfort/react';
 import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell, CreditCard } from 'lucide-react';
@@ -16,12 +16,15 @@ const NAV_ITEMS = [
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 
+const SESSION_REFRESH_INTERVAL_MS = 30 * 60 * 1000; // Renew at most every 30 minutes
+const SESSION_REFRESH_COOLDOWN_MS = 5 * 60 * 1000; // Focus/visibility re-entry cooldown
+
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useOpenfort();
   const { signOut } = useSignOut();
-  const { getAccessToken, isAuthenticated } = useUser();
+  const { getAccessToken, isAuthenticated, validateAndRefreshToken } = useUser();
   const getToken = useCallback(async () => {
     const token = await getAccessToken();
     if (!token) {
@@ -29,6 +32,56 @@ export default function DashboardLayout() {
     }
     return token;
   }, [getAccessToken]);
+
+  // Sliding-session keep-alive: proactively renew the Openfort session while the
+  // dashboard stays open so an idle-but-open tab does not let the session lapse.
+  const sessionRefreshInFlightRef = useRef(false);
+  const lastSessionRefreshAtRef = useRef(0);
+
+  const refreshSession = useCallback(async () => {
+    if (!isAuthenticated || sessionRefreshInFlightRef.current) return;
+    const now = Date.now();
+    if (now - lastSessionRefreshAtRef.current < SESSION_REFRESH_COOLDOWN_MS) return;
+
+    sessionRefreshInFlightRef.current = true;
+    lastSessionRefreshAtRef.current = now;
+    try {
+      await validateAndRefreshToken();
+    } catch {
+      // Swallow silently: expired/invalid sessions are handled by ProtectedRoute
+      // and Openfort's own state. Never log tokens or expose sensitive details.
+    } finally {
+      sessionRefreshInFlightRef.current = false;
+    }
+  }, [isAuthenticated, validateAndRefreshToken]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    void refreshSession();
+
+    const intervalId = window.setInterval(() => {
+      void refreshSession();
+    }, SESSION_REFRESH_INTERVAL_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSession();
+      }
+    };
+    const handleWindowFocus = () => {
+      void refreshSession();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [isAuthenticated, refreshSession]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
