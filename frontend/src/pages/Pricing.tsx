@@ -213,12 +213,8 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
 
   const ctaClasses = [
     'mt-6 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-medium tracking-widest transition-all',
+    'bg-brand-text text-white hover:bg-black/90',
     'focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2',
-    isRecommended
-      ? 'bg-brand-text text-white hover:bg-black/90'
-      : isEnterprise
-        ? 'border border-brand-text bg-brand-text text-white hover:bg-black/90'
-        : 'border border-brand-border bg-white text-brand-text hover:border-brand-text hover:bg-brand-surface',
   ].join(' ');
 
   const ctaContent = (

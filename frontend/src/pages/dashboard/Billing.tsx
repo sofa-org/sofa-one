@@ -659,19 +659,14 @@ export default function BillingPage() {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-accent/10">
-                    <CreditCard className="h-6 w-6 text-brand-accent" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-brand-text">{currentPlan.name}</p>
-                    <p className="text-xs text-brand-muted">{currentPlan.billingPeriod}</p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-accent/10">
+                  <CreditCard className="h-6 w-6 text-brand-accent" />
                 </div>
-                <span className="shrink-0 text-lg font-semibold text-brand-text">
-                  {formatAmount(currentPlan.basePrice, currentPlan.currency)}
-                </span>
+                <div>
+                  <p className="text-lg font-semibold text-brand-text">{currentPlan.name}</p>
+                  <p className="text-xs text-brand-muted">{currentPlan.billingPeriod}</p>
+                </div>
               </div>
               <p className="text-sm leading-6 text-brand-muted">{currentPlan.description}</p>
               {currentPlan.features.length > 0 && (
@@ -734,7 +729,7 @@ export default function BillingPage() {
                     planChangeLoading ||
                     (planChangeSelectedId ?? plans?.currentPlanId) === plans?.currentPlanId
                   }
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {planChangeLoading ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
