@@ -645,6 +645,7 @@ export default function BillingPage() {
           <div className="mb-5 flex justify-end">
             <Link
               to="/pricing"
+              state={{ fromBilling: true }}
               className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent transition-colors hover:text-brand-accent-hover hover:underline underline-offset-4"
             >
               Compare all plans

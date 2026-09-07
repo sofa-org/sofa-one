@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useOpenfort } from '@openfort/react';
-import { Activity, Check, Mail, Users, Wallet, Zap } from 'lucide-react';
+import { Activity, ArrowLeft, Check, Mail, Users, Wallet, Zap } from 'lucide-react';
 import AuthProviders from '../components/AuthProviders';
 
 type PlanId = 'free' | 'starter' | 'growth' | 'scale' | 'business' | 'enterprise';
@@ -308,6 +308,10 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
 }
 
 export default function PricingPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromBilling = location.state?.fromBilling === true;
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text antialiased selection:bg-brand-accent selection:text-white">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
@@ -317,18 +321,31 @@ export default function PricingPage() {
         >
           SOFA ONE
         </Link>
-        {HAS_OPENFORT_CONFIG ? (
-          <AuthProviders>
-            <HeaderAuthAction />
-          </AuthProviders>
-        ) : (
-          <Link
-            to="/sign-in"
-            className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text transition-all hover:border-brand-text hover:bg-brand-surface"
-          >
-            SIGN IN
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {fromBilling && (
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
+              aria-label="Back to Billing"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Back
+            </button>
+          )}
+          {HAS_OPENFORT_CONFIG ? (
+            <AuthProviders>
+              <HeaderAuthAction />
+            </AuthProviders>
+          ) : (
+            <Link
+              to="/sign-in"
+              className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text transition-all hover:border-brand-text hover:bg-brand-surface"
+            >
+              SIGN IN
+            </Link>
+          )}
+        </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-6 pb-20">
