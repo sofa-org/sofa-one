@@ -1,11 +1,12 @@
 /**
  * USDC on-chain billing constants (Phase 3B Phase 2).
  *
- * The USDC billing chain allowlist is fixed to Base (8453) and Base Sepolia
- * (84532). Per-chain treasury addresses and RPC URLs are environment
- * configuration (`billing.usdc.*`); a chain is only usable when both are
- * configured. Canonical token addresses are derived at runtime from the
- * existing `SUPPORTED_CHAINS` registry — never from the client.
+ * The USDC billing chain allowlist is fixed to Base (8453), Base Sepolia
+ * (84532), Ethereum mainnet (1), and Ethereum Sepolia (11155111). Per-chain
+ * treasury addresses and RPC URLs are environment configuration
+ * (`billing.usdc.*`); a chain is only usable when both are configured.
+ * Canonical token addresses are derived at runtime from the existing
+ * `SUPPORTED_CHAINS` registry — never from the client.
  */
 export const USDC_RECEIPT_PROVIDER = Symbol('USDC_RECEIPT_PROVIDER');
 
@@ -17,7 +18,7 @@ export const USDC_TRANSFER_TOPIC0 =
 export const USDC_DECIMALS = 6;
 
 /** The only chains USDC invoice payments are allowed on. */
-export const USDC_BILLING_CHAIN_IDS = [8453, 84532] as const;
+export const USDC_BILLING_CHAIN_IDS = [1, 11155111, 8453, 84532] as const;
 export type UsdcBillingChainId = (typeof USDC_BILLING_CHAIN_IDS)[number];
 
 /** A uint256 amount is exactly 32 bytes (64 hex chars) after the 0x prefix. */

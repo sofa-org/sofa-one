@@ -317,7 +317,61 @@ describe('UsdcPaymentService', () => {
     });
 
     it('rejects a chain outside the USDC billing allowlist', async () => {
-      await expect(service.quote('user-1', 'inv-1', 1)).rejects.toThrow(BadRequestException);
+      await expect(service.quote('user-1', 'inv-1', 137)).rejects.toThrow(BadRequestException);
+    });
+
+    it('accepts Ethereum mainnet (1) when its treasury and RPC are configured', async () => {
+      configGet.mockImplementation((key: string) => {
+        const values: Record<string, unknown> = {
+          'billing.usdc.enabled': true,
+          'billing.usdc.treasuryAddresses.1': '0x5555555555555555555555555555555555555555',
+          'billing.usdc.rpcUrls.1': 'https://eth.example.com/rpc',
+          'billing.usdc.requiredConfirmations': 5,
+          'billing.usdc.quoteTtlSeconds': 86400,
+          'chain.defaultChainId': 84532,
+        };
+        return values[key];
+      });
+
+      await service.quote('user-1', 'inv-1', 1);
+
+      expect(attemptCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          chainId: 1n,
+          tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // canonical Ethereum USDC
+          treasuryAddress: '0x5555555555555555555555555555555555555555',
+          providerIdentity: createHash('sha256')
+            .update('https://eth.example.com/rpc')
+            .digest('hex'),
+        }),
+      });
+    });
+
+    it('accepts Ethereum Sepolia (11155111) when its treasury and RPC are configured', async () => {
+      configGet.mockImplementation((key: string) => {
+        const values: Record<string, unknown> = {
+          'billing.usdc.enabled': true,
+          'billing.usdc.treasuryAddresses.11155111': '0x6666666666666666666666666666666666666666',
+          'billing.usdc.rpcUrls.11155111': 'https://sepolia.example.com/rpc',
+          'billing.usdc.requiredConfirmations': 5,
+          'billing.usdc.quoteTtlSeconds': 86400,
+          'chain.defaultChainId': 84532,
+        };
+        return values[key];
+      });
+
+      await service.quote('user-1', 'inv-1', 11155111);
+
+      expect(attemptCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          chainId: 11155111n,
+          tokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // canonical Sepolia USDC
+          treasuryAddress: '0x6666666666666666666666666666666666666666',
+          providerIdentity: createHash('sha256')
+            .update('https://sepolia.example.com/rpc')
+            .digest('hex'),
+        }),
+      });
     });
 
     it('rejects a chain without configured treasury/RPC', async () => {
@@ -648,7 +702,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('throws Conflict when the snapshot chain is outside the USDC allowlist', async () => {
-      attemptFindUnique.mockResolvedValue(usdcAttempt({ chainId: 1n }));
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ chainId: 137n }));
 
       await expect(
         service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),

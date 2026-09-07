@@ -258,7 +258,7 @@ Worker recovery (BillingWorkerService, gated by BILLING_WORKER_ENABLED)
 ```
 POST /v1/billing/invoices/:id/usdc/quote { chainId? }
   → assertEnabled (BILLING_USDC_ENABLED); loadOwnedInvoice; assertInvoiceEligible
-  → resolveChain (allowlist 8453/84532 + configured treasury/RPC; default chain
+  → resolveChain (allowlist 1/11155111/8453/84532 + configured treasury/RPC; default chain
     or Base Sepolia); canonical token from SUPPORTED_CHAINS; expected payer =
     active user wallet; requiredConfirmations (≥5); quoteExpiresAt (TTL)
   → reuse/release active pending/confirming attempt (confirming never released;

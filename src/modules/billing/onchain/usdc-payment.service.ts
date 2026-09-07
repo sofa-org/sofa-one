@@ -122,8 +122,9 @@ type TransferParseResult =
 /**
  * Dashboard-only native USDC invoice payment rail (Phase 3B Phase 2).
  *
- * Quote/claim lifecycle for finalized USD invoices on Base (8453) and Base
- * Sepolia (84532). All payment facts are server-derived and snapshotted on the
+ * Quote/claim lifecycle for finalized USD invoices on Ethereum (1), Ethereum
+ * Sepolia (11155111), Base (8453) and Base Sepolia (84532). All payment facts
+ * are server-derived and snapshotted on the
  * `BillingPaymentAttempt` at quote time: canonical token (from
  * `SUPPORTED_CHAINS`), static per-chain treasury and RPC (from environment
  * config), expected payer (the invoice owner's SOFA/Openfort user wallet),

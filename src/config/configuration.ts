@@ -27,10 +27,14 @@ export default () => ({
     usdc: {
       enabled: process.env.BILLING_USDC_ENABLED === 'true',
       treasuryAddresses: {
+        1: process.env.BILLING_USDC_TREASURY_ADDRESS_1,
+        11155111: process.env.BILLING_USDC_TREASURY_ADDRESS_11155111,
         8453: process.env.BILLING_USDC_TREASURY_ADDRESS_8453,
         84532: process.env.BILLING_USDC_TREASURY_ADDRESS_84532,
       },
       rpcUrls: {
+        1: process.env.BILLING_USDC_RPC_URL_1,
+        11155111: process.env.BILLING_USDC_RPC_URL_11155111,
         8453: process.env.BILLING_USDC_RPC_URL_8453,
         84532: process.env.BILLING_USDC_RPC_URL_84532,
       },

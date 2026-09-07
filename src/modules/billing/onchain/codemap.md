@@ -1,6 +1,6 @@
 # src/modules/billing/onchain/
 
-Dashboard-only native USDC invoice payment rail (Phase 3B Phase 2). Lets a user pay a finalized USD invoice on-chain with USDC on Base (8453) or Base Sepolia (84532), with server-side quote snapshots and strict receipt verification. Not part of the public API-key spec (`openapi.yaml`).
+Dashboard-only native USDC invoice payment rail (Phase 3B Phase 2). Lets a user pay a finalized USD invoice on-chain with USDC on Ethereum (1), Ethereum Sepolia (11155111), Base (8453) or Base Sepolia (84532), with server-side quote snapshots and strict receipt verification. Not part of the public API-key spec (`openapi.yaml`).
 
 ## Responsibility
 
@@ -54,7 +54,7 @@ Files:
 - **`BillingModule`** (`../billing.module.ts`): registers `UsdcPaymentController`, provides `UsdcPaymentService`, and binds `USDC_RECEIPT_PROVIDER` → `ViemUsdcReceiptProvider`. The module imports `PrismaModule`.
 - **`InvoiceSettlementService`** (`../invoice-settlement.service.ts`): shared atomic first-rail-wins settlement boundary, also used by the Stripe webhook; takes the interactive transaction client so USDC settles inside its own transaction. Lock order attempt → invoice is shared with Stripe to stay deadlock-free.
 - **Prisma** (`prisma/schema.prisma`): `BillingPaymentAttempt` (quote snapshot + evidence columns, `@@unique([chainId, tokenAddress, txHash, logIndex])`, `@@index([invoiceId, method, status])`), `BillingInvoice` (`paidAt`/`paidVia`/unique `settlementAttemptId`), `BillingAccount` (ownership), `UserWallet` (expected payer).
-- **Config** (`src/config/configuration.ts`): `billing.usdc.enabled` (`BILLING_USDC_ENABLED`), `treasuryAddresses.{8453,84532}` (`BILLING_USDC_TREASURY_ADDRESS_8453/84532`), `rpcUrls.{8453,84532}` (`BILLING_USDC_RPC_URL_8453/84532`), `requiredConfirmations` (default 5), `quoteTtlSeconds` (default 86400), `chain.defaultChainId`.
+- **Config** (`src/config/configuration.ts`): `billing.usdc.enabled` (`BILLING_USDC_ENABLED`), `treasuryAddresses.{1,11155111,8453,84532}` (`BILLING_USDC_TREASURY_ADDRESS_1/11155111/8453/84532`), `rpcUrls.{1,11155111,8453,84532}` (`BILLING_USDC_RPC_URL_1/11155111/8453/84532`), `requiredConfirmations` (default 5), `quoteTtlSeconds` (default 86400), `chain.defaultChainId`.
 - **`getSupportedChain`** (`../../../common/chains/supported-chains.ts`): canonical `usdcAddress` per chain and the viem `Chain` object used by the receipt provider.
 - **Guards/decorators**: `OpenfortUserGuard` + `FrontendOnlyGuard` + `@FrontendOnly()` — dashboard-only routes intentionally omitted from `openapi.yaml`; require an Openfort IAM bearer token plus origin/referer checks. `@CurrentUser('id')` supplies the user id.
 - **Throttling**: the claim route carries a tight route-level throttle (`short: 5/60s`, `medium: 20/3600s`) to bound RPC amplification; global throttling still applies.

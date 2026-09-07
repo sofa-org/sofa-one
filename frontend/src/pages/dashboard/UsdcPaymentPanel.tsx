@@ -14,6 +14,8 @@ import {
 const USDC_CHAIN_OPTIONS: Array<{ chainId: number; name: string; explorer: string }> = [
   { chainId: 8453, name: 'Base Mainnet', explorer: 'https://basescan.org' },
   { chainId: 84532, name: 'Base Sepolia', explorer: 'https://sepolia.basescan.org' },
+  { chainId: 1, name: 'Ethereum Mainnet', explorer: 'https://etherscan.io' },
+  { chainId: 11155111, name: 'Ethereum Sepolia', explorer: 'https://sepolia.etherscan.io' },
 ];
 
 function getChainOption(chainId: number) {

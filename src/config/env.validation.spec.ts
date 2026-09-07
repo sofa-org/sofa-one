@@ -169,17 +169,105 @@ describe('environment validation', () => {
 
   it('requires both treasuries and RPC URLs when USDC billing is enabled', () => {
     expect(() => validate({ ...baseConfig, BILLING_USDC_ENABLED: 'true' })).toThrow(
-      'BILLING_USDC_TREASURY_ADDRESS_8453 must be set when BILLING_USDC_ENABLED=true',
+      'BILLING_USDC_TREASURY_ADDRESS_1 must be set when BILLING_USDC_ENABLED=true',
     );
     expect(() =>
       validate({
         ...baseConfig,
         BILLING_USDC_ENABLED: 'true',
-        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
-        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_TREASURY_ADDRESS_1: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_11155111: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x3333333333333333333333333333333333333333',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x4444444444444444444444444444444444444444',
+        BILLING_USDC_RPC_URL_1: 'https://eth.example.com/rpc',
+        BILLING_USDC_RPC_URL_11155111: 'https://sepolia.example.com/rpc',
         BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
       }),
     ).toThrow('BILLING_USDC_RPC_URL_84532 must be set when BILLING_USDC_ENABLED=true');
+  });
+
+  it('requires all four per-chain treasuries and RPC URLs when USDC billing is enabled', () => {
+    const valid: Record<string, unknown> = {
+      ...baseConfig,
+      BILLING_USDC_ENABLED: 'true',
+      BILLING_USDC_TREASURY_ADDRESS_1: '0x1111111111111111111111111111111111111111',
+      BILLING_USDC_TREASURY_ADDRESS_11155111: '0x2222222222222222222222222222222222222222',
+      BILLING_USDC_TREASURY_ADDRESS_8453: '0x3333333333333333333333333333333333333333',
+      BILLING_USDC_TREASURY_ADDRESS_84532: '0x4444444444444444444444444444444444444444',
+      BILLING_USDC_RPC_URL_1: 'https://eth.example.com/rpc',
+      BILLING_USDC_RPC_URL_11155111: 'https://sepolia.example.com/rpc',
+      BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+      BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+    };
+
+    // Omitting any single chain's treasury or RPC fails closed.
+    for (const missing of [
+      'BILLING_USDC_TREASURY_ADDRESS_1',
+      'BILLING_USDC_TREASURY_ADDRESS_11155111',
+      'BILLING_USDC_TREASURY_ADDRESS_8453',
+      'BILLING_USDC_TREASURY_ADDRESS_84532',
+      'BILLING_USDC_RPC_URL_1',
+      'BILLING_USDC_RPC_URL_11155111',
+      'BILLING_USDC_RPC_URL_8453',
+      'BILLING_USDC_RPC_URL_84532',
+    ]) {
+      const rest = { ...valid };
+      delete rest[missing];
+      expect(() => validate(rest)).toThrow(`${missing} must be set when BILLING_USDC_ENABLED=true`);
+    }
+
+    // Full four-chain configuration is accepted.
+    expect(validate(valid)).toEqual(expect.objectContaining({ BILLING_USDC_ENABLED: 'true' }));
+  });
+
+  it('rejects malformed treasury addresses on every chain when USDC billing is enabled', () => {
+    for (const key of [
+      'BILLING_USDC_TREASURY_ADDRESS_1',
+      'BILLING_USDC_TREASURY_ADDRESS_11155111',
+      'BILLING_USDC_TREASURY_ADDRESS_8453',
+      'BILLING_USDC_TREASURY_ADDRESS_84532',
+    ]) {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          BILLING_USDC_ENABLED: 'true',
+          BILLING_USDC_TREASURY_ADDRESS_1: '0x1111111111111111111111111111111111111111',
+          BILLING_USDC_TREASURY_ADDRESS_11155111: '0x2222222222222222222222222222222222222222',
+          BILLING_USDC_TREASURY_ADDRESS_8453: '0x3333333333333333333333333333333333333333',
+          BILLING_USDC_TREASURY_ADDRESS_84532: '0x4444444444444444444444444444444444444444',
+          BILLING_USDC_RPC_URL_1: 'https://eth.example.com/rpc',
+          BILLING_USDC_RPC_URL_11155111: 'https://sepolia.example.com/rpc',
+          BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+          BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+          [key]: 'not-an-address',
+        }),
+      ).toThrow(`${key} must be a valid EVM address`);
+    }
+  });
+
+  it('rejects malformed RPC URLs on every chain when USDC billing is enabled', () => {
+    for (const key of [
+      'BILLING_USDC_RPC_URL_1',
+      'BILLING_USDC_RPC_URL_11155111',
+      'BILLING_USDC_RPC_URL_8453',
+      'BILLING_USDC_RPC_URL_84532',
+    ]) {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          BILLING_USDC_ENABLED: 'true',
+          BILLING_USDC_TREASURY_ADDRESS_1: '0x1111111111111111111111111111111111111111',
+          BILLING_USDC_TREASURY_ADDRESS_11155111: '0x2222222222222222222222222222222222222222',
+          BILLING_USDC_TREASURY_ADDRESS_8453: '0x3333333333333333333333333333333333333333',
+          BILLING_USDC_TREASURY_ADDRESS_84532: '0x4444444444444444444444444444444444444444',
+          BILLING_USDC_RPC_URL_1: 'https://eth.example.com/rpc',
+          BILLING_USDC_RPC_URL_11155111: 'https://sepolia.example.com/rpc',
+          BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
+          BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
+          [key]: 'ftp://example.com/rpc',
+        }),
+      ).toThrow(`${key} must be a valid https URL`);
+    }
   });
 
   it('rejects malformed treasury addresses when USDC billing is enabled', () => {
@@ -272,8 +360,12 @@ describe('environment validation', () => {
       validate({
         ...baseConfig,
         BILLING_USDC_ENABLED: 'true',
-        BILLING_USDC_TREASURY_ADDRESS_8453: '0x1111111111111111111111111111111111111111',
-        BILLING_USDC_TREASURY_ADDRESS_84532: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_TREASURY_ADDRESS_1: '0x1111111111111111111111111111111111111111',
+        BILLING_USDC_TREASURY_ADDRESS_11155111: '0x2222222222222222222222222222222222222222',
+        BILLING_USDC_TREASURY_ADDRESS_8453: '0x3333333333333333333333333333333333333333',
+        BILLING_USDC_TREASURY_ADDRESS_84532: '0x4444444444444444444444444444444444444444',
+        BILLING_USDC_RPC_URL_1: 'https://eth.example.com/rpc',
+        BILLING_USDC_RPC_URL_11155111: 'https://sepolia.example.com/rpc',
         BILLING_USDC_RPC_URL_8453: 'https://base.example.com/rpc',
         BILLING_USDC_RPC_URL_84532: 'https://base-sepolia.example.com/rpc',
         BILLING_USDC_REQUIRED_CONFIRMATIONS: '10',

@@ -27,9 +27,9 @@
 | `STRIPE_SECRET_KEY` | No | Stripe rail; when unset all Stripe calls fail closed 503 |
 | `STRIPE_WEBHOOK_SECRET` | When Stripe configured | Verifies `POST /v1/billing/webhooks/stripe` signatures from `req.rawBody` |
 | `STRIPE_SUCCESS_URL` / `STRIPE_CANCEL_URL` | When Stripe configured | Server-side redirect URLs; valid https and never client-supplied |
-| `BILLING_USDC_ENABLED` | No | Defaults `false`; when `true` both treasury and RPC vars below are required |
-| `BILLING_USDC_TREASURY_ADDRESS_8453` / `_84532` | When USDC enabled | Static treasury addresses for Base / Base Sepolia; never the zero address |
-| `BILLING_USDC_RPC_URL_8453` / `_84532` | When USDC enabled | HTTPS RPC URLs (may embed an API key — only a sha256 digest is persisted) |
+| `BILLING_USDC_ENABLED` | No | Defaults `false`; when `true` all treasury and RPC vars below are required |
+| `BILLING_USDC_TREASURY_ADDRESS_1` / `_11155111` / `_8453` / `_84532` | When USDC enabled | Static treasury addresses for Ethereum / Ethereum Sepolia / Base / Base Sepolia; never the zero address |
+| `BILLING_USDC_RPC_URL_1` / `_11155111` / `_8453` / `_84532` | When USDC enabled | HTTPS RPC URLs (may embed an API key — only a sha256 digest is persisted) |
 | `BILLING_USDC_REQUIRED_CONFIRMATIONS` | No | Default `5`; validated 5–100 |
 | `BILLING_USDC_QUOTE_TTL_SECONDS` | No | Default `86400`; validated 1–604800 |
 
@@ -165,8 +165,9 @@ Stripe callers fail closed with 503):
 
 USDC rail (optional; `BILLING_USDC_ENABLED` defaults `false`):
 
-- When enabled, both supported chains — Base (8453) and Base Sepolia (84532) — require a
-  static treasury address (EVM format, never the zero address) and an HTTPS RPC URL.
+- When enabled, all four supported chains — Ethereum (1), Ethereum Sepolia (11155111), Base
+  (8453), and Base Sepolia (84532) — require a static treasury address (EVM format, never the
+  zero address) and an HTTPS RPC URL.
 - Token addresses are derived from the `SUPPORTED_CHAINS` registry at runtime, not
   configured.
 - `BILLING_USDC_REQUIRED_CONFIRMATIONS` (default 5) and `BILLING_USDC_QUOTE_TTL_SECONDS`

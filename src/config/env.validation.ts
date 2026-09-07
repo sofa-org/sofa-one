@@ -125,11 +125,27 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  BILLING_USDC_TREASURY_ADDRESS_1?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_TREASURY_ADDRESS_11155111?: string;
+
+  @IsString()
+  @IsOptional()
   BILLING_USDC_RPC_URL_8453?: string;
 
   @IsString()
   @IsOptional()
   BILLING_USDC_RPC_URL_84532?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_RPC_URL_1?: string;
+
+  @IsString()
+  @IsOptional()
+  BILLING_USDC_RPC_URL_11155111?: string;
 
   @IsInt()
   @Min(5)
@@ -248,11 +264,12 @@ function validateStripeConfig(config: EnvironmentVariables) {
 
 /**
  * USDC billing is optional: with `BILLING_USDC_ENABLED` unset/false the app
- * and all non-USDC functionality start normally. When enabled, both supported
- * USDC chains (Base 8453 and Base Sepolia 84532) must have a static treasury
- * address (EVM format, never the zero address) and an HTTPS RPC URL;
- * confirmations (minimum 5) and quote TTL are validated by the class
- * decorators with defaults of 5 and 86400.
+ * and all non-USDC functionality start normally. When enabled, every
+ * supported USDC chain (Base 8453, Base Sepolia 84532, Ethereum mainnet 1,
+ * Ethereum Sepolia 11155111) must have a static treasury address (EVM format,
+ * never the zero address) and an HTTPS RPC URL; confirmations (minimum 5) and
+ * quote TTL are validated by the class decorators with defaults of 5 and
+ * 86400.
  *
  * Treasury addresses and RPC URLs are format-validated whenever they are
  * provided (even while the feature is disabled) so a misconfigured value never
@@ -287,12 +304,25 @@ function validateUsdcConfig(config: EnvironmentVariables) {
   }
 }
 
-/** USDC billing chains (Base + Base Sepolia). Both are in SUPPORTED_CHAINS. */
+/**
+ * USDC billing chains (Ethereum mainnet, Ethereum Sepolia, Base + Base
+ * Sepolia). All are in SUPPORTED_CHAINS.
+ */
 const USDC_BILLING_CHAINS: ReadonlyArray<{
   chainId: number;
   treasuryKey: keyof EnvironmentVariables;
   rpcKey: keyof EnvironmentVariables;
 }> = [
+  {
+    chainId: 1,
+    treasuryKey: 'BILLING_USDC_TREASURY_ADDRESS_1',
+    rpcKey: 'BILLING_USDC_RPC_URL_1',
+  },
+  {
+    chainId: 11155111,
+    treasuryKey: 'BILLING_USDC_TREASURY_ADDRESS_11155111',
+    rpcKey: 'BILLING_USDC_RPC_URL_11155111',
+  },
   {
     chainId: 8453,
     treasuryKey: 'BILLING_USDC_TREASURY_ADDRESS_8453',

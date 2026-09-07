@@ -14,11 +14,11 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
   - `pimlico`: `{ apiKey, rpcUrls: { 143, 10143 } }`
   - `database`: `{ url }`
   - `stripe`: `{ secretKey, webhookSecret, successUrl, cancelUrl }`
-  - `billing.usdc`: `{ enabled, treasuryAddresses: { 8453, 84532 }, rpcUrls: { 8453, 84532 }, requiredConfirmations (default 5), quoteTtlSeconds (default 86400) }`
+  - `billing.usdc`: `{ enabled, treasuryAddresses: { 1, 11155111, 8453, 84532 }, rpcUrls: { 1, 11155111, 8453, 84532 }, requiredConfirmations (default 5), quoteTtlSeconds (default 86400) }`
   - `security`: `{ trustProxy }`
   - `chain`: `{ defaultChainId }` (default `84532`)
   - `redis`: `{ url }`
-- **Dependencies**: none (pure `process.env` reads). Note: `pimlico.rpcUrls` keys are Monad chain IDs (143, 10143); `billing.usdc` keys are Base chain IDs (8453, 84532).
+- **Dependencies**: none (pure `process.env` reads). Note: `pimlico.rpcUrls` keys are Monad chain IDs (143, 10143); `billing.usdc` keys are USDC billing chain IDs (1, 11155111, 8453, 84532).
 
 ### `env.validation.ts`
 - **Symbols**:
@@ -26,7 +26,7 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
   - `class EnvironmentVariables` — class-validator schema; every field is a decorated env var (see below).
   - `validate(config: Record<string, unknown>)` — exported entry point; transforms raw env into `EnvironmentVariables`, runs `validateSync`, then calls the private validators; returns the validated instance.
   - Private helpers: `validateProductionConfig`, `validateOptionalHttpsUrl`, `validateDefaultChain`, `validateMfaSecretEncryptionKey`, `validateStripeConfig`, `validateUsdcConfig`, `validateEthereumAddress`, `validateRpcUrl`.
-  - Private constants: `USDC_BILLING_CHAINS` (8453 + 84532 with their treasury/RPC keys), `EVM_ADDRESS_REGEX` (`/^0x[0-9a-fA-F]{40}$/`), `ZERO_ADDRESS`.
+  - Private constants: `USDC_BILLING_CHAINS` (1 + 11155111 + 8453 + 84532 with their treasury/RPC keys), `EVM_ADDRESS_REGEX` (`/^0x[0-9a-fA-F]{40}$/`), `ZERO_ADDRESS`.
 - **Input**: raw `process.env` record (passed by `ConfigModule.forRoot({ validate })`).
 - **Output**: validated `EnvironmentVariables` instance, or throws `Error` on any failure (aborts startup).
 - **Validation rules**:
@@ -36,7 +36,7 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
   - Optional HTTPS URLs (validated whenever provided): `SECURITY_EVENTS_SIEM_WEBHOOK_URL`, `STEP_UP_OTP_WEBHOOK_URL`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`, and USDC RPC URLs.
   - `DEFAULT_CHAIN_ID` must be an integer in `SUPPORTED_CHAIN_IDS` (default `84532`).
   - Stripe: if `STRIPE_SECRET_KEY` is set, `STRIPE_SUCCESS_URL` and `STRIPE_CANCEL_URL` are required.
-  - USDC billing: treasury addresses format-validated (EVM 0x + 40 hex, never zero address) and RPC URLs HTTPS-validated whenever provided; when `BILLING_USDC_ENABLED === 'true'`, both chains' treasury + RPC become required.
+  - USDC billing: treasury addresses format-validated (EVM 0x + 40 hex, never zero address) and RPC URLs HTTPS-validated whenever provided; when `BILLING_USDC_ENABLED === 'true'`, all four chains' treasury + RPC become required.
 - **Dependencies**: `class-transformer` (`plainToInstance`), `class-validator` (decorators + `validateSync`), and `SUPPORTED_CHAIN_IDS` from `../common/chains/supported-chains`.
 
 ## Design/Patterns
