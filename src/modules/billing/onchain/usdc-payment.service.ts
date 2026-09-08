@@ -201,9 +201,7 @@ export class UsdcPaymentService {
         },
       });
     } catch (error) {
-      this.logger.error(
-        `USDC claim audit failed: ${sanitizeErrorMessage(getErrorText(error))}`,
-      );
+      this.logger.error(`USDC claim audit failed: ${sanitizeErrorMessage(getErrorText(error))}`);
     }
   }
 
@@ -287,18 +285,23 @@ export class UsdcPaymentService {
     }
 
     try {
+      // After a fixed-fee renewal has already allocated coverage against the
+      // finalized invoice, a new USDC quote must only ask for the remaining
+      // balance — never the full total again. The full-invoice (single-rail)
+      // behavior is preserved unchanged when nothing was allocated yet.
+      const due = this.remainingDue(invoice);
       const attempt = await this.prisma.billingPaymentAttempt.create({
         data: {
           invoiceId: invoice.id,
           method: 'usdc',
           status: 'pending',
-          amountMicros: invoice.totalMicros,
+          amountMicros: due,
           currency: invoice.currency,
           chainId: BigInt(chain),
           tokenAddress,
           treasuryAddress,
           tokenDecimals: USDC_DECIMALS,
-          expectedBaseUnits: invoice.totalMicros,
+          expectedBaseUnits: due,
           quoteExpiresAt,
           priceSource: 'usdc_6decimals',
           expectedPayerAddress,
@@ -373,7 +376,11 @@ export class UsdcPaymentService {
     if (attempt.method !== 'usdc') {
       throw new ConflictException('Payment attempt is not a USDC payment');
     }
-    if (attempt.amountMicros !== invoice.totalMicros || attempt.currency !== invoice.currency) {
+    // Full single-rail quotes keep amountMicros == totalMicros; renewal
+    // remainder quotes carry the persisted remainder snapshot (never more than
+    // the frozen total). The immutable snapshot amount is authoritative for
+    // receipt verification; the settlement boundary caps any excess coverage.
+    if (attempt.currency !== invoice.currency || !this.amountMatchesInvoice(attempt, invoice)) {
       throw new ConflictException('Payment attempt does not match the invoice');
     }
     this.assertSnapshotComplete(attempt, invoice);
@@ -744,7 +751,40 @@ export class UsdcPaymentService {
         }
 
         // Evidence matches (or none recorded): mark succeeded and settle
-        // atomically through the shared first-rail-wins boundary.
+        // atomically through the shared coverage boundary. But first re-read
+        // the invoice under the row lock and reject a STALE quote: if the
+        // current remaining balance (`totalMicros - allocatedMicros`) shrank
+        // below the persisted quote amount (e.g. a fixed-fee renewal allocation
+        // landed after the quote was issued), settling would give the user
+        // partial credit for a full payment. A legitimate fixed-fee remainder
+        // quote (persisted amount <= current remainder) is unchanged and
+        // passes; only an over-covering stale quote is refused and surfaced
+        // for review so the overpayment can be resolved, never silently
+        // truncated into a partial allocation.
+        const freshInvoice = await tx.billingInvoice.findUnique({
+          where: { id: invoice.id },
+        });
+        if (!freshInvoice) return { kind: 'missing' } as const;
+        const currentRemaining = freshInvoice.totalMicros - (freshInvoice.allocatedMicros ?? 0n);
+        if (attempt.amountMicros > currentRemaining) {
+          await tx.billingPaymentAttempt.update({
+            where: { id: attempt.id },
+            data: {
+              status: 'needs_review',
+              reviewReason: 'stale_quote_over_remainder',
+              lastCheckedAt: new Date(),
+            },
+          });
+          return {
+            kind: 'duplicate',
+            row: {
+              ...current,
+              status: 'needs_review',
+              reviewReason: 'stale_quote_over_remainder',
+            },
+          } as const;
+        }
+
         await tx.billingPaymentAttempt.update({
           where: { id: attempt.id },
           data: {
@@ -766,14 +806,25 @@ export class UsdcPaymentService {
           invoiceId: invoice.id,
           method: 'usdc',
         });
-        // Not settled: either this attempt already settled the invoice
-        // (idempotent replay) or another rail won (duplicate/unallocated).
+        // The invoice is fully covered when the shared allocation boundary set
+        // the paid markers in this call or this attempt already owns the
+        // settlement pointer (idempotent replay of an earlier settlement).
         const settledInvoice = await tx.billingInvoice.findUnique({
           where: { id: invoice.id },
           select: { settlementAttemptId: true },
         });
-        if (result.settled || settledInvoice?.settlementAttemptId === attempt.id) {
+        if (
+          (result.paid && result.paidByThisAttempt) ||
+          (!result.paid && settledInvoice?.settlementAttemptId === attempt.id)
+        ) {
           return { kind: 'paid', row: current, wroteEvidence: true } as const;
+        }
+        if (result.replayed) {
+          // This attempt's coverage was already counted toward the invoice in
+          // an earlier allocation (replay). Its coverage fact is real and must
+          // never be demoted to a duplicate review just because another rail
+          // paid the invoice later.
+          return { kind: 'duplicate', row: current } as const;
         }
         // Another rail won the race: record the successful evidence as
         // duplicate/unallocated review, never overwrite the paid invoice.
@@ -943,23 +994,96 @@ export class UsdcPaymentService {
     txHash: string,
     backoffMs: number,
   ): Promise<{ matched: boolean; current: PaymentAttemptRow | null }> {
-    const result = await this.prisma.billingPaymentAttempt.updateMany({
-      where: {
-        id: attemptId,
-        status: { in: [...ACTIVE_CLAIM_STATES] },
-        OR: [{ submittedTxHash: null }, { submittedTxHash: txHash }],
-      },
-      data: {
-        submittedTxHash: txHash,
-        lastCheckedAt: new Date(),
-        nextCheckAt: new Date(Date.now() + backoffMs),
-      },
-    });
+    let result: { count: number };
+    try {
+      result = await this.prisma.billingPaymentAttempt.updateMany({
+        where: {
+          id: attemptId,
+          status: { in: [...ACTIVE_CLAIM_STATES] },
+          OR: [{ submittedTxHash: null }, { submittedTxHash: txHash }],
+        },
+        data: {
+          submittedTxHash: txHash,
+          lastCheckedAt: new Date(),
+          nextCheckAt: new Date(Date.now() + backoffMs),
+        },
+      });
+    } catch (err) {
+      if (!isUniqueConstraintError(err)) throw err;
+      // Prisma P2002: the canonical `submitted_tx_hash` is ALREADY owned by
+      // another attempt (the migration-only unique index). This claim can
+      // never become the provider's evidence owner — fail closed: never a bare
+      // 500, never a second provider claim, never a permanent pending. The
+      // attempt is marked `needs_review`/`duplicate_unallocated` while it is
+      // still active; a concurrent terminal transition wins and its real state
+      // is returned instead.
+      return this.markDuplicateSubmittedHash(attemptId, txHash);
+    }
     if (result.count > 0) return { matched: true, current: null };
     const current = await this.prisma.billingPaymentAttempt.findUnique({
       where: { id: attemptId },
     });
     return { matched: false, current };
+  }
+
+  /**
+   * Fail-closed outcome for a claim whose canonical submitted hash is already
+   * owned by ANOTHER attempt (the migration-only unique `submitted_tx_hash`
+   * index rejected the write with a Prisma P2002). The losing claim must never
+   * perform provider work and must never be left permanently pending: while the
+   * attempt is still active AND still unclaimed (`submittedTxHash` NULL) it is
+   * transitioned to `needs_review`/`duplicate_unallocated` with a safe audit
+   * note (the conflicting hash is not secret). The NULL guard means a
+   * concurrent claim that legitimately persisted a DIFFERENT hash after this
+   * loser's P2002 is never marked needs_review — its real state is returned
+   * instead. A concurrent terminal transition wins the same way, so a stale
+   * loser can never regress a succeeded/terminal attempt.
+   */
+  private async markDuplicateSubmittedHash(
+    attemptId: string,
+    txHash: string,
+  ): Promise<{ matched: boolean; current: PaymentAttemptRow | null }> {
+    const current = await this.prisma.billingPaymentAttempt.findUnique({
+      where: { id: attemptId },
+    });
+    if (!current) return { matched: false, current: null };
+    if (current.status !== 'pending' && current.status !== 'confirming') {
+      return { matched: false, current };
+    }
+    if (current.submittedTxHash !== null) {
+      // A concurrent claim already owns this attempt with a legitimate hash;
+      // this loser must never mark it needs_review.
+      return { matched: false, current };
+    }
+    const claimed = await this.prisma.billingPaymentAttempt.updateMany({
+      where: {
+        id: attemptId,
+        status: { in: [...ACTIVE_CLAIM_STATES] },
+        submittedTxHash: null,
+      },
+      data: {
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        failureCode: 'duplicate_submitted_hash',
+        failureMessage: `Submitted hash is already claimed by another payment attempt: ${txHash}`,
+        lastCheckedAt: new Date(),
+      },
+    });
+    if (claimed.count === 1) {
+      return {
+        matched: false,
+        current: {
+          ...current,
+          status: 'needs_review',
+          reviewReason: 'duplicate_unallocated',
+          failureCode: 'duplicate_submitted_hash',
+        },
+      };
+    }
+    const latest = await this.prisma.billingPaymentAttempt.findUnique({
+      where: { id: attemptId },
+    });
+    return { matched: false, current: latest };
   }
 
   /**
@@ -1188,11 +1312,16 @@ export class UsdcPaymentService {
     // hash may expire; a confirming attempt with recorded evidence is handled
     // by the caller as review, never expiry, and a competing claim can never
     // expire the owner's attempt.
-    const current = await this.casUpdate(attempt.id, ['pending'], {
-      status: 'expired',
-      reviewReason: 'quote_expired',
-      lastCheckedAt: new Date(),
-    }, txHash);
+    const current = await this.casUpdate(
+      attempt.id,
+      ['pending'],
+      {
+        status: 'expired',
+        reviewReason: 'quote_expired',
+        lastCheckedAt: new Date(),
+      },
+      txHash,
+    );
     if (current) return this.toClaimResultFromRow(invoice, current);
     return this.toClaimResult(
       invoice,
@@ -1353,6 +1482,38 @@ export class UsdcPaymentService {
   }
 
   /**
+   * The amount a USDC quote/claim may still ask for on a finalized invoice:
+   * the frozen total when no coverage has been allocated yet (full single-rail
+   * behavior preserved), or the remaining balance
+   * (`totalMicros - allocatedMicros`) once a fixed-fee renewal has allocated
+   * coverage — so an existing fixed-fee allocation is never paid twice.
+   */
+  private remainingDue(invoice: InvoiceRow): bigint {
+    const allocated = invoice.allocatedMicros ?? 0n;
+    const remaining = invoice.totalMicros - allocated;
+    if (remaining <= 0n) {
+      throw new ConflictException('Invoice is already fully covered');
+    }
+    return remaining;
+  }
+
+  /**
+   * True when an attempt amount is a consistent share of the frozen invoice:
+   * exactly the full total when nothing was allocated, or a positive amount
+   * that never exceeds the total once fixed-fee coverage was allocated. The
+   * persisted quote amount (snapshot) is authoritative for receipt
+   * verification; the shared settlement boundary caps coverage at the
+   * remaining balance, so an allocation that happened after the quote can
+   * never over-allocate the invoice.
+   */
+  private amountMatchesInvoice(attempt: PaymentAttemptRow, invoice: InvoiceRow): boolean {
+    if (attempt.currency !== invoice.currency) return false;
+    const allocated = invoice.allocatedMicros ?? 0n;
+    if (allocated <= 0n) return attempt.amountMicros === invoice.totalMicros;
+    return attempt.amountMicros > 0n && attempt.amountMicros <= invoice.totalMicros;
+  }
+
+  /**
    * Resolves the payment chain. The client may pass `chainId` as a verified
    * selector only: it must be in the USDC billing allowlist AND have both a
    * configured treasury and RPC URL. Without a selector, the app's default
@@ -1479,12 +1640,15 @@ export class UsdcPaymentService {
       throw new ConflictException('Payment attempt has invalid token decimals');
     }
 
-    // Amount: the expected base units must equal the invoice total (1:1 at 6
-    // decimals), and the attempt amount must match too.
-    if (
-      attempt.expectedBaseUnits !== invoice.totalMicros ||
-      attempt.amountMicros !== invoice.totalMicros
-    ) {
+    // Amount: the expected base units must equal the persisted attempt amount
+    // (1:1 at 6 decimals), and the amount must be a consistent share of the
+    // frozen invoice total — the full total when nothing was allocated yet,
+    // or a positive remainder snapshot (never more than the total) once a
+    // fixed-fee renewal has allocated coverage.
+    if (attempt.expectedBaseUnits !== attempt.amountMicros || attempt.amountMicros <= 0n) {
+      throw new ConflictException('Payment attempt amount does not match the invoice');
+    }
+    if (!this.amountMatchesInvoice(attempt, invoice)) {
       throw new ConflictException('Payment attempt amount does not match the invoice');
     }
 
@@ -1533,7 +1697,7 @@ export class UsdcPaymentService {
       treasuryAddress: attempt.treasuryAddress!,
       expectedPayerAddress: attempt.expectedPayerAddress!,
       amountBaseUnits: attempt.expectedBaseUnits!.toString(),
-      amountUsd: microsToDecimalUsd(invoice.totalMicros),
+      amountUsd: microsToDecimalUsd(attempt.expectedBaseUnits!),
       currency: 'USD',
       quoteExpiresAt: attempt.quoteExpiresAt!.toISOString(),
       requiredConfirmations: attempt.requiredConfirmations!,

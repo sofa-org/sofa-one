@@ -20,6 +20,7 @@ import * as Stripe from 'stripe';
 import {
   STRIPE_CHARGE_KIND_FIXED_FEE,
   STRIPE_CHARGE_KIND_FULL,
+  STRIPE_CHARGE_KIND_OVERAGE,
   STRIPE_CLIENT,
   STRIPE_DEFERRED_BACKOFF_MS,
   STRIPE_DEFERRED_MAX_RETRIES,
@@ -33,6 +34,18 @@ type SecurityEventInput = Parameters<SecurityEventService['record']>[0];
 
 /** Forward-only payment outcome derived from a verified Stripe event. */
 type PaymentTransition = 'succeeded' | 'failed' | null;
+
+/** Outcome of the worker-driven PaymentIntent reconciliation (lost-webhook recovery). */
+export type OverageReconcileResult =
+  | 'settled' // PI succeeded → attempt succeeded + invoice fully covered
+  | 'allocated' // PI succeeded → coverage allocated, invoice not fully covered
+  | 'pending' // PI processing / transient retrieve error — re-check after backoff
+  | 'failed' // PI canceled/declined → forward-only CAS to failed
+  | 'needs_review' // identity mismatch / SCA / not found — operator action
+  | 'skipped'; // not eligible / lease lost / webhook already applied
+
+/** Backoff before the worker re-reconciles a still-pending overage PaymentIntent. */
+const OVERAGE_RECONCILE_BACKOFF_MS = 60_000;
 
 /** 1 cent = 10,000 microdollars. Stripe amounts are integer cents. */
 const MICROS_PER_CENT = 10_000n;
@@ -184,7 +197,10 @@ export class StripeWebhookService {
     }
   }
 
-  private async recordPreflightReview(event: Stripe.Event, lease?: { ownerId: string }): Promise<void> {
+  private async recordPreflightReview(
+    event: Stripe.Event,
+    lease?: { ownerId: string },
+  ): Promise<void> {
     try {
       await this.prisma.stripeWebhookEvent.create({
         data: {
@@ -203,9 +219,15 @@ export class StripeWebhookService {
         where: {
           stripeEventId: event.id,
           status: 'deferred',
-          ...(lease ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } } : {}),
+          ...(lease
+            ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } }
+            : {}),
         },
-        data: { status: 'needs_review', errorType: 'preflight_rejected', errorCode: 'identity_or_provider_mismatch' },
+        data: {
+          status: 'needs_review',
+          errorType: 'preflight_rejected',
+          errorCode: 'identity_or_provider_mismatch',
+        },
       });
     }
   }
@@ -230,22 +252,29 @@ export class StripeWebhookService {
       });
       const terminalReplay = existingEvent && existingEvent.status !== 'deferred';
       if (lease) {
-        const leaseValid = existingEvent?.status === 'deferred' &&
+        const leaseValid =
+          existingEvent?.status === 'deferred' &&
           existingEvent.retryOwnerId === lease.ownerId &&
           existingEvent.retryLeaseExpiresAt instanceof Date &&
           existingEvent.retryLeaseExpiresAt.getTime() > Date.now();
-        if (!leaseValid) throw new ConflictException('Stripe deferred retry lease is missing or expired');
+        if (!leaseValid)
+          throw new ConflictException('Stripe deferred retry lease is missing or expired');
       }
       let createdFresh = !existingEvent;
       const preflightLookup = await this.findAttemptForEvent(tx, event);
-      if (preflightLookup.kind === 'conflict') throw new ConflictException('Stripe event identity conflict');
+      if (preflightLookup.kind === 'conflict')
+        throw new ConflictException('Stripe event identity conflict');
       const preflightAttempt = preflightLookup.kind === 'attempt' ? preflightLookup.attempt : null;
-      if (hasMalformedIdentityMetadata(event.data.object)) throw new ConflictException('Stripe event metadata is malformed');
-      if (!preflightAttempt && !STRIPE_RENEWAL_EVENT_TYPES.has(event.type)) throw new ConflictException('Stripe event has no owned local identity');
+      if (hasMalformedIdentityMetadata(event.data.object))
+        throw new ConflictException('Stripe event metadata is malformed');
+      if (!preflightAttempt && !STRIPE_RENEWAL_EVENT_TYPES.has(event.type))
+        throw new ConflictException('Stripe event has no owned local identity');
       let renewalAccount: Prisma.BillingAccountGetPayload<Record<string, never>> | null = null;
       if (event.type.startsWith('customer.subscription') || event.type.startsWith('invoice')) {
-        if ((event.type.startsWith('customer.subscription') || event.type === 'invoice.finalized') &&
-          (!Number.isSafeInteger(event.created) || event.created <= 0)) {
+        if (
+          (event.type.startsWith('customer.subscription') || event.type === 'invoice.finalized') &&
+          (!Number.isSafeInteger(event.created) || event.created <= 0)
+        ) {
           throw new ConflictException('Stripe event ordering timestamp is missing');
         }
         // Account resolution is deliberately read-only here. The mutating mirror
@@ -253,22 +282,27 @@ export class StripeWebhookService {
         renewalAccount = await this.resolveAccountForEvent(tx, event.data.object);
         if (!renewalAccount) throw new ConflictException('Stripe event account is unresolved');
       }
-      if (
-        preflightAttempt &&
-        !(await this.validateAttemptIdentity(tx, event, preflightAttempt))
-      ) {
+      if (preflightAttempt && !(await this.validateAttemptIdentity(tx, event, preflightAttempt))) {
         throw new ConflictException('Stripe attempt identity preflight failed');
       }
       if (preflightAttempt) {
         const providerFacts = await this.validateProviderFacts(tx, event, preflightAttempt);
-        if (!providerFacts.ok) throw new ConflictException(`Stripe provider preflight failed: ${providerFacts.reason}`);
-        if (event.type.startsWith('invoice') && preflightAttempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE &&
-          !(await this.validateRenewalReplay(tx, event, preflightAttempt))) {
+        if (!providerFacts.ok)
+          throw new ConflictException(`Stripe provider preflight failed: ${providerFacts.reason}`);
+        if (
+          event.type.startsWith('invoice') &&
+          preflightAttempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE &&
+          !(await this.validateRenewalReplay(tx, event, preflightAttempt))
+        ) {
           throw new ConflictException('Stripe renewal replay proof failed');
         }
-      } else if (event.type.startsWith('customer.subscription') || event.type.startsWith('invoice')) {
+      } else if (
+        event.type.startsWith('customer.subscription') ||
+        event.type.startsWith('invoice')
+      ) {
         const providerFacts = this.validateUnmatchedProviderFacts(event);
-        if (!providerFacts.ok) throw new ConflictException(`Stripe provider preflight failed: ${providerFacts.reason}`);
+        if (!providerFacts.ok)
+          throw new ConflictException(`Stripe provider preflight failed: ${providerFacts.reason}`);
       }
       if (terminalReplay) return;
       if (lease) {
@@ -281,7 +315,8 @@ export class StripeWebhookService {
           },
           data: { retryLeaseExpiresAt: new Date(Date.now() + 2 * 60 * 1000) },
         });
-        if (heartbeat.count !== 1) throw new ConflictException('Stripe deferred retry lease was lost');
+        if (heartbeat.count !== 1)
+          throw new ConflictException('Stripe deferred retry lease was lost');
       }
 
       let attempt = preflightLookup.kind === 'attempt' ? preflightLookup.attempt : null;
@@ -315,13 +350,16 @@ export class StripeWebhookService {
       // Claim first, then serialize every period-affecting Stripe mutation
       // (not just invoice materialization) with BillingService's advisory-key
       // protocol. No provider call is made while this transaction is open.
-      const lockAccount = renewalAccount ?? (attempt
-        ? await this.getAttemptAccount(tx, attempt)
-        : null);
-      const lockPeriod = this.eventPeriod(event) ??
+      const lockAccount =
+        renewalAccount ?? (attempt ? await this.getAttemptAccount(tx, attempt) : null);
+      const lockPeriod =
+        this.eventPeriod(event) ??
         (attempt ? await this.getAttemptPeriod(tx, attempt) : null) ??
-        (renewalAccount?.stripeSubscriptionPeriodStart ? this.utcMonthStart(renewalAccount.stripeSubscriptionPeriodStart) : null);
-      const periodAffecting = event.type.startsWith('payment_intent') ||
+        (renewalAccount?.stripeSubscriptionPeriodStart
+          ? this.utcMonthStart(renewalAccount.stripeSubscriptionPeriodStart)
+          : null);
+      const periodAffecting =
+        event.type.startsWith('payment_intent') ||
         event.type.startsWith('checkout.session') ||
         event.type.startsWith('customer.subscription') ||
         event.type.startsWith('invoice');
@@ -340,21 +378,39 @@ export class StripeWebhookService {
       // Claim the event before materialization. Materialization remains inside
       // this transaction, so a proof/CAS failure rolls back both the claim and
       // every invoice/attempt write instead of leaving an orphaned processed row.
-      if (!attempt && (event.type === 'invoice.created' || event.type === 'invoice.finalized' || event.type === 'invoice.paid')) {
+      if (
+        !attempt &&
+        (event.type === 'invoice.created' ||
+          event.type === 'invoice.finalized' ||
+          event.type === 'invoice.paid')
+      ) {
         attempt = await this.materializeRenewal(tx, event, queueAudit);
-        if (!attempt) throw new ConflictException('Stripe renewal materialization preflight failed');
+        if (!attempt)
+          throw new ConflictException('Stripe renewal materialization preflight failed');
       }
-      if (preflightAttempt && attempt && event.type === 'invoice.finalized' && attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
+      if (
+        preflightAttempt &&
+        attempt &&
+        event.type === 'invoice.finalized' &&
+        attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE
+      ) {
         if (!(await this.validateRenewalReplay(tx, event, attempt))) {
           throw new ConflictException('Renewal finalization replay proof failed');
         }
         await this.promoteRenewalInvoice(tx, event, attempt);
         if (attempt.status === 'succeeded') {
+          // Coverage-first settlement: the fixed fee allocates toward the
+          // frozen total; only a full payment of a fixed-only invoice marks it
+          // paid here (a dynamic invoice keeps its separately-payable overage).
           const settled = await this.settlementService.settleInvoice(tx, {
-            id: attempt.id, invoiceId: attempt.invoiceId, method: 'stripe',
+            id: attempt.id,
+            invoiceId: attempt.invoiceId,
+            method: 'stripe',
           });
-          if (settled.settled) {
-            await this.bootstrapActivePlan(tx, event, attempt);
+          if (settled.allocated) {
+            if (settled.paid) {
+              await this.bootstrapActivePlan(tx, event, attempt);
+            }
             await this.persistEventIds(tx, event, attempt);
           }
         }
@@ -363,7 +419,10 @@ export class StripeWebhookService {
       // The read-only account/mirror proof completed before event insertion.
       // Subscription lifecycle events may legitimately update the mirror even
       // when no payment attempt exists yet; this is still after preflight.
-      if (event.type.startsWith('customer.subscription') && this.resolveTransition(event) === null) {
+      if (
+        event.type.startsWith('customer.subscription') &&
+        this.resolveTransition(event) === null
+      ) {
         const mirrorResult = await this.applySubscriptionMirror(tx, event);
         if (mirrorResult === 'unmatched') {
           await this.deferUnmatched(tx, event, queueAudit, createdFresh, lease);
@@ -371,8 +430,18 @@ export class StripeWebhookService {
         }
         if (mirrorResult === 'conflict') {
           await tx.stripeWebhookEvent.updateMany({
-            where: { stripeEventId: event.id, ...(createdFresh ? { status: 'processed' } : { status: 'deferred' }), ...(lease ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } } : {}) },
-            data: { status: 'needs_review', errorType: 'subscription_ownership_conflict', nextRetryAt: null },
+            where: {
+              stripeEventId: event.id,
+              ...(createdFresh ? { status: 'processed' } : { status: 'deferred' }),
+              ...(lease
+                ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } }
+                : {}),
+            },
+            data: {
+              status: 'needs_review',
+              errorType: 'subscription_ownership_conflict',
+              nextRetryAt: null,
+            },
           });
           return;
         }
@@ -411,10 +480,17 @@ export class StripeWebhookService {
         });
       } else {
         const processed = await tx.stripeWebhookEvent.updateMany({
-          where: { stripeEventId: event.id, status: 'deferred', ...(lease ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } } : {}) },
+          where: {
+            stripeEventId: event.id,
+            status: 'deferred',
+            ...(lease
+              ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } }
+              : {}),
+          },
           data: { status: 'processed', processedAt: new Date() },
         });
-        if (processed.count !== 1) throw new ConflictException('Stripe deferred event claim was lost');
+        if (processed.count !== 1)
+          throw new ConflictException('Stripe deferred event claim was lost');
       }
 
       const transition = this.resolveTransition(event);
@@ -456,11 +532,20 @@ export class StripeWebhookService {
             ? raw.id
             : readProviderId(raw.payment_intent, 'payment_intent');
           const subscriptionId = readProviderId(raw.subscription, 'subscription');
-          const invoiceId = event.type.startsWith('invoice') ? raw.id : readProviderId(raw.invoice, 'invoice');
+          const invoiceId = event.type.startsWith('invoice')
+            ? raw.id
+            : readProviderId(raw.invoice, 'invoice');
           const identityAnd: Array<Record<string, unknown>> = [];
-          if (paymentIntentId) identityAnd.push({ OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: paymentIntentId }] });
-          if (subscriptionId) identityAnd.push({ OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }] });
-          if (invoiceId) identityAnd.push({ OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: invoiceId }] });
+          if (paymentIntentId)
+            identityAnd.push({
+              OR: [{ stripePaymentIntentId: null }, { stripePaymentIntentId: paymentIntentId }],
+            });
+          if (subscriptionId)
+            identityAnd.push({
+              OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }],
+            });
+          if (invoiceId)
+            identityAnd.push({ OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: invoiceId }] });
           // Do not rely on the preflight snapshot after the advisory/row lock.
           // The success transition is a fact-bound CAS, so a concurrently
           // committed failure (or identity change) can never be overwritten.
@@ -470,7 +555,11 @@ export class StripeWebhookService {
               invoiceId: attempt.invoiceId,
               method: 'stripe',
               status: 'pending',
-              ...(sessionId ? { OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: sessionId }] } : {}),
+              ...(sessionId
+                ? {
+                    OR: [{ stripeCheckoutSessionId: null }, { stripeCheckoutSessionId: sessionId }],
+                  }
+                : {}),
               ...(identityAnd.length > 0 ? { AND: identityAnd } : {}),
             } as any,
             data: {
@@ -485,33 +574,60 @@ export class StripeWebhookService {
             throw new ConflictException('Stripe success compare-and-set lost');
           }
         }
-        // Atomic first-rail-wins settlement: sets paidAt/paidVia/pointer once.
-        // The CAS requires the attempt amount/currency to EXACTLY match the
-        // invoice total, so a fixed-fee recurring charge can never mark a
-        // dynamic invoice (with overage > fixed fee) as paid. A duplicate
-        // replay of this attempt is an idempotent no-op, and a settlement
-        // already won by another rail is never overwritten.
+        // Coverage-first, invoice-paid-last settlement: the shared boundary
+        // allocates the attempt's amount toward the invoice (never more than
+        // the remaining balance), and marks the invoice paid only when the
+        // cumulative allocation reaches the frozen total. A fixed-fee
+        // recurring charge therefore allocates partial coverage on a dynamic
+        // invoice (separately-payable overage remains) instead of faking a
+        // paid invoice; a duplicate replay of this attempt is an idempotent
+        // no-op; and a settlement already won by another rail is never
+        // overwritten.
         const result = await this.settlementService.settleInvoice(tx, {
           id: attempt.id,
           invoiceId: attempt.invoiceId,
           method: 'stripe',
         });
-        if (!result.settled) {
-          // This Stripe success lost the settlement race. Only when the
-          // invoice's settlement pointer clearly belongs to a different
-          // attempt is the succeeded Stripe payment recorded as a
-          // duplicate/unallocated review — mirroring the USDC losing path. A
-          // precondition failure (invoice unsettled) or this attempt's own
-          // idempotent replay never changes the attempt, and the winning
-          // attempt/invoice is never touched. A fixed-fee renewal on an
-          // invoice whose total exceeds the fixed charge stays unsettled
-          // (the separately-payable dynamic overage remains), never a fake
-          // paid — surfaced as deferred for the dashboard/operator.
+        if (result.allocated) {
+          // New coverage was counted. Only a fully covered invoice is a
+          // settlement; a partial allocation (e.g. fixed fee on a dynamic
+          // invoice) keeps the invoice unpaid and is not a failure.
+          if (result.paid) {
+            queueAudit({
+              actorType: 'system',
+              eventType: 'billing.stripe.invoice.settled',
+              riskLevel: 'low',
+              result: 'allowed',
+              metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
+            });
+          } else {
+            queueAudit({
+              actorType: 'system',
+              eventType: 'billing.stripe.coverage_allocated',
+              riskLevel: 'low',
+              result: 'allowed',
+              metadata: {
+                invoiceId: attempt.invoiceId,
+                attemptId: attempt.id,
+                allocatedMicros: result.allocatedMicros.toString(),
+              },
+            });
+          }
+        } else {
+          // No new coverage was allocated. Only when the invoice's settlement
+          // pointer clearly belongs to a DIFFERENT attempt is the succeeded
+          // Stripe payment recorded as a duplicate/unallocated review —
+          // mirroring the USDC losing path. A precondition failure (invoice
+          // unsettled/open), this attempt's own idempotent replay (including a
+          // replay after a legitimate partial fixed-fee allocation), or an
+          // invoice fully paid by this attempt earlier never changes the
+          // attempt, and the winning attempt/invoice is never touched.
           const settledInvoice = await tx.billingInvoice.findUnique({
             where: { id: attempt.invoiceId },
-            select: { settlementAttemptId: true, totalMicros: true },
+            select: { settlementAttemptId: true },
           });
           if (
+            !result.replayed &&
             settledInvoice?.settlementAttemptId &&
             settledInvoice.settlementAttemptId !== attempt.id
           ) {
@@ -527,40 +643,21 @@ export class StripeWebhookService {
               reason: 'duplicate_unallocated',
               metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
             });
-          } else if (
-            attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE &&
-            settledInvoice &&
-            attempt.amountMicros < settledInvoice.totalMicros
-          ) {
-            await tx.billingPaymentAttempt.update({
-              where: { id: attempt.id },
-              data: { status: 'needs_review', reviewReason: 'fixed_fee_partial_balance' },
-            });
-            queueAudit({
-              actorType: 'system',
-              eventType: 'billing.stripe.fixed_fee_partial_balance',
-              riskLevel: 'high',
-              result: 'denied',
-              reason: 'fixed_fee_partial_balance',
-              metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
-            });
           }
-        } else {
-          queueAudit({
-            actorType: 'system',
-            eventType: 'billing.stripe.invoice.settled',
-            riskLevel: 'low',
-            result: 'allowed',
-            metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
-          });
         }
-        // A false settlement is a losing/open/dynamic rail. It must not bind
-        // provider identities or mutate the active subscription mirror. An
-        // already-winning replay has already persisted these identities; the
-        // locked settlement service is the sole authority for this boundary.
-        if (!result.settled) return;
+        // A no-op allocation (losing/open/dynamic rail, precondition failure,
+        // or replay) must not bind provider identities or mutate the active
+        // subscription mirror. An already-winning replay has already persisted
+        // these identities; the locked settlement service is the sole
+        // authority for this boundary.
+        if (!result.allocated) return;
         try {
-          await this.bootstrapActivePlan(tx, event, attempt);
+          // The active-plan bootstrap runs only when this payment actually
+          // settled the whole invoice; a partial fixed-fee allocation leaves
+          // the dynamic invoice's plan to the finalization/overage flow.
+          if (result.paid) {
+            await this.bootstrapActivePlan(tx, event, attempt);
+          }
           await this.persistEventIds(tx, event, attempt);
           await this.applySubscriptionBookkeeping(tx, event, attempt);
         } catch {
@@ -572,9 +669,15 @@ export class StripeWebhookService {
             where: {
               stripeEventId: event.id,
               status: 'processed',
-              ...(lease ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } } : {}),
+              ...(lease
+                ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } }
+                : {}),
             },
-            data: { status: 'needs_review', errorType: 'post_settlement_identity_conflict', nextRetryAt: null },
+            data: {
+              status: 'needs_review',
+              errorType: 'post_settlement_identity_conflict',
+              nextRetryAt: null,
+            },
           });
           if (reviewed.count === 1) {
             queueAudit({
@@ -645,6 +748,244 @@ export class StripeWebhookService {
   }
 
   /**
+   * Lost-webhook recovery for an automatic overage charge whose PaymentIntent
+   * was created and its id persisted, but whose outcome webhook never arrived
+   * (or arrived while the worker ticked). The PaymentIntent is RETRIEVED from
+   * Stripe — never created — and the SAME strict metadata/identity/
+   * provider-fact validation and coverage settlement as the webhook path are
+   * applied, so nothing is faked and no second PaymentIntent can ever be
+   * created (the idempotency/PI identity is unchanged). The recovery lease is
+   * claimed atomically (fail-closed on the retry backoff), and:
+   *   * succeeded → forward-only CAS to succeeded + shared coverage settlement;
+   *   * processing → stays pending with a bounded re-check backoff;
+   *   * canceled → forward-only CAS to failed;
+   *   * requires_action / requires_payment_method / unexpected status →
+   *     needs_review with a safe reason (never a fake success, never a
+   *     forever-pending attempt);
+   *   * transient retrieve errors → stays pending with the backoff; a PI that
+   *     no longer exists at Stripe is a data inconsistency → needs_review.
+   */
+  async reconcileOveragePaymentIntent(
+    attempt: PaymentAttemptRow,
+    workerId: string,
+  ): Promise<OverageReconcileResult> {
+    const stripe = this.stripe;
+    if (!stripe) return 'skipped';
+    const current = await this.prisma.billingPaymentAttempt.findUnique({
+      where: { id: attempt.id },
+      include: { invoice: { include: { billingAccount: true } } },
+    });
+    if (!current || current.status !== 'pending') return 'skipped';
+    if (current.method !== 'stripe' || current.stripeChargeKind !== STRIPE_CHARGE_KIND_OVERAGE) {
+      return 'skipped';
+    }
+    const piId = current.stripePaymentIntentId;
+    if (!piId) return 'skipped'; // no persisted PI — the re-issue path owns this
+    const invoice = current.invoice;
+    if (!invoice || invoice.status !== 'finalized') return 'skipped';
+
+    // Atomic lease claim, fail-closed on the retry backoff (mirrors the
+    // re-issue recovery path).
+    const now = new Date();
+    const claimed = await this.prisma.billingPaymentAttempt.updateMany({
+      where: {
+        id: current.id,
+        status: 'pending',
+        stripePaymentIntentId: piId,
+        AND: [
+          {
+            OR: [
+              { checkoutRetryOwnerId: null },
+              { checkoutRetryLeaseExpiresAt: null },
+              { checkoutRetryLeaseExpiresAt: { lt: now } },
+            ],
+          },
+          {
+            OR: [{ checkoutNextRetryAt: null }, { checkoutNextRetryAt: { lte: now } }],
+          },
+        ],
+      },
+      data: {
+        checkoutRetryOwnerId: workerId,
+        checkoutRetryLeaseExpiresAt: new Date(now.getTime() + 2 * 60 * 1000),
+      },
+    });
+    if (claimed.count !== 1) return 'skipped';
+
+    // Provider retrieve OUTSIDE any DB transaction.
+    let pi: Stripe.PaymentIntent;
+    try {
+      pi = await stripe.paymentIntents.retrieve(piId);
+    } catch (err) {
+      // A PI that no longer exists at Stripe is a data inconsistency: surface
+      // for review instead of retrying forever. Other errors are transient.
+      if (isResourceMissingError(err)) {
+        await this.prisma.billingPaymentAttempt.updateMany({
+          where: { id: current.id, status: 'pending' },
+          data: {
+            status: 'needs_review',
+            reviewReason: 'payment_intent_not_found',
+            checkoutRetryOwnerId: null,
+            checkoutRetryLeaseExpiresAt: null,
+            checkoutNextRetryAt: null,
+          },
+        });
+        return 'needs_review';
+      }
+      await this.prisma.billingPaymentAttempt.updateMany({
+        where: { id: current.id, status: 'pending', checkoutRetryOwnerId: workerId },
+        data: {
+          checkoutNextRetryAt: new Date(Date.now() + OVERAGE_RECONCILE_BACKOFF_MS),
+          checkoutRetryOwnerId: null,
+          checkoutRetryLeaseExpiresAt: null,
+        },
+      });
+      return 'pending';
+    }
+
+    // Strict identity: PI id + metadata + amount/currency + customer, exactly
+    // as strict as the webhook's provider-fact validation for overage PIs.
+    if (!this.isReconciledOverageIdentityValid(current, invoice, pi)) {
+      await this.prisma.billingPaymentAttempt.updateMany({
+        where: { id: current.id, status: 'pending' },
+        data: {
+          status: 'needs_review',
+          reviewReason: 'payment_intent_reconciliation_mismatch',
+          checkoutRetryOwnerId: null,
+          checkoutRetryLeaseExpiresAt: null,
+          checkoutNextRetryAt: null,
+        },
+      });
+      return 'needs_review';
+    }
+
+    const piStatus = typeof pi.status === 'string' ? pi.status : null;
+    if (piStatus === 'succeeded') {
+      // Forward-only transition + shared coverage settlement, identical to the
+      // webhook's success path.
+      const outcome = await this.prisma.$transaction(async (tx) => {
+        const res = await tx.billingPaymentAttempt.updateMany({
+          where: {
+            id: current.id,
+            status: 'pending',
+            stripePaymentIntentId: piId,
+          },
+          data: {
+            status: 'succeeded',
+            succeededAt: new Date(),
+            failedAt: null,
+            failureCode: null,
+            failureMessage: null,
+            checkoutRetryOwnerId: null,
+            checkoutRetryLeaseExpiresAt: null,
+            checkoutNextRetryAt: null,
+          },
+        });
+        if (res.count !== 1) return { kind: 'noop' } as const;
+        const settled = await this.settlementService.settleInvoice(tx, {
+          id: current.id,
+          invoiceId: current.invoiceId,
+          method: 'stripe',
+        });
+        return {
+          kind: settled.paid && settled.paidByThisAttempt ? 'settled' : 'allocated',
+        } as const;
+      });
+      return outcome.kind === 'noop' ? 'skipped' : outcome.kind;
+    }
+
+    if (piStatus === 'processing') {
+      // Legitimate in-flight: keep pending and re-check after the backoff.
+      await this.prisma.billingPaymentAttempt.updateMany({
+        where: { id: current.id, status: 'pending', checkoutRetryOwnerId: workerId },
+        data: {
+          checkoutNextRetryAt: new Date(Date.now() + OVERAGE_RECONCILE_BACKOFF_MS),
+          checkoutRetryOwnerId: null,
+          checkoutRetryLeaseExpiresAt: null,
+        },
+      });
+      return 'pending';
+    }
+
+    if (piStatus === 'canceled') {
+      // Mirrors the webhook's canceled → failed transition.
+      await this.prisma.billingPaymentAttempt.updateMany({
+        where: { id: current.id, status: 'pending', stripePaymentIntentId: piId },
+        data: {
+          status: 'failed',
+          failedAt: new Date(),
+          failureCode: 'canceled',
+          failureMessage: 'Overage PaymentIntent was canceled',
+          checkoutRetryOwnerId: null,
+          checkoutRetryLeaseExpiresAt: null,
+          checkoutNextRetryAt: null,
+        },
+      });
+      return 'failed';
+    }
+
+    // requires_action / requires_payment_method / unexpected status: SCA or an
+    // operator decision is needed — never fake success, never pending forever.
+    const safeReason =
+      piStatus === 'requires_action'
+        ? 'payment_intent_requires_action'
+        : piStatus === 'requires_payment_method'
+          ? 'payment_intent_requires_payment_method'
+          : 'payment_intent_unexpected_status';
+    await this.prisma.billingPaymentAttempt.updateMany({
+      where: { id: current.id, status: 'pending' },
+      data: {
+        status: 'needs_review',
+        reviewReason: safeReason,
+        checkoutRetryOwnerId: null,
+        checkoutRetryLeaseExpiresAt: null,
+        checkoutNextRetryAt: null,
+      },
+    });
+    return 'needs_review';
+  }
+
+  /**
+   * Strict identity fence for a reconciled overage PaymentIntent — mirrors the
+   * webhook's overage provider-fact checks: the PI id, its metadata
+   * (attempt/invoice/chargeKind), the exact amount/currency, and the customer
+   * ownership. A PI that references a different local attempt/invoice/charge
+   * kind or a different customer is never settled.
+   */
+  private isReconciledOverageIdentityValid(
+    attempt: PaymentAttemptRow,
+    invoice: { billingAccount?: { stripeCustomerId: string | null } | null } | null,
+    pi: Stripe.PaymentIntent,
+  ): boolean {
+    if (pi.id !== attempt.stripePaymentIntentId) return false;
+    const metadata = pi.metadata as Record<string, unknown> | null | undefined;
+    if (!metadata) return false;
+    if (metadata.attemptId !== attempt.id) return false;
+    if (metadata.invoiceId !== attempt.invoiceId) return false;
+    if (metadata.chargeKind !== STRIPE_CHARGE_KIND_OVERAGE) return false;
+    if (typeof pi.amount !== 'number' || !Number.isSafeInteger(pi.amount) || pi.amount <= 0) {
+      return false;
+    }
+    if (BigInt(pi.amount) * MICROS_PER_CENT !== attempt.amountMicros) return false;
+    if (
+      typeof pi.currency !== 'string' ||
+      pi.currency.toLowerCase() !== attempt.currency.toLowerCase()
+    ) {
+      return false;
+    }
+    const accountCustomerId = invoice?.billingAccount?.stripeCustomerId ?? null;
+    if (!accountCustomerId) return false;
+    const piCustomer =
+      typeof pi.customer === 'string'
+        ? pi.customer
+        : typeof pi.customer === 'object' && pi.customer !== null
+          ? pi.customer.id
+          : null;
+    if (piCustomer !== accountCustomerId) return false;
+    return true;
+  }
+
+  /**
    * Sanitized audit for material Stripe transitions. Never includes Stripe
    * payloads, payment data, RPC URLs, or secrets — only safe identifiers.
    * Audit/notification/SIEM failures are isolated and never affect the webhook
@@ -691,7 +1032,12 @@ export class StripeWebhookService {
   ): Promise<void> {
     const existing = await tx.stripeWebhookEvent.findUnique({
       where: { stripeEventId: event.id },
-      select: { retryCount: true, nextRetryAt: true, retryOwnerId: true, retryLeaseExpiresAt: true },
+      select: {
+        retryCount: true,
+        nextRetryAt: true,
+        retryOwnerId: true,
+        retryLeaseExpiresAt: true,
+      },
     });
     const retryCount = (existing?.retryCount ?? 0) + 1;
     const exhausted = retryCount > STRIPE_DEFERRED_MAX_RETRIES;
@@ -771,10 +1117,11 @@ export class StripeWebhookService {
     const account = await this.resolveAccountForEvent(tx, object);
     if (!account) return 'unmatched'; // caller defers/ignores
 
-    const eventSubscriptionId =
-      event.type.startsWith('customer.subscription')
-        ? (typeof raw.id === 'string' ? raw.id : null)
-        : readProviderId(raw.subscription, 'subscription');
+    const eventSubscriptionId = event.type.startsWith('customer.subscription')
+      ? typeof raw.id === 'string'
+        ? raw.id
+        : null
+      : readProviderId(raw.subscription, 'subscription');
     const eventCustomerId = readProviderId(raw.customer, 'customer');
 
     // Exact identity guards: never replace an existing binding with a
@@ -801,7 +1148,8 @@ export class StripeWebhookService {
       return 'conflict';
     }
 
-    const eventCreated = Number.isSafeInteger(event.created) && event.created > 0 ? event.created : null;
+    const eventCreated =
+      Number.isSafeInteger(event.created) && event.created > 0 ? event.created : null;
     if (eventCreated === null) return 'conflict';
     const current = account.stripeSubscriptionUpdatedAt
       ? Math.floor(account.stripeSubscriptionUpdatedAt.getTime() / 1000)
@@ -809,7 +1157,13 @@ export class StripeWebhookService {
     // Stripe timestamps have second precision. Use the event id as the
     // deterministic tie-breaker instead of arrival/server time.
     if (current !== null && eventCreated < current) return 'ok';
-    if (current !== null && eventCreated === current && account.stripeSubscriptionEventId && event.id <= account.stripeSubscriptionEventId) return 'ok';
+    if (
+      current !== null &&
+      eventCreated === current &&
+      account.stripeSubscriptionEventId &&
+      event.id <= account.stripeSubscriptionEventId
+    )
+      return 'ok';
 
     const data: Prisma.BillingAccountUncheckedUpdateInput = {
       stripeSubscriptionUpdatedAt: new Date(eventCreated * 1000),
@@ -819,8 +1173,7 @@ export class StripeWebhookService {
 
     if (event.type === 'customer.subscription.created') {
       data.stripeSubscriptionId = raw.id as string;
-      data.stripeSubscriptionStatus =
-        typeof raw.status === 'string' ? raw.status : 'active';
+      data.stripeSubscriptionStatus = typeof raw.status === 'string' ? raw.status : 'active';
       if (typeof raw.current_period_start === 'number') {
         data.stripeSubscriptionPeriodStart = new Date(raw.current_period_start * 1000);
       }
@@ -829,8 +1182,7 @@ export class StripeWebhookService {
       }
     } else if (event.type === 'customer.subscription.updated') {
       data.stripeSubscriptionId = raw.id as string;
-      data.stripeSubscriptionStatus =
-        typeof raw.status === 'string' ? raw.status : 'active';
+      data.stripeSubscriptionStatus = typeof raw.status === 'string' ? raw.status : 'active';
       if (typeof raw.current_period_start === 'number') {
         data.stripeSubscriptionPeriodStart = new Date(raw.current_period_start * 1000);
       }
@@ -866,7 +1218,12 @@ export class StripeWebhookService {
         OR: [
           { stripeSubscriptionUpdatedAt: null },
           { stripeSubscriptionUpdatedAt: { lt: eventTime } },
-          { AND: [{ stripeSubscriptionUpdatedAt: eventTime }, { stripeSubscriptionEventId: { lt: event.id } }] },
+          {
+            AND: [
+              { stripeSubscriptionUpdatedAt: eventTime },
+              { stripeSubscriptionEventId: { lt: event.id } },
+            ],
+          },
         ],
       },
       data,
@@ -911,10 +1268,14 @@ export class StripeWebhookService {
 
     if (subscription) {
       const updated = await tx.billingPaymentAttempt.updateMany({
-        where: { id: attempt.id, OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscription }] },
+        where: {
+          id: attempt.id,
+          OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscription }],
+        },
         data: { stripeSubscriptionId: subscription },
       });
-      if (updated.count !== 1) throw new ConflictException('Stripe subscription bookkeeping CAS lost');
+      if (updated.count !== 1)
+        throw new ConflictException('Stripe subscription bookkeeping CAS lost');
     }
   }
 
@@ -943,11 +1304,19 @@ export class StripeWebhookService {
     const metadata = extractSafeMetadata(object);
     const metadataAccountId = readMetadataString(object, 'billingAccountId');
 
-    const ownsEvent = (account: Prisma.BillingAccountGetPayload<Record<string, never>>): boolean => {
+    const ownsEvent = (
+      account: Prisma.BillingAccountGetPayload<Record<string, never>>,
+    ): boolean => {
       if (metadata.userId && account.userId !== metadata.userId) return false;
       if (metadataAccountId && account.id !== metadataAccountId) return false;
-      if (customerId && account.stripeCustomerId && customerId !== account.stripeCustomerId) return false;
-      if (subscriptionId && account.stripeSubscriptionId && subscriptionId !== account.stripeSubscriptionId) return false;
+      if (customerId && account.stripeCustomerId && customerId !== account.stripeCustomerId)
+        return false;
+      if (
+        subscriptionId &&
+        account.stripeSubscriptionId &&
+        subscriptionId !== account.stripeSubscriptionId
+      )
+        return false;
       // A null local subscription is a valid bootstrap state. The proven
       // customer/subscription pair is claimed later with an atomic null-or-same
       // CAS; only a different existing identity is rejected above.
@@ -966,7 +1335,9 @@ export class StripeWebhookService {
       // The subscription hint was not owned by an account. A customer lookup
       // is not an authority that may bypass this conflict.
       if (customerId) {
-        const byCustomer = await tx.billingAccount.findFirst({ where: { stripeCustomerId: customerId } });
+        const byCustomer = await tx.billingAccount.findFirst({
+          where: { stripeCustomerId: customerId },
+        });
         return byCustomer && ownsEvent(byCustomer) ? byCustomer : null;
       }
     }
@@ -999,13 +1370,24 @@ export class StripeWebhookService {
     // and an already-owned local fixed-fee attempt/invoice.
     if (subscriptionId && customerId && metadata.attemptId) {
       const attempt = await tx.billingPaymentAttempt.findFirst({
-        where: { id: metadata.attemptId, method: 'stripe', stripeChargeKind: STRIPE_CHARGE_KIND_FIXED_FEE },
+        where: {
+          id: metadata.attemptId,
+          method: 'stripe',
+          stripeChargeKind: STRIPE_CHARGE_KIND_FIXED_FEE,
+        },
       });
       if (attempt) {
         const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
         if (invoice?.planVersionId) {
-          const byCustomer = await tx.billingAccount.findFirst({ where: { id: invoice.billingAccountId, stripeCustomerId: customerId } });
-          if (byCustomer && attempt.stripeSubscriptionId === null && invoice.currency === 'USD' && invoice.monthlyFeeMicros === attempt.amountMicros) {
+          const byCustomer = await tx.billingAccount.findFirst({
+            where: { id: invoice.billingAccountId, stripeCustomerId: customerId },
+          });
+          if (
+            byCustomer &&
+            attempt.stripeSubscriptionId === null &&
+            invoice.currency === 'USD' &&
+            invoice.monthlyFeeMicros === attempt.amountMicros
+          ) {
             return byCustomer;
           }
         }
@@ -1026,51 +1408,102 @@ export class StripeWebhookService {
     const customer = readProviderId(raw.customer, 'customer');
     if (!customer) return false;
     const subscription = readProviderId(raw.subscription, 'subscription');
-    if (!customer || !subscription || raw.currency !== 'usd' && raw.currency !== 'USD') return false;
+    if (!customer || !subscription || (raw.currency !== 'usd' && raw.currency !== 'USD'))
+      return false;
     if (attempt.stripeSubscriptionId !== subscription) return false;
-    const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId }, include: { lines: true } });
+    const invoice = await tx.billingInvoice.findUnique({
+      where: { id: attempt.invoiceId },
+      include: { lines: true },
+    });
     if (!invoice || invoice.currency !== 'USD' || invoice.planVersionId === null) return false;
-    if (typeof invoice.snapshotHash !== 'string' || !/^[0-9a-f]{64}$/i.test(invoice.snapshotHash)) return false;
+    if (typeof invoice.snapshotHash !== 'string' || !/^[0-9a-f]{64}$/i.test(invoice.snapshotHash))
+      return false;
     const account = await tx.billingAccount.findUnique({ where: { id: invoice.billingAccountId } });
-    if (!account || account.stripeCustomerId !== customer || account.stripeSubscriptionId !== subscription) return false;
-    const period = event.type.startsWith('invoice') ? this.invoicePeriod(raw) : (raw.period ?? raw.lines?.data?.[0]?.period);
+    if (
+      !account ||
+      account.stripeCustomerId !== customer ||
+      account.stripeSubscriptionId !== subscription
+    )
+      return false;
+    const period = event.type.startsWith('invoice')
+      ? this.invoicePeriod(raw)
+      : (raw.period ?? raw.lines?.data?.[0]?.period);
     if (!period || typeof period.start !== 'number' || typeof period.end !== 'number') return false;
     const start = this.utcMonthStart(new Date(period.start * 1000));
     const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
-    if (period.start * 1000 !== start.getTime() || period.end * 1000 !== end.getTime()) return false;
-    if (invoice.periodStart.getTime() !== start.getTime() || invoice.periodEnd.getTime() !== end.getTime()) return false;
+    if (period.start * 1000 !== start.getTime() || period.end * 1000 !== end.getTime())
+      return false;
+    if (
+      invoice.periodStart.getTime() !== start.getTime() ||
+      invoice.periodEnd.getTime() !== end.getTime()
+    )
+      return false;
     if (invoice.status !== 'open' && invoice.status !== 'finalized') return false;
-    if (invoice.totalMicros !== attempt.amountMicros || invoice.monthlyFeeMicros !== attempt.amountMicros) return false;
+    if (
+      invoice.totalMicros !== attempt.amountMicros ||
+      invoice.monthlyFeeMicros !== attempt.amountMicros
+    )
+      return false;
     if (
       invoice.grossOutboundMicros !== 0n ||
       invoice.billableOutboundMicros !== 0n ||
       invoice.outboundOverageMicros !== 0n ||
       invoice.apiOverageMicros !== 0n ||
       invoice.walletOverageMicros !== 0n
-    ) return false;
+    )
+      return false;
     const plan = await tx.billingPlanVersion.findUnique({ where: { id: invoice.planVersionId } });
     if (!plan || plan.monthlyFeeMicros !== attempt.amountMicros) return false;
     const snapshot = invoice.snapshotJson as {
-      version?: unknown; planVersionId?: unknown; fixedFeeMicros?: unknown; period?: unknown;
-      renewal?: unknown; plan?: { code?: unknown; name?: unknown; monthlyFeeMicros?: unknown };
+      version?: unknown;
+      planVersionId?: unknown;
+      fixedFeeMicros?: unknown;
+      period?: unknown;
+      renewal?: unknown;
+      plan?: { code?: unknown; name?: unknown; monthlyFeeMicros?: unknown };
       amounts?: { monthlyFeeMicros?: unknown; totalMicros?: unknown };
     } | null;
     if (!snapshot || snapshot.planVersionId !== invoice.planVersionId) return false;
     const datePeriod = start.toISOString().slice(0, 10);
     const monthPeriod = start.toISOString().slice(0, 7);
-    const syntheticRenewal = snapshot.renewal === true &&
-      snapshot.fixedFeeMicros === attempt.amountMicros.toString() && snapshot.period === datePeriod;
-    const canonicalWorkerSnapshot = snapshot.version === 1 && snapshot.period === monthPeriod &&
-      snapshot.plan?.code === plan.code && snapshot.plan?.name === plan.name &&
+    const syntheticRenewal =
+      snapshot.renewal === true &&
+      snapshot.fixedFeeMicros === attempt.amountMicros.toString() &&
+      snapshot.period === datePeriod;
+    const canonicalWorkerSnapshot =
+      snapshot.version === 1 &&
+      snapshot.period === monthPeriod &&
+      snapshot.plan?.code === plan.code &&
+      snapshot.plan?.name === plan.name &&
       snapshot.plan?.monthlyFeeMicros === microsToDecimal(plan.monthlyFeeMicros) &&
       snapshot.amounts?.monthlyFeeMicros === microsToDecimal(attempt.amountMicros) &&
       snapshot.amounts?.totalMicros === microsToDecimal(attempt.amountMicros);
     if (!syntheticRenewal && !canonicalWorkerSnapshot) return false;
-    const recomputedSnapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
+    const recomputedSnapshotHash = createHash('sha256')
+      .update(canonicalBillingJson(snapshot))
+      .digest('hex');
     if (recomputedSnapshotHash !== invoice.snapshotHash) return false;
-    if (invoice.paidAt !== null || invoice.settlementAttemptId !== null) return false;
-    const lines = (invoice as typeof invoice & { lines?: Array<{ lineType: string; amountMicros: bigint }> }).lines;
-    if (!Array.isArray(lines) || lines.length !== 1 || lines[0].lineType !== 'monthly_fee' || lines[0].amountMicros !== attempt.amountMicros || (lines[0] as any).quantity !== 1n) return false;
+    if (invoice.paidAt !== null || invoice.settlementAttemptId !== null) {
+      // Companion replay: a `invoice.paid` event can legitimately arrive AFTER
+      // the PaymentIntent already settled this invoice (PI-first ordering). It
+      // is a no-op only when EVERY strict identity/amount/period/plan/snapshot/
+      // line fact above matched AND this same fixed-fee attempt is the
+      // settlement winner — never for invoice.payment_failed, never for a
+      // different winner, and the paid state is never regressed.
+      if (event.type === 'invoice.paid' && invoice.settlementAttemptId === attempt.id) return true;
+      return false;
+    }
+    const lines = (
+      invoice as typeof invoice & { lines?: Array<{ lineType: string; amountMicros: bigint }> }
+    ).lines;
+    if (
+      !Array.isArray(lines) ||
+      lines.length !== 1 ||
+      lines[0].lineType !== 'monthly_fee' ||
+      lines[0].amountMicros !== attempt.amountMicros ||
+      (lines[0] as any).quantity !== 1n
+    )
+      return false;
     return true;
   }
 
@@ -1119,13 +1552,15 @@ export class StripeWebhookService {
 
     const subscriptionId = readProviderId(rawObject.subscription, 'subscription');
     const customerId = readProviderId(rawObject.customer, 'customer');
-    const currency = typeof rawObject.currency === 'string' ? rawObject.currency.toUpperCase() : null;
+    const currency =
+      typeof rawObject.currency === 'string' ? rawObject.currency.toUpperCase() : null;
     if (!subscriptionId || !customerId || currency !== 'USD') return null;
 
     // Ownership: the event's customer/subscription must match the account's
     // Stripe mirror when the mirror exists; an unproven mirror is deferred.
     if (account.stripeCustomerId && customerId !== account.stripeCustomerId) return null;
-    if (account.stripeSubscriptionId && subscriptionId !== account.stripeSubscriptionId) return null;
+    if (account.stripeSubscriptionId && subscriptionId !== account.stripeSubscriptionId)
+      return null;
     if (!account.stripeSubscriptionId) return null;
     if (account.stripeSubscriptionStatus === 'canceled') return null;
     if (!account.activeSubscriptionPlanVersionId) return null;
@@ -1147,7 +1582,9 @@ export class StripeWebhookService {
     }
     const periodStartMs = period.start * 1000;
     const monthStart = this.utcMonthStart(new Date(periodStartMs));
-    const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 1));
+    const monthEnd = new Date(
+      Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 1),
+    );
     // Exact UTC month boundary: the Stripe period must align 1:1 with the
     // local UTC month it maps to, never a partial/slopped interval.
     if (periodStartMs !== monthStart.getTime() || period.end * 1000 !== monthEnd.getTime()) {
@@ -1186,7 +1623,10 @@ export class StripeWebhookService {
       if (invoice.stripeInvoiceId !== null && invoice.stripeInvoiceId !== stripeInvoiceId) {
         return null;
       }
-      if (!(await this.validateLocalRenewalInvoice(tx, invoice, plan, monthStart, monthEnd, fixedFee))) return null;
+      if (
+        !(await this.validateLocalRenewalInvoice(tx, invoice, plan, monthStart, monthEnd, fixedFee))
+      )
+        return null;
       // Bind the Stripe invoice id to this local invoice ATOMICALLY when absent
       // (CAS on `stripeInvoiceId = null`), so repeated/retried events reuse the
       // SAME local invoice and no two invoices can ever carry the same Stripe
@@ -1267,7 +1707,8 @@ export class StripeWebhookService {
           !winner ||
           (winner.status !== 'open' && winner.status !== 'finalized') ||
           winner.totalMicros !== fixedFee
-        ) return null;
+        )
+          return null;
         // The winner must also be bound to this exact Stripe invoice id (or be
         // bound atomically now) before an attempt is attached to it.
         if (winner.stripeInvoiceId !== null && winner.stripeInvoiceId !== stripeInvoiceId) {
@@ -1327,24 +1768,57 @@ export class StripeWebhookService {
     end: Date,
     fixedFee: bigint,
   ): Promise<boolean> {
-    if (invoice.currency !== 'USD' || invoice.periodStart.getTime() !== start.getTime() ||
-      invoice.periodEnd.getTime() !== end.getTime() || invoice.totalMicros !== fixedFee ||
-      invoice.monthlyFeeMicros !== fixedFee || invoice.paidAt !== null || invoice.settlementAttemptId !== null ||
-      !['open', 'finalized'].includes(invoice.status) || invoice.planVersionId !== plan.id) return false;
-    if (invoice.grossOutboundMicros !== 0n || invoice.billableOutboundMicros !== 0n ||
-      invoice.outboundOverageMicros !== 0n || invoice.apiOverageMicros !== 0n || invoice.walletOverageMicros !== 0n) return false;
+    if (
+      invoice.currency !== 'USD' ||
+      invoice.periodStart.getTime() !== start.getTime() ||
+      invoice.periodEnd.getTime() !== end.getTime() ||
+      invoice.totalMicros !== fixedFee ||
+      invoice.monthlyFeeMicros !== fixedFee ||
+      invoice.paidAt !== null ||
+      invoice.settlementAttemptId !== null ||
+      !['open', 'finalized'].includes(invoice.status) ||
+      invoice.planVersionId !== plan.id
+    )
+      return false;
+    if (
+      invoice.grossOutboundMicros !== 0n ||
+      invoice.billableOutboundMicros !== 0n ||
+      invoice.outboundOverageMicros !== 0n ||
+      invoice.apiOverageMicros !== 0n ||
+      invoice.walletOverageMicros !== 0n
+    )
+      return false;
     const snapshot = invoice.snapshotJson as any;
-    if (!snapshot || typeof invoice.snapshotHash !== 'string' ||
-      createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex') !== invoice.snapshotHash) return false;
-    const synthetic = snapshot.renewal === true && snapshot.planVersionId === plan.id &&
-      snapshot.fixedFeeMicros === fixedFee.toString() && snapshot.period === start.toISOString().slice(0, 10);
-    const canonical = snapshot.version === 1 && snapshot.planVersionId === plan.id &&
-      snapshot.period === start.toISOString().slice(0, 7) && snapshot.plan?.code === plan.code &&
-      snapshot.plan?.name === plan.name && snapshot.plan?.monthlyFeeMicros === microsToDecimal(fixedFee) &&
-      snapshot.amounts?.monthlyFeeMicros === microsToDecimal(fixedFee) && snapshot.amounts?.totalMicros === microsToDecimal(fixedFee);
+    if (
+      !snapshot ||
+      typeof invoice.snapshotHash !== 'string' ||
+      createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex') !==
+        invoice.snapshotHash
+    )
+      return false;
+    const synthetic =
+      snapshot.renewal === true &&
+      snapshot.planVersionId === plan.id &&
+      snapshot.fixedFeeMicros === fixedFee.toString() &&
+      snapshot.period === start.toISOString().slice(0, 10);
+    const canonical =
+      snapshot.version === 1 &&
+      snapshot.planVersionId === plan.id &&
+      snapshot.period === start.toISOString().slice(0, 7) &&
+      snapshot.plan?.code === plan.code &&
+      snapshot.plan?.name === plan.name &&
+      snapshot.plan?.monthlyFeeMicros === microsToDecimal(fixedFee) &&
+      snapshot.amounts?.monthlyFeeMicros === microsToDecimal(fixedFee) &&
+      snapshot.amounts?.totalMicros === microsToDecimal(fixedFee);
     const lines = invoice.lines;
-    return (synthetic || canonical) && Array.isArray(lines) && lines.length === 1 &&
-      lines[0].lineType === 'monthly_fee' && lines[0].quantity === 1n && lines[0].amountMicros === fixedFee;
+    return (
+      (synthetic || canonical) &&
+      Array.isArray(lines) &&
+      lines.length === 1 &&
+      lines[0].lineType === 'monthly_fee' &&
+      lines[0].quantity === 1n &&
+      lines[0].amountMicros === fixedFee
+    );
   }
 
   private async promoteRenewalInvoice(
@@ -1358,19 +1832,38 @@ export class StripeWebhookService {
     if (event.type === 'invoice.finalized') return;
     const raw = event.data.object as StripeObjectLike;
     const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
-    if (!invoice || invoice.currency !== 'USD' || invoice.totalMicros !== attempt.amountMicros ||
-      invoice.stripeInvoiceId !== (typeof raw.id === 'string' ? raw.id : null) || invoice.paidAt !== null || invoice.settlementAttemptId !== null) {
+    if (
+      !invoice ||
+      invoice.currency !== 'USD' ||
+      invoice.totalMicros !== attempt.amountMicros ||
+      invoice.stripeInvoiceId !== (typeof raw.id === 'string' ? raw.id : null) ||
+      invoice.paidAt !== null ||
+      invoice.settlementAttemptId !== null
+    ) {
       throw new ConflictException('Renewal finalization proof failed');
     }
     if (invoice.status === 'finalized') return;
     if (invoice.status !== 'open') throw new ConflictException('Renewal invoice is not promotable');
     const promoted = await tx.billingInvoice.updateMany({
-      where: { id: invoice.id, status: 'open', stripeInvoiceId: typeof raw.id === 'string' ? raw.id : null, totalMicros: attempt.amountMicros, paidAt: null, settlementAttemptId: null },
+      where: {
+        id: invoice.id,
+        status: 'open',
+        stripeInvoiceId: typeof raw.id === 'string' ? raw.id : null,
+        totalMicros: attempt.amountMicros,
+        paidAt: null,
+        settlementAttemptId: null,
+      },
       data: { status: 'finalized', finalizedAt: new Date() },
     });
     if (promoted.count !== 1) {
       const current = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
-      if (!current || current.status !== 'finalized' || current.stripeInvoiceId !== raw.id || current.paidAt !== null || current.settlementAttemptId !== null) {
+      if (
+        !current ||
+        current.status !== 'finalized' ||
+        current.stripeInvoiceId !== raw.id ||
+        current.paidAt !== null ||
+        current.settlementAttemptId !== null
+      ) {
         throw new ConflictException('Renewal finalization ownership lost');
       }
     }
@@ -1383,41 +1876,82 @@ export class StripeWebhookService {
   ): Promise<void> {
     if (attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FIXED_FEE) return;
     const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
-    if (!invoice || invoice.status !== 'finalized' && invoice.status !== 'open') throw new ConflictException('Invalid fixed-fee bootstrap invoice');
-    if (invoice.currency !== 'USD' || invoice.totalMicros !== attempt.amountMicros) throw new ConflictException('Fixed-fee bootstrap amount/currency mismatch');
-    if (invoice.grossOutboundMicros !== 0n || invoice.billableOutboundMicros !== 0n || invoice.outboundOverageMicros !== 0n || invoice.apiOverageMicros !== 0n || invoice.walletOverageMicros !== 0n) throw new ConflictException('Dynamic invoice cannot bootstrap recurring plan');
-    if (invoice.planVersionId === null) throw new ConflictException('Fixed-fee bootstrap plan is missing');
+    if (!invoice || (invoice.status !== 'finalized' && invoice.status !== 'open'))
+      throw new ConflictException('Invalid fixed-fee bootstrap invoice');
+    if (invoice.currency !== 'USD' || invoice.totalMicros !== attempt.amountMicros)
+      throw new ConflictException('Fixed-fee bootstrap amount/currency mismatch');
+    if (
+      invoice.grossOutboundMicros !== 0n ||
+      invoice.billableOutboundMicros !== 0n ||
+      invoice.outboundOverageMicros !== 0n ||
+      invoice.apiOverageMicros !== 0n ||
+      invoice.walletOverageMicros !== 0n
+    )
+      throw new ConflictException('Dynamic invoice cannot bootstrap recurring plan');
+    if (invoice.planVersionId === null)
+      throw new ConflictException('Fixed-fee bootstrap plan is missing');
     const snapshot = invoice.snapshotJson as { planVersionId?: unknown; renewal?: unknown } | null;
-    if (!snapshot || snapshot.planVersionId !== invoice.planVersionId) throw new ConflictException('Fixed-fee bootstrap snapshot mismatch');
-    if (typeof invoice.snapshotHash !== 'string' || createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex') !== invoice.snapshotHash) throw new ConflictException('Fixed-fee bootstrap snapshot hash mismatch');
+    if (!snapshot || snapshot.planVersionId !== invoice.planVersionId)
+      throw new ConflictException('Fixed-fee bootstrap snapshot mismatch');
+    if (
+      typeof invoice.snapshotHash !== 'string' ||
+      createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex') !==
+        invoice.snapshotHash
+    )
+      throw new ConflictException('Fixed-fee bootstrap snapshot hash mismatch');
     const plan = await tx.billingPlanVersion.findUnique({ where: { id: invoice.planVersionId } });
-    if (!plan || plan.monthlyFeeMicros === null || plan.monthlyFeeMicros !== invoice.totalMicros) throw new ConflictException('Fixed-fee bootstrap plan mismatch');
+    if (!plan || plan.monthlyFeeMicros === null || plan.monthlyFeeMicros !== invoice.totalMicros)
+      throw new ConflictException('Fixed-fee bootstrap plan mismatch');
     const account = await tx.billingAccount.findUnique({ where: { id: invoice.billingAccountId } });
     if (!account) throw new ConflictException('Fixed-fee bootstrap account missing');
     const raw = event.data.object as StripeObjectLike;
     const customer = readProviderId(raw.customer, 'customer');
     const subscription = readProviderId(raw.subscription, 'subscription');
-    if (!customer || !account.stripeCustomerId || customer !== account.stripeCustomerId) throw new ConflictException('Fixed-fee bootstrap customer mismatch');
-    if (subscription && account.stripeSubscriptionId && subscription !== account.stripeSubscriptionId) throw new ConflictException('Fixed-fee bootstrap subscription mismatch');
+    if (!customer || !account.stripeCustomerId || customer !== account.stripeCustomerId)
+      throw new ConflictException('Fixed-fee bootstrap customer mismatch');
+    if (
+      subscription &&
+      account.stripeSubscriptionId &&
+      subscription !== account.stripeSubscriptionId
+    )
+      throw new ConflictException('Fixed-fee bootstrap subscription mismatch');
     const eventTime = new Date(event.created * 1000);
-    if (!Number.isFinite(eventTime.getTime())) throw new ConflictException('Invalid Stripe event timestamp');
+    if (!Number.isFinite(eventTime.getTime()))
+      throw new ConflictException('Invalid Stripe event timestamp');
     const guarded = await tx.billingAccount.updateMany({
       where: {
         id: account.id,
         ...(customer ? { stripeCustomerId: customer } : {}),
         ...(subscription ? { stripeSubscriptionId: subscription } : {}),
         AND: [
-          { OR: [{ activeSubscriptionPlanVersionId: null }, { activeSubscriptionPlanVersionId: invoice.planVersionId }] },
-          { OR: [
-            { stripeSubscriptionUpdatedAt: null },
-            { stripeSubscriptionUpdatedAt: { lt: eventTime } },
-            { AND: [{ stripeSubscriptionUpdatedAt: eventTime }, { stripeSubscriptionEventId: { lt: event.id } }] },
-          ] },
+          {
+            OR: [
+              { activeSubscriptionPlanVersionId: null },
+              { activeSubscriptionPlanVersionId: invoice.planVersionId },
+            ],
+          },
+          {
+            OR: [
+              { stripeSubscriptionUpdatedAt: null },
+              { stripeSubscriptionUpdatedAt: { lt: eventTime } },
+              {
+                AND: [
+                  { stripeSubscriptionUpdatedAt: eventTime },
+                  { stripeSubscriptionEventId: { lt: event.id } },
+                ],
+              },
+            ],
+          },
         ],
       },
-      data: { activeSubscriptionPlanVersionId: invoice.planVersionId, stripeSubscriptionUpdatedAt: eventTime, stripeSubscriptionEventId: event.id },
+      data: {
+        activeSubscriptionPlanVersionId: invoice.planVersionId,
+        stripeSubscriptionUpdatedAt: eventTime,
+        stripeSubscriptionEventId: event.id,
+      },
     });
-    if (guarded.count !== 1) throw new ConflictException('Fixed-fee bootstrap ownership/order lost');
+    if (guarded.count !== 1)
+      throw new ConflictException('Fixed-fee bootstrap ownership/order lost');
   }
 
   // ── Provider-fact validation ───────────────────────────────────────────────
@@ -1428,41 +1962,72 @@ export class StripeWebhookService {
   ): { ok: true } | { ok: false; reason: string } {
     const raw = event.data.object as StripeObjectLike;
     if (!raw || typeof raw.id !== 'string') return { ok: false, reason: 'provider_object_missing' };
-    if (!readProviderId(raw.customer, 'customer')) return { ok: false, reason: 'provider_customer_missing' };
+    if (!readProviderId(raw.customer, 'customer'))
+      return { ok: false, reason: 'provider_customer_missing' };
     const eventSubscription = event.type.startsWith('customer.subscription')
       ? raw.id
       : raw.subscription;
-    if (!readProviderId(eventSubscription, 'subscription')) return { ok: false, reason: 'provider_subscription_missing' };
-    if (!event.type.startsWith('customer.subscription') &&
-      (typeof raw.currency !== 'string' || raw.currency.toLowerCase() !== 'usd')) {
+    if (!readProviderId(eventSubscription, 'subscription'))
+      return { ok: false, reason: 'provider_subscription_missing' };
+    if (
+      !event.type.startsWith('customer.subscription') &&
+      (typeof raw.currency !== 'string' || raw.currency.toLowerCase() !== 'usd')
+    ) {
       return { ok: false, reason: 'provider_currency_mismatch' };
     }
     if (event.type.startsWith('customer.subscription')) {
       const status = typeof raw.status === 'string' ? raw.status : null;
       const valid = event.type.endsWith('.deleted')
         ? status === 'canceled'
-        : status !== null && ['active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete', 'incomplete_expired'].includes(status);
+        : status !== null &&
+          [
+            'active',
+            'trialing',
+            'past_due',
+            'unpaid',
+            'paused',
+            'incomplete',
+            'incomplete_expired',
+          ].includes(status);
       if (!valid) return { ok: false, reason: 'provider_status_mismatch' };
-      if (!event.type.endsWith('.deleted') &&
-        (typeof raw.current_period_start !== 'number' || typeof raw.current_period_end !== 'number' ||
-          !Number.isSafeInteger(raw.current_period_start) || !Number.isSafeInteger(raw.current_period_end) ||
-          raw.current_period_start >= raw.current_period_end)) {
+      if (
+        !event.type.endsWith('.deleted') &&
+        (typeof raw.current_period_start !== 'number' ||
+          typeof raw.current_period_end !== 'number' ||
+          !Number.isSafeInteger(raw.current_period_start) ||
+          !Number.isSafeInteger(raw.current_period_end) ||
+          raw.current_period_start >= raw.current_period_end)
+      ) {
         return { ok: false, reason: 'provider_period_missing' };
       }
       return { ok: true };
     }
     const status = typeof raw.status === 'string' ? raw.status : null;
-    const allowed = event.type === 'invoice.created' ? ['draft', 'open', 'finalized'] :
-      event.type === 'invoice.finalized' ? ['open', 'finalized'] :
-        event.type === 'invoice.paid' ? ['paid'] : ['open', 'uncollectible'];
-    if (!status || !allowed.includes(status)) return { ok: false, reason: 'provider_status_mismatch' };
+    const allowed =
+      event.type === 'invoice.created'
+        ? ['draft', 'open', 'finalized']
+        : event.type === 'invoice.finalized'
+          ? ['open', 'finalized']
+          : event.type === 'invoice.paid'
+            ? ['paid']
+            : ['open', 'uncollectible'];
+    if (!status || !allowed.includes(status))
+      return { ok: false, reason: 'provider_status_mismatch' };
     const amount = this.invoiceAmount(raw, event.type);
     if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount < 0) {
       return { ok: false, reason: 'provider_amount_missing' };
     }
-    const period = event.type.startsWith('invoice') ? this.invoicePeriod(raw) : (raw.period ?? raw.lines?.data?.[0]?.period);
-    if (!period || typeof period.start !== 'number' || typeof period.end !== 'number' ||
-      !Number.isSafeInteger(period.start) || !Number.isSafeInteger(period.end) || period.start >= period.end) {
+    const period = event.type.startsWith('invoice')
+      ? this.invoicePeriod(raw)
+      : (raw.period ?? raw.lines?.data?.[0]?.period);
+    if (
+      !period ||
+      typeof period.start !== 'number' ||
+      typeof period.end !== 'number' ||
+      !Number.isSafeInteger(period.start) ||
+      !Number.isSafeInteger(period.end) ||
+      period.start >= period.end
+    ) {
       return { ok: false, reason: 'provider_period_missing' };
     }
     return { ok: true };
@@ -1497,15 +2062,35 @@ export class StripeWebhookService {
       const customer = readProviderId(rawObject.customer, 'customer');
       const subscription = readProviderId(rawObject.id, 'subscription');
       const status = typeof rawObject.status === 'string' ? rawObject.status : null;
-      const validStatus = event.type.endsWith('.deleted') ? status === 'canceled' :
-        status !== null && ['active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete', 'incomplete_expired'].includes(status);
-      if (!customer || !subscription || !validStatus || !Number.isSafeInteger(event.created) || event.created <= 0) {
+      const validStatus = event.type.endsWith('.deleted')
+        ? status === 'canceled'
+        : status !== null &&
+          [
+            'active',
+            'trialing',
+            'past_due',
+            'unpaid',
+            'paused',
+            'incomplete',
+            'incomplete_expired',
+          ].includes(status);
+      if (
+        !customer ||
+        !subscription ||
+        !validStatus ||
+        !Number.isSafeInteger(event.created) ||
+        event.created <= 0
+      ) {
         return { ok: false, reason: 'provider_lifecycle_identity_invalid' };
       }
-      if (!event.type.endsWith('.deleted') &&
-        (typeof rawObject.current_period_start !== 'number' || typeof rawObject.current_period_end !== 'number' ||
-          !Number.isSafeInteger(rawObject.current_period_start) || !Number.isSafeInteger(rawObject.current_period_end) ||
-          rawObject.current_period_start >= rawObject.current_period_end)) {
+      if (
+        !event.type.endsWith('.deleted') &&
+        (typeof rawObject.current_period_start !== 'number' ||
+          typeof rawObject.current_period_end !== 'number' ||
+          !Number.isSafeInteger(rawObject.current_period_start) ||
+          !Number.isSafeInteger(rawObject.current_period_end) ||
+          rawObject.current_period_start >= rawObject.current_period_end)
+      ) {
         return { ok: false, reason: 'provider_period_missing' };
       }
       return { ok: true };
@@ -1515,17 +2100,31 @@ export class StripeWebhookService {
     // webhook type alone must never authorize an incompatible state transition.
     if (event.type.startsWith('payment_intent')) {
       const status = typeof rawObject.status === 'string' ? rawObject.status : null;
-      const valid = event.type === 'payment_intent.succeeded' ? status === 'succeeded'
-        : event.type === 'payment_intent.processing' ? status === 'processing'
-          : status === 'requires_payment_method' || status === 'canceled';
+      const valid =
+        event.type === 'payment_intent.succeeded'
+          ? status === 'succeeded'
+          : event.type === 'payment_intent.processing'
+            ? status === 'processing'
+            : event.type === 'payment_intent.canceled'
+              ? status === 'canceled'
+              : // payment_intent.payment_failed: a canceled PI or an off-session
+                // charge that needs user authentication (requires_action) or a
+                // missing/declined payment method never paid — fail closed.
+                status === 'requires_payment_method' ||
+                status === 'requires_action' ||
+                status === 'canceled';
       if (!valid) return { ok: false, reason: 'provider_status_mismatch' };
     }
     if (event.type.startsWith('checkout.session')) {
-      const paymentStatus = typeof rawObject.payment_status === 'string' ? rawObject.payment_status : null;
+      const paymentStatus =
+        typeof rawObject.payment_status === 'string' ? rawObject.payment_status : null;
       if (!paymentStatus || !['paid', 'unpaid', 'no_payment_required'].includes(paymentStatus)) {
         return { ok: false, reason: 'provider_payment_status_missing' };
       }
-      if (typeof rawObject.mode !== 'string' || !['payment', 'subscription', 'setup'].includes(rawObject.mode)) {
+      if (
+        typeof rawObject.mode !== 'string' ||
+        !['payment', 'subscription', 'setup'].includes(rawObject.mode)
+      ) {
         return { ok: false, reason: 'provider_mode_missing' };
       }
       // Exact mode/charge-kind identity before any settlement: fixed_fee must
@@ -1542,8 +2141,12 @@ export class StripeWebhookService {
       if (mode === 'setup') {
         return { ok: false, reason: 'provider_mode_mismatch' };
       }
-      if (rawObject.lines !== undefined &&
-        (!rawObject.lines || !Array.isArray(rawObject.lines.data) || rawObject.lines.data.length === 0)) {
+      if (
+        rawObject.lines !== undefined &&
+        (!rawObject.lines ||
+          !Array.isArray(rawObject.lines.data) ||
+          rawObject.lines.data.length === 0)
+      ) {
         return { ok: false, reason: 'provider_line_structure_invalid' };
       }
       if (event.type === 'checkout.session.async_payment_succeeded' && paymentStatus !== 'paid') {
@@ -1552,16 +2155,31 @@ export class StripeWebhookService {
       if (event.type === 'checkout.session.async_payment_failed' && paymentStatus !== 'unpaid') {
         return { ok: false, reason: 'provider_status_mismatch' };
       }
-      if (event.type === 'checkout.session.completed' && rawObject.payment_status === 'paid' && rawObject.mode === 'subscription' && rawObject.subscription === undefined) {
+      if (
+        event.type === 'checkout.session.completed' &&
+        rawObject.payment_status === 'paid' &&
+        rawObject.mode === 'subscription' &&
+        rawObject.subscription === undefined
+      ) {
         // Subscription Checkout may omit subscription only when the local fixed
         // fee attempt is already owned; validateAttemptIdentity/provider facts
         // perform that local ownership proof before any mutation.
       }
     }
-    if (event.type === 'invoice.paid' && rawObject.status !== 'paid') return { ok: false, reason: 'provider_status_mismatch' };
-    if (event.type === 'invoice.payment_failed' && !['open', 'uncollectible'].includes(String(rawObject.status))) return { ok: false, reason: 'provider_status_mismatch' };
-    if (event.type === 'invoice.created' && !['draft', 'open'].includes(String(rawObject.status))) return { ok: false, reason: 'provider_status_mismatch' };
-    if (event.type === 'invoice.finalized' && !['open', 'finalized'].includes(String(rawObject.status))) return { ok: false, reason: 'provider_status_mismatch' };
+    if (event.type === 'invoice.paid' && rawObject.status !== 'paid')
+      return { ok: false, reason: 'provider_status_mismatch' };
+    if (
+      event.type === 'invoice.payment_failed' &&
+      !['open', 'uncollectible'].includes(String(rawObject.status))
+    )
+      return { ok: false, reason: 'provider_status_mismatch' };
+    if (event.type === 'invoice.created' && !['draft', 'open'].includes(String(rawObject.status)))
+      return { ok: false, reason: 'provider_status_mismatch' };
+    if (
+      event.type === 'invoice.finalized' &&
+      !['open', 'finalized'].includes(String(rawObject.status))
+    )
+      return { ok: false, reason: 'provider_status_mismatch' };
 
     // Event-specific amount in cents.
     let amountCents: unknown;
@@ -1587,10 +2205,14 @@ export class StripeWebhookService {
       ) {
         return { ok: false, reason: 'provider_amount_mismatch' };
       }
-    } else if (amountCents === undefined ||
+    } else if (
+      amountCents === undefined ||
       (amountCents !== undefined &&
-      (typeof amountCents !== 'number' || !Number.isSafeInteger(amountCents) || amountCents < 0 ||
-        BigInt(amountCents) * MICROS_PER_CENT > attempt.amountMicros))) {
+        (typeof amountCents !== 'number' ||
+          !Number.isSafeInteger(amountCents) ||
+          amountCents < 0 ||
+          BigInt(amountCents) * MICROS_PER_CENT > attempt.amountMicros))
+    ) {
       return { ok: false, reason: 'provider_amount_mismatch' };
     }
 
@@ -1622,8 +2244,10 @@ export class StripeWebhookService {
       }
     }
 
-    // Subscription ownership: a subscription-bearing success event must match
-    // the attempt's subscription (fixed-fee renewal attempts always carry one).
+    // Subscription / renewal ownership. Stripe PaymentIntents carry `invoice`
+    // (their Stripe invoice id), NOT `subscription` — so a fixed-fee renewal
+    // payment must be proven from the PERSISTED local subscription mirror and
+    // the Stripe invoice identity, never from a bare PI object.
     const subscription = (object as { subscription?: unknown }).subscription;
     if (typeof subscription === 'string') {
       if (attempt.stripeSubscriptionId && subscription !== attempt.stripeSubscriptionId) {
@@ -1645,8 +2269,46 @@ export class StripeWebhookService {
       // the local invoice/attempt ownership is the trusted bootstrap proof; the
       // active-plan CAS later binds null-or-same without accepting metadata.
     } else if (attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
-      // Non-Checkout fixed-fee renewal success must always carry a subscription.
-      return { ok: false, reason: 'provider_subscription_missing' };
+      // Non-Checkout fixed-fee renewal events (payment_intent.* / invoice.*)
+      // reference their Stripe invoice rather than the subscription. Prove the
+      // renewal STRICTLY from the persisted account subscription mirror + the
+      // Stripe invoice identity — this never loosens validation to an arbitrary
+      // PaymentIntent: customer, amount/currency, metadata/attempt/invoice, and
+      // the Stripe invoice reference must all still match the local attempt.
+      const renewalInvoice = await tx.billingInvoice.findUnique({
+        where: { id: attempt.invoiceId },
+      });
+      if (!renewalInvoice) return { ok: false, reason: 'provider_invoice_missing' };
+      const renewalAccount = await tx.billingAccount.findUnique({
+        where: { id: renewalInvoice.billingAccountId },
+      });
+      if (!renewalAccount?.stripeSubscriptionId) {
+        return { ok: false, reason: 'provider_subscription_missing' };
+      }
+      if (
+        attempt.stripeSubscriptionId &&
+        attempt.stripeSubscriptionId !== renewalAccount.stripeSubscriptionId
+      ) {
+        return { ok: false, reason: 'provider_subscription_mismatch' };
+      }
+      const suppliedSubscription = readProviderId(subscription, 'subscription');
+      if (suppliedSubscription && suppliedSubscription !== renewalAccount.stripeSubscriptionId) {
+        return { ok: false, reason: 'provider_subscription_mismatch' };
+      }
+      // Stripe invoice identity: invoice.* events ARE the invoice; a
+      // PaymentIntent references it via `invoice`. Either must match the
+      // renewal mapping persisted on the attempt.
+      const providerInvoiceId = event.type.startsWith('invoice')
+        ? typeof rawObject.id === 'string'
+          ? rawObject.id
+          : null
+        : readProviderId(rawObject.invoice, 'invoice');
+      if (!providerInvoiceId) {
+        return { ok: false, reason: 'provider_invoice_identity_missing' };
+      }
+      if (attempt.stripeInvoiceId && providerInvoiceId !== attempt.stripeInvoiceId) {
+        return { ok: false, reason: 'provider_invoice_identity_mismatch' };
+      }
     }
 
     // Invoice period boundaries: for invoice.* events the Stripe period must
@@ -1655,11 +2317,7 @@ export class StripeWebhookService {
     // without settling — never trusted as a proxy for the local period.
     if (event.type.startsWith('invoice')) {
       const period = this.invoicePeriod(rawObject);
-      if (
-        !period ||
-        !Number.isSafeInteger(period.start) ||
-        !Number.isSafeInteger(period.end)
-      ) {
+      if (!period || !Number.isSafeInteger(period.start) || !Number.isSafeInteger(period.end)) {
         return { ok: false, reason: 'provider_period_missing' };
       }
       const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
@@ -1691,9 +2349,16 @@ export class StripeWebhookService {
     if (!invoice || invoice.billingAccountId.length === 0) return false;
     const account = await tx.billingAccount.findUnique({ where: { id: invoice.billingAccountId } });
     if (!account) return false;
-    if (attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FIXED_FEE && attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FULL) return false;
-    if (attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE && !invoice.planVersionId) return false;
-    if (!invoice.periodStart || !invoice.periodEnd || invoice.periodStart >= invoice.periodEnd) return false;
+    if (
+      attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FIXED_FEE &&
+      attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FULL &&
+      attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_OVERAGE
+    )
+      return false;
+    if (attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE && !invoice.planVersionId)
+      return false;
+    if (!invoice.periodStart || !invoice.periodEnd || invoice.periodStart >= invoice.periodEnd)
+      return false;
 
     const metadata = extractSafeMetadata(event.data.object);
     if (metadata.invalidAttemptId || metadata.invalidInvoiceId) return false;
@@ -1707,7 +2372,8 @@ export class StripeWebhookService {
     const metadataPlanVersionId = readMetadataString(event.data.object, 'planVersionId');
     if (metadataPlanVersionId && metadataPlanVersionId !== invoice.planVersionId) return false;
     const metadataPeriod = readMetadataString(event.data.object, 'period');
-    if (metadataPeriod && metadataPeriod !== invoice.periodStart.toISOString().slice(0, 7)) return false;
+    if (metadataPeriod && metadataPeriod !== invoice.periodStart.toISOString().slice(0, 7))
+      return false;
 
     const raw = event.data.object as StripeObjectLike;
     const customer = typeof raw.customer === 'string' ? raw.customer : null;
@@ -1716,17 +2382,68 @@ export class StripeWebhookService {
 
     const objectId = typeof raw.id === 'string' ? raw.id : null;
     if (!objectId) return false;
-    if (event.type.startsWith('checkout.session') && attempt.stripeCheckoutSessionId && objectId !== attempt.stripeCheckoutSessionId) return false;
-    if (event.type.startsWith('payment_intent') && attempt.stripePaymentIntentId && objectId !== attempt.stripePaymentIntentId) return false;
-    if (event.type.startsWith('invoice') && attempt.stripeInvoiceId && objectId !== attempt.stripeInvoiceId) return false;
-    if (event.type.startsWith('customer.subscription') && attempt.stripeSubscriptionId && objectId !== attempt.stripeSubscriptionId) return false;
+    if (
+      event.type.startsWith('checkout.session') &&
+      attempt.stripeCheckoutSessionId &&
+      objectId !== attempt.stripeCheckoutSessionId
+    )
+      return false;
+    if (
+      event.type.startsWith('payment_intent') &&
+      attempt.stripePaymentIntentId &&
+      objectId !== attempt.stripePaymentIntentId
+    )
+      return false;
+    if (
+      event.type.startsWith('invoice') &&
+      attempt.stripeInvoiceId &&
+      objectId !== attempt.stripeInvoiceId
+    )
+      return false;
+    if (
+      event.type.startsWith('customer.subscription') &&
+      attempt.stripeSubscriptionId &&
+      objectId !== attempt.stripeSubscriptionId
+    )
+      return false;
     const associatedPaymentIntent = readProviderId(raw.payment_intent, 'PaymentIntent');
-    if (associatedPaymentIntent && attempt.stripePaymentIntentId && associatedPaymentIntent !== attempt.stripePaymentIntentId) return false;
+    if (
+      associatedPaymentIntent &&
+      attempt.stripePaymentIntentId &&
+      associatedPaymentIntent !== attempt.stripePaymentIntentId
+    )
+      return false;
     const associatedInvoice = readProviderId(raw.invoice, 'Invoice');
     const latestInvoice = readProviderId(raw.latest_invoice, 'Invoice');
-    if (associatedInvoice && attempt.stripeInvoiceId && associatedInvoice !== attempt.stripeInvoiceId) return false;
-    if (latestInvoice && attempt.stripeInvoiceId && latestInvoice !== attempt.stripeInvoiceId) return false;
-    if ((associatedInvoice || latestInvoice) && !attempt.stripeInvoiceId && event.type !== 'invoice.created' && event.type !== 'invoice.finalized') return false;
+    if (
+      associatedInvoice &&
+      attempt.stripeInvoiceId &&
+      associatedInvoice !== attempt.stripeInvoiceId
+    )
+      return false;
+    if (latestInvoice && attempt.stripeInvoiceId && latestInvoice !== attempt.stripeInvoiceId)
+      return false;
+    const providerInvoiceRef = associatedInvoice ?? latestInvoice;
+    if (providerInvoiceRef && !attempt.stripeInvoiceId) {
+      // A PI/invoice object references a Stripe invoice the local attempt has
+      // not yet bound. Two legitimate cases:
+      //   * invoice.created / invoice.finalized — the renewal materializer
+      //     binds stripeInvoiceId (already exempted above);
+      //   * a FIRST-PERIOD SUBSCRIPTION CHECKOUT attempt — the Checkout's PI
+      //     references the subscription's first invoice before the local
+      //     attempt ever learned it (persistSubscriptionCheckout does not save
+      //     stripeInvoiceId). Allow it ONLY with strict proof that this is
+      //     exactly such an attempt (see isInitialSubscriptionCheckoutAttempt);
+      //     the invoice id is then CAS-bound on the safe event-identity
+      //     persistence path. An arbitrary renewal PI is NEVER loosened: a
+      //     renewal attempt without a Checkout session must already have AND
+      //     match its local stripeInvoiceId.
+      const allowed =
+        event.type === 'invoice.created' ||
+        event.type === 'invoice.finalized' ||
+        this.isInitialSubscriptionCheckoutAttempt(attempt, account, invoice);
+      if (!allowed) return false;
+    }
 
     const suppliedSubscription = readProviderId(raw.subscription, 'subscription');
     if (
@@ -1739,12 +2456,55 @@ export class StripeWebhookService {
     return true;
   }
 
+  /**
+   * Strict proof that an attempt is a FIRST-PERIOD SUBSCRIPTION CHECKOUT
+   * attempt whose PaymentIntent may legitimately reference a Stripe invoice the
+   * local attempt has not yet bound (`stripeInvoiceId` NULL): the attempt must
+   * be a `fixed_fee` attempt already bound to a Checkout session AND to a
+   * subscription, and that subscription must exactly match the account's
+   * persisted mirror. This is the ONLY non-renewal-materialization case where a
+   * bare provider invoice reference is accepted while `stripeInvoiceId` is
+   * still NULL — arbitrary renewal PIs are never loosened.
+   *
+   * First-period invoice period consistency: when the account mirror already
+   * carries the subscription's period (from `customer.subscription.created`/
+   * `updated`), the local invoice's UTC month must EXACTLY match it — a
+   * mismatched/mid-period invoice is never treated as the subscription's first
+   * Checkout invoice. When the mirror period is absent (out-of-order delivery),
+   * the strict identity checks above remain the only gate; the provider event
+   * payload is never trusted to guess a period.
+   */
+  private isInitialSubscriptionCheckoutAttempt(
+    attempt: PaymentAttemptRow,
+    account: Prisma.BillingAccountGetPayload<Record<string, never>>,
+    invoice: { periodStart: Date; periodEnd: Date } | null,
+  ): boolean {
+    if (attempt.stripeChargeKind !== STRIPE_CHARGE_KIND_FIXED_FEE) return false;
+    if (!attempt.stripeCheckoutSessionId) return false;
+    if (!attempt.stripeSubscriptionId) return false;
+    if (!account.stripeSubscriptionId) return false;
+    if (account.stripeSubscriptionId !== attempt.stripeSubscriptionId) return false;
+    if (invoice) {
+      const mirrorStart = account.stripeSubscriptionPeriodStart;
+      const mirrorEnd = account.stripeSubscriptionPeriodEnd;
+      if (mirrorStart && invoice.periodStart.getTime() !== mirrorStart.getTime()) return false;
+      if (mirrorEnd && invoice.periodEnd.getTime() !== mirrorEnd.getTime()) return false;
+    }
+    return true;
+  }
+
   private utcMonthStart(date: Date): Date {
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
   }
 
-  private async getAttemptAccount(tx: Tx, attempt: PaymentAttemptRow): Promise<{ id: string } | null> {
-    const invoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId }, select: { billingAccountId: true } });
+  private async getAttemptAccount(
+    tx: Tx,
+    attempt: PaymentAttemptRow,
+  ): Promise<{ id: string } | null> {
+    const invoice = await tx.billingInvoice.findUnique({
+      where: { id: attempt.invoiceId },
+      select: { billingAccountId: true },
+    });
     return invoice ? { id: invoice.billingAccountId } : null;
   }
 
@@ -1753,18 +2513,21 @@ export class StripeWebhookService {
       where: { id: attempt.invoiceId },
       select: { periodStart: true, periodEnd: true },
     });
-    if (!invoice?.periodStart || !invoice.periodEnd || invoice.periodStart >= invoice.periodEnd) return null;
+    if (!invoice?.periodStart || !invoice.periodEnd || invoice.periodStart >= invoice.periodEnd)
+      return null;
     return this.utcMonthStart(invoice.periodStart);
   }
 
   private eventPeriod(event: Stripe.Event): Date | null {
     const raw = event.data.object as StripeObjectLike;
-    const period = event.type.startsWith('customer.subscription') &&
-      typeof raw.current_period_start === 'number' && typeof raw.current_period_end === 'number'
-      ? { start: raw.current_period_start, end: raw.current_period_end }
-      : event.type.startsWith('invoice')
-      ? this.invoicePeriod(raw)
-      : raw.period ?? raw.lines?.data?.[0]?.period;
+    const period =
+      event.type.startsWith('customer.subscription') &&
+      typeof raw.current_period_start === 'number' &&
+      typeof raw.current_period_end === 'number'
+        ? { start: raw.current_period_start, end: raw.current_period_end }
+        : event.type.startsWith('invoice')
+          ? this.invoicePeriod(raw)
+          : (raw.period ?? raw.lines?.data?.[0]?.period);
     if (period && typeof period.start === 'number' && Number.isSafeInteger(period.start)) {
       return this.utcMonthStart(new Date(period.start * 1000));
     }
@@ -1778,16 +2541,21 @@ export class StripeWebhookService {
 
   /** Stripe Invoice period fields are top-level and are not Checkout fields. */
   private invoicePeriod(raw: StripeObjectLike): { start: number; end: number } | null {
-    if (!Number.isSafeInteger(raw.period_start) || !Number.isSafeInteger(raw.period_end) ||
-      (raw.period_start as number) >= (raw.period_end as number)) return null;
+    if (
+      !Number.isSafeInteger(raw.period_start) ||
+      !Number.isSafeInteger(raw.period_end) ||
+      (raw.period_start as number) >= (raw.period_end as number)
+    )
+      return null;
     return { start: raw.period_start as number, end: raw.period_end as number };
   }
 
   private invoiceAmount(raw: StripeObjectLike, eventType: string): number | null {
-    const value = eventType === 'invoice.paid' || eventType === 'invoice.payment_failed'
-      ? raw.amount_paid
-      : raw.total;
-    return Number.isSafeInteger(value) && (value as number) >= 0 ? value as number : null;
+    const value =
+      eventType === 'invoice.paid' || eventType === 'invoice.payment_failed'
+        ? raw.amount_paid
+        : raw.total;
+    return Number.isSafeInteger(value) && (value as number) >= 0 ? (value as number) : null;
   }
 
   // ── Attempt lookup ─────────────────────────────────────────────────────────
@@ -1813,10 +2581,7 @@ export class StripeWebhookService {
    * same PaymentIntent/Checkout id or the same attempt id in metadata
    * (dual-rail isolation).
    */
-  private async findAttemptForEvent(
-    tx: Tx,
-    event: Stripe.Event,
-  ): Promise<AttemptLookup> {
+  private async findAttemptForEvent(tx: Tx, event: Stripe.Event): Promise<AttemptLookup> {
     const object = event.data.object as Stripe.Checkout.Session | Stripe.PaymentIntent;
     if (!object || typeof object.id !== 'string') return { kind: 'none' };
 
@@ -1891,9 +2656,9 @@ export class StripeWebhookService {
       return { kind: 'conflict' };
     }
     const referenceId = event.type.startsWith('checkout.session')
-      ? (typeof (object as Stripe.Checkout.Session).client_reference_id === 'string'
+      ? typeof (object as Stripe.Checkout.Session).client_reference_id === 'string'
         ? (object as Stripe.Checkout.Session).client_reference_id
-        : null)
+        : null
       : null;
     let byReference: PaymentAttemptRow | null = null;
     if (isUuid(referenceId)) {
@@ -1939,7 +2704,8 @@ export class StripeWebhookService {
       });
       if (result.count === 0) {
         const current = await tx.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
-        if (current?.stripePaymentIntentId !== object.id) throw new ConflictException('Stripe PaymentIntent identity conflict');
+        if (current?.stripePaymentIntentId !== object.id)
+          throw new ConflictException('Stripe PaymentIntent identity conflict');
       }
     }
     if (event.type.startsWith('checkout.session') && attempt.stripeCheckoutSessionId === null) {
@@ -1949,7 +2715,8 @@ export class StripeWebhookService {
       });
       if (result.count === 0) {
         const current = await tx.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
-        if (current?.stripeCheckoutSessionId !== object.id) throw new ConflictException('Stripe Checkout identity conflict');
+        if (current?.stripeCheckoutSessionId !== object.id)
+          throw new ConflictException('Stripe Checkout identity conflict');
       }
     }
 
@@ -1960,7 +2727,8 @@ export class StripeWebhookService {
       });
       if (result.count === 0) {
         const current = await tx.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
-        if (current?.stripeInvoiceId !== object.id) throw new ConflictException('Stripe Invoice identity conflict');
+        if (current?.stripeInvoiceId !== object.id)
+          throw new ConflictException('Stripe Invoice identity conflict');
       }
     }
     if (event.type.startsWith('customer.subscription') && attempt.stripeSubscriptionId === null) {
@@ -1970,7 +2738,8 @@ export class StripeWebhookService {
       });
       if (result.count === 0) {
         const current = await tx.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
-        if (current?.stripeSubscriptionId !== object.id) throw new ConflictException('Stripe Subscription identity conflict');
+        if (current?.stripeSubscriptionId !== object.id)
+          throw new ConflictException('Stripe Subscription identity conflict');
       }
     }
 
@@ -1986,7 +2755,8 @@ export class StripeWebhookService {
     for (const [field, value] of associated) {
       if (!value) continue;
       const current = attempt[field];
-      if (current && current !== value) throw new ConflictException(`Stripe ${field} identity conflict`);
+      if (current && current !== value)
+        throw new ConflictException(`Stripe ${field} identity conflict`);
       if (current === value) continue;
       const claimed = await tx.billingPaymentAttempt.updateMany({
         where: { id: attempt.id, [field]: null },
@@ -1994,7 +2764,8 @@ export class StripeWebhookService {
       });
       if (claimed.count !== 1) {
         const reloaded = await tx.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
-        if (!reloaded || reloaded[field] !== value) throw new ConflictException(`Stripe ${field} CAS lost`);
+        if (!reloaded || reloaded[field] !== value)
+          throw new ConflictException(`Stripe ${field} CAS lost`);
       }
     }
   }
@@ -2021,6 +2792,7 @@ export class StripeWebhookService {
         return 'succeeded';
       case 'checkout.session.async_payment_failed':
       case 'payment_intent.payment_failed':
+      case 'payment_intent.canceled':
       case 'invoice.payment_failed':
         return 'failed';
       case 'payment_intent.processing':
@@ -2042,7 +2814,6 @@ function microsToDecimal(value: bigint | null): string | null {
   return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`;
 }
 
-
 function readProviderId(value: unknown, kind: string): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string' && value.length > 0) return value;
@@ -2062,7 +2833,26 @@ function isUniqueConstraintError(err: unknown): boolean {
 
 function isPreflightConflict(error: ConflictException): boolean {
   const message = error.message;
-  return message.startsWith('Stripe event ') || message.startsWith('Stripe renewal ') || message.startsWith('Stripe provider ') || message.startsWith('Stripe attempt ') || message.startsWith('Stripe success ');
+  return (
+    message.startsWith('Stripe event ') ||
+    message.startsWith('Stripe renewal ') ||
+    message.startsWith('Stripe provider ') ||
+    message.startsWith('Stripe attempt ') ||
+    message.startsWith('Stripe success ')
+  );
+}
+
+/**
+ * True when a Stripe API error means the requested object no longer exists
+ * (Stripe `resource_missing` / HTTP 404). Used by the PaymentIntent
+ * reconciliation to distinguish "transient network/5xx" (retryable pending)
+ * from "the PI is gone" (data inconsistency → needs_review).
+ */
+function isResourceMissingError(error: unknown): boolean {
+  const raw = error as { code?: unknown; statusCode?: unknown } | null;
+  const code = typeof raw?.code === 'string' ? raw.code.toLowerCase() : '';
+  const status = typeof raw?.statusCode === 'number' ? raw.statusCode : 0;
+  return code === 'resource_missing' || status === 404;
 }
 
 function isUuid(value: unknown): value is string {
@@ -2084,7 +2874,13 @@ function extractSafeMetadata(object: unknown): {
 } {
   const metadata = (object as { metadata?: unknown } | null)?.metadata;
   if (typeof metadata !== 'object' || metadata === null) {
-    return { attemptId: null, invoiceId: null, userId: null, invalidAttemptId: false, invalidInvoiceId: false };
+    return {
+      attemptId: null,
+      invoiceId: null,
+      userId: null,
+      invalidAttemptId: false,
+      invalidInvoiceId: false,
+    };
   }
   const record = metadata as Record<string, unknown>;
   return {
@@ -2108,12 +2904,30 @@ function hasMalformedIdentityMetadata(object: unknown): boolean {
   if (typeof metadata !== 'object' || metadata === null) return false;
   const record = metadata as Record<string, unknown>;
   if (record.userId !== undefined && !isUuid(record.userId)) return true;
-  if (record.billingAccountId !== undefined && (typeof record.billingAccountId !== 'string' || record.billingAccountId.length === 0)) return true;
+  if (
+    record.billingAccountId !== undefined &&
+    (typeof record.billingAccountId !== 'string' || record.billingAccountId.length === 0)
+  )
+    return true;
   if (record.attemptId !== undefined && !isUuid(record.attemptId)) return true;
   if (record.invoiceId !== undefined && !isUuid(record.invoiceId)) return true;
-  if (record.planVersionId !== undefined && (typeof record.planVersionId !== 'string' || record.planVersionId.length === 0)) return true;
-  if (record.chargeKind !== undefined && record.chargeKind !== 'fixed_fee' && record.chargeKind !== 'full') return true;
-  if (record.period !== undefined && (typeof record.period !== 'string' || !/^\d{4}-\d{2}$/.test(record.period))) return true;
+  if (
+    record.planVersionId !== undefined &&
+    (typeof record.planVersionId !== 'string' || record.planVersionId.length === 0)
+  )
+    return true;
+  if (
+    record.chargeKind !== undefined &&
+    record.chargeKind !== 'fixed_fee' &&
+    record.chargeKind !== 'full' &&
+    record.chargeKind !== 'overage'
+  )
+    return true;
+  if (
+    record.period !== undefined &&
+    (typeof record.period !== 'string' || !/^\d{4}-\d{2}$/.test(record.period))
+  )
+    return true;
   return false;
 }
 

@@ -5,9 +5,13 @@
  * database. Only the RPC provider is mocked (deterministic receipts); the
  * claim service runs against real Postgres with real row locks and CAS
  * transitions. Creates its own finalized invoices + pending USDC attempts,
- * actually races concurrent `claim()` calls, asserts the invariants (at most
- * one settlement, consistent paidVia/pointer, stale claims cannot regress a
- * succeeded state, normalized tx_hash uniqueness), and cleans up its own data.
+ * actually races concurrent `claim()` calls, asserts the invariants:
+ * persist-before-RPC / first-writer-wins (the first claim to persist the
+ * canonical submitted hash owns the attempt; a different-hash loser never
+ * calls RPC), at most one settlement, consistent paidVia/pointer, stale
+ * claims cannot regress a terminal state, and the unique submitted_tx_hash /
+ * Transfer-evidence indexes fail closed to duplicate_unallocated review.
+ * Cleans up its own data.
  *
  * Runs via `npm run test:e2e` (maxWorkers=1) following the repo convention for
  * DB-dependent tests. Requires a reachable Postgres at DATABASE_URL.
@@ -399,13 +403,19 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     expect(resultA.status).toBe('succeeded');
 
     // Claim B with the same tx in uppercase hex → canonicalized to the same
-    // lowercase hash; the DB unique evidence index rejects the duplicate.
+    // lowercase hash; the migration-only unique `submitted_tx_hash` index
+    // rejects the persist write (Prisma P2002) before any provider work, and
+    // the loser is surfaced as duplicate_unallocated review — never a 500,
+    // never a second provider claim, never a permanent pending.
     const resultB = await service.claim(seedB.userId, seedB.invoiceId, {
       paymentAttemptId: seedB.attemptId,
       txHash: '0x' + 'A'.repeat(64),
     });
     expect(resultB.status).toBe('needs_review');
     expect(resultB.reviewReason).toBe('duplicate_unallocated');
+    // Only the winner performed provider work; the duplicate loser never
+    // reached RPC.
+    expect(provider.getTransactionReceipt).toHaveBeenCalledTimes(1);
 
     const attemptA = await prisma.billingPaymentAttempt.findUnique({
       where: { id: seedA.attemptId },
@@ -424,40 +434,38 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     expect(invoiceA!.paidAt).not.toBeNull();
     expect(attemptB!.status).toBe('needs_review');
     expect(attemptB!.reviewReason).toBe('duplicate_unallocated');
+    expect(attemptB!.failureCode).toBe('duplicate_submitted_hash'); // audit note
+    expect(attemptB!.submittedTxHash).toBeNull(); // the rejected write never persisted
     expect(invoiceB!.paidAt).toBeNull();
   });
 
-  it('never lets a second claim overwrite the winner evidence or settle with its own evidence (two different hashes)', async () => {
+  it('first claim to persist a hash wins; a different-hash loser never calls RPC or binds evidence', async () => {
     const seed = await seedUsdcInvoice();
     seeds.push(seed);
     const txHashA = '0x' + 'a'.repeat(64);
     const txHashB = '0x' + 'b'.repeat(64);
     const blockHashA = '0x' + 'c'.repeat(64);
-    const blockHashB = '0x' + 'd'.repeat(64);
 
-    // Both receipts are valid exact transfers from the same payer; only the tx
-    // hash / block identity differs.
     const receiptA = confirmedReceiptFor(seed.payer, {
       transactionHash: txHashA,
       blockHash: blockHashA,
     });
-    const receiptB = confirmedReceiptFor(seed.payer, {
-      transactionHash: txHashB,
-      blockHash: blockHashB,
-    });
 
-    // Gate claim A inside its RPC call so both claims read the attempt as
-    // pending before either writes evidence; claim B settles first.
+    // Claim A persists hashA (persist-before-RPC, first-writer-wins) then
+    // blocks inside its RPC call. Claim B's different hash can no longer be
+    // persisted: its persist CAS matches zero rows (the null-or-equal guard
+    // fails against the winner's recorded hash), so B returns the observed real
+    // state WITHOUT any provider work.
     let releaseA: () => void;
     const gateA = new Promise<void>((resolve) => {
       releaseA = resolve;
     });
     let receiptCalls = 0;
     const provider = {
-      getTransactionReceipt: jest.fn(async (_chainId: number, hash: string) => {
+      getTransactionReceipt: jest.fn(async () => {
         receiptCalls++;
         if (receiptCalls === 1) await gateA;
-        return hash === txHashA ? receiptA : receiptB;
+        return receiptA;
       }),
       getBlockNumber: jest.fn(async () => 104n), // 5 confirmations → settle path
     };
@@ -473,11 +481,18 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
       paymentAttemptId: seed.attemptId,
       txHash: txHashB,
     });
+    // The loser observed the winner-owned attempt: the real current state
+    // (pending, retryable) — it never performed RPC work and never wrote
+    // evidence. Only the winner performed provider work.
+    expect(resultB.status).toBe('pending');
+    expect(resultB.retryable).toBe(true);
+    expect(provider.getTransactionReceipt).toHaveBeenCalledTimes(1);
+
     releaseA!();
     const resultA = await claimA;
+    expect(resultA.status).toBe('succeeded');
+    expect(resultA.paid).toBe(true);
 
-    // Exactly one evidence wins settlement; the stale claim cannot overwrite it
-    // and cannot settle with its own evidence.
     const attempt = await prisma.billingPaymentAttempt.findUnique({
       where: { id: seed.attemptId },
     });
@@ -485,36 +500,32 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     expect(attempt).not.toBeNull();
     expect(invoice).not.toBeNull();
     expect(attempt!.status).toBe('succeeded');
-    expect(attempt!.txHash).toBe(txHashB); // winner evidence preserved
-    expect(attempt!.txHash).not.toBe(txHashA); // loser evidence never recorded
+    expect(attempt!.txHash).toBe(txHashA); // winner evidence preserved
+    expect(attempt!.txHash).not.toBe(txHashB); // loser evidence never recorded
     expect(invoice!.paidAt).not.toBeNull();
     expect(invoice!.settlementAttemptId).toBe(seed.attemptId);
     expect(invoice!.paidVia).toBe('usdc');
-    // The stale claim observes the real paid state (safe current state).
-    expect(resultA.status).toBe('succeeded');
-    expect(resultA.paid).toBe(true);
-    expect(resultB.status).toBe('succeeded');
-    expect(resultB.paid).toBe(true);
   });
 
-  it('records a second claim with different evidence as duplicate_unallocated when both are below the confirmation threshold', async () => {
+  it('two same-hash claims below the confirmation threshold converge on one confirming attempt', async () => {
     const seed = await seedUsdcInvoice();
     seeds.push(seed);
-    const txHashA = '0x' + 'a'.repeat(64);
-    const txHashB = '0x' + 'b'.repeat(64);
 
+    // Same hash on the same attempt: both claims persist (the null-or-equal
+    // guard matches the winner's hash), both verify the same evidence, but only
+    // one evidence write wins under the real Postgres CAS; the other is an
+    // idempotent confirming replay. The attempt stays confirming (4
+    // confirmations < 5) with a single evidence identity.
     let releaseA: () => void;
     const gateA = new Promise<void>((resolve) => {
       releaseA = resolve;
     });
     let receiptCalls = 0;
     const provider = {
-      getTransactionReceipt: jest.fn(async (_chainId: number, hash: string) => {
+      getTransactionReceipt: jest.fn(async () => {
         receiptCalls++;
         if (receiptCalls === 1) await gateA;
-        return hash === txHashA
-          ? confirmedReceiptFor(seed.payer, { transactionHash: txHashA })
-          : confirmedReceiptFor(seed.payer, { transactionHash: txHashB });
+        return confirmedReceiptFor(seed.payer);
       }),
       getBlockNumber: jest.fn(async () => 103n), // 4 confirmations → confirming path
     };
@@ -522,23 +533,21 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
 
     const claimA = service.claim(seed.userId, seed.invoiceId, {
       paymentAttemptId: seed.attemptId,
-      txHash: txHashA,
+      txHash: TX_HASH,
     });
     await waitFor(() => receiptCalls === 1);
 
-    // Claim B confirms first with evidence B.
     const resultB = await service.claim(seed.userId, seed.invoiceId, {
       paymentAttemptId: seed.attemptId,
-      txHash: txHashB,
+      txHash: TX_HASH,
     });
     expect(resultB.status).toBe('confirming');
+    expect(resultB.retryable).toBe(true);
 
     releaseA!();
-    // Claim A's confirming CAS must lose (different evidence identity) and the
-    // ambiguity is recorded as duplicate_unallocated review, preserving B.
     const resultA = await claimA;
-    expect(resultA.status).toBe('needs_review');
-    expect(resultA.reviewReason).toBe('duplicate_unallocated');
+    // Same evidence → idempotent confirming replay of the winner's evidence.
+    expect(resultA.status).toBe('confirming');
 
     const attempt = await prisma.billingPaymentAttempt.findUnique({
       where: { id: seed.attemptId },
@@ -546,40 +555,32 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     const invoice = await prisma.billingInvoice.findUnique({ where: { id: seed.invoiceId } });
     expect(attempt).not.toBeNull();
     expect(invoice).not.toBeNull();
-    expect(attempt!.status).toBe('needs_review');
-    expect(attempt!.reviewReason).toBe('duplicate_unallocated');
-    expect(attempt!.txHash).toBe(txHashB); // winner evidence preserved
-    expect(attempt!.txHash).not.toBe(txHashA);
+    expect(attempt!.status).toBe('confirming');
+    expect(attempt!.txHash).toBe(TX_HASH); // single evidence identity
     expect(invoice!.paidAt).toBeNull();
   });
 
-  it('a stale claim with a different hash cannot regress a succeeded attempt to confirming', async () => {
+  it('a different-hash loser is rejected at persist time and can never regress the winner to confirming', async () => {
     const seed = await seedUsdcInvoice();
     seeds.push(seed);
     const txHashA = '0x' + 'a'.repeat(64);
     const txHashB = '0x' + 'b'.repeat(64);
 
+    // Winner A owns hashA and is gated inside its RPC call. Loser B claims a
+    // different hash: the persist CAS matches zero rows, so B never reaches the
+    // confirming path and can never regress A's outcome.
     let releaseA: () => void;
     const gateA = new Promise<void>((resolve) => {
       releaseA = resolve;
     });
     let receiptCalls = 0;
-    let blockCalls = 0;
     const provider = {
-      getTransactionReceipt: jest.fn(async (_chainId: number, hash: string) => {
+      getTransactionReceipt: jest.fn(async () => {
         receiptCalls++;
         if (receiptCalls === 1) await gateA;
-        return hash === txHashA
-          ? confirmedReceiptFor(seed.payer, { transactionHash: txHashA })
-          : confirmedReceiptFor(seed.payer, { transactionHash: txHashB });
+        return confirmedReceiptFor(seed.payer, { transactionHash: txHashA });
       }),
-      getBlockNumber: jest.fn(async () => {
-        blockCalls++;
-        // Claim B (first to reach the head) sees 5 confirmations and settles;
-        // claim A (released later) sees 4 confirmations and takes the
-        // confirming CAS path, which must lose to the succeeded state.
-        return blockCalls === 1 ? 104n : 103n;
-      }),
+      getBlockNumber: jest.fn(async () => 103n), // 4 confirmations → confirming
     };
     const service = buildService(provider);
 
@@ -593,12 +594,14 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
       paymentAttemptId: seed.attemptId,
       txHash: txHashB,
     });
-    expect(resultB.status).toBe('succeeded');
+    expect(resultB.status).toBe('pending');
+    expect(resultB.retryable).toBe(true);
+    expect(provider.getTransactionReceipt).toHaveBeenCalledTimes(1); // only the winner
 
     releaseA!();
     const resultA = await claimA;
-    expect(resultA.status).toBe('succeeded');
-    expect(resultA.paid).toBe(true);
+    expect(resultA.status).toBe('confirming');
+    expect(resultA.retryable).toBe(true);
 
     const attempt = await prisma.billingPaymentAttempt.findUnique({
       where: { id: seed.attemptId },
@@ -606,101 +609,38 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     const invoice = await prisma.billingInvoice.findUnique({ where: { id: seed.invoiceId } });
     expect(attempt).not.toBeNull();
     expect(invoice).not.toBeNull();
-    expect(attempt!.status).toBe('succeeded');
-    expect(attempt!.txHash).toBe(txHashB);
-    expect(invoice!.paidAt).not.toBeNull();
-    expect(invoice!.settlementAttemptId).toBe(seed.attemptId);
+    expect(attempt!.status).toBe('confirming');
+    expect(attempt!.txHash).toBe(txHashA); // winner evidence preserved
+    expect(attempt!.txHash).not.toBe(txHashB); // loser never bound evidence
+    expect(attempt!.submittedTxHash).toBe(txHashA);
+    expect(invoice!.paidAt).toBeNull();
   });
 
-  it('a stale claim with a different hash cannot regress a succeeded attempt to review', async () => {
+  it('a different-hash loser is rejected at persist time and can never regress the winner to review', async () => {
     const seed = await seedUsdcInvoice();
     seeds.push(seed);
     const txHashA = '0x' + 'a'.repeat(64);
     const txHashB = '0x' + 'b'.repeat(64);
 
+    // Winner A owns hashA; its own receipt is defective (wrong amount), so A
+    // alone drives the attempt to review. Loser B's different hash is rejected
+    // at persist time and can never trigger or influence A's review.
     let releaseA: () => void;
     const gateA = new Promise<void>((resolve) => {
       releaseA = resolve;
     });
     let receiptCalls = 0;
     const provider = {
-      getTransactionReceipt: jest.fn(async (_chainId: number, hash: string) => {
+      getTransactionReceipt: jest.fn(async () => {
         receiptCalls++;
         if (receiptCalls === 1) await gateA;
-        if (hash === txHashA) {
-          // Claim A's receipt has a wrong amount → review path.
-          return confirmedReceiptFor(seed.payer, {
-            transactionHash: txHashA,
-            logs: [
-              transferLog(seed.payer, {
-                data: '0x' + (AMOUNT_MICROS - 1n).toString(16).padStart(64, '0'),
-              }),
-            ],
-          });
-        }
-        return confirmedReceiptFor(seed.payer, { transactionHash: txHashB });
-      }),
-      getBlockNumber: jest.fn(async () => 104n),
-    };
-    const service = buildService(provider);
-
-    const claimA = service.claim(seed.userId, seed.invoiceId, {
-      paymentAttemptId: seed.attemptId,
-      txHash: txHashA,
-    });
-    await waitFor(() => receiptCalls === 1);
-
-    const resultB = await service.claim(seed.userId, seed.invoiceId, {
-      paymentAttemptId: seed.attemptId,
-      txHash: txHashB,
-    });
-    expect(resultB.status).toBe('succeeded');
-
-    releaseA!();
-    const resultA = await claimA;
-    expect(resultA.status).toBe('succeeded');
-    expect(resultA.paid).toBe(true);
-
-    const attempt = await prisma.billingPaymentAttempt.findUnique({
-      where: { id: seed.attemptId },
-    });
-    const invoice = await prisma.billingInvoice.findUnique({ where: { id: seed.invoiceId } });
-    expect(attempt).not.toBeNull();
-    expect(invoice).not.toBeNull();
-    expect(attempt!.status).toBe('succeeded');
-    expect(attempt!.txHash).toBe(txHashB);
-    expect(invoice!.paidAt).not.toBeNull();
-    expect(invoice!.settlementAttemptId).toBe(seed.attemptId);
-  });
-
-  it('a stale claim with a different hash cannot regress a succeeded attempt to expired', async () => {
-    const seed = await seedUsdcInvoice();
-    seeds.push(seed);
-    // Age the attempt so its quote is already expired while receipt B was mined
-    // before the expiry (so B can still settle).
-    await prisma.billingPaymentAttempt.update({
-      where: { id: seed.attemptId },
-      data: {
-        createdAt: new Date(Date.now() - 7200_000),
-        quoteExpiresAt: new Date(Date.now() - 3600_000),
-      },
-    });
-    const txHashA = '0x' + 'a'.repeat(64);
-    const txHashB = '0x' + 'b'.repeat(64);
-
-    let releaseA: () => void;
-    const gateA = new Promise<void>((resolve) => {
-      releaseA = resolve;
-    });
-    let receiptCalls = 0;
-    const provider = {
-      getTransactionReceipt: jest.fn(async (_chainId: number, hash: string) => {
-        receiptCalls++;
-        if (receiptCalls === 1) await gateA;
-        if (hash === txHashA) return null; // claim A: receipt not found → expiry path
         return confirmedReceiptFor(seed.payer, {
-          transactionHash: txHashB,
-          blockTimestamp: BigInt(Math.floor((Date.now() - 5400_000) / 1000)),
+          transactionHash: txHashA,
+          logs: [
+            transferLog(seed.payer, {
+              data: '0x' + (AMOUNT_MICROS - 1n).toString(16).padStart(64, '0'),
+            }),
+          ],
         });
       }),
       getBlockNumber: jest.fn(async () => 104n),
@@ -717,12 +657,16 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
       paymentAttemptId: seed.attemptId,
       txHash: txHashB,
     });
-    expect(resultB.status).toBe('succeeded');
+    expect(resultB.status).toBe('pending');
+    expect(resultB.retryable).toBe(true);
+    expect(provider.getTransactionReceipt).toHaveBeenCalledTimes(1); // only the winner
 
     releaseA!();
     const resultA = await claimA;
-    expect(resultA.status).toBe('succeeded');
-    expect(resultA.paid).toBe(true);
+    // The winner's own review outcome (wrong amount) — never a regression of a
+    // terminal state, because B never wrote anything.
+    expect(resultA.status).toBe('needs_review');
+    expect(resultA.reviewReason).toBe('wrong_amount');
 
     const attempt = await prisma.billingPaymentAttempt.findUnique({
       where: { id: seed.attemptId },
@@ -730,9 +674,72 @@ describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
     const invoice = await prisma.billingInvoice.findUnique({ where: { id: seed.invoiceId } });
     expect(attempt).not.toBeNull();
     expect(invoice).not.toBeNull();
-    expect(attempt!.status).toBe('succeeded');
-    expect(attempt!.txHash).toBe(txHashB);
-    expect(invoice!.paidAt).not.toBeNull();
-    expect(invoice!.settlementAttemptId).toBe(seed.attemptId);
+    expect(attempt!.status).toBe('needs_review');
+    expect(attempt!.reviewReason).toBe('wrong_amount'); // winner's own review
+    expect(attempt!.submittedTxHash).toBe(txHashA); // loser never persisted its hash
+    expect(invoice!.paidAt).toBeNull();
+  });
+
+  it('a different-hash loser is rejected at persist time and can never regress the winner to expired', async () => {
+    const seed = await seedUsdcInvoice();
+    seeds.push(seed);
+    // Age the attempt so a missing receipt drives the winner to the expiry path.
+    await prisma.billingPaymentAttempt.update({
+      where: { id: seed.attemptId },
+      data: {
+        createdAt: new Date(Date.now() - 7200_000),
+        quoteExpiresAt: new Date(Date.now() - 3600_000),
+      },
+    });
+    const txHashA = '0x' + 'a'.repeat(64);
+    const txHashB = '0x' + 'b'.repeat(64);
+
+    // Winner A owns hashA and blocks inside its RPC call. Loser B claims a
+    // different hash: the persist CAS matches zero rows, so B can never reach
+    // the expiry path at all — only the winner's own missing receipt expires it.
+    let releaseA: () => void;
+    const gateA = new Promise<void>((resolve) => {
+      releaseA = resolve;
+    });
+    let receiptCalls = 0;
+    const provider = {
+      getTransactionReceipt: jest.fn(async () => {
+        receiptCalls++;
+        if (receiptCalls === 1) await gateA;
+        return null; // not mined → the winner's own flow expires the attempt
+      }),
+      getBlockNumber: jest.fn(async () => 104n),
+    };
+    const service = buildService(provider);
+
+    const claimA = service.claim(seed.userId, seed.invoiceId, {
+      paymentAttemptId: seed.attemptId,
+      txHash: txHashA,
+    });
+    await waitFor(() => receiptCalls === 1);
+
+    const resultB = await service.claim(seed.userId, seed.invoiceId, {
+      paymentAttemptId: seed.attemptId,
+      txHash: txHashB,
+    });
+    expect(resultB.status).toBe('pending');
+    expect(resultB.retryable).toBe(true);
+    expect(provider.getTransactionReceipt).toHaveBeenCalledTimes(1); // only the winner
+
+    releaseA!();
+    const resultA = await claimA;
+    expect(resultA.status).toBe('expired');
+    expect(resultA.retryable).toBe(true);
+
+    const attempt = await prisma.billingPaymentAttempt.findUnique({
+      where: { id: seed.attemptId },
+    });
+    const invoice = await prisma.billingInvoice.findUnique({ where: { id: seed.invoiceId } });
+    expect(attempt).not.toBeNull();
+    expect(invoice).not.toBeNull();
+    expect(attempt!.status).toBe('expired');
+    expect(attempt!.reviewReason).toBe('quote_expired'); // winner's own expiry
+    expect(attempt!.submittedTxHash).toBe(txHashA); // loser never persisted its hash
+    expect(invoice!.paidAt).toBeNull();
   });
 });

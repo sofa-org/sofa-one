@@ -10,6 +10,7 @@ Dashboard-only native USDC invoice payment rail (Phase 3B Phase 2). Lets a user 
 - **Worker recovery (gated)**: pending/confirming claims with a persisted canonical `submittedTxHash` and a due `nextCheckAt` are resumed by `BillingWorkerService.recoverUsdcClaims` (enabled only with `BILLING_WORKER_ENABLED=true`) through the same `claim()` verification path with the persisted hash — never re-derived or fabricated. Without the worker, user claim/retry remains the only driver of the lifecycle.
 
 Files:
+
 - `usdc-payment.controller.ts` — route wiring, guards, claim throttle.
 - `usdc-payment.service.ts` — quote/claim orchestration, strict Transfer parsing, evidence-aware CAS state transitions, atomic settlement.
 - `usdc-receipt.provider.ts` — RPC boundary (viem-backed), sanitized receipt/log types, DI token contract.
@@ -25,12 +26,14 @@ Files:
 - **Strict Transfer parsing**: only logs from the canonical token with `Transfer` topic0 are candidates; topics must be exactly three strictly 32-byte hex values with zero ABI padding, data a 32-byte uint256, `removed === false` (missing/non-boolean/true is unsafe), from = expected payer, to = treasury, amount = expected. Zero matches, malformed/removed/unsafe logs, and multiple exact matches are all review with a specific reason.
 - **Retryable vs terminal states**: `pending` (receipt not found) and `rpc_error` (transient RPC) are retryable no-ops; `confirming` records evidence and stays active; `succeeded`/`expired`/`needs_review`/`failed` are terminal and returned idempotently on replay.
 - **Reorg and chain-time guards**: recorded block hash/number mismatch → `reorged`; transfer mined before attempt creation → `receipt_predates_attempt`; mined after quote expiry → `expired` (pending) or `evidence_changed` (confirming); chain head behind receipt block → retryable `rpc_error`.
-- **Evidence uniqueness**: the schema's `@@unique([chainId, tokenAddress, txHash, logIndex])` makes the same Transfer allocatable to at most one attempt; a P2002 conflict becomes `duplicate_unallocated` review.
+- **Evidence uniqueness**: the schema's `@@unique([chainId, tokenAddress, txHash, logIndex])` makes the same Transfer allocatable to at most one attempt; a P2002 conflict becomes `duplicate_unallocated` review. The migration-only unique index on the canonical `submitted_tx_hash` (NULLs distinct) makes the SAME user-submitted hash allocatable to at most one attempt: a second attempt's persist write hits a Prisma P2002 and fails closed to `needs_review`/`duplicate_unallocated` (`failureCode: duplicate_submitted_hash`) before any provider work.
+- **Persist-before-RPC / first-writer-wins**: the canonical user-submitted hash is CAS-persisted (`submittedTxHash`, guarded by active states and null-or-equal) BEFORE any RPC verification, so a process restart/worker retry resumes the claim from the stored hash. The first claim to persist owns the attempt: a competing claim with a DIFFERENT hash matches zero rows and returns the observed real state without RPC; a competing attempt with the SAME hash hits the unique index P2002 and fails closed to `duplicate_unallocated` review. Hash persistence is never deferred to after RPC, and no second provider claim is ever allowed.
 - **DI boundary**: `USDC_RECEIPT_PROVIDER` (Symbol) abstracts the RPC layer; `ViemUsdcReceiptProvider` is the production implementation. Receipt-not-found is classified by viem's `TransactionReceiptNotFoundError` type (never error-message text) and returned as `null`; all other provider errors propagate as retryable RPC errors.
 
 ## Flow
 
 **Quote** (`UsdcPaymentService.quote`):
+
 1. `assertEnabled` (`billing.usdc.enabled === true`) → `loadOwnedInvoice` (via `BillingAccount.userId`) → `assertInvoiceEligible` (finalized, unpaid, USD, positive total).
 2. `resolveChain`: client `chainId` must be in `USDC_BILLING_CHAIN_IDS` AND have both a configured treasury and RPC URL; without a selector, `chain.defaultChainId` if it is a USDC chain, else 84532.
 3. Derive token (`getSupportedChain(...).usdcAddress`), treasury (config), expected payer (active unfrozen `UserWallet`), confirmations (default 5), expiry (default 24h).
@@ -38,14 +41,16 @@ Files:
 5. Create the attempt with the full snapshot; on a P2002 insert race, reuse the winner only when it is active on the requested chain.
 
 **Claim** (`UsdcPaymentService.claim`):
+
 1. Load owned invoice (must be `finalized`), load attempt (must belong to the invoice, be `method === 'usdc'`, match amount/currency), `assertSnapshotComplete` (fail-closed).
 2. Canonicalize `txHash` to lowercase (format validated; casing can never bypass evidence uniqueness). Terminal states are returned as-is.
 3. A confirming attempt bound to a different hash → `evidence_conflict` review.
-4. RPC `getTransactionReceipt`: `null` → `pending` (retryable), or `confirming` if evidence already recorded, or `expired` if the quote lapsed; throw → `rpc_error` (retryable).
-5. Verify receipt hash matches, block timestamp present, no reorg, transfer not predating the attempt, receipt status `success` (reverted → `failed` for pending, `reorged` review for confirming).
-6. `parseTransfer` strict verification; any mismatch → `needs_review` with a specific reason.
-7. Confirming attempt's recorded evidence must match the current receipt (`evidence_changed` review otherwise); post-expiry timestamp → `expired` (pending) or `evidence_changed` (confirming).
-8. `getBlockNumber`: confirmations = head − receipt block + 1. Below threshold → `markConfirming` (evidence-aware CAS, records evidence, stays active). At/above threshold → `settleConfirmed`.
+4. Persist the canonical submitted hash BEFORE RPC (active-states + null-or-equal CAS, schedules the recovery backoff). A different-hash loser matches zero rows → the observed real state is returned with NO RPC. A same-hash cross-attempt P2002 (migration-only unique `submitted_tx_hash` index) → the active attempt is CAS-marked `needs_review`/`duplicate_unallocated` (`failureCode: duplicate_submitted_hash`) and the sanitized state returned — never a 500, never a permanent pending, never a second provider claim. Non-P2002 errors propagate unchanged.
+5. RPC `getTransactionReceipt`: `null` → `pending` (retryable), or `confirming` if evidence already recorded, or `expired` if the quote lapsed; throw → `rpc_error` (retryable).
+6. Verify receipt hash matches, block timestamp present, no reorg, transfer not predating the attempt, receipt status `success` (reverted → `failed` for pending, `reorged` review for confirming).
+7. `parseTransfer` strict verification; any mismatch → `needs_review` with a specific reason.
+8. Confirming attempt's recorded evidence must match the current receipt (`evidence_changed` review otherwise); post-expiry timestamp → `expired` (pending) or `evidence_changed` (confirming).
+9. `getBlockNumber`: confirmations = head − receipt block + 1. Below threshold → `markConfirming` (evidence-aware CAS, records evidence, stays active). At/above threshold → `settleConfirmed`.
 
 **Settlement** (`settleConfirmed`): `$transaction` → `FOR UPDATE` locks attempt then invoice → re-read attempt → terminal states returned as-is → recorded evidence must match the caller's identity (else `duplicate_unallocated` review) → mark `succeeded` with evidence → `settlementService.settleInvoice` (first-rail-wins CAS) → if another rail won, record `duplicate_unallocated` review in the same transaction. P2002 → `duplicate_unallocated` via evidence-aware CAS.
 

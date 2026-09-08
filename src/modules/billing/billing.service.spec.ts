@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingService } from './billing.service';
 import { BillingQuotaExceededException } from './billing-quota.exception';
+import { InvoiceSettlementService } from './invoice-settlement.service';
 import { PLANS } from './billing-calculator';
 
 const p2002 = () =>
@@ -157,14 +158,20 @@ describe('BillingService', () => {
   const invoiceCount = jest.fn();
   const invoiceCreate = jest.fn();
   const invoiceUpdate = jest.fn();
+  const attemptFindMany = jest.fn();
   const lineCreateMany = jest.fn();
   const lineDeleteMany = jest.fn();
   const transaction = jest.fn();
   const executeRaw = jest.fn();
   const queryRaw = jest.fn();
+  const settleInvoice = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    // Pin the clock to the fixture date the period-based expectations are
+    // written against (2026-08-25), so "next UTC month" assertions never
+    // depend on the wall-clock month the suite happens to run in.
+    jest.useFakeTimers({ now: new Date('2026-08-25T00:00:00.000Z') });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -193,7 +200,11 @@ describe('BillingService', () => {
               aggregate: usageEventAggregate,
             },
             billingReconciliationRun: { findMany: reconciliationRunFindMany },
-            transaction: { findUnique: transactionFindUnique, count: transactionCount, updateMany: transactionUpdateMany },
+            transaction: {
+              findUnique: transactionFindUnique,
+              count: transactionCount,
+              updateMany: transactionUpdateMany,
+            },
             userWallet: { count: walletCount },
             billingInvoice: {
               findUnique: invoiceFindUnique,
@@ -203,10 +214,12 @@ describe('BillingService', () => {
               create: invoiceCreate,
               update: invoiceUpdate,
             },
+            billingPaymentAttempt: { findMany: attemptFindMany },
             billingInvoiceLine: { createMany: lineCreateMany, deleteMany: lineDeleteMany },
             $transaction: transaction,
           },
         },
+        { provide: InvoiceSettlementService, useValue: { settleInvoice } },
       ],
     }).compile();
 
@@ -247,7 +260,11 @@ describe('BillingService', () => {
         aggregate: usageEventAggregate,
       },
       billingReconciliationRun: { findMany: reconciliationRunFindMany },
-      transaction: { findUnique: transactionFindUnique, count: transactionCount, updateMany: transactionUpdateMany },
+      transaction: {
+        findUnique: transactionFindUnique,
+        count: transactionCount,
+        updateMany: transactionUpdateMany,
+      },
       userWallet: { count: walletCount },
       billingInvoice: {
         findUnique: invoiceFindUnique,
@@ -257,11 +274,17 @@ describe('BillingService', () => {
         create: invoiceCreate,
         update: invoiceUpdate,
       },
+      billingPaymentAttempt: { findMany: attemptFindMany },
       billingInvoiceLine: { createMany: lineCreateMany, deleteMany: lineDeleteMany },
     };
     transaction.mockImplementation(async (cb) => cb(tx));
     executeRaw.mockResolvedValue(undefined);
     queryRaw.mockResolvedValue([{ id: 'run-1' }]);
+    attemptFindMany.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('getPlans', () => {
@@ -1135,7 +1158,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1192,7 +1216,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-cross-month' });
 
-      await service.recordSuccessfulOutbound({ ...completeFence,
+      await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         sourceKey: 'tx:tx-1:cross-month:0',
         status: 'posted',
@@ -1210,13 +1235,15 @@ describe('BillingService', () => {
         metadata: { policyVersion: 1 },
       });
 
-      expect(usageEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          billingAccountId: ACCOUNT.id,
-          periodStart: new Date('2026-08-01T00:00:00.000Z'),
-          occurredAt: new Date('2026-09-02T00:00:00.000Z'),
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            periodStart: new Date('2026-08-01T00:00:00.000Z'),
+            occurredAt: new Date('2026-09-02T00:00:00.000Z'),
+          }),
         }),
-      }));
+      );
     });
 
     it('appends a quarantined outbound event with volume 0 and reason metadata', async () => {
@@ -1224,7 +1251,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         sourceKey: 'tx:tx-1:native',
         status: 'quarantined',
@@ -1253,7 +1281,8 @@ describe('BillingService', () => {
 
     it('rejects negative amounts', async () => {
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1272,11 +1301,12 @@ describe('BillingService', () => {
     it('rejects receipt-backed outbound without a transactionId', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           sourceKey: 'tx:tx-1:log:0',
           transactionId: undefined,
-           status: 'posted',
+          status: 'posted',
           periodStart: new Date('2026-08-01T00:00:00.000Z'),
           occurredAt: new Date('2026-08-10T00:00:00.000Z'),
           amountUsdMicros: 1_000_000n,
@@ -1291,7 +1321,8 @@ describe('BillingService', () => {
     it('rejects receipt-backed outbound with a non-posted/quarantined status', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1313,7 +1344,8 @@ describe('BillingService', () => {
       usageEventCreate.mockRejectedValue(p2002());
       usageEventFindUnique.mockResolvedValue(existingPostedRow());
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1341,7 +1373,8 @@ describe('BillingService', () => {
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ volumeUsdMicros: 999n }));
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1368,7 +1401,8 @@ describe('BillingService', () => {
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ receiptBlockNumber: 99999n }));
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1395,7 +1429,8 @@ describe('BillingService', () => {
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ status: 'quarantined' }));
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1420,7 +1455,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(null);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-missing',
           sourceKey: 'tx:tx-missing:log:0',
@@ -1441,7 +1477,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue({ ...TX, userId: 'user-other' });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1470,7 +1507,8 @@ describe('BillingService', () => {
       });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1491,7 +1529,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue({ ...TX, chainId: 1n });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1515,7 +1554,8 @@ describe('BillingService', () => {
       });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1536,7 +1576,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1557,7 +1598,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1578,7 +1620,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
-      await service.recordSuccessfulOutbound({ ...completeFence,
+      await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1618,7 +1661,8 @@ describe('BillingService', () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1644,7 +1688,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1671,7 +1716,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1700,7 +1746,8 @@ describe('BillingService', () => {
       // roundHalfUp(huge * 3n, 10^6) = (huge*3*2 + 10^6) / (2*10^6)
       const expected = (huge * 3n * 2n + 1_000_000n) / 2_000_000n;
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1726,7 +1773,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1752,7 +1800,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1778,7 +1827,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         sourceKey: 'tx:tx-1:native',
         status: 'quarantined',
@@ -1801,7 +1851,8 @@ describe('BillingService', () => {
       // run-1 wrote the row with runId 'run-1'; run-2 replays with 'run-2'
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ reconciliationRunId: 'run-1' }));
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1842,7 +1893,8 @@ describe('BillingService', () => {
       );
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1867,7 +1919,7 @@ describe('BillingService', () => {
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
       const result = await service.recordUnverifiedOutbound({
-         userId: 'user-1',
+        userId: 'user-1',
         sourceKey: 'out:legacy',
         amountUsdMicros: 100n,
       });
@@ -1885,7 +1937,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
-      await service.recordSuccessfulOutbound({ ...completeFence,
+      await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1918,7 +1971,8 @@ describe('BillingService', () => {
       invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -1945,7 +1999,8 @@ describe('BillingService', () => {
       invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           sourceKey: 'tx:tx-1:native',
           status: 'quarantined',
@@ -1967,7 +2022,8 @@ describe('BillingService', () => {
       invoiceFindUnique.mockResolvedValue({ id: 'inv-1', status: 'finalized' });
       usageEventFindUnique.mockResolvedValue(existingPostedRow());
 
-      const result = await service.recordSuccessfulOutbound({ ...completeFence,
+      const result = await service.recordSuccessfulOutbound({
+        ...completeFence,
         userId: 'user-1',
         transactionId: 'tx-1',
         sourceKey: 'tx:tx-1:log:0',
@@ -1996,7 +2052,8 @@ describe('BillingService', () => {
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ volumeUsdMicros: 999n }));
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -2023,7 +2080,8 @@ describe('BillingService', () => {
       usageEventFindUnique.mockResolvedValue(existingPostedRow({ billingAccountId: 'acc-other' }));
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -2049,7 +2107,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -2070,7 +2129,8 @@ describe('BillingService', () => {
       transactionFindUnique.mockResolvedValue(TX);
 
       await expect(
-        service.recordSuccessfulOutbound({ ...completeFence,
+        service.recordSuccessfulOutbound({
+          ...completeFence,
           userId: 'user-1',
           transactionId: 'tx-1',
           sourceKey: 'tx:tx-1:log:0',
@@ -2633,6 +2693,96 @@ describe('BillingService', () => {
       expect(result.status).toBe('finalized');
     });
 
+    it('allocates a succeeded fixed-fee renewal as partial coverage at finalization (never a fake paid)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 109_000_000n, // dynamic: fixed fee + overage
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+      // A fixed-fee renewal attempt succeeded while the invoice was still
+      // open; after finalization the shared boundary gets one catch-up.
+      attemptFindMany.mockResolvedValue([
+        {
+          id: 'att-fixed',
+          invoiceId: 'inv-1',
+          method: 'stripe',
+          status: 'succeeded',
+          stripeChargeKind: 'fixed_fee',
+          amountMicros: 49_000_000n,
+          currency: 'USD',
+          createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        },
+      ]);
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: false,
+        paidByThisAttempt: false,
+        replayed: false,
+        allocatedMicros: 49_000_000n,
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.status).toBe('finalized');
+      // The post-commit catch-up allocates the fixed fee as partial coverage.
+      expect(settleInvoice).toHaveBeenCalledWith(expect.anything(), {
+        id: 'att-fixed',
+        invoiceId: 'inv-1',
+        method: 'stripe',
+      });
+      // The legitimate partial allocation is NOT demoted to
+      // fixed_fee_partial_balance / needs_review: the overage worker collects
+      // the remainder instead. (No updateMany exists on the tx mock, so a
+      // marking attempt would throw and fail this test.)
+    });
+
+    it('recoverRenewalAllocation retries a failed post-commit fixed-fee allocation (bounded catch-up)', async () => {
+      // A finalized invoice whose post-commit allocation never ran: the worker
+      // re-invokes the catch-up and the shared boundary allocates the coverage.
+      attemptFindMany.mockResolvedValue([
+        {
+          id: 'att-fixed',
+          invoiceId: 'inv-1',
+          method: 'stripe',
+          status: 'succeeded',
+          stripeChargeKind: 'fixed_fee',
+          amountMicros: 49_000_000n,
+          currency: 'USD',
+          createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        },
+      ]);
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: false,
+        paidByThisAttempt: false,
+        replayed: false,
+        allocatedMicros: 49_000_000n,
+      });
+
+      await service.recoverRenewalAllocation('inv-1');
+
+      expect(settleInvoice).toHaveBeenCalledWith(expect.anything(), {
+        id: 'att-fixed',
+        invoiceId: 'inv-1',
+        method: 'stripe',
+      });
+    });
+
     it('returns the existing invoice without modifying it', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
@@ -2772,14 +2922,15 @@ describe('BillingService', () => {
         .mockResolvedValueOnce(1) // pending count
         .mockResolvedValue(0); // confirmed count
 
-      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
       expect(transactionCount).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
           where: expect.objectContaining({
-            OR: [{ billingPeriodStart: new Date('2026-05-01T00:00:00.000Z') }, { billingPeriodStart: null }],
+            OR: [
+              { billingPeriodStart: new Date('2026-05-01T00:00:00.000Z') },
+              { billingPeriodStart: null },
+            ],
           }),
         }),
       );
@@ -2833,9 +2984,7 @@ describe('BillingService', () => {
       // a status=confirmed / txHash IS NULL row.
       transactionCount.mockResolvedValueOnce(0).mockResolvedValue(1);
 
-      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
       expect(invoiceCreate).not.toHaveBeenCalled();
     });
 
@@ -2949,11 +3098,20 @@ describe('BillingService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') } },
+              {
+                billingAccountId: 'acc-1',
+                periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') },
+                periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') },
+              },
             ]),
           }),
           orderBy: { startedAt: 'desc' },
-          select: expect.objectContaining({ id: true, status: true, completedAt: true, summary: true }),
+          select: expect.objectContaining({
+            id: true,
+            status: true,
+            completedAt: true,
+            summary: true,
+          }),
         }),
       );
     });
@@ -3249,7 +3407,12 @@ describe('BillingService', () => {
           runType: 'receipt_outbound',
           periodStart: new Date('2026-05-01T00:00:00.000Z'),
           periodEnd: new Date('2026-06-01T00:00:00.000Z'),
-          summary: { userId: 'user-other', complete: true, notFound: 1, accountingPeriods: ['2026-05-01T00:00:00.000Z'] },
+          summary: {
+            userId: 'user-other',
+            complete: true,
+            notFound: 1,
+            accountingPeriods: ['2026-05-01T00:00:00.000Z'],
+          },
         },
       ]);
       // Discovery must include the account-scoped overlap branch WITHOUT an
@@ -3260,7 +3423,11 @@ describe('BillingService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') } },
+              {
+                billingAccountId: 'acc-1',
+                periodStart: { lte: new Date('2026-06-01T00:00:00.000Z') },
+                periodEnd: { gte: new Date('2026-05-01T00:00:00.000Z') },
+              },
             ]),
           }),
         }),
@@ -3658,7 +3825,11 @@ describe('BillingService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              { billingAccountId: 'acc-1', periodStart: { lte: new Date('2026-08-01T00:00:00.000Z') }, periodEnd: { gte: new Date('2026-07-01T00:00:00.000Z') } },
+              {
+                billingAccountId: 'acc-1',
+                periodStart: { lte: new Date('2026-08-01T00:00:00.000Z') },
+                periodEnd: { gte: new Date('2026-07-01T00:00:00.000Z') },
+              },
             ]),
           }),
         }),
@@ -3915,28 +4086,42 @@ describe('BillingService', () => {
     });
 
     it('keeps matching account runs relevant when summary identity is contradictory', () => {
-      const relevant = (service as any).isRunRelevantToPeriod({
-        id: 'run-corrupt',
-        billingAccountId: ACCOUNT.id,
-        accountUserId: 'user-1',
-        runType: 'receipt_outbound',
-        periodStart: new Date('2026-05-01T00:00:00.000Z'),
-        periodEnd: new Date('2026-06-01T00:00:00.000Z'),
-        summary: { userId: 'user-other' },
-      }, new Date('2026-05-01T00:00:00.000Z'), new Date('2026-06-01T00:00:00.000Z'), 'user-1', ACCOUNT.id, []);
+      const relevant = (service as any).isRunRelevantToPeriod(
+        {
+          id: 'run-corrupt',
+          billingAccountId: ACCOUNT.id,
+          accountUserId: 'user-1',
+          runType: 'receipt_outbound',
+          periodStart: new Date('2026-05-01T00:00:00.000Z'),
+          periodEnd: new Date('2026-06-01T00:00:00.000Z'),
+          summary: { userId: 'user-other' },
+        },
+        new Date('2026-05-01T00:00:00.000Z'),
+        new Date('2026-06-01T00:00:00.000Z'),
+        'user-1',
+        ACCOUNT.id,
+        [],
+      );
       expect(relevant).toBe(true);
     });
 
     it('keeps a usage-linked run relevant when stored account and user scope conflicts', () => {
-      const relevant = (service as any).isRunRelevantToPeriod({
-        id: 'run-linked',
-        billingAccountId: 'acc-other',
-        accountUserId: 'user-other',
-        runType: 'receipt_outbound',
-        periodStart: new Date('2026-05-01T00:00:00.000Z'),
-        periodEnd: new Date('2026-06-01T00:00:00.000Z'),
-        summary: { userId: 'user-other' },
-      }, new Date('2026-05-01T00:00:00.000Z'), new Date('2026-06-01T00:00:00.000Z'), 'user-1', ACCOUNT.id, ['run-linked']);
+      const relevant = (service as any).isRunRelevantToPeriod(
+        {
+          id: 'run-linked',
+          billingAccountId: 'acc-other',
+          accountUserId: 'user-other',
+          runType: 'receipt_outbound',
+          periodStart: new Date('2026-05-01T00:00:00.000Z'),
+          periodEnd: new Date('2026-06-01T00:00:00.000Z'),
+          summary: { userId: 'user-other' },
+        },
+        new Date('2026-05-01T00:00:00.000Z'),
+        new Date('2026-06-01T00:00:00.000Z'),
+        'user-1',
+        ACCOUNT.id,
+        ['run-linked'],
+      );
 
       // Relevance is retained from immutable usage provenance; the later risk
       // fence blocks the contradictory run instead of isolating it.
@@ -3945,10 +4130,20 @@ describe('BillingService', () => {
 
     it('keeps matching partial/global legacy scopes relevant but isolates another user', () => {
       const check = (billingAccountId: string | null, accountUserId: string | null) =>
-        (service as any).isRunRelevantToPeriod({
-          id: 'run-legacy', billingAccountId, accountUserId,
-          runType: 'receipt_outbound', summary: {},
-        }, new Date('2026-05-01T00:00:00.000Z'), new Date('2026-06-01T00:00:00.000Z'), 'user-1', ACCOUNT.id, []);
+        (service as any).isRunRelevantToPeriod(
+          {
+            id: 'run-legacy',
+            billingAccountId,
+            accountUserId,
+            runType: 'receipt_outbound',
+            summary: {},
+          },
+          new Date('2026-05-01T00:00:00.000Z'),
+          new Date('2026-06-01T00:00:00.000Z'),
+          'user-1',
+          ACCOUNT.id,
+          [],
+        );
       expect(check(null, 'user-1')).toBe(true);
       expect(check(null, null)).toBe(true);
       expect(check(null, 'user-other')).toBe(false);

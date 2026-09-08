@@ -33,6 +33,7 @@ export const STRIPE_WEBHOOK_EVENT_TYPES: ReadonlySet<string> = new Set([
   'checkout.session.async_payment_failed',
   'payment_intent.succeeded',
   'payment_intent.payment_failed',
+  'payment_intent.canceled',
   'payment_intent.processing',
   'customer.subscription.created',
   'customer.subscription.updated',
@@ -74,6 +75,18 @@ export const STRIPE_CHARGE_KIND_FIXED_FEE = 'fixed_fee';
  * and vice versa.
  */
 export const STRIPE_CHARGE_KIND_FULL = 'full';
+
+/**
+ * A worker-created automatic overage attempt's `stripeChargeKind`. It is
+ * created only after the renewal invoice has been finalized AND a succeeded
+ * fixed-fee attempt has already been allocated against it AND the remainder
+ * (`totalMicros - allocatedMicros`) is positive. The amount is the persisted
+ * remainder snapshot; a PaymentIntent for this kind is charged off-session
+ * against the customer's default payment method with a stable idempotency key,
+ * and may never be created while another active full/overage payment attempt
+ * exists or the invoice is already paid.
+ */
+export const STRIPE_CHARGE_KIND_OVERAGE = 'overage';
 
 /**
  * Stripe renewal materialization may only bind a fixed-fee recurring attempt to

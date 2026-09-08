@@ -13,6 +13,7 @@ import { UsdcPaymentService } from './onchain/usdc-payment.service';
 import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
 import {
+  STRIPE_CHARGE_KIND_OVERAGE,
   STRIPE_CLIENT,
   STRIPE_DEFERRED_BACKOFF_MS,
   STRIPE_DEFERRED_MAX_RETRIES,
@@ -26,6 +27,10 @@ const RECONCILE_PAGES_PER_ACCOUNT = 5;
 const USDC_CLAIM_BATCH = 100;
 /** Bounded batch of deferred Stripe events retried per tick. */
 const STRIPE_DEFERRED_BATCH = 50;
+/** Bounded batch of pending overage charges recovered per tick. */
+const OVERAGE_RECOVERY_BATCH = 50;
+/** Bounded automatic overage charges created per account per tick. */
+const OVERAGE_CHARGE_PER_ACCOUNT = 5;
 /** Scheduler interval for the worker pass (5 minutes). */
 const WORKER_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -71,9 +76,7 @@ export class BillingWorkerService implements OnModuleInit {
         `Billing worker enabled (workerId=${this.workerId}, interval=${WORKER_INTERVAL_MS}ms)`,
       );
     } else {
-      this.logger.log(
-        'Billing worker is disabled (set BILLING_WORKER_ENABLED=true to enable)',
-      );
+      this.logger.log('Billing worker is disabled (set BILLING_WORKER_ENABLED=true to enable)');
     }
   }
 
@@ -96,6 +99,7 @@ export class BillingWorkerService implements OnModuleInit {
     try {
       await this.reconcileAndFinalizeAll();
       await this.recoverUsdcClaims();
+      await this.recoverOverageCharges();
       await this.retryDeferredStripeEvents();
       if (this.stripePayments) await this.stripePayments.recoverPendingCheckouts(this.workerId);
     } catch (error) {
@@ -103,9 +107,7 @@ export class BillingWorkerService implements OnModuleInit {
       // must never kill the scheduler loop or leak secrets/account/user data.
       // Individual account/attempt scopes already log sanitized failures above;
       // this catch is the last-resort boundary for anything that escaped them.
-      this.logger.error(
-        `Billing worker tick failed: ${sanitizeErrorMessage(getErrorText(error))}`,
-      );
+      this.logger.error(`Billing worker tick failed: ${sanitizeErrorMessage(getErrorText(error))}`);
     } finally {
       this.ticking = false;
     }
@@ -148,9 +150,7 @@ export class BillingWorkerService implements OnModuleInit {
   private async drainAccount(account: { id: string; userId: string }): Promise<void> {
     const now = new Date();
     const currentPeriodStart = this.monthStart(now);
-    const currentPeriodEnd = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-    );
+    const currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
     // Enumerate this account's eligible target periods: the current UTC period
     // plus every open invoice period. Each period is reconciled with the
@@ -172,10 +172,15 @@ export class BillingWorkerService implements OnModuleInit {
         end: invoice.periodEnd,
       });
     }
-    periods.set(currentPeriodStart.toISOString(), { start: currentPeriodStart, end: currentPeriodEnd });
+    periods.set(currentPeriodStart.toISOString(), {
+      start: currentPeriodStart,
+      end: currentPeriodEnd,
+    });
 
     let lostOwnership = false;
-    for (const { start, end } of [...periods.values()].sort((a, b) => a.start.getTime() - b.start.getTime())) {
+    for (const { start, end } of [...periods.values()].sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    )) {
       for (let page = 0; page < RECONCILE_PAGES_PER_ACCOUNT; page++) {
         const result = await this.reconciliation.reconcile(account.userId, {
           limit: 200,
@@ -225,6 +230,217 @@ export class BillingWorkerService implements OnModuleInit {
 
     await this.materializeDueRecurringPeriod(account, now);
     await this.finalizeEligiblePeriods(account);
+    await this.recoverUnallocatedFixedFee(account);
+    await this.attemptRenewalOverage(account);
+  }
+
+  // ── Renewal fixed-fee allocation catch-up ──────────────────────────────────
+
+  /**
+   * Finds finalized unpaid invoices whose succeeded fixed-fee attempt was
+   * never allocated (the post-commit allocation in `finalizeInvoice` can fail
+   * after the finalize transaction already committed) and retries the
+   * allocation via the shared boundary. This makes the renewal flow resilient:
+   * a transient post-commit failure never leaves an invoice permanently stuck
+   * with a succeeded-but-unallocated fixed fee, and once allocated the overage
+   * worker can collect the remainder. Idempotent and bounded per account/tick.
+   */
+  private async recoverUnallocatedFixedFee(account: { id: string; userId: string }): Promise<void> {
+    const candidates = await this.prisma.billingInvoice.findMany({
+      where: {
+        billingAccountId: account.id,
+        status: 'finalized',
+        paidAt: null,
+        settlementAttemptId: null,
+        paymentAttempts: {
+          some: {
+            method: 'stripe',
+            stripeChargeKind: 'fixed_fee',
+            status: 'succeeded',
+            allocatedAt: null,
+          },
+        },
+      },
+      orderBy: { periodStart: 'asc' },
+      take: OVERAGE_CHARGE_PER_ACCOUNT,
+    });
+    for (const invoice of candidates ?? []) {
+      try {
+        await this.billing.recoverRenewalAllocation(invoice.id);
+      } catch (error) {
+        this.logger.warn(
+          `Billing worker fixed-fee allocation recovery failed for invoice ${invoice.id}: ${sanitizeErrorMessage(getErrorText(error))}`,
+        );
+      }
+    }
+  }
+
+  // ── Renewal overage (automatic remainder collection) ──────────────────────
+
+  /**
+   * Triggers the automatic overage charge for this account's finalized renewal
+   * invoices: after the local invoice is frozen and the fixed-fee renewal
+   * coverage has been allocated, the remainder (`totalMicros - allocatedMicros`)
+   * is charged off-session. All safety gates live in
+   * `StripePaymentService.chargeRenewalOverage`; the worker only supplies the
+   * candidate invoices (already filtered to finalized/unpaid renewal invoices
+   * with allocated fixed-fee coverage) and sanitized audits. The amount is
+   * persisted on the attempt at creation and never recomputed per tick.
+   */
+  private async attemptRenewalOverage(account: { id: string; userId: string }): Promise<void> {
+    if (!this.stripePayments || !this.stripe) return;
+    const accountRow = await this.prisma.billingAccount.findUnique({
+      where: { id: account.id },
+    });
+    if (!accountRow?.stripeCustomerId) return;
+    const candidates = await this.prisma.billingInvoice.findMany({
+      where: {
+        billingAccountId: account.id,
+        status: 'finalized',
+        paidAt: null,
+        settlementAttemptId: null,
+        periodEnd: { lte: new Date() },
+        paymentAttempts: {
+          some: {
+            method: 'stripe',
+            stripeChargeKind: 'fixed_fee',
+            status: 'succeeded',
+            allocatedAt: { not: null },
+          },
+        },
+      },
+      orderBy: { periodStart: 'asc' },
+      take: OVERAGE_CHARGE_PER_ACCOUNT,
+    });
+    for (const invoice of candidates) {
+      const remainder = invoice.totalMicros - (invoice.allocatedMicros ?? 0n);
+      if (remainder <= 0n) continue;
+      try {
+        const outcome = await this.stripePayments.chargeRenewalOverage(
+          accountRow,
+          invoice,
+          this.workerId,
+        );
+        if (outcome === 'needs_review') {
+          await this.audit({
+            actorType: 'system',
+            eventType: 'billing.stripe.overage.needs_review',
+            userId: account.userId,
+            riskLevel: 'high',
+            result: 'denied',
+            reason: 'overage_failed_closed',
+            metadata: {
+              invoiceId: invoice.id,
+              period: formatUtcMonth(invoice.periodStart),
+              remainderMicros: remainder.toString(),
+              workerId: this.workerId,
+            },
+          });
+        } else if (outcome === 'failed') {
+          await this.audit({
+            actorType: 'system',
+            eventType: 'billing.stripe.overage.failed',
+            userId: account.userId,
+            riskLevel: 'medium',
+            result: 'denied',
+            reason: 'overage_charge_failed',
+            metadata: {
+              invoiceId: invoice.id,
+              period: formatUtcMonth(invoice.periodStart),
+              remainderMicros: remainder.toString(),
+              workerId: this.workerId,
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Billing worker overage charge skipped for invoice ${invoice.id}: ${sanitizeErrorMessage(getErrorText(error))}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Resumes interrupted automatic overage charges. Two recovery paths, both
+   * bounded and lease/backoff-guarded (fail-closed in the DB query AND the
+   * atomic claim CAS — an attempt whose backoff is still in the future is never
+   * touched even when its 2-minute lease has expired):
+   *   * a pending attempt WITHOUT a persisted PaymentIntent id is re-issued
+   *     through `recoverOverageCharge` — the SAME attempt id and therefore the
+   *     SAME Stripe idempotency key, so a retry can never produce a second
+   *     charge;
+   *   * a pending attempt WITH a persisted PaymentIntent id is actively
+   *     reconciled through `StripeWebhookService.reconcileOveragePaymentIntent`
+   *     (retrieve, never create) so a lost webhook can never leave the payment
+   *     stuck: succeeded PIs are settled through the shared coverage boundary,
+   *     failed/canceled/SCA/identity-mismatch PIs are surfaced with a safe
+   *     state, and processing/transient PIs stay pending with a re-check
+   *     backoff.
+   */
+  private async recoverOverageCharges(): Promise<void> {
+    if (!this.stripePayments || !this.stripe) return;
+    const now = new Date();
+    const due = await this.prisma.billingPaymentAttempt.findMany({
+      where: {
+        method: 'stripe',
+        stripeChargeKind: STRIPE_CHARGE_KIND_OVERAGE,
+        status: 'pending',
+        AND: [
+          // The recovery lease must be claimable.
+          {
+            OR: [
+              { checkoutRetryOwnerId: null },
+              { checkoutRetryLeaseExpiresAt: null },
+              { checkoutRetryLeaseExpiresAt: { lt: now } },
+            ],
+          },
+          // The retry BACKOFF must have elapsed (or never been scheduled).
+          {
+            OR: [{ checkoutNextRetryAt: null }, { checkoutNextRetryAt: { lte: now } }],
+          },
+        ],
+      },
+      orderBy: { createdAt: 'asc' },
+      take: OVERAGE_RECOVERY_BATCH,
+    });
+    for (const attempt of due) {
+      try {
+        const outcome = attempt.stripePaymentIntentId
+          ? await this.webhook.reconcileOveragePaymentIntent(attempt, this.workerId)
+          : await this.stripePayments.recoverOverageCharge(attempt, this.workerId);
+        if (outcome === 'needs_review') {
+          await this.audit({
+            actorType: 'system',
+            eventType: 'billing.stripe.overage.needs_review',
+            riskLevel: 'high',
+            result: 'denied',
+            reason: 'overage_recovery_exhausted',
+            metadata: {
+              paymentAttemptId: attempt.id,
+              invoiceId: attempt.invoiceId,
+              workerId: this.workerId,
+            },
+          });
+        } else if (outcome === 'failed') {
+          await this.audit({
+            actorType: 'system',
+            eventType: 'billing.stripe.overage.failed',
+            riskLevel: 'medium',
+            result: 'denied',
+            reason: 'overage_charge_failed',
+            metadata: {
+              paymentAttemptId: attempt.id,
+              invoiceId: attempt.invoiceId,
+              workerId: this.workerId,
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Billing worker overage recovery failed for attempt ${attempt.id}: ${sanitizeErrorMessage(getErrorText(error))}`,
+        );
+      }
+    }
   }
 
   /**
@@ -490,7 +706,12 @@ export class BillingWorkerService implements OnModuleInit {
               nextRetryAt: eventRow.nextRetryAt,
               retryOwnerId: this.workerId,
             },
-            data: { retryCount, nextRetryAt: new Date(Date.now() + backoff), retryOwnerId: null, retryLeaseExpiresAt: null },
+            data: {
+              retryCount,
+              nextRetryAt: new Date(Date.now() + backoff),
+              retryOwnerId: null,
+              retryLeaseExpiresAt: null,
+            },
           });
           if (updated.count === 0) {
             // A concurrent webhook processed the event — never reschedule it.
@@ -519,9 +740,7 @@ export class BillingWorkerService implements OnModuleInit {
    * service; never include full Stripe payloads, receipts, RPC URLs, calldata,
    * or credentials.
    */
-  private async audit(
-    input: Parameters<SecurityEventService['record']>[0],
-  ): Promise<void> {
+  private async audit(input: Parameters<SecurityEventService['record']>[0]): Promise<void> {
     try {
       await this.securityEvents.record({
         actorType: input.actorType,

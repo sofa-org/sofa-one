@@ -151,7 +151,7 @@ describe('InvoiceSettlementService concurrency (real PostgreSQL)', () => {
         ),
       ]);
 
-      const winners = [stripeId, usdcId].filter((_, idx) => results[idx].settled);
+      const winners = [stripeId, usdcId].filter((_, idx) => results[idx].paidByThisAttempt);
       expect(winners.length).toBe(1);
 
       const invoice = await prisma.billingInvoice.findUnique({

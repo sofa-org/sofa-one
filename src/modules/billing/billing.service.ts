@@ -767,11 +767,16 @@ export class BillingService {
     return this.withRetryOnSerialization(() =>
       this.withBillingPeriodLock(input.userId, periodStart, async (tx, billingAccountId) => {
         if (
-          !input.reconciliationRunId || !input.reconciliationRunType ||
-          !input.reconciliationOwnerId || !input.reconciliationAccountId ||
-          !input.reconciliationPeriodStart || !input.reconciliationPeriodEnd ||
-          !input.reconciliationExpectedTransactionStatus || !input.transactionId ||
-          input.reconciliationExpectedTxHash === undefined || input.reconciliationExpectedTxHash === null ||
+          !input.reconciliationRunId ||
+          !input.reconciliationRunType ||
+          !input.reconciliationOwnerId ||
+          !input.reconciliationAccountId ||
+          !input.reconciliationPeriodStart ||
+          !input.reconciliationPeriodEnd ||
+          !input.reconciliationExpectedTransactionStatus ||
+          !input.transactionId ||
+          input.reconciliationExpectedTxHash === undefined ||
+          input.reconciliationExpectedTxHash === null ||
           input.reconciliationExpectedChainId === undefined ||
           !input.reconciliationExpectedWalletAddress ||
           !isValidFenceDate(input.reconciliationPeriodStart) ||
@@ -782,7 +787,8 @@ export class BillingService {
           ) ||
           input.reconciliationAccountId !== billingAccountId ||
           input.reconciliationPeriodStart.getTime() !== periodStart.getTime() ||
-          !input.periodStart || input.periodStart.getTime() !== periodStart.getTime()
+          !input.periodStart ||
+          input.periodStart.getTime() !== periodStart.getTime()
         ) {
           throw new ConflictException('Incomplete reconciliation fence');
         }
@@ -866,7 +872,8 @@ export class BillingService {
             },
           });
           if (
-            (input.reconciliationTransactionStatus === 'confirmed' || input.reconciliationTransactionStatus === 'quarantined') &&
+            (input.reconciliationTransactionStatus === 'confirmed' ||
+              input.reconciliationTransactionStatus === 'quarantined') &&
             input.transactionId &&
             input.reconciliationExpectedTransactionStatus
           ) {
@@ -886,7 +893,10 @@ export class BillingService {
                   : {}),
               },
               data: {
-                status: input.reconciliationTransactionStatus === 'confirmed' ? 'confirmed' : 'needs_review',
+                status:
+                  input.reconciliationTransactionStatus === 'confirmed'
+                    ? 'confirmed'
+                    : 'needs_review',
                 ...(input.reconciliationTransactionStatus === 'quarantined'
                   ? { failureReason: 'billing_reconciliation_quarantine' }
                   : {}),
@@ -894,7 +904,9 @@ export class BillingService {
               },
             });
             if (changed.count === 0) {
-              throw new ConflictException('Transaction state changed while posting billing evidence');
+              throw new ConflictException(
+                'Transaction state changed while posting billing evidence',
+              );
             }
           }
           return { outcome: 'inserted' };
@@ -1082,9 +1094,9 @@ export class BillingService {
       throw new ConflictException('periodStart must match the explicit accounting period');
     }
     if (input.reconciliationPeriodStart && input.reconciliationPeriodEnd) {
-      const expectedEnd = new Date(Date.UTC(
-        targetPeriod.getUTCFullYear(), targetPeriod.getUTCMonth() + 1, 1,
-      ));
+      const expectedEnd = new Date(
+        Date.UTC(targetPeriod.getUTCFullYear(), targetPeriod.getUTCMonth() + 1, 1),
+      );
       if (input.reconciliationPeriodEnd.getTime() !== expectedEnd.getTime()) {
         throw new ConflictException('reconciliation period must be a complete UTC month');
       }
@@ -1466,7 +1478,9 @@ export class BillingService {
           activeWallets,
           totals,
         });
-        const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
+        const snapshotHash = createHash('sha256')
+          .update(canonicalBillingJson(snapshot))
+          .digest('hex');
 
         try {
           if (lockedExisting) {
@@ -1575,7 +1589,11 @@ export class BillingService {
   /**
    * A Stripe renewal can be confirmed before its local open invoice reaches
    * finalization. Once finalization has frozen the exact amount, give the
-   * shared first-rail settlement boundary one catch-up opportunity.
+   * shared allocation boundary one catch-up opportunity: the fixed-fee attempt
+   * allocates its coverage toward the frozen total (partial when the invoice
+   * carries dynamic overage, full when it does not). A legitimate partial
+   * allocation is a success, not a `fixed_fee_partial_balance` review: the
+   * separately-payable overage remainder is collected by the overage worker.
    */
   private async settleFinalizedRenewalPostCommit(invoiceId: string): Promise<void> {
     if (!this.invoiceSettlement) return;
@@ -1585,35 +1603,50 @@ export class BillingService {
         orderBy: { createdAt: 'asc' },
       });
       for (const attempt of attempts) {
-        const settled = await this.invoiceSettlement!.settleInvoice(tx, {
+        const result = await this.invoiceSettlement!.settleInvoice(tx, {
           id: attempt.id,
           invoiceId,
           method: 'stripe',
         });
-        if (!settled.settled) {
-          const invoice = await tx.billingInvoice.findUnique({
-            where: { id: invoiceId },
-            select: { status: true, paidAt: true, totalMicros: true, currency: true, settlementAttemptId: true },
-          });
-          if (invoice?.settlementAttemptId === attempt.id) continue;
-          const differentWinner = Boolean(
-            invoice?.settlementAttemptId && invoice.settlementAttemptId !== attempt.id,
-          );
-          const exactPayableMismatch = Boolean(
-            invoice &&
-              invoice.status === 'finalized' &&
-              invoice.paidAt === null &&
-              (attempt.amountMicros !== invoice.totalMicros || attempt.currency !== invoice.currency),
-          );
-          if (!differentWinner && !exactPayableMismatch) continue;
-          const reason = differentWinner ? 'duplicate_unallocated' : 'fixed_fee_partial_balance';
-          await tx.billingPaymentAttempt.updateMany({
-            where: { id: attempt.id, status: 'succeeded' },
-            data: { status: 'needs_review', reviewReason: reason },
-          });
-        }
+        if (result.allocated || result.replayed) continue;
+        // No new coverage: either the invoice was already paid by another
+        // rail (record the unallocated success for review) or the attempt
+        // failed its preconditions. Never fabricate a settlement.
+        const invoice = await tx.billingInvoice.findUnique({
+          where: { id: invoiceId },
+          select: {
+            status: true,
+            paidAt: true,
+            totalMicros: true,
+            currency: true,
+            settlementAttemptId: true,
+          },
+        });
+        if (invoice?.settlementAttemptId === attempt.id) continue;
+        const differentWinner = Boolean(
+          invoice?.settlementAttemptId && invoice.settlementAttemptId !== attempt.id,
+        );
+        if (!differentWinner) continue;
+        await tx.billingPaymentAttempt.updateMany({
+          where: { id: attempt.id, status: 'succeeded' },
+          data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
+        });
       }
     });
+  }
+
+  /**
+   * Bounded catch-up for a finalized invoice whose post-commit fixed-fee
+   * allocation never ran or failed (e.g. a transient DB error after the
+   * finalize transaction committed). The worker calls this for every finalized
+   * unpaid invoice that still has a succeeded fixed-fee attempt with
+   * `allocatedAt IS NULL`, so the fixed-fee coverage is eventually recorded and
+   * the overage worker can then collect the remainder. Idempotent and safe to
+   * re-run every tick: already-allocated attempts are replays.
+   */
+  async recoverRenewalAllocation(invoiceId: string): Promise<void> {
+    if (!this.invoiceSettlement) return;
+    await this.settleFinalizedRenewalPostCommit(invoiceId);
   }
 
   // ── Internal helpers ────────────────────────────────────────────────────────
@@ -1748,7 +1781,7 @@ export class BillingService {
       },
     });
 
-// Newest-first: pick the first run relevant to this user AND this target
+    // Newest-first: pick the first run relevant to this user AND this target
     // accounting period. Usage-linked runs are always relevant; unlinked runs
     // are scoped by userId and validated accountingPeriods coverage, with
     // missing/legacy/malformed coverage or unresolved risk kept conservatively
@@ -1762,13 +1795,16 @@ export class BillingService {
       const bTime = b.startedAt?.getTime() ?? 0;
       return bTime - aTime;
     })[0];
-    if (newestRelevantRun && isRiskyReconciliationRun(newestRelevantRun, end, {
-      accountId,
-      userId,
-      runType: 'receipt_outbound',
-      periodStart: start,
-      periodEnd: end,
-    })) {
+    if (
+      newestRelevantRun &&
+      isRiskyReconciliationRun(newestRelevantRun, end, {
+        accountId,
+        userId,
+        runType: 'receipt_outbound',
+        periodStart: start,
+        periodEnd: end,
+      })
+    ) {
       throw new ConflictException(
         'Cannot finalize invoice: reconciliation has unresolved errors or conflicts',
       );
@@ -1857,7 +1893,11 @@ export class BillingService {
     // Nullable identity is legacy/unprovable, never a global clean run.
     if (run.billingAccountId !== undefined && run.billingAccountId !== null) {
       if (run.billingAccountId !== accountId) return false;
-    } else if (run.accountUserId !== undefined && run.accountUserId !== null && run.accountUserId !== userId) {
+    } else if (
+      run.accountUserId !== undefined &&
+      run.accountUserId !== null &&
+      run.accountUserId !== userId
+    ) {
       return false;
     }
     const summary = (run.summary ?? {}) as Record<string, unknown>;
@@ -1867,8 +1907,14 @@ export class BillingService {
     if (run.billingAccountId === undefined || run.accountUserId === undefined) return true;
     if (run.runType === undefined || run.runType !== 'receipt_outbound') return true;
     if (run.periodStart !== undefined && run.periodStart.getTime() !== start.getTime()) return true;
-    if (run.periodEnd !== undefined && run.periodEnd !== null && run.periodEnd.getTime() !== end.getTime()) return true;
-    if (run.periodStart === undefined || run.periodEnd === undefined || run.periodEnd === null) return true;
+    if (
+      run.periodEnd !== undefined &&
+      run.periodEnd !== null &&
+      run.periodEnd.getTime() !== end.getTime()
+    )
+      return true;
+    if (run.periodStart === undefined || run.periodEnd === undefined || run.periodEnd === null)
+      return true;
     const runUserId = summary.userId;
     if (typeof runUserId === 'string' && runUserId !== userId) return true;
     if (summary.complete !== true) return true;
@@ -2240,16 +2286,25 @@ function isRiskyReconciliationRun(
     periodEnd?: Date | null;
   },
   periodEnd: Date,
-  target: { accountId: string; userId: string; runType: string; periodStart: Date; periodEnd: Date },
+  target: {
+    accountId: string;
+    userId: string;
+    runType: string;
+    periodStart: Date;
+    periodEnd: Date;
+  },
 ): boolean {
   if (run.status !== 'completed') return true;
   if (
     run.billingAccountId !== target.accountId ||
     run.accountUserId !== target.userId ||
     run.runType !== target.runType ||
-    !(run.periodStart instanceof Date) || run.periodStart.getTime() !== target.periodStart.getTime() ||
-    !(run.periodEnd instanceof Date) || run.periodEnd.getTime() !== target.periodEnd.getTime()
-  ) return true;
+    !(run.periodStart instanceof Date) ||
+    run.periodStart.getTime() !== target.periodStart.getTime() ||
+    !(run.periodEnd instanceof Date) ||
+    run.periodEnd.getTime() !== target.periodEnd.getTime()
+  )
+    return true;
   const summary = (run.summary ?? {}) as Record<string, unknown>;
   if (
     summary.userId !== target.userId ||
@@ -2258,13 +2313,30 @@ function isRiskyReconciliationRun(
     summary.runType !== target.runType ||
     summary.periodStart !== target.periodStart.toISOString() ||
     summary.periodEnd !== target.periodEnd.toISOString()
-  ) return true;
+  )
+    return true;
   const requiredCounters = [
-    'scanned', 'notFound', 'transientError', 'reverted', 'posted', 'quarantined',
-    'updated', 'errors', 'conflicts', 'replayed', 'casNoops', 'noHash', 'retryable',
+    'scanned',
+    'notFound',
+    'transientError',
+    'reverted',
+    'posted',
+    'quarantined',
+    'updated',
+    'errors',
+    'conflicts',
+    'replayed',
+    'casNoops',
+    'noHash',
+    'retryable',
     'remainingUnresolved',
   ];
-  if (!requiredCounters.every((key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0)) return true;
+  if (
+    !requiredCounters.every(
+      (key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0,
+    )
+  )
+    return true;
   const errors = summary.errors as number;
   const conflicts = summary.conflicts as number;
   const notFound = summary.notFound as number;
@@ -2308,7 +2380,8 @@ function isRiskyReconciliationRun(
 function isValidHighWaterMark(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
   const hwm = value as Record<string, unknown>;
-  if (typeof hwm.createdAt !== 'string' || typeof hwm.id !== 'string' || hwm.id.length === 0) return false;
+  if (typeof hwm.createdAt !== 'string' || typeof hwm.id !== 'string' || hwm.id.length === 0)
+    return false;
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(hwm.createdAt)) return false;
   const parsed = new Date(hwm.createdAt);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString() === hwm.createdAt;
@@ -2323,11 +2396,27 @@ function hasUnresolvedRunRisk(run: { status: string; summary: unknown }): boolea
   if (run.status !== 'completed') return true;
   const summary = (run.summary ?? {}) as Record<string, unknown>;
   const requiredCounters = [
-    'scanned', 'notFound', 'transientError', 'reverted', 'posted', 'quarantined',
-    'updated', 'errors', 'conflicts', 'replayed', 'casNoops', 'noHash', 'retryable',
+    'scanned',
+    'notFound',
+    'transientError',
+    'reverted',
+    'posted',
+    'quarantined',
+    'updated',
+    'errors',
+    'conflicts',
+    'replayed',
+    'casNoops',
+    'noHash',
+    'retryable',
     'remainingUnresolved',
   ];
-  if (!requiredCounters.every((key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0)) return true;
+  if (
+    !requiredCounters.every(
+      (key) => Number.isSafeInteger(summary[key]) && (summary[key] as number) >= 0,
+    )
+  )
+    return true;
   const errors = typeof summary.errors === 'number' ? summary.errors : 0;
   const conflicts = typeof summary.conflicts === 'number' ? summary.conflicts : 0;
   const notFound = typeof summary.notFound === 'number' ? summary.notFound : 0;
@@ -2335,9 +2424,18 @@ function hasUnresolvedRunRisk(run: { status: string; summary: unknown }): boolea
   const noHash = typeof summary.noHash === 'number' ? summary.noHash : 0;
   const quarantined = typeof summary.quarantined === 'number' ? summary.quarantined : 0;
   const retryable = typeof summary.retryable === 'number' ? summary.retryable : 0;
-  const remainingUnresolved = typeof summary.remainingUnresolved === 'number' ? summary.remainingUnresolved : 0;
-  return errors > 0 || conflicts > 0 || notFound > 0 || transientError > 0 ||
-    noHash > 0 || quarantined > 0 || retryable > 0 || remainingUnresolved > 0;
+  const remainingUnresolved =
+    typeof summary.remainingUnresolved === 'number' ? summary.remainingUnresolved : 0;
+  return (
+    errors > 0 ||
+    conflicts > 0 ||
+    notFound > 0 ||
+    transientError > 0 ||
+    noHash > 0 ||
+    quarantined > 0 ||
+    retryable > 0 ||
+    remainingUnresolved > 0
+  );
 }
 
 /**

@@ -75,6 +75,7 @@ function invoice(overrides: Record<string, unknown> = {}) {
     paidAt: null,
     paidVia: null,
     settlementAttemptId: null,
+    allocatedMicros: 0n,
     ...overrides,
   };
 }
@@ -112,6 +113,8 @@ function usdcAttempt(overrides: Record<string, unknown> = {}) {
     receiptEvidence: null,
     reviewReason: null,
     lastCheckedAt: null,
+    submittedTxHash: null,
+    nextCheckAt: null,
     createdAt: new Date('2026-06-01T00:00:00.000Z'),
     updatedAt: new Date('2026-06-01T00:00:00.000Z'),
     succeededAt: null,
@@ -237,6 +240,9 @@ describe('UsdcPaymentService', () => {
     });
     txAttemptFindUnique.mockResolvedValue(usdcAttempt());
     attemptUpdateMany.mockResolvedValue({ count: 1 });
+    // The claim path re-reads the invoice under the row lock to reject stale
+    // quotes whose persisted amount exceeds the current remaining balance.
+    txInvoiceFindUnique.mockResolvedValue(invoice({ settlementAttemptId: null }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -466,6 +472,164 @@ describe('UsdcPaymentService', () => {
     });
   });
 
+  describe('quote/claim — renewal remainder (after a fixed-fee allocation)', () => {
+    beforeEach(() => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      walletFindUnique.mockResolvedValue({
+        userId: 'user-1',
+        walletAddress: PAYER,
+        status: 'active',
+        frozenAt: null,
+      });
+      attemptFindFirst.mockResolvedValue(null);
+      attemptCreate.mockResolvedValue(usdcAttempt());
+    });
+
+    it('quotes only the remaining balance once a fixed fee was allocated', async () => {
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ totalMicros: 109_000_000n, allocatedMicros: 49_000_000n }),
+      );
+      attemptCreate.mockResolvedValue(
+        usdcAttempt({ amountMicros: 60_000_000n, expectedBaseUnits: 60_000_000n }),
+      );
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      // total (109) - allocated fixed fee (49) = 60; never the full total.
+      expect(attemptCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          amountMicros: 60_000_000n,
+          expectedBaseUnits: 60_000_000n,
+        }),
+      });
+      expect(result.amountUsd).toBe('60');
+      expect(result.amountBaseUnits).toBe('60000000');
+    });
+
+    it('keeps the full single-rail quote unchanged when nothing was allocated', async () => {
+      invoiceFindFirst.mockResolvedValue(invoice());
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      expect(attemptCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          amountMicros: AMOUNT,
+          expectedBaseUnits: AMOUNT,
+        }),
+      });
+      expect(result.amountUsd).toBe('49');
+    });
+
+    it('rejects a quote when the invoice is already fully covered', async () => {
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n }),
+      );
+
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
+      expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('settles a remainder claim whose persisted amount equals the remaining balance', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ totalMicros: 109_000_000n, allocatedMicros: 49_000_000n }),
+      );
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({ amountMicros: 60_000_000n, expectedBaseUnits: 60_000_000n }),
+      );
+      txAttemptFindUnique.mockResolvedValue(
+        usdcAttempt({ amountMicros: 60_000_000n, expectedBaseUnits: 60_000_000n }),
+      );
+      getTransactionReceipt.mockResolvedValue(
+        receipt({ logs: [transferLog({ amount: 60_000_000n })] }),
+      );
+      getBlockNumber.mockResolvedValue(104n);
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: 60_000_000n,
+      });
+      txInvoiceFindUnique.mockResolvedValue(
+        invoice({
+          settlementAttemptId: 'att-usdc',
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+        }),
+      );
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.paid).toBe(true);
+      expect(txAttemptUpdate).toHaveBeenCalledWith({
+        where: { id: 'att-usdc' },
+        data: expect.objectContaining({
+          status: 'succeeded',
+          actualBaseUnits: 60_000_000n,
+        }),
+      });
+    });
+
+    it('rejects a stale full quote whose persisted amount now exceeds the current remainder (never partial credit for a full payment)', async () => {
+      // The user quoted the FULL $109 before the fixed fee was allocated; the
+      // claim arrives after $49 was allocated, so the remaining balance is $60.
+      // Settling the full transfer would give partial credit for a full
+      // payment — it must be refused and surfaced for review, never truncated
+      // by the settlement boundary.
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ totalMicros: 109_000_000n, allocatedMicros: 49_000_000n }),
+      );
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({ amountMicros: 109_000_000n, expectedBaseUnits: 109_000_000n }),
+      );
+      txAttemptFindUnique.mockResolvedValue(
+        usdcAttempt({ amountMicros: 109_000_000n, expectedBaseUnits: 109_000_000n }),
+      );
+      getTransactionReceipt.mockResolvedValue(
+        receipt({ logs: [transferLog({ amount: 109_000_000n })] }),
+      );
+      getBlockNumber.mockResolvedValue(104n);
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: 60_000_000n,
+      });
+      txInvoiceFindUnique.mockResolvedValue(
+        invoice({
+          settlementAttemptId: 'att-usdc',
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+        }),
+      );
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('needs_review');
+      expect(result.reviewReason).toBe('stale_quote_over_remainder');
+      // The attempt is NOT marked succeeded and the settlement boundary is
+      // never asked to truncate the full payment.
+      expect(txAttemptUpdate).toHaveBeenCalledWith({
+        where: { id: 'att-usdc' },
+        data: expect.objectContaining({
+          status: 'needs_review',
+          reviewReason: 'stale_quote_over_remainder',
+        }),
+      });
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+  });
+
   describe('quote — concurrency and reuse', () => {
     beforeEach(() => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
@@ -633,6 +797,20 @@ describe('UsdcPaymentService', () => {
       );
 
       await expect(service.quote('user-1', 'inv-1', 84532)).rejects.toThrow(ConflictException);
+    });
+
+    it('fails closed when the unified active reservation blocks the quote (another active rail)', async () => {
+      // The unified active-payment index
+      // (`billing_payment_attempts_one_active_payment_per_invoice_idx`) rejects
+      // the USDC insert because ANOTHER rail (e.g. a pending Stripe overage/full
+      // attempt) holds the invoice-level slot. The P2002 falls through to the
+      // winner lookup, finds no active USDC attempt, and fails closed with a
+      // Conflict — never a second active payment that could double-charge.
+      attemptFindFirst.mockResolvedValue(null); // no active USDC to reuse
+      attemptCreate.mockRejectedValueOnce(p2002());
+
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -829,7 +1007,10 @@ describe('UsdcPaymentService', () => {
       // retry can resume this claim across a process restart.
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
         }),
       );
     });
@@ -846,7 +1027,10 @@ describe('UsdcPaymentService', () => {
       expect(result.retryable).toBe(true);
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
         }),
       );
     });
@@ -908,7 +1092,10 @@ describe('UsdcPaymentService', () => {
       expect(result.retryable).toBe(true);
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
         }),
       );
     });
@@ -926,7 +1113,10 @@ describe('UsdcPaymentService', () => {
       expect(result.retryable).toBe(true);
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
         }),
       );
     });
@@ -1110,7 +1300,7 @@ describe('UsdcPaymentService', () => {
       expect(result.reviewReason).toBe('evidence_changed');
     });
 
-    it('returns the owner\'s state untouched on an evidence conflict (different claimed hash)', async () => {
+    it("returns the owner's state untouched on an evidence conflict (different claimed hash)", async () => {
       // A confirming attempt is bound to recorded evidence 0xe…; the user
       // claims a different hash. The losing request must not mark review on
       // the owner's attempt, must not call RPC, and must not mutate anything.
@@ -1340,7 +1530,13 @@ describe('UsdcPaymentService', () => {
       getTransactionReceipt.mockResolvedValue(
         receipt({ to: '0x' + '7'.repeat(40), logs: [transferLog()] }),
       );
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1414,14 +1610,23 @@ describe('UsdcPaymentService', () => {
       expect(settleInvoice).not.toHaveBeenCalled();
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ submittedTxHash: TX_HASH, nextCheckAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            submittedTxHash: TX_HASH,
+            nextCheckAt: expect.any(Date),
+          }),
         }),
       );
     });
 
     it('settles a fully confirmed exact transfer through the shared boundary', async () => {
       getBlockNumber.mockResolvedValue(104n); // 5 confirmations
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1455,7 +1660,13 @@ describe('UsdcPaymentService', () => {
     it('canonicalizes the claimed txHash to lowercase for lookup, evidence, and persistence', async () => {
       const upperHash = '0x' + 'A'.repeat(64); // uppercase hex digits, same tx
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1477,7 +1688,13 @@ describe('UsdcPaymentService', () => {
       // lower-bound comparison must not falsely flag it as a replay.
       getTransactionReceipt.mockResolvedValue(receipt({ blockTimestamp: 1_780_272_000n }));
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1491,8 +1708,14 @@ describe('UsdcPaymentService', () => {
 
     it('marks duplicate_unallocated when another rail already settled the invoice', async () => {
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: false });
-      txInvoiceFindUnique.mockResolvedValue({ settlementAttemptId: 'att-stripe' });
+      settleInvoice.mockResolvedValue({
+        allocated: false,
+        paid: true,
+        paidByThisAttempt: false,
+        replayed: false,
+        allocatedMicros: 0n,
+      });
+      txInvoiceFindUnique.mockResolvedValue(invoice({ settlementAttemptId: 'att-stripe' }));
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1512,8 +1735,20 @@ describe('UsdcPaymentService', () => {
 
     it('treats a replay of its own settlement as paid', async () => {
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: false });
-      txInvoiceFindUnique.mockResolvedValue({ settlementAttemptId: 'att-usdc' });
+      settleInvoice.mockResolvedValue({
+        allocated: false,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: true,
+        allocatedMicros: 0n,
+      });
+      txInvoiceFindUnique.mockResolvedValue(
+        invoice({
+          settlementAttemptId: 'att-usdc',
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+        }),
+      );
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1532,7 +1767,13 @@ describe('UsdcPaymentService', () => {
       txAttemptFindUnique.mockResolvedValue(
         usdcAttempt({ status: 'succeeded', succeededAt: new Date() }),
       );
-      txInvoiceFindUnique.mockResolvedValue({ settlementAttemptId: 'att-usdc' });
+      txInvoiceFindUnique.mockResolvedValue(
+        invoice({
+          settlementAttemptId: 'att-usdc',
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+        }),
+      );
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1566,9 +1807,7 @@ describe('UsdcPaymentService', () => {
       getBlockNumber.mockResolvedValue(103n); // confirming path
       // persistSubmittedHash succeeds first; the confirming evidence CAS then
       // hits the unique-evidence conflict.
-      attemptUpdateMany
-        .mockResolvedValueOnce({ count: 1 })
-        .mockRejectedValueOnce(p2002());
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockRejectedValueOnce(p2002());
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1595,9 +1834,7 @@ describe('UsdcPaymentService', () => {
       // The service canonicalizes the claimed hash to lowercase before the
       // evidence write; the DB unique index then rejects the duplicate.
       getBlockNumber.mockResolvedValue(103n); // confirming path
-      attemptUpdateMany
-        .mockResolvedValueOnce({ count: 1 })
-        .mockRejectedValueOnce(p2002());
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockRejectedValueOnce(p2002());
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1667,7 +1904,13 @@ describe('UsdcPaymentService', () => {
         }),
       );
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const second = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1685,7 +1928,13 @@ describe('UsdcPaymentService', () => {
 
     it('never exposes logs, calldata, RPC details, or secrets in the claim result', async () => {
       getBlockNumber.mockResolvedValue(104n);
-      settleInvoice.mockResolvedValue({ settled: true });
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
 
       const result = await service.claim('user-1', 'inv-1', {
         paymentAttemptId: 'att-usdc',
@@ -1827,7 +2076,7 @@ describe('UsdcPaymentService', () => {
       });
     });
 
-    it('returns the owner\'s pre-read state when a different claimed hash conflicts (no review write)', async () => {
+    it("returns the owner's pre-read state when a different claimed hash conflicts (no review write)", async () => {
       // The claim read a confirming attempt bound to hash 0xe… and the user
       // claimed a different hash. The losing request returns the owner's
       // current state without any review CAS and without RPC.
@@ -2086,7 +2335,7 @@ describe('UsdcPaymentService', () => {
       );
     });
 
-    it('a losing claim can never expire, review, or bind evidence on the winner\'s attempt', async () => {
+    it("a losing claim can never expire, review, or bind evidence on the winner's attempt", async () => {
       // The winner owns submittedTxHash = TX_HASH on a pending attempt whose
       // quote window has expired. The loser claims TX_HASH2: the persist CAS
       // matches zero rows, so the loser can neither expire the winner (its
@@ -2135,6 +2384,114 @@ describe('UsdcPaymentService', () => {
       expect(result.status).toBe('pending');
       expect(result.retryable).toBe(true);
       expect(getTransactionReceipt).toHaveBeenCalledWith(8453, TX_HASH);
+    });
+
+    it('fails closed when the canonical submitted hash is already claimed by another attempt (P2002)', async () => {
+      // Another attempt already owns the canonical submitted hash; the
+      // migration-only unique `submitted_tx_hash` index rejects this attempt's
+      // persist write with a Prisma P2002. The loser must never do provider
+      // work, never 500, and never stay permanently pending: it is transitioned
+      // to needs_review/duplicate_unallocated with a safe audit note.
+      attemptFindUnique.mockResolvedValue(usdcAttempt());
+      attemptUpdateMany.mockRejectedValueOnce(p2002()); // persist CAS → P2002
+      getTransactionReceipt.mockClear();
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('needs_review');
+      expect(result.reviewReason).toBe('duplicate_unallocated');
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      // Only the failed persist CAS and the guarded needs_review CAS ran.
+      expect(attemptUpdateMany).toHaveBeenCalledTimes(2);
+      const reviewCall = attemptUpdateMany.mock.calls[1][0] as {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      };
+      expect(reviewCall.where).toEqual(
+        expect.objectContaining({
+          id: 'att-usdc',
+          status: { in: ['pending', 'confirming'] },
+          submittedTxHash: null, // only an unclaimed attempt may be marked review
+        }),
+      );
+      expect(reviewCall.data).toEqual(
+        expect.objectContaining({
+          status: 'needs_review',
+          reviewReason: 'duplicate_unallocated',
+          failureCode: 'duplicate_submitted_hash',
+          failureMessage: expect.stringContaining(TX_HASH),
+        }),
+      );
+    });
+
+    it('never marks needs_review an attempt a concurrent claim already owns with a different hash', async () => {
+      // After this loser's P2002, a concurrent claim legitimately persisted a
+      // DIFFERENT hash on the same attempt. The needs_review write guards
+      // `submittedTxHash: null`, so the legitimate claim's attempt is never
+      // pushed into review — the loser returns the observed real state.
+      attemptFindUnique
+        .mockResolvedValueOnce(usdcAttempt()) // claim's pre-read
+        .mockResolvedValue(usdcAttempt({ submittedTxHash: TX_HASH2 })); // re-read: now owned
+      attemptUpdateMany.mockRejectedValueOnce(p2002()); // persist CAS → P2002
+      getTransactionReceipt.mockClear();
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('pending');
+      expect(result.retryable).toBe(true);
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      // Only the failed persist CAS ran; the needs_review write was skipped.
+      expect(attemptUpdateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns the real state when a concurrent transition won before the P2002 loser marks review', async () => {
+      // The P2002 is observed, but by the time the loser re-reads the attempt
+      // the winner already settled it. The needs_review CAS matches zero rows
+      // and the real succeeded state is returned — the loser can never regress
+      // a terminal attempt.
+      attemptFindUnique
+        .mockResolvedValueOnce(usdcAttempt()) // claim's pre-read
+        .mockResolvedValueOnce(usdcAttempt()) // P2002 loser re-read (still pending)
+        .mockResolvedValue(
+          usdcAttempt({ status: 'succeeded', txHash: TX_HASH, paidAt: new Date() }),
+        ); // needs_review CAS lost → real row
+      attemptUpdateMany
+        .mockRejectedValueOnce(p2002()) // persist CAS → P2002
+        .mockResolvedValue({ count: 0 }); // needs_review CAS loses to the winner
+      getTransactionReceipt.mockClear();
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.paid).toBe(true);
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('propagates non-P2002 database errors unchanged (original error semantics)', async () => {
+      // A transient connection error (P1001) is not a duplicate-hash conflict:
+      // it must propagate unchanged so the caller/worker can retry — never
+      // converted into a fabricated review.
+      const connectionError = new Prisma.PrismaClientKnownRequestError('Connection lost', {
+        code: 'P1001',
+        clientVersion: 'test',
+      });
+      attemptUpdateMany.mockRejectedValueOnce(connectionError);
+
+      await expect(
+        service.claim('user-1', 'inv-1', {
+          paymentAttemptId: 'att-usdc',
+          txHash: TX_HASH,
+        }),
+      ).rejects.toThrow(connectionError);
     });
   });
 });

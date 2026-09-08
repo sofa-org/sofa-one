@@ -588,6 +588,13 @@ model BillingInvoice {
   paidAt                 DateTime?            @map("paid_at") @db.Timestamptz()
   paidVia                BillingPaymentMethod? @map("paid_via")
   settlementAttemptId    String?              @unique @map("settlement_attempt_id") @db.Uuid
+  // Cumulative confirmed coverage already allocated to this invoice from one
+  // or more succeeded payment attempts (fixed-fee renewal + overage + full
+  // rails). The invoice is only marked paid when allocatedMicros reaches
+  // totalMicros; it is the single local accounting fact that prevents a fixed
+  // recurring charge from falsely paying a dynamic (overage) invoice while
+  // still allowing the overage remainder to be collected automatically.
+  allocatedMicros        BigInt               @default(0) @map("allocated_micros")
   // Stripe invoice id for subscription-renewal invoices (unique so a renewal
   // invoice is materialized exactly once per Stripe invoice).
   stripeInvoiceId        String?              @unique @map("stripe_invoice_id") @db.VarChar(255)
@@ -684,6 +691,11 @@ model BillingPaymentAttempt {
   updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
   succeededAt             DateTime?                  @map("succeeded_at") @db.Timestamptz()
   failedAt                DateTime?                  @map("failed_at") @db.Timestamptz()
+  // Set exactly once when this attempt's coverage was counted toward the
+  // invoice's allocatedMicros. A second allocation of the same attempt is an
+  // idempotent no-op; it is also the durable marker the overage worker uses to
+  // prove a fixed-fee renewal attempt has already been allocated.
+  allocatedAt             DateTime?                  @map("allocated_at") @db.Timestamptz()
 
   invoice        BillingInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   settledInvoice BillingInvoice? @relation("InvoiceSettlement")

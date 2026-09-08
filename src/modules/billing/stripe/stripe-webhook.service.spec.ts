@@ -99,25 +99,31 @@ function invoiceRow(overrides: Record<string, unknown> = {}) {
     totalMicros: 49_000_000n,
     paidAt: null,
     settlementAttemptId: null,
-    snapshotJson: { renewal: true, planVersionId: 'plan-1', fixedFeeMicros: '49000000', period: '2026-08-01' },
+    snapshotJson: {
+      renewal: true,
+      planVersionId: 'plan-1',
+      fixedFeeMicros: '49000000',
+      period: '2026-08-01',
+    },
     snapshotHash: '866992bfad24dfffd0349f15a125a49c1dad07aea403a0f55543a30d2d6262d5',
     lines: [{ lineType: 'monthly_fee', amountMicros: 49_000_000n }],
     ...overrides,
   };
 }
 
-/** The full CAS where clause the settlement update must carry. */
-function casWhere(invoiceId: string, attemptId: string) {
+/**
+ * The guarded paid-marker CAS the coverage-allocation boundary runs when the
+ * cumulative allocation reaches the frozen total: it sets paidAt/paidVia/pointer
+ * only for a finalized, unpaid, unsettled invoice whose allocatedMicros already
+ * equals the full amount.
+ */
+function casWhere(invoiceId: string) {
   return {
     id: invoiceId,
     status: 'finalized',
     paidAt: null,
     settlementAttemptId: null,
-    totalMicros: 49_000_000n,
-    currency: 'USD',
-    paymentAttempts: {
-      some: { id: attemptId, method: 'stripe', status: 'succeeded' },
-    },
+    allocatedMicros: 49_000_000n,
   };
 }
 
@@ -148,25 +154,33 @@ describe('StripeWebhookService', () => {
   const transaction = jest.fn();
   const configGet = jest.fn();
   const constructEventAsync = jest.fn();
+  const paymentIntentRetrieve = jest.fn();
   const securityRecord = jest.fn();
 
-  const stripeMock = { webhooks: { constructEventAsync } };
+  const stripeMock = {
+    webhooks: { constructEventAsync },
+    paymentIntents: { retrieve: paymentIntentRetrieve },
+  };
 
   beforeEach(async () => {
     jest.resetAllMocks();
     // Model Prisma's updateMany result while retaining the existing update spy
     // as a compact assertion surface for the business mutation. The production
     // service still exercises the guarded updateMany call below.
-    webhookEventUpdateMany.mockImplementation((args: { where: { stripeEventId: string }; data: unknown }) => {
-      webhookEventUpdate({ where: { stripeEventId: args.where.stripeEventId }, data: args.data });
-      return Promise.resolve({ count: 1 });
-    });
-    attemptUpdateMany.mockImplementation((args: { data?: Record<string, unknown>; where: unknown }) => {
-      if (args.data?.stripePaymentIntentId || args.data?.stripeCheckoutSessionId) {
-        attemptUpdate({ where: { id: (args.where as { id: string }).id }, data: args.data });
-      }
-      return Promise.resolve({ count: 1 });
-    });
+    webhookEventUpdateMany.mockImplementation(
+      (args: { where: { stripeEventId: string }; data: unknown }) => {
+        webhookEventUpdate({ where: { stripeEventId: args.where.stripeEventId }, data: args.data });
+        return Promise.resolve({ count: 1 });
+      },
+    );
+    attemptUpdateMany.mockImplementation(
+      (args: { data?: Record<string, unknown>; where: unknown }) => {
+        if (args.data?.stripePaymentIntentId || args.data?.stripeCheckoutSessionId) {
+          attemptUpdate({ where: { id: (args.where as { id: string }).id }, data: args.data });
+        }
+        return Promise.resolve({ count: 1 });
+      },
+    );
     accountUpdateMany.mockImplementation((args: { where: { id: string }; data: unknown }) => {
       accountUpdate({ where: { id: args.where.id }, data: args.data });
       return Promise.resolve({ count: 1 });
@@ -428,7 +442,7 @@ describe('StripeWebhookService', () => {
       // under the full CAS (finalized/unpaid/amount/currency + succeeded
       // attempt with the referenced id/method).
       expect(invoiceUpdateMany).toHaveBeenCalledWith({
-        where: casWhere('inv-1', 'att-1'),
+        where: casWhere('inv-1'),
         data: {
           paidAt: expect.any(Date),
           paidVia: 'stripe',
@@ -556,7 +570,11 @@ describe('StripeWebhookService', () => {
 
     it('rejects a fixed-fee attempt completed with a payment-mode Checkout', async () => {
       constructEventAsync.mockResolvedValue(
-        event('checkout.session.completed', session({ payment_status: 'paid', mode: 'payment' }), 'evt_mode_mismatch'),
+        event(
+          'checkout.session.completed',
+          session({ payment_status: 'paid', mode: 'payment' }),
+          'evt_mode_mismatch',
+        ),
       );
       webhookEventCreate.mockResolvedValue({});
       attemptFindFirst.mockResolvedValue(
@@ -567,18 +585,32 @@ describe('StripeWebhookService', () => {
 
       expect(attemptUpdateMany).not.toHaveBeenCalled();
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
-      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'needs_review' }),
-      }));
+      expect(webhookEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'needs_review' }),
+        }),
+      );
     });
 
     it.each([
-      ['full attempt completed with a subscription-mode Checkout', { mode: 'subscription', subscription: 'sub_123' }, {}],
+      [
+        'full attempt completed with a subscription-mode Checkout',
+        { mode: 'subscription', subscription: 'sub_123' },
+        {},
+      ],
       ['full attempt completed with a setup-mode Checkout', { mode: 'setup' }, {}],
-      ['fixed-fee attempt completed with a setup-mode Checkout', { mode: 'setup' }, { stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_123' }],
+      [
+        'fixed-fee attempt completed with a setup-mode Checkout',
+        { mode: 'setup' },
+        { stripeChargeKind: 'fixed_fee', stripeSubscriptionId: 'sub_123' },
+      ],
     ])('rejects %s without settlement', async (_label, sessionOverrides, attemptOverrides) => {
       constructEventAsync.mockResolvedValue(
-        event('checkout.session.completed', session({ payment_status: 'paid', ...sessionOverrides }), 'evt_mode_reject'),
+        event(
+          'checkout.session.completed',
+          session({ payment_status: 'paid', ...sessionOverrides }),
+          'evt_mode_reject',
+        ),
       );
       webhookEventCreate.mockResolvedValue({});
       attemptFindFirst.mockResolvedValue(attemptRow(attemptOverrides));
@@ -587,9 +619,11 @@ describe('StripeWebhookService', () => {
 
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
       expect(attemptUpdateMany).not.toHaveBeenCalled();
-      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'needs_review' }),
-      }));
+      expect(webhookEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'needs_review' }),
+        }),
+      );
     });
   });
 
@@ -615,13 +649,14 @@ describe('StripeWebhookService', () => {
       );
       webhookEventCreate.mockResolvedValueOnce({});
       attemptFindFirst.mockResolvedValueOnce(attemptRow());
-      invoiceUpdateMany.mockResolvedValueOnce({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 }); // increment + paid-marker CAS
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
       // Second delivery: checkout.session.completed arrives after the attempt
-      // is already succeeded and the invoice is already settled — the guarded
-      // settlement update must match zero rows (never overwrite).
+      // is already succeeded and the invoice is already settled — the attempt's
+      // coverage is already allocated (replay), so the checkout completion is a
+      // pure no-op and never overwrites or double-allocates the settlement.
       constructEventAsync.mockResolvedValueOnce(
         event('checkout.session.completed', session({ payment_status: 'paid' }), 'evt_cs'),
       );
@@ -630,21 +665,40 @@ describe('StripeWebhookService', () => {
         attemptRow({
           status: 'succeeded',
           succeededAt: new Date('2026-06-01T00:00:00.000Z'),
+          allocatedAt: new Date('2026-06-01T00:00:00.000Z'),
         }),
       );
-      invoiceUpdateMany.mockResolvedValueOnce({ count: 0 });
+      // The settlement re-reads the attempt under the row lock; it must see
+      // the allocation recorded by the first delivery (idempotent replay).
+      attemptFindUnique.mockResolvedValue(
+        attemptRow({
+          id: 'att-1',
+          invoiceId: 'inv-1',
+          status: 'succeeded',
+          succeededAt: new Date('2026-06-01T00:00:00.000Z'),
+          allocatedAt: new Date('2026-06-01T00:00:00.000Z'),
+        }),
+      );
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      expect(attemptUpdateMany).toHaveBeenCalledTimes(1); // only the PI event updated
-      expect(invoiceUpdateMany).toHaveBeenCalledTimes(2); // both events attempted settlement
-      // Every settlement attempt carries the full CAS guard: an already-settled
-      // invoice can never be overwritten (the second call matched 0 rows).
-      for (const call of invoiceUpdateMany.mock.calls) {
-        expect(call[0].where).toEqual(casWhere('inv-1', 'att-1'));
-      }
-      expect(invoiceUpdateMany.mock.results[0].value).resolves.toEqual({ count: 1 });
-      expect(invoiceUpdateMany.mock.results[1].value).resolves.toEqual({ count: 0 });
+      // The first (PI) delivery performed the settlement: the paid-marker CAS
+      // ran exactly once and set paidAt/paidVia/pointer under the full guard.
+      const paidCalls = invoiceUpdateMany.mock.calls.filter(
+        (c) => (c[0].data as Record<string, unknown> | undefined)?.paidAt !== undefined,
+      );
+      expect(paidCalls).toHaveLength(1);
+      expect(paidCalls[0][0].where).toEqual(casWhere('inv-1'));
+      expect(paidCalls[0][0].data).toEqual(
+        expect.objectContaining({ paidVia: 'stripe', settlementAttemptId: 'att-1' }),
+      );
+      // The second (checkout) delivery is an idempotent replay: no additional
+      // paid-marker write, and the already-allocated coverage is never doubled.
+      expect(
+        invoiceUpdateMany.mock.calls.filter(
+          (c) => (c[0].data as Record<string, unknown> | undefined)?.allocatedMicros !== undefined,
+        ),
+      ).toHaveLength(1);
     });
 
     it('rejects a succeeded event for a previously failed attempt', async () => {
@@ -671,9 +725,11 @@ describe('StripeWebhookService', () => {
 
       expect(attemptUpdate).not.toHaveBeenCalled();
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
-      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'needs_review' }),
-      }));
+      expect(webhookEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'needs_review' }),
+        }),
+      );
     });
 
     it('never regresses a succeeded attempt on a later failure event', async () => {
@@ -727,7 +783,11 @@ describe('StripeWebhookService', () => {
 
     it('does not let a stale success overwrite a failure committed after preflight', async () => {
       constructEventAsync.mockResolvedValue(
-        event('payment_intent.succeeded', paymentIntent({ status: 'succeeded' }), 'evt_stale_success'),
+        event(
+          'payment_intent.succeeded',
+          paymentIntent({ status: 'succeeded' }),
+          'evt_stale_success',
+        ),
       );
       webhookEventCreate.mockResolvedValue({});
       attemptFindFirst.mockResolvedValue(attemptRow({ status: 'pending' }));
@@ -736,14 +796,18 @@ describe('StripeWebhookService', () => {
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
-        data: expect.objectContaining({ status: 'succeeded' }),
-      }));
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
+          data: expect.objectContaining({ status: 'succeeded' }),
+        }),
+      );
       expect(invoiceUpdateMany).not.toHaveBeenCalled();
-      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'needs_review' }),
-      }));
+      expect(webhookEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'needs_review' }),
+        }),
+      );
     });
 
     it('success CAS rejects a conflicting stripeInvoiceId bound after preflight', async () => {
@@ -786,18 +850,22 @@ describe('StripeWebhookService', () => {
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
       // The success CAS now also carries the stripeInvoiceId null-or-same fence.
-      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          status: 'pending',
-          AND: expect.arrayContaining([
-            { OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: 'in_123' }] },
-          ]),
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'pending',
+            AND: expect.arrayContaining([
+              { OR: [{ stripeInvoiceId: null }, { stripeInvoiceId: 'in_123' }] },
+            ]),
+          }),
+          data: expect.objectContaining({ status: 'succeeded' }),
         }),
-        data: expect.objectContaining({ status: 'succeeded' }),
-      }));
-      expect(webhookEventCreate).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'needs_review' }),
-      }));
+      );
+      expect(webhookEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'needs_review' }),
+        }),
+      );
     });
 
     it('marks a succeeded Stripe attempt duplicate_unallocated when another rail already settled the invoice', async () => {
@@ -824,32 +892,30 @@ describe('StripeWebhookService', () => {
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
       );
-      // ...but the settlement CAS prevents any overwrite of the USDC win, and
-      // the succeeded Stripe attempt is marked duplicate/unallocated review.
-      expect(invoiceUpdateMany).toHaveBeenCalledWith({
-        where: casWhere('inv-1', 'att-1'),
-        data: expect.objectContaining({
-          paidVia: 'stripe',
-          settlementAttemptId: 'att-1',
-        }),
-      });
+      // ...but the coverage-allocation boundary never overwrites the USDC win
+      // (the already-settled invoice makes the allocation a no-op), and the
+      // succeeded Stripe attempt is marked duplicate/unallocated review.
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
       expect(attemptUpdate).toHaveBeenLastCalledWith({
         where: { id: 'att-1' },
         data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
       });
     });
 
-    it('does not mark duplicate when the settlement CAS fails but the invoice is unsettled', async () => {
-      // A settlement precondition failure (e.g. invoice no longer finalized)
-      // leaves the invoice unsettled — the succeeded Stripe attempt is not a
-      // duplicate and must not be flagged.
+    it('does not mark duplicate when the settlement precondition fails (invoice unsettled/open)', async () => {
+      // A settlement precondition failure (e.g. the local invoice is still
+      // open) is a no-op — the succeeded Stripe attempt is not a duplicate and
+      // must not be flagged. (A genuine CAS anomaly instead aborts the whole
+      // webhook transaction, which is covered by the CAS-loss tests.)
       constructEventAsync.mockResolvedValue(
         event('payment_intent.succeeded', paymentIntent(), 'evt_no_dup'),
       );
       webhookEventCreate.mockResolvedValue({});
       attemptFindFirst.mockResolvedValue(attemptRow());
-      invoiceUpdateMany.mockResolvedValue({ count: 0 });
-      invoiceFindUnique.mockResolvedValue(invoiceRow({ settlementAttemptId: null }));
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceFindUnique.mockResolvedValue(
+        invoiceRow({ settlementAttemptId: null, status: 'open' }),
+      );
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
@@ -858,6 +924,31 @@ describe('StripeWebhookService', () => {
           data: expect.objectContaining({ status: 'succeeded' }),
         }),
       );
+      expect(attemptUpdate).not.toHaveBeenCalledWith({
+        where: { id: 'att-1' },
+        data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
+      });
+    });
+
+    it('aborts the webhook transaction when the settlement CAS loses (rolls back the success, never half-committed)', async () => {
+      // A coverage-increment CAS failure is a genuine anomaly under the row
+      // locks: the whole webhook transaction must roll back (the succeeded CAS
+      // included) and the failure must surface as a retryable error instead of
+      // being silently treated as a successful replay.
+      constructEventAsync.mockResolvedValue(
+        event('payment_intent.succeeded', paymentIntent(), 'evt_cas_loss'),
+      );
+      webhookEventCreate.mockResolvedValue({});
+      attemptFindFirst.mockResolvedValue(attemptRow());
+      invoiceUpdateMany.mockResolvedValue({ count: 0 });
+      invoiceFindUnique.mockResolvedValue(invoiceRow({ settlementAttemptId: null }));
+
+      await expect(service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig')).rejects.toThrow(
+        'Stripe settlement CAS lost',
+      );
+      // The failure is not recorded as a success audit and the duplicate
+      // review path never ran.
+      expect(securityRecord).not.toHaveBeenCalled();
       expect(attemptUpdate).not.toHaveBeenCalledWith({
         where: { id: 'att-1' },
         data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
@@ -956,7 +1047,7 @@ describe('StripeWebhookService', () => {
         }),
       );
       expect(invoiceUpdateMany).toHaveBeenCalledWith({
-        where: casWhere(INVOICE_UUID, ATTEMPT_UUID),
+        where: casWhere(INVOICE_UUID),
         data: expect.objectContaining({
           paidAt: expect.any(Date),
           paidVia: 'stripe',
@@ -1227,13 +1318,7 @@ describe('StripeWebhookService', () => {
       // First delivery deferred the event (no local match). The worker retries
       // by re-fetching; the event id already exists as `deferred` (P2002), and
       // the now-existing local attempt is found and processed.
-      constructEventAsync.mockResolvedValue(
-        event(
-          'invoice.paid',
-          renewalInvoice(),
-          'evt_renewal',
-        ),
-      );
+      constructEventAsync.mockResolvedValue(event('invoice.paid', renewalInvoice(), 'evt_renewal'));
       webhookEventCreate.mockRejectedValueOnce(p2002());
       webhookEventFindUnique.mockResolvedValue({ status: 'deferred', retryCount: 2 });
       attemptFindFirst.mockResolvedValue(
@@ -1254,13 +1339,7 @@ describe('StripeWebhookService', () => {
     });
 
     it('never settles a dynamic invoice with a smaller fixed recurring charge', async () => {
-      constructEventAsync.mockResolvedValue(
-        event(
-          'invoice.paid',
-          renewalInvoice(),
-          'evt_renewal',
-        ),
-      );
+      constructEventAsync.mockResolvedValue(event('invoice.paid', renewalInvoice(), 'evt_renewal'));
       webhookEventCreate.mockResolvedValue({});
       // The renewal attempt charges only the fixed plan fee ($49).
       attemptFindFirst.mockResolvedValue(
@@ -1276,25 +1355,26 @@ describe('StripeWebhookService', () => {
         totalMicros: 99_000_000n,
         settlementAttemptId: null,
       });
-      invoiceUpdateMany.mockResolvedValue({ count: 0 }); // exact-match CAS misses
+      invoiceUpdateMany.mockResolvedValue({ count: 1 }); // coverage-increment CAS wins
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      // The exact-match settlement CAS cannot match (isSettlable short-circuits
-      // on the amount mismatch), so the dynamic invoice is NOT marked paid by
-      // the smaller recurring charge; the mismatch is surfaced as needs_review
-      // (separately payable balance).
+      // The fixed recurring charge allocates partial coverage (49 of 99) but
+      // NEVER marks the dynamic invoice paid — the separately-payable overage
+      // remainder (50) stays outstanding and is collected by the overage
+      // worker instead of being faked away.
       expect(
         invoiceUpdateMany.mock.calls.some(
           ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
         ),
       ).toBe(false);
-      // The fixed recurring charge must not settle the dynamic invoice. Any
-      // resulting attempt bookkeeping/review remains forward-only and is not
-      // part of this settlement invariant.
-      expect(attemptUpdateMany.mock.calls.some(([arg]) =>
-        (arg as { data?: Record<string, unknown> })?.data?.status === 'needs_review',
-      )).toBe(false);
+      // The legitimate partial allocation is NOT demoted to
+      // fixed_fee_partial_balance / needs_review.
+      expect(
+        attemptUpdateMany.mock.calls.some(
+          ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.status === 'needs_review',
+        ),
+      ).toBe(false);
     });
 
     describe('renewal materialization and provider-fact validation (Gate 1 remediation)', () => {
@@ -1332,7 +1412,11 @@ describe('StripeWebhookService', () => {
         accountFindFirst.mockResolvedValue(renewalAccount());
         accountFindUnique.mockResolvedValue(renewalAccount());
         planVersionFindUnique.mockResolvedValue(fixedFeePlan());
-        attemptCreate.mockResolvedValue({ id: 'att-renewal', invoiceId: 'inv-renew', method: 'stripe' });
+        attemptCreate.mockResolvedValue({
+          id: 'att-renewal',
+          invoiceId: 'inv-renew',
+          method: 'stripe',
+        });
       });
 
       it('accepts a matched real Invoice without Checkout amount_total', async () => {
@@ -1618,137 +1702,1096 @@ describe('StripeWebhookService', () => {
       });
     });
 
-  describe('audit outbox (Gate 1 remediation)', () => {
-    it('never emits a success audit when the business transaction rolls back', async () => {
-      constructEventAsync.mockResolvedValue(event('checkout.session.completed', session()));
-      webhookEventCreate.mockResolvedValue({});
-      attemptFindFirst.mockResolvedValue(attemptRow());
-      // The settlement CAS fails AND the attempt update for the lost race
-      // throws, rolling the whole transaction back.
-      invoiceUpdateMany.mockResolvedValue({ count: 0 });
-      attemptUpdateMany.mockRejectedValue(new Error('db error'));
+    describe('audit outbox (Gate 1 remediation)', () => {
+      it('never emits a success audit when the business transaction rolls back', async () => {
+        constructEventAsync.mockResolvedValue(event('checkout.session.completed', session()));
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(attemptRow());
+        // The settlement CAS fails AND the attempt update for the lost race
+        // throws, rolling the whole transaction back.
+        invoiceUpdateMany.mockResolvedValue({ count: 0 });
+        attemptUpdateMany.mockRejectedValue(new Error('db error'));
 
-      await expect(service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig')).rejects.toThrow(
-        'db error',
-      );
+        await expect(service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig')).rejects.toThrow(
+          'db error',
+        );
 
-      // No audit intent is emitted for a transition that never committed.
-      expect(securityRecord).not.toHaveBeenCalled();
+        // No audit intent is emitted for a transition that never committed.
+        expect(securityRecord).not.toHaveBeenCalled();
+      });
+
+      it('audit/notification failure never rolls back an already-settled payment', async () => {
+        constructEventAsync.mockResolvedValue(event('checkout.session.completed', session()));
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(attemptRow());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 }); // settlement CAS succeeds
+        securityRecord.mockRejectedValue(new Error('SIEM timeout'));
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The invoice is settled and the webhook answers 2xx despite the audit
+        // exporter failure.
+        expect(
+          invoiceUpdateMany.mock.calls.some(
+            ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
+          ),
+        ).toBe(true);
+        expect(securityRecord).toHaveBeenCalled();
+      });
     });
 
-    it('audit/notification failure never rolls back an already-settled payment', async () => {
-      constructEventAsync.mockResolvedValue(event('checkout.session.completed', session()));
-      webhookEventCreate.mockResolvedValue({});
-      attemptFindFirst.mockResolvedValue(attemptRow());
-      invoiceUpdateMany.mockResolvedValue({ count: 1 }); // settlement CAS succeeds
-      securityRecord.mockRejectedValue(new Error('SIEM timeout'));
+    describe('Stripe identity hardening (Gate 1 remediation round 2)', () => {
+      it('never binds/overwrites a subscription from metadata userId when the account has no matching mirror', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'customer.subscription.created',
+            {
+              id: 'sub_999',
+              status: 'active',
+              current_period_start: 1_784_764_800,
+              current_period_end: 1_787_356_800,
+              customer: 'cus_999',
+              metadata: { userId: '00000000-0000-4000-8000-000000000001' },
+            },
+            'evt_unproven',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(null);
+        // The metadata userId resolves to an account, but that account has NO
+        // Stripe mirror at all — metadata alone must never bind it.
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+          stripeSubscriptionStatus: null,
+          stripeSubscriptionUpdatedAt: null,
+        });
+        accountFindFirst.mockResolvedValue(null);
 
-      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      // The invoice is settled and the webhook answers 2xx despite the audit
-      // exporter failure.
-      expect(
-        invoiceUpdateMany.mock.calls.some(
-          ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
-        ),
-      ).toBe(true);
-      expect(securityRecord).toHaveBeenCalled();
+        // No mirror write happened (cannot be proven), and the event is deferred
+        // for bounded retry — never silently bound.
+        expect(accountUpdate).not.toHaveBeenCalled();
+        expect(webhookEventUpdate).not.toHaveBeenCalled();
+      });
+
+      it('rejects a metadata attemptId/invoiceId disagreement before mutating anything', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.succeeded',
+            paymentIntent({
+              id: 'pi_123',
+              metadata: {
+                attemptId: ATTEMPT_UUID,
+                invoiceId: '33333333-3333-4333-8333-333333333333',
+              },
+            }),
+            'evt_conflict',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        // Persisted-id lookup misses; metadata attemptId resolves to an attempt
+        // whose invoiceId DIFFERS from the metadata invoiceId.
+        attemptFindFirst
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(attemptRow({ id: ATTEMPT_UUID, invoiceId: INVOICE_UUID }));
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The event is recorded for manual review; nothing is mutated/settled.
+        expect(webhookEventUpdate).not.toHaveBeenCalled();
+        expect(attemptUpdate).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(securityRecord).not.toHaveBeenCalled();
+      });
+
+      it('rejects a forged failure event with a mismatched metadata user before any write', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.payment_failed',
+            paymentIntent({ metadata: { userId: '33333333-3333-4333-8333-333333333333' } }),
+            'evt_failure_identity_conflict',
+          ),
+        );
+        attemptFindFirst.mockResolvedValue(attemptRow());
+        invoiceFindUnique.mockResolvedValue(invoiceRow());
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: '11111111-1111-4111-8111-111111111111',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: null,
+        });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
+        );
+        expect(webhookEventUpdate).not.toHaveBeenCalled();
+        expect(attemptUpdate).not.toHaveBeenCalled();
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
     });
-  });
-
-  describe('Stripe identity hardening (Gate 1 remediation round 2)', () => {
-    it('never binds/overwrites a subscription from metadata userId when the account has no matching mirror', async () => {
-      constructEventAsync.mockResolvedValue(
-        event(
-          'customer.subscription.created',
-          {
-            id: 'sub_999',
-            status: 'active',
-            current_period_start: 1_784_764_800,
-            current_period_end: 1_787_356_800,
-            customer: 'cus_999',
-            metadata: { userId: '00000000-0000-4000-8000-000000000001' },
+    describe('renewal overage webhook transitions', () => {
+      const overageAttempt = (overrides: Record<string, unknown> = {}) =>
+        attemptRow({
+          id: ATTEMPT_UUID,
+          invoiceId: INVOICE_UUID,
+          stripeChargeKind: 'overage',
+          stripePaymentIntentId: 'pi_ov',
+          amountMicros: 60_000_000n,
+          ...overrides,
+        });
+      const overageInvoice = (overrides: Record<string, unknown> = {}) =>
+        invoiceRow({
+          id: INVOICE_UUID,
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+          ...overrides,
+        });
+      const overageIntent = (overrides: Record<string, unknown> = {}) =>
+        paymentIntent({
+          id: 'pi_ov',
+          amount: 6000,
+          amount_received: 6000,
+          metadata: {
+            invoiceId: INVOICE_UUID,
+            attemptId: ATTEMPT_UUID,
+            period: '2026-08',
+            chargeKind: 'overage',
           },
-          'evt_unproven',
-        ),
-      );
-      webhookEventCreate.mockResolvedValue({});
-      attemptFindFirst.mockResolvedValue(null);
-      // The metadata userId resolves to an account, but that account has NO
-      // Stripe mirror at all — metadata alone must never bind it.
-      accountFindUnique.mockResolvedValue({
-        id: 'acct-1',
-        userId: 'user-1',
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-        stripeSubscriptionStatus: null,
-        stripeSubscriptionUpdatedAt: null,
-      });
-      accountFindFirst.mockResolvedValue(null);
+          ...overrides,
+        });
 
-      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+      it('allocates the overage remainder and marks the invoice paid on payment_intent.succeeded', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', overageIntent(), 'evt_overage_paid'),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+        // The settlement re-reads the attempt and invoice under the row lock.
+        attemptFindUnique.mockResolvedValue(overageAttempt({ status: 'succeeded' }));
+        invoiceFindUnique.mockResolvedValue(overageInvoice());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
 
-      // No mirror write happened (cannot be proven), and the event is deferred
-      // for bounded retry — never silently bound.
-      expect(accountUpdate).not.toHaveBeenCalled();
-      expect(webhookEventUpdate).not.toHaveBeenCalled();
-    });
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-    it('rejects a metadata attemptId/invoiceId disagreement before mutating anything', async () => {
-      constructEventAsync.mockResolvedValue(
-        event(
-          'payment_intent.succeeded',
-          paymentIntent({
-            id: 'pi_123',
-            metadata: { attemptId: ATTEMPT_UUID, invoiceId: '33333333-3333-4333-8333-333333333333' },
+        // The overage attempt is marked succeeded (forward-only CAS).
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: ATTEMPT_UUID, status: 'pending' }),
+            data: expect.objectContaining({ status: 'succeeded' }),
           }),
-          'evt_conflict',
-        ),
-      );
-      webhookEventCreate.mockResolvedValue({});
-      // Persisted-id lookup misses; metadata attemptId resolves to an attempt
-      // whose invoiceId DIFFERS from the metadata invoiceId.
-      attemptFindFirst
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(attemptRow({ id: ATTEMPT_UUID, invoiceId: INVOICE_UUID }));
-      invoiceUpdateMany.mockResolvedValue({ count: 1 });
-
-      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
-
-      // The event is recorded for manual review; nothing is mutated/settled.
-      expect(webhookEventUpdate).not.toHaveBeenCalled();
-      expect(attemptUpdate).not.toHaveBeenCalled();
-      expect(invoiceUpdateMany).not.toHaveBeenCalled();
-      expect(securityRecord).not.toHaveBeenCalled();
-    });
-
-    it('rejects a forged failure event with a mismatched metadata user before any write', async () => {
-      constructEventAsync.mockResolvedValue(
-        event(
-          'payment_intent.payment_failed',
-          paymentIntent({ metadata: { userId: '33333333-3333-4333-8333-333333333333' } }),
-          'evt_failure_identity_conflict',
-        ),
-      );
-      attemptFindFirst.mockResolvedValue(attemptRow());
-      invoiceFindUnique.mockResolvedValue(invoiceRow());
-      accountFindUnique.mockResolvedValue({
-        id: 'acct-1',
-        userId: '11111111-1111-4111-8111-111111111111',
-        stripeCustomerId: 'cus_123',
-        stripeSubscriptionId: null,
+        );
+        // The coverage-allocation boundary tops the invoice up: 49 (fixed fee)
+        // + 60 (overage) = 109 → the paid markers are set by the overage attempt.
+        const paidCalls = invoiceUpdateMany.mock.calls.filter(
+          (c) => (c[0].data as Record<string, unknown> | undefined)?.paidAt !== undefined,
+        );
+        expect(paidCalls).toHaveLength(1);
+        expect(paidCalls[0][0].where).toEqual(
+          expect.objectContaining({ id: INVOICE_UUID, allocatedMicros: 109_000_000n }),
+        );
+        expect(paidCalls[0][0].data).toEqual(
+          expect.objectContaining({ paidVia: 'stripe', settlementAttemptId: ATTEMPT_UUID }),
+        );
       });
 
-      await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+      it('keeps the overage attempt pending on payment_intent.processing (never fake success)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.processing',
+            overageIntent({ status: 'processing' }),
+            'evt_overage_proc',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
 
-      expect(webhookEventCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
-      );
-      expect(webhookEventUpdate).not.toHaveBeenCalled();
-      expect(attemptUpdate).not.toHaveBeenCalled();
-      expect(attemptUpdateMany).not.toHaveBeenCalled();
-      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdate).not.toHaveBeenCalled();
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('marks the overage attempt failed on payment_intent.payment_failed and never touches the invoice', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.payment_failed',
+            overageIntent({
+              status: 'requires_payment_method',
+              last_payment_error: {
+                code: 'authentication_required',
+                message: 'Card requires authentication',
+              },
+            }),
+            'evt_overage_failed',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // Failure is a pending-only CAS: the attempt fails, the invoice stays
+        // unpaid and no coverage is fabricated.
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({
+            status: 'failed',
+            failureCode: 'authentication_required',
+          }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        // A later success must not resurrect this failed attempt.
+        expect(attemptUpdate).not.toHaveBeenCalled();
+      });
+
+      it('marks a canceled PaymentIntent failed (never pending forever, never fake success)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.canceled',
+            overageIntent({ status: 'canceled' }),
+            'evt_overage_canceled',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The canceled event maps to a forward-only failure: the attempt fails,
+        // the invoice stays unpaid, and the state is recoverable/reviewable.
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('fails closed on a requires_action payment_intent.payment_failed (SCA surfaced as failed, not pending forever)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.payment_failed',
+            overageIntent({ status: 'requires_action' }),
+            'evt_overage_sca',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        // Never a fabricated success.
+        expect(
+          invoiceUpdateMany.mock.calls.some(
+            ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
+          ),
+        ).toBe(false);
+      });
+
+      it('rejects an overage event whose provider amount does not match the persisted remainder', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.succeeded',
+            overageIntent({ amount_received: 9999 }),
+            'evt_overage_wrong',
+          ),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // Provider-fact mismatch fails closed: no success transition, no
+        // settlement, no paidAt.
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(
+          invoiceUpdateMany.mock.calls.some(
+            ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
+          ),
+        ).toBe(false);
+      });
+
+      it('records an overage event on an already-paid invoice as duplicate/unallocated review', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', overageIntent(), 'evt_overage_dup'),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(overageAttempt());
+        attemptFindUnique.mockResolvedValue(overageAttempt({ status: 'succeeded' }));
+        // The invoice was already paid by a different rail.
+        invoiceFindUnique.mockResolvedValue(
+          overageInvoice({
+            paidAt: new Date('2026-08-10T00:00:00.000Z'),
+            settlementAttemptId: 'att-other',
+            allocatedMicros: 109_000_000n,
+          }),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The paid invoice is never overwritten; the overage success is surfaced
+        // as duplicate/unallocated review instead of a fake settlement.
+        expect(attemptUpdate).toHaveBeenLastCalledWith({
+          where: { id: ATTEMPT_UUID },
+          data: { status: 'needs_review', reviewReason: 'duplicate_unallocated' },
+        });
+        expect(
+          invoiceUpdateMany.mock.calls.some(
+            ([arg]) => (arg as { data?: Record<string, unknown> })?.data?.paidAt !== undefined,
+          ),
+        ).toBe(false);
+      });
     });
-  });
+
+    describe('fixed-fee PaymentIntent webhook identity (invoice-based renewal proof)', () => {
+      // Stripe PaymentIntents carry `invoice`, not `subscription`. A fixed-fee
+      // renewal is proven from the PERSISTED account subscription mirror + the
+      // Stripe invoice identity.
+      const fixedFeeRenewalAttempt = (overrides: Record<string, unknown> = {}) =>
+        attemptRow({
+          id: ATTEMPT_UUID,
+          invoiceId: INVOICE_UUID,
+          stripeChargeKind: 'fixed_fee',
+          stripeSubscriptionId: 'sub_123',
+          stripeInvoiceId: 'in_123',
+          stripePaymentIntentId: 'pi_123',
+          ...overrides,
+        });
+      const fixedFeeInvoice = (overrides: Record<string, unknown> = {}) =>
+        invoiceRow({ id: INVOICE_UUID, ...overrides });
+      const fixedFeePi = (overrides: Record<string, unknown> = {}) =>
+        paymentIntent({
+          id: 'pi_123',
+          amount: 4900,
+          amount_received: 4900,
+          invoice: 'in_123',
+          metadata: {
+            invoiceId: INVOICE_UUID,
+            attemptId: ATTEMPT_UUID,
+            period: '2026-08',
+            chargeKind: 'fixed_fee',
+          },
+          ...overrides,
+        });
+
+      beforeEach(() => {
+        // Account mirror carries the persisted subscription (customer cus_123).
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(fixedFeeRenewalAttempt());
+      });
+
+      it('settles a fixed-fee payment_intent.succeeded that only references its invoice (no subscription field)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', fixedFeePi(), 'evt_fixed_pi_ok'),
+        );
+        attemptFindUnique.mockResolvedValue(fixedFeeRenewalAttempt({ status: 'succeeded' }));
+        invoiceFindUnique.mockResolvedValue(fixedFeeInvoice());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The PI event is accepted: the persisted subscription mirror + the
+        // matching Stripe invoice id prove the renewal.
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: ATTEMPT_UUID, status: 'pending' }),
+            data: expect.objectContaining({ status: 'succeeded' }),
+          }),
+        );
+        const paidCalls = invoiceUpdateMany.mock.calls.filter(
+          (c) => (c[0].data as Record<string, unknown> | undefined)?.paidAt !== undefined,
+        );
+        expect(paidCalls).toHaveLength(1);
+      });
+
+      it('fails closed when a fixed-fee payment_intent.succeeded references a DIFFERENT Stripe invoice', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.succeeded',
+            fixedFeePi({ invoice: 'in_OTHER' }),
+            'evt_fixed_pi_bad',
+          ),
+        );
+        attemptFindUnique.mockResolvedValue(fixedFeeRenewalAttempt({ status: 'succeeded' }));
+        invoiceFindUnique.mockResolvedValue(fixedFeeInvoice());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The Stripe invoice identity mismatch fails closed: no success
+        // transition, no settlement, review recorded.
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
+        );
+      });
+
+      it('fails closed when the account mirror has no persisted subscription (bare PI cannot prove a renewal)', async () => {
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: null,
+        });
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', fixedFeePi(), 'evt_fixed_pi_nosub'),
+        );
+        attemptFindUnique.mockResolvedValue(fixedFeeRenewalAttempt({ status: 'succeeded' }));
+        invoiceFindUnique.mockResolvedValue(fixedFeeInvoice());
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('marks a fixed-fee payment_intent.payment_failed attempt failed (invoice-based proof)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.payment_failed',
+            fixedFeePi({
+              status: 'requires_payment_method',
+              last_payment_error: { code: 'card_declined', message: 'Your card was declined.' },
+            }),
+            'evt_fixed_pi_fail',
+          ),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed', failureCode: 'card_declined' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('marks a fixed-fee payment_intent.canceled attempt failed (never pending forever)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.canceled',
+            fixedFeePi({ status: 'canceled' }),
+            'evt_fixed_pi_cancel',
+          ),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('initial subscription Checkout PI-before-invoice identity (provider invoice ref exemption)', () => {
+      // A FIRST-PERIOD subscription Checkout attempt: the Checkout's PI
+      // references the subscription's first Stripe invoice BEFORE the local
+      // attempt ever learned its id (`persistSubscriptionCheckout` does not
+      // store stripeInvoiceId). The bare provider invoice reference is accepted
+      // ONLY with strict proof (`validateAttemptIdentity` →
+      // `isInitialSubscriptionCheckoutAttempt`): the attempt must be fixed_fee,
+      // bound to a Checkout session AND to a subscription, that subscription
+      // must exactly match the account mirror, and the local invoice period must
+      // match the mirror's subscription period when the mirror carries one.
+      const initialAttempt = (overrides: Record<string, unknown> = {}) =>
+        attemptRow({
+          id: ATTEMPT_UUID,
+          invoiceId: INVOICE_UUID,
+          stripeChargeKind: 'fixed_fee',
+          stripeCheckoutSessionId: 'cs_sub',
+          stripeSubscriptionId: 'sub_123',
+          stripeInvoiceId: null,
+          stripePaymentIntentId: null,
+          ...overrides,
+        });
+      const initialInvoice = (overrides: Record<string, unknown> = {}) =>
+        invoiceRow({
+          id: INVOICE_UUID,
+          monthlyFeeMicros: 49_000_000n,
+          grossOutboundMicros: 0n,
+          billableOutboundMicros: 0n,
+          outboundOverageMicros: 0n,
+          apiOverageMicros: 0n,
+          walletOverageMicros: 0n,
+          snapshotJson: {
+            renewal: true,
+            planVersionId: 'plan-1',
+            fixedFeeMicros: '49000000',
+            period: '2026-08-01',
+          },
+          snapshotHash: 'b9137cdf1cb4a737e45eabf914a5cc45753de035968afa3d99f6ab3ef1f12a6b',
+          ...overrides,
+        });
+      const firstInvoicePi = (overrides: Record<string, unknown> = {}) =>
+        paymentIntent({
+          id: 'pi_first',
+          amount: 4900,
+          amount_received: 4900,
+          invoice: 'in_first',
+          metadata: {
+            invoiceId: INVOICE_UUID,
+            attemptId: ATTEMPT_UUID,
+            period: '2026-08',
+            chargeKind: 'fixed_fee',
+          },
+          ...overrides,
+        });
+
+      beforeEach(() => {
+        // The account mirror is bound to the SAME subscription and its period
+        // matches the local invoice's UTC month (billing_cycle_anchor = the
+        // invoice periodStart), which is the first-period proof.
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-09-01T00:00:00.000Z'),
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(initialAttempt());
+        invoiceFindUnique.mockResolvedValue(initialInvoice());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+        planVersionFindUnique.mockResolvedValue({
+          id: 'plan-1',
+          code: 'pro',
+          version: 2,
+          name: 'Pro',
+          monthlyFeeMicros: 49_000_000n,
+        });
+      });
+
+      it('accepts a first-period PI that references an unbound Stripe invoice and settles it', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', firstInvoicePi(), 'evt_first_pi_ok'),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The identity proof passed: fixed_fee + Checkout session + matching
+        // subscription mirror. The attempt is succeeded and the invoice settled.
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: ATTEMPT_UUID, status: 'pending' }),
+            data: expect.objectContaining({ status: 'succeeded' }),
+          }),
+        );
+        // The provider invoice reference is CAS-bound on the safe event-identity
+        // persistence path (stripeInvoiceId was null before this event).
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: ATTEMPT_UUID, stripeInvoiceId: null }),
+            data: expect.objectContaining({ stripeInvoiceId: 'in_first' }),
+          }),
+        );
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: ATTEMPT_UUID, stripePaymentIntentId: null }),
+            data: expect.objectContaining({ stripePaymentIntentId: 'pi_first' }),
+          }),
+        );
+        const paidCalls = invoiceUpdateMany.mock.calls.filter(
+          (c) => (c[0].data as Record<string, unknown> | undefined)?.paidAt !== undefined,
+        );
+        expect(paidCalls).toHaveLength(1);
+      });
+
+      it('rejects a PI whose account mirror subscription differs from the attempt (wrong subscription)', async () => {
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_OTHER',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-09-01T00:00:00.000Z'),
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', firstInvoicePi(), 'evt_first_pi_sub'),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        // The account/attempt subscription disagreement fails closed: no success
+        // transition, no settlement, durably reviewed.
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
+        );
+      });
+
+      it('rejects a PI whose local invoice period does not match the mirror period (non-first-period)', async () => {
+        // The subscription mirror already advanced to the NEXT period (July),
+        // so the August invoice cannot be proven to be the subscription's first
+        // Checkout invoice — the bare invoice reference is never loosened.
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-08-01T00:00:00.000Z'),
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', firstInvoicePi(), 'evt_first_pi_period'),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
+        );
+      });
+
+      it('rejects a bare renewal PI whose attempt has no Checkout session (never loosened)', async () => {
+        // A fixed-fee renewal PI without a Checkout session is never exempted:
+        // its Stripe invoice must already be bound AND match locally.
+        attemptFindFirst.mockResolvedValue(initialAttempt({ stripeCheckoutSessionId: null }));
+        constructEventAsync.mockResolvedValue(
+          event('payment_intent.succeeded', firstInvoicePi(), 'evt_first_pi_nosession'),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'needs_review' }) }),
+        );
+      });
+
+      it('marks the first-period PI attempt failed on payment_intent.payment_failed', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.payment_failed',
+            firstInvoicePi({
+              status: 'requires_payment_method',
+              last_payment_error: { code: 'card_declined', message: 'Your card was declined.' },
+            }),
+            'evt_first_pi_fail',
+          ),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed', failureCode: 'card_declined' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('marks the first-period PI attempt failed on payment_intent.canceled (never pending forever)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event(
+            'payment_intent.canceled',
+            firstInvoicePi({ status: 'canceled' }),
+            'evt_first_pi_cancel',
+          ),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptUpdateMany).toHaveBeenCalledWith({
+          where: { id: ATTEMPT_UUID, status: 'pending' },
+          data: expect.objectContaining({ status: 'failed' }),
+        });
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('validateRenewalReplay companion no-op (strict replay proof)', () => {
+      // Every strict fact a replay must prove exactly: fixed-fee, exact UTC
+      // month, single monthly-fee line, snapshot hash, and provider identity.
+      const replayAttempt = (overrides: Record<string, unknown> = {}) =>
+        attemptRow({
+          id: ATTEMPT_UUID,
+          invoiceId: INVOICE_UUID,
+          stripeChargeKind: 'fixed_fee',
+          stripeSubscriptionId: 'sub_123',
+          stripeInvoiceId: 'in_123',
+          stripePaymentIntentId: 'pi_123',
+          amountMicros: 49_000_000n,
+          ...overrides,
+        });
+      const replayInvoice = (overrides: Record<string, unknown> = {}) =>
+        invoiceRow({
+          id: INVOICE_UUID,
+          monthlyFeeMicros: 49_000_000n,
+          grossOutboundMicros: 0n,
+          billableOutboundMicros: 0n,
+          outboundOverageMicros: 0n,
+          apiOverageMicros: 0n,
+          walletOverageMicros: 0n,
+          snapshotJson: {
+            renewal: true,
+            planVersionId: 'plan-1',
+            fixedFeeMicros: '49000000',
+            period: '2026-08-01',
+          },
+          snapshotHash: 'b9137cdf1cb4a737e45eabf914a5cc45753de035968afa3d99f6ab3ef1f12a6b',
+          lines: [{ lineType: 'monthly_fee', amountMicros: 49_000_000n, quantity: 1n }],
+          ...overrides,
+        });
+
+      beforeEach(() => {
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        // invoice.* events also resolve the account via the subscription mirror
+        // (no metadata userId on renewal invoices).
+        accountFindFirst.mockResolvedValue({
+          id: 'acct-1',
+          userId: 'user-1',
+          stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionUpdatedAt: null,
+          activeSubscriptionPlanVersionId: 'plan-1',
+        });
+        planVersionFindUnique.mockResolvedValue({
+          id: 'plan-1',
+          code: 'pro',
+          version: 2,
+          name: 'Pro',
+          monthlyFeeMicros: 49_000_000n,
+        });
+      });
+
+      it('allows the invoice.paid companion no-op when the same fixed-fee attempt is the settlement winner', async () => {
+        invoiceFindUnique.mockResolvedValue(
+          replayInvoice({
+            paidAt: new Date('2026-08-02T00:00:00.000Z'),
+            settlementAttemptId: ATTEMPT_UUID,
+          }),
+        );
+
+        const result = await (service as any).validateRenewalReplay(
+          (service as any).prisma,
+          event('invoice.paid', renewalInvoice({ status: 'paid' }), 'evt_companion'),
+          replayAttempt(),
+        );
+
+        expect(result).toBe(true);
+      });
+
+      it('applies the companion invoice.paid as a true no-op (no re-settlement, no duplicate review)', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('invoice.paid', renewalInvoice({ status: 'paid' }), 'evt_inv_paid_companion'),
+        );
+        webhookEventCreate.mockResolvedValue({});
+        attemptFindFirst.mockResolvedValue(
+          replayAttempt({ status: 'succeeded', allocatedAt: new Date() }),
+        );
+        attemptFindUnique.mockResolvedValue(
+          replayAttempt({ status: 'succeeded', allocatedAt: new Date() }),
+        );
+        invoiceFindUnique.mockResolvedValue(
+          replayInvoice({
+            paidAt: new Date('2026-08-02T00:00:00.000Z'),
+            settlementAttemptId: ATTEMPT_UUID,
+          }),
+        );
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(webhookEventCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'processed' }) }),
+        );
+        // The already-settled invoice is never re-settled and the succeeded
+        // attempt is never regressed or marked duplicate — a pure no-op.
+        expect(attemptUpdateMany).not.toHaveBeenCalled();
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('rejects a companion invoice.payment_failed on an already-paid invoice (paid state never regressed)', async () => {
+        invoiceFindUnique.mockResolvedValue(
+          replayInvoice({
+            paidAt: new Date('2026-08-02T00:00:00.000Z'),
+            settlementAttemptId: ATTEMPT_UUID,
+          }),
+        );
+
+        const result = await (service as any).validateRenewalReplay(
+          (service as any).prisma,
+          event('invoice.payment_failed', renewalInvoice({ status: 'open' }), 'evt_fail'),
+          replayAttempt(),
+        );
+
+        expect(result).toBe(false);
+      });
+
+      it('rejects an invoice.paid replay when a DIFFERENT attempt owns the settlement', async () => {
+        invoiceFindUnique.mockResolvedValue(
+          replayInvoice({
+            paidAt: new Date('2026-08-02T00:00:00.000Z'),
+            settlementAttemptId: '99999999-9999-4999-8999-999999999999',
+          }),
+        );
+
+        const result = await (service as any).validateRenewalReplay(
+          (service as any).prisma,
+          event('invoice.paid', renewalInvoice({ status: 'paid' }), 'evt_other_winner'),
+          replayAttempt(),
+        );
+
+        expect(result).toBe(false);
+      });
+
+      it('rejects a companion replay whose local invoice facts no longer match the fixed fee (strict facts required)', async () => {
+        // The same winner, but the local invoice total drifted to a dynamic
+        // overage amount — a replay must never ride on a changed fact set.
+        invoiceFindUnique.mockResolvedValue(
+          replayInvoice({
+            paidAt: new Date('2026-08-02T00:00:00.000Z'),
+            settlementAttemptId: ATTEMPT_UUID,
+            totalMicros: 99_000_000n,
+            monthlyFeeMicros: 99_000_000n,
+          }),
+        );
+
+        const result = await (service as any).validateRenewalReplay(
+          (service as any).prisma,
+          event('invoice.paid', renewalInvoice({ status: 'paid' }), 'evt_drift'),
+          replayAttempt(),
+        );
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('overage PaymentIntent reconciliation (lost-webhook recovery)', () => {
+      const reconcilableAttempt = (overrides: Record<string, unknown> = {}) =>
+        attemptRow({
+          stripeChargeKind: 'overage',
+          stripePaymentIntentId: 'pi_ov',
+          amountMicros: 60_000_000n,
+          ...overrides,
+        });
+      const reconciledInvoice = () =>
+        invoiceRow({
+          totalMicros: 109_000_000n,
+          allocatedMicros: 49_000_000n,
+        });
+      const overagePi = (overrides: Record<string, unknown> = {}) =>
+        ({
+          id: 'pi_ov',
+          status: 'succeeded',
+          amount: 6000,
+          currency: 'usd',
+          customer: 'cus_123',
+          metadata: {
+            invoiceId: 'inv-1',
+            attemptId: 'att-1',
+            chargeKind: 'overage',
+          },
+          ...overrides,
+        }) as any;
+
+      beforeEach(() => {
+        // The reconcile's initial read sees the pending attempt; the shared
+        // settlement boundary re-reads it AFTER the forward-only succeeded CAS,
+        // so it must see `succeeded` (exactly like the real DB).
+        attemptFindUnique
+          .mockResolvedValueOnce({
+            ...reconcilableAttempt(),
+            invoice: { ...reconciledInvoice(), billingAccount: { stripeCustomerId: 'cus_123' } },
+          })
+          .mockResolvedValue({
+            ...reconcilableAttempt({ status: 'succeeded' }),
+            invoice: { ...reconciledInvoice(), billingAccount: { stripeCustomerId: 'cus_123' } },
+          });
+        invoiceFindUnique.mockResolvedValue(reconciledInvoice());
+        attemptUpdateMany.mockResolvedValue({ count: 1 });
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+        paymentIntentRetrieve.mockResolvedValue(overagePi());
+      });
+
+      it('settles a PaymentIntent that succeeded but whose webhook was lost', async () => {
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('settled');
+        // Forward-only CAS to succeeded + shared coverage settlement.
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              id: 'att-1',
+              status: 'pending',
+              stripePaymentIntentId: 'pi_ov',
+            }),
+            data: expect.objectContaining({ status: 'succeeded' }),
+          }),
+        );
+        const paidCalls = invoiceUpdateMany.mock.calls.filter(
+          (c) => (c[0].data as Record<string, unknown> | undefined)?.paidAt !== undefined,
+        );
+        expect(paidCalls).toHaveLength(1);
+        // The SAME PI identity is used — nothing is re-created.
+        expect(paymentIntentRetrieve).toHaveBeenCalledWith('pi_ov');
+      });
+
+      it('keeps a processing PaymentIntent pending with a re-check backoff (never fake success)', async () => {
+        paymentIntentRetrieve.mockResolvedValue(overagePi({ status: 'processing' }));
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('pending');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
+            data: expect.objectContaining({ checkoutNextRetryAt: expect.any(Date) }),
+          }),
+        );
+        expect(attemptUpdate).not.toHaveBeenCalled();
+      });
+
+      it('marks a canceled PaymentIntent failed', async () => {
+        paymentIntentRetrieve.mockResolvedValue(overagePi({ status: 'canceled' }));
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('failed');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: 'att-1', status: 'pending' }),
+            data: expect.objectContaining({ status: 'failed', failureCode: 'canceled' }),
+          }),
+        );
+      });
+
+      it('marks a requires_action PaymentIntent needs_review (SCA, never a fake success)', async () => {
+        paymentIntentRetrieve.mockResolvedValue(overagePi({ status: 'requires_action' }));
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('needs_review');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              status: 'needs_review',
+              reviewReason: 'payment_intent_requires_action',
+            }),
+          }),
+        );
+      });
+
+      it('marks a PaymentIntent with a mismatched identity needs_review (never settled)', async () => {
+        paymentIntentRetrieve.mockResolvedValue(
+          overagePi({ amount: 9999 }), // wrong amount
+        );
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('needs_review');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              status: 'needs_review',
+              reviewReason: 'payment_intent_reconciliation_mismatch',
+            }),
+          }),
+        );
+        expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it('keeps a transient retrieve failure pending with backoff (no state change)', async () => {
+        paymentIntentRetrieve.mockRejectedValue(new Error('network timeout'));
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('pending');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ checkoutNextRetryAt: expect.any(Date) }),
+          }),
+        );
+      });
+
+      it('marks a PaymentIntent that no longer exists at Stripe as needs_review', async () => {
+        paymentIntentRetrieve.mockRejectedValue(
+          Object.assign(new Error('No such payment_intent'), {
+            code: 'resource_missing',
+            statusCode: 404,
+          }),
+        );
+
+        const result = await service.reconcileOveragePaymentIntent(
+          reconcilableAttempt() as any,
+          'worker-1',
+        );
+
+        expect(result).toBe('needs_review');
+        expect(attemptUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              status: 'needs_review',
+              reviewReason: 'payment_intent_not_found',
+            }),
+          }),
+        );
+      });
+    });
   });
 });

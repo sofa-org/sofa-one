@@ -2,30 +2,31 @@
 
 Commercial billing subsystem for SOFA ONE: plan catalog and self-service plan
 changes, usage metering (API calls, outbound volume, active wallets), quota
-enforcement, monthly invoice finalization, two payment rails (Stripe Checkout
-and native USDC on Base), receipt-confirmed reconciliation, and an atomic
-first-rail-wins settlement boundary. All monetary math is bigint microdollars;
+enforcement, monthly invoice finalization, Stripe payment rails (Checkout,
+renewal fixed fees, Stripe off-session overage collection, and native USDC on
+Base), receipt-confirmed reconciliation, and a shared coverage-first allocation
+boundary. All monetary math is bigint microdollars;
 all persisted/returned payloads are JSON-safe (no BigInt leaks).
 
 ## Responsibility
 
-| File | Responsibility |
-| --- | --- |
-| `billing.module.ts` | Nest module wiring: imports `PrismaModule`, `SecurityEventModule`, and `ScheduleModule.forRoot()`; registers 3 controllers + 10 providers, exports the services consumed by other modules. |
-| `billing.controller.ts` | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, subscription-checkout, reconcile). |
-| `billing.service.ts` | Core service: plan catalog seeding/validation, plan assignment, usage recording + API-call quota, outbound metering (legacy + receipt-confirmed), summary aggregation, invoice list/get/finalize, and the shared billing-period lock seam. |
-| `billing-calculator.ts` | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`. |
-| `billing-catalog.ts` | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values. |
-| `billing-pricing.ts` | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results. |
-| `billing-entitlement.service.ts` | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and the transaction-aware `assertWalletActivationAllowed` hard-quota seam. |
-| `billing-worker.service.ts` | Gated 5-minute `@Interval` worker (`BILLING_WORKER_ENABLED`, default off; exposes no route): drains receipt reconciliation per account/period, runs invoice finalization catch-up, materializes due recurring periods, resumes pending/confirming USDC claims, retries deferred Stripe renewal events, and recovers interrupted pending checkouts. Reuses the existing evidence-backed services. |
-| `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers. |
-| `invoice-settlement.service.ts` | Shared atomic invoice-settlement boundary (`settleInvoice`): row-locked, first-rail-wins CAS used by both Stripe and USDC rails. |
-| `billing-quota.exception.ts` | `BillingQuotaExceededException` — HTTP 429 with machine-readable `BILLING_API_QUOTA_EXCEEDED` code, metric, limit, period, retryAfter. |
-| `billing.utils.ts` | Pure helpers: `parsePeriod`, `formatUtcMonth`, `microsToDecimalUsd`, `ppmToPercentString`, `safeNumber`. |
-| `dto/` | Request DTOs for the five dashboard billing routes (see `dto/codemap.md`). |
-| `stripe/` | Stripe Checkout rail: client provider, payment service, signature-verified webhook controller/service, constants (see `stripe/codemap.md`). |
-| `onchain/` | Native USDC rail: quote/claim controller + service, viem receipt provider, constants (see `onchain/codemap.md`). |
+| File                                | Responsibility                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `billing.module.ts`                 | Nest module wiring: imports `PrismaModule`, `SecurityEventModule`, and `ScheduleModule.forRoot()`; registers 3 controllers + 10 providers, exports the services consumed by other modules.                                                                                                                                                                                                       |
+| `billing.controller.ts`             | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, subscription-checkout, reconcile).                                                                                                                                                                                                                                                           |
+| `billing.service.ts`                | Core service: plan catalog seeding/validation, plan assignment, usage recording + API-call quota, outbound metering (legacy + receipt-confirmed), summary aggregation, invoice list/get/finalize, and the shared billing-period lock seam.                                                                                                                                                       |
+| `billing-calculator.ts`             | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`.                                                                                                                                                                                                                                                                       |
+| `billing-catalog.ts`                | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values.                                                                                                                                                                                                                                                                                               |
+| `billing-pricing.ts`                | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results.                                                                                                                                                                                                                                                           |
+| `billing-entitlement.service.ts`    | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and the transaction-aware `assertWalletActivationAllowed` hard-quota seam.                                                                                                                                                                                                                                                   |
+| `billing-worker.service.ts`         | Gated 5-minute `@Interval` worker (`BILLING_WORKER_ENABLED`, default off; exposes no route): drains receipt reconciliation per account/period, runs invoice finalization catch-up, materializes due recurring periods, resumes pending/confirming USDC claims, retries deferred Stripe renewal events, and recovers interrupted pending checkouts. Reuses the existing evidence-backed services. |
+| `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers.                                                                                                                                                                                       |
+| `invoice-settlement.service.ts`     | Shared atomic invoice-allocation boundary (`settleInvoice`): row-locked, coverage-first, invoice-paid-last; used by both Stripe and USDC rails and the renewal fixed-fee catch-up.                                                                                                                                                                                                               |
+| `billing-quota.exception.ts`        | `BillingQuotaExceededException` — HTTP 429 with machine-readable `BILLING_API_QUOTA_EXCEEDED` code, metric, limit, period, retryAfter.                                                                                                                                                                                                                                                           |
+| `billing.utils.ts`                  | Pure helpers: `parsePeriod`, `formatUtcMonth`, `microsToDecimalUsd`, `ppmToPercentString`, `safeNumber`.                                                                                                                                                                                                                                                                                         |
+| `dto/`                              | Request DTOs for the five dashboard billing routes (see `dto/codemap.md`).                                                                                                                                                                                                                                                                                                                       |
+| `stripe/`                           | Stripe Checkout rail: client provider, payment service, signature-verified webhook controller/service, constants (see `stripe/codemap.md`).                                                                                                                                                                                                                                                      |
+| `onchain/`                          | Native USDC rail: quote/claim controller + service, viem receipt provider, constants (see `onchain/codemap.md`).                                                                                                                                                                                                                                                                                 |
 
 ## Design/Patterns
 
@@ -68,15 +69,27 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   `snapshotHash` over a JSON snapshot) → `paid` (set only by the settlement
   boundary). `finalized`/`needs_review`/`void` invoices are immutable; only
   `open` invoices can be updated by a plan change.
-- **Dual-rail payment attempts + first-rail-wins settlement.** `BillingPaymentAttempt`
+- **Dual-rail payment attempts + coverage-first allocation.** `BillingPaymentAttempt`
   rows are method-scoped (`stripe` | `usdc`); a partial unique index keeps at
-  most one active pending attempt per invoice+method. `InvoiceSettlementService.settleInvoice`
+  most one active pending attempt per invoice+method, and a second
+  migration-only partial unique index
+  (`billing_payment_attempts_one_active_payment_per_invoice_idx`) allows at most
+  ONE active (`pending`/`confirming`) payment attempt per invoice across ALL
+  rails (USDC and every Stripe charge kind), so a confirming USDC transfer and
+  an off-session Stripe overage — or any other two active rails — can never
+  coexist (services preflight and treat the P2002 as a fail-closed Conflict). `InvoiceSettlementService.settleInvoice`
   takes stable PostgreSQL row locks (attempt → invoice, matching the webhook's
-  natural order to avoid deadlocks) and performs an atomic CAS guarded by
-  `paidAt IS NULL AND settlementAttemptId IS NULL` plus re-checked predicates.
-  Precondition failures are no-ops (`settled: false`), never throws; a lost
-  rail race is recorded as `needs_review`/`duplicate_unallocated`, never an
-  overwrite of the paid invoice.
+  natural order to avoid deadlocks) and allocates a succeeded attempt's coverage
+  toward `BillingInvoice.allocatedMicros` — never more than the remaining
+  balance — marking the invoice paid only when cumulative coverage reaches the
+  frozen total. The attempt `allocatedAt` marker makes a replay of the same
+  attempt an idempotent no-op, and any coverage/paid-marker CAS failure aborts
+  the whole caller transaction (throw → rollback) so the attempt marker and the
+  invoice coverage/paid markers can never diverge. Precondition failures are
+  no-ops (`allocated: false`), never throws; a lost rail race is recorded as
+  `needs_review`/`duplicate_unallocated`, never an overwrite of the paid invoice,
+  and a fixed-fee under-charge on a larger invoice is a legitimate PARTIAL
+  allocation (the overage remainder is collected by the overage worker).
 - **Scheduled worker seam (default off).** `BillingWorkerService` ticks every 5
   minutes via `ScheduleModule.forRoot()` but only acts when `billing.worker.enabled`
   (`BILLING_WORKER_ENABLED=true`) is set; otherwise the tick returns immediately.
@@ -240,8 +253,10 @@ POST /v1/billing/webhooks/stripe (signed, raw body; 13 processed event types)
     fixed-fee renewal materializes the local renewal invoice + fixed-fee attempt
     exactly once (unique stripeInvoiceId), subject to provider-fact validation
   → succeeded → forward-only attempt update + settlementService.settleInvoice
-    (lost race → duplicate_unallocated review; fixed-fee partial balance →
-    needs_review); failed → pending-only CAS
+    (coverage-first allocation; lost race → duplicate_unallocated review;
+    fixed-fee partial coverage keeps the invoice unpaid and the overage worker
+    collects the remainder — never a fake paid); failed/canceled/requires_action
+    → pending-only CAS to failed
 
 Worker recovery (BillingWorkerService, gated by BILLING_WORKER_ENABLED)
   → retryDeferredStripeEvents: re-fetches deferred events from Stripe by id and
@@ -251,6 +266,21 @@ Worker recovery (BillingWorkerService, gated by BILLING_WORKER_ENABLED)
     stripe.checkout.sessions.retrieve (expanded subscription), proving session
     identity/amount/currency/customer/period compatibility before persisting
     recovered ids, with checkoutRetry* lease columns; exhaustion → needs_review
+  → recoverUnallocatedFixedFee: retries the post-commit fixed-fee allocation for
+    finalized unpaid invoices whose succeeded fixed-fee attempt still has
+    allocatedAt NULL (the finalize post-commit catch-up can fail transiently)
+  → attemptRenewalOverage: after finalization + allocated fixed-fee coverage,
+    charges the frozen remainder off-session (Stripe PaymentIntent,
+    confirm+off_session, stable key `overage-payment:<attemptId>`, provable
+    default PM, active-USDC exclusion, bounded backoff-respecting retries)
+  → recoverOverageCharges: resumes pending overage charges — a PI-less attempt
+    re-issues the SAME attempt/idempotency key (never a second charge), and a
+    PI-persisted attempt is actively RECONCILED via
+    `StripeWebhookService.reconcileOveragePaymentIntent` (retrieve, never
+    create): succeeded PIs are settled through the shared coverage boundary,
+    failed/canceled/SCA/identity-mismatch PIs are surfaced with a safe state,
+    processing/transient PIs stay pending with a re-check backoff; exhaustion →
+    needs_review
 ```
 
 ### USDC rail
@@ -264,13 +294,22 @@ POST /v1/billing/invoices/:id/usdc/quote { chainId? }
   → reuse/release active pending/confirming attempt (confirming never released;
     expired pending released before chain-conflict check; different-chain active
     = conflict); else create attempt with full immutable quote snapshot
-    (providerIdentity = sha256 of RPC URL, never the raw URL)
+    (providerIdentity = sha256 of RPC URL, never the raw URL); the quote amount
+    is the CURRENT remaining balance (`totalMicros - allocatedMicros`) once a
+    fixed-fee renewal has allocated coverage, and the full total otherwise
 
 POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
   → assertSnapshotComplete (every snapshot field present + consistent with
     current config/allowlist — fail closed)
   → canonicalize txHash; terminal states returned as-is; evidence-conflict →
     review
+  → persist-before-RPC / first-writer-wins: CAS-persist the canonical
+    submittedTxHash (active states, null-or-equal); a different-hash loser
+    matches zero rows → observed real state returned with NO RPC; a same-hash
+    cross-attempt P2002 (migration-only unique submitted_tx_hash index) →
+    active attempt CAS-marked needs_review/duplicate_unallocated
+    (failureCode duplicate_submitted_hash) — never a 500 / permanent pending /
+    second provider claim; non-P2002 errors propagate unchanged
   → receiptProvider.getTransactionReceipt (null → pending/expired; RPC error →
     retryable); receipt hash match; block timestamp; reorg detection;
     receipt_predates_attempt; status success; parseTransfer (unique canonical
@@ -278,8 +317,11 @@ POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
     ambiguous → review)
   → confirmations vs chain head (getBlockNumber); below threshold →
     markConfirming (evidence-aware CAS); at/above → settleConfirmed: row-locked
-    transaction (attempt → invoice), evidence re-verified under lock, attempt →
-    succeeded, settlementService.settleInvoice; lost race / duplicate evidence →
+    transaction (attempt → invoice), evidence re-verified under lock, a fresh
+    invoice re-read REJECTS a stale quote whose persisted amount exceeds the
+    current remaining balance (`stale_quote_over_remainder` → needs_review, never
+    partial credit for a full payment), attempt → succeeded,
+    settlementService.settleInvoice; lost race / duplicate evidence →
     needs_review/duplicate_unallocated
 
 Worker recovery (BillingWorkerService.recoverUsdcClaims, gated by
