@@ -44,6 +44,23 @@ export type OverageReconcileResult =
   | 'needs_review' // identity mismatch / SCA / not found — operator action
   | 'skipped'; // not eligible / lease lost / webhook already applied
 
+/**
+ * Outcome of the internal deferred-event re-processing pipeline
+ * (`processEvent`), the worker's sole authority for whether a deferred retry
+ * completed. The pipeline is never bypassed and no payment state is
+ * synthesized.
+ * - `processed` / `ignored`: the event was applied or legitimately recorded —
+ *   success for the worker tick.
+ * - `needs_review`: the event was durably transitioned to operator review by
+ *   THIS processor (preflight rejection or retry exhaustion) — the worker tick
+ *   must fail.
+ * - `deferred`: a still-unmatched renewal was re-scheduled (retry count bumped)
+ *   by this processor — retryable; the worker tick must fail.
+ * A benign concurrent CAS miss (another worker/webhook already completed the
+ * event) is reported as the completed outcome and never fails the tick.
+ */
+export type StripeEventProcessingOutcome = 'processed' | 'ignored' | 'needs_review' | 'deferred';
+
 /** Backoff before the worker re-reconciles a still-pending overage PaymentIntent. */
 const OVERAGE_RECONCILE_BACKOFF_MS = 60_000;
 
@@ -200,7 +217,7 @@ export class StripeWebhookService {
   private async recordPreflightReview(
     event: Stripe.Event,
     lease?: { ownerId: string },
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await this.prisma.stripeWebhookEvent.create({
         data: {
@@ -212,9 +229,10 @@ export class StripeWebhookService {
           errorCode: 'identity_or_provider_mismatch',
         },
       });
+      return true;
     } catch (error) {
       if (!isUniqueConstraintError(error)) throw error;
-      await this.prisma.stripeWebhookEvent.updateMany({
+      const updated = await this.prisma.stripeWebhookEvent.updateMany({
         // Processed is terminal; a replay must never demote a committed event.
         where: {
           stripeEventId: event.id,
@@ -229,6 +247,9 @@ export class StripeWebhookService {
           errorCode: 'identity_or_provider_mismatch',
         },
       });
+      // `false` when the CAS missed because a concurrent processor already
+      // completed the event — the caller treats that as benign (never a failure).
+      return updated.count === 1;
     }
   }
 
@@ -238,13 +259,16 @@ export class StripeWebhookService {
    * rollback never leaves a success audit and an audit/notification/SIEM
    * failure is isolated (never rolls back settlement).
    */
-  private async processKnownEvent(event: Stripe.Event, lease?: { ownerId: string }): Promise<void> {
+  private async processKnownEvent(
+    event: Stripe.Event,
+    lease?: { ownerId: string },
+  ): Promise<StripeEventProcessingOutcome> {
     const audits: SecurityEventInput[] = [];
     const queueAudit = (input: SecurityEventInput): void => {
       audits.push(input);
     };
 
-    await this.prisma.$transaction(async (tx) => {
+    const outcome = await this.prisma.$transaction(async (tx) => {
       // Dedupe is read-only. A new event must pass the complete identity/provider
       // preflight before it can create an event row or become an identity anchor.
       const existingEvent = await tx.stripeWebhookEvent.findUnique({
@@ -304,7 +328,7 @@ export class StripeWebhookService {
         if (!providerFacts.ok)
           throw new ConflictException(`Stripe provider preflight failed: ${providerFacts.reason}`);
       }
-      if (terminalReplay) return;
+      if (terminalReplay) return 'processed';
       if (lease) {
         const heartbeat = await tx.stripeWebhookEvent.updateMany({
           where: {
@@ -340,7 +364,7 @@ export class StripeWebhookService {
           // A deferred event is re-processed by the worker once its local
           // renewal invoice exists; processed/ignored/needs_review events are
           // already applied and are idempotent no-ops.
-          if (existing?.status !== 'deferred') return;
+          if (existing?.status !== 'deferred') return 'processed';
           createdFresh = false;
         } else {
           throw err;
@@ -425,11 +449,10 @@ export class StripeWebhookService {
       ) {
         const mirrorResult = await this.applySubscriptionMirror(tx, event);
         if (mirrorResult === 'unmatched') {
-          await this.deferUnmatched(tx, event, queueAudit, createdFresh, lease);
-          return;
+          return this.deferUnmatched(tx, event, queueAudit, createdFresh, lease);
         }
         if (mirrorResult === 'conflict') {
-          await tx.stripeWebhookEvent.updateMany({
+          const reviewed = await tx.stripeWebhookEvent.updateMany({
             where: {
               stripeEventId: event.id,
               ...(createdFresh ? { status: 'processed' } : { status: 'deferred' }),
@@ -443,7 +466,9 @@ export class StripeWebhookService {
               nextRetryAt: null,
             },
           });
-          return;
+          // Only this processor's own owned transition counts as a review
+          // failure; a concurrent CAS miss is benign (already completed).
+          return reviewed.count === 1 ? 'needs_review' : 'processed';
         }
       }
 
@@ -452,8 +477,7 @@ export class StripeWebhookService {
         // the renewal invoice/attempt exists) is deferred for bounded retry by
         // the worker — never silently ignored. Non-renewal orphans stay ignored.
         if (STRIPE_RENEWAL_EVENT_TYPES.has(event.type)) {
-          await this.deferUnmatched(tx, event, queueAudit, createdFresh, lease);
-          return;
+          return this.deferUnmatched(tx, event, queueAudit, createdFresh, lease);
         }
         // Legitimate event with no local match: ignored, 2xx, no business
         // change. Guarded to the row this transaction owns (or a deferred
@@ -466,7 +490,7 @@ export class StripeWebhookService {
           data: { status: 'ignored' },
         });
         if (ignored.count !== 1) throw new ConflictException('Stripe event claim was lost');
-        return;
+        return 'ignored';
       }
 
       // A previously deferred event that now has a local match is processed.
@@ -499,7 +523,7 @@ export class StripeWebhookService {
         // identity after the complete lookup/mirror preflight above.
         await this.persistEventIds(tx, event, attempt);
         await this.applySubscriptionBookkeeping(tx, event, attempt);
-        return;
+        return 'processed';
       }
 
       if (transition === 'succeeded') {
@@ -650,7 +674,7 @@ export class StripeWebhookService {
         // subscription mirror. An already-winning replay has already persisted
         // these identities; the locked settlement service is the sole
         // authority for this boundary.
-        if (!result.allocated) return;
+        if (!result.allocated) return 'processed';
         try {
           // The active-plan bootstrap runs only when this payment actually
           // settled the whole invoice; a partial fixed-fee allocation leaves
@@ -689,9 +713,11 @@ export class StripeWebhookService {
               metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
             });
           }
-          return;
+          // Only this processor's own owned transition counts as a review
+          // failure; a concurrent CAS miss is benign (already completed).
+          return reviewed.count === 1 ? 'needs_review' : 'processed';
         }
-        return;
+        return 'processed';
       }
 
       // Failure: only a pending attempt may transition to failed. The CAS
@@ -699,7 +725,7 @@ export class StripeWebhookService {
       // Committed — a concurrent success that already committed can never be
       // regressed, and a stale read of a pending attempt cannot overwrite a
       // succeeded/confirming attempt or the attempt that settled the invoice.
-      if (attempt.status === 'succeeded') return;
+      if (attempt.status === 'succeeded') return 'processed';
       const { code, message } = extractFailureDetails(event);
       await tx.billingPaymentAttempt.updateMany({
         where: { id: attempt.id, status: 'pending' },
@@ -718,6 +744,7 @@ export class StripeWebhookService {
         reason: code ?? 'payment_failed',
         metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
       });
+      return 'processed';
     });
 
     // Emit queued audits only after the business transaction committed.
@@ -726,6 +753,7 @@ export class StripeWebhookService {
     for (const input of audits) {
       await this.audit(input);
     }
+    return outcome;
   }
 
   /**
@@ -735,13 +763,20 @@ export class StripeWebhookService {
    * signature-verified/trusted (retrieved from Stripe by id). This is an
    * internal trusted path — never a controller/public route.
    */
-  async processEvent(event: Stripe.Event, lease?: { ownerId: string }): Promise<void> {
+  async processEvent(
+    event: Stripe.Event,
+    lease?: { ownerId: string },
+  ): Promise<StripeEventProcessingOutcome> {
     try {
-      await this.processKnownEvent(event, lease);
+      return await this.processKnownEvent(event, lease);
     } catch (error) {
       if (error instanceof ConflictException && isPreflightConflict(error)) {
-        await this.recordPreflightReview(event, lease);
-        return;
+        // A preflight rejection is converted to a durable needs_review outcome
+        // and reported as such — the worker must fail its tick. A benign CAS
+        // miss (a concurrent processor already completed the event) is reported
+        // as processed and never fails the tick.
+        const transitioned = await this.recordPreflightReview(event, lease);
+        return transitioned ? 'needs_review' : 'processed';
       }
       throw error;
     }
@@ -1029,7 +1064,7 @@ export class StripeWebhookService {
     queueAudit: (i: SecurityEventInput) => void,
     createdFresh: boolean,
     lease?: { ownerId: string },
-  ): Promise<void> {
+  ): Promise<StripeEventProcessingOutcome> {
     const existing = await tx.stripeWebhookEvent.findUnique({
       where: { stripeEventId: event.id },
       select: {
@@ -1073,7 +1108,7 @@ export class StripeWebhookService {
       this.logger.warn(
         `Stripe event ${event.id} was already processed concurrently; skipping deferral`,
       );
-      return;
+      return 'processed';
     }
     queueAudit({
       actorType: 'system',
@@ -1086,6 +1121,7 @@ export class StripeWebhookService {
       reason: exhausted ? 'deferred_retry_exhausted' : 'unmatched_renewal_invoice',
       metadata: { stripeEventId: event.id, type: event.type, retryCount },
     });
+    return exhausted ? 'needs_review' : 'deferred';
   }
 
   // ── Subscription mirror (event-order safe, account-resolvable) ─────────────

@@ -9,7 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { STRIPE_CLIENT } from './stripe.constants';
-import { StripePaymentService } from './stripe-payment.service';
+import { StripePaymentService, withCheckoutReturnMarker } from './stripe-payment.service';
 
 const p2002 = () =>
   new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -257,6 +257,98 @@ describe('StripePaymentService', () => {
     });
   });
 
+  describe('withCheckoutReturnMarker', () => {
+    it('appends the success marker when the URL has no query string', () => {
+      expect(withCheckoutReturnMarker('https://app.example.com/billing', 'success')).toBe(
+        'https://app.example.com/billing?success=1',
+      );
+    });
+
+    it('appends the canceled marker when the URL has no query string', () => {
+      expect(withCheckoutReturnMarker('https://app.example.com/billing', 'canceled')).toBe(
+        'https://app.example.com/billing?canceled=1',
+      );
+    });
+
+    it('merges the success marker into an existing query string', () => {
+      expect(
+        withCheckoutReturnMarker('https://app.example.com/billing?checkout=success', 'success'),
+      ).toBe('https://app.example.com/billing?checkout=success&success=1');
+    });
+
+    it('merges the canceled marker into an existing query string', () => {
+      expect(
+        withCheckoutReturnMarker('https://app.example.com/billing?checkout=cancelled', 'canceled'),
+      ).toBe('https://app.example.com/billing?checkout=cancelled&canceled=1');
+    });
+
+    it('places the marker before the fragment when the URL has only a fragment', () => {
+      expect(withCheckoutReturnMarker('https://app.example.com/billing#section', 'success')).toBe(
+        'https://app.example.com/billing?success=1#section',
+      );
+      expect(withCheckoutReturnMarker('https://app.example.com/billing#section', 'canceled')).toBe(
+        'https://app.example.com/billing?canceled=1#section',
+      );
+    });
+
+    it('places the marker before the fragment when the URL has both a query string and a fragment', () => {
+      expect(
+        withCheckoutReturnMarker(
+          'https://app.example.com/billing?checkout=success#section',
+          'success',
+        ),
+      ).toBe('https://app.example.com/billing?checkout=success&success=1#section');
+      expect(
+        withCheckoutReturnMarker(
+          'https://app.example.com/billing?checkout=cancelled#section',
+          'canceled',
+        ),
+      ).toBe('https://app.example.com/billing?checkout=cancelled&canceled=1#section');
+    });
+
+    it('never duplicates an already-present success marker', () => {
+      expect(withCheckoutReturnMarker('https://app.example.com/billing?success=1', 'success')).toBe(
+        'https://app.example.com/billing?success=1',
+      );
+      expect(
+        withCheckoutReturnMarker(
+          'https://app.example.com/billing?checkout=success&success=1#section',
+          'success',
+        ),
+      ).toBe('https://app.example.com/billing?checkout=success&success=1#section');
+    });
+
+    it('never duplicates an already-present canceled marker', () => {
+      expect(
+        withCheckoutReturnMarker('https://app.example.com/billing?canceled=1', 'canceled'),
+      ).toBe('https://app.example.com/billing?canceled=1');
+      expect(
+        withCheckoutReturnMarker(
+          'https://app.example.com/billing?checkout=cancelled&canceled=1#section',
+          'canceled',
+        ),
+      ).toBe('https://app.example.com/billing?checkout=cancelled&canceled=1#section');
+    });
+
+    it('does not append a marker when the key already exists with a different value', () => {
+      expect(withCheckoutReturnMarker('https://app.example.com/billing?success=0', 'success')).toBe(
+        'https://app.example.com/billing?success=0',
+      );
+      expect(
+        withCheckoutReturnMarker('https://app.example.com/billing?canceled=0', 'canceled'),
+      ).toBe('https://app.example.com/billing?canceled=0');
+    });
+
+    it('preserves every existing configured query parameter in order', () => {
+      expect(
+        withCheckoutReturnMarker(
+          'https://app.example.com/billing?checkout=success&from=email&retry=2',
+          'success',
+        ),
+      ).toBe('https://app.example.com/billing?checkout=success&from=email&retry=2&success=1');
+    });
+  });
+
   describe('ownership and eligibility', () => {
     it('throws NotFound when the user has no billing account', async () => {
       accountFindUnique.mockResolvedValue(null);
@@ -360,8 +452,8 @@ describe('StripePaymentService', () => {
         expect.objectContaining({
           customer: 'cus_123',
           mode: 'payment',
-          success_url: 'https://app.example.com/billing?checkout=success',
-          cancel_url: 'https://app.example.com/billing?checkout=cancelled',
+          success_url: 'https://app.example.com/billing?checkout=success&success=1',
+          cancel_url: 'https://app.example.com/billing?checkout=cancelled&canceled=1',
           line_items: [
             {
               quantity: 1,
@@ -1099,12 +1191,16 @@ describe('StripePaymentService', () => {
       expect(result.sessionId).toBe('cs_sub');
       expect(sessionCreate).toHaveBeenCalledWith(
         expect.objectContaining({
+          customer: 'cus_123',
+          mode: 'subscription',
+          success_url: 'https://app.example.com/billing?checkout=success&success=1',
+          cancel_url: 'https://app.example.com/billing?checkout=cancelled&canceled=1',
           subscription_data: expect.objectContaining({
             billing_cycle_anchor: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
             proration_behavior: 'none',
           }),
         }),
-        expect.any(Object),
+        expect.objectContaining({ idempotencyKey: 'subscription-checkout:att-1' }),
       );
       expect(accountUpdateMany).not.toHaveBeenCalled();
       expect(accountUpdate).not.toHaveBeenCalled();
@@ -1186,7 +1282,7 @@ describe('StripePaymentService', () => {
 
       const result = await service.recoverPendingCheckouts('worker-1');
 
-      expect(result).toEqual({ attempted: 1, recovered: 1, needsReview: 0 });
+      expect(result).toEqual({ attempted: 1, recovered: 1, needsReview: 0, retryable: 0 });
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -1256,7 +1352,7 @@ describe('StripePaymentService', () => {
 
       const result = await service.recoverPendingCheckouts('worker-1');
 
-      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0 });
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 0 });
       expect(sessionRetrieve).not.toHaveBeenCalled();
     });
 
@@ -1307,6 +1403,18 @@ describe('StripePaymentService', () => {
       const result = await service.recoverPendingCheckouts('worker-1');
 
       expect(result.recovered).toBe(1);
+      // The freshly created one-time Checkout session for the recovered attempt
+      // must carry the deterministic frontend return markers on the configured
+      // server URLs while keeping the attempt-derived idempotency key.
+      expect(sessionCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: 'cus_123',
+          mode: 'payment',
+          success_url: 'https://app.example.com/billing?checkout=success&success=1',
+          cancel_url: 'https://app.example.com/billing?checkout=cancelled&canceled=1',
+        }),
+        { idempotencyKey: 'checkout:att-1' },
+      );
       // The persistence CAS must carry the NEW session id, never the null the
       // attempt originally had — otherwise one-time recovery would keep
       // retrying with no local session identity.
@@ -1344,6 +1452,18 @@ describe('StripePaymentService', () => {
       const result = await service.recoverPendingCheckouts('worker-1');
 
       expect(result.recovered).toBe(1);
+      // The freshly created subscription-mode Checkout session for the recovered
+      // fixed-fee attempt must carry the deterministic frontend return markers
+      // on the configured server URLs (subscription-checkout idempotency key).
+      expect(sessionCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: 'cus_123',
+          mode: 'subscription',
+          success_url: 'https://app.example.com/billing?checkout=success&success=1',
+          cancel_url: 'https://app.example.com/billing?checkout=cancelled&canceled=1',
+        }),
+        { idempotencyKey: 'subscription-checkout:att-1' },
+      );
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -1374,7 +1494,7 @@ describe('StripePaymentService', () => {
 
       const result = await service.recoverPendingCheckouts('worker-1');
 
-      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0 });
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 0 });
       expect(sessionRetrieve).not.toHaveBeenCalled();
       expect(sessionCreate).not.toHaveBeenCalled();
     });
@@ -1502,6 +1622,83 @@ describe('StripePaymentService', () => {
 
       expect(result.recovered).toBe(0);
       expect((service as any).persistRecoveredCheckout).not.toHaveBeenCalled();
+    });
+
+    it('counts a non-exhausted recovery failure as retryable while the row stays pending/retryable', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      // The non-exhausted retry reschedule was persisted by THIS worker
+      // (updateMany count 1): it is an explicit retryable failure, not a benign
+      // miss — the row remains pending with a future backoff.
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 1 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'att-1',
+            status: 'pending',
+            checkoutRetryOwnerId: 'worker-1',
+            checkoutRetryLeaseExpiresAt: expect.objectContaining({ gt: expect.any(Date) }),
+          }),
+          data: expect.objectContaining({ checkoutNextRetryAt: expect.any(Date) }),
+        }),
+      );
+    });
+
+    it('counts an exhausted recovery transition as needsReview only when this worker owns the CAS', async () => {
+      const row = recoveryRow({ checkoutRetryCount: 4 }); // 4 + 1 >= 5 → exhausted
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
+      sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 1, retryable: 0 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'needs_review',
+            reviewReason: 'checkout_recovery_exhausted',
+            checkoutNextRetryAt: null,
+          }),
+        }),
+      );
+    });
+
+    it('never counts a lease/CAS-miss reschedule as a retryable failure (benign race)', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptUpdateMany
+        .mockResolvedValueOnce({ count: 1 }) // lease claim wins
+        .mockResolvedValue({ count: 0 }); // reschedule CAS misses — another worker completed the attempt
+      sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      // A CAS miss (lease lost / stale row / concurrent completion) is benign
+      // and never counts as a retryable or needs_review failure.
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 0 });
+    });
+
+    it('never counts an exhausted transition whose CAS misses as needsReview (benign race)', async () => {
+      const row = recoveryRow({ checkoutRetryCount: 4 });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptUpdateMany
+        .mockResolvedValueOnce({ count: 1 }) // lease claim wins
+        .mockResolvedValue({ count: 0 }); // exhaustion CAS misses — a concurrent processor owns the row
+      sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 0 });
     });
   });
 

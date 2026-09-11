@@ -62,6 +62,13 @@ enum StripeWebhookEventStatus {
   failed
 }
 
+enum BillingWorkerStatus {
+  starting
+  running
+  healthy
+  failed
+}
+
 model User {
   id             String    @id @default(uuid()) @db.Uuid
   socialProvider String    @map("social_provider") @db.VarChar(20)
@@ -404,6 +411,11 @@ model BillingAccount {
   // Tie equal-second Stripe events to a deterministic total order.
   stripeSubscriptionEventId String? @map("stripe_subscription_event_id") @db.VarChar(255)
   activeSubscriptionPlanVersionId String? @map("active_subscription_plan_version_id") @db.Uuid
+  // Deterministic round-robin cursor over the historical open-invoice backfill.
+  // Stores the normalized UTC month start of the furthest historical month this
+  // account's backfill has scanned (see BillingWorkerService). Nullable; a NULL
+  // cursor means the backfill starts from the oldest missing month.
+  billingBackfillCursor DateTime? @map("billing_backfill_cursor") @db.Timestamptz()
   currency         String   @default("USD") @map("currency") @db.VarChar(10)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
@@ -732,4 +744,18 @@ model StripeWebhookEvent {
   @@index([type, receivedAt])
   @@index([status, nextRetryAt])
   @@map("stripe_webhook_events")
+}
+
+model BillingWorkerHeartbeat {
+  workerId            String              @id @map("worker_id") @db.VarChar(80)
+  status              BillingWorkerStatus @default(starting) @map("status")
+  lastHeartbeatAt     DateTime            @default(now()) @map("last_heartbeat_at") @db.Timestamptz()
+  lastStartedAt       DateTime?           @map("last_started_at") @db.Timestamptz()
+  lastSuccessAt       DateTime?           @map("last_success_at") @db.Timestamptz()
+  lastFailureAt       DateTime?           @map("last_failure_at") @db.Timestamptz()
+  consecutiveFailures Int                 @default(0) @map("consecutive_failures")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("billing_worker_heartbeats")
 }

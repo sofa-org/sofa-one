@@ -29,12 +29,20 @@ import {
   isApiError,
   listBillingInvoicesAuth,
   type BillingInvoice,
+  type BillingPlan,
   type BillingPlanResponse,
   type BillingSummary,
   type BillingTierBreakdown,
 } from '@/lib/api';
 
 const INVOICE_PAGE_SIZE = 20;
+
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_ATTEMPTS = 6;
+const POLL_MAX_DURATION_MS = 10000;
+const PENDING_INVOICE_STORAGE_KEY = 'sofa-one.billing.pendingInvoiceId';
+
+type PaymentNoticeType = 'processing' | 'paid' | 'timeout' | 'cancel';
 
 function isIntegerString(value: string): boolean {
   return /^\d+$/.test(value.trim());
@@ -107,6 +115,13 @@ function statusTone(status: string): string {
   }
 }
 
+/** Plans that require sales review (Enterprise/custom null-terms) are listable but not self-service. */
+function isSelfServicePlan(plan: BillingPlan): boolean {
+  if (plan.id === 'enterprise') return false;
+  const base = plan.basePrice?.trim() ?? '';
+  return base.length > 0 && base.toLowerCase() !== 'custom';
+}
+
 function usdStringToMicros(value: string | null | undefined): bigint | null {
   if (value === null || value === undefined || value === '') return null;
   const trimmed = value.trim();
@@ -159,6 +174,45 @@ function friendlyCheckoutError(error: unknown): string {
 
 function getCurrentUtcMonth(): string {
   return new Date().toISOString().slice(0, 7);
+}
+
+function paymentNoticeClasses(type: PaymentNoticeType): string {
+  switch (type) {
+    case 'paid':
+      return 'border-green-200 bg-green-50 text-green-800';
+    case 'processing':
+      return 'border-blue-200 bg-blue-50 text-blue-800';
+    case 'timeout':
+      return 'border-amber-200 bg-amber-50 text-amber-800';
+    case 'cancel':
+      return 'border-brand-border bg-brand-surface text-brand-text';
+  }
+}
+
+function paymentNoticeTitle(type: PaymentNoticeType): string {
+  switch (type) {
+    case 'paid':
+      return 'Payment confirmed';
+    case 'processing':
+      return 'Payment processing';
+    case 'timeout':
+      return 'Waiting for confirmation';
+    case 'cancel':
+      return 'Returned to billing';
+  }
+}
+
+function paymentNoticeSubtitleClasses(type: PaymentNoticeType): string {
+  switch (type) {
+    case 'paid':
+      return 'text-green-700';
+    case 'processing':
+      return 'text-blue-700';
+    case 'timeout':
+      return 'text-amber-700';
+    case 'cancel':
+      return 'text-brand-muted';
+  }
 }
 
 function PageError({
@@ -265,7 +319,9 @@ export default function BillingPage() {
 
   const [checkoutLoadingId, setCheckoutLoadingId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [subscriptionCheckoutLoadingId, setSubscriptionCheckoutLoadingId] = useState<string | null>(null);
+  const [subscriptionCheckoutLoadingId, setSubscriptionCheckoutLoadingId] = useState<string | null>(
+    null,
+  );
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
@@ -278,13 +334,27 @@ export default function BillingPage() {
     message: string;
   } | null>(null);
 
-  // Refs for silent invoice refresh: abort previous in-flight request and ignore stale responses.
-  const invoicesRefreshIdRef = useRef(0);
-  const silentRefreshAbortRef = useRef<AbortController | null>(null);
+  // Refs for invoice loading: abort previous in-flight request and ignore stale responses.
+  const invoiceLoadGenerationRef = useRef(0);
+  const invoiceLoadAbortRef = useRef<AbortController | null>(null);
+
+  // Refs for bounded payment-confirmation polling and latest invoice mirror.
+  const invoicesRef = useRef<BillingInvoice[]>(invoices);
+  const pendingReturnSuccessRef = useRef(false);
+  const pollingActiveRef = useRef(false);
+  const pollAbortRef = useRef<AbortController | null>(null);
+  const pollTimerRef = useRef<number | null>(null);
+  const pollInFlightRef = useRef(false);
+  const pollStartTimeRef = useRef(0);
+  const pollAttemptsRef = useRef(0);
+  const pollCycleRef = useRef<() => Promise<void>>(() => Promise.resolve());
+
+  // Ref to suppress state updates after the page unmounts.
+  const isMountedRef = useRef(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [paymentNotice, setPaymentNotice] = useState<{
-    type: 'success' | 'cancel';
+    type: PaymentNoticeType;
     message: string;
   } | null>(null);
 
@@ -333,15 +403,62 @@ export default function BillingPage() {
 
   const loadInvoices = useCallback(
     async (signal?: AbortSignal) => {
+      // Cancel any earlier invoice load and start a new generation so stale
+      // responses (including the initial load resolving after a return poll)
+      // cannot overwrite newer state.
+      invoiceLoadAbortRef.current?.abort();
+      const controller = new AbortController();
+      invoiceLoadAbortRef.current = controller;
+      const requestId = (invoiceLoadGenerationRef.current += 1);
+
+      let abortListener: (() => void) | undefined;
+      if (signal) {
+        if (signal.aborted) {
+          controller.abort();
+        } else {
+          abortListener = () => controller.abort();
+          signal.addEventListener('abort', abortListener, { once: true });
+        }
+      }
+
       setInvoicesLoading(true);
       setInvoicesError(null);
       try {
-        const data = await listBillingInvoicesAuth(getToken, { limit: INVOICE_PAGE_SIZE }, signal);
-        if (!signal?.aborted) setInvoices(data.items);
+        const data = await listBillingInvoicesAuth(
+          getToken,
+          { limit: INVOICE_PAGE_SIZE },
+          controller.signal,
+        );
+        if (
+          isMountedRef.current &&
+          !controller.signal.aborted &&
+          requestId === invoiceLoadGenerationRef.current
+        ) {
+          setInvoices(data.items);
+          invoicesRef.current = data.items;
+        }
       } catch (err: unknown) {
-        if (!signal?.aborted) setInvoicesError(getApiErrorMessage(err));
+        if (
+          isMountedRef.current &&
+          !controller.signal.aborted &&
+          requestId === invoiceLoadGenerationRef.current
+        ) {
+          setInvoicesError(getApiErrorMessage(err));
+        }
       } finally {
-        if (!signal?.aborted) setInvoicesLoading(false);
+        if (
+          isMountedRef.current &&
+          !controller.signal.aborted &&
+          requestId === invoiceLoadGenerationRef.current
+        ) {
+          setInvoicesLoading(false);
+        }
+        if (signal && abortListener) {
+          signal.removeEventListener('abort', abortListener);
+        }
+        if (invoiceLoadAbortRef.current === controller) {
+          invoiceLoadAbortRef.current = null;
+        }
       }
     },
     [getToken],
@@ -349,65 +466,303 @@ export default function BillingPage() {
 
   const refreshInvoicesSilently = useCallback(
     async (signal?: AbortSignal): Promise<boolean> => {
-      // Abort any previous silent refresh so only the latest response can update state.
-      silentRefreshAbortRef.current?.abort();
+      // Share the same generation/abort fence with the initial load.
+      invoiceLoadAbortRef.current?.abort();
       const controller = new AbortController();
-      silentRefreshAbortRef.current = controller;
-      const requestId = (invoicesRefreshIdRef.current += 1);
+      invoiceLoadAbortRef.current = controller;
+      const requestId = (invoiceLoadGenerationRef.current += 1);
+
+      let abortListener: (() => void) | undefined;
+      if (signal) {
+        if (signal.aborted) {
+          controller.abort();
+        } else {
+          abortListener = () => controller.abort();
+          signal.addEventListener('abort', abortListener, { once: true });
+        }
+      }
 
       try {
         const data = await listBillingInvoicesAuth(
           getToken,
           { limit: INVOICE_PAGE_SIZE },
-          signal ?? controller.signal,
+          controller.signal,
         );
-        if (controller.signal.aborted) return false;
-        if (requestId !== invoicesRefreshIdRef.current) return false; // stale response
+        if (controller.signal.aborted || requestId !== invoiceLoadGenerationRef.current) {
+          return false;
+        }
         setInvoices(data.items);
+        invoicesRef.current = data.items;
+        setInvoicesLoading(false);
+        setInvoicesError(null);
         return true;
-      } catch {
+      } catch (err: unknown) {
         // Silent refresh: do not swap the table for a spinner or unmount open panels.
+        // If this request owned the current generation and a loading spinner was still
+        // active (because we superseded the initial load), clear the spinner and
+        // surface the truthful error. Otherwise leave the polling notice/timeout path
+        // to inform the user.
+        if (
+          isMountedRef.current &&
+          !controller.signal.aborted &&
+          requestId === invoiceLoadGenerationRef.current
+        ) {
+          setInvoicesLoading((wasLoading) => {
+            if (wasLoading) {
+              setInvoicesError(getApiErrorMessage(err));
+            }
+            return false;
+          });
+        }
         return false;
       } finally {
-        if (silentRefreshAbortRef.current === controller) {
-          silentRefreshAbortRef.current = null;
+        if (signal && abortListener) {
+          signal.removeEventListener('abort', abortListener);
+        }
+        if (invoiceLoadAbortRef.current === controller) {
+          invoiceLoadAbortRef.current = null;
         }
       }
     },
     [getToken],
   );
 
+  // Keep a synchronous mirror of the invoice list for polling logic.
   useEffect(() => {
-    const hasSuccess = searchParams.has('success');
-    const hasCanceled = searchParams.has('canceled');
-    if (!hasSuccess && !hasCanceled) return;
+    invoicesRef.current = invoices;
+  }, [invoices]);
 
-    if (hasSuccess) {
+  // Track mount state so async invoice loads never update state after unmount.
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleVisibilityChange = useCallback(() => {
+    if (
+      document.visibilityState === 'visible' &&
+      pollingActiveRef.current &&
+      !pollInFlightRef.current
+    ) {
+      void pollCycleRef.current();
+    }
+  }, []);
+
+  const handleWindowFocus = useCallback(() => {
+    if (pollingActiveRef.current && !pollInFlightRef.current) {
+      void pollCycleRef.current();
+    }
+  }, []);
+
+  const stopPaymentConfirmationPolling = useCallback((clearPending = true) => {
+    pollingActiveRef.current = false;
+    if (pollTimerRef.current !== null) {
+      window.clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('focus', handleWindowFocus);
+    if (clearPending) {
+      sessionStorage.removeItem(PENDING_INVOICE_STORAGE_KEY);
+    }
+  }, []);
+
+  // Single terminal path for paid/timeout/cancel states: set a truthful notice,
+  // then tear down timers, listeners, session state, and in-flight requests.
+  const finalizePaymentConfirmationPolling = useCallback(
+    (type: Exclude<PaymentNoticeType, 'processing'>, message: string, clearPending = true) => {
+      setPaymentNotice({ type, message });
+      stopPaymentConfirmationPolling(clearPending);
+    },
+    [stopPaymentConfirmationPolling],
+  );
+
+  const startPaymentConfirmationPolling = useCallback(
+    async (targetInvoiceId?: string | null) => {
+      stopPaymentConfirmationPolling(false);
+
+      const relevantInvoiceId =
+        targetInvoiceId ?? sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY);
+      pollingActiveRef.current = true;
+      pollStartTimeRef.current = Date.now();
+      pollAttemptsRef.current = 0;
+      pollInFlightRef.current = false;
+
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('focus', handleWindowFocus);
+
+      const isPaid = (invoices: BillingInvoice[]): boolean => {
+        if (!relevantInvoiceId) return false;
+        const invoice = invoices.find((inv) => inv.id === relevantInvoiceId);
+        return invoice ? isInvoicePaid(invoice) : false;
+      };
+
+      const shouldContinuePolling = (
+        invoices: BillingInvoice[],
+        trackedId: string | null,
+      ): boolean => {
+        if (trackedId) {
+          const tracked = invoices.find((inv) => inv.id === trackedId);
+          // If the tracked invoice is visible and explicitly no longer pending
+          // (e.g., voided or uncollectible), the tracked flow is settled.
+          if (tracked && !isInvoicePayable(tracked)) return false;
+          // Otherwise keep polling: either the tracked invoice is still payable,
+          // or it is not on the first page and we cannot determine its state yet.
+          return true;
+        }
+        // No tracked invoice: fall back to safe first-page behavior.
+        return invoices.some(
+          (inv) => inv.status === 'finalized' && !isInvoicePaid(inv) && isInvoicePayable(inv),
+        );
+      };
+
+      const scheduleNext = () => {
+        if (
+          !pollingActiveRef.current ||
+          controller.signal.aborted ||
+          pollAbortRef.current !== controller
+        ) {
+          return;
+        }
+        if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+          finalizePaymentConfirmationPolling(
+            'timeout',
+            "We're still waiting for the final payment confirmation. No action is needed — your invoice will update automatically once the payment clears.",
+          );
+          return;
+        }
+        if (Date.now() - pollStartTimeRef.current >= POLL_MAX_DURATION_MS) {
+          finalizePaymentConfirmationPolling(
+            'timeout',
+            "We're still waiting for the final payment confirmation. No action is needed — your invoice will update automatically once the payment clears.",
+          );
+          return;
+        }
+        pollTimerRef.current = window.setTimeout(() => {
+          void pollCycleRef.current();
+        }, POLL_INTERVAL_MS);
+      };
+
+      const runCycle = async () => {
+        if (
+          !pollingActiveRef.current ||
+          controller.signal.aborted ||
+          pollAbortRef.current !== controller
+        ) {
+          return;
+        }
+        if (pollInFlightRef.current) return;
+        pollInFlightRef.current = true;
+        pollAttemptsRef.current += 1;
+
+        try {
+          const ok = await refreshInvoicesSilently(controller.signal);
+          if (controller.signal.aborted || pollAbortRef.current !== controller) return;
+          if (!ok || !pollingActiveRef.current) {
+            scheduleNext();
+            return;
+          }
+
+          const currentInvoices = invoicesRef.current;
+
+          if (isPaid(currentInvoices)) {
+            finalizePaymentConfirmationPolling(
+              'paid',
+              'Payment confirmed. Your invoice has been marked as paid.',
+            );
+            return;
+          }
+
+          if (!shouldContinuePolling(currentInvoices, relevantInvoiceId)) {
+            finalizePaymentConfirmationPolling(
+              'timeout',
+              "Invoice status has been checked. It will keep updating automatically as the payment clears — you don't need to refresh.",
+            );
+            return;
+          }
+
+          if (
+            pollAttemptsRef.current >= MAX_POLL_ATTEMPTS ||
+            Date.now() - pollStartTimeRef.current >= POLL_MAX_DURATION_MS
+          ) {
+            finalizePaymentConfirmationPolling(
+              'timeout',
+              "We're still waiting for the final payment confirmation. No action is needed — your invoice will update automatically once the payment clears.",
+            );
+            return;
+          }
+
+          scheduleNext();
+        } finally {
+          pollInFlightRef.current = false;
+        }
+      };
+
+      pollCycleRef.current = runCycle;
+      await runCycle();
+    },
+    [refreshInvoicesSilently, stopPaymentConfirmationPolling],
+  );
+
+  useEffect(() => {
+    const isSuccessReturn = searchParams.get('success') === '1';
+    const isCanceledReturn = searchParams.get('canceled') === '1';
+    if (!isSuccessReturn && !isCanceledReturn) return;
+
+    if (isSuccessReturn) {
       setPaymentNotice({
-        type: 'success',
-        message: 'Payment is being processed. Refresh this page to confirm the latest status.',
+        type: 'processing',
+        message:
+          "Payment is being processed. We're checking for confirmation and will update the invoice automatically.",
       });
+      if (!authLoading && isAuthenticated) {
+        void startPaymentConfirmationPolling();
+      } else {
+        pendingReturnSuccessRef.current = true;
+      }
     } else {
       setPaymentNotice({
         type: 'cancel',
         message:
           'Returned to billing. You can retry payment or refresh to confirm the latest status.',
       });
+      setInvoicesRetryNonce((nonce) => nonce + 1);
     }
-    setInvoicesRetryNonce((nonce) => nonce + 1);
 
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('success');
     nextParams.delete('canceled');
     setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [
+    searchParams,
+    setSearchParams,
+    authLoading,
+    isAuthenticated,
+    startPaymentConfirmationPolling,
+  ]);
 
-  // Abort any in-flight silent refresh when the page unmounts.
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+    if (!pendingReturnSuccessRef.current) return;
+    pendingReturnSuccessRef.current = false;
+    void startPaymentConfirmationPolling();
+  }, [authLoading, isAuthenticated, startPaymentConfirmationPolling]);
+
+  // Abort any in-flight invoice load or payment polling when the page unmounts.
   useEffect(() => {
     return () => {
-      silentRefreshAbortRef.current?.abort();
+      invoiceLoadAbortRef.current?.abort();
+      stopPaymentConfirmationPolling();
     };
-  }, []);
+  }, [stopPaymentConfirmationPolling]);
 
   // Close the USDC panel automatically once its invoice is paid by any method (Stripe/USDC/server refresh).
   useEffect(() => {
@@ -425,6 +780,7 @@ export default function BillingPage() {
       setCheckoutError(null);
       try {
         const response = await createBillingCheckoutSessionAuth(getToken, invoice.id);
+        sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, invoice.id);
         window.location.href = response.checkoutUrl;
       } catch (err: unknown) {
         setCheckoutError(friendlyCheckoutError(err));
@@ -446,10 +802,13 @@ export default function BillingPage() {
           invoice.id,
           invoice.planVersionId,
         );
+        sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, invoice.id);
         window.location.href = response.checkoutUrl;
       } catch (err: unknown) {
         if (isApiError(err) && err.statusCode === 503) {
-          setCheckoutError('Subscription checkout is temporarily unavailable. Please try again in a moment.');
+          setCheckoutError(
+            'Subscription checkout is temporarily unavailable. Please try again in a moment.',
+          );
         } else {
           setCheckoutError(
             getApiErrorMessage(err) ||
@@ -489,7 +848,15 @@ export default function BillingPage() {
 
   const handlePlanChange = useCallback(
     async (planCode: string) => {
-      if (!planCode || planCode === plans?.currentPlanId || planChangeLoading) return;
+      const targetPlan = plans?.plans.find((p) => p.id === planCode);
+      if (
+        !planCode ||
+        planCode === plans?.currentPlanId ||
+        planChangeLoading ||
+        !targetPlan ||
+        !isSelfServicePlan(targetPlan)
+      )
+        return;
       setPlanChangeLoading(true);
       setPlanChangeNotice(null);
       try {
@@ -511,7 +878,7 @@ export default function BillingPage() {
         setPlanChangeLoading(false);
       }
     },
-    [getToken, plans?.currentPlanId, planChangeLoading],
+    [getToken, plans?.currentPlanId, plans?.plans, planChangeLoading],
   );
 
   useEffect(() => {
@@ -554,16 +921,12 @@ export default function BillingPage() {
 
       {paymentNotice && (
         <div
-          className={`rounded-xl border p-4 text-sm shadow-sm ${
-            paymentNotice.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-brand-border bg-brand-surface text-brand-text'
-          }`}
+          className={`rounded-xl border p-4 text-sm shadow-sm ${paymentNoticeClasses(
+            paymentNotice.type,
+          )}`}
         >
-          <p className="font-medium">
-            {paymentNotice.type === 'success' ? 'Payment processing' : 'Returned to billing'}
-          </p>
-          <p className={paymentNotice.type === 'success' ? 'text-green-700' : 'text-brand-muted'}>
+          <p className="font-medium">{paymentNoticeTitle(paymentNotice.type)}</p>
+          <p className={paymentNoticeSubtitleClasses(paymentNotice.type)}>
             {paymentNotice.message}
           </p>
         </div>
@@ -688,8 +1051,8 @@ export default function BillingPage() {
                     <div>
                       <p className="font-semibold text-blue-800">Scheduled plan</p>
                       <p className="text-blue-700">
-                        {plans.scheduledPlan.planName} ({plans.scheduledPlan.planCode}) takes
-                        effect on {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}.
+                        {plans.scheduledPlan.planName} ({plans.scheduledPlan.planCode}) takes effect
+                        on {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}.
                       </p>
                     </div>
                   </div>
@@ -710,11 +1073,16 @@ export default function BillingPage() {
                   disabled={planChangeLoading || !plans || plans.plans.length === 0}
                   className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
                 >
-                  {plans?.plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name} — {formatAmount(plan.basePrice, plan.currency)}
-                    </option>
-                  ))}
+                  {plans?.plans.map((plan) => {
+                    const selfService = isSelfServicePlan(plan);
+                    return (
+                      <option key={plan.id} value={plan.id} disabled={!selfService}>
+                        {selfService
+                          ? `${plan.name} — ${formatAmount(plan.basePrice, plan.currency)}`
+                          : `${plan.name} — Contact sales`}
+                      </option>
+                    );
+                  })}
                 </select>
                 <p className="text-xs text-brand-muted">
                   Plan changes take effect at the start of the next UTC month. Your current plan
@@ -726,10 +1094,16 @@ export default function BillingPage() {
                     const selected = planChangeSelectedId ?? plans?.currentPlanId;
                     if (selected) void handlePlanChange(selected);
                   }}
-                  disabled={
-                    planChangeLoading ||
-                    (planChangeSelectedId ?? plans?.currentPlanId) === plans?.currentPlanId
-                  }
+                  disabled={(() => {
+                    const selectedId = planChangeSelectedId ?? plans?.currentPlanId;
+                    const selectedPlan = plans?.plans.find((p) => p.id === selectedId);
+                    return (
+                      planChangeLoading ||
+                      selectedId === plans?.currentPlanId ||
+                      !selectedPlan ||
+                      !isSelfServicePlan(selectedPlan)
+                    );
+                  })()}
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {planChangeLoading ? (
@@ -933,7 +1307,8 @@ export default function BillingPage() {
                   const hasActions = canPayCard || canPayUsdc || canPaySubscription;
                   const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
-                  const isLoadingSubscriptionCheckout = subscriptionCheckoutLoadingId === invoice.id;
+                  const isLoadingSubscriptionCheckout =
+                    subscriptionCheckoutLoadingId === invoice.id;
                   const isLoadingPdf = pdfLoadingId === invoice.id;
                   const usdcPanelOpen = usdcPanelInvoiceId === invoice.id;
                   return (

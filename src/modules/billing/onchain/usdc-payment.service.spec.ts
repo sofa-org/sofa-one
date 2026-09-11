@@ -9,6 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { API_ERROR_CODES } from '../../../common/errors/api-error-codes';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
 import { USDC_RECEIPT_PROVIDER, USDC_TRANSFER_TOPIC0 } from './usdc.constants';
 import { UsdcPaymentService } from './usdc-payment.service';
@@ -165,6 +166,16 @@ function receipt(overrides: Partial<UsdcReceipt> & { logs?: UsdcReceiptLog[] } =
     logs: [transferLog()],
     ...overrides,
   };
+}
+
+/** Resolves a rejected promise to its error so tests can inspect `getResponse()`. */
+async function captureError(fn: () => Promise<unknown>): Promise<unknown> {
+  try {
+    await fn();
+  } catch (err) {
+    return err;
+  }
+  throw new Error('expected the promise to reject');
 }
 
 describe('UsdcPaymentService', () => {
@@ -2492,6 +2503,216 @@ describe('UsdcPaymentService', () => {
           txHash: TX_HASH,
         }),
       ).rejects.toThrow(connectionError);
+    });
+  });
+
+  describe('USDC conflict error codes', () => {
+    beforeEach(() => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptFindUnique.mockResolvedValue(usdcAttempt());
+      walletFindUnique.mockResolvedValue({
+        userId: 'user-1',
+        walletAddress: PAYER,
+        status: 'active',
+        frozenAt: null,
+      });
+    });
+
+    it('maps a non-finalized invoice quote to USDC_INVOICE_NOT_PAYABLE', async () => {
+      invoiceFindFirst.mockResolvedValue(invoice({ status: 'open' }));
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1'));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Only finalized invoices can be paid',
+        }),
+      );
+    });
+
+    it('maps an already-paid invoice quote to USDC_INVOICE_NOT_PAYABLE', async () => {
+      invoiceFindFirst.mockResolvedValue(invoice({ paidAt: new Date() }));
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1'));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is already paid',
+        }),
+      );
+    });
+
+    it('maps a fully covered invoice quote to USDC_INVOICE_NOT_PAYABLE', async () => {
+      invoiceFindFirst.mockResolvedValue(
+        invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n }),
+      );
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is already fully covered',
+        }),
+      );
+    });
+
+    it('maps an active attempt on another chain to USDC_PAYMENT_IN_PROGRESS', async () => {
+      attemptFindFirst.mockResolvedValue(usdcAttempt({ chainId: 84532n }));
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+          message: 'An active USDC payment already exists for this invoice on another chain',
+        }),
+      );
+    });
+
+    it('maps a unified active-reservation insert race to USDC_PAYMENT_IN_PROGRESS', async () => {
+      attemptFindFirst.mockResolvedValue(null); // no active USDC to reuse
+      attemptCreate.mockRejectedValueOnce(p2002());
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+          message: 'A USDC payment is already being quoted for this invoice',
+        }),
+      );
+    });
+
+    it('maps a missing active wallet quote to USDC_WALLET_NOT_ACTIVE', async () => {
+      walletFindUnique.mockResolvedValue(null);
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE,
+          message: 'No active user wallet is available for USDC payment',
+        }),
+      );
+    });
+
+    it('maps a no-longer-payable claim to USDC_INVOICE_NOT_PAYABLE', async () => {
+      invoiceFindFirst.mockResolvedValue(invoice({ status: 'open' }));
+
+      const err = await captureError(() =>
+        service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),
+      );
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is no longer payable',
+        }),
+      );
+    });
+
+    it('maps a non-USDC attempt claim to USDC_INVALID_ATTEMPT', async () => {
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ method: 'stripe' }));
+
+      const err = await captureError(() =>
+        service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),
+      );
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+          message: 'Payment attempt is not a USDC payment',
+        }),
+      );
+    });
+
+    it('maps a mismatched attempt amount claim to USDC_INVALID_ATTEMPT', async () => {
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ amountMicros: 48_000_000n }));
+
+      const err = await captureError(() =>
+        service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),
+      );
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+          message: 'Payment attempt does not match the invoice',
+        }),
+      );
+    });
+
+    it('maps an incomplete snapshot claim to USDC_INVALID_ATTEMPT', async () => {
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ requiredConfirmations: null }));
+
+      const err = await captureError(() =>
+        service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),
+      );
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+          message: 'Payment attempt is missing its USDC quote snapshot',
+        }),
+      );
+    });
+
+    it('maps a changed provider-identity snapshot claim to USDC_INVALID_ATTEMPT', async () => {
+      attemptFindUnique.mockResolvedValue(usdcAttempt({ providerIdentity: '0'.repeat(64) }));
+
+      const err = await captureError(() =>
+        service.claim('user-1', 'inv-1', { paymentAttemptId: 'att-usdc', txHash: TX_HASH }),
+      );
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+          message: 'Payment attempt provider configuration has changed; re-quote',
+        }),
+      );
+    });
+
+    it('leaves no explicit code on non-conflict failures (400/404/503 fall back to the resolver)', async () => {
+      // Non-USD invoice → BadRequest
+      invoiceFindFirst.mockResolvedValue(invoice({ currency: 'EUR' }));
+      const badRequest = await captureError(() => service.quote('user-1', 'inv-1'));
+      expect(badRequest).toBeInstanceOf(BadRequestException);
+      expect(
+        ((badRequest as BadRequestException).getResponse() as Record<string, unknown>).code,
+      ).toBeUndefined();
+
+      // No billing account → NotFound
+      accountFindUnique.mockResolvedValue(null);
+      const notFound = await captureError(() => service.quote('user-1', 'inv-1'));
+      expect(notFound).toBeInstanceOf(NotFoundException);
+      expect(
+        ((notFound as NotFoundException).getResponse() as Record<string, unknown>).code,
+      ).toBeUndefined();
+
+      // Feature disabled → ServiceUnavailable
+      configGet.mockImplementation((key: string) =>
+        key === 'billing.usdc.enabled' ? false : undefined,
+      );
+      const unavailable = await captureError(() => service.quote('user-1', 'inv-1'));
+      expect(unavailable).toBeInstanceOf(ServiceUnavailableException);
+      expect(
+        ((unavailable as ServiceUnavailableException).getResponse() as Record<string, unknown>)
+          .code,
+      ).toBeUndefined();
     });
   });
 });

@@ -318,6 +318,17 @@ describe('BillingService', () => {
       expect(accountCreate).toHaveBeenCalledWith({ data: { userId: 'user-1' } });
       // 6 plans created
       expect(planVersionCreate).toHaveBeenCalledTimes(6);
+      // New plan versions align with the hard API limit: the retained
+      // apiOverageRateMicros column is seeded at 0n (no per-call price), while
+      // the wallet overage rate keeps its unchanged default.
+      expect(planVersionCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            apiOverageRateMicros: 0n,
+            walletOverageRateMicros: 10_000n,
+          }),
+        }),
+      );
       expect(assignmentCreate).toHaveBeenCalledTimes(1);
       expect(result.currentPlanId).toBe('free');
       expect(result.plans).toHaveLength(2);
@@ -793,7 +804,7 @@ describe('BillingService', () => {
   });
 
   describe('recordApiCall', () => {
-    it('creates an api_call usage event with quantity 1', async () => {
+    it('creates an explicitly unverified api_call usage event (legacy seam, never quota/billable)', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
@@ -809,6 +820,13 @@ describe('BillingService', () => {
           data: expect.objectContaining({
             billingAccountId: ACCOUNT.id,
             metric: 'api_call',
+            // The legacy seam writes its status explicitly — never relying on
+            // the Prisma default — and is never posted, so only
+            // assertAndRecordApiCall rows can consume quota or appear on an
+            // invoice.
+            entryType: 'usage',
+            sourceType: 'api_request',
+            status: 'unverified',
             sourceKey: 'api:tx-1',
             quantity: 1n,
             volumeUsdMicros: 0n,
@@ -862,15 +880,58 @@ describe('BillingService', () => {
           }),
         }),
       );
-      // the quota count only reads usage-type api_call events
+      // the quota count only reads posted usage-type api_call events
       expect(usageEventFindMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             billingAccountId: ACCOUNT.id,
             metric: 'api_call',
             entryType: 'usage',
+            status: 'posted',
           }),
           select: { quantity: true },
+        }),
+      );
+    });
+
+    it('never counts unverified/quarantined api_call rows toward the quota', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog initialized
+      // Only unverified/quarantined rows exist in the period. The quota query
+      // requires status=posted, so the filtered result set is empty and the
+      // legacy rows cannot consume quota or trigger a 429.
+      usageEventFindMany.mockResolvedValue([]);
+      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
+
+      await service.assertAndRecordApiCall({
+        userId: 'user-1',
+        sourceKey: 'api:req-posted-only',
+        endpoint: '/v1/wallets/sign',
+      });
+
+      // The quota query explicitly requires the authoritative posted status.
+      expect(usageEventFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            metric: 'api_call',
+            entryType: 'usage',
+            status: 'posted',
+          }),
+          select: { quantity: true },
+        }),
+      );
+      // used (0n) < limit (10_000) -> a posted api_request row is written.
+      expect(usageEventCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            metric: 'api_call',
+            entryType: 'usage',
+            sourceType: 'api_request',
+            status: 'posted',
+            sourceKey: 'api:req-posted-only',
+          }),
         }),
       );
     });
@@ -882,6 +943,27 @@ describe('BillingService', () => {
         service.assertAndRecordApiCall({
           userId: 'user-1',
           sourceKey: 'api:req-2',
+          endpoint: '/v1/wallets/sign',
+        }),
+      ).rejects.toThrow(BillingQuotaExceededException);
+      expect(usageEventCreate).not.toHaveBeenCalled();
+    });
+
+    it('keeps the hard 429 limit even when the persisted plan carries a legacy nonzero API rate', async () => {
+      // A persisted plan version seeded under the old $0.001/call product
+      // boundary must still enforce the hard quota: at the limit the request is
+      // rejected with 429 and NO billable overage event is ever written.
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue({
+        ...FREE_VERSION,
+        apiOverageRateMicros: 1_000n, // legacy $0.001 per call
+      });
+      usageEventFindMany.mockResolvedValue([{ quantity: 10_000n }]); // at limit
+
+      await expect(
+        service.assertAndRecordApiCall({
+          userId: 'user-1',
+          sourceKey: 'api:req-legacy-rate',
           endpoint: '/v1/wallets/sign',
         }),
       ).rejects.toThrow(BillingQuotaExceededException);
@@ -2166,7 +2248,7 @@ describe('BillingService', () => {
           status: 'posted',
           entryType: 'usage',
         },
-        { metric: 'api_call', quantity: 5n, entryType: 'usage' },
+        { metric: 'api_call', quantity: 5n, status: 'posted', entryType: 'usage' },
       ]);
       walletCount.mockResolvedValue(3);
 
@@ -2298,7 +2380,7 @@ describe('BillingService', () => {
       expect(result.outboundOverage).toBe('0');
     });
 
-    it('counts only posted usage-type outbound and keeps api_call counting intact', async () => {
+    it('counts only posted usage-type outbound and keeps posted api_call counting intact', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
       assignmentFindFirst.mockResolvedValue({
@@ -2329,7 +2411,7 @@ describe('BillingService', () => {
           status: 'unverified',
           entryType: 'usage',
         },
-        { metric: 'api_call', quantity: 3n, status: 'unverified', entryType: 'usage' },
+        { metric: 'api_call', quantity: 3n, status: 'posted', entryType: 'usage' },
       ]);
       walletCount.mockResolvedValue(0);
 
@@ -2337,8 +2419,68 @@ describe('BillingService', () => {
 
       // only the posted usage row counts; reversal and unverified are excluded
       expect(result.outboundVolume).toBe('100');
-      // api_call counting is unaffected by status/entryType
+      // only the posted api_call row counts toward reported API usage
       expect(result.apiCalls).toBe('3');
+    });
+
+    it('excludes unverified/quarantined/reversed api_call rows from the summary', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindMany.mockResolvedValue([
+        // Legacy recordApiCall seam rows are explicitly unverified and must
+        // never be reported as API usage.
+        { metric: 'api_call', quantity: 900_000n, status: 'unverified', entryType: 'usage' },
+        { metric: 'api_call', quantity: 7n, status: 'quarantined', entryType: 'usage' },
+        { metric: 'api_call', quantity: 2n, status: 'reversed', entryType: 'usage' },
+        { metric: 'api_call', quantity: 4n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      // Only the explicitly posted usage-type api_call row counts.
+      expect(result.apiCalls).toBe('4');
+      expect(result.outboundVolume).toBe('0');
+      expect(result.outboundOverage).toBe('0');
+    });
+
+    it('keeps API overage out of the estimate when the persisted plan has a legacy nonzero API rate', async () => {
+      // planVersionFindFirst serves both the catalog probe and the Free-plan
+      // fallback; the assigned legacy Starter version carries the old
+      // $0.001/call rate.
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: 'plan-starter-legacy',
+        planVersion: {
+          ...STARTER_VERSION,
+          id: 'plan-starter-legacy',
+          apiOverageRateMicros: 1_000n, // legacy $0.001 per call
+        },
+      });
+      usageEventFindMany.mockResolvedValue([
+        { metric: 'api_call', quantity: 900_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      // The over-limit API usage is still reported...
+      expect(result.apiCalls).toBe('900000');
+      expect(result.apiCallsFreeAllowance).toBe('100000');
+      // ...but the legacy nonzero rate cannot produce an API-overage charge:
+      // only the $49 monthly fee is estimated.
+      expect(result.estimatedBaseCost).toBe('49');
+      expect(result.estimatedOverageCost).toBe('0');
+      expect(result.estimatedTotal).toBe('49');
     });
 
     it('fails closed when the plan is Enterprise/custom null terms', async () => {
@@ -2690,6 +2832,110 @@ describe('BillingService', () => {
         ]),
       });
       expect(result.id).toBe('inv-1');
+      expect(result.status).toBe('finalized');
+    });
+
+    it('finalizes with zero API overage even when the persisted plan has a legacy nonzero API rate', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
+      invoiceFindUnique.mockResolvedValue(null);
+      // Assigned legacy Starter version still carries the old $0.001/call rate.
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: 'plan-starter-legacy',
+        planVersion: {
+          ...STARTER_VERSION,
+          id: 'plan-starter-legacy',
+          apiOverageRateMicros: 1_000n, // legacy $0.001 per call
+        },
+      });
+      usageEventFindFirst.mockResolvedValue(null); // no quarantined usage
+      usageEventFindMany
+        .mockResolvedValueOnce([]) // no reconciliation-linked usage rows
+        .mockResolvedValueOnce([
+          // 1,000,000 API calls recorded against a 100,000-call allowance.
+          { metric: 'api_call', quantity: 1_000_000n, status: 'posted', entryType: 'usage' },
+        ]);
+      reconciliationRunFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-api-0',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 49_000_000n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      // 900,000 over-limit calls * legacy $0.001 would be $900 — the hard-limit
+      // rule keeps API overage at zero and the total at the $49 monthly fee.
+      expect(invoiceCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            apiOverageMicros: 0n,
+            totalMicros: 49_000_000n,
+          }),
+        }),
+      );
+      // No api_overage line item is ever emitted from a legacy nonzero rate.
+      const lineData = lineCreateMany.mock.calls[0][0] as {
+        data: Array<{ lineType: string }>;
+      };
+      expect(lineData.data.map((line) => line.lineType)).not.toContain('api_overage');
+      expect(lineData.data.map((line) => line.lineType)).toContain('monthly_fee');
+      expect(result.status).toBe('finalized');
+    });
+
+    it('excludes unverified/quarantined api_call rows from the finalized invoice', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+      usageEventFindFirst.mockResolvedValue(null); // no quarantined usage
+      usageEventFindMany
+        .mockResolvedValueOnce([]) // no reconciliation-linked usage rows
+        .mockResolvedValueOnce([
+          // Only posted usage-type api_call rows may reach the invoice: the
+          // legacy recordApiCall seam rows (unverified) and quarantined rows
+          // are excluded entirely.
+          { metric: 'api_call', quantity: 1_000_000n, status: 'unverified', entryType: 'usage' },
+          { metric: 'api_call', quantity: 50n, status: 'quarantined', entryType: 'usage' },
+          { metric: 'api_call', quantity: 12n, status: 'posted', entryType: 'usage' },
+        ]);
+      reconciliationRunFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-api-posted-only',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      // Only the 12 posted calls are frozen into the invoice; the 1,000,050
+      // unverified/quarantined calls never surface as API usage.
+      expect(invoiceCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            apiCalls: 12n,
+            apiOverageMicros: 0n,
+            totalMicros: 0n,
+          }),
+        }),
+      );
       expect(result.status).toBe('finalized');
     });
 

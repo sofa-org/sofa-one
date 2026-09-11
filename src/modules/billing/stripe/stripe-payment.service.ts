@@ -56,7 +56,24 @@ export interface CheckoutSessionResult {
   checkoutUrl: string;
 }
 
-export type CheckoutRecoveryResult = { attempted: number; recovered: number; needsReview: number };
+/**
+ * Result of a worker's bounded Checkout-recovery pass.
+ *
+ * `retryable` counts the non-exhausted recovery failures THIS worker owns: a
+ * catch on its own leased row whose retry reschedule was durably persisted
+ * (`updateMany.count === 1`). The row remains pending/retryable and the tick
+ * heartbeat must report failed. A lease/CAS miss, stale/ineligible row, or
+ * another worker completing the attempt is benign and never counted.
+ *
+ * `needsReview` counts only the exhaustion transitions THIS worker owns
+ * (status transition CAS count === 1); a concurrent CAS miss stays benign.
+ */
+export type CheckoutRecoveryResult = {
+  attempted: number;
+  recovered: number;
+  needsReview: number;
+  retryable: number;
+};
 
 /** Outcome of an automatic overage charge attempt. */
 export type OverageChargeResult =
@@ -91,7 +108,7 @@ export class StripePaymentService {
 
   /** Bounded worker recovery; provider calls are deliberately outside DB transactions. */
   async recoverPendingCheckouts(workerId: string, limit = 50): Promise<CheckoutRecoveryResult> {
-    if (!this.stripe) return { attempted: 0, recovered: 0, needsReview: 0 };
+    if (!this.stripe) return { attempted: 0, recovered: 0, needsReview: 0, retryable: 0 };
     // These recovery lease columns are present in the deployed billing schema;
     // the checked-in generated client may lag migrations in development.
     const attempts = this.prisma.billingPaymentAttempt as any;
@@ -111,6 +128,7 @@ export class StripePaymentService {
     });
     let recovered = 0;
     let needsReview = 0;
+    let retryable = 0;
     for (let row of rows) {
       const lease = await attempts.updateMany({
         where: {
@@ -187,7 +205,7 @@ export class StripePaymentService {
         recovered++;
       } catch {
         const exhausted = row.checkoutRetryCount + 1 >= 5;
-        await attempts.updateMany({
+        const rescheduled = await attempts.updateMany({
           where: {
             id: row.id,
             status: 'pending',
@@ -210,10 +228,17 @@ export class StripePaymentService {
                 checkoutRetryLeaseExpiresAt: null,
               },
         });
-        if (exhausted) needsReview++;
+        // Only THIS worker's own owned transition (CAS count 1) counts. A
+        // concurrent CAS miss, stale/ineligible row, or another worker completing
+        // the attempt is benign and never counts as a retryable/needs_review
+        // failure.
+        if (rescheduled.count === 1) {
+          if (exhausted) needsReview++;
+          else retryable++;
+        }
       }
     }
-    return { attempted: rows.length, recovered, needsReview };
+    return { attempted: rows.length, recovered, needsReview, retryable };
   }
 
   private async createCheckoutForExistingAttempt(
@@ -229,6 +254,14 @@ export class StripePaymentService {
     const account = row.invoice.billingAccount;
     const customer = await this.ensureStripeCustomer(this.stripe!, account, account.userId);
     const period = formatUtcMonth(row.invoice.periodStart);
+    const successUrl = withCheckoutReturnMarker(
+      this.config.get<string>('stripe.successUrl')!,
+      'success',
+    );
+    const cancelUrl = withCheckoutReturnMarker(
+      this.config.get<string>('stripe.cancelUrl')!,
+      'canceled',
+    );
     const session = await this.stripe!.checkout.sessions.create(
       fixed
         ? {
@@ -256,8 +289,8 @@ export class StripePaymentService {
                 planVersionId: row.invoice.planVersionId,
               },
             },
-            success_url: this.config.get<string>('stripe.successUrl')!,
-            cancel_url: this.config.get<string>('stripe.cancelUrl')!,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             metadata: {
               invoiceId: row.invoiceId,
               attemptId: row.id,
@@ -279,8 +312,8 @@ export class StripePaymentService {
                 },
               },
             ],
-            success_url: this.config.get<string>('stripe.successUrl')!,
-            cancel_url: this.config.get<string>('stripe.cancelUrl')!,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             metadata: { invoiceId: row.invoiceId, attemptId: row.id, period },
             payment_intent_data: { metadata: { invoiceId: row.invoiceId, attemptId: row.id } },
             client_reference_id: row.invoiceId,
@@ -606,8 +639,8 @@ export class StripePaymentService {
               planVersionId,
             },
           },
-          success_url: successUrl,
-          cancel_url: cancelUrl,
+          success_url: withCheckoutReturnMarker(successUrl, 'success'),
+          cancel_url: withCheckoutReturnMarker(cancelUrl, 'canceled'),
           metadata: {
             invoiceId: invoice.id,
             attemptId: attempt.id,
@@ -738,8 +771,8 @@ export class StripePaymentService {
               },
             },
           ],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
+          success_url: withCheckoutReturnMarker(successUrl, 'success'),
+          cancel_url: withCheckoutReturnMarker(cancelUrl, 'canceled'),
           // Local identifiers for out-of-order webhook correlation. The attempt
           // id is the authoritative local key; the invoice id is a fallback.
           metadata: {
@@ -2072,4 +2105,39 @@ function extractPaymentIntentId(error: unknown): string | null {
     if (typeof id === 'string' && id.startsWith('pi_')) return id;
   }
   return null;
+}
+
+// ── Checkout return markers ───────────────────────────────────────────────────
+
+const CHECKOUT_RETURN_MARKERS: Record<'success' | 'canceled', string> = {
+  success: 'success=1',
+  canceled: 'canceled=1',
+};
+
+/**
+ * Deterministic, frontend-compatible checkout return marker merged onto a
+ * server-configured absolute success/cancel URL (the frontend billing page
+ * keys off the bare query-param presence of `success`/`canceled`). The
+ * configured URL stays authoritative: its scheme/host/path, every existing
+ * query parameter, and any fragment are preserved byte-for-byte, and the
+ * marker is only placed in the query string (before any fragment) when its key
+ * is not already present — so URLs with/without query strings and fragments
+ * are handled and duplicate marker keys are never emitted.
+ */
+export function withCheckoutReturnMarker(url: string, outcome: 'success' | 'canceled'): string {
+  const marker = CHECKOUT_RETURN_MARKERS[outcome];
+  const hashIndex = url.indexOf('#');
+  const fragment = hashIndex === -1 ? '' : url.slice(hashIndex);
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const queryIndex = base.indexOf('?');
+  if (queryIndex === -1) {
+    return `${base}?${marker}${fragment}`;
+  }
+  const query = base.slice(queryIndex + 1);
+  const alreadyMarked = query.split('&').some((pair) => {
+    const equalsIndex = pair.indexOf('=');
+    return (equalsIndex === -1 ? pair : pair.slice(0, equalsIndex)) === outcome;
+  });
+  if (alreadyMarked) return url;
+  return `${base}&${marker}${fragment}`;
 }

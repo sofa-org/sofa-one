@@ -2793,5 +2793,90 @@ describe('StripeWebhookService', () => {
         );
       });
     });
+
+    describe('deferred worker re-processing outcome contract (Gate 2)', () => {
+      const deferredRow = () => ({
+        status: 'deferred',
+        retryCount: 1,
+        retryOwnerId: 'worker-1',
+        retryLeaseExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
+        nextRetryAt: new Date(),
+      });
+
+      it('returns needs_review when a deferred preflight conflict is durably recorded', async () => {
+        webhookEventFindUnique.mockResolvedValue(deferredRow());
+        webhookEventCreate.mockRejectedValue(p2002());
+        // The metadata attemptId/invoiceId disagreement is a preflight conflict.
+        attemptFindFirst
+          .mockResolvedValueOnce(null) // persisted-id lookup misses
+          .mockResolvedValueOnce(
+            attemptRow({ id: ATTEMPT_UUID, invoiceId: '33333333-3333-4333-8333-333333333333' }),
+          );
+
+        const result = await service.processEvent(
+          event(
+            'payment_intent.succeeded',
+            paymentIntent({ metadata: { attemptId: ATTEMPT_UUID, invoiceId: INVOICE_UUID } }),
+            'evt_1',
+          ),
+          { ownerId: 'worker-1' },
+        );
+
+        // The pipeline (sole authority) converted the preflight conflict to a
+        // durable needs_review and reported it — the worker must fail its tick.
+        expect(result).toBe('needs_review');
+        expect(webhookEventUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ stripeEventId: 'evt_1' }),
+            data: expect.objectContaining({ status: 'needs_review' }),
+          }),
+        );
+      });
+
+      it('returns processed when a deferred preflight-review CAS misses (benign concurrent completion)', async () => {
+        webhookEventFindUnique.mockResolvedValue(deferredRow());
+        webhookEventCreate.mockRejectedValue(p2002());
+        attemptFindFirst
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(
+            attemptRow({ id: ATTEMPT_UUID, invoiceId: '33333333-3333-4333-8333-333333333333' }),
+          );
+        // A concurrent processor already completed the event: the needs_review
+        // transition CAS matches zero rows.
+        webhookEventUpdateMany.mockResolvedValue({ count: 0 });
+
+        const result = await service.processEvent(
+          event(
+            'payment_intent.succeeded',
+            paymentIntent({ metadata: { attemptId: ATTEMPT_UUID, invoiceId: INVOICE_UUID } }),
+            'evt_1',
+          ),
+          { ownerId: 'worker-1' },
+        );
+
+        // The benign CAS miss is reported as the completed outcome — never a
+        // needs_review failure for the worker tick.
+        expect(result).toBe('processed');
+      });
+
+      it('returns processed when a deferred event is re-applied through the worker pipeline', async () => {
+        webhookEventFindUnique.mockResolvedValue(deferredRow());
+        webhookEventCreate.mockRejectedValue(p2002());
+        attemptFindFirst.mockResolvedValue(attemptRow());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+
+        const result = await service.processEvent(
+          event('checkout.session.completed', session({ payment_status: 'paid' }), 'evt_1'),
+          { ownerId: 'worker-1' },
+        );
+
+        expect(result).toBe('processed');
+        expect(webhookEventUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ status: 'processed' }),
+          }),
+        );
+      });
+    });
   });
 });

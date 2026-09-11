@@ -40,6 +40,97 @@ jobs:
       - name: Build backend
         run: npm run build
 
+  backend-concurrency-e2e:
+    name: Backend concurrency E2E
+    runs-on: ubuntu-latest
+
+    # Bounded P1 CI wiring: the two real-PostgreSQL concurrency specs
+    # (invoice settlement + USDC claims) race interactive transactions against
+    # a real Postgres 16. Redis 7 is provisioned for parity with the local
+    # docker-compose topology; the specs themselves only use Postgres.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: agent_wallet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d agent_wallet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      # Safe CI-only placeholders. Only the two bounded concurrency specs run
+      # here; they never boot the Nest app or touch Openfort/Stripe/SIEM, so no
+      # API keys, wallet secrets, or signing material are needed or set.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agent_wallet
+      REDIS_URL: redis://localhost:6379
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      # Belt-and-braces on top of the service health checks: do not start
+      # applying migrations until Postgres actually accepts connections.
+      - name: Wait for PostgreSQL readiness
+        run: |
+          node -e '
+            const { Client } = require("pg");
+            const deadline = Date.now() + 60000;
+            (async () => {
+              while (Date.now() < deadline) {
+                const client = new Client({ connectionString: process.env.DATABASE_URL });
+                try {
+                  await client.connect();
+                  await client.query("SELECT 1");
+                  await client.end();
+                  console.log("PostgreSQL is ready");
+                  return;
+                } catch {
+                  await client.end().catch(() => {});
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                }
+              }
+              throw new Error("PostgreSQL did not become ready within 60 seconds");
+            })().catch((error) => { console.error(error.message); process.exit(1); });
+          '
+
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
+
+      # Runs only the two real-Postgres concurrency specs with the repo's
+      # single-worker Jest config (maxWorkers: 1 in test/jest-e2e.json).
+      # The other e2e specs need Openfort/Redis/app secrets and are out of scope.
+      - name: Run concurrency E2E tests
+        run: npm run test:e2e -- test/settlement-concurrency.e2e-spec.ts test/claim-concurrency.e2e-spec.ts
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -69,6 +160,11 @@ jobs:
 
       - name: Lint frontend
         run: npm run lint
+
+      # P1 release-test wiring: frontend unit tests run via Vitest
+      # ("test": "vitest run") with jsdom + React Testing Library.
+      - name: Test frontend
+        run: npm test
 
       - name: Build frontend
         run: npm run build

@@ -56,8 +56,14 @@ npm run prisma:studio
 
 ## 4. Health checks
 
-- `GET /health/live`: process liveness.
-- `GET /health/ready`: readiness for dependencies/configuration.
+Both endpoints are public. They never expose secrets, account/user data, or provider identifiers.
+
+- `GET /health/live`: process liveness — returns `{ status: 'ok', timestamp }` without touching dependencies. Use it for liveness probes (is the process up?).
+- `GET /health/ready`: readiness — probes the database and reports non-sensitive billing-worker state. Use it for readiness probes (should traffic be routed here?).
+  - `checks.database`: `ok`, or `unavailable` (readiness fails).
+  - `checks.billingWorker`: `enabled`, an aggregated activity status (`starting` | `running` | `healthy` | `failed`, otherwise stale), `lastHeartbeatAt`, `lastSuccessAt`, `lastFailureAt`, `consecutiveFailures`, and an aggregate `needsReviewCount` (billing invoices/payment attempts in `needs_review`, Stripe webhook events in `needs_review`/`failed`, and quarantined usage events). The count is informational and never fails readiness by itself.
+  - Worker status comes from the persisted in-process heartbeat rows (`BillingWorkerHeartbeat`), one per enabled worker, refreshed each 5-minute tick. Freshness is 15 minutes (three intervals); an enabled worker without a fresh heartbeat is stale. A missing heartbeat table/query fails closed to stale/unavailable, never silently healthy.
+  - Production: 503 while the worker is disabled, failed, or stale. `starting`/`running` are allowed during bounded startup/active-tick windows. Development/test may run with the worker disabled and stay ready.
 
 ## 5. Common troubleshooting
 
@@ -100,11 +106,46 @@ This is intentional. Public status responses are safe by design and must not exp
   `billing_payment_attempts`, quarantined `billing_usage_events`); see `DEPLOYMENT.md`
   section 8 for the full run/monitor guide.
 
+### User returns from Stripe Checkout but the invoice looks stale
+
+- Return URLs are server-authoritative. Stripe redirects to the configured
+  `STRIPE_SUCCESS_URL`/`STRIPE_CANCEL_URL` plus a `success=1`/`canceled=1` marker (any
+  existing query string and fragment are preserved). The billing page maps the marker to
+  a notice and performs bounded invoice-status polling after return.
+- The redirect never marks an invoice paid. Only a signature-verified Stripe webhook (or
+  the billing worker's recovery paths) settles an invoice. If the invoice is unpaid after
+  return, confirm the webhook was delivered and inspect the payment attempt's status or
+  `needs_review` before retrying payment.
+
+### Pricing effective date and quarantined receipts
+
+- The current pricing policy is effective from `2026-08-01T00:00:00.000Z`, inclusive. There is no separate activation flag or migration for this date.
+- Receipt observations before that instant are intentionally quarantined as `stale_price`; observations at or after it can be priced normally. Do not manually bypass the quarantine.
+- Before enabling production reconciliation, verify that the deployed build contains this policy constant and that the billing migrations are applied. Changing the effective date is a pricing-policy decision and requires coordinated test/documentation updates.
+
+### Billing worker heartbeat failed/stale or `/health/ready` is 503
+
+- Production readiness requires an enabled worker with a fresh heartbeat: `starting`/
+  `running` are allowed during startup/active ticks; a disabled, failed, or stale worker
+  returns 503. Development/test allow a disabled worker.
+- A `failed`/stale heartbeat or new `needs_review` rows surface only through the existing
+  operational surfaces — sanitized worker logs, `SecurityEvent` rows, and the optional
+  SIEM export. There is no Slack/PagerDuty/email alert.
+- A missing heartbeat table for an enabled worker usually means the additive migration was
+  not applied: run `npm run prisma:migrate:deploy` before enabling the worker in
+  production.
+
 ## 6. Operational safety
 
 - Revoke or rotate API keys through dashboard-only endpoints.
 - Rotate Openfort secrets through deployment secret storage and restart backend instances.
-- Run migrations before deploying code that expects schema changes.
+- Run migrations before deploying code that expects schema changes; this includes the
+  additive `BillingWorkerHeartbeat` migration before enabling the billing worker in
+  production.
 - Update documentation alongside behavior changes.
 - Treat `BILLING_WORKER_ENABLED=true` as an explicit production opt-in; verify its startup
   log line after each deployment that changes billing behavior.
+- Treat a production `/health/ready` 503 caused by a disabled, failed, or stale billing
+  worker as a deployment blocker. Investigate failed/stale heartbeats and `needs_review`
+  rows through existing logs, `SecurityEvent` records, and the optional SIEM export; do
+  not expect Slack/PagerDuty/email notifications.

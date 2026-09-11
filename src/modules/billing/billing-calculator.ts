@@ -43,8 +43,18 @@ export interface InvoiceTotalsInput {
   readonly plan: BillingPlanConfig;
   readonly grossOutboundMicros: bigint;
   readonly activeWallets?: number;
+  /**
+   * API calls consumed in the period. Reporting only: API usage is a hard
+   * quota (assertAndRecordApiCall returns HTTP 429 at the limit and never
+   * writes billable overage), so this count never produces a charge here.
+   */
   readonly apiCallsTotal?: number;
-  /** Overage rate per over-limit API call, in microdollars; defaults to 0. */
+  /**
+   * Legacy/persisted per-API-call rate, in microdollars. Retained so the
+   * immutable persisted value can be threaded through for compatibility, but
+   * deliberately NEVER used to price an invoice: API overage is zero even when
+   * this rate is nonzero.
+   */
   readonly apiOverageRateMicros?: bigint;
   /** Overage rate per over-limit wallet per month, in microdollars; defaults to 0. */
   readonly walletOverageRateMicros?: bigint;
@@ -55,6 +65,7 @@ export interface InvoiceTotals {
   readonly monthlyFeeMicros: bigint;
   readonly billableOutboundMicros: bigint;
   readonly outboundOverageMicros: bigint;
+  /** Always 0n: API usage is hard-limited upstream and never billed as overage. */
   readonly apiOverageMicros: bigint;
   readonly walletOverageMicros: bigint;
   readonly totalMicros: bigint;
@@ -62,13 +73,18 @@ export interface InvoiceTotals {
 }
 
 /**
- * Default overage rates from the accepted product boundary (PRICING.md §7
- * ranges narrowed to fixed values): API calls at $0.001/call (1_000 micros)
- * and active wallets at $0.01/wallet/month (10_000 micros). Seeded into new
- * plan versions; existing used plan versions are versioned forward, never
- * rewritten in place.
+ * Default overage rates seeded into new plan versions; existing used plan
+ * versions are versioned forward, never rewritten in place.
+ *
+ * API calls are a hard quota, not an overage dimension: assertAndRecordApiCall
+ * rejects over-limit traffic with HTTP 429 and never records billable overage,
+ * so the API default rate is 0 micros (no per-call price). The persisted
+ * `apiOverageRateMicros` column is retained for legacy/back-compat and is never
+ * used to price an invoice, even when an older persisted plan version carries a
+ * nonzero value. Active wallets remain overage-billed at $0.01/wallet/month
+ * (10_000 micros).
  */
-export const DEFAULT_API_OVERAGE_RATE_MICROS = 1_000n;
+export const DEFAULT_API_OVERAGE_RATE_MICROS = 0n;
 export const DEFAULT_WALLET_OVERAGE_RATE_MICROS = 10_000n;
 
 function micros(dollars: number): bigint {
@@ -211,9 +227,14 @@ export function calculateOutboundOverage(
 }
 
 /**
- * Totals a monthly invoice: plan monthly fee + outbound overage + API-call
- * overage + wallet overage. All amounts are bigints in microdollars and the
- * outbound tier breakdown is included.
+ * Totals a monthly invoice: plan monthly fee + outbound overage + wallet
+ * overage. All amounts are bigints in microdollars and the outbound tier
+ * breakdown is included.
+ *
+ * API-call usage is a hard quota enforced upstream (`assertAndRecordApiCall`
+ * returns HTTP 429 at the included limit and never records billable overage),
+ * so `apiOverageMicros` is always 0n — even when a legacy/persisted nonzero
+ * `apiOverageRateMicros` is supplied. That rate is deliberately inert.
  */
 export function calculateInvoiceTotals(input: InvoiceTotalsInput): InvoiceTotals {
   const monthlyFeeMicros = input.plan.monthlyFeeMicros ?? 0n;
@@ -226,10 +247,15 @@ export function calculateInvoiceTotals(input: InvoiceTotalsInput): InvoiceTotals
     tiers,
   );
 
+  // API usage is a hard limit, never an overage dimension: over-limit traffic
+  // is rejected with HTTP 429 before an event is written, so there is nothing
+  // to bill and API overage is structurally zero. A legacy/persisted nonzero
+  // apiOverageRateMicros is deliberately ignored (never prices an invoice);
+  // historical plan versions are immutable and are never repriced.
   const apiOverageMicros = computeUsageOverage(
     input.apiCallsTotal ?? 0,
     input.plan.includedApiCallsPerMonth ?? 0,
-    input.apiOverageRateMicros ?? DEFAULT_API_OVERAGE_RATE_MICROS,
+    0n,
   );
   const walletOverageMicros = computeUsageOverage(
     input.activeWallets ?? 0,

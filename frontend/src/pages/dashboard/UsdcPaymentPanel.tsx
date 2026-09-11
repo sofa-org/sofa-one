@@ -4,6 +4,7 @@ import { CopyButton } from '@/components/CopyButton';
 import {
   createUsdcClaimAuth,
   createUsdcQuoteAuth,
+  hasApiErrorCode,
   isApiError,
   type BillingInvoice,
   type UsdcClaimResponse,
@@ -48,6 +49,18 @@ function formatExpiry(value: string | null | undefined): string {
 
 function friendlyUsdcError(error: unknown, fallback: string): string {
   if (isApiError(error)) {
+    if (error.code === 'USDC_INVOICE_NOT_PAYABLE') {
+      return 'This invoice is no longer payable. It may already be paid, finalized, or fully covered. Use another payment method or contact support.';
+    }
+    if (error.code === 'USDC_PAYMENT_IN_PROGRESS') {
+      return 'A USDC payment is already in progress for this invoice. Wait for it to complete, then refresh the quote.';
+    }
+    if (error.code === 'USDC_INVALID_ATTEMPT') {
+      return 'This payment attempt or quote is no longer valid. Request a new quote to continue.';
+    }
+    if (error.code === 'USDC_WALLET_NOT_ACTIVE') {
+      return 'Your wallet is not active yet. Finish wallet setup and try again.';
+    }
     if (error.statusCode === 404 || error.statusCode === 501) {
       return 'USDC payments are not available for this invoice. Please use the card option or contact support.';
     }
@@ -58,10 +71,7 @@ function friendlyUsdcError(error: unknown, fallback: string): string {
       return 'The request was not accepted. Check the selected network and invoice, then try again.';
     }
     if (error.statusCode === 409) {
-      return 'A payment is already in progress for this invoice. Please wait for it to complete.';
-    }
-    if (error.statusCode === 410) {
-      return 'This quote has expired. Request a new quote to continue.';
+      return 'A conflict occurred while processing the USDC payment. Please refresh the quote or try again.';
     }
   }
   return fallback;
@@ -81,9 +91,11 @@ function isKnownClaimStatus(status: string): status is UsdcClaimStatus {
   return KNOWN_CLAIM_STATUSES.includes(status as UsdcClaimStatus);
 }
 
-function claimStatusDisplay(
-  result: UsdcClaimResponse,
-): { message: string; tone: 'green' | 'amber' | 'red' | 'blue'; retryable: boolean } {
+function claimStatusDisplay(result: UsdcClaimResponse): {
+  message: string;
+  tone: 'green' | 'amber' | 'red' | 'blue';
+  retryable: boolean;
+} {
   const confirmations = result.confirmations ?? 0;
   const required = result.requiredConfirmations ?? null;
   const progress =
@@ -172,7 +184,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
   const [claimResult, setClaimResult] = useState<UsdcClaimResponse | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
 
-  const [invoiceRefreshPhase, setInvoiceRefreshPhase] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [invoiceRefreshPhase, setInvoiceRefreshPhase] = useState<
+    'idle' | 'pending' | 'success' | 'error'
+  >('idle');
 
   const quoteRequestIdRef = useRef(0);
   const isMountedRef = useRef(true);
@@ -260,34 +274,69 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
         void onChange();
       } catch (err: unknown) {
         if (isApiError(err) && err.statusCode === 409) {
-          // The invoice has been settled or made unpayable by another payment method (e.g. Stripe).
-          // Invalidate the stale quote and await a server-side invoice refresh before allowing
-          // any further interaction.
-          quoteRequestIdRef.current += 1;
-          setQuote(null);
-          setQuoteError(null);
-          setClaimResult(null);
-          setClaimError(null);
-          setTxHash('');
-          setTxHashTouched(false);
-          setInvoiceRefreshPhase('pending');
+          if (hasApiErrorCode(err, 'USDC_INVOICE_NOT_PAYABLE')) {
+            // The invoice is no longer payable (paid, finalized, or fully covered).
+            // Invalidate the stale quote and await a server-side invoice refresh before allowing
+            // any further interaction.
+            quoteRequestIdRef.current += 1;
+            setQuote(null);
+            setQuoteError(null);
+            setClaimResult(null);
+            setClaimError(null);
+            setTxHash('');
+            setTxHashTouched(false);
+            setInvoiceRefreshPhase('pending');
 
-          try {
-            const refreshed = await onChange();
-            if (!isMountedRef.current) return;
-            setInvoiceRefreshPhase(refreshed ? 'success' : 'error');
-          } catch {
-            if (!isMountedRef.current) return;
-            setInvoiceRefreshPhase('error');
+            try {
+              const refreshed = await onChange();
+              if (!isMountedRef.current) return;
+              setInvoiceRefreshPhase(refreshed ? 'success' : 'error');
+            } catch {
+              if (!isMountedRef.current) return;
+              setInvoiceRefreshPhase('error');
+            }
+            return;
           }
-        } else {
+
+          if (hasApiErrorCode(err, 'USDC_PAYMENT_IN_PROGRESS')) {
+            setClaimError(
+              'A USDC payment is already in progress for this invoice. Wait for it to complete, then refresh the quote.',
+            );
+            return;
+          }
+
+          if (hasApiErrorCode(err, 'USDC_INVALID_ATTEMPT')) {
+            quoteRequestIdRef.current += 1;
+            setQuote(null);
+            setQuoteError(null);
+            setClaimResult(null);
+            setClaimError(
+              'This payment attempt or quote is no longer valid. Request a new quote to continue.',
+            );
+            return;
+          }
+
+          if (hasApiErrorCode(err, 'USDC_WALLET_NOT_ACTIVE')) {
+            setClaimError('Your wallet is not active yet. Finish wallet setup and try again.');
+            return;
+          }
+
+          // Unknown 409: keep the current quote and show a generic conflict message.
           setClaimError(
             friendlyUsdcError(
               err,
-              'Could not submit the USDC payment. Check the transaction hash and try again.',
+              'A conflict occurred while submitting the USDC payment. Please refresh the quote or try again.',
             ),
           );
+          return;
         }
+
+        setClaimError(
+          friendlyUsdcError(
+            err,
+            'Could not submit the USDC payment. Check the transaction hash and try again.',
+          ),
+        );
       } finally {
         setClaimLoading(false);
       }
@@ -309,8 +358,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     (!isKnownClaimStatus(claimResult.status) || claimResult.retryable !== true);
   const claimDisabled =
     claimLoading || quoteLoading || !quote || !isValidTxHash(txHash) || claimFormLocked;
-  const controlsLocked =
-    invoiceRefreshPhase === 'pending' || invoiceRefreshPhase === 'error';
+  const controlsLocked = invoiceRefreshPhase === 'pending' || invoiceRefreshPhase === 'error';
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-5">
@@ -379,8 +427,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
-              Invoice status refreshed. The previous quote is no longer valid. Select a network and
-              click Refresh quote to request a new quote.
+              Invoice status refreshed. This invoice is no longer payable (it may have been paid or
+              finalized). The previous quote is no longer valid. Select a network and click Refresh
+              quote to request a new quote.
             </span>
           </div>
         </div>
@@ -414,10 +463,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
               <div className="mt-1 flex items-center gap-2">
                 <p className="text-lg font-semibold text-brand-text">{formattedUsdcAmount}</p>
                 {formattedUsdcAmount && (
-                  <CopyButton
-                    text={formattedUsdcAmount.replace(' USDC', '')}
-                    className="h-7 w-7"
-                  />
+                  <CopyButton text={formattedUsdcAmount.replace(' USDC', '')} className="h-7 w-7" />
                 )}
               </div>
               <p className="text-[10px] text-brand-muted">Base units: {quote.amountBaseUnits}</p>

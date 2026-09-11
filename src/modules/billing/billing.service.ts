@@ -599,9 +599,13 @@ export class BillingService {
   // ── Usage recording ─────────────────────────────────────────────────────────
 
   /**
-   * Records a single API call (metric = api_call, quantity = 1). Idempotent on
-   * sourceKey: a duplicate sourceKey is silently ignored. The sourceKey must be
-   * supplied by the server-side caller and is never derived from a client
+   * Legacy API-call meter seam (no quota check). Records a single API call
+   * (metric = api_call, quantity = 1) as an explicitly `unverified` usage event
+   * so it can never affect quota or invoice accounting. The authoritative,
+   * quota-checked path is `assertAndRecordApiCall`, which writes
+   * `status = posted`; only posted api_call rows are ever counted. Idempotent
+   * on sourceKey: a duplicate sourceKey is silently ignored. The sourceKey must
+   * be supplied by the server-side caller and is never derived from a client
    * X-Request-Id.
    */
   async recordApiCall(input: RecordApiCallInput): Promise<void> {
@@ -613,6 +617,9 @@ export class BillingService {
         data: {
           billingAccountId: account.id,
           metric: 'api_call',
+          entryType: 'usage',
+          sourceType: 'api_request',
+          status: 'unverified',
           sourceKey: input.sourceKey,
           periodStart,
           occurredAt,
@@ -634,8 +641,9 @@ export class BillingService {
    * Atomic API-call quota check-and-record (Phase 2B). Runs inside the shared
    * billing-period lock (Serializable + advisory lock) so N concurrent requests
    * can never exceed the included API-call limit. The period is the UTC
-   * calendar month of the request. Only `metric=api_call AND entryType=usage`
-   * events count; reversal/adjustment/non-usage rows never consume quota.
+   * calendar month of the request. Only `metric=api_call AND entryType=usage
+   * AND status=posted` events count; reversal/adjustment/non-usage rows and
+   * unverified/quarantined api_call rows never consume quota.
    *
    * The plan in effect for the period is resolved first; Enterprise/custom null
    * terms fail closed (never treated as 0 or infinite). When the existing count
@@ -664,14 +672,18 @@ export class BillingService {
         const limit = includedApiCalls;
 
         // Fetch and validate each included usage row before reduction: only
-        // metric=api_call AND entryType=usage counts; a negative or non-bigint
-        // quantity fails closed instead of silently reducing usage.
+        // metric=api_call AND entryType=usage AND status=posted counts. The
+        // explicit posted-status requirement keeps rows written by the legacy
+        // recordApiCall seam (explicitly unverified) from consuming quota, and
+        // a negative or non-bigint quantity fails closed instead of silently
+        // reducing usage.
         const usageRows = await tx.billingUsageEvent.findMany({
           where: {
             billingAccountId,
             periodStart,
             metric: 'api_call',
             entryType: 'usage',
+            status: 'posted',
           },
           select: { quantity: true },
         });
@@ -1279,10 +1291,12 @@ export class BillingService {
           outboundVolume += ev.volumeUsdMicros;
         }
       } else if (ev.metric === 'api_call') {
-        // One API usage policy: only entryType=usage counts; reversal/adjustment/
-        // non-usage rows are excluded. A negative or non-bigint quantity fails
-        // closed instead of reducing usage.
-        if (ev.entryType === 'usage') {
+        // One API usage policy: only posted usage-type api_call events count
+        // toward reported usage. Rows written by the legacy recordApiCall seam
+        // (explicitly unverified) and quarantined/reversed rows are excluded;
+        // reversal/adjustment/non-usage rows are excluded. A negative or
+        // non-bigint quantity fails closed instead of reducing usage.
+        if (ev.status === 'posted' && ev.entryType === 'usage') {
           if (typeof ev.quantity !== 'bigint' || ev.quantity < 0n) {
             throw new ConflictException('Usage quantity is invalid');
           }
@@ -1448,9 +1462,12 @@ export class BillingService {
               outboundVolume += ev.volumeUsdMicros;
             }
           } else if (ev.metric === 'api_call') {
-            // One API usage policy: only entryType=usage counts; a negative or
-            // non-bigint quantity fails closed instead of reducing usage.
-            if (ev.entryType === 'usage') {
+            // One API usage policy: only posted usage-type api_call events are
+            // billable/reported. Legacy recordApiCall rows (explicitly
+            // unverified) and quarantined/reversed rows are excluded; a
+            // negative or non-bigint quantity fails closed instead of reducing
+            // usage.
+            if (ev.status === 'posted' && ev.entryType === 'usage') {
               if (typeof ev.quantity !== 'bigint' || ev.quantity < 0n) {
                 throw new ConflictException('Usage quantity is invalid');
               }
@@ -1978,6 +1995,10 @@ export class BillingService {
               plan.includedApiCallsPerMonth !== null ? BigInt(plan.includedApiCallsPerMonth) : null,
             includedWallets: plan.includedWallets,
             includedTeamMembers: null,
+            // API calls are a hard quota (HTTP 429 at the limit, never billed
+            // as overage), so new plan versions seed the retained
+            // apiOverageRateMicros column at the 0n default; existing used
+            // versions are never rewritten. Wallet overage keeps its default.
             apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
             walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
             effectiveFrom: new Date(),
@@ -2203,6 +2224,10 @@ export class BillingService {
       });
     });
 
+    // API-call usage is a hard quota: over-limit traffic is rejected with HTTP
+    // 429 and never recorded, so totals.apiOverageMicros is always 0n and this
+    // branch is unreachable. The guard is retained so a legacy/persisted
+    // nonzero apiOverageRateMicros can never surface as an api_overage line.
     if (totals.apiOverageMicros > 0n) {
       const billableApiCalls = Math.max(apiCalls - (plan.includedApiCallsPerMonth ?? 0), 0);
       lines.push({

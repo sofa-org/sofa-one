@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { getSupportedChain } from '../../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../../common/errors/api-error-codes';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { SecurityEventService } from '../../security-events/security-event.service';
@@ -238,9 +239,10 @@ export class UsdcPaymentService {
       // chain start alongside it.
       if (existing.status === 'confirming') {
         if (existing.chainId !== BigInt(chain)) {
-          throw new ConflictException(
-            'An active USDC payment already exists for this invoice on another chain',
-          );
+          throw new ConflictException({
+            code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+            message: 'An active USDC payment already exists for this invoice on another chain',
+          });
         }
         return this.toQuoteResult(invoice, existing);
       }
@@ -268,17 +270,19 @@ export class UsdcPaymentService {
           });
           if (current && (current.status === 'pending' || current.status === 'confirming')) {
             if (current.chainId !== BigInt(chain)) {
-              throw new ConflictException(
-                'An active USDC payment already exists for this invoice on another chain',
-              );
+              throw new ConflictException({
+                code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+                message: 'An active USDC payment already exists for this invoice on another chain',
+              });
             }
             return this.toQuoteResult(invoice, current);
           }
         }
       } else if (existing.chainId !== BigInt(chain)) {
-        throw new ConflictException(
-          'An active USDC payment already exists for this invoice on another chain',
-        );
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+          message: 'An active USDC payment already exists for this invoice on another chain',
+        });
       } else {
         return this.toQuoteResult(invoice, existing);
       }
@@ -328,7 +332,10 @@ export class UsdcPaymentService {
           return this.toQuoteResult(invoice, winner);
         }
       }
-      throw new ConflictException('A USDC payment is already being quoted for this invoice');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+        message: 'A USDC payment is already being quoted for this invoice',
+      });
     }
   }
 
@@ -364,7 +371,10 @@ export class UsdcPaymentService {
     this.assertEnabled();
     const invoice = await this.loadOwnedInvoice(userId, invoiceId);
     if (invoice.status !== 'finalized') {
-      throw new ConflictException('Invoice is no longer payable');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+        message: 'Invoice is no longer payable',
+      });
     }
 
     const attempt = await this.prisma.billingPaymentAttempt.findUnique({
@@ -374,14 +384,20 @@ export class UsdcPaymentService {
       throw new NotFoundException('Payment attempt not found');
     }
     if (attempt.method !== 'usdc') {
-      throw new ConflictException('Payment attempt is not a USDC payment');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt is not a USDC payment',
+      });
     }
     // Full single-rail quotes keep amountMicros == totalMicros; renewal
     // remainder quotes carry the persisted remainder snapshot (never more than
     // the frozen total). The immutable snapshot amount is authoritative for
     // receipt verification; the settlement boundary caps any excess coverage.
     if (attempt.currency !== invoice.currency || !this.amountMatchesInvoice(attempt, invoice)) {
-      throw new ConflictException('Payment attempt does not match the invoice');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt does not match the invoice',
+      });
     }
     this.assertSnapshotComplete(attempt, invoice);
 
@@ -1468,10 +1484,16 @@ export class UsdcPaymentService {
 
   private assertInvoiceEligible(invoice: InvoiceRow): void {
     if (invoice.status !== 'finalized') {
-      throw new ConflictException('Only finalized invoices can be paid');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+        message: 'Only finalized invoices can be paid',
+      });
     }
     if (invoice.paidAt) {
-      throw new ConflictException('Invoice is already paid');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+        message: 'Invoice is already paid',
+      });
     }
     if (invoice.currency !== 'USD') {
       throw new BadRequestException('Only USD invoices can be paid');
@@ -1492,7 +1514,10 @@ export class UsdcPaymentService {
     const allocated = invoice.allocatedMicros ?? 0n;
     const remaining = invoice.totalMicros - allocated;
     if (remaining <= 0n) {
-      throw new ConflictException('Invoice is already fully covered');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+        message: 'Invoice is already fully covered',
+      });
     }
     return remaining;
   }
@@ -1561,7 +1586,10 @@ export class UsdcPaymentService {
   private async expectedPayer(userId: string): Promise<string> {
     const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
     if (!wallet?.walletAddress || wallet.status !== 'active' || wallet.frozenAt) {
-      throw new ConflictException('No active user wallet is available for USDC payment');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE,
+        message: 'No active user wallet is available for USDC payment',
+      });
     }
     return wallet.walletAddress;
   }
@@ -1603,41 +1631,62 @@ export class UsdcPaymentService {
    */
   private assertSnapshotComplete(attempt: PaymentAttemptRow, invoice: InvoiceRow): void {
     if (!this.hasQuoteSnapshot(attempt)) {
-      throw new ConflictException('Payment attempt is missing its USDC quote snapshot');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt is missing its USDC quote snapshot',
+      });
     }
 
     const chainId = Number(attempt.chainId);
 
     // Chain: must be in the USDC billing allowlist.
     if (!USDC_BILLING_CHAIN_IDS.includes(chainId as UsdcBillingChainId)) {
-      throw new ConflictException('Payment attempt has an unsupported USDC chain');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has an unsupported USDC chain',
+      });
     }
 
     // Token: must be the canonical USDC address for the snapshotted chain.
     const canonicalToken = this.canonicalToken(chainId);
     if (attempt.tokenAddress!.toLowerCase() !== canonicalToken.toLowerCase()) {
-      throw new ConflictException('Payment attempt has a non-canonical USDC token');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has a non-canonical USDC token',
+      });
     }
 
     // Treasury: valid EVM address, never the zero address, and consistent with
     // the current per-chain configuration.
     const treasury = attempt.treasuryAddress!.toLowerCase();
     if (!isEthereumAddress(treasury) || treasury === ZERO_ADDRESS) {
-      throw new ConflictException('Payment attempt has an invalid treasury address');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has an invalid treasury address',
+      });
     }
     const configuredTreasury = this.treasury(chainId);
     if (treasury !== configuredTreasury.toLowerCase()) {
-      throw new ConflictException('Payment attempt treasury does not match server configuration');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt treasury does not match server configuration',
+      });
     }
 
     // Payer: valid EVM address.
     if (!isEthereumAddress(attempt.expectedPayerAddress!.toLowerCase())) {
-      throw new ConflictException('Payment attempt has an invalid expected payer');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has an invalid expected payer',
+      });
     }
 
     // Decimals: USDC is exactly 6.
     if (attempt.tokenDecimals !== USDC_DECIMALS) {
-      throw new ConflictException('Payment attempt has invalid token decimals');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has invalid token decimals',
+      });
     }
 
     // Amount: the expected base units must equal the persisted attempt amount
@@ -1646,15 +1695,24 @@ export class UsdcPaymentService {
     // or a positive remainder snapshot (never more than the total) once a
     // fixed-fee renewal has allocated coverage.
     if (attempt.expectedBaseUnits !== attempt.amountMicros || attempt.amountMicros <= 0n) {
-      throw new ConflictException('Payment attempt amount does not match the invoice');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt amount does not match the invoice',
+      });
     }
     if (!this.amountMatchesInvoice(attempt, invoice)) {
-      throw new ConflictException('Payment attempt amount does not match the invoice');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt amount does not match the invoice',
+      });
     }
 
     // Confirmations: at least the product minimum of 5.
     if (attempt.requiredConfirmations! < 5) {
-      throw new ConflictException('Payment attempt has insufficient required confirmations');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has insufficient required confirmations',
+      });
     }
 
     // Expiry: a valid date.
@@ -1662,13 +1720,19 @@ export class UsdcPaymentService {
       !(attempt.quoteExpiresAt instanceof Date) ||
       Number.isNaN(attempt.quoteExpiresAt.getTime())
     ) {
-      throw new ConflictException('Payment attempt has an invalid quote expiry');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt has an invalid quote expiry',
+      });
     }
 
     // Provider identity: must match the current non-secret RPC identity so an
     // in-flight quote is bound to the operational provider configuration.
     if (attempt.providerIdentity !== this.providerIdentity(chainId)) {
-      throw new ConflictException('Payment attempt provider configuration has changed; re-quote');
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt provider configuration has changed; re-quote',
+      });
     }
   }
 

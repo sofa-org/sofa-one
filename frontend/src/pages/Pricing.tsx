@@ -256,7 +256,9 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
         </div>
         <div className="rounded-2xl border border-brand-border bg-brand-bg/60 p-3">
           <Wallet className="h-4 w-4 text-brand-accent" aria-hidden="true" />
-          <p className="mt-2 text-xs font-bold uppercase tracking-wider text-brand-muted">Wallets</p>
+          <p className="mt-2 text-xs font-bold uppercase tracking-wider text-brand-muted">
+            Wallets
+          </p>
           <p className="mt-0.5 truncate text-sm font-semibold text-brand-text">
             {formatCount(plan.wallets)}
           </p>
@@ -295,11 +297,7 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
           {ctaContent}
         </a>
       ) : (
-        <Link
-          to={plan.ctaTo}
-          className={ctaClasses}
-          aria-label={`${plan.cta} on SOFA ONE`}
-        >
+        <Link to={plan.ctaTo} className={ctaClasses} aria-label={`${plan.cta} on SOFA ONE`}>
           {ctaContent}
         </Link>
       )}
@@ -360,10 +358,7 @@ export default function PricingPage() {
           </p>
         </section>
 
-        <section
-          aria-label="Pricing plans"
-          className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-        >
+        <section aria-label="Pricing plans" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -376,14 +371,14 @@ export default function PricingPage() {
             </h2>
             <p className="mt-3 text-sm leading-7 text-brand-muted">
               Your monthly bill starts with the plan fee. Outbound volume beyond the included
-              allowance is charged using the marginal tiers on this page — each tier only applies
-              to volume inside that band, so scaling up never raises your whole bill retroactively.
+              allowance is charged using the marginal tiers on this page — each tier only applies to
+              volume inside that band, so scaling up never raises your whole bill retroactively.
             </p>
             <p className="mt-3 text-sm leading-7 text-brand-muted">
-              Resource overages apply only when you exceed included quotas: API calls over the plan
-              limit at $0.001 per call, and active wallets over the plan limit at $0.01 per wallet
-              per month. Team member seats beyond the included count are billed on Enterprise
-              custom terms.
+              Each plan includes a fixed monthly API request limit. Requests that reach or exceed
+              the limit are rejected with HTTP 429 — there is no per-call overage. Active wallets
+              over the plan limit are billed at $0.01 per wallet per month. Team member seats beyond
+              the included count are billed on Enterprise custom terms.
             </p>
           </div>
 
