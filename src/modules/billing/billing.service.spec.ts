@@ -208,6 +208,15 @@ describe('BillingService', () => {
             userWallet: { count: walletCount },
             billingInvoice: {
               findUnique: invoiceFindUnique,
+              findUniqueOrThrow: jest.fn(async (args: unknown) => {
+                const row = await invoiceFindUnique(args);
+                if (!row) {
+                  const err = new Error('not found') as Error & { code?: string };
+                  err.code = 'P2025';
+                  throw err;
+                }
+                return row;
+              }),
               findFirst: invoiceFindFirst,
               findMany: invoiceFindMany,
               count: invoiceCount,
@@ -268,6 +277,15 @@ describe('BillingService', () => {
       userWallet: { count: walletCount },
       billingInvoice: {
         findUnique: invoiceFindUnique,
+        findUniqueOrThrow: jest.fn(async (args: unknown) => {
+          const row = await invoiceFindUnique(args);
+          if (!row) {
+            const err = new Error('not found') as Error & { code?: string };
+            err.code = 'P2025';
+            throw err;
+          }
+          return row;
+        }),
         findFirst: invoiceFindFirst,
         findMany: invoiceFindMany,
         count: invoiceCount,
@@ -2821,6 +2839,13 @@ describe('BillingService', () => {
             status: 'finalized',
             totalMicros: 53_750_000n,
             snapshotHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+            snapshotJson: expect.objectContaining({
+              plan: expect.objectContaining({
+                code: FREE_VERSION.code,
+                name: FREE_VERSION.name,
+                version: FREE_VERSION.version,
+              }),
+            }),
           }),
         }),
       );
@@ -4393,6 +4418,178 @@ describe('BillingService', () => {
       expect(check(null, 'user-1')).toBe(true);
       expect(check(null, null)).toBe(true);
       expect(check(null, 'user-other')).toBe(false);
+    });
+  });
+
+  describe('buildInvoiceLineSpecs', () => {
+    it('builds monthly_fee and outbound tier lines matching finalize rules', () => {
+      const { buildInvoiceLineSpecs } =
+        require('./billing.service') as typeof import('./billing.service');
+      const { calculateInvoiceTotals, PLANS } =
+        require('./billing-calculator') as typeof import('./billing-calculator');
+      const plan = PLANS.starter;
+      const totals = calculateInvoiceTotals({
+        plan,
+        grossOutboundMicros: 0n,
+        activeWallets: 0,
+        apiCallsTotal: 2,
+      });
+      const lines = buildInvoiceLineSpecs({
+        planVersionName: plan.name,
+        plan,
+        apiCalls: 2,
+        activeWallets: 0,
+        totals,
+        apiOverageRateMicros: 0n,
+        walletOverageRateMicros: 10_000n,
+      });
+      expect(lines[0]).toEqual(
+        expect.objectContaining({
+          lineType: 'monthly_fee',
+          description: 'Monthly fee — Starter',
+          quantity: 1n,
+          amountMicros: plan.monthlyFeeMicros,
+        }),
+      );
+      expect(lines.every((l) => l.lineType !== 'api_overage')).toBe(true);
+      const sum = lines.reduce((a, l) => a + l.amountMicros, 0n);
+      expect(sum).toBe(totals.totalMicros);
+    });
+
+    it('rejects nothing extra: zero outbound yields only fee (+ zero-volume tiers if any)', () => {
+      const { buildInvoiceLineSpecs } =
+        require('./billing.service') as typeof import('./billing.service');
+      const { calculateInvoiceTotals, PLANS } =
+        require('./billing-calculator') as typeof import('./billing-calculator');
+      const plan = PLANS.free;
+      const totals = calculateInvoiceTotals({
+        plan,
+        grossOutboundMicros: 0n,
+        activeWallets: 0,
+        apiCallsTotal: 0,
+      });
+      const lines = buildInvoiceLineSpecs({
+        planVersionName: plan.name,
+        plan,
+        apiCalls: 0,
+        activeWallets: 0,
+        totals,
+        apiOverageRateMicros: 0n,
+        walletOverageRateMicros: 0n,
+      });
+      expect(lines.filter((l) => l.lineType === 'monthly_fee')).toHaveLength(1);
+      expect(lines.filter((l) => l.lineType === 'api_overage')).toHaveLength(0);
+      expect(lines.filter((l) => l.lineType === 'wallet_overage')).toHaveLength(0);
+    });
+  });
+
+  describe('createFinalizedInvoiceOnlyInTx', () => {
+    const PERIOD_START = new Date('2026-05-01T00:00:00.000Z');
+    const PERIOD_END = new Date('2026-06-01T00:00:00.000Z');
+
+    /** Reuse the interactive-tx mock client from beforeEach. */
+    async function lockedTx(): Promise<any> {
+      return (service as any).prisma.$transaction(async (tx: any) => tx);
+    }
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-06-03T00:00:00.000Z'));
+    });
+
+    it('creates a finalized invoice and returns created:true when period is blank', async () => {
+      const createdRow = {
+        id: 'inv-fix',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        periodStart: PERIOD_START,
+        periodEnd: PERIOD_END,
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        apiCalls: 0n,
+        snapshotHash: 'a'.repeat(64),
+        snapshotJson: { version: 1, period: '2026-05', planVersionId: FREE_VERSION.id },
+        paidAt: null,
+        paidVia: null,
+        settlementAttemptId: null,
+        stripeInvoiceId: null,
+        allocatedMicros: 0n,
+        lines: [{ amountMicros: 0n }],
+      };
+      invoiceFindUnique
+        .mockResolvedValueOnce(null) // create-only pre-check
+        .mockResolvedValueOnce(createdRow); // findUniqueOrThrow after create
+      planVersionFindUnique.mockResolvedValue(FREE_VERSION);
+      usageEventFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue(createdRow);
+      lineCreateMany.mockResolvedValue({ count: 1 });
+
+      const tx = await lockedTx();
+      const result = await service.createFinalizedInvoiceOnlyInTx(tx, {
+        userId: 'user-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: PERIOD_START,
+        periodEnd: PERIOD_END,
+        period: '2026-05',
+        planVersionId: FREE_VERSION.id,
+      });
+
+      expect(result.created).toBe(true);
+      expect(result.invoice.id).toBe('inv-fix');
+      expect(invoiceCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'finalized',
+            planVersionId: FREE_VERSION.id,
+            billingAccountId: ACCOUNT.id,
+          }),
+        }),
+      );
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+    });
+
+    it('refuses when any invoice already exists (including open)', async () => {
+      invoiceFindUnique.mockResolvedValue({ id: 'inv-open', status: 'open' });
+      const tx = await lockedTx();
+      await expect(
+        service.createFinalizedInvoiceOnlyInTx(tx, {
+          userId: 'user-1',
+          billingAccountId: ACCOUNT.id,
+          periodStart: PERIOD_START,
+          periodEnd: PERIOD_END,
+          period: '2026-05',
+          planVersionId: FREE_VERSION.id,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+    });
+
+    it('refuses P2002 concurrent insert without claiming ownership', async () => {
+      invoiceFindUnique.mockResolvedValue(null);
+      planVersionFindUnique.mockResolvedValue(FREE_VERSION);
+      usageEventFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+      const { Prisma } = require('@prisma/client') as typeof import('@prisma/client');
+      const p2002 = new Prisma.PrismaClientKnownRequestError('unique', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+      invoiceCreate.mockRejectedValue(p2002);
+
+      const tx = await lockedTx();
+      await expect(
+        service.createFinalizedInvoiceOnlyInTx(tx, {
+          userId: 'user-1',
+          billingAccountId: ACCOUNT.id,
+          periodStart: PERIOD_START,
+          periodEnd: PERIOD_END,
+          period: '2026-05',
+          planVersionId: FREE_VERSION.id,
+        }),
+      ).rejects.toThrow(/concurrent invoice insert|create-only/i);
     });
   });
 });

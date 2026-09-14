@@ -19,7 +19,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "billing:testnet-smoke": "ts-node --transpile-only scripts/billing-testnet-smoke.ts",
+    "billing:fixture": "ts-node --transpile-only scripts/billing-fixture.ts"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

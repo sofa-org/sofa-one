@@ -1604,6 +1604,171 @@ export class BillingService {
   }
 
   /**
+   * Create-only finalized invoice for an already-locked billing period
+   * transaction (fixture / ops tooling).
+   *
+   * Contract (intentionally stricter than `finalizeInvoice`):
+   * - Caller MUST already hold the account+period advisory lock on `tx`.
+   * - Does **not** call `ensureAccount` / `ensurePlanVersions` / catalog bootstrap.
+   * - Does **not** update an existing `open`/`needs_review`/`void`/any invoice —
+   *   if any invoice row exists for the period, throws ConflictException.
+   * - Uses the pinned `planVersionId` when provided (fail closed if missing or
+   *   code/terms invalid); otherwise resolves via existing assignments only.
+   * - Returns `{ invoice, created: true }` only when this call inserted the row.
+   * - Does **not** run post-commit settlement (no payment side effects).
+   *
+   * Production `finalizeInvoice` behavior is unchanged.
+   */
+  async createFinalizedInvoiceOnlyInTx(
+    tx: Prisma.TransactionClient,
+    args: {
+      userId: string;
+      billingAccountId: string;
+      periodStart: Date;
+      periodEnd: Date;
+      /** YYYY-MM */
+      period: string;
+      /** When set, must exist and be finalizable; preferred over assignment resolve. */
+      planVersionId?: string;
+    },
+  ): Promise<{
+    invoice: Prisma.BillingInvoiceGetPayload<{ include: { lines: true } }>;
+    created: true;
+  }> {
+    const { userId, billingAccountId, periodStart, periodEnd, period: periodStr } = args;
+
+    this.assertFinalizablePeriod(periodEnd);
+
+    const existing = await tx.billingInvoice.findUnique({
+      where: {
+        billingAccountId_periodStart: { billingAccountId, periodStart },
+      },
+    });
+    if (existing) {
+      throw new ConflictException(
+        'Cannot create-only finalize: an invoice already exists for this period',
+      );
+    }
+
+    let planVersion: PlanVersion;
+    if (args.planVersionId) {
+      const pinned = await tx.billingPlanVersion.findUnique({
+        where: { id: args.planVersionId },
+      });
+      if (!pinned) {
+        throw new ConflictException('Pinned plan version not found');
+      }
+      planVersion = pinned;
+    } else {
+      planVersion = await this.resolvePlanVersion(billingAccountId, periodStart, tx);
+    }
+
+    const plan = planVersionToConfig(planVersion);
+    this.assertPlanFinalizable(planVersion);
+    await this.assertNoUnresolvedBillingRisk(tx, billingAccountId, periodStart, periodEnd, userId);
+
+    const [usageEvents, activeWallets] = await Promise.all([
+      tx.billingUsageEvent.findMany({
+        where: { billingAccountId, periodStart },
+      }),
+      tx.userWallet.count({
+        where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
+      }),
+    ]);
+
+    let outboundVolume = 0n;
+    let apiCalls = 0n;
+    for (const ev of usageEvents) {
+      if (ev.metric === 'outbound_volume') {
+        if (ev.status === 'posted' && ev.entryType === 'usage') {
+          outboundVolume += ev.volumeUsdMicros;
+        }
+      } else if (ev.metric === 'api_call') {
+        if (ev.status === 'posted' && ev.entryType === 'usage') {
+          if (typeof ev.quantity !== 'bigint' || ev.quantity < 0n) {
+            throw new ConflictException('Usage quantity is invalid');
+          }
+          apiCalls += ev.quantity;
+        }
+      }
+    }
+    const apiCallsSafe = toSafeCount(apiCalls);
+
+    const totals = calculateInvoiceTotals({
+      plan,
+      grossOutboundMicros: outboundVolume,
+      activeWallets,
+      apiCallsTotal: apiCallsSafe,
+      apiOverageRateMicros: planVersion.apiOverageRateMicros,
+      walletOverageRateMicros: planVersion.walletOverageRateMicros,
+    });
+
+    const snapshot = this.buildSnapshot({
+      period: periodStr,
+      planVersion,
+      plan,
+      outboundVolume,
+      apiCalls: apiCallsSafe,
+      activeWallets,
+      totals,
+    });
+    const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
+
+    try {
+      const created = await tx.billingInvoice.create({
+        data: {
+          billingAccountId,
+          planVersionId: planVersion.id,
+          periodStart,
+          periodEnd,
+          status: 'finalized',
+          currency: 'USD',
+          grossOutboundMicros: outboundVolume,
+          includedOutboundMicros: plan.includedOutboundMicros,
+          billableOutboundMicros: totals.billableOutboundMicros,
+          apiCalls: BigInt(apiCalls),
+          includedApiCalls:
+            plan.includedApiCallsPerMonth !== null ? BigInt(plan.includedApiCallsPerMonth) : null,
+          activeWallets,
+          includedWallets: plan.includedWallets,
+          monthlyFeeMicros: totals.monthlyFeeMicros,
+          outboundOverageMicros: totals.outboundOverageMicros,
+          apiOverageMicros: totals.apiOverageMicros,
+          walletOverageMicros: totals.walletOverageMicros,
+          totalMicros: totals.totalMicros,
+          snapshotJson: snapshot as Prisma.InputJsonValue,
+          snapshotHash,
+          finalizedAt: new Date(),
+        },
+      });
+      const lines = this.buildInvoiceLines({
+        invoiceId: created.id,
+        planVersion,
+        plan,
+        apiCalls: apiCallsSafe,
+        activeWallets,
+        totals,
+      });
+      if (lines.length > 0) {
+        await tx.billingInvoiceLine.createMany({ data: lines });
+      }
+      const withLines = await tx.billingInvoice.findUniqueOrThrow({
+        where: { id: created.id },
+        include: { lines: true },
+      });
+      return { invoice: withLines, created: true };
+    } catch (err) {
+      // Never treat a concurrent insert as successful create provenance.
+      if (isUniqueConstraintError(err)) {
+        throw new ConflictException(
+          'Cannot create-only finalize: concurrent invoice insert (P2002) — refusing ownership claim',
+        );
+      }
+      throw err;
+    }
+  }
+
+  /**
    * A Stripe renewal can be confirmed before its local open invoice reaches
    * finalization. Once finalization has frozen the exact amount, give the
    * shared allocation boundary one catch-up opportunity: the fixed-fee attempt
@@ -2159,6 +2324,9 @@ export class BillingService {
       plan: {
         code: planVersion.code,
         name: planVersion.name,
+        // Immutable plan catalog version identity (additive; used by fixture
+        // integrity checks and deterministic snapshot hashing).
+        version: planVersion.version,
         monthlyFeeMicros:
           plan.monthlyFeeMicros === null ? null : microsToDecimalUsd(plan.monthlyFeeMicros),
         includedOutboundMicros:
@@ -2202,57 +2370,23 @@ export class BillingService {
     activeWallets: number;
     totals: ReturnType<typeof calculateInvoiceTotals>;
   }): Prisma.BillingInvoiceLineCreateManyInput[] {
-    const { invoiceId, planVersion, plan, apiCalls, activeWallets, totals } = args;
-    const lines: Prisma.BillingInvoiceLineCreateManyInput[] = [];
-
-    lines.push({
-      invoiceId,
-      lineType: 'monthly_fee',
-      description: `Monthly fee — ${planVersion.name}`,
-      quantity: 1n,
-      amountMicros: totals.monthlyFeeMicros,
-    });
-
-    totals.outboundTiers.forEach((t, i) => {
-      lines.push({
-        invoiceId,
-        lineType: 'outbound_tier',
-        description: `Outbound volume tier ${i + 1}`,
-        quantity: t.volumeMicros,
-        unitRatePpm: t.ratePpm,
-        amountMicros: t.feeMicros,
-      });
-    });
-
-    // API-call usage is a hard quota: over-limit traffic is rejected with HTTP
-    // 429 and never recorded, so totals.apiOverageMicros is always 0n and this
-    // branch is unreachable. The guard is retained so a legacy/persisted
-    // nonzero apiOverageRateMicros can never surface as an api_overage line.
-    if (totals.apiOverageMicros > 0n) {
-      const billableApiCalls = Math.max(apiCalls - (plan.includedApiCallsPerMonth ?? 0), 0);
-      lines.push({
-        invoiceId,
-        lineType: 'api_overage',
-        description: 'API call overage',
-        quantity: BigInt(billableApiCalls),
-        unitAmountMicros: planVersion.apiOverageRateMicros,
-        amountMicros: totals.apiOverageMicros,
-      });
-    }
-
-    if (totals.walletOverageMicros > 0n) {
-      const billableWallets = Math.max(activeWallets - (plan.includedWallets ?? 0), 0);
-      lines.push({
-        invoiceId,
-        lineType: 'wallet_overage',
-        description: 'Wallet overage',
-        quantity: BigInt(billableWallets),
-        unitAmountMicros: planVersion.walletOverageRateMicros,
-        amountMicros: totals.walletOverageMicros,
-      });
-    }
-
-    return lines;
+    return buildInvoiceLineSpecs({
+      planVersionName: args.planVersion.name,
+      plan: args.plan,
+      apiCalls: args.apiCalls,
+      activeWallets: args.activeWallets,
+      totals: args.totals,
+      apiOverageRateMicros: args.planVersion.apiOverageRateMicros,
+      walletOverageRateMicros: args.planVersion.walletOverageRateMicros,
+    }).map((spec) => ({
+      invoiceId: args.invoiceId,
+      lineType: spec.lineType,
+      description: spec.description,
+      quantity: spec.quantity,
+      unitRatePpm: spec.unitRatePpm ?? undefined,
+      unitAmountMicros: spec.unitAmountMicros ?? undefined,
+      amountMicros: spec.amountMicros,
+    }));
   }
 
   private monthStart(date: Date): Date {
@@ -2628,7 +2762,12 @@ function toSafeCount(value: bigint): number {
   return Number(value);
 }
 
-function planVersionToConfig(v: PlanVersion): BillingPlanConfig {
+/**
+ * Convert a validated DB plan version row into calculator config using the
+ * **pinned DB terms** (not the static PLANS table monetary values). Exported for
+ * fixture integrity so historical fee/quota drifts still recompute correctly.
+ */
+export function planVersionToConfig(v: PlanVersion): BillingPlanConfig {
   validatePlanVersion(v);
   return {
     id: v.code as PlanId,
@@ -2638,4 +2777,77 @@ function planVersionToConfig(v: PlanVersion): BillingPlanConfig {
     includedWallets: v.includedWallets,
     includedApiCallsPerMonth: v.includedApiCalls !== null ? Number(v.includedApiCalls) : null,
   };
+}
+
+/** Shared invoice-line shape used by production finalize and fixture integrity. */
+export interface BillingInvoiceLineSpec {
+  lineType: string;
+  description: string;
+  quantity: bigint;
+  unitRatePpm: number | null;
+  unitAmountMicros: bigint | null;
+  amountMicros: bigint;
+}
+
+/**
+ * Pure line construction matching production finalize. Exported so fixture
+ * integrity checks compare against the same rules without duplicating logic.
+ */
+export function buildInvoiceLineSpecs(args: {
+  planVersionName: string;
+  plan: BillingPlanConfig;
+  apiCalls: number;
+  activeWallets: number;
+  totals: ReturnType<typeof calculateInvoiceTotals>;
+  apiOverageRateMicros: bigint;
+  walletOverageRateMicros: bigint;
+}): BillingInvoiceLineSpec[] {
+  const { planVersionName, plan, apiCalls, activeWallets, totals } = args;
+  const lines: BillingInvoiceLineSpec[] = [];
+
+  lines.push({
+    lineType: 'monthly_fee',
+    description: `Monthly fee — ${planVersionName}`,
+    quantity: 1n,
+    unitRatePpm: null,
+    unitAmountMicros: null,
+    amountMicros: totals.monthlyFeeMicros,
+  });
+
+  totals.outboundTiers.forEach((t, i) => {
+    lines.push({
+      lineType: 'outbound_tier',
+      description: `Outbound volume tier ${i + 1}`,
+      quantity: t.volumeMicros,
+      unitRatePpm: t.ratePpm,
+      unitAmountMicros: null,
+      amountMicros: t.feeMicros,
+    });
+  });
+
+  if (totals.apiOverageMicros > 0n) {
+    const billableApiCalls = Math.max(apiCalls - (plan.includedApiCallsPerMonth ?? 0), 0);
+    lines.push({
+      lineType: 'api_overage',
+      description: 'API call overage',
+      quantity: BigInt(billableApiCalls),
+      unitRatePpm: null,
+      unitAmountMicros: args.apiOverageRateMicros,
+      amountMicros: totals.apiOverageMicros,
+    });
+  }
+
+  if (totals.walletOverageMicros > 0n) {
+    const billableWallets = Math.max(activeWallets - (plan.includedWallets ?? 0), 0);
+    lines.push({
+      lineType: 'wallet_overage',
+      description: 'Wallet overage',
+      quantity: BigInt(billableWallets),
+      unitRatePpm: null,
+      unitAmountMicros: args.walletOverageRateMicros,
+      amountMicros: totals.walletOverageMicros,
+    });
+  }
+
+  return lines;
 }
