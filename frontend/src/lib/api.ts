@@ -451,6 +451,8 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'Agent registration is still syncing on-chain. Try again shortly.';
     case 'IP_NOT_ALLOWED':
       return 'This request is blocked by the API key IP allowlist.';
+    case 'BILLING_OUTBOUND_BLOCKED':
+      return 'Withdrawals are blocked until you settle your unpaid invoice. Open Billing to pay the finalized invoice, then try again.';
     default:
       return fallback;
   }

@@ -1,3 +1,19 @@
+/**
+ * Load per-chain simulation RPC URLs from `SIMULATION_RPC_URLS__<chainId>` env vars
+ * (Nest-style double-underscore nested keys). Keys are numeric chain id strings.
+ * Startup validation in env.validation.ts enforces supported chains + https;
+ * it also rejects non-numeric / unknown-chain suffixes on the same prefix.
+ */
+function loadSimulationRpcUrls(): Record<string, string> {
+  const urls: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = /^SIMULATION_RPC_URLS__(\d+)$/.exec(key);
+    if (!match) continue;
+    urls[match[1]] = typeof value === 'string' ? value : '';
+  }
+  return urls;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -44,6 +60,14 @@ export default () => ({
     worker: {
       enabled: process.env.BILLING_WORKER_ENABLED === 'true',
     },
+  },
+  /**
+   * Explicit per-chain HTTPS RPCs for debt-gate asset-flow evidence simulation.
+   * Never fall back to public `http()` — missing chain entries fail closed at runtime
+   * as BILLING_ASSET_FLOW_UNVERIFIABLE. Configure via SIMULATION_RPC_URLS__<chainId>.
+   */
+  simulation: {
+    rpcUrls: loadSimulationRpcUrls() as Record<string, string>,
   },
   security: {
     trustProxy: process.env.TRUST_PROXY,

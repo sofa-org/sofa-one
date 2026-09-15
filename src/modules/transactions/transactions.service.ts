@@ -5,11 +5,16 @@ import {
   Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
+import { getAddress, isAddress } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import { RequestContextService } from '../../common/request-context/request-context.service';
@@ -18,9 +23,50 @@ import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.d
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
-import { TransactionSimulationService } from './transaction-simulation.service';
+import {
+  AssetFlowSimulationUnavailableError,
+  TransactionSimulationService,
+} from './transaction-simulation.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { BillingDebtService } from '../billing/billing-debt.service';
+import {
+  classifyTransactionAssetFlow,
+  type AssetFlowBatchClassification,
+} from './transaction-asset-flow.policy';
+import {
+  computeAssetFlowPlanDigest,
+  verifyTransactionAssetFlow,
+  type AssetFlowSimulationMode,
+  type AssetFlowVerificationResult,
+} from './transaction-asset-flow.verifier';
+
+/** Exact outer-gate proof binding carried into the create transaction (no raw evidence). */
+type BoundAssetFlowVerification = {
+  status: 'verified';
+  planDigest: string;
+  ownerAddress: string;
+  chainId: number;
+  executionMode: ExecutionMode;
+  simulationMode: AssetFlowSimulationMode;
+};
+
+type BillingAssetFlowGateContext = {
+  userId: string;
+  walletId?: string;
+  executionMode: ExecutionMode;
+  /** Trusted execution owner used for classification + evidence binding. */
+  ownerAddress: string;
+  /** Full ordered interaction plan (binding source of truth). */
+  interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+  assetFlow: AssetFlowBatchClassification;
+  apiKeyPrefix?: string;
+  /**
+   * Exact verified proof from the outer gate when debt was present and verified.
+   * Null when outer observed no debt (inner must reject if debt appears without proof).
+   */
+  verification: BoundAssetFlowVerification | null;
+};
 
 type ApiKeyTransactionContext = {
   id?: string;
@@ -45,6 +91,8 @@ export class TransactionsService {
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
     private readonly transactionPolicy: TransactionPolicyService,
+    private readonly billingDebt: BillingDebtService,
+    private readonly config: ConfigService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -168,6 +216,26 @@ export class TransactionsService {
       return this.toSendResponse(existingTransaction);
     }
 
+    // Owner for asset-flow classification + evidence binding:
+    // session_key executes as the user wallet; eoa executes as the agent backend wallet.
+    const assetFlowOwnerAddress =
+      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress!;
+    const assetFlow = classifyTransactionAssetFlow({
+      interactions: dto.interactions,
+      ownerAddress: assetFlowOwnerAddress,
+      chainId,
+    });
+    // Outer debt gate (may RPC for evidence). Idempotent hits returned above skip this entirely.
+    const boundVerification = await this.evaluateOuterBillingAssetFlowGate(userId, {
+      chainId,
+      walletId: wallet.id,
+      executionMode,
+      ownerAddress: assetFlowOwnerAddress,
+      interactions: dto.interactions,
+      assetFlow,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+    });
+
     await this.assertTransactionSimulatable(userId, dto, apiKeyRecord, {
       chainId,
       executionMode,
@@ -193,6 +261,16 @@ export class TransactionsService {
         agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
         requestHash,
+      },
+      billingGate: {
+        userId,
+        walletId: wallet.id,
+        executionMode,
+        ownerAddress: assetFlowOwnerAddress,
+        interactions: dto.interactions,
+        assetFlow,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        verification: boundVerification,
       },
     });
 
@@ -554,30 +632,63 @@ export class TransactionsService {
       requestHash: string;
       walletAddress: string;
       details: Record<string, unknown>;
+      billingGate?: BillingAssetFlowGateContext;
     },
   ) {
-    const createdAt = new Date();
-    const billingPeriodStart = new Date(Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1));
+    // Interactive transaction: inner idempotency + debt recheck (no RPC) + create only.
+    // On unique-key race (P2002) the interactive tx aborts — never re-query on the
+    // failed txClient. Recover outside with the root PrismaService after rollback.
     try {
-      const tx = await this.prisma.transaction.create({
-        data: {
+      return await this.prisma.$transaction(async (txClient) => {
+        const existingInTx = await this.findExistingTransactionRequest(
           userId,
-          apiKeyId: params.apiKeyId,
-          authMethod: 'api_key',
-          apiKeyPrefix: params.apiKeyPrefix,
-          apiKeyName: params.apiKeyName,
-          status: 'submitting',
-          chainId: BigInt(params.chainId),
-          walletAddress: params.walletAddress,
-          operationType: params.operationType,
-          idempotencyKey: params.idempotencyKey,
-          requestHash: params.requestHash,
-          createdAt,
-          billingPeriodStart,
-          details: params.details as any,
-        },
+          {
+            operationType: params.operationType,
+            chainId: params.chainId,
+            idempotencyKey: params.idempotencyKey,
+            requestHash: params.requestHash,
+          },
+          txClient,
+        );
+        if (existingInTx) {
+          return { tx: existingInTx, created: false };
+        }
+
+        if (params.billingGate) {
+          await this.assertInnerBillingAssetFlowGate(
+            params.billingGate.userId,
+            {
+              chainId: params.chainId,
+              gate: params.billingGate,
+            },
+            txClient,
+          );
+        }
+
+        const createdAt = new Date();
+        const billingPeriodStart = new Date(
+          Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1),
+        );
+        const tx = await txClient.transaction.create({
+          data: {
+            userId,
+            apiKeyId: params.apiKeyId,
+            authMethod: 'api_key',
+            apiKeyPrefix: params.apiKeyPrefix,
+            apiKeyName: params.apiKeyName,
+            status: 'submitting',
+            chainId: BigInt(params.chainId),
+            walletAddress: params.walletAddress,
+            operationType: params.operationType,
+            idempotencyKey: params.idempotencyKey,
+            requestHash: params.requestHash,
+            createdAt,
+            billingPeriodStart,
+            details: params.details as any,
+          },
+        });
+        return { tx, created: true };
       });
-      return { tx, created: true };
     } catch (error: any) {
       if (error?.code !== 'P2002') throw error;
 
@@ -595,8 +706,9 @@ export class TransactionsService {
   private async findExistingTransactionRequest(
     userId: string,
     params: { operationType: string; chainId: number; idempotencyKey: string; requestHash: string },
+    prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
-    const existing = await this.prisma.transaction.findFirst({
+    const existing = await prisma.transaction.findFirst({
       where: {
         userId,
         operationType: params.operationType,
@@ -611,6 +723,441 @@ export class TransactionsService {
     }
 
     return existing;
+  }
+
+  /**
+   * Outer debt-aware asset-flow gate (may perform RPC evidence simulation).
+   * - no debt → null proof (existing path unchanged; no evidence simulation)
+   * - debt + static external_transfer → BILLING_OUTBOUND_BLOCKED (no simulation)
+   * - debt + retained/unknown → simulate full ordered plan + verify; only exact
+   *   `status === 'verified'` AND `simulationMode === 'calibur_atomic'` yields a
+   *   bound proof (complete evidence.binding, no context fallback); otherwise fail closed
+   */
+  private async evaluateOuterBillingAssetFlowGate(
+    userId: string,
+    context: {
+      chainId: number;
+      walletId?: string;
+      executionMode: ExecutionMode;
+      ownerAddress: string;
+      interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+      assetFlow: AssetFlowBatchClassification;
+      apiKeyPrefix?: string;
+    },
+  ): Promise<BoundAssetFlowVerification | null> {
+    const snapshot = await this.getBillingDebtSnapshot(userId, context, this.prisma);
+    if (!snapshot.hasDebt) {
+      return null;
+    }
+
+    if (context.assetFlow.classification === 'external_transfer') {
+      this.logBillingAssetFlowBlocked(userId, context, snapshot.invoiceIds.length, 'external_transfer');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+        message: 'Outbound transfers are blocked until outstanding invoices are settled',
+      });
+    }
+
+    // Debt + retained/unknown: require simulation evidence + verifier (DB-tx outside).
+    return this.verifyDebtSensitiveAssetFlowWithEvidence(userId, context, snapshot.invoiceIds.length);
+  }
+
+  /**
+   * Inner gate: debt recheck under txClient only — never RPC/simulation/verifier network.
+   * Debt without an exact bound verified proof fails closed.
+   */
+  private async assertInnerBillingAssetFlowGate(
+    userId: string,
+    params: { chainId: number; gate: BillingAssetFlowGateContext },
+    db: Prisma.TransactionClient,
+  ): Promise<void> {
+    const snapshot = await this.getBillingDebtSnapshot(
+      userId,
+      {
+        chainId: params.chainId,
+        walletId: params.gate.walletId,
+        executionMode: params.gate.executionMode,
+        assetFlow: params.gate.assetFlow,
+        apiKeyPrefix: params.gate.apiKeyPrefix,
+      },
+      db,
+    );
+    if (!snapshot.hasDebt) {
+      return;
+    }
+
+    const verification = params.gate.verification;
+    if (
+      !verification ||
+      verification.status !== 'verified' ||
+      verification.simulationMode !== 'calibur_atomic'
+    ) {
+      this.logBillingAssetFlowBlocked(
+        userId,
+        {
+          chainId: params.chainId,
+          walletId: params.gate.walletId,
+          executionMode: params.gate.executionMode,
+          assetFlow: params.gate.assetFlow,
+          apiKeyPrefix: params.gate.apiKeyPrefix,
+        },
+        snapshot.invoiceIds.length,
+        !verification
+          ? 'missing_bound_verification'
+          : verification.simulationMode !== 'calibur_atomic'
+            ? 'non_atomic_bound_verification'
+            : 'unverified_bound_verification',
+      );
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    this.assertBoundVerificationMatchesPlan(verification, {
+      chainId: params.chainId,
+      executionMode: params.gate.executionMode,
+      ownerAddress: params.gate.ownerAddress,
+      interactions: params.gate.interactions,
+    });
+  }
+
+  private async verifyDebtSensitiveAssetFlowWithEvidence(
+    userId: string,
+    context: {
+      chainId: number;
+      walletId?: string;
+      executionMode: ExecutionMode;
+      ownerAddress: string;
+      interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+      assetFlow: AssetFlowBatchClassification;
+      apiKeyPrefix?: string;
+    },
+    invoiceCount: number,
+  ): Promise<BoundAssetFlowVerification> {
+    const rpcUrl = this.resolveSimulationRpcUrl(context.chainId);
+    if (!rpcUrl) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'missing_simulation_rpc');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    if (!this.transactionSimulation?.simulateAssetFlowEvidence) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'simulation_service_unavailable');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    let evidence: Awaited<
+      ReturnType<TransactionSimulationService['simulateAssetFlowEvidence']>
+    >;
+    try {
+      evidence = await this.transactionSimulation.simulateAssetFlowEvidence({
+        interactions: context.interactions,
+        ownerAddress: context.ownerAddress,
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        rpcUrl,
+      });
+    } catch (error) {
+      this.logger.warn({
+        message: 'Asset flow evidence simulation unavailable under billing debt',
+        userId,
+        walletId: context.walletId,
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        apiKeyPrefix: context.apiKeyPrefix,
+        classification: context.assetFlow.classification,
+        rule: context.assetFlow.rule,
+        errorName:
+          error instanceof AssetFlowSimulationUnavailableError
+            ? error.name
+            : error instanceof Error
+              ? error.name
+              : typeof error,
+      });
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    let verdict: AssetFlowVerificationResult;
+    try {
+      verdict = verifyTransactionAssetFlow({
+        ownerAddress: context.ownerAddress,
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        interactions: context.interactions,
+        evidence,
+      });
+    } catch (error) {
+      this.logger.warn({
+        message: 'Asset flow verifier failed under billing debt',
+        userId,
+        walletId: context.walletId,
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        apiKeyPrefix: context.apiKeyPrefix,
+        classification: context.assetFlow.classification,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    if (verdict.status === 'external_transfer') {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, verdict.rule || 'verified_external');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+        message: 'Outbound transfers are blocked until outstanding invoices are settled',
+      });
+    }
+
+    // Defense-in-depth: never accept non-atomic modes even if a mock/compromised
+    // verifier returns status=verified. Only calibur_atomic may become a bound proof.
+    if (verdict.status !== 'verified' || verdict.simulationMode !== 'calibur_atomic') {
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        invoiceCount,
+        verdict.simulationMode && verdict.simulationMode !== 'calibur_atomic'
+          ? 'non_atomic_verification'
+          : verdict.rule || 'verification_not_verified',
+      );
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    // No context fallback: evidence.binding must be complete and exact-match the plan.
+    const binding = evidence?.binding;
+    if (!binding || typeof binding !== 'object') {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'missing_evidence_binding');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    if (typeof binding.planDigest !== 'string' || binding.planDigest.length === 0) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'missing_binding_plan_digest');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (typeof binding.ownerAddress !== 'string' || !isAddress(binding.ownerAddress)) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'missing_binding_owner');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (typeof binding.chainId !== 'number' || binding.chainId !== context.chainId) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_chain_mismatch');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (
+      binding.executionMode !== context.executionMode ||
+      (binding.executionMode !== 'session_key' && binding.executionMode !== 'eoa')
+    ) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_execution_mode_mismatch');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (!isAddress(context.ownerAddress)) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'invalid_plan_owner');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    const boundOwner = getAddress(binding.ownerAddress);
+    const planOwner = getAddress(context.ownerAddress);
+    if (boundOwner !== planOwner) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_owner_mismatch');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    const expectedDigest = computeAssetFlowPlanDigest({
+      ownerAddress: context.ownerAddress,
+      chainId: context.chainId,
+      executionMode: context.executionMode,
+      interactions: context.interactions,
+    });
+    if (!expectedDigest || binding.planDigest !== expectedDigest) {
+      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_plan_digest_mismatch');
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    const bound: BoundAssetFlowVerification = {
+      status: 'verified',
+      planDigest: binding.planDigest,
+      ownerAddress: boundOwner,
+      chainId: binding.chainId,
+      executionMode: binding.executionMode,
+      simulationMode: 'calibur_atomic',
+    };
+
+    // Defense in depth: refuse to carry a proof that does not match the current plan
+    // or is not an atomic verified mode.
+    this.assertBoundVerificationMatchesPlan(bound, {
+      chainId: context.chainId,
+      executionMode: context.executionMode,
+      ownerAddress: context.ownerAddress,
+      interactions: context.interactions,
+    });
+
+    return bound;
+  }
+
+  private assertBoundVerificationMatchesPlan(
+    verification: BoundAssetFlowVerification,
+    plan: {
+      chainId: number;
+      executionMode: ExecutionMode;
+      ownerAddress: string;
+      interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+    },
+  ): void {
+    if (verification.status !== 'verified' || verification.simulationMode !== 'calibur_atomic') {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (verification.chainId !== plan.chainId || verification.executionMode !== plan.executionMode) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (!isAddress(plan.ownerAddress) || !isAddress(verification.ownerAddress)) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+    if (getAddress(verification.ownerAddress) !== getAddress(plan.ownerAddress)) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+
+    const expectedDigest = computeAssetFlowPlanDigest({
+      ownerAddress: plan.ownerAddress,
+      chainId: plan.chainId,
+      executionMode: plan.executionMode,
+      interactions: plan.interactions,
+    });
+    if (!expectedDigest || verification.planDigest !== expectedDigest) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
+        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
+      });
+    }
+  }
+
+  private async getBillingDebtSnapshot(
+    userId: string,
+    context: {
+      chainId: number;
+      walletId?: string;
+      executionMode: ExecutionMode;
+      assetFlow: AssetFlowBatchClassification;
+      apiKeyPrefix?: string;
+    },
+    db: Prisma.TransactionClient,
+  ): Promise<{ hasDebt: boolean; invoiceIds: string[] }> {
+    try {
+      return await this.billingDebt.getDebt(userId, db);
+    } catch (error) {
+      this.logger.error({
+        message: 'Billing debt check unavailable',
+        userId,
+        walletId: context.walletId,
+        chainId: context.chainId,
+        executionMode: context.executionMode,
+        apiKeyPrefix: context.apiKeyPrefix,
+        classification: context.assetFlow.classification,
+        rule: context.assetFlow.rule,
+        decisiveIndex: context.assetFlow.decisiveIndex,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+        message: 'Billing debt check is temporarily unavailable',
+      });
+    }
+  }
+
+  /**
+   * Strict explicit simulation RPC lookup from `simulation.rpcUrls.<chainId>`.
+   * Never falls back to public http() or request-supplied URLs.
+   * Missing/empty/non-https values fail closed at the call site
+   * (BILLING_ASSET_FLOW_UNVERIFIABLE). Startup validation already enforces
+   * supported-chain keys + https for declared env entries.
+   */
+  private resolveSimulationRpcUrl(chainId: number): string | null {
+    const raw = this.config.get<unknown>(`simulation.rpcUrls.${chainId}`);
+    if (typeof raw !== 'string') return null;
+    const url = raw.trim();
+    if (!url) return null;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') return null;
+    } catch {
+      return null;
+    }
+    return url;
+  }
+
+  private logBillingAssetFlowBlocked(
+    userId: string,
+    context: {
+      chainId: number;
+      walletId?: string;
+      executionMode: ExecutionMode;
+      assetFlow: AssetFlowBatchClassification;
+      apiKeyPrefix?: string;
+    },
+    invoiceCount: number,
+    reason: string,
+  ): void {
+    this.logger.warn({
+      message: 'Transaction send blocked by billing debt asset-flow gate',
+      userId,
+      walletId: context.walletId,
+      chainId: context.chainId,
+      executionMode: context.executionMode,
+      apiKeyPrefix: context.apiKeyPrefix,
+      classification: context.assetFlow.classification,
+      rule: context.assetFlow.rule,
+      decisiveIndex: context.assetFlow.decisiveIndex,
+      invoiceCount,
+      reason,
+    });
   }
 
   private logExistingTransaction(tx: any, chainId: number, apiKeyPrefix: string | undefined): void {

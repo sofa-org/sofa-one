@@ -7,7 +7,12 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 - `transactions.controller.ts` — route wiring: guards, throttles, DTO binding, and delegation to the service.
 - `transactions.service.ts` — orchestration of the send pipeline, list/detail/status reads, idempotency, and response shaping.
 - `transaction-policy.service.ts` — pre-wallet risk policy: interaction/calldata limits, native value, Permit/approval selectors, allowlists, spend limits.
-- `transaction-simulation.service.ts` — per-interaction `eth_call` preflight via a cached viem public client.
+- `transaction-simulation.service.ts` — per-interaction `eth_call` preflight via a cached viem public client; plus `simulateAssetFlowEvidence` (explicit per-chain HTTPS `rpcUrl`, never default public `http()`).
+- `transaction-asset-flow.policy.ts` — pure static batch asset-flow classifier (Aave/Uniswap/WETH/ERC-4626/revoke-only auth + transfer family).
+- `asset-flow-rules/weth-addresses.ts` — chain-scoped official wrapped-native addresses (`SUPPORTED_CHAINS_WETH`).
+- `asset-flow-rules/trusted-spenders.ts` — chain-scoped revoke-only spender/operator allowlist (`TRUSTED_SPENDERS`; Aave pools + Uni routers).
+- `asset-flow-rules/erc4626-vaults.ts` — chain-scoped ERC-4626 vault allowlist (`ERC4626_VAULTS`).
+- `transaction-asset-flow.verifier.ts` — pure fail-closed simulation-evidence verifier (`BoundAssetFlowVerification` source when debt-gated).
 - `transactions.module.ts` — module composition (imports `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule`).
 - `dto/` — request/query validation DTOs; see `dto/codemap.md` (not modified here).
 
@@ -37,7 +42,17 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 ### Idempotency
 - Idempotency is keyed on `[userId, operationType, chainId, idempotencyKey]` (DB unique constraint) plus a `requestHash` = SHA-256 of a stable-serialized request (`operationType`, `chainId`, `executionMode`, optional `sponsorship`, `interactions`) via `hashRequest`.
 - Same key + same hash → return the existing transaction response (no resubmission). Same key + different hash → 400 "Idempotency key was already used for a different request".
-- Race handling: `createPendingOrReturnExisting` catches Prisma `P2002` and re-fetches the existing row; if the row already has a `txHash` or is not `submitting`, the existing response is returned instead of resubmitting.
+- Race handling: `createPendingOrReturnExisting` catches Prisma `P2002` after the interactive transaction has rolled back, then re-fetches the existing row through the root Prisma client (never the aborted transaction client); if the row already has a `txHash` or is not `submitting`, the existing response is returned instead of resubmitting.
+
+### Billing outbound / asset-flow gate (debt-aware)
+- Static classification: `transaction-asset-flow.policy.ts` classifies the **full** ordered interaction batch with the trusted execution owner (`walletAddress` for `session_key`, `agentWalletAddress` for `eoa`). Batch fold is `external_transfer > unknown > retained_protocol` without dropping interactions. Protocol brand (Aave/Uniswap/etc.) is **not** a debt-period allowlist by itself. Beyond audited Aave supply/withdraw and Uniswap direct swaps, Phase 4 static retained rules (calldata/selector/ABI + registry match only) include: official WETH wrap/unwrap; `approve(…,0)` / `setApprovalForAll(…,false)` to `TRUSTED_SPENDERS`; registered ERC-4626 deposit/mint/redeem/withdraw with receiver/owner == execution owner; Aave V3 `setUserUseReserveAsCollateral(..., false)`. Non-matching calls stay `unknown`/`external_transfer`.
+- **Outer gate** (`evaluateOuterBillingAssetFlowGate`, outside any DB transaction; skipped on idempotent hits):
+  - No finalized unpaid invoice → returns `null` bound proof; existing send path unchanged (no evidence RPC).
+  - Debt + static `external_transfer` → `BILLING_OUTBOUND_BLOCKED` (no simulation).
+  - Debt + retained/unknown → `TransactionSimulationService.simulateAssetFlowEvidence` with explicit `simulation.rpcUrls.<chainId>` HTTPS RPC, then `verifyTransactionAssetFlow`. Only exact `status === 'verified'` **and** `simulationMode === 'calibur_atomic'` with complete binding yields a `BoundAssetFlowVerification` (`status`, `planDigest`, `ownerAddress`, `chainId`, `executionMode`, `simulationMode`). Production non-atomic evidence, missing RPC, verifier unknown, or binding mismatch → `BILLING_ASSET_FLOW_UNVERIFIABLE`.
+  - Debt-query failure → `BILLING_DEBT_CHECK_UNAVAILABLE` (fail-closed).
+- **Inner gate** (`assertInnerBillingAssetFlowGate`, inside the create interactive transaction only): rechecks debt via the tx client (**no** RPC/simulation). If debt is present, requires the outer `BoundAssetFlowVerification` still match the same owner/chain/mode/plan digest; missing or non-atomic/unverified proof → `BILLING_ASSET_FLOW_UNVERIFIABLE`. A later invoice does not revoke an already-committed row.
+- Evidence primitives live in `transaction-asset-flow.verifier.ts` and `transaction-simulation.service.ts` (explicit rpcUrl; never default public `http()`).
 
 ### State machine
 - `Transaction.status`: `submitting` (row created, submission in flight) → `confirmed` (Openfort returned a `transactionHash`) | `pending` (UserOperation accepted, only `userOpHash` so far) | `failed` (submission threw; `failureReason` is sanitized via `sanitizeErrorMessage`). `unknown` is a valid stored/filter value for spend-limit accounting.
@@ -54,12 +69,15 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 5. `RiskEvaluationService.evaluateRisk` runs; non-`allow` results are enforced via `enforceRiskAction`.
 6. Load `UserWallet` with `chainAuthorizations` for the chain; 404 if missing; reject frozen/inactive wallets.
 7. `session_key`: `assertAgentWalletReady` (agent account/address/key hash + registered non-expired chain authorization) then `SessionKeyPolicyService.assertSessionKeyAllowed`. `eoa`: `assertBackendWalletReady`. The transaction wallet address is `agentWalletAddress` for `eoa`, else the user `walletAddress`.
-8. Compute `requestHash`; `findExistingTransactionRequest` returns the existing response on match or 400 on hash mismatch.
-9. `TransactionSimulationService.assertSimulatable` preflights each interaction (batch deferred to bundler).
-10. `createPendingOrReturnExisting` inserts a `Transaction` row (`status: 'submitting'`, `authMethod: 'api_key'`, API-key attribution snapshot, `requestHash`, safe `details` JSON) or returns the existing row on `P2002`.
-11. `submitTransaction` dispatches by mode to `openfort.sendUserOperation` (session_key, with sponsorship) or `openfort.sendBackendTransaction` (eoa).
-12. On success the row is updated to `confirmed` (with `txHash`) or `pending` (with `userOpHash` in `details`); response is `{ transactionId, transactionHash, status }`.
-13. On failure the row is updated to `failed` with a sanitized `failureReason` and the error is rethrown.
+8. Compute `requestHash`; `findExistingTransactionRequest` returns the existing response on match or 400 on hash mismatch (idempotent hits skip the billing gates below).
+9. **Outer billing asset-flow gate** (new requests only): classify full batch → `evaluateOuterBillingAssetFlowGate` may run evidence simulation + verifier and produce an optional `BoundAssetFlowVerification` (or throw `BILLING_*` as above).
+10. `TransactionSimulationService.assertSimulatable` preflights each interaction (batch deferred to bundler). This is separate from debt-gate evidence simulation.
+11. `createPendingOrReturnExisting`:
+    - Interactive `$transaction`: inner idempotency lookup → **`assertInnerBillingAssetFlowGate`** (debt recheck only; no RPC) → insert `Transaction` (`status: 'submitting'`, `authMethod: 'api_key'`, API-key attribution snapshot, `requestHash`, safe `details` JSON).
+    - On unique-key race **`P2002`**, the interactive transaction aborts; recovery **re-reads the existing row on the root `PrismaService` client** (never the aborted tx client), then returns that row if `requestHash` matches.
+12. `submitTransaction` dispatches by mode to `openfort.sendUserOperation` (session_key, with sponsorship) or `openfort.sendBackendTransaction` (eoa).
+13. On success the row is updated to `confirmed` (with `txHash`) or `pending` (with `userOpHash` in `details`); response is `{ transactionId, transactionHash, status }`.
+14. On failure the row is updated to `failed` with a sanitized `failureReason` and the error is rethrown.
 
 ### Reads
 - `GET /v1/transactions` (dashboard): filter by `status`/`chainId`, paginate (`page`/`limit`, default 1/20, max 100), order by `createdAt desc`; returns `{ items, total, page, limit }` with safe list items.
@@ -69,7 +87,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 ## Integration
 - **Guards/decorators**: `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `RequireApiKeyPermission`, `OpenfortUserGuard`, `FrontendOnlyGuard`, `FrontendOnly`, `CurrentUser` from `src/common`.
 - **Services**: `PrismaService` (Transaction/UserWallet reads and writes), `OpenfortService` (`sendUserOperation`, `sendBackendTransaction`), `RequestContextService` (client IP + log context), `EoaExecutionPolicyService`, `SessionKeyPolicyService`, `RiskEvaluationService`, `SecurityEventService` (via policy/simulation services).
-- **Modules**: `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule` (module-level import; the send pipeline itself does not call billing services directly).
+- **Modules**: `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule` (debt snapshot via billing debt helper on the send path; Stripe/USDC settlement remains outside this module).
 - **Common utils**: `getSupportedChain` (`src/common/chains/supported-chains`), `hashRequest` (`src/common/utils/request-hash`), `sanitizeErrorMessage` (`src/common/utils/sanitize`), `AgentStatus` (`src/common/agent/agent-status`).
 - **DTOs**: `SendTransactionDto` / `InteractionDto` (shared constants `MAX_TRANSACTION_INTERACTIONS`, `MAX_INTERACTION_CALLDATA_BYTES` consumed by the policy service) and `ListTransactionsQueryDto`; see `dto/codemap.md`.
 - **Data model**: Prisma `Transaction` (`transactions` table) with `@@unique([userId, operationType, chainId, idempotencyKey])` and indexes on `[apiKeyId, createdAt]`, `[requestHash]`, `[userId, createdAt]`, `[userId, status]`; `details` JSON holds safe send metadata (execution mode, sponsorship, interaction count, agent wallet/key hash, `userOpHash`).

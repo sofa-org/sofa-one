@@ -6,6 +6,7 @@ import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { BillingReconciliationService } from './billing-reconciliation.service';
 import { BillingEntitlementService } from './billing-entitlement.service';
+import { BillingDebtService } from './billing-debt.service';
 import { InvoiceSettlementService } from './invoice-settlement.service';
 import { BillingWorkerService } from './billing-worker.service';
 import { InvoicePdfService } from './invoice-pdf.service';
@@ -25,6 +26,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     BillingService,
     BillingReconciliationService,
     BillingEntitlementService,
+    BillingDebtService,
     InvoiceSettlementService,
     BillingWorkerService,
     InvoicePdfService,
@@ -38,6 +40,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     BillingService,
     BillingReconciliationService,
     BillingEntitlementService,
+    BillingDebtService,
     InvoiceSettlementService,
     StripePaymentService,
   ],

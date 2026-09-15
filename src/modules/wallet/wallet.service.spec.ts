@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -33,6 +34,7 @@ import { WalletService } from './wallet.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
@@ -41,6 +43,7 @@ import { SigningPolicyService } from './signing-policy.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { BillingDebtService } from '../billing/billing-debt.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +115,8 @@ describe('WalletService.withdraw()', () => {
   // Prisma mock handles
   const mockFindUnique = jest.fn();
   const mockFindFirst = jest.fn();
+  /** Interactive-tx findFirst — distinct from root so P2002 recovery can be asserted. */
+  const mockTxFindFirst = jest.fn();
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
   const mockUpdateMany = jest.fn();
@@ -120,6 +125,7 @@ describe('WalletService.withdraw()', () => {
   const mockTransaction = jest.fn();
   const mockEvaluateRisk = jest.fn();
   const mockEnforceRiskAction = jest.fn();
+  const mockGetDebt = jest.fn();
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
@@ -130,9 +136,10 @@ describe('WalletService.withdraw()', () => {
     jest.clearAllMocks();
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
-    // Default: wallet exists, sufficient balance, no duplicate tx
+    // Default: wallet exists, sufficient balance, no duplicate tx, no billing debt
     mockFindUnique.mockResolvedValue({ ...WALLET });
     mockFindFirst.mockResolvedValue(null);
+    mockTxFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
     mockGetBalance.mockResolvedValue(BigInt('200000000000000000'));
     mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
@@ -141,12 +148,20 @@ describe('WalletService.withdraw()', () => {
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
     mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
+    mockGetDebt.mockResolvedValue({ hasDebt: false, invoiceIds: [] });
     mockUpdateMany.mockImplementation(async ({ data }: any) => {
       mockUpdate({ where: { id: 'tx-1' }, data });
       return { count: 1 };
     });
     mockTransaction.mockImplementation(async (callback) =>
-      callback({ transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: mockUpdateMany } }),
+      callback({
+        transaction: {
+          findFirst: mockTxFindFirst,
+          create: mockCreate,
+          update: mockUpdate,
+          updateMany: mockUpdateMany,
+        },
+      }),
     );
     mockEvaluateRisk.mockResolvedValue({
       riskLevel: 'low',
@@ -178,6 +193,10 @@ describe('WalletService.withdraw()', () => {
             assertWithdrawalAllowed: mockAssertWithdrawalAllowed,
             assertDailyLimitWithUserLock: mockAssertDailyLimitWithUserLock,
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: mockGetDebt },
         },
         {
           provide: RiskEvaluationService,
@@ -277,10 +296,12 @@ describe('WalletService.withdraw()', () => {
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('returns the existing withdrawal after a concurrent idempotency insert race', async () => {
+  it('returns the existing withdrawal after a concurrent idempotency insert race via root prisma', async () => {
+    // Outer root miss → inner tx miss → P2002 aborts interactive tx → root re-read hits existing.
     mockFindFirst
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting' });
+    mockTxFindFirst.mockResolvedValue(null);
     mockCreate.mockRejectedValue({ code: 'P2002' });
 
     const result = await service.withdraw('user-1', VALID_DTO);
@@ -291,6 +312,37 @@ describe('WalletService.withdraw()', () => {
       status: 'submitting',
     });
     expect(mockReadContract).toHaveBeenCalledTimes(1);
+    expect(mockGetDebt).toHaveBeenCalled();
+    expect(mockTxFindFirst).toHaveBeenCalledTimes(1);
+    // Recovery must use root prisma findFirst (2 calls: outer + post-P2002), not txClient.
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
+    mockFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'tx-existing',
+        txHash: null,
+        status: 'submitting',
+        requestHash: 'different-request',
+      });
+    mockTxFindFirst.mockResolvedValue(null);
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rethrows P2002 when no existing withdrawal is found after rollback', async () => {
+    mockFindFirst.mockResolvedValue(null);
+    mockTxFindFirst.mockResolvedValue(null);
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({ code: 'P2002' });
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -556,6 +608,81 @@ describe('WalletService.withdraw()', () => {
       data: expect.objectContaining({ status: 'unknown' }),
     }));
   });
+
+  // ── Billing debt gate ──────────────────────────────────────────────────────
+
+  it('blocks new withdrawals when billing debt exists before balance/create/Openfort', async () => {
+    mockGetDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      },
+    });
+
+    expect(mockGetDebt).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockGetBalance).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+    expect(mockAssertDailyLimitWithUserLock).not.toHaveBeenCalled();
+  });
+
+  it('returns existing idempotent withdrawal without checking billing debt', async () => {
+    mockFindFirst.mockResolvedValue({
+      id: 'tx-existing',
+      txHash: '0xhash-existing',
+      status: 'pending',
+    });
+    mockGetDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+
+    const result = await service.withdraw('user-1', VALID_DTO);
+
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: '0xhash-existing',
+      status: 'pending',
+    });
+    expect(mockGetDebt).not.toHaveBeenCalled();
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('re-checks billing debt inside the create transaction after idempotency miss', async () => {
+    mockGetDebt
+      .mockResolvedValueOnce({ hasDebt: false, invoiceIds: [] })
+      .mockResolvedValueOnce({ hasDebt: true, invoiceIds: ['inv-race'] });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      },
+    });
+
+    expect(mockGetDebt).toHaveBeenCalledTimes(2);
+    expect(mockReadContract).toHaveBeenCalledTimes(1);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockAssertDailyLimitWithUserLock).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when billing debt check fails (fail-closed)', async () => {
+    mockGetDebt.mockRejectedValue(new Error('db unavailable'));
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+      },
+    });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
 });
 
 describe('WalletService.sign()', () => {
@@ -620,6 +747,10 @@ describe('WalletService.sign()', () => {
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
         SigningPolicyService,
       ],
@@ -1197,6 +1328,10 @@ describe('WalletService.getBalances()', () => {
             removeWithdrawalAddress: jest.fn(),
           },
         },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
+        },
       ],
     }).compile();
 
@@ -1281,6 +1416,10 @@ describe('WalletService.getDepositInfo()', () => {
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
       ],
     }).compile();

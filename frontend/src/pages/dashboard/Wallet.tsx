@@ -74,7 +74,6 @@ import {
   AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS,
   BALANCE_CHAIN_STORAGE_KEY,
   RAW_KEY_NOTICE_TTL_MS,
-  WithdrawSuccess,
   assertWebCryptoAvailable,
   delay,
   formatAuthorizationExpiry,
@@ -86,6 +85,8 @@ import {
   parseWithdrawalAmount,
   persistChainId,
   resolveEmbeddedWallet,
+  type WithdrawError,
+  type WithdrawSuccess,
 } from './wallet-helpers';
 
 export default function WalletPage() {
@@ -147,7 +148,7 @@ export default function WalletPage() {
   const [token, setToken] = useState<WithdrawalToken>('USDC');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
-  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [withdrawError, setWithdrawError] = useState<WithdrawError | null>(null);
   const [withdrawalAllowlist, setWithdrawalAllowlist] =
     useState<ListWithdrawalAddressesResponse | null>(null);
   const [withdrawalAllowlistLoading, setWithdrawalAllowlistLoading] = useState(false);
@@ -436,7 +437,12 @@ export default function WalletPage() {
       setTo('');
       setAmount('');
     } catch (err: unknown) {
-      setWithdrawError(getApiErrorMessage(err));
+      // Only treat the explicit billing block code as unpaid-invoice guidance.
+      // Network/unknown failures keep the generic message with no Billing CTA.
+      setWithdrawError({
+        message: getApiErrorMessage(err),
+        billingBlocked: hasApiErrorCode(err, 'BILLING_OUTBOUND_BLOCKED'),
+      });
     } finally {
       setWithdrawLoading(false);
     }

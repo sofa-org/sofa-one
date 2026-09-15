@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -23,6 +24,7 @@ import {
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain, type SupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
@@ -35,6 +37,7 @@ import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { BillingDebtService } from '../billing/billing-debt.service';
 
 const ERC20_BALANCE_ABI = [
   {
@@ -67,6 +70,7 @@ export class WalletService {
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
     private readonly withdrawalPolicy: WithdrawalPolicyService,
+    private readonly billingDebt: BillingDebtService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -661,6 +665,14 @@ export class WalletService {
       return this.toWithdrawalResponse(existingWithdrawal);
     }
 
+    // Explicit external withdraw: block new submissions while billing debt is open.
+    // Idempotent hits above bypass this gate so retries of already-accepted withdraws still return.
+    await this.assertNoBillingDebtForOutbound(userId, {
+      chainId,
+      walletId: wallet.id,
+      operation: 'withdraw',
+    });
+
     // Guard: verify on-chain balance is sufficient before submitting intent
     {
       const publicClient = this.getPublicClient(chainId);
@@ -688,55 +700,84 @@ export class WalletService {
       }
     }
 
-    const { tx, created } = await this.prisma.$transaction(async (txClient) => {
-      const existing = await this.findExistingWithdrawal(
-        userId,
-        {
-          idempotencyKey: params.idempotencyKey!,
-          chainId,
-          requestHash,
-        },
-        txClient,
-      );
-      if (existing) {
-        return { tx: existing, created: false };
-      }
-
-      await this.withdrawalPolicy.assertDailyLimitWithUserLock(
-        userId,
-        params,
-        {
-          chainId,
-          walletId: wallet.id,
-          walletAddress,
-        },
-        txClient,
-      );
-
-      return this.createPendingWithdrawalOrReturnExisting(
-        userId,
-        {
-          idempotencyKey: params.idempotencyKey!,
-          chainId,
-          requestHash,
-          walletAddress,
-          details: {
-            type: 'withdraw',
-            execution: 'calibur_agent_user_operation',
-            executionMode: 'session_key',
-            to: params.to,
-            amount: params.amount,
-            token: params.token,
-            contractAddress: tokenAddress,
-            agentWalletAddress: wallet.agentWalletAddress,
-            agentKeyHash: wallet.agentKeyHash,
-            idempotencyKey: params.idempotencyKey,
+    // Interactive transaction: inner idempotency + debt recheck + daily limit + create.
+    // On unique-key race (P2002) the interactive tx aborts — recover outside with root
+    // PrismaService after rollback (never re-query on the failed txClient).
+    let tx: any;
+    let created: boolean;
+    try {
+      ({ tx, created } = await this.prisma.$transaction(async (txClient) => {
+        const existing = await this.findExistingWithdrawal(
+          userId,
+          {
+            idempotencyKey: params.idempotencyKey!,
+            chainId,
             requestHash,
           },
-        },
-        txClient,
-      );
-    });
+          txClient,
+        );
+        if (existing) {
+          return { tx: existing, created: false };
+        }
+
+        // Re-check debt under the same tx snapshot before daily-limit lock / pending create.
+        await this.assertNoBillingDebtForOutbound(
+          userId,
+          {
+            chainId,
+            walletId: wallet.id,
+            operation: 'withdraw',
+          },
+          txClient,
+        );
+
+        await this.withdrawalPolicy.assertDailyLimitWithUserLock(
+          userId,
+          params,
+          {
+            chainId,
+            walletId: wallet.id,
+            walletAddress,
+          },
+          txClient,
+        );
+
+        return this.createPendingWithdrawal(
+          userId,
+          {
+            idempotencyKey: params.idempotencyKey!,
+            chainId,
+            requestHash,
+            walletAddress,
+            details: {
+              type: 'withdraw',
+              execution: 'calibur_agent_user_operation',
+              executionMode: 'session_key',
+              to: params.to,
+              amount: params.amount,
+              token: params.token,
+              contractAddress: tokenAddress,
+              agentWalletAddress: wallet.agentWalletAddress,
+              agentKeyHash: wallet.agentKeyHash,
+              idempotencyKey: params.idempotencyKey,
+              requestHash,
+            },
+          },
+          txClient,
+        );
+      }));
+    } catch (error: any) {
+      if (error?.code !== 'P2002') throw error;
+
+      const existing = await this.findExistingWithdrawal(userId, {
+        idempotencyKey: params.idempotencyKey!,
+        chainId,
+        requestHash,
+      });
+      if (!existing) throw error;
+      tx = existing;
+      created = false;
+    }
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
       return this.toWithdrawalResponse(tx);
@@ -848,7 +889,53 @@ export class WalletService {
     await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context, options);
   }
 
-  private async createPendingWithdrawalOrReturnExisting(
+  /**
+   * Fail-closed billing gate for explicit external withdrawals.
+   * DB/query failures map to 503 — never fail-open as "no debt".
+   */
+  private async assertNoBillingDebtForOutbound(
+    userId: string,
+    context: { chainId: number; walletId?: string; operation: 'withdraw' },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    let snapshot: { hasDebt: boolean; invoiceIds: string[] };
+    try {
+      snapshot = await this.billingDebt.getDebt(userId, db);
+    } catch (error) {
+      this.logger.error({
+        message: 'Billing debt check unavailable',
+        userId,
+        walletId: context.walletId,
+        chainId: context.chainId,
+        operation: context.operation,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+        message: 'Billing debt check is temporarily unavailable',
+      });
+    }
+
+    if (!snapshot.hasDebt) {
+      return;
+    }
+
+    this.logger.warn({
+      message: 'Outbound withdrawal blocked by billing debt',
+      userId,
+      walletId: context.walletId,
+      chainId: context.chainId,
+      operation: context.operation,
+      invoiceCount: snapshot.invoiceIds.length,
+    });
+    throw new ForbiddenException({
+      code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      message: 'Withdrawals are blocked until outstanding invoices are settled',
+    });
+  }
+
+  /** Create a pending withdrawal row. Callers own P2002 recovery after tx rollback. */
+  private async createPendingWithdrawal(
     userId: string,
     params: {
       idempotencyKey: string;
@@ -861,37 +948,21 @@ export class WalletService {
   ) {
     const createdAt = new Date();
     const billingPeriodStart = new Date(Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1));
-    try {
-      const tx = await prisma.transaction.create({
-        data: {
-          userId,
-          status: 'submitting',
-          chainId: BigInt(params.chainId),
-          walletAddress: params.walletAddress,
-          operationType: 'withdraw',
-          idempotencyKey: params.idempotencyKey,
-          requestHash: params.requestHash,
-          createdAt,
-          billingPeriodStart,
-          details: params.details as any,
-        },
-      });
-      return { tx, created: true };
-    } catch (error: any) {
-      if (error?.code !== 'P2002') throw error;
-
-      const existing = await this.findExistingWithdrawal(
+    const tx = await prisma.transaction.create({
+      data: {
         userId,
-        {
-          idempotencyKey: params.idempotencyKey,
-          chainId: params.chainId,
-          requestHash: params.requestHash,
-        },
-        prisma,
-      );
-      if (!existing) throw error;
-      return { tx: existing, created: false };
-    }
+        status: 'submitting',
+        chainId: BigInt(params.chainId),
+        walletAddress: params.walletAddress,
+        operationType: 'withdraw',
+        idempotencyKey: params.idempotencyKey,
+        requestHash: params.requestHash,
+        createdAt,
+        billingPeriodStart,
+        details: params.details as any,
+      },
+    });
+    return { tx, created: true as const };
   }
 
   private async findExistingWithdrawal(
