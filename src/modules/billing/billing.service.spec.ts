@@ -336,13 +336,11 @@ describe('BillingService', () => {
       expect(accountCreate).toHaveBeenCalledWith({ data: { userId: 'user-1' } });
       // 6 plans created
       expect(planVersionCreate).toHaveBeenCalledTimes(6);
-      // New plan versions align with the hard API limit: the retained
-      // apiOverageRateMicros column is seeded at 0n (no per-call price), while
-      // the wallet overage rate keeps its unchanged default.
+      // New plan versions pin the plan-specific API overage rate.
       expect(planVersionCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            apiOverageRateMicros: 0n,
+            apiOverageRateMicros: 2000n,
             walletOverageRateMicros: 10_000n,
           }),
         }),
@@ -898,27 +896,12 @@ describe('BillingService', () => {
           }),
         }),
       );
-      // the quota count only reads posted usage-type api_call events
-      expect(usageEventFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            billingAccountId: ACCOUNT.id,
-            metric: 'api_call',
-            entryType: 'usage',
-            status: 'posted',
-          }),
-          select: { quantity: true },
-        }),
-      );
+      expect(usageEventFindMany).not.toHaveBeenCalled();
     });
 
-    it('never counts unverified/quarantined api_call rows toward the quota', async () => {
+    it('records calls without querying prior usage rows', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog initialized
-      // Only unverified/quarantined rows exist in the period. The quota query
-      // requires status=posted, so the filtered result set is empty and the
-      // legacy rows cannot consume quota or trigger a 429.
-      usageEventFindMany.mockResolvedValue([]);
       usageEventCreate.mockResolvedValue({ id: 'evt-1' });
 
       await service.assertAndRecordApiCall({
@@ -927,19 +910,7 @@ describe('BillingService', () => {
         endpoint: '/v1/wallets/sign',
       });
 
-      // The quota query explicitly requires the authoritative posted status.
-      expect(usageEventFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            billingAccountId: ACCOUNT.id,
-            metric: 'api_call',
-            entryType: 'usage',
-            status: 'posted',
-          }),
-          select: { quantity: true },
-        }),
-      );
-      // used (0n) < limit (10_000) -> a posted api_request row is written.
+      expect(usageEventFindMany).not.toHaveBeenCalled();
       expect(usageEventCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -954,23 +925,19 @@ describe('BillingService', () => {
       );
     });
 
-    it('throws BillingQuotaExceededException and writes nothing at the limit', async () => {
+    it('records successfully at the former quota boundary', async () => {
       mockQuotaSetup(10_000); // at limit
 
-      await expect(
-        service.assertAndRecordApiCall({
+      await service.assertAndRecordApiCall({
           userId: 'user-1',
           sourceKey: 'api:req-2',
           endpoint: '/v1/wallets/sign',
-        }),
-      ).rejects.toThrow(BillingQuotaExceededException);
-      expect(usageEventCreate).not.toHaveBeenCalled();
+        });
+      expect(usageEventCreate).toHaveBeenCalled();
     });
 
-    it('keeps the hard 429 limit even when the persisted plan carries a legacy nonzero API rate', async () => {
-      // A persisted plan version seeded under the old $0.001/call product
-      // boundary must still enforce the hard quota: at the limit the request is
-      // rejected with 429 and NO billable overage event is ever written.
+    it('records overage when the persisted plan carries a nonzero API rate', async () => {
+      // Persisted plan versions retain their own immutable API overage rate.
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue({
         ...FREE_VERSION,
@@ -978,40 +945,27 @@ describe('BillingService', () => {
       });
       usageEventFindMany.mockResolvedValue([{ quantity: 10_000n }]); // at limit
 
-      await expect(
-        service.assertAndRecordApiCall({
+      await service.assertAndRecordApiCall({
           userId: 'user-1',
           sourceKey: 'api:req-legacy-rate',
           endpoint: '/v1/wallets/sign',
-        }),
-      ).rejects.toThrow(BillingQuotaExceededException);
-      expect(usageEventCreate).not.toHaveBeenCalled();
+        });
+      expect(usageEventCreate).toHaveBeenCalled();
     });
 
     it('compares huge used counts exactly in bigint without Number conversion', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // safe limit 10_000
-      // used = 2^60 (far above the limit) -> exact bigint comparison -> 429
+      // used = 2^60 remains safe because the meter no longer reads quota rows.
       usageEventFindMany.mockResolvedValue([{ quantity: 2n ** 60n }]);
 
-      await expect(
-        service.assertAndRecordApiCall({
+      await service.assertAndRecordApiCall({
           userId: 'user-1',
           sourceKey: 'api:req-huge',
           endpoint: '/v1/wallets/sign',
-        }),
-      ).rejects.toThrow(BillingQuotaExceededException);
-      expect(usageEventCreate).not.toHaveBeenCalled();
-
-      // used = 9_999 (below the limit) -> write succeeds
-      usageEventFindMany.mockResolvedValue([{ quantity: 9_999n }]);
-      usageEventCreate.mockResolvedValue({ id: 'evt-1' });
-      await service.assertAndRecordApiCall({
-        userId: 'user-1',
-        sourceKey: 'api:req-ok',
-        endpoint: '/v1/wallets/sign',
-      });
+        });
       expect(usageEventCreate).toHaveBeenCalledTimes(1);
+
     });
 
     it('fails closed when the persisted includedApiCalls exceeds Number.MAX_SAFE_INTEGER', async () => {
@@ -1033,19 +987,16 @@ describe('BillingService', () => {
       expect(usageEventCreate).not.toHaveBeenCalled();
     });
 
-    it('fails closed when a usage quantity is negative', async () => {
+    it('does not inspect prior usage quantities', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
-      usageEventFindMany.mockResolvedValue([{ quantity: -1n }]);
-
-      await expect(
-        service.assertAndRecordApiCall({
+      await service.assertAndRecordApiCall({
           userId: 'user-1',
           sourceKey: 'api:req-neg',
           endpoint: '/v1/wallets/sign',
-        }),
-      ).rejects.toThrow(ConflictException);
-      expect(usageEventCreate).not.toHaveBeenCalled();
+        });
+      expect(usageEventFindMany).not.toHaveBeenCalled();
+      expect(usageEventCreate).toHaveBeenCalled();
     });
 
     it('runs the check-and-record inside the billing-period lock', async () => {
@@ -2468,7 +2419,7 @@ describe('BillingService', () => {
       expect(result.outboundOverage).toBe('0');
     });
 
-    it('keeps API overage out of the estimate when the persisted plan has a legacy nonzero API rate', async () => {
+    it('includes API overage in the estimate using the persisted plan rate', async () => {
       // planVersionFindFirst serves both the catalog probe and the Free-plan
       // fallback; the assigned legacy Starter version carries the old
       // $0.001/call rate.
@@ -2494,11 +2445,10 @@ describe('BillingService', () => {
       // The over-limit API usage is still reported...
       expect(result.apiCalls).toBe('900000');
       expect(result.apiCallsFreeAllowance).toBe('100000');
-      // ...but the legacy nonzero rate cannot produce an API-overage charge:
-      // only the $49 monthly fee is estimated.
+      // 800,000 calls over the Starter allowance at $0.001/call.
       expect(result.estimatedBaseCost).toBe('49');
-      expect(result.estimatedOverageCost).toBe('0');
-      expect(result.estimatedTotal).toBe('49');
+      expect(result.estimatedOverageCost).toBe('800');
+      expect(result.estimatedTotal).toBe('849');
     });
 
     it('fails closed when the plan is Enterprise/custom null terms', async () => {
@@ -2860,7 +2810,7 @@ describe('BillingService', () => {
       expect(result.status).toBe('finalized');
     });
 
-    it('finalizes with zero API overage even when the persisted plan has a legacy nonzero API rate', async () => {
+    it('finalizes API overage using the persisted plan rate', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
       invoiceFindUnique.mockResolvedValue(null);
@@ -2890,27 +2840,26 @@ describe('BillingService', () => {
         periodStart: new Date('2026-05-01T00:00:00.000Z'),
         status: 'finalized',
         currency: 'USD',
-        totalMicros: 49_000_000n,
+        totalMicros: 949_000_000n,
         createdAt: new Date('2026-06-01T00:00:00.000Z'),
       });
 
       const result = await service.finalizeInvoice('user-1', '2026-05');
 
-      // 900,000 over-limit calls * legacy $0.001 would be $900 — the hard-limit
-      // rule keeps API overage at zero and the total at the $49 monthly fee.
+      // 900,000 over-limit calls * $0.001 = $900, plus the $49 monthly fee.
       expect(invoiceCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            apiOverageMicros: 0n,
-            totalMicros: 49_000_000n,
+            apiOverageMicros: 900_000_000n,
+            totalMicros: 949_000_000n,
           }),
         }),
       );
-      // No api_overage line item is ever emitted from a legacy nonzero rate.
+      // The overage is represented as a dedicated invoice line.
       const lineData = lineCreateMany.mock.calls[0][0] as {
         data: Array<{ lineType: string }>;
       };
-      expect(lineData.data.map((line) => line.lineType)).not.toContain('api_overage');
+      expect(lineData.data.map((line) => line.lineType)).toContain('api_overage');
       expect(lineData.data.map((line) => line.lineType)).toContain('monthly_fee');
       expect(result.status).toBe('finalized');
     });

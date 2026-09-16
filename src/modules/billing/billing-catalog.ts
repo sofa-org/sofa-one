@@ -3,18 +3,40 @@ import type { PlanId } from './billing-calculator';
 /**
  * Plan catalog metadata (description + features) sourced from PRICING.md
  * section 5. Monetary values and allowances live in the calculator's PLANS;
- * this file only carries the human-facing marketing copy.
+ * this file only carries the human-facing marketing copy and the published
+ * per-plan API overage rates (PRICING.md §7).
  *
- * Resource overage rates are the accepted Phase 1 values: API calls at
- * $0.001/call and active wallets at $0.01/wallet/month (PRICING.md §7).
+ * API calls beyond the included monthly allowance continue to succeed and are
+ * billed at the plan's per-call overage rate. Infrastructure throttling can
+ * still return HTTP 429 independently of billing overage. Active wallets remain
+ * overage-billed at $0.01/wallet/month.
  */
 export interface PlanCatalogEntry {
   readonly description: string;
   readonly features: readonly string[];
 }
 
-const OVERAGE_NOTE_API = 'API overage rate: $0.001/call';
+/** Per-call API overage rates in microdollars (PRICING.md §7). Enterprise is custom. */
+export const PLAN_API_OVERAGE_RATE_MICROS: Readonly<
+  Record<Exclude<PlanId, 'enterprise'>, bigint>
+> = {
+  free: 2_000n, // $0.002 / call
+  starter: 1_500n, // $0.0015 / call
+  growth: 1_000n, // $0.001 / call
+  scale: 750n, // $0.00075 / call
+  business: 500n, // $0.0005 / call
+};
+
 const OVERAGE_NOTE_WALLET = 'Wallet overage rate: $0.01/wallet/month';
+
+function apiOverageNote(planId: Exclude<PlanId, 'enterprise'>): string {
+  const micros = PLAN_API_OVERAGE_RATE_MICROS[planId];
+  // 1_000_000 micros = $1; rates are whole microdollars so format without float math.
+  const dollars = Number(micros) / 1_000_000;
+  const rendered =
+    dollars >= 0.01 ? dollars.toFixed(2) : dollars.toFixed(5).replace(/0+$/, '').replace(/\.$/, '');
+  return `API overage rate: $${rendered}/call (requests beyond the included allowance continue and are charged)`;
+}
 
 export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
   free: {
@@ -26,7 +48,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'Basic transaction status queries',
       'Community or documentation support',
       'Standard rate limits',
-      OVERAGE_NOTE_API,
+      apiOverageNote('free'),
       OVERAGE_NOTE_WALLET,
     ],
   },
@@ -40,7 +62,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'Basic IP allowlist',
       'Email support',
       'Standard security event logging',
-      OVERAGE_NOTE_API,
+      apiOverageNote('starter'),
       OVERAGE_NOTE_WALLET,
     ],
   },
@@ -54,7 +76,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'User, wallet, and API key freeze controls',
       'Longer audit log retention',
       'Priority support during business hours',
-      OVERAGE_NOTE_API,
+      apiOverageNote('growth'),
       OVERAGE_NOTE_WALLET,
     ],
   },
@@ -68,7 +90,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'Multi-chain production support',
       'Longer idempotency windows and transaction tracking',
       'Priority technical support',
-      OVERAGE_NOTE_API,
+      apiOverageNote('scale'),
       OVERAGE_NOTE_WALLET,
     ],
   },
@@ -84,7 +106,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'Financial reconciliation and billing report support',
       'Priority response to production incidents',
       'SLA options',
-      OVERAGE_NOTE_API,
+      apiOverageNote('business'),
       OVERAGE_NOTE_WALLET,
     ],
   },
@@ -101,7 +123,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
       'Security audit support',
       'Compliance, financial, and operational reports',
       'Dedicated risk-control strategies and approval workflows',
-      OVERAGE_NOTE_API,
+      'API overage rate: custom (requests beyond the included allowance continue and are charged)',
       OVERAGE_NOTE_WALLET,
     ],
   },

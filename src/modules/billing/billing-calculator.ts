@@ -9,6 +9,8 @@
  *   outbound volume, wallet and API-call allowances. Enterprise is custom (nulls).
  * - Outbound overage is billed in marginal, half-open tiers against billable volume
  *   = max(gross outbound - included allowance, 0), each tier rounded half-up.
+ * - API-call overage is billed linearly:
+ *   max(apiCallsTotal - included, 0) * apiOverageRateMicros (per plan).
  */
 
 export const MICROS_PER_DOLLAR = 1_000_000n;
@@ -23,6 +25,11 @@ export interface BillingPlanConfig {
   readonly includedOutboundMicros: bigint | null;
   readonly includedWallets: number | null;
   readonly includedApiCallsPerMonth: number | null;
+  /**
+   * Per-call API overage rate in microdollars. Null only for Enterprise/custom
+   * (fail-closed upstream; never priced here as infinite or free).
+   */
+  readonly apiOverageRateMicros: bigint | null;
 }
 
 export interface OutboundTier {
@@ -44,16 +51,14 @@ export interface InvoiceTotalsInput {
   readonly grossOutboundMicros: bigint;
   readonly activeWallets?: number;
   /**
-   * API calls consumed in the period. Reporting only: API usage is a hard
-   * quota (assertAndRecordApiCall returns HTTP 429 at the limit and never
-   * writes billable overage), so this count never produces a charge here.
+   * API calls consumed in the period. Billable overage is
+   * max(apiCallsTotal - included, 0) * effective apiOverageRateMicros.
    */
   readonly apiCallsTotal?: number;
   /**
-   * Legacy/persisted per-API-call rate, in microdollars. Retained so the
-   * immutable persisted value can be threaded through for compatibility, but
-   * deliberately NEVER used to price an invoice: API overage is zero even when
-   * this rate is nonzero.
+   * Per-API-call overage rate in microdollars. Prefer the immutable rate pinned
+   * on the plan version; falls back to the plan config rate, then the Free-plan
+   * default (DEFAULT_API_OVERAGE_RATE_MICROS).
    */
   readonly apiOverageRateMicros?: bigint;
   /** Overage rate per over-limit wallet per month, in microdollars; defaults to 0. */
@@ -65,7 +70,7 @@ export interface InvoiceTotals {
   readonly monthlyFeeMicros: bigint;
   readonly billableOutboundMicros: bigint;
   readonly outboundOverageMicros: bigint;
-  /** Always 0n: API usage is hard-limited upstream and never billed as overage. */
+  /** max(apiCallsTotal - included, 0) * apiOverageRateMicros. */
   readonly apiOverageMicros: bigint;
   readonly walletOverageMicros: bigint;
   readonly totalMicros: bigint;
@@ -73,18 +78,15 @@ export interface InvoiceTotals {
 }
 
 /**
- * Default overage rates seeded into new plan versions; existing used plan
- * versions are versioned forward, never rewritten in place.
+ * Default overage rates seeded into new plan versions when a plan does not
+ * pin its own rate (Enterprise). Existing used plan versions are versioned
+ * forward, never rewritten in place.
  *
- * API calls are a hard quota, not an overage dimension: assertAndRecordApiCall
- * rejects over-limit traffic with HTTP 429 and never records billable overage,
- * so the API default rate is 0 micros (no per-call price). The persisted
- * `apiOverageRateMicros` column is retained for legacy/back-compat and is never
- * used to price an invoice, even when an older persisted plan version carries a
- * nonzero value. Active wallets remain overage-billed at $0.01/wallet/month
- * (10_000 micros).
+ * Public plans pin per-plan API rates on `PLANS` (Free $0.002 … Business
+ * $0.0005). The Free-plan rate is the calculator fallback default. Active
+ * wallets remain overage-billed at $0.01/wallet/month (10_000 micros).
  */
-export const DEFAULT_API_OVERAGE_RATE_MICROS = 0n;
+export const DEFAULT_API_OVERAGE_RATE_MICROS = 2000n;
 export const DEFAULT_WALLET_OVERAGE_RATE_MICROS = 10_000n;
 
 function micros(dollars: number): bigint {
@@ -114,6 +116,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: micros(50_000),
     includedWallets: 10,
     includedApiCallsPerMonth: 10_000,
+    apiOverageRateMicros: 2000n, // $0.002 / call
   },
   starter: {
     id: 'starter',
@@ -122,6 +125,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: micros(250_000),
     includedWallets: 100,
     includedApiCallsPerMonth: 100_000,
+    apiOverageRateMicros: 1500n, // $0.0015 / call
   },
   growth: {
     id: 'growth',
@@ -130,6 +134,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: micros(1_000_000),
     includedWallets: 1_000,
     includedApiCallsPerMonth: 1_000_000,
+    apiOverageRateMicros: 1000n, // $0.001 / call
   },
   scale: {
     id: 'scale',
@@ -138,6 +143,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: micros(5_000_000),
     includedWallets: 5_000,
     includedApiCallsPerMonth: 5_000_000,
+    apiOverageRateMicros: 750n, // $0.00075 / call
   },
   business: {
     id: 'business',
@@ -146,6 +152,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: micros(25_000_000),
     includedWallets: 25_000,
     includedApiCallsPerMonth: 25_000_000,
+    apiOverageRateMicros: 500n, // $0.0005 / call
   },
   enterprise: {
     id: 'enterprise',
@@ -154,6 +161,7 @@ export const PLANS: Record<PlanId, BillingPlanConfig> = {
     includedOutboundMicros: null,
     includedWallets: null,
     includedApiCallsPerMonth: null,
+    apiOverageRateMicros: null,
   },
 };
 
@@ -227,14 +235,14 @@ export function calculateOutboundOverage(
 }
 
 /**
- * Totals a monthly invoice: plan monthly fee + outbound overage + wallet
- * overage. All amounts are bigints in microdollars and the outbound tier
- * breakdown is included.
+ * Totals a monthly invoice: plan monthly fee + outbound overage + API overage
+ * + wallet overage. All amounts are bigints in microdollars and the outbound
+ * tier breakdown is included.
  *
- * API-call usage is a hard quota enforced upstream (`assertAndRecordApiCall`
- * returns HTTP 429 at the included limit and never records billable overage),
- * so `apiOverageMicros` is always 0n — even when a legacy/persisted nonzero
- * `apiOverageRateMicros` is supplied. That rate is deliberately inert.
+ * API overage is linear:
+ *   max(apiCallsTotal - includedApiCallsPerMonth, 0) * apiOverageRateMicros
+ * where the effective rate is the supplied rate, else the plan's pinned rate,
+ * else DEFAULT_API_OVERAGE_RATE_MICROS (Free $0.002).
  */
 export function calculateInvoiceTotals(input: InvoiceTotalsInput): InvoiceTotals {
   const monthlyFeeMicros = input.plan.monthlyFeeMicros ?? 0n;
@@ -247,15 +255,14 @@ export function calculateInvoiceTotals(input: InvoiceTotalsInput): InvoiceTotals
     tiers,
   );
 
-  // API usage is a hard limit, never an overage dimension: over-limit traffic
-  // is rejected with HTTP 429 before an event is written, so there is nothing
-  // to bill and API overage is structurally zero. A legacy/persisted nonzero
-  // apiOverageRateMicros is deliberately ignored (never prices an invoice);
-  // historical plan versions are immutable and are never repriced.
+  const apiOverageRateMicros =
+    input.apiOverageRateMicros ??
+    input.plan.apiOverageRateMicros ??
+    DEFAULT_API_OVERAGE_RATE_MICROS;
   const apiOverageMicros = computeUsageOverage(
     input.apiCallsTotal ?? 0,
     input.plan.includedApiCallsPerMonth ?? 0,
-    0n,
+    apiOverageRateMicros,
   );
   const walletOverageMicros = computeUsageOverage(
     input.activeWallets ?? 0,

@@ -26,7 +26,6 @@ import {
   parsePeriod,
   ppmToPercentString,
 } from './billing.utils';
-import { BillingQuotaExceededException } from './billing-quota.exception';
 import { InvoiceSettlementService } from './invoice-settlement.service';
 import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 
@@ -599,12 +598,12 @@ export class BillingService {
   // ── Usage recording ─────────────────────────────────────────────────────────
 
   /**
-   * Legacy API-call meter seam (no quota check). Records a single API call
+   * Legacy API-call meter seam (no plan validation). Records a single API call
    * (metric = api_call, quantity = 1) as an explicitly `unverified` usage event
-   * so it can never affect quota or invoice accounting. The authoritative,
-   * quota-checked path is `assertAndRecordApiCall`, which writes
-   * `status = posted`; only posted api_call rows are ever counted. Idempotent
-   * on sourceKey: a duplicate sourceKey is silently ignored. The sourceKey must
+   * so it can never affect invoice accounting. The authoritative metering path
+   * is `assertAndRecordApiCall`, which writes `status = posted`; only posted
+   * api_call rows are ever counted toward usage/overage. Idempotent on
+   * sourceKey: a duplicate sourceKey is silently ignored. The sourceKey must
    * be supplied by the server-side caller and is never derived from a client
    * X-Request-Id.
    */
@@ -638,19 +637,20 @@ export class BillingService {
   }
 
   /**
-   * Atomic API-call quota check-and-record (Phase 2B). Runs inside the shared
-   * billing-period lock (Serializable + advisory lock) so N concurrent requests
-   * can never exceed the included API-call limit. The period is the UTC
-   * calendar month of the request. Only `metric=api_call AND entryType=usage
-   * AND status=posted` events count; reversal/adjustment/non-usage rows and
-   * unverified/quarantined api_call rows never consume quota.
+   * Atomic API-call meter (billable overage). Runs inside the shared
+   * billing-period lock (Serializable + advisory lock) so concurrent writers
+   * for the same account+period serialize. The period is the UTC calendar
+   * month of the request.
    *
    * The plan in effect for the period is resolved first; Enterprise/custom null
-   * terms fail closed (never treated as 0 or infinite). When the existing count
-   * is >= the included limit, a `BillingQuotaExceededException` (HTTP 429) is
-   * thrown and NO event is written. Otherwise a
-   * `status=posted, entryType=usage, sourceType=api_request` event is written.
-   * A serialization conflict retries with a fresh transaction (no double count).
+   * terms and unknown/malformed plans fail closed (never treated as 0 or
+   * infinite). For valid finite-rate public plans every successful call —
+   * including calls past the included allowance — writes a
+   * `status=posted, entryType=usage, sourceType=api_request` event. There is
+   * no business-quota HTTP 429 here; over-limit volume is priced later via
+   * `calculateInvoiceTotals` using the plan version's `apiOverageRateMicros`.
+   * Infrastructure throttling elsewhere is unchanged. A serialization conflict
+   * retries with a fresh transaction (no double count on unique sourceKey).
    */
   async assertAndRecordApiCall(input: RecordApiCallInput): Promise<void> {
     await this.ensurePlanVersions();
@@ -662,53 +662,9 @@ export class BillingService {
         const planVersion = await this.resolvePlanVersion(billingAccountId, periodStart, tx);
         // Fail closed on unknown/malformed persisted plans (never 0/infinite).
         validatePlanVersion(planVersion);
-        const includedApiCalls = planVersion.includedApiCalls;
-        if (includedApiCalls === null) {
+        if (planVersion.includedApiCalls === null) {
           // Enterprise/custom null terms fail closed — never 0 or infinite.
           throw new ServiceUnavailableException('Billing service unavailable');
-        }
-        // Keep the quota limit and the used count in bigint — never Number —
-        // so counts above Number.MAX_SAFE_INTEGER are compared exactly.
-        const limit = includedApiCalls;
-
-        // Fetch and validate each included usage row before reduction: only
-        // metric=api_call AND entryType=usage AND status=posted counts. The
-        // explicit posted-status requirement keeps rows written by the legacy
-        // recordApiCall seam (explicitly unverified) from consuming quota, and
-        // a negative or non-bigint quantity fails closed instead of silently
-        // reducing usage.
-        const usageRows = await tx.billingUsageEvent.findMany({
-          where: {
-            billingAccountId,
-            periodStart,
-            metric: 'api_call',
-            entryType: 'usage',
-            status: 'posted',
-          },
-          select: { quantity: true },
-        });
-        let used = 0n;
-        for (const row of usageRows) {
-          if (typeof row.quantity !== 'bigint' || row.quantity < 0n) {
-            throw new ConflictException('Usage quantity is invalid');
-          }
-          used += row.quantity;
-        }
-
-        if (used >= limit) {
-          const periodEnd = new Date(
-            Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1),
-          );
-          const retryAfterSeconds = Math.max(
-            1,
-            Math.ceil((periodEnd.getTime() - Date.now()) / 1000),
-          );
-          throw new BillingQuotaExceededException(
-            'api_call',
-            limit,
-            formatUtcMonth(periodStart),
-            retryAfterSeconds,
-          );
         }
 
         await tx.billingUsageEvent.create({
@@ -2160,11 +2116,12 @@ export class BillingService {
               plan.includedApiCallsPerMonth !== null ? BigInt(plan.includedApiCallsPerMonth) : null,
             includedWallets: plan.includedWallets,
             includedTeamMembers: null,
-            // API calls are a hard quota (HTTP 429 at the limit, never billed
-            // as overage), so new plan versions seed the retained
-            // apiOverageRateMicros column at the 0n default; existing used
-            // versions are never rewritten. Wallet overage keeps its default.
-            apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
+            // Each public plan pins its own API overage rate on PLANS; Enterprise
+            // is custom/null and seeds the Free-plan default column value only
+            // for schema non-null. Existing used versions are never rewritten.
+            // Wallet overage keeps its default.
+            apiOverageRateMicros:
+              plan.apiOverageRateMicros ?? DEFAULT_API_OVERAGE_RATE_MICROS,
             walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
             effectiveFrom: new Date(),
             tiers: { create: tierData },
@@ -2769,13 +2726,17 @@ function toSafeCount(value: bigint): number {
  */
 export function planVersionToConfig(v: PlanVersion): BillingPlanConfig {
   validatePlanVersion(v);
+  const code = v.code as PlanId;
   return {
-    id: v.code as PlanId,
+    id: code,
     name: v.name,
     monthlyFeeMicros: v.monthlyFeeMicros,
     includedOutboundMicros: v.includedOutboundMicros,
     includedWallets: v.includedWallets,
     includedApiCallsPerMonth: v.includedApiCalls !== null ? Number(v.includedApiCalls) : null,
+    // Prefer the immutable rate pinned on this plan version; fall back to the
+    // static PLANS rate (null only for Enterprise/custom).
+    apiOverageRateMicros: v.apiOverageRateMicros ?? PLANS[code].apiOverageRateMicros,
   };
 }
 

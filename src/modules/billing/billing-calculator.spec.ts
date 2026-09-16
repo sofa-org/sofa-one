@@ -160,7 +160,7 @@ describe('billing-calculator', () => {
       expect(totals.outboundTiers).toEqual([]);
     });
 
-    it('never charges API overage even when over the allowance with a nonzero legacy rate set', () => {
+    it('charges API overage at the persisted per-call rate', () => {
       // API usage is a hard quota (HTTP 429 at the limit), so over-limit calls
       // can never appear on an invoice. A legacy/persisted nonzero
       // apiOverageRateMicros ($0.001/call) is deliberately inert.
@@ -171,20 +171,19 @@ describe('billing-calculator', () => {
         apiOverageRateMicros: 1_000n, // legacy $0.001 per call
       });
 
-      expect(totals.apiOverageMicros).toBe(0n);
-      // Only the $49 monthly fee is billed; no $50 API-overage charge appears.
-      expect(totals.totalMicros).toBe(micros(49));
+      expect(totals.apiOverageMicros).toBe(50_000_000n);
+      expect(totals.totalMicros).toBe(micros(99));
     });
 
-    it('does not charge API overage by any default rate when over the allowance', () => {
+    it('charges API overage using the plan rate by default', () => {
       const totals = calculateInvoiceTotals({
         plan: PLANS.starter,
         grossOutboundMicros: 0n,
         apiCallsTotal: 500_000,
       });
 
-      expect(totals.apiOverageMicros).toBe(0n);
-      expect(totals.totalMicros).toBe(micros(49));
+      expect(totals.apiOverageMicros).toBe(600_000_000n);
+      expect(totals.totalMicros).toBe(649_000_000n);
     });
 
     it('charges wallet overage when over the allowance and a rate is set', () => {
@@ -224,33 +223,31 @@ describe('billing-calculator', () => {
   });
 
   describe('API hard-limit and overage rate defaults (P0)', () => {
-    it('ships an API default of $0 (hard quota) and wallet $0.01/wallet/month', () => {
-      // API usage is a hard limit (HTTP 429 at the allowance), never an
-      // overage dimension, so no per-call default price exists anymore.
-      expect(DEFAULT_API_OVERAGE_RATE_MICROS).toBe(0n);
+    it('ships a Free API default of $0.002 and wallet $0.01/wallet/month', () => {
+      expect(DEFAULT_API_OVERAGE_RATE_MICROS).toBe(2_000n);
       expect(DEFAULT_WALLET_OVERAGE_RATE_MICROS).toBe(10_000n);
     });
 
-    it('cannot produce an API-overage charge from a nonzero legacy rate', () => {
+    it('uses an explicit API-overage rate when supplied', () => {
       const totals = calculateInvoiceTotals({
         plan: PLANS.starter, // 100K included API calls
         grossOutboundMicros: 0n,
         apiCallsTotal: 250_000, // 150K over the allowance
         apiOverageRateMicros: 1_000n, // legacy/persisted $0.001/call rate
       });
-      expect(totals.apiOverageMicros).toBe(0n);
-      expect(totals.totalMicros).toBe(micros(49)); // base fee only
+      expect(totals.apiOverageMicros).toBe(150_000_000n);
+      expect(totals.totalMicros).toBe(199_000_000n);
     });
 
-    it('charges nothing at exactly one over the API allowance (hard limit)', () => {
+    it('charges one call over the API allowance', () => {
       const totals = calculateInvoiceTotals({
         plan: PLANS.free, // 10_000 included API calls
         grossOutboundMicros: 0n,
         apiCallsTotal: 10_001, // exactly 1 over
         apiOverageRateMicros: DEFAULT_API_OVERAGE_RATE_MICROS,
       });
-      expect(totals.apiOverageMicros).toBe(0n);
-      expect(totals.totalMicros).toBe(0n);
+      expect(totals.apiOverageMicros).toBe(DEFAULT_API_OVERAGE_RATE_MICROS);
+      expect(totals.totalMicros).toBe(DEFAULT_API_OVERAGE_RATE_MICROS);
     });
 
     it('charges nothing at exactly the API allowance', () => {
@@ -287,11 +284,10 @@ describe('billing-calculator', () => {
         plan: PLANS.starter, // 100_000 included
         grossOutboundMicros: 0n,
         apiCallsTotal: 1_000_000_000, // ~1e9 over-limit calls
-        apiOverageRateMicros: 1_000n, // legacy nonzero rate is still inert
+        apiOverageRateMicros: 1_000n,
       });
-      // Hard quota: over-limit traffic was rejected with 429 and never billed.
-      expect(totals.apiOverageMicros).toBe(0n);
-      expect(totals.totalMicros).toBe(micros(49));
+      expect(totals.apiOverageMicros).toBe(999_900_000_000n);
+      expect(totals.totalMicros).toBe(999_949_000_000n);
     });
 
     it('keeps outbound overage exact at one microdollar past the allowance', () => {
