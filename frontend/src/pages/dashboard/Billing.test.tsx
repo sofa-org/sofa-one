@@ -621,6 +621,40 @@ describe('Billing — bounded payment-confirmation polling', () => {
   });
 });
 
+describe('Billing — open invoice UX', () => {
+  it('explains finalized vs open invoices and shows a non-interactive finalization hint for open rows', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_open',
+        status: 'open',
+        amount: '10.00',
+        currency: 'USD',
+      }),
+    ];
+    renderBilling();
+
+    expect(
+      await screen.findByText(
+        /Finalized invoices can be paid by Card or USDC\. Open invoices are estimates for the current period/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/payment options appear here after the period ends and the invoice is finalized/i),
+    ).toBeInTheDocument();
+
+    const finalizationHint = await screen.findByLabelText('Available after finalization');
+    expect(finalizationHint).toHaveTextContent('Available after finalization');
+
+    // Open invoices must not expose payment actions or call checkout/USDC.
+    expect(screen.queryByRole('button', { name: 'Card' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'USDC' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+    expect(createBillingCheckoutSessionAuth).not.toHaveBeenCalled();
+    expect(createBillingSubscriptionCheckoutSessionAuth).not.toHaveBeenCalled();
+  });
+});
+
 describe('Billing — invoice payment actions and user-visible errors', () => {
   let locationStub: { href: string };
   beforeEach(() => {

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Calendar,
   Check,
+  Clock,
   Coins,
   CreditCard,
   FileDown,
@@ -1757,7 +1758,10 @@ export default function BillingPage() {
       </DashboardCard>
 
       {/* Invoices */}
-      <DashboardCard title="Invoices" description="Historical billing statements.">
+      <DashboardCard
+        title="Invoices"
+        description="Finalized invoices can be paid by Card or USDC. Open invoices are estimates for the current period — payment options appear here after the period ends and the invoice is finalized."
+      >
         {invoicesLoading ? (
           <InlineSpinner />
         ) : invoicesError ? (
@@ -1799,6 +1803,7 @@ export default function BillingPage() {
                   const canPaySubscription =
                     !isUpgradeChargeInvoice && isInvoicePayableBySubscription(invoice);
                   const hasActions = canPayCard || canPayUsdc || canPaySubscription;
+                  const isOpenUnpaid = !paid && invoice.status === 'open';
                   const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
                   const isLoadingSubscriptionCheckout =
@@ -1885,6 +1890,15 @@ export default function BillingPage() {
                                   </button>
                                 )}
                               </>
+                            ) : isOpenUnpaid ? (
+                              <span
+                                className="inline-flex items-center gap-1 text-xs font-medium text-brand-muted"
+                                title="Payment will be available here after this billing period is finalized"
+                                aria-label="Available after finalization"
+                              >
+                                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                Available after finalization
+                              </span>
                             ) : null}
                             {invoice.pdfUrl && (
                               <a
@@ -1911,9 +1925,13 @@ export default function BillingPage() {
                                 {isLoadingPdf ? 'Downloading…' : 'PDF'}
                               </button>
                             )}
-                            {!paid && !hasActions && !invoice.pdfUrl && !canDownloadPdf && (
-                              <span className="text-xs text-brand-muted">—</span>
-                            )}
+                            {!paid &&
+                              !hasActions &&
+                              !isOpenUnpaid &&
+                              !invoice.pdfUrl &&
+                              !canDownloadPdf && (
+                                <span className="text-xs text-brand-muted">—</span>
+                              )}
                           </div>
                         </td>
                       </tr>
