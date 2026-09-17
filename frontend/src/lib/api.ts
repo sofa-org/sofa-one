@@ -275,14 +275,42 @@ export interface AssignBillingPlanRequest {
   planCode: string;
 }
 
-export interface AssignBillingPlanResponse {
-  planCode: string;
-  planName: string;
-  /** YYYY-MM the new plan takes effect (always the next UTC month). */
-  effectivePeriod: string;
-  effectiveFrom: string;
-  outcome: 'changed' | 'unchanged';
-}
+/**
+ * POST /v1/billing/plan result. Server owns amount, effective dates, and kind.
+ * - unchanged: already on the requested plan (idempotent)
+ * - payment_required: upgrade charge created; pay before entitlements change
+ * - scheduled: downgrade/lateral takes effect at the next UTC month boundary
+ * - changed: legacy alias for a scheduled outcome (treat like scheduled)
+ */
+export type AssignBillingPlanResponse =
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'unchanged';
+    }
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'payment_required';
+      changeId: string;
+      invoiceId: string;
+      amount: string;
+      currency: string;
+      kind: 'upgrade';
+    }
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'scheduled' | 'changed';
+      changeId?: string;
+      kind?: 'downgrade';
+    };
 
 export interface BillingTierBreakdown {
   tier: string;

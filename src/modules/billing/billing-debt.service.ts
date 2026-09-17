@@ -46,11 +46,15 @@ export class BillingDebtService {
       return { hasDebt: false, invoiceIds: [] };
     }
 
+    // Only usage_period invoices gate wallet/transaction operations. Abandoned
+    // plan_charge upgrade invoices must not block while current entitlement is
+    // unchanged (user can ignore an unpaid upgrade request).
     const invoices = await db.billingInvoice.findMany({
       where: {
         billingAccountId: account.id,
         status: 'finalized',
         paidAt: null,
+        purpose: 'usage_period',
       },
       select: { id: true },
       orderBy: { periodStart: 'asc' },

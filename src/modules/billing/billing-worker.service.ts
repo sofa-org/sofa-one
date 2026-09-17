@@ -9,9 +9,11 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { BillingService } from './billing.service';
 import { formatUtcMonth } from './billing.utils';
 import { BillingReconciliationService } from './billing-reconciliation.service';
+import { BillingPlanChangeService } from './billing-plan-change.service';
 import { UsdcPaymentService } from './onchain/usdc-payment.service';
 import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
+import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 import {
   STRIPE_CHARGE_KIND_OVERAGE,
   STRIPE_CLIENT,
@@ -84,6 +86,8 @@ export class BillingWorkerService implements OnModuleInit {
     private readonly securityEvents: SecurityEventService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe | null,
     @Optional() private readonly stripePayments?: StripePaymentService,
+    @Optional() private readonly planChanges?: BillingPlanChangeService,
+    @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -129,7 +133,10 @@ export class BillingWorkerService implements OnModuleInit {
       // Every bounded stage reports an aggregate success/failure result. Scoped
       // failures never throw out of the scheduler; they only flip the aggregate
       // so the final heartbeat is `failed` while unrelated work still runs.
-      let ok = await this.reconcileAndFinalizeAll();
+      // Subscription sync before lower-priority recovery (Gate 1 attempt 3).
+      let ok = await this.processSubscriptionSync();
+      ok = (await this.reconcileAndFinalizeAll()) && ok;
+      ok = (await this.applyDuePlanChanges()) && ok;
       ok = (await this.recoverUsdcClaims()) && ok;
       ok = (await this.recoverOverageCharges()) && ok;
       ok = (await this.retryDeferredStripeEvents()) && ok;
@@ -246,7 +253,11 @@ export class BillingWorkerService implements OnModuleInit {
     // Add current after loading historical invoices; iteration is explicitly
     // sorted below so older eligible periods drain before the current period.
     const openInvoices = await this.prisma.billingInvoice.findMany({
-      where: { billingAccountId: account.id, status: 'open' },
+      where: {
+        billingAccountId: account.id,
+        status: 'open',
+        purpose: 'usage_period',
+      },
       select: { periodStart: true, periodEnd: true },
       orderBy: { periodStart: 'asc' },
       take: 20,
@@ -426,6 +437,7 @@ export class BillingWorkerService implements OnModuleInit {
             SELECT 1 FROM "billing_invoices" i
             WHERE i."billing_account_id" = u."billing_account_id"
               AND i."period_start" = date_trunc('month', u."period_start", 'UTC')
+              AND i."purpose" = 'usage_period'
           )
         GROUP BY date_trunc('month', u."period_start", 'UTC')
       ),
@@ -553,6 +565,7 @@ export class BillingWorkerService implements OnModuleInit {
       where: {
         billingAccountId: account.id,
         status: 'finalized',
+        purpose: 'usage_period',
         paidAt: null,
         settlementAttemptId: null,
         paymentAttempts: {
@@ -607,6 +620,7 @@ export class BillingWorkerService implements OnModuleInit {
       where: {
         billingAccountId: account.id,
         status: 'finalized',
+        purpose: 'usage_period',
         paidAt: null,
         settlementAttemptId: null,
         periodEnd: { lte: new Date() },
@@ -783,8 +797,15 @@ export class BillingWorkerService implements OnModuleInit {
       findFirst?: (args: unknown) => Promise<any>;
     };
     if (typeof invoices.findFirst !== 'function') return true;
+    // Only usage_period invoices drive recurring materialization. A finalized
+    // plan_charge upgrade invoice must never be treated as the latest billing
+    // period or suppress the next open usage invoice.
     const latest = await invoices.findFirst({
-      where: { billingAccountId: account.id, status: 'finalized' },
+      where: {
+        billingAccountId: account.id,
+        status: 'finalized',
+        purpose: 'usage_period',
+      },
       orderBy: { periodStart: 'desc' },
       select: { periodEnd: true },
     });
@@ -793,7 +814,11 @@ export class BillingWorkerService implements OnModuleInit {
     const nextStart = latest.periodEnd as Date;
     const nextEnd = new Date(Date.UTC(nextStart.getUTCFullYear(), nextStart.getUTCMonth() + 2, 1));
     const existing = await invoices.findFirst({
-      where: { billingAccountId: account.id, periodStart: nextStart },
+      where: {
+        billingAccountId: account.id,
+        periodStart: nextStart,
+        purpose: 'usage_period',
+      },
       select: { id: true },
     });
     if (existing) return true;
@@ -841,7 +866,12 @@ export class BillingWorkerService implements OnModuleInit {
   ): Promise<StageResult> {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const openInvoices = await this.prisma.billingInvoice.findMany({
-      where: { billingAccountId: account.id, status: 'open', periodEnd: { lte: cutoff } },
+      where: {
+        billingAccountId: account.id,
+        status: 'open',
+        purpose: 'usage_period',
+        periodEnd: { lte: cutoff },
+      },
       select: { id: true, billingAccountId: true, periodStart: true },
       orderBy: [{ periodStart: 'asc' }, { id: 'asc' }],
       take: 20,
@@ -919,6 +949,41 @@ export class BillingWorkerService implements OnModuleInit {
    * scans chain events, never fabricates hashes/receipts, and is guarded by the
    * claim's evidence-aware CAS. Bounded batch per tick.
    */
+  /**
+   * Applies scheduled downgrade/lateral plan changes whose effectiveAt has been
+   * reached. Uses BillingPlanChangeService CAS + period locks; failures are
+   * scoped and do not abort the rest of the tick.
+   */
+  private async applyDuePlanChanges(): Promise<StageResult> {
+    if (!this.planChanges) return true;
+    try {
+      await this.planChanges.applyDueScheduledChanges(new Date(), 50);
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `Billing worker could not apply due plan changes: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+      return false;
+    }
+  }
+
+  /** Process durable Stripe subscription mirror sync intents (outside DB TX). */
+  private async processSubscriptionSync(): Promise<StageResult> {
+    if (!this.subscriptionSync) return true;
+    try {
+      const result = await this.subscriptionSync.processDue(this.workerId, 25);
+      // needs_review requires operator attention; retryable means this tick did
+      // not finish the sync — report failed for heartbeat while other work continues.
+      if (result.needsReview > 0 || result.retryable > 0) return false;
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `Billing worker subscription sync failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+      return false;
+    }
+  }
+
   private async recoverUsdcClaims(): Promise<StageResult> {
     const due = await this.prisma.billingPaymentAttempt.findMany({
       where: {

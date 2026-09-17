@@ -41,8 +41,67 @@ const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 6;
 const POLL_MAX_DURATION_MS = 10000;
 const PENDING_INVOICE_STORAGE_KEY = 'sofa-one.billing.pendingInvoiceId';
+/** Survives Stripe return so an unpaid upgrade stays visibly pending. */
+const PENDING_PLAN_UPGRADE_STORAGE_KEY = 'sofa-one.billing.pendingPlanUpgrade';
 
 type PaymentNoticeType = 'processing' | 'paid' | 'timeout' | 'cancel';
+
+/** Server-owned pending upgrade charge; never invent amount or dates client-side. */
+type PendingPlanUpgrade = {
+  invoiceId: string;
+  planCode: string;
+  planName: string;
+  amount: string;
+  currency: string;
+  effectivePeriod: string;
+  effectiveFrom: string;
+};
+
+type PlanChangeNoticeType = 'success' | 'error' | 'info' | 'pending';
+
+type PlanChangeNotice = {
+  type: PlanChangeNoticeType;
+  title: string;
+  message: string;
+};
+
+function readPendingPlanUpgrade(): PendingPlanUpgrade | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PendingPlanUpgrade>;
+    if (
+      typeof parsed.invoiceId !== 'string' ||
+      typeof parsed.planCode !== 'string' ||
+      typeof parsed.planName !== 'string' ||
+      typeof parsed.amount !== 'string' ||
+      typeof parsed.currency !== 'string' ||
+      typeof parsed.effectivePeriod !== 'string' ||
+      typeof parsed.effectiveFrom !== 'string'
+    ) {
+      return null;
+    }
+    return {
+      invoiceId: parsed.invoiceId,
+      planCode: parsed.planCode,
+      planName: parsed.planName,
+      amount: parsed.amount,
+      currency: parsed.currency,
+      effectivePeriod: parsed.effectivePeriod,
+      effectiveFrom: parsed.effectiveFrom,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePendingPlanUpgrade(value: PendingPlanUpgrade | null): void {
+  if (!value) {
+    sessionStorage.removeItem(PENDING_PLAN_UPGRADE_STORAGE_KEY);
+    return;
+  }
+  sessionStorage.setItem(PENDING_PLAN_UPGRADE_STORAGE_KEY, JSON.stringify(value));
+}
 
 function isIntegerString(value: string): boolean {
   return /^\d+$/.test(value.trim());
@@ -77,6 +136,38 @@ function formatPeriodLabel(period: string): string {
   const date = new Date(Number(year), Number(month) - 1, 1);
   if (Number.isNaN(date.getTime())) return period;
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+}
+
+function formatEffectiveDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+/** Relative intent for button labels only — server decides outcome and amounts. */
+function planPriceRank(plan: BillingPlan): bigint | null {
+  return usdStringToMicros(plan.basePrice);
+}
+
+function isLikelyUpgrade(from: BillingPlan | null, to: BillingPlan): boolean {
+  if (!from) return false;
+  const fromRank = planPriceRank(from);
+  const toRank = planPriceRank(to);
+  if (fromRank === null || toRank === null) return false;
+  return toRank > fromRank;
+}
+
+function isLikelyDowngrade(from: BillingPlan | null, to: BillingPlan): boolean {
+  if (!from) return false;
+  const fromRank = planPriceRank(from);
+  const toRank = planPriceRank(to);
+  if (fromRank === null || toRank === null) return false;
+  return toRank < fromRank;
 }
 
 function formatInvoiceStatus(status: string): string {
@@ -329,10 +420,11 @@ export default function BillingPage() {
 
   const [planChangeSelectedId, setPlanChangeSelectedId] = useState<string | null>(null);
   const [planChangeLoading, setPlanChangeLoading] = useState(false);
-  const [planChangeNotice, setPlanChangeNotice] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  const [planChangeNotice, setPlanChangeNotice] = useState<PlanChangeNotice | null>(null);
+  const [pendingUpgrade, setPendingUpgrade] = useState<PendingPlanUpgrade | null>(() =>
+    readPendingPlanUpgrade(),
+  );
+  const [upgradeUsdcOpen, setUpgradeUsdcOpen] = useState(false);
 
   // Refs for invoice loading: abort previous in-flight request and ignore stale responses.
   const invoiceLoadGenerationRef = useRef(0);
@@ -363,11 +455,32 @@ export default function BillingPage() {
     return plans.plans.find((plan) => plan.id === plans.currentPlanId) ?? null;
   }, [plans]);
 
+  const pendingUpgradeInvoice = useMemo(() => {
+    if (!pendingUpgrade) return null;
+    return invoices.find((inv) => inv.id === pendingUpgrade.invoiceId) ?? null;
+  }, [invoices, pendingUpgrade]);
+
+  const pendingUpgradePaid = useMemo(() => {
+    if (!pendingUpgradeInvoice) return false;
+    return isInvoicePaid(pendingUpgradeInvoice);
+  }, [pendingUpgradeInvoice]);
+
+  const pendingUpgradeActivated = useMemo(() => {
+    if (!pendingUpgrade || !plans) return false;
+    return plans.currentPlanId === pendingUpgrade.planCode;
+  }, [pendingUpgrade, plans]);
+
   useEffect(() => {
     if (plans && planChangeSelectedId === null) {
       setPlanChangeSelectedId(plans.currentPlanId);
     }
   }, [plans, planChangeSelectedId]);
+
+  const setPendingUpgradeState = useCallback((value: PendingPlanUpgrade | null) => {
+    writePendingPlanUpgrade(value);
+    setPendingUpgrade(value);
+    if (!value) setUpgradeUsdcOpen(false);
+  }, []);
 
   const loadPlans = useCallback(
     async (signal?: AbortSignal) => {
@@ -677,6 +790,9 @@ export default function BillingPage() {
               'paid',
               'Payment confirmed. Your invoice has been marked as paid.',
             );
+            // Plan upgrades activate only after settlement — refresh plans/summary too.
+            setPlansRetryNonce((n) => n + 1);
+            setSummaryRetryNonce((n) => n + 1);
             return;
           }
 
@@ -773,6 +889,69 @@ export default function BillingPage() {
     }
   }, [invoices, usdcPanelInvoiceId]);
 
+  // Close upgrade USDC panel once the upgrade charge is paid.
+  useEffect(() => {
+    if (!upgradeUsdcOpen || !pendingUpgrade) return;
+    if (pendingUpgradeInvoice && isInvoicePaid(pendingUpgradeInvoice)) {
+      setUpgradeUsdcOpen(false);
+    }
+  }, [upgradeUsdcOpen, pendingUpgrade, pendingUpgradeInvoice]);
+
+  // After upgrade payment settles, show pending activation until plans report the new current plan.
+  const pendingActivationRefreshRef = useRef(false);
+  useEffect(() => {
+    if (!pendingUpgrade) {
+      pendingActivationRefreshRef.current = false;
+      return;
+    }
+
+    if (pendingUpgradeActivated) {
+      pendingActivationRefreshRef.current = false;
+      setPlanChangeNotice({
+        type: 'success',
+        title: 'Upgrade activated',
+        message: `${pendingUpgrade.planName} is now your current plan.`,
+      });
+      setPendingUpgradeState(null);
+      setPlanChangeSelectedId(pendingUpgrade.planCode);
+      return;
+    }
+
+    if (pendingUpgradePaid) {
+      setPlanChangeNotice({
+        type: 'pending',
+        title: 'Upgrade activating',
+        message: `Payment received for ${pendingUpgrade.planName}. Your plan updates as soon as confirmation finishes — it is not active yet.`,
+      });
+      setUpgradeUsdcOpen(false);
+      // One extra plans/summary refresh after payment; avoid a tight loop.
+      if (!pendingActivationRefreshRef.current) {
+        pendingActivationRefreshRef.current = true;
+        setPlansRetryNonce((n) => n + 1);
+        setSummaryRetryNonce((n) => n + 1);
+      }
+    }
+  }, [
+    pendingUpgrade,
+    pendingUpgradeActivated,
+    pendingUpgradePaid,
+    setPendingUpgradeState,
+  ]);
+
+  // If the pending upgrade invoice is no longer payable (void/uncollectible) and unpaid, clear it.
+  useEffect(() => {
+    if (!pendingUpgrade || !pendingUpgradeInvoice) return;
+    if (isInvoicePaid(pendingUpgradeInvoice)) return;
+    if (isInvoicePayable(pendingUpgradeInvoice)) return;
+    setPlanChangeNotice({
+      type: 'error',
+      title: 'Upgrade charge unavailable',
+      message:
+        'The upgrade payment is no longer available. Choose a plan again or contact support if you already paid.',
+    });
+    setPendingUpgradeState(null);
+  }, [pendingUpgrade, pendingUpgradeInvoice, setPendingUpgradeState]);
+
   const handlePayInvoice = useCallback(
     async (invoice: BillingInvoice) => {
       if (!isInvoicePayableByCard(invoice)) return;
@@ -846,40 +1025,134 @@ export default function BillingPage() {
     [getToken, pdfLoadingId],
   );
 
+  const refreshBillingAfterPlanEvent = useCallback(() => {
+    setPlansRetryNonce((n) => n + 1);
+    setSummaryRetryNonce((n) => n + 1);
+    setInvoicesRetryNonce((n) => n + 1);
+  }, []);
+
   const handlePlanChange = useCallback(
     async (planCode: string) => {
       const targetPlan = plans?.plans.find((p) => p.id === planCode);
       if (
         !planCode ||
-        planCode === plans?.currentPlanId ||
         planChangeLoading ||
         !targetPlan ||
         !isSelfServicePlan(targetPlan)
-      )
+      ) {
         return;
+      }
+      // Same current plan with no pending upgrade: local no-op.
+      if (planCode === plans?.currentPlanId && !pendingUpgrade) {
+        setPlanChangeNotice({
+          type: 'info',
+          title: 'Already on this plan',
+          message: `${targetPlan.name} is your current plan. No change was requested.`,
+        });
+        return;
+      }
+
       setPlanChangeLoading(true);
       setPlanChangeNotice(null);
       try {
         const result = await assignBillingPlanAuth(getToken, planCode);
+
+        if (result.outcome === 'unchanged') {
+          setPendingUpgradeState(null);
+          setPlanChangeNotice({
+            type: 'info',
+            title: 'Already on this plan',
+            message: `${result.planName} is already your current plan.`,
+          });
+          refreshBillingAfterPlanEvent();
+          return;
+        }
+
+        if (result.outcome === 'payment_required') {
+          const pending: PendingPlanUpgrade = {
+            invoiceId: result.invoiceId,
+            planCode: result.planCode,
+            planName: result.planName,
+            amount: result.amount,
+            currency: result.currency,
+            effectivePeriod: result.effectivePeriod,
+            effectiveFrom: result.effectiveFrom,
+          };
+          setPendingUpgradeState(pending);
+          setPlanChangeSelectedId(result.planCode);
+          setPlanChangeNotice({
+            type: 'pending',
+            title: 'Payment required to upgrade',
+            message: `${result.planName} stays pending until payment is confirmed. Your current plan remains active until then.`,
+          });
+          refreshBillingAfterPlanEvent();
+          return;
+        }
+
+        // scheduled | changed (legacy alias)
+        setPendingUpgradeState(null);
+        setPlanChangeSelectedId(result.planCode);
         setPlanChangeNotice({
           type: 'success',
-          message:
-            result.outcome === 'changed'
-              ? `Plan scheduled: ${result.planName} takes effect on ${formatPeriodLabel(result.effectivePeriod)}.`
-              : `${result.planName} is already scheduled for ${formatPeriodLabel(result.effectivePeriod)}.`,
+          title: 'Downgrade scheduled',
+          message: `${result.planName} begins on ${formatEffectiveDate(
+            result.effectiveFrom,
+          )} (${formatPeriodLabel(result.effectivePeriod)}). Your current plan stays active until then.`,
         });
-        setPlansRetryNonce((n) => n + 1);
+        refreshBillingAfterPlanEvent();
       } catch (err: unknown) {
         setPlanChangeNotice({
           type: 'error',
+          title: 'Could not change plan',
           message: getApiErrorMessage(err) || 'Could not change plan. Please try again.',
         });
       } finally {
         setPlanChangeLoading(false);
       }
     },
-    [getToken, plans?.currentPlanId, plans?.plans, planChangeLoading],
+    [
+      getToken,
+      plans?.currentPlanId,
+      plans?.plans,
+      planChangeLoading,
+      pendingUpgrade,
+      setPendingUpgradeState,
+      refreshBillingAfterPlanEvent,
+    ],
   );
+
+  const handlePayUpgradeInvoice = useCallback(async () => {
+    if (!pendingUpgrade) return;
+    const invoice =
+      pendingUpgradeInvoice ??
+      ({
+        id: pendingUpgrade.invoiceId,
+        period: pendingUpgrade.effectivePeriod,
+        status: 'finalized',
+        amount: pendingUpgrade.amount,
+        currency: pendingUpgrade.currency,
+        createdAt: pendingUpgrade.effectiveFrom,
+        paidAt: null,
+        pdfUrl: null,
+        planVersionId: null,
+      } satisfies BillingInvoice);
+
+    // Upgrade charges must use one-time card checkout — never subscription.
+    if (!isInvoicePayableByCard(invoice) && pendingUpgradeInvoice) return;
+    if (pendingUpgradeInvoice && !isInvoicePayableByCard(pendingUpgradeInvoice)) return;
+
+    setCheckoutLoadingId(pendingUpgrade.invoiceId);
+    setCheckoutError(null);
+    try {
+      const response = await createBillingCheckoutSessionAuth(getToken, pendingUpgrade.invoiceId);
+      sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, pendingUpgrade.invoiceId);
+      window.location.href = response.checkoutUrl;
+    } catch (err: unknown) {
+      setCheckoutError(friendlyCheckoutError(err));
+    } finally {
+      setCheckoutLoadingId(null);
+    }
+  }, [getToken, pendingUpgrade, pendingUpgradeInvoice]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -914,8 +1187,9 @@ export default function BillingPage() {
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
         <p className="font-medium">Secure checkout</p>
         <p className="mt-1 text-amber-700">
-          Eligible invoices can be paid by card or USDC on Base. All payment amounts and recipient
-          addresses are set by the server. Automatic plan upgrades are not enabled.
+          Eligible invoices can be paid by card or USDC. All payment amounts and recipient addresses
+          are set by the server. Upgrades activate only after payment confirmation; downgrades begin
+          at the next UTC billing period.
         </p>
       </div>
 
@@ -966,15 +1240,30 @@ export default function BillingPage() {
 
       {planChangeNotice && (
         <div
+          role="status"
+          aria-live="polite"
           className={`rounded-xl border p-4 text-sm shadow-sm ${
             planChangeNotice.type === 'success'
               ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-red-200 bg-red-50 text-red-800'
+              : planChangeNotice.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-800'
+                : planChangeNotice.type === 'pending'
+                  ? 'border-amber-200 bg-amber-50 text-amber-900'
+                  : 'border-blue-200 bg-blue-50 text-blue-800'
           }`}
         >
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 shrink-0 text-current" />
-            <span>{planChangeNotice.message}</span>
+            {planChangeNotice.type === 'success' ? (
+              <Check className="h-5 w-5 shrink-0 text-green-600" aria-hidden="true" />
+            ) : planChangeNotice.type === 'pending' ? (
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-amber-600" aria-hidden="true" />
+            ) : (
+              <AlertCircle className="h-5 w-5 shrink-0 text-current" aria-hidden="true" />
+            )}
+            <div>
+              <p className="font-medium">{planChangeNotice.title}</p>
+              <p className="mt-0.5 opacity-90">{planChangeNotice.message}</p>
+            </div>
           </div>
         </div>
       )}
@@ -998,131 +1287,332 @@ export default function BillingPage() {
         />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Current plan */}
-        <DashboardCard
-          title="Current Plan"
-          description="Your active plan and included allowances."
-          className="lg:col-span-1"
-        >
-          <div className="mb-5 flex justify-end">
-            <Link
-              to="/pricing"
-              state={{ fromBilling: true }}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent transition-colors hover:text-brand-accent-hover hover:underline underline-offset-4"
-            >
-              Compare all plans
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+      {/* Plan switching */}
+      <DashboardCard
+        title="Your Plan"
+        description="Upgrades activate after payment confirmation. Downgrades begin next billing period."
+      >
+        <div className="mb-5 flex justify-end">
+          <Link
+            to="/pricing"
+            state={{ fromBilling: true }}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-accent transition-colors hover:text-brand-accent-hover hover:underline underline-offset-4"
+          >
+            Compare all plans
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+
+        {plansLoading ? (
+          <InlineSpinner />
+        ) : !currentPlan || !plans ? (
+          <div className="py-8 text-center">
+            <p className="text-brand-muted">No plan information available.</p>
           </div>
-          {plansLoading ? (
-            <InlineSpinner />
-          ) : !currentPlan ? (
-            <div className="py-8 text-center">
-              <p className="text-brand-muted">No plan information available.</p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
+        ) : (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-brand-bg/50 p-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-accent/10">
-                  <CreditCard className="h-6 w-6 text-brand-accent" />
+                  <CreditCard className="h-6 w-6 text-brand-accent" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-brand-text">{currentPlan.name}</p>
-                  <p className="text-xs text-brand-muted">{currentPlan.billingPeriod}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-lg font-semibold text-brand-text">{currentPlan.name}</p>
+                    <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                      Current
+                    </span>
+                    {pendingUpgrade && !pendingUpgradeActivated && (
+                      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                        Upgrade pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-brand-muted">{currentPlan.billingPeriod}</p>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-brand-muted">
+                    {currentPlan.description}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm leading-6 text-brand-muted">{currentPlan.description}</p>
-              {currentPlan.features.length > 0 && (
-                <ul className="space-y-2">
-                  {currentPlan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm text-brand-text">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <p className="text-sm font-semibold text-brand-text sm:text-right">
+                {formatAmount(currentPlan.basePrice, currentPlan.currency)}
+                <span className="block text-xs font-normal text-brand-muted">base / period</span>
+              </p>
+            </div>
 
-              {plans?.scheduledPlan && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                    <div>
-                      <p className="font-semibold text-blue-800">Scheduled plan</p>
-                      <p className="text-blue-700">
-                        {plans.scheduledPlan.planName} ({plans.scheduledPlan.planCode}) takes effect
-                        on {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}.
-                      </p>
-                    </div>
+            {plans.scheduledPlan && (
+              <div
+                role="status"
+                className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"
+              >
+                <div className="flex items-start gap-2">
+                  <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+                  <div>
+                    <p className="font-semibold">Scheduled downgrade</p>
+                    <p className="mt-0.5 text-blue-700">
+                      {plans.scheduledPlan.planName} begins{' '}
+                      {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}. Your current access
+                      stays until then.
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4">
-                <label
-                  htmlFor="plan-change-select"
-                  className="text-[11px] font-bold uppercase tracking-widest text-brand-muted"
-                >
-                  Change plan
-                </label>
-                <select
-                  id="plan-change-select"
-                  value={planChangeSelectedId ?? plans?.currentPlanId}
-                  onChange={(event) => setPlanChangeSelectedId(event.target.value)}
-                  disabled={planChangeLoading || !plans || plans.plans.length === 0}
-                  className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
-                >
-                  {plans?.plans.map((plan) => {
-                    const selfService = isSelfServicePlan(plan);
-                    return (
-                      <option key={plan.id} value={plan.id} disabled={!selfService}>
-                        {selfService
-                          ? `${plan.name} — ${formatAmount(plan.basePrice, plan.currency)}`
-                          : `${plan.name} — Contact sales`}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="text-xs text-brand-muted">
-                  Plan changes take effect at the start of the next UTC month. Your current plan
-                  stays active until then.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const selected = planChangeSelectedId ?? plans?.currentPlanId;
-                    if (selected) void handlePlanChange(selected);
-                  }}
-                  disabled={(() => {
-                    const selectedId = planChangeSelectedId ?? plans?.currentPlanId;
-                    const selectedPlan = plans?.plans.find((p) => p.id === selectedId);
-                    return (
-                      planChangeLoading ||
-                      selectedId === plans?.currentPlanId ||
-                      !selectedPlan ||
-                      !isSelfServicePlan(selectedPlan)
-                    );
-                  })()}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {planChangeLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Check className="h-3.5 w-3.5" />
+            {pendingUpgrade && !pendingUpgradeActivated && (
+              <div
+                role="region"
+                aria-label="Upgrade payment required"
+                className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                      <Zap className="h-5 w-5 text-amber-700" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-amber-950">
+                        {pendingUpgradePaid
+                          ? `Activating ${pendingUpgrade.planName}`
+                          : `Pay to upgrade to ${pendingUpgrade.planName}`}
+                      </p>
+                      <p className="mt-1 text-sm text-amber-900/90">
+                        {pendingUpgradePaid
+                          ? 'Payment is confirmed. The new plan is not active until the server finishes applying it.'
+                          : 'This charge is set by the server. Your current plan stays active until payment is confirmed.'}
+                      </p>
+                      {!pendingUpgradePaid && (
+                        <p className="mt-2 text-sm font-semibold text-amber-950">
+                          Amount due: {formatAmount(pendingUpgrade.amount, pendingUpgrade.currency)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {!pendingUpgradePaid && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handlePayUpgradeInvoice()}
+                        disabled={
+                          checkoutLoadingId === pendingUpgrade.invoiceId ||
+                          (pendingUpgradeInvoice !== null &&
+                            !isInvoicePayableByCard(pendingUpgradeInvoice))
+                        }
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {checkoutLoadingId === pendingUpgrade.invoiceId ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {checkoutLoadingId === pendingUpgrade.invoiceId
+                          ? 'Redirecting…'
+                          : 'Pay with card'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUpgradeUsdcOpen((open) => !open)}
+                        disabled={
+                          pendingUpgradeInvoice !== null &&
+                          !isInvoicePayableByUsdc(pendingUpgradeInvoice)
+                        }
+                        aria-expanded={upgradeUsdcOpen}
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60 ${
+                          upgradeUsdcOpen
+                            ? 'border-brand-border bg-brand-surface text-brand-text'
+                            : 'border-brand-border bg-white text-brand-text hover:bg-brand-surface'
+                        }`}
+                      >
+                        <Coins className="h-3.5 w-3.5" aria-hidden="true" />
+                        {upgradeUsdcOpen ? 'Close USDC' : 'Pay with USDC'}
+                      </button>
+                    </div>
                   )}
-                  {planChangeLoading ? 'Scheduling…' : 'Schedule plan change'}
-                </button>
+                </div>
+
+                {upgradeUsdcOpen &&
+                  !pendingUpgradePaid &&
+                  pendingUpgradeInvoice &&
+                  isInvoicePayableByUsdc(pendingUpgradeInvoice) && (
+                    <UsdcPaymentPanel
+                      invoice={pendingUpgradeInvoice}
+                      getToken={getToken}
+                      onChange={async () => {
+                        const ok = await refreshInvoicesSilently();
+                        if (ok) {
+                          setPlansRetryNonce((n) => n + 1);
+                          setSummaryRetryNonce((n) => n + 1);
+                        }
+                        return ok;
+                      }}
+                    />
+                  )}
+
+                {upgradeUsdcOpen && !pendingUpgradeInvoice && !pendingUpgradePaid && (
+                  <p className="text-sm text-amber-900">
+                    Loading the upgrade invoice… If it does not appear, refresh billing and try
+                    again.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted">
+                Choose a plan
+              </p>
+              <p className="mb-4 text-xs text-brand-muted">
+                Upgrades require a one-time prorated charge and stay pending until payment is
+                confirmed. Downgrades are scheduled for the next UTC month and keep current access
+                until then.
+              </p>
+              <div
+                className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+                role="list"
+                aria-label="Available plans"
+              >
+                {plans.plans.map((plan) => {
+                  const selfService = isSelfServicePlan(plan);
+                  const isCurrent = plan.id === plans.currentPlanId;
+                  const isScheduledTarget = plans.scheduledPlan?.planCode === plan.id;
+                  const isPendingUpgradeTarget =
+                    pendingUpgrade?.planCode === plan.id && !pendingUpgradeActivated;
+                  const selected = (planChangeSelectedId ?? plans.currentPlanId) === plan.id;
+                  const upgradeIntent = isLikelyUpgrade(currentPlan, plan);
+                  const downgradeIntent = isLikelyDowngrade(currentPlan, plan);
+
+                  let badge: { label: string; className: string } | null = null;
+                  if (isCurrent) {
+                    badge = {
+                      label: 'Current',
+                      className: 'bg-green-100 text-green-700',
+                    };
+                  } else if (isPendingUpgradeTarget) {
+                    badge = {
+                      label: pendingUpgradePaid ? 'Pending activation' : 'Payment required',
+                      className: 'bg-amber-100 text-amber-800',
+                    };
+                  } else if (isScheduledTarget) {
+                    badge = {
+                      label: 'Scheduled',
+                      className: 'bg-blue-100 text-blue-700',
+                    };
+                  }
+
+                  const actionLabel = (() => {
+                    if (!selfService) return 'Contact sales';
+                    if (isCurrent && !isPendingUpgradeTarget) return 'Current plan';
+                    if (isPendingUpgradeTarget && !pendingUpgradePaid) return 'Complete payment';
+                    if (isPendingUpgradeTarget && pendingUpgradePaid) return 'Activating…';
+                    if (isScheduledTarget) return 'Already scheduled';
+                    if (upgradeIntent) return `Upgrade to ${plan.name}`;
+                    if (downgradeIntent) return `Schedule ${plan.name}`;
+                    return `Switch to ${plan.name}`;
+                  })();
+
+                  const actionDisabled =
+                    planChangeLoading ||
+                    !selfService ||
+                    (isCurrent && !isPendingUpgradeTarget) ||
+                    (isPendingUpgradeTarget && pendingUpgradePaid) ||
+                    (isScheduledTarget && !upgradeIntent);
+
+                  return (
+                    <div
+                      key={plan.id}
+                      role="listitem"
+                      className={`flex flex-col rounded-2xl border p-4 shadow-sm transition-all ${
+                        isPendingUpgradeTarget
+                          ? 'border-amber-300 bg-amber-50/40 ring-1 ring-amber-200'
+                          : isCurrent
+                            ? 'border-green-200 bg-green-50/30 ring-1 ring-green-100'
+                            : isScheduledTarget
+                              ? 'border-blue-200 bg-blue-50/40 ring-1 ring-blue-100'
+                              : selected
+                                ? 'border-brand-accent/50 bg-white ring-1 ring-brand-accent/30'
+                                : 'border-brand-border bg-white hover:border-brand-accent/40 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-base font-semibold text-brand-text">{plan.name}</p>
+                          <p className="mt-0.5 text-xs text-brand-muted">{plan.billingPeriod}</p>
+                        </div>
+                        {badge && (
+                          <span
+                            className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 text-lg font-semibold text-brand-text">
+                        {selfService
+                          ? formatAmount(plan.basePrice, plan.currency)
+                          : 'Custom'}
+                      </p>
+                      <p className="mt-2 line-clamp-2 flex-1 text-xs leading-5 text-brand-muted">
+                        {plan.description}
+                      </p>
+                      {plan.features.length > 0 && (
+                        <ul className="mt-3 space-y-1.5">
+                          {plan.features.slice(0, 3).map((feature, index) => (
+                            <li
+                              key={index}
+                              className="flex items-start gap-1.5 text-xs text-brand-text"
+                            >
+                              <Check
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600"
+                                aria-hidden="true"
+                              />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPlanChangeSelectedId(plan.id);
+                          if (isPendingUpgradeTarget && !pendingUpgradePaid) {
+                            // Focus payment panel — already visible above.
+                            return;
+                          }
+                          if (!selfService || isCurrent) return;
+                          void handlePlanChange(plan.id);
+                        }}
+                        disabled={actionDisabled && !(isPendingUpgradeTarget && !pendingUpgradePaid)}
+                        aria-current={isCurrent ? 'true' : undefined}
+                        className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {planChangeLoading && planChangeSelectedId === plan.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : isCurrent ? (
+                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : upgradeIntent ? (
+                          <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {planChangeLoading && planChangeSelectedId === plan.id
+                          ? 'Working…'
+                          : actionLabel}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
-        </DashboardCard>
+          </div>
+        )}
+      </DashboardCard>
 
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Usage summary */}
         <DashboardCard
           title="Usage This Period"
           description="Track outbound volume, API calls, and active wallets."
-          className="lg:col-span-2"
+          className="lg:col-span-3"
         >
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
@@ -1303,7 +1793,11 @@ export default function BillingPage() {
                   const paid = isInvoicePaid(invoice);
                   const canPayCard = isInvoicePayableByCard(invoice);
                   const canPayUsdc = isInvoicePayableByUsdc(invoice);
-                  const canPaySubscription = isInvoicePayableBySubscription(invoice);
+                  // Upgrade plan-charge invoices must never use subscription checkout.
+                  const isUpgradeChargeInvoice =
+                    pendingUpgrade?.invoiceId === invoice.id;
+                  const canPaySubscription =
+                    !isUpgradeChargeInvoice && isInvoicePayableBySubscription(invoice);
                   const hasActions = canPayCard || canPayUsdc || canPaySubscription;
                   const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;

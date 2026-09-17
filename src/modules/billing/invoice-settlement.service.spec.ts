@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
 import { InvoiceSettlementService } from './invoice-settlement.service';
+import { BillingPlanChangeService } from './billing-plan-change.service';
 
 describe('InvoiceSettlementService', () => {
   let service: InvoiceSettlementService;
@@ -9,16 +10,23 @@ describe('InvoiceSettlementService', () => {
   const attemptUpdateMany = jest.fn();
   const invoiceFindUnique = jest.fn();
   const invoiceUpdateMany = jest.fn();
+  const applyPaidPlanCharge = jest.fn();
+  const extendEntitlementForPaidUsageInvoice = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [InvoiceSettlementService],
+      providers: [
+        InvoiceSettlementService,
+        {
+          provide: BillingPlanChangeService,
+          useValue: { applyPaidPlanCharge, extendEntitlementForPaidUsageInvoice },
+        },
+      ],
     }).compile();
     service = module.get<InvoiceSettlementService>(InvoiceSettlementService);
 
-    // The service takes stable row locks (FOR UPDATE) on the attempt and the
-    // invoice before re-reading them through the same interactive tx.
+    // Soft-read invoice meta, then FOR UPDATE attempt → invoice, then period lock.
     queryRaw.mockImplementation((strings: TemplateStringsArray) => {
       const sql = strings.join('');
       if (sql.includes('billing_payment_attempts')) return Promise.resolve([{ id: 'att-stripe' }]);
@@ -27,13 +35,20 @@ describe('InvoiceSettlementService', () => {
     });
     attemptUpdateMany.mockResolvedValue({ count: 1 });
     invoiceUpdateMany.mockResolvedValue({ count: 1 });
+    executeRaw.mockResolvedValue(undefined);
+    // Default: soft-read + locked re-read both see an unpaid finalized invoice.
+    // Tests that need multi-step sequences override with mockResolvedValueOnce.
+    invoiceFindUnique.mockResolvedValue(finalizedInvoice());
+    attemptFindUnique.mockResolvedValue(succeededAttempt());
   });
 
   // The interactive transaction client is the only dependency; the service
   // locks the attempt + invoice rows, re-reads them, validates the allocation
   // preconditions, then performs guarded CAS updates.
+  const executeRaw = jest.fn();
   const tx = {
     $queryRaw: queryRaw,
+    $executeRaw: executeRaw,
     billingPaymentAttempt: { findUnique: attemptFindUnique, updateMany: attemptUpdateMany },
     billingInvoice: { findUnique: invoiceFindUnique, updateMany: invoiceUpdateMany },
   } as any;
@@ -52,11 +67,14 @@ describe('InvoiceSettlementService', () => {
   const finalizedInvoice = (overrides: Record<string, unknown> = {}) => ({
     id: 'inv-1',
     status: 'finalized',
+    purpose: 'usage_period',
     totalMicros: 49_000_000n,
     allocatedMicros: 0n,
     currency: 'USD',
     paidAt: null,
     settlementAttemptId: null,
+    billingAccountId: 'acc-1',
+    periodStart: new Date('2026-08-01T00:00:00.000Z'),
     ...overrides,
   });
 
@@ -81,7 +99,17 @@ describe('InvoiceSettlementService', () => {
   describe('coverage-first allocation', () => {
     it('allocates a full single-rail attempt and marks the invoice paid', async () => {
       attemptFindUnique.mockResolvedValue(succeededAttempt());
-      invoiceFindUnique.mockResolvedValue(finalizedInvoice());
+      // soft-read meta → locked re-read → post-paid activation re-read
+      invoiceFindUnique
+        .mockResolvedValueOnce(finalizedInvoice())
+        .mockResolvedValueOnce(finalizedInvoice())
+        .mockResolvedValueOnce(
+          finalizedInvoice({
+            paidAt: new Date(),
+            allocatedMicros: 49_000_000n,
+            settlementAttemptId: 'att-stripe',
+          }),
+        );
 
       const result = await service.settleInvoice(tx, {
         id: 'att-stripe',
@@ -118,6 +146,98 @@ describe('InvoiceSettlementService', () => {
           settlementAttemptId: 'att-stripe',
         },
       });
+      // usage_period full pay extends renewal entitlement, not upgrade apply.
+      expect(applyPaidPlanCharge).not.toHaveBeenCalled();
+      expect(extendEntitlementForPaidUsageInvoice).toHaveBeenCalledWith(
+        tx,
+        'inv-1',
+        expect.any(Date),
+        { periodLockAlreadyHeld: true },
+      );
+    });
+
+    it('applies plan change only on first full settlement of a plan_charge invoice', async () => {
+      attemptFindUnique.mockResolvedValue(succeededAttempt({ amountMicros: 25_000_000n }));
+      const charge = finalizedInvoice({
+        purpose: 'plan_charge',
+        totalMicros: 25_000_000n,
+      });
+      invoiceFindUnique
+        .mockResolvedValueOnce(charge) // soft-read
+        .mockResolvedValueOnce(charge) // locked re-read
+        .mockResolvedValueOnce(
+          finalizedInvoice({
+            purpose: 'plan_charge',
+            totalMicros: 25_000_000n,
+            allocatedMicros: 25_000_000n,
+            paidAt: new Date(),
+            settlementAttemptId: 'att-stripe',
+          }),
+        );
+      applyPaidPlanCharge.mockResolvedValue(undefined);
+
+      const result = await service.settleInvoice(tx, {
+        id: 'att-stripe',
+        invoiceId: 'inv-1',
+        method: 'stripe',
+      });
+
+      expect(result.paid).toBe(true);
+      expect(applyPaidPlanCharge).toHaveBeenCalledWith(
+        tx,
+        'inv-1',
+        expect.any(Date),
+        { periodLockAlreadyHeld: true },
+      );
+      // Period advisory lock acquired after row locks (executeRaw).
+      expect(executeRaw).toHaveBeenCalled();
+    });
+
+    it('does not apply plan change on partial allocation', async () => {
+      attemptFindUnique.mockResolvedValue(succeededAttempt({ amountMicros: 10_000_000n }));
+      invoiceFindUnique.mockResolvedValue(
+        finalizedInvoice({ purpose: 'plan_charge', totalMicros: 25_000_000n }),
+      );
+
+      const result = await service.settleInvoice(tx, {
+        id: 'att-stripe',
+        invoiceId: 'inv-1',
+        method: 'stripe',
+      });
+
+      expect(result.paid).toBe(false);
+      expect(applyPaidPlanCharge).not.toHaveBeenCalled();
+    });
+
+    it('replays apply on already-allocated paid plan_charge (idempotent recovery)', async () => {
+      attemptFindUnique.mockResolvedValue(
+        succeededAttempt({ allocatedAt: new Date('2026-08-16T00:00:00.000Z') }),
+      );
+      invoiceFindUnique.mockResolvedValue(
+        finalizedInvoice({
+          purpose: 'plan_charge',
+          totalMicros: 25_000_000n,
+          allocatedMicros: 25_000_000n,
+          paidAt: new Date(),
+          settlementAttemptId: 'att-stripe',
+        }),
+      );
+      applyPaidPlanCharge.mockResolvedValue(undefined);
+
+      const result = await service.settleInvoice(tx, {
+        id: 'att-stripe',
+        invoiceId: 'inv-1',
+        method: 'stripe',
+      });
+
+      expect(result.replayed).toBe(true);
+      expect(result.paid).toBe(true);
+      expect(applyPaidPlanCharge).toHaveBeenCalledWith(
+        tx,
+        'inv-1',
+        expect.any(Date),
+        { periodLockAlreadyHeld: true },
+      );
     });
 
     it('allocates a fixed-fee attempt partially and leaves the invoice unpaid', async () => {

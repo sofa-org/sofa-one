@@ -112,15 +112,25 @@ describe('BillingController', () => {
     billingService.assignPlan.mockResolvedValue({
       planCode: 'starter',
       planName: 'Starter',
-      effectivePeriod: '2026-09',
-      effectiveFrom: '2026-09-01T00:00:00.000Z',
-      outcome: 'changed',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'payment_required',
+      changeId: 'chg-1',
+      invoiceId: 'inv-charge-1',
+      amount: '25.000000',
+      currency: 'USD',
+      kind: 'upgrade',
     });
 
     const result = await controller.assignPlan('user-1', { planCode: 'starter' } as any);
 
     expect(billingService.assignPlan).toHaveBeenCalledWith('user-1', 'starter');
-    expect(result).toMatchObject({ planCode: 'starter', outcome: 'changed' });
+    expect(result).toMatchObject({
+      planCode: 'starter',
+      outcome: 'payment_required',
+      changeId: 'chg-1',
+      invoiceId: 'inv-charge-1',
+    });
   });
 
   it('delegates checkoutInvoice to the Stripe payment service scoped to the current user', async () => {

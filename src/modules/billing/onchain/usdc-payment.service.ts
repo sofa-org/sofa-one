@@ -17,6 +17,9 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { SecurityEventService } from '../../security-events/security-event.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
+import { BillingPlanChangeService } from '../billing-plan-change.service';
+import { StripeSubscriptionSyncService } from '../stripe/stripe-subscription-sync.service';
+import { acquireBillingPeriodAdvisoryLock } from '../billing-period-lock';
 import { microsToDecimalUsd } from '../billing.utils';
 import {
   EVM_ADDRESS_REGEX,
@@ -157,6 +160,8 @@ export class UsdcPaymentService {
     private readonly settlementService: InvoiceSettlementService,
     @Inject(USDC_RECEIPT_PROVIDER) private readonly receiptProvider: UsdcReceiptProvider,
     @Optional() private readonly securityEvents?: SecurityEventService,
+    @Optional() private readonly planChanges?: BillingPlanChangeService,
+    @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
   ) {}
 
   /**
@@ -222,6 +227,9 @@ export class UsdcPaymentService {
     this.assertEnabled();
     const invoice = await this.loadOwnedInvoice(userId, invoiceId);
     this.assertInvoiceEligible(invoice);
+    if (this.planChanges && (invoice as { purpose?: string }).purpose === 'plan_charge') {
+      await this.planChanges.assertPlanChargePayable(this.prisma, invoice.id);
+    }
 
     const chain = this.resolveChain(chainId);
     const tokenAddress = this.canonicalToken(chain);
@@ -701,9 +709,9 @@ export class UsdcPaymentService {
     const identity = this.claimEvidence(attempt, txHash, receipt, transfer);
     try {
       const outcome = await this.prisma.$transaction(async (tx: Tx) => {
-        // Stable row locks (attempt → invoice) so the re-read below is stable
-        // under Read Committed: no concurrent claim/webhook can mutate the
-        // attempt or the invoice between the read and the settlement commit.
+        // Uniform lock order (Gate 1 attempt 3): period → attempt → invoice.
+        // settleInvoice re-enters the same period key then re-locks rows.
+        await acquireBillingPeriodAdvisoryLock(tx, invoice.billingAccountId, invoice.periodStart);
         const lockedAttempt = await tx.$queryRaw<Array<{ id: string }>>`
           SELECT "id" FROM "billing_payment_attempts" WHERE "id" = ${attempt.id} FOR UPDATE`;
         if (lockedAttempt.length === 0) return { kind: 'missing' } as const;
@@ -862,6 +870,10 @@ export class UsdcPaymentService {
         case 'duplicate':
           return this.toClaimResultFromRow(invoice, outcome.row);
         case 'paid': {
+          // Post-commit best-effort Stripe mirror sync (local entitlement already committed).
+          if (this.subscriptionSync && (invoice as { purpose?: string }).purpose === 'plan_charge') {
+            void this.subscriptionSync.processAccountBestEffort(invoice.billingAccountId);
+          }
           if (outcome.wroteEvidence) {
             // This claim performed the settlement: report its verified evidence.
             return this.toClaimResult(

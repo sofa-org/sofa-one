@@ -338,6 +338,53 @@ describe('BillingWorkerService', () => {
     // recurring period).
     expect(ensureOpenInvoiceForPeriod).toHaveBeenCalledTimes(2);
     expect(finalizeInvoice).toHaveBeenCalledTimes(0);
+    // latest/existing discovery must filter usage_period only.
+    expect(invoiceFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          billingAccountId: 'acc-a',
+          status: 'finalized',
+          purpose: 'usage_period',
+        }),
+      }),
+    );
+  });
+
+  it('does not let a finalized plan_charge suppress next usage_period materialization', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    accountFindMany.mockResolvedValueOnce([ACCOUNT_A]).mockResolvedValueOnce([]);
+    reconcile.mockResolvedValue({
+      scanned: 0,
+      notFound: 0,
+      transientError: 0,
+      errors: 0,
+      conflicts: 0,
+      noHash: 0,
+      skipped: false,
+      ownershipLost: false,
+    });
+    invoiceFindMany.mockResolvedValue([]);
+    // First findFirst is latest usage_period finalized (not a plan_charge).
+    // If purpose filter were missing, a newer plan_charge could win and stall.
+    invoiceFindFirst
+      .mockResolvedValueOnce({
+        periodEnd: new Date('2026-07-01T00:00:00.000Z'),
+        purpose: 'usage_period',
+      })
+      // existing next usage_period: none (a plan_charge-only next period must not count)
+      .mockResolvedValueOnce(null);
+    ensureOpenInvoiceForPeriod.mockResolvedValue({ id: 'inv-next', status: 'open' });
+
+    await service.tick();
+
+    expect(invoiceFindFirst.mock.calls[0][0].where).toEqual(
+      expect.objectContaining({ purpose: 'usage_period', status: 'finalized' }),
+    );
+    expect(invoiceFindFirst.mock.calls[1][0].where).toEqual(
+      expect.objectContaining({ purpose: 'usage_period', periodStart: expect.any(Date) }),
+    );
+    expect(ensureOpenInvoiceForPeriod).toHaveBeenCalledWith('user-a', '2026-07');
   });
 
   it("never finalizes another account's open invoice (cross-account regression)", async () => {
@@ -481,6 +528,9 @@ describe('BillingWorkerService', () => {
     const rawSql = (rawStrings as TemplateStringsArray).join('');
     expect(rawSql).toContain('billing_usage_events');
     expect(rawSql).toContain('NOT EXISTS');
+    // Gate 1 attempt 3: plan_charge rows must not satisfy the invoice existence
+    // probe — only usage_period invoices suppress historical materialization.
+    expect(rawSql).toMatch(/purpose.*=.*usage_period/);
     expect(rawSql).toContain('billing_invoices');
     expect(rawParams).toEqual(
       expect.arrayContaining([

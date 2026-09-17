@@ -212,8 +212,10 @@ describe('UsdcPaymentService', () => {
     $transaction: jest.fn(),
   };
 
+  const txExecuteRaw = jest.fn().mockResolvedValue(undefined);
   const tx = {
     $queryRaw: txQueryRaw,
+    $executeRaw: txExecuteRaw,
     billingPaymentAttempt: { update: txAttemptUpdate, findUnique: txAttemptFindUnique },
     billingInvoice: { findUnique: txInvoiceFindUnique },
   };
@@ -241,8 +243,8 @@ describe('UsdcPaymentService', () => {
     prisma.$transaction.mockImplementation(async (fn: (t: typeof tx) => Promise<unknown>) =>
       fn(tx),
     );
-    // The settlement transaction takes stable row locks (attempt → invoice)
-    // before re-reading the attempt under the lock.
+    // Period advisory + row locks (period → attempt → invoice).
+    txExecuteRaw.mockResolvedValue(undefined);
     txQueryRaw.mockImplementation((strings: TemplateStringsArray) => {
       const sql = strings.join('');
       if (sql.includes('billing_payment_attempts')) return Promise.resolve([{ id: 'att-usdc' }]);

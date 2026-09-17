@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
+import { BillingPlanChangeService } from '../billing-plan-change.service';
 import { SecurityEventService } from '../../security-events/security-event.service';
 import { STRIPE_CLIENT } from './stripe.constants';
 import { StripeWebhookService } from './stripe-webhook.service';
@@ -143,6 +144,7 @@ describe('StripeWebhookService', () => {
   const invoiceFindFirst = jest.fn();
   const invoiceCreate = jest.fn();
   const invoiceLineCreateMany = jest.fn();
+  const invoiceLineDeleteMany = jest.fn();
   const invoiceUpdate = jest.fn();
   const invoiceUpdateMany = jest.fn();
   const accountFindUnique = jest.fn();
@@ -150,6 +152,9 @@ describe('StripeWebhookService', () => {
   const accountUpdate = jest.fn();
   const accountUpdateMany = jest.fn();
   const planVersionFindUnique = jest.fn();
+  const syncIntentFindFirst = jest.fn();
+  const syncIntentFindMany = jest.fn();
+  const applyFixedFeeRenewalCoverage = jest.fn();
   const queryRaw = jest.fn();
   const transaction = jest.fn();
   const configGet = jest.fn();
@@ -220,7 +225,10 @@ describe('StripeWebhookService', () => {
               update: invoiceUpdate,
               updateMany: invoiceUpdateMany,
             },
-            billingInvoiceLine: { createMany: invoiceLineCreateMany },
+            billingInvoiceLine: {
+              createMany: invoiceLineCreateMany,
+              deleteMany: invoiceLineDeleteMany,
+            },
             billingAccount: {
               findUnique: accountFindUnique,
               findFirst: accountFindFirst,
@@ -228,6 +236,10 @@ describe('StripeWebhookService', () => {
               updateMany: accountUpdateMany,
             },
             billingPlanVersion: { findUnique: planVersionFindUnique },
+            billingSubscriptionSyncIntent: {
+              findFirst: syncIntentFindFirst,
+              findMany: syncIntentFindMany,
+            },
             $queryRaw: queryRaw,
             $transaction: transaction,
           },
@@ -235,10 +247,18 @@ describe('StripeWebhookService', () => {
         { provide: ConfigService, useValue: { get: configGet } },
         { provide: STRIPE_CLIENT, useValue: stripeMock },
         { provide: SecurityEventService, useValue: { record: securityRecord } },
+        {
+          provide: BillingPlanChangeService,
+          useValue: { applyFixedFeeRenewalCoverage },
+        },
       ],
     }).compile();
 
     service = module.get<StripeWebhookService>(StripeWebhookService);
+    applyFixedFeeRenewalCoverage.mockResolvedValue(true);
+    syncIntentFindFirst.mockResolvedValue(null);
+    syncIntentFindMany.mockResolvedValue([]);
+    invoiceLineDeleteMany.mockResolvedValue({ count: 0 });
 
     // The interactive transaction client shares the same jest.fn() instances
     // as this.prisma so the production transaction path is exercised.
@@ -263,7 +283,10 @@ describe('StripeWebhookService', () => {
         update: invoiceUpdate,
         updateMany: invoiceUpdateMany,
       },
-      billingInvoiceLine: { createMany: invoiceLineCreateMany },
+      billingInvoiceLine: {
+        createMany: invoiceLineCreateMany,
+        deleteMany: invoiceLineDeleteMany,
+      },
       billingAccount: {
         findUnique: accountFindUnique,
         findFirst: accountFindFirst,
@@ -271,6 +294,10 @@ describe('StripeWebhookService', () => {
         updateMany: accountUpdateMany,
       },
       billingPlanVersion: { findUnique: planVersionFindUnique },
+      billingSubscriptionSyncIntent: {
+        findFirst: syncIntentFindFirst,
+        findMany: syncIntentFindMany,
+      },
       $queryRaw: queryRaw,
       $executeRaw: queryRaw,
     };
@@ -307,6 +334,9 @@ describe('StripeWebhookService', () => {
         }),
       ),
     );
+    // usage_period lookups use findFirst (purpose filter); keep the same mock
+    // chain as findUnique unless a test overrides findFirst explicitly.
+    invoiceFindFirst.mockImplementation((args) => invoiceFindUnique(args));
     webhookEventFindUnique.mockResolvedValue(null);
     // Default account mirror: a customer exists, no subscription yet.
     accountFindUnique.mockResolvedValue({
@@ -1338,7 +1368,7 @@ describe('StripeWebhookService', () => {
       expect(attemptUpdate).not.toHaveBeenCalled();
     });
 
-    it('never settles a dynamic invoice with a smaller fixed recurring charge', async () => {
+      it('never settles a dynamic invoice with a smaller fixed recurring charge', async () => {
       constructEventAsync.mockResolvedValue(event('invoice.paid', renewalInvoice(), 'evt_renewal'));
       webhookEventCreate.mockResolvedValue({});
       // The renewal attempt charges only the fixed plan fee ($49).
@@ -1386,7 +1416,9 @@ describe('StripeWebhookService', () => {
           stripeCustomerId: 'cus_123',
           stripeSubscriptionId: 'sub_123',
           stripeSubscriptionStatus: 'active',
-          stripeSubscriptionPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+          // Mirror period must match the renewal invoice month for fallback identity.
+          stripeSubscriptionPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-09-01T00:00:00.000Z'),
           stripeSubscriptionUpdatedAt: null,
           activeSubscriptionPlanVersionId: 'plan-1',
         };
@@ -1443,6 +1475,7 @@ describe('StripeWebhookService', () => {
         // No attempt/invoice exists locally yet (out-of-order delivery).
         attemptFindFirst.mockResolvedValue(null);
         invoiceFindUnique.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
         invoiceCreate.mockResolvedValue({
           id: 'inv-renew',
           billingAccountId: 'acct-1',
@@ -1525,6 +1558,21 @@ describe('StripeWebhookService', () => {
           totalMicros: 99_000_000n,
           currency: 'USD',
         });
+        invoiceFindFirst.mockResolvedValue({
+          id: 'inv-dynamic',
+          billingAccountId: 'acct-1',
+          status: 'open',
+          totalMicros: 99_000_000n,
+          currency: 'USD',
+          planVersionId: 'plan-1',
+          stripeInvoiceId: null,
+          paidAt: null,
+          settlementAttemptId: null,
+          allocatedMicros: 0n,
+          purpose: 'usage_period',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          periodEnd: new Date('2026-09-01T00:00:00.000Z'),
+        });
 
         await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
@@ -1534,6 +1582,388 @@ describe('StripeWebhookService', () => {
         expect(attemptCreate).not.toHaveBeenCalled();
         expect(webhookEventCreate).toHaveBeenCalled();
         expect(webhookEventUpdate).not.toHaveBeenCalled();
+      });
+
+      it('uses September sync effective start for October renewal (not expected window)', async () => {
+        // Provider renewal for Oct 2026; Sep plan-change sync stored effective Oct.
+        const octStart = Math.floor(new Date('2026-10-01T00:00:00.000Z').getTime() / 1000);
+        const octEnd = Math.floor(new Date('2026-11-01T00:00:00.000Z').getTime() / 1000);
+        constructEventAsync.mockResolvedValue(
+          event(
+            'invoice.finalized',
+            renewalInvoice({
+              period_start: octStart,
+              period_end: octEnd,
+              amount_paid: 19900,
+              total: 19900,
+            }),
+            'evt_oct_from_sep_sync',
+          ),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
+        // Stale mirror still shows prior month / prior plan — must not win.
+        accountFindFirst.mockResolvedValue({
+          ...renewalAccount(),
+          activeSubscriptionPlanVersionId: 'plan-starter-stale',
+          stripeSubscriptionPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+        });
+        accountFindUnique.mockResolvedValue({
+          ...renewalAccount(),
+          activeSubscriptionPlanVersionId: 'plan-starter-stale',
+          stripeSubscriptionPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+        });
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-growth',
+            targetUnitAmountCents: 19900,
+            revision: 3,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+          },
+        ]);
+        planVersionFindUnique.mockResolvedValue({
+          ...fixedFeePlan(),
+          id: 'plan-growth',
+          code: 'growth',
+          name: 'Growth',
+          monthlyFeeMicros: 199_000_000n,
+        });
+        invoiceCreate.mockResolvedValue({
+          id: 'inv-oct',
+          billingAccountId: 'acct-1',
+          planVersionId: 'plan-growth',
+          status: 'open',
+          totalMicros: 199_000_000n,
+        });
+        attemptCreate.mockResolvedValue({ id: 'att-oct', invoiceId: 'inv-oct' });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(syncIntentFindMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              effectivePeriodStart: { lte: new Date('2026-10-01T00:00:00.000Z') },
+            }),
+            orderBy: { revision: 'desc' },
+          }),
+        );
+        expect(invoiceCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              planVersionId: 'plan-growth',
+              totalMicros: 199_000_000n,
+            }),
+          }),
+        );
+      });
+
+      it('carries September Growth sync forward to November without a new intent', async () => {
+        const novStart = Math.floor(new Date('2026-11-01T00:00:00.000Z').getTime() / 1000);
+        const novEnd = Math.floor(new Date('2026-12-01T00:00:00.000Z').getTime() / 1000);
+        constructEventAsync.mockResolvedValue(
+          event(
+            'invoice.finalized',
+            renewalInvoice({
+              period_start: novStart,
+              period_end: novEnd,
+              amount_paid: 19900,
+              total: 19900,
+            }),
+            'evt_nov_carry_forward',
+          ),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
+        accountFindFirst.mockResolvedValue({
+          ...renewalAccount(),
+          activeSubscriptionPlanVersionId: 'plan-starter-stale',
+          stripeSubscriptionPeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-11-01T00:00:00.000Z'),
+        });
+        accountFindUnique.mockResolvedValue({
+          ...renewalAccount(),
+          activeSubscriptionPlanVersionId: 'plan-starter-stale',
+          stripeSubscriptionPeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+          stripeSubscriptionPeriodEnd: new Date('2026-11-01T00:00:00.000Z'),
+        });
+        // Only Oct-effective Growth row — no November-specific intent.
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-growth',
+            targetUnitAmountCents: 19900,
+            revision: 3,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+          },
+        ]);
+        planVersionFindUnique.mockResolvedValue({
+          ...fixedFeePlan(),
+          id: 'plan-growth',
+          code: 'growth',
+          name: 'Growth',
+          monthlyFeeMicros: 199_000_000n,
+        });
+        invoiceCreate.mockResolvedValue({
+          id: 'inv-nov',
+          billingAccountId: 'acct-1',
+          planVersionId: 'plan-growth',
+          status: 'open',
+          totalMicros: 199_000_000n,
+        });
+        attemptCreate.mockResolvedValue({ id: 'att-nov', invoiceId: 'inv-nov' });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(invoiceCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              planVersionId: 'plan-growth',
+              totalMicros: 199_000_000n,
+              periodStart: new Date('2026-11-01T00:00:00.000Z'),
+            }),
+          }),
+        );
+      });
+
+      it('later cancel_at_period_end revision wins over older paid update for the period', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('invoice.finalized', renewalInvoice(), 'evt_cancel_wins'),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
+        // Highest revision is cancel — paid update must not materialize.
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'cancel_at_period_end',
+            targetPlanVersionId: null,
+            targetUnitAmountCents: null,
+            revision: 5,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-08-01T00:00:00.000Z'),
+          },
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-1',
+            targetUnitAmountCents: 4900,
+            revision: 3,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-08-01T00:00:00.000Z'),
+          },
+        ]);
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptCreate).not.toHaveBeenCalled();
+        expect(invoiceCreate).not.toHaveBeenCalled();
+      });
+
+      it('carried-forward cancel blocks older paid update for following months', async () => {
+        const novStart = Math.floor(new Date('2026-11-01T00:00:00.000Z').getTime() / 1000);
+        const novEnd = Math.floor(new Date('2026-12-01T00:00:00.000Z').getTime() / 1000);
+        constructEventAsync.mockResolvedValue(
+          event(
+            'invoice.finalized',
+            renewalInvoice({
+              period_start: novStart,
+              period_end: novEnd,
+              amount_paid: 4900,
+              total: 4900,
+            }),
+            'evt_nov_cancel_carry',
+          ),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
+        // r5 cancel effective Oct carries into Nov; older Growth must not win.
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'cancel_at_period_end',
+            targetPlanVersionId: null,
+            revision: 5,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+          },
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-growth',
+            targetUnitAmountCents: 19900,
+            revision: 3,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+          },
+        ]);
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(attemptCreate).not.toHaveBeenCalled();
+        expect(invoiceCreate).not.toHaveBeenCalled();
+      });
+
+      it('does not let a lower revision roll back a newer carried-forward config', async () => {
+        const novStart = Math.floor(new Date('2026-11-01T00:00:00.000Z').getTime() / 1000);
+        const novEnd = Math.floor(new Date('2026-12-01T00:00:00.000Z').getTime() / 1000);
+        constructEventAsync.mockResolvedValue(
+          event(
+            'invoice.finalized',
+            renewalInvoice({
+              period_start: novStart,
+              period_end: novEnd,
+              amount_paid: 19900,
+              total: 19900,
+            }),
+            'evt_nov_revision_order',
+          ),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        invoiceFindFirst.mockResolvedValue(null);
+        // Returned desc: r4 Growth must beat r2 Starter.
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-growth',
+            targetUnitAmountCents: 19900,
+            revision: 4,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-10-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-10-01T00:00:00.000Z'),
+          },
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-1',
+            targetUnitAmountCents: 4900,
+            revision: 2,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-09-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-09-01T00:00:00.000Z'),
+          },
+        ]);
+        planVersionFindUnique.mockResolvedValue({
+          ...fixedFeePlan(),
+          id: 'plan-growth',
+          code: 'growth',
+          name: 'Growth',
+          monthlyFeeMicros: 199_000_000n,
+        });
+        invoiceCreate.mockResolvedValue({ id: 'inv-nov', planVersionId: 'plan-growth' });
+        attemptCreate.mockResolvedValue({ id: 'att-nov' });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(invoiceCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ planVersionId: 'plan-growth' }),
+          }),
+        );
+      });
+
+      it('adopts worker-first open Free estimate when later paid fixed_fee webhook arrives', async () => {
+        constructEventAsync.mockResolvedValue(
+          event('invoice.finalized', renewalInvoice(), 'evt_adopt_free'),
+        );
+        attemptFindFirst.mockResolvedValue(null);
+        const freeEstimate = {
+          id: 'inv-worker-free',
+          billingAccountId: 'acct-1',
+          planVersionId: 'plan-free',
+          purpose: 'usage_period',
+          status: 'open',
+          currency: 'USD',
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          periodEnd: new Date('2026-09-01T00:00:00.000Z'),
+          totalMicros: 0n,
+          monthlyFeeMicros: 0n,
+          stripeInvoiceId: null,
+          paidAt: null,
+          settlementAttemptId: null,
+          allocatedMicros: 0n,
+          lines: [],
+        };
+        invoiceFindFirst.mockResolvedValue(freeEstimate);
+        // Sync history proves paid plan for this renewal month.
+        syncIntentFindMany.mockResolvedValue([
+          {
+            kind: 'update_item',
+            targetPlanVersionId: 'plan-1',
+            targetUnitAmountCents: 4900,
+            revision: 2,
+            stripeCustomerId: 'cus_123',
+            stripeSubscriptionId: 'sub_123',
+            effectivePeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+            expectedPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+            expectedPeriodEnd: new Date('2026-08-01T00:00:00.000Z'),
+          },
+        ]);
+        planVersionFindUnique.mockResolvedValue(fixedFeePlan());
+        invoiceUpdateMany.mockResolvedValue({ count: 1 });
+        invoiceFindUnique.mockResolvedValue({
+          ...freeEstimate,
+          planVersionId: 'plan-1',
+          totalMicros: 49_000_000n,
+          monthlyFeeMicros: 49_000_000n,
+          stripeInvoiceId: 'in_123',
+          lines: [{ lineType: 'monthly_fee', quantity: 1n, amountMicros: 49_000_000n }],
+        });
+        attemptCreate.mockResolvedValue({
+          id: 'att-adopt',
+          invoiceId: 'inv-worker-free',
+          method: 'stripe',
+        });
+
+        await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
+
+        expect(invoiceUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              id: 'inv-worker-free',
+              status: 'open',
+              stripeInvoiceId: null,
+            }),
+            data: expect.objectContaining({
+              planVersionId: 'plan-1',
+              totalMicros: 49_000_000n,
+              stripeInvoiceId: 'in_123',
+            }),
+          }),
+        );
+        expect(invoiceLineDeleteMany).toHaveBeenCalled();
+        expect(invoiceLineCreateMany).toHaveBeenCalled();
+        expect(attemptCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              invoiceId: 'inv-worker-free',
+              amountMicros: 49_000_000n,
+              stripeChargeKind: 'fixed_fee',
+            }),
+          }),
+        );
+        expect(invoiceCreate).not.toHaveBeenCalled();
       });
 
       it('deferrals eventually exhaust into needs_review (never silently dropped)', async () => {

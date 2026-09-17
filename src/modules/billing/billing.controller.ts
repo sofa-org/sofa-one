@@ -47,10 +47,11 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/plan — self-service plan change. The authenticated
-   * dashboard user selects a plan code; it takes effect at the next UTC month
-   * and creates/updates that future period's open invoice. Not part of the
-   * public API-key spec; no client userId/effectiveFrom/admin bypass.
+   * POST /v1/billing/plan — self-service plan change. Upgrade returns
+   * `payment_required` with a finalized plan_charge invoice (pay via existing
+   * Stripe one-time checkout or USDC quote); downgrade returns `scheduled` for
+   * the next UTC month. Not part of the public API-key spec; no client
+   * userId/effectiveFrom/amount/admin bypass.
    */
   @Post('plan')
   @FrontendOnly()

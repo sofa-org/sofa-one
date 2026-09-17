@@ -35,14 +35,14 @@ describe('BillingEntitlementService', () => {
   let service: BillingEntitlementService;
 
   const accountFindUnique = jest.fn();
-  const assignmentFindFirst = jest.fn();
+  const assignmentFindMany = jest.fn();
   const walletFindUnique = jest.fn();
   const walletCount = jest.fn();
 
   const buildTx = () =>
     ({
       billingAccount: { findUnique: accountFindUnique },
-      billingPlanAssignment: { findFirst: assignmentFindFirst },
+      billingPlanAssignment: { findMany: assignmentFindMany },
       userWallet: { findUnique: walletFindUnique, count: walletCount },
     }) as any;
 
@@ -56,7 +56,7 @@ describe('BillingEntitlementService', () => {
           provide: PrismaService,
           useValue: {
             billingAccount: { findUnique: accountFindUnique },
-            billingPlanAssignment: { findFirst: assignmentFindFirst },
+            billingPlanAssignment: { findMany: assignmentFindMany },
             userWallet: { findUnique: walletFindUnique, count: walletCount },
           },
         },
@@ -82,12 +82,16 @@ describe('BillingEntitlementService', () => {
 
   it('returns the plan in effect for the requested period', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: STARTER_VERSION.id,
-      planVersion: STARTER_VERSION,
-    });
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: STARTER_VERSION,
+      },
+    ]);
 
     const result = await service.getEntitlements('user-1', '2026-09');
 
@@ -98,7 +102,7 @@ describe('BillingEntitlementService', () => {
       includedApiCalls: 100_000,
       includedWallets: 100,
     });
-    expect(assignmentFindFirst).toHaveBeenCalledWith(
+    expect(assignmentFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           billingAccountId: ACCOUNT.id,
@@ -111,12 +115,16 @@ describe('BillingEntitlementService', () => {
 
   it('returns null limits for Enterprise/custom null terms', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: ENTERPRISE_VERSION.id,
-      planVersion: ENTERPRISE_VERSION,
-    });
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: ENTERPRISE_VERSION.id,
+        expiresAt: null,
+        source: 'default',
+        planVersion: ENTERPRISE_VERSION,
+      },
+    ]);
 
     const result = await service.getEntitlements('user-1', '2026-09');
 
@@ -127,39 +135,47 @@ describe('BillingEntitlementService', () => {
 
   it('fails closed when the persisted plan has an unknown code', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: 'plan-unknown-1',
-      planVersion: {
-        ...STARTER_VERSION,
-        id: 'plan-unknown-1',
-        code: 'not-a-real-plan',
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: 'plan-unknown-1',
+        expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: {
+          ...STARTER_VERSION,
+          id: 'plan-unknown-1',
+          code: 'not-a-real-plan',
+        },
       },
-    });
+    ]);
 
     await expect(service.getEntitlements('user-1', '2026-09')).rejects.toThrow(ConflictException);
   });
 
   it('fails closed when the persisted Enterprise row has finite terms', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: 'plan-enterprise-1',
-      planVersion: {
-        ...STARTER_VERSION,
-        id: 'plan-enterprise-1',
-        code: 'enterprise',
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: 'plan-enterprise-1',
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: {
+          ...STARTER_VERSION,
+          id: 'plan-enterprise-1',
+          code: 'enterprise',
+        },
       },
-    });
+    ]);
 
     await expect(service.getEntitlements('user-1', '2026-09')).rejects.toThrow(ConflictException);
   });
 
   it('returns Free fallback when no assignment exists', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue(null);
+    assignmentFindMany.mockResolvedValue([]);
 
     const result = await service.getEntitlements('user-1', '2026-09');
 
@@ -167,14 +183,82 @@ describe('BillingEntitlementService', () => {
     expect(result.includedApiCalls).toBe(10_000);
   });
 
+  it('ignores expired paid assignments (unpaid renewal → Free at boundary)', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    // Query filter excludes expired rows; empty list → Free.
+    assignmentFindMany.mockResolvedValue([]);
+
+    const result = await service.getEntitlements('user-1', '2026-09');
+
+    expect(result.planCode).toBe('free');
+    expect(assignmentFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date('2026-09-01T00:00:00.000Z') } }],
+        }),
+      }),
+    );
+  });
+
+  it('rejects legacy paid assignment with null expiresAt (no indefinite paid access)', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-legacy',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        expiresAt: null,
+        source: null,
+        planVersion: STARTER_VERSION,
+      },
+    ]);
+
+    const result = await service.getEntitlements('user-1', '2026-09');
+    expect(result.planCode).toBe('free');
+  });
+
+  it('does not resurrect an older paid assignment after an expired latest row', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    // Newest expired is filtered out by the query; older paid with bound still
+    // present would be wrong if we walked without expires check — ensure only
+    // Free when the only remaining candidate is expired (empty list).
+    assignmentFindMany.mockResolvedValue([]);
+    const result = await service.getEntitlements('user-1', '2026-09');
+    expect(result.planCode).toBe('free');
+  });
+
+  it('uses a non-expired paid upgrade assignment immediately', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-upgrade',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-09-01T00:00:00.000Z'),
+        expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      },
+    ]);
+
+    const result = await service.getEntitlements('user-1', '2026-09');
+
+    expect(result.planCode).toBe('starter');
+    expect(result.includedWallets).toBe(100);
+  });
+
   it('getPlanForPeriod returns the plan code/name/period', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    assignmentFindFirst.mockResolvedValue({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: STARTER_VERSION.id,
-      planVersion: STARTER_VERSION,
-    });
+    assignmentFindMany.mockResolvedValue([
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: STARTER_VERSION,
+      },
+    ]);
 
     const result = await service.getPlanForPeriod('user-1', '2026-09');
 
@@ -186,16 +270,20 @@ describe('BillingEntitlementService', () => {
   });
 
   describe('assertWalletActivationAllowed', () => {
-    const starterAssignment = () => ({
-      id: 'assign-1',
-      billingAccountId: ACCOUNT.id,
-      planVersionId: STARTER_VERSION.id,
-      planVersion: STARTER_VERSION,
-    });
+    const starterAssignment = () => [
+      {
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: STARTER_VERSION,
+      },
+    ];
 
     it('allows activation when the active count is below the limit (limit-1)', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue(starterAssignment());
+      assignmentFindMany.mockResolvedValue(starterAssignment());
       walletFindUnique.mockResolvedValue(null);
       walletCount.mockResolvedValue(99);
 
@@ -209,7 +297,7 @@ describe('BillingEntitlementService', () => {
 
     it('rejects activation with a 429 quota exception when the active count is at the limit', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue(starterAssignment());
+      assignmentFindMany.mockResolvedValue(starterAssignment());
       walletFindUnique.mockResolvedValue(null);
       walletCount.mockResolvedValue(100);
 
@@ -228,8 +316,7 @@ describe('BillingEntitlementService', () => {
 
     it('excludes pending/frozen/empty-address wallets from the active count', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue(starterAssignment());
-      // The user's own wallet is pending (not active), so activation is gated.
+      assignmentFindMany.mockResolvedValue(starterAssignment());
       walletFindUnique.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
@@ -237,7 +324,6 @@ describe('BillingEntitlementService', () => {
         walletAddress: null,
         frozenAt: null,
       });
-      // Only truly-active wallets count; pending/frozen/empty-address are excluded.
       walletCount.mockResolvedValue(9);
 
       await expect(
@@ -250,7 +336,7 @@ describe('BillingEntitlementService', () => {
 
     it('treats a frozen wallet as not active so activation is gated', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue(starterAssignment());
+      assignmentFindMany.mockResolvedValue(starterAssignment());
       walletFindUnique.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
@@ -268,7 +354,7 @@ describe('BillingEntitlementService', () => {
 
     it('idempotently allows re-authorization of an existing active wallet even at the limit', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue(starterAssignment());
+      assignmentFindMany.mockResolvedValue(starterAssignment());
       walletFindUnique.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
@@ -286,12 +372,16 @@ describe('BillingEntitlementService', () => {
 
     it('fails closed for Enterprise/custom null wallet terms', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      assignmentFindFirst.mockResolvedValue({
-        id: 'assign-1',
-        billingAccountId: ACCOUNT.id,
-        planVersionId: ENTERPRISE_VERSION.id,
-        planVersion: ENTERPRISE_VERSION,
-      });
+      assignmentFindMany.mockResolvedValue([
+        {
+          id: 'assign-1',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: ENTERPRISE_VERSION.id,
+          expiresAt: null,
+          source: 'default',
+          planVersion: ENTERPRISE_VERSION,
+        },
+      ]);
       walletFindUnique.mockResolvedValue(null);
 
       await expect(

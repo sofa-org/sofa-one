@@ -7,10 +7,10 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
-import { BillingService } from './billing.service';
-import { BillingQuotaExceededException } from './billing-quota.exception';
+import { BillingService, buildInvoiceLineSpecs } from './billing.service';
 import { InvoiceSettlementService } from './invoice-settlement.service';
-import { PLANS } from './billing-calculator';
+import { BillingPlanChangeService } from './billing-plan-change.service';
+import { calculateInvoiceTotals, PLANS } from './billing-calculator';
 
 const p2002 = () =>
   new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -139,9 +139,11 @@ describe('BillingService', () => {
   const planVersionFindMany = jest.fn();
   const planVersionCreate = jest.fn();
   const assignmentFindFirst = jest.fn();
+  const assignmentFindMany = jest.fn();
   const assignmentCreate = jest.fn();
   const assignmentFindUnique = jest.fn();
   const assignmentUpdate = jest.fn();
+  const planChangeFindFirst = jest.fn();
   const usageEventCreate = jest.fn();
   const usageEventFindMany = jest.fn();
   const usageEventFindUnique = jest.fn();
@@ -165,6 +167,7 @@ describe('BillingService', () => {
   const executeRaw = jest.fn();
   const queryRaw = jest.fn();
   const settleInvoice = jest.fn();
+  const requestPlanChange = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -188,9 +191,13 @@ describe('BillingService', () => {
             },
             billingPlanAssignment: {
               findFirst: assignmentFindFirst,
+              findMany: assignmentFindMany,
               create: assignmentCreate,
               findUnique: assignmentFindUnique,
               update: assignmentUpdate,
+            },
+            billingPlanChange: {
+              findFirst: planChangeFindFirst,
             },
             billingUsageEvent: {
               create: usageEventCreate,
@@ -229,6 +236,10 @@ describe('BillingService', () => {
           },
         },
         { provide: InvoiceSettlementService, useValue: { settleInvoice } },
+        {
+          provide: BillingPlanChangeService,
+          useValue: { requestPlanChange },
+        },
       ],
     }).compile();
 
@@ -241,6 +252,38 @@ describe('BillingService', () => {
     // No unresolved outbound transaction work (the no-run barrier passes).
     transactionCount.mockResolvedValue(0);
     transactionUpdateMany.mockResolvedValue({ count: 1 });
+    // usage_period invoice lookups now use findFirst (purpose filter) instead of
+    // the removed compound unique. Default findFirst to the same mock chain as
+    // findUnique so existing finalize/period tests keep working; tests that
+    // need id-scoped findFirst override this implementation explicitly.
+    invoiceFindFirst.mockImplementation((args) => invoiceFindUnique(args));
+    // Entitlement/usage resolvers walk assignments via findMany; default to the
+    // prior findFirst mock so existing tests keep working. Paid plans without
+    // expiresAt are given a far-future bound so legacy fixtures remain valid
+    // under Gate 1 entitlement rules (only Free may be open-ended).
+    assignmentFindMany.mockImplementation(async (args) => {
+      const row = await assignmentFindFirst(args);
+      if (row == null) return [];
+      const list = Array.isArray(row) ? row : [row];
+      return list.map((r: any) => {
+        const fee = r.planVersion?.monthlyFeeMicros ?? r.monthlyFeeMicros ?? 0n;
+        if (r.expiresAt == null && fee > 0n) {
+          return {
+            ...r,
+            expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+            source: r.source ?? 'renewal',
+          };
+        }
+        return r;
+      });
+    });
+    planChangeFindFirst.mockResolvedValue(null);
+    // finalize pins usage invoice planVersionId via findUnique.
+    planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+      if (where?.id === STARTER_VERSION.id) return STARTER_VERSION;
+      if (where?.id === FREE_VERSION.id) return FREE_VERSION;
+      return FREE_VERSION;
+    });
 
     // The interactive transaction client used by withBillingPeriodLock. All
     // model accessors share the same jest.fn() instances as this.prisma so the
@@ -257,9 +300,13 @@ describe('BillingService', () => {
       },
       billingPlanAssignment: {
         findFirst: assignmentFindFirst,
+        findMany: assignmentFindMany,
         create: assignmentCreate,
         findUnique: assignmentFindUnique,
         update: assignmentUpdate,
+      },
+      billingPlanChange: {
+        findFirst: planChangeFindFirst,
       },
       billingUsageEvent: {
         create: usageEventCreate,
@@ -408,6 +455,49 @@ describe('BillingService', () => {
         planName: 'Starter',
         effectivePeriod: '2026-09',
       });
+    });
+
+    it('reclassifies current-month legacy paid assignment (null expiresAt) to Free without P2002', async () => {
+      // Fake clock is 2026-08-25 → current month start 2026-08-01.
+      const monthStart = new Date('2026-08-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      const legacy = {
+        id: 'asg-legacy',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: monthStart,
+        expiresAt: null,
+        source: null,
+        planVersion: STARTER_VERSION,
+      };
+      // Do not auto-repair expiresAt — this is the invalid legacy shape.
+      assignmentFindMany.mockResolvedValue([legacy]);
+      assignmentFindUnique.mockResolvedValue(legacy);
+      assignmentUpdate.mockResolvedValue({
+        ...legacy,
+        planVersionId: FREE_VERSION.id,
+        source: 'default',
+        expiresAt: null,
+        planVersion: FREE_VERSION,
+      });
+      assignmentFindFirst.mockResolvedValue(null);
+      planVersionFindMany.mockResolvedValue([FREE_VERSION, STARTER_VERSION]);
+
+      const result = await service.getPlans('user-1');
+
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(assignmentUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'asg-legacy' },
+          data: expect.objectContaining({
+            planVersionId: FREE_VERSION.id,
+            source: 'default',
+            expiresAt: null,
+          }),
+        }),
+      );
+      expect(result.currentPlanId).toBe('free');
     });
 
     it('creates a current Free plan instead of reusing a future assignment', async () => {
@@ -577,91 +667,115 @@ describe('BillingService', () => {
       });
     }
 
-    it('assigns a plan effective next UTC month and creates an open invoice', async () => {
+    function mockCurrentFreeAssignment() {
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-current',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: null,
+        planVersion: FREE_VERSION,
+      });
+    }
+
+    it('upgrade returns payment_required and does not rewrite usage assignment/invoice itself', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       mockPlanLookup();
-      assignmentFindUnique.mockResolvedValue(null);
-      invoiceFindUnique.mockResolvedValue(null);
-      invoiceCreate.mockResolvedValue({
-        id: 'inv-open',
-        billingAccountId: ACCOUNT.id,
-        periodStart: new Date('2026-09-01T00:00:00.000Z'),
-        status: 'open',
+      mockCurrentFreeAssignment();
+      requestPlanChange.mockResolvedValue({
+        outcome: 'payment_required',
+        planCode: 'starter',
+        planName: 'Starter',
+        changeId: 'chg-1',
+        invoiceId: 'inv-charge-1',
+        amount: '25.000000',
         currency: 'USD',
-        totalMicros: 49_000_000n,
-        createdAt: new Date('2026-08-25T00:00:00.000Z'),
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        kind: 'upgrade',
       });
 
       const result = await service.assignPlan('user-1', 'starter');
 
       expect(result).toMatchObject({
+        outcome: 'payment_required',
         planCode: 'starter',
-        planName: 'Starter',
-        outcome: 'changed',
+        changeId: 'chg-1',
+        invoiceId: 'inv-charge-1',
+        kind: 'upgrade',
       });
-      // env date is 2026-08-25 -> next UTC month is 2026-09
-      expect(result.effectivePeriod).toBe('2026-09');
-      expect(assignmentCreate).toHaveBeenCalledWith(
+      expect(requestPlanChange).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            billingAccountId: ACCOUNT.id,
-            planVersionId: STARTER_VERSION.id,
-            periodStart: new Date('2026-09-01T00:00:00.000Z'),
-          }),
+          billingAccountId: ACCOUNT.id,
+          targetPlanVersion: STARTER_VERSION,
+          currentPlanVersion: FREE_VERSION,
         }),
       );
-      expect(invoiceCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            status: 'open',
-            planVersionId: STARTER_VERSION.id,
-            totalMicros: 49_000_000n,
-          }),
-        }),
-      );
+      // BillingService no longer writes assignment/open invoice for upgrades.
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(invoiceCreate).not.toHaveBeenCalled();
     });
 
     it('treats the same target plan as an idempotent no-op', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       mockPlanLookup();
-      assignmentFindUnique.mockResolvedValue({
+      assignmentFindFirst.mockResolvedValue({
         id: 'assign-1',
         billingAccountId: ACCOUNT.id,
         planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: null,
+        planVersion: STARTER_VERSION,
       });
-      invoiceFindUnique.mockResolvedValue({ id: 'inv-open', status: 'open' });
-      invoiceUpdate.mockResolvedValue({ id: 'inv-open', status: 'open' });
+      requestPlanChange.mockResolvedValue({
+        outcome: 'unchanged',
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      });
 
       const result = await service.assignPlan('user-1', 'starter');
 
       expect(result.outcome).toBe('unchanged');
-      expect(assignmentUpdate).not.toHaveBeenCalled();
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      // the open invoice is kept consistent with the same plan
-      expect(invoiceUpdate).toHaveBeenCalled();
     });
 
-    it('replaces the future assignment and updates the open invoice when the plan changes', async () => {
+    it('downgrade returns scheduled for next UTC month', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       mockPlanLookup();
-      assignmentFindUnique.mockResolvedValue({
+      assignmentFindFirst.mockResolvedValue({
         id: 'assign-1',
         billingAccountId: ACCOUNT.id,
-        planVersionId: FREE_VERSION.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: null,
+        planVersion: STARTER_VERSION,
       });
-      invoiceFindUnique.mockResolvedValue({ id: 'inv-open', status: 'open' });
-      invoiceUpdate.mockResolvedValue({ id: 'inv-open', status: 'open' });
+      // Target free is returned when code=free after starter lookup for free path —
+      // assignPlan looks up body.planCode first.
+      planVersionFindFirst.mockImplementation(async ({ where }: { where: { code?: string } }) => {
+        if (where.code === 'free') return FREE_VERSION;
+        if (where.code === 'starter') return STARTER_VERSION;
+        return FREE_VERSION;
+      });
+      requestPlanChange.mockResolvedValue({
+        outcome: 'scheduled',
+        planCode: 'free',
+        planName: 'Free',
+        changeId: 'chg-down-1',
+        effectivePeriod: '2026-09',
+        effectiveFrom: '2026-09-01T00:00:00.000Z',
+        kind: 'downgrade',
+      });
 
-      const result = await service.assignPlan('user-1', 'starter');
+      const result = await service.assignPlan('user-1', 'free');
 
-      expect(result.outcome).toBe('changed');
-      expect(assignmentUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ planVersionId: STARTER_VERSION.id }),
-        }),
-      );
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      expect(invoiceUpdate).toHaveBeenCalled();
+      expect(result).toMatchObject({
+        outcome: 'scheduled',
+        planCode: 'free',
+        effectivePeriod: '2026-09',
+        kind: 'downgrade',
+      });
     });
 
     it('rejects Enterprise/custom null terms via self-service', async () => {
@@ -669,8 +783,7 @@ describe('BillingService', () => {
       mockPlanLookup();
 
       await expect(service.assignPlan('user-1', 'enterprise')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
     it('rejects an unknown plan code', async () => {
@@ -686,7 +799,6 @@ describe('BillingService', () => {
 
     it('rejects a persisted plan code that is not in the static whitelist', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      // the DB has a row for a code that is not in PLANS
       planVersionFindFirst.mockImplementation(async ({ where }: { where: { code?: string } }) =>
         where.code === 'ghost-plan'
           ? { ...FREE_VERSION, id: 'plan-ghost-1', code: 'ghost-plan' }
@@ -694,19 +806,16 @@ describe('BillingService', () => {
       );
 
       await expect(service.assignPlan('user-1', 'ghost-plan')).rejects.toThrow(BadRequestException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
     it.each(['toString', 'constructor', '__proto__', '', 123 as unknown as string])(
       'rejects inherited/empty/non-string plan code %p with zero DB calls',
       async (badCode) => {
         await expect(service.assignPlan('user-1', badCode)).rejects.toThrow(BadRequestException);
-        // static validation happens before any DB read/write
         expect(accountFindUnique).not.toHaveBeenCalled();
         expect(planVersionFindFirst).not.toHaveBeenCalled();
-        expect(assignmentCreate).not.toHaveBeenCalled();
-        expect(invoiceCreate).not.toHaveBeenCalled();
+        expect(requestPlanChange).not.toHaveBeenCalled();
       },
     );
 
@@ -719,7 +828,7 @@ describe('BillingService', () => {
       );
 
       await expect(service.assignPlan('user-1', 'starter')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
     it('rejects a finite plan with a negative quota field', async () => {
@@ -729,7 +838,7 @@ describe('BillingService', () => {
       );
 
       await expect(service.assignPlan('user-1', 'starter')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
     it('rejects a finite plan with an unsafe wallet count', async () => {
@@ -739,32 +848,33 @@ describe('BillingService', () => {
       );
 
       await expect(service.assignPlan('user-1', 'starter')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
-    it('keeps a known historical finite plan valid', async () => {
+    it('keeps a known historical finite plan valid for upgrade request', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
+      const historical = { ...STARTER_VERSION, monthlyFeeMicros: 99_000_000n };
       planVersionFindFirst.mockImplementation(async ({ where }: { where: { code?: string } }) =>
-        where.code === 'starter'
-          ? { ...STARTER_VERSION, monthlyFeeMicros: 99_000_000n } // historical price snapshot
-          : FREE_VERSION,
+        where.code === 'starter' ? historical : FREE_VERSION,
       );
-      assignmentFindUnique.mockResolvedValue(null);
-      invoiceFindUnique.mockResolvedValue(null);
-      invoiceCreate.mockResolvedValue({
-        id: 'inv-open',
-        billingAccountId: ACCOUNT.id,
-        periodStart: new Date('2026-09-01T00:00:00.000Z'),
-        status: 'open',
+      mockCurrentFreeAssignment();
+      requestPlanChange.mockResolvedValue({
+        outcome: 'payment_required',
+        planCode: 'starter',
+        planName: 'Starter',
+        changeId: 'chg-1',
+        invoiceId: 'inv-charge-1',
+        amount: '50.000000',
         currency: 'USD',
-        totalMicros: 99_000_000n,
-        createdAt: new Date('2026-08-25T00:00:00.000Z'),
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        kind: 'upgrade',
       });
 
       const result = await service.assignPlan('user-1', 'starter');
 
-      expect(result.outcome).toBe('changed');
-      expect(assignmentCreate).toHaveBeenCalled();
+      expect(result.outcome).toBe('payment_required');
+      expect(requestPlanChange).toHaveBeenCalled();
     });
 
     it('rejects a malformed Enterprise persisted row with finite terms', async () => {
@@ -776,26 +886,14 @@ describe('BillingService', () => {
       );
 
       await expect(service.assignPlan('user-1', 'enterprise')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      expect(invoiceCreate).not.toHaveBeenCalled();
-    });
-
-    it('rejects a plan change when the future invoice is immutable', async () => {
-      accountFindUnique.mockResolvedValue(ACCOUNT);
-      mockPlanLookup();
-      invoiceFindUnique.mockResolvedValue({ id: 'inv-final', status: 'finalized' });
-
-      await expect(service.assignPlan('user-1', 'starter')).rejects.toThrow(ConflictException);
-      expect(assignmentCreate).not.toHaveBeenCalled();
-      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(requestPlanChange).not.toHaveBeenCalled();
     });
 
     it('retries a serialization conflict during plan assignment', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       mockPlanLookup();
-      assignmentFindUnique.mockResolvedValue(null);
-      invoiceFindUnique.mockResolvedValue(null);
-      invoiceCreate
+      mockCurrentFreeAssignment();
+      requestPlanChange
         .mockRejectedValueOnce(
           new Prisma.PrismaClientKnownRequestError('serialization failure', {
             code: 'P2034',
@@ -803,19 +901,22 @@ describe('BillingService', () => {
           }),
         )
         .mockResolvedValueOnce({
-          id: 'inv-open',
-          billingAccountId: ACCOUNT.id,
-          periodStart: new Date('2026-09-01T00:00:00.000Z'),
-          status: 'open',
+          outcome: 'payment_required',
+          planCode: 'starter',
+          planName: 'Starter',
+          changeId: 'chg-1',
+          invoiceId: 'inv-charge-1',
+          amount: '25.000000',
           currency: 'USD',
-          totalMicros: 49_000_000n,
-          createdAt: new Date('2026-08-25T00:00:00.000Z'),
+          effectivePeriod: '2026-08',
+          effectiveFrom: '2026-08-01T00:00:00.000Z',
+          kind: 'upgrade',
         });
 
       const result = await service.assignPlan('user-1', 'starter');
 
-      expect(result.outcome).toBe('changed');
-      expect(invoiceCreate).toHaveBeenCalledTimes(2);
+      expect(result.outcome).toBe('payment_required');
+      expect(requestPlanChange).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -2723,13 +2824,22 @@ describe('BillingService', () => {
         createdAt: new Date('2026-05-01T00:00:00.000Z'),
         paidAt: null,
       };
-      invoiceFindUnique
+      // Per ensureOpenInvoiceForPeriod call path:
+      // 1) existing check 2) resolveUsagePlanVersion 3) upsertOpen existing
+      // 4) re-read after create. Second call only hits existing check.
+      invoiceFindFirst
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(created)
-        .mockResolvedValueOnce(created);
+        .mockResolvedValue(created);
       invoiceCreate.mockResolvedValue(created);
       lineCreateMany.mockResolvedValue({ count: 1 });
+      assignmentFindFirst.mockResolvedValue({
+        planVersion: FREE_VERSION,
+        expiresAt: null,
+        source: 'default',
+      });
 
       await expect(service.ensureOpenInvoiceForPeriod('user-1', '2026-05')).resolves.toMatchObject({
         id: 'inv-next',
@@ -3026,23 +3136,31 @@ describe('BillingService', () => {
     it('returns the same invoice on a concurrent unique-conflict race', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
-      invoiceFindUnique
-        .mockResolvedValueOnce(null) // cheap pre-check: none
-        .mockResolvedValueOnce(null) // re-check inside the lock: none
-        .mockResolvedValueOnce({
-          id: 'inv-1',
-          billingAccountId: ACCOUNT.id,
-          periodStart: new Date('2026-05-01T00:00:00.000Z'),
-          status: 'finalized',
-          currency: 'USD',
-          totalMicros: 55_000_000n,
-          createdAt: new Date('2026-06-01T00:00:00.000Z'),
-        }); // after unique conflict: found
+      const winner = {
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized' as const,
+        currency: 'USD',
+        totalMicros: 55_000_000n,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        purpose: 'usage_period',
+        planVersionId: FREE_VERSION.id,
+      };
+      // cheap pre-check + lock re-check: none; after P2002 winner lookup: winner
+      // (invoiceFindFirst is also used by resolveUsagePlanVersion → null)
+      invoiceFindFirst
+        .mockResolvedValueOnce(null) // finalize pre-check
+        .mockResolvedValueOnce(null) // lock re-check
+        .mockResolvedValueOnce(null) // resolveUsagePlanVersion
+        .mockResolvedValueOnce(winner); // after P2002
       assignmentFindFirst.mockResolvedValue({
         id: 'assign-1',
         billingAccountId: ACCOUNT.id,
         planVersionId: FREE_VERSION.id,
         planVersion: FREE_VERSION,
+        expiresAt: null,
+        source: 'default',
       });
       usageEventFindMany.mockResolvedValue([]);
       walletCount.mockResolvedValue(0);
@@ -3423,12 +3541,26 @@ describe('BillingService', () => {
     it('fails closed when the persisted plan has an unknown code during finalize', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindFirst.mockResolvedValue(null);
       invoiceFindUnique.mockResolvedValue(null);
       assignmentFindFirst.mockResolvedValue({
         id: 'assign-1',
         billingAccountId: ACCOUNT.id,
         planVersionId: 'plan-unknown-1',
-        planVersion: { ...FREE_VERSION, id: 'plan-unknown-1', code: 'not-a-real-plan' },
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: {
+          ...FREE_VERSION,
+          id: 'plan-unknown-1',
+          code: 'not-a-real-plan',
+          monthlyFeeMicros: 1n,
+        },
+      });
+      planVersionFindUnique.mockResolvedValue({
+        ...FREE_VERSION,
+        id: 'plan-unknown-1',
+        code: 'not-a-real-plan',
+        monthlyFeeMicros: 1n,
       });
 
       await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
@@ -4372,10 +4504,6 @@ describe('BillingService', () => {
 
   describe('buildInvoiceLineSpecs', () => {
     it('builds monthly_fee and outbound tier lines matching finalize rules', () => {
-      const { buildInvoiceLineSpecs } =
-        require('./billing.service') as typeof import('./billing.service');
-      const { calculateInvoiceTotals, PLANS } =
-        require('./billing-calculator') as typeof import('./billing-calculator');
       const plan = PLANS.starter;
       const totals = calculateInvoiceTotals({
         plan,
@@ -4406,10 +4534,6 @@ describe('BillingService', () => {
     });
 
     it('rejects nothing extra: zero outbound yields only fee (+ zero-volume tiers if any)', () => {
-      const { buildInvoiceLineSpecs } =
-        require('./billing.service') as typeof import('./billing.service');
-      const { calculateInvoiceTotals, PLANS } =
-        require('./billing-calculator') as typeof import('./billing-calculator');
       const plan = PLANS.free;
       const totals = calculateInvoiceTotals({
         plan,
@@ -4521,12 +4645,7 @@ describe('BillingService', () => {
       planVersionFindUnique.mockResolvedValue(FREE_VERSION);
       usageEventFindMany.mockResolvedValue([]);
       walletCount.mockResolvedValue(0);
-      const { Prisma } = require('@prisma/client') as typeof import('@prisma/client');
-      const p2002 = new Prisma.PrismaClientKnownRequestError('unique', {
-        code: 'P2002',
-        clientVersion: 'test',
-      });
-      invoiceCreate.mockRejectedValue(p2002);
+      invoiceCreate.mockRejectedValue(p2002());
 
       const tx = await lockedTx();
       await expect(

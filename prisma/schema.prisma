@@ -69,6 +69,40 @@ enum BillingWorkerStatus {
   failed
 }
 
+enum BillingInvoicePurpose {
+  usage_period
+  plan_charge
+}
+
+enum BillingPlanChangeKind {
+  upgrade
+  downgrade
+}
+
+enum BillingPlanChangeStatus {
+  pending_payment
+  scheduled
+  applied
+  canceled
+  needs_review
+}
+
+enum BillingSubscriptionSyncKind {
+  update_item
+  cancel_at_period_end
+}
+
+enum BillingSubscriptionSyncStatus {
+  // Never dispatched to Stripe yet — safe to supersede.
+  pending
+  // Provider call started or result uncertain — must not be superseded; retry same payload.
+  in_flight
+  synced
+  needs_review
+  superseded
+  failed
+}
+
 model User {
   id             String    @id @default(uuid()) @db.Uuid
   socialProvider String    @map("social_provider") @db.VarChar(20)
@@ -416,14 +450,19 @@ model BillingAccount {
   // account's backfill has scanned (see BillingWorkerService). Nullable; a NULL
   // cursor means the backfill starts from the oldest missing month.
   billingBackfillCursor DateTime? @map("billing_backfill_cursor") @db.Timestamptz()
+  // Account-scoped lease for first subscription Checkout create (no second sub race).
+  subscriptionCreateLeaseOwnerId    String?   @map("subscription_create_lease_owner_id") @db.VarChar(80)
+  subscriptionCreateLeaseExpiresAt  DateTime? @map("subscription_create_lease_expires_at") @db.Timestamptz()
   currency         String   @default("USD") @map("currency") @db.VarChar(10)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  user        User                    @relation(fields: [userId], references: [id])
-  assignments BillingPlanAssignment[]
-  usageEvents BillingUsageEvent[]
-  invoices    BillingInvoice[]
+  user                User                           @relation(fields: [userId], references: [id])
+  assignments         BillingPlanAssignment[]
+  usageEvents         BillingUsageEvent[]
+  invoices            BillingInvoice[]
+  planChanges         BillingPlanChange[]
+  subscriptionSyncs   BillingSubscriptionSyncIntent[]
 
   @@map("billing_accounts")
 }
@@ -444,10 +483,13 @@ model BillingPlanVersion {
   effectiveFrom           DateTime @map("effective_from") @db.Timestamptz()
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  tiers              BillingPlanTier[]
-  assignments        BillingPlanAssignment[]
-  invoices           BillingInvoice[]
-  billingUsageEvents BillingUsageEvent[]
+  tiers                BillingPlanTier[]
+  assignments          BillingPlanAssignment[]
+  invoices             BillingInvoice[]
+  billingUsageEvents   BillingUsageEvent[]
+  planChangesFrom      BillingPlanChange[]              @relation("PlanChangeFrom")
+  planChangesTo        BillingPlanChange[]              @relation("PlanChangeTo")
+  subscriptionSyncs    BillingSubscriptionSyncIntent[]
 
   @@unique([code, version])
   @@map("billing_plan_versions")
@@ -467,11 +509,16 @@ model BillingPlanTier {
 }
 
 model BillingPlanAssignment {
-  id               String   @id @default(uuid()) @db.Uuid
-  billingAccountId String   @map("billing_account_id") @db.Uuid
-  planVersionId    String   @map("plan_version_id") @db.Uuid
-  periodStart      DateTime @map("period_start") @db.Timestamptz()
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id               String    @id @default(uuid()) @db.Uuid
+  billingAccountId String    @map("billing_account_id") @db.Uuid
+  planVersionId    String    @map("plan_version_id") @db.Uuid
+  periodStart      DateTime  @map("period_start") @db.Timestamptz()
+  // Exclusive end of paid/scheduled validity. Null means open-ended (e.g. Free
+  // default). Entitlement resolution requires expiresAt IS NULL OR expiresAt > at.
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz()
+  // Optional provenance: default | upgrade_payment | downgrade_schedule | renewal.
+  source           String?   @map("source") @db.VarChar(40)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   billingAccount BillingAccount     @relation(fields: [billingAccountId], references: [id])
   planVersion    BillingPlanVersion @relation(fields: [planVersionId], references: [id])
@@ -480,6 +527,99 @@ model BillingPlanAssignment {
   @@index([planVersionId])
   @@index([billingAccountId, periodStart])
   @@map("billing_plan_assignments")
+}
+
+model BillingPlanChange {
+  id                String                   @id @default(uuid()) @db.Uuid
+  billingAccountId  String                   @map("billing_account_id") @db.Uuid
+  fromPlanVersionId String                   @map("from_plan_version_id") @db.Uuid
+  toPlanVersionId   String                   @map("to_plan_version_id") @db.Uuid
+  kind              BillingPlanChangeKind    @map("kind")
+  status            BillingPlanChangeStatus  @map("status")
+  // When the change should take effect (current month start for paid upgrades;
+  // next UTC month start for scheduled downgrades).
+  effectiveAt       DateTime                 @map("effective_at") @db.Timestamptz()
+  // Billing period the change is scoped to (current UTC month for upgrades;
+  // next UTC month for downgrades).
+  periodStart       DateTime                 @map("period_start") @db.Timestamptz()
+  // Server-derived exclusive end of the payable/activatable window (UTC month
+  // end for upgrades; next-next month start for scheduled downgrades).
+  validUntil        DateTime                 @map("valid_until") @db.Timestamptz()
+  chargeInvoiceId   String?                  @unique @map("charge_invoice_id") @db.Uuid
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz()
+  appliedAt         DateTime?                @map("applied_at") @db.Timestamptz()
+  canceledAt        DateTime?                @map("canceled_at") @db.Timestamptz()
+
+  billingAccount  BillingAccount     @relation(fields: [billingAccountId], references: [id])
+  fromPlanVersion BillingPlanVersion @relation("PlanChangeFrom", fields: [fromPlanVersionId], references: [id])
+  toPlanVersion   BillingPlanVersion @relation("PlanChangeTo", fields: [toPlanVersionId], references: [id])
+  chargeInvoice   BillingInvoice?    @relation("PlanChangeChargeInvoice", fields: [chargeInvoiceId], references: [id], onDelete: SetNull)
+
+  @@index([billingAccountId, status])
+  @@index([billingAccountId, periodStart])
+  @@index([toPlanVersionId])
+  @@map("billing_plan_changes")
+}
+
+/// Durable Stripe subscription mirror sync intent (Gate 1 B4).
+/// Local plan-change apply commits the intent in the same TX; Stripe is called
+/// only AFTER commit. Local entitlement never depends on sync success.
+model BillingSubscriptionSyncIntent {
+  id                      String                         @id @default(uuid()) @db.Uuid
+  billingAccountId        String                         @map("billing_account_id") @db.Uuid
+  // Monotonic per-account revision. Older unresolved revisions dispatch first;
+  // never-dispatched pending may be superseded by a newer enqueue.
+  revision                Int                            @map("revision")
+  sourcePlanChangeId      String?                        @map("source_plan_change_id") @db.Uuid
+  kind                    BillingSubscriptionSyncKind    @map("kind")
+  status                  BillingSubscriptionSyncStatus  @default(pending) @map("status")
+  // Frozen binding at enqueue time (never client-supplied).
+  stripeCustomerId        String                         @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId    String                         @map("stripe_subscription_id") @db.VarChar(255)
+  // Filled after first successful retrieve of the licensed monthly item.
+  stripeSubscriptionItemId String?                       @map("stripe_subscription_item_id") @db.VarChar(255)
+  targetPlanVersionId     String?                        @map("target_plan_version_id") @db.Uuid
+  // Positive fee in Stripe cents for update_item; null for cancel_at_period_end.
+  targetUnitAmountCents   Int?                           @map("target_unit_amount_cents")
+  targetCurrency          String                         @default("usd") @map("target_currency") @db.VarChar(10)
+  // Provider validation window at enqueue (current subscription item period).
+  expectedPeriodStart     DateTime?                      @map("expected_period_start") @db.Timestamptz()
+  expectedPeriodEnd       DateTime?                      @map("expected_period_end") @db.Timestamptz()
+  // Stable provider idempotency key for the exact same mutation payload.
+  operationIdempotencyKey String                         @unique @map("operation_idempotency_key") @db.VarChar(120)
+  // Frozen provider mutation payload (item/product/cents/periods); immutable after first freeze.
+  frozenPayloadJson       Json?                          @map("frozen_payload_json")
+  // Set when the provider call is first attempted; marks uncertain until terminal.
+  dispatchedAt            DateTime?                      @map("dispatched_at") @db.Timestamptz()
+  retryCount              Int                            @default(0) @map("retry_count")
+  nextRetryAt             DateTime?                      @map("next_retry_at") @db.Timestamptz()
+  leaseOwnerId            String?                        @map("lease_owner_id") @db.VarChar(80)
+  leaseExpiresAt          DateTime?                      @map("lease_expires_at") @db.Timestamptz()
+  lastErrorCode           String?                        @map("last_error_code") @db.VarChar(80)
+  lastErrorType           String?                        @map("last_error_type") @db.VarChar(80)
+  // Frozen verified provider facts after sync (safe identifiers only).
+  syncedProviderPriceId   String?                        @map("synced_provider_price_id") @db.VarChar(255)
+  // First renewal month this config governs (UTC month from current period end).
+  // Distinct from expected*: a Sep sync validates the current period but applies
+  // from the following month forward until a higher-revision update/cancel.
+  // effectivePeriodEnd is the exclusive end of that first month (informational);
+  // renewal identity carries forward past it via revision ordering.
+  effectivePeriodStart    DateTime?                      @map("effective_period_start") @db.Timestamptz()
+  effectivePeriodEnd      DateTime?                      @map("effective_period_end") @db.Timestamptz()
+  syncedAt                DateTime?                      @map("synced_at") @db.Timestamptz()
+  createdAt               DateTime                       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime                       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  billingAccount    BillingAccount      @relation(fields: [billingAccountId], references: [id])
+  targetPlanVersion BillingPlanVersion? @relation(fields: [targetPlanVersionId], references: [id], onDelete: SetNull)
+
+  @@unique([billingAccountId, revision])
+  @@index([status, nextRetryAt])
+  @@index([billingAccountId, status])
+  @@index([stripeSubscriptionId])
+  // Partial unique (one in_flight per account) lives in SQL migrations only:
+  // 20260917150000_sync_intent_queue_behind_in_flight.
+  @@map("billing_subscription_sync_intents")
 }
 
 model BillingReconciliationRun {
@@ -573,13 +713,16 @@ model BillingUsageEvent {
 }
 
 model BillingInvoice {
-  id                     String               @id @default(uuid()) @db.Uuid
-  billingAccountId       String               @map("billing_account_id") @db.Uuid
-  planVersionId          String               @map("plan_version_id") @db.Uuid
-  periodStart            DateTime             @map("period_start") @db.Timestamptz()
-  periodEnd              DateTime             @map("period_end") @db.Timestamptz()
-  status                 BillingInvoiceStatus @default(open) @map("status")
-  currency               String               @default("USD") @map("currency") @db.VarChar(10)
+  id                     String                @id @default(uuid()) @db.Uuid
+  billingAccountId       String                @map("billing_account_id") @db.Uuid
+  planVersionId          String                @map("plan_version_id") @db.Uuid
+  periodStart            DateTime              @map("period_start") @db.Timestamptz()
+  periodEnd              DateTime              @map("period_end") @db.Timestamptz()
+  // usage_period: monthly usage/renewal invoice (at most one per account+period).
+  // plan_charge: independent upgrade proration charge (may coexist same month).
+  purpose                BillingInvoicePurpose @default(usage_period) @map("purpose")
+  status                 BillingInvoiceStatus  @default(open) @map("status")
+  currency               String                @default("USD") @map("currency") @db.VarChar(10)
   grossOutboundMicros    BigInt               @default(0) @map("gross_outbound_micros")
   includedOutboundMicros BigInt?              @map("included_outbound_micros")
   billableOutboundMicros BigInt               @default(0) @map("billable_outbound_micros")
@@ -616,9 +759,14 @@ model BillingInvoice {
   lines            BillingInvoiceLine[]
   paymentAttempts  BillingPaymentAttempt[]
   settlementAttempt BillingPaymentAttempt? @relation("InvoiceSettlement", fields: [settlementAttemptId], references: [id], onDelete: SetNull)
+  // Reverse side of BillingPlanChange.chargeInvoiceId (1:1 when set).
+  planChangeCharge BillingPlanChange? @relation("PlanChangeChargeInvoice")
 
-  @@unique([billingAccountId, periodStart])
+  // usage_period uniqueness is enforced by a migration-only partial unique index
+  // on (billing_account_id, period_start) WHERE purpose = 'usage_period'.
+  // plan_charge rows may share the same period and are keyed via BillingPlanChange.
   @@index([billingAccountId, periodStart, periodEnd])
+  @@index([billingAccountId, purpose, periodStart])
   @@map("billing_invoices")
 }
 

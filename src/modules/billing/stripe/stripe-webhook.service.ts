@@ -14,6 +14,8 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { SecurityEventService } from '../../security-events/security-event.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
+import { BillingPlanChangeService } from '../billing-plan-change.service';
+import { StripeSubscriptionSyncService } from './stripe-subscription-sync.service';
 import { canonicalBillingJson } from '../billing-json';
 import { acquireBillingPeriodAdvisoryLock } from '../billing-period-lock';
 import * as Stripe from 'stripe';
@@ -152,6 +154,8 @@ export class StripeWebhookService {
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe | null,
     private readonly settlementService: InvoiceSettlementService,
     @Optional() private readonly securityEvents?: SecurityEventService,
+    @Optional() private readonly planChanges?: BillingPlanChangeService,
+    @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
   ) {}
 
   async handleWebhook(rawBody: Buffer | undefined, signature: string | undefined): Promise<void> {
@@ -612,6 +616,24 @@ export class StripeWebhookService {
           invoiceId: attempt.invoiceId,
           method: 'stripe',
         });
+        // Fixed-fee renewal coverage is independent of usage-invoice allocation:
+        // open dynamic invoices reject settlement, but a verified succeeded
+        // fixed_fee attempt still extends bounded entitlement for the period.
+        if (this.planChanges && attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
+          const inv = await tx.billingInvoice.findUnique({
+            where: { id: attempt.invoiceId },
+          });
+          const planVersionId = inv?.planVersionId ?? null;
+          if (inv && planVersionId) {
+            await this.planChanges.applyFixedFeeRenewalCoverage(tx, {
+              invoiceId: inv.id,
+              planVersionId,
+              amountMicros: attempt.amountMicros,
+              attemptId: attempt.id,
+              periodLockAlreadyHeld: true,
+            });
+          }
+        }
         if (result.allocated) {
           // New coverage was counted. Only a fully covered invoice is a
           // settlement; a partial allocation (e.g. fixed fee on a dynamic
@@ -1627,10 +1649,30 @@ export class StripeWebhookService {
       return null;
     }
 
-    // Fixed fee from the proven active subscription plan version. Never derive
-    // an amount from untrusted event metadata.
+    // Find or create the local renewal usage_period invoice (at most one per
+    // account+period). plan_charge upgrade invoices share the period but are
+    // never selected here. Open unbound worker estimates are NOT authoritative
+    // for paid renewal identity — verified period-specific sync history wins.
+    let invoice: any = await tx.billingInvoice.findFirst({
+      where: {
+        billingAccountId: account.id,
+        periodStart: monthStart,
+        purpose: 'usage_period',
+      },
+      include: { lines: true },
+    });
+
+    const planVersionIdForFee = await this.resolveRenewalPlanVersionId(
+      tx,
+      account,
+      monthStart,
+      monthEnd,
+      invoice,
+    );
+    if (!planVersionIdForFee) return null;
+
     const plan = await tx.billingPlanVersion.findUnique({
-      where: { id: account.activeSubscriptionPlanVersionId },
+      where: { id: planVersionIdForFee },
     });
     const fixedFee = plan?.monthlyFeeMicros ?? null;
     if (!plan || fixedFee === null || fixedFee <= 0n || fixedFee % MICROS_PER_CENT !== 0n) {
@@ -1644,37 +1686,52 @@ export class StripeWebhookService {
     if (amountCents === null || amountCents <= 0) return null;
     if (BigInt(amountCents) * MICROS_PER_CENT !== fixedFee) return null;
 
-    // Find or create the local renewal invoice (unique account+period).
-    let invoice: any = await tx.billingInvoice.findUnique({
-      where: {
-        billingAccountId_periodStart: { billingAccountId: account.id, periodStart: monthStart },
-      },
-      include: { lines: true },
-    });
     if (invoice) {
-      // Immutable finalized invoices may receive a late, exact fixed-fee
-      // attempt mapping. Their snapshot/amount/lines are never changed.
       if (invoice.status !== 'open' && invoice.status !== 'finalized') return null;
-      if (invoice.totalMicros !== fixedFee) return null;
       if (invoice.stripeInvoiceId !== null && invoice.stripeInvoiceId !== stripeInvoiceId) {
         return null;
       }
-      if (
-        !(await this.validateLocalRenewalInvoice(tx, invoice, plan, monthStart, monthEnd, fixedFee))
-      )
-        return null;
-      // Bind the Stripe invoice id to this local invoice ATOMICALLY when absent
-      // (CAS on `stripeInvoiceId = null`), so repeated/retried events reuse the
-      // SAME local invoice and no two invoices can ever carry the same Stripe
-      // invoice id. A lost CAS means a concurrent writer bound it elsewhere.
-      if (invoice.stripeInvoiceId === null) {
-        const claimed = await tx.billingInvoice.updateMany({
-          where: { id: invoice.id, stripeInvoiceId: null },
-          data: { stripeInvoiceId },
+
+      // Worker-first open unbound estimate (e.g. Free zero-fee) may precede a
+      // valid paid renewal webhook. Adopt only pure fee estimates without
+      // overage — never rewrite dynamic overage rows, finalized, or covered.
+      if (this.canAdoptOpenEstimateForPaidRenewal(invoice, plan.id, fixedFee)) {
+        const adopted = await this.adoptOpenUnboundEstimateForRenewal(tx, {
+          invoice,
+          plan,
+          fixedFee,
+          stripeInvoiceId,
+          monthStart,
+          monthEnd,
         });
-        if (claimed.count === 0) {
-          const current = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
-          if (!current || current.stripeInvoiceId !== stripeInvoiceId) return null; // defer
+        if (!adopted) return null;
+        invoice = adopted;
+      } else {
+        if (invoice.totalMicros !== fixedFee) return null;
+        if (
+          !(await this.validateLocalRenewalInvoice(
+            tx,
+            invoice,
+            plan,
+            monthStart,
+            monthEnd,
+            fixedFee,
+          ))
+        )
+          return null;
+        // Bind the Stripe invoice id to this local invoice ATOMICALLY when absent
+        // (CAS on `stripeInvoiceId = null`), so repeated/retried events reuse the
+        // SAME local invoice and no two invoices can ever carry the same Stripe
+        // invoice id. A lost CAS means a concurrent writer bound it elsewhere.
+        if (invoice.stripeInvoiceId === null) {
+          const claimed = await tx.billingInvoice.updateMany({
+            where: { id: invoice.id, stripeInvoiceId: null },
+            data: { stripeInvoiceId },
+          });
+          if (claimed.count === 0) {
+            const current = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
+            if (!current || current.stripeInvoiceId !== stripeInvoiceId) return null; // defer
+          }
         }
       }
       // Provider invoice.finalized is identity/payment evidence only. Local
@@ -1699,6 +1756,7 @@ export class StripeWebhookService {
             planVersionId: plan.id,
             periodStart: monthStart,
             periodEnd: monthEnd,
+            purpose: 'usage_period',
             status: 'open',
             currency: 'USD',
             grossOutboundMicros: 0n,
@@ -1731,12 +1789,11 @@ export class StripeWebhookService {
         });
       } catch (err) {
         if (!isUniqueConstraintError(err)) throw err;
-        const winner = await tx.billingInvoice.findUnique({
+        const winner = await tx.billingInvoice.findFirst({
           where: {
-            billingAccountId_periodStart: {
-              billingAccountId: account.id,
-              periodStart: monthStart,
-            },
+            billingAccountId: account.id,
+            periodStart: monthStart,
+            purpose: 'usage_period',
           },
         });
         if (
@@ -1794,6 +1851,323 @@ export class StripeWebhookService {
       if (!winner || !(await this.validateRenewalReplay(tx, event, winner))) return null;
       return winner;
     }
+  }
+
+  /**
+   * True when the usage invoice is an open worker/estimate row with no Stripe
+   * renewal binding and no coverage — not authoritative for paid plan identity.
+   */
+  private isOpenUnboundUsageEstimate(invoice: {
+    status: string;
+    purpose?: string | null;
+    stripeInvoiceId: string | null;
+    paidAt: Date | null;
+    settlementAttemptId: string | null;
+    allocatedMicros?: bigint | null;
+  }): boolean {
+    if (invoice.status !== 'open') return false;
+    if (invoice.purpose != null && invoice.purpose !== 'usage_period') return false;
+    if (invoice.stripeInvoiceId != null) return false;
+    if (invoice.paidAt != null || invoice.settlementAttemptId != null) return false;
+    if ((invoice.allocatedMicros ?? 0n) > 0n) return false;
+    return true;
+  }
+
+  /**
+   * Open unbound pure-fee estimates (Free 0 or monthly-fee-only, no overage)
+   * may be rewritten to the verified paid renewal shape. Dynamic overage
+   * invoices are never adopted.
+   */
+  private canAdoptOpenEstimateForPaidRenewal(
+    invoice: {
+      status: string;
+      purpose?: string | null;
+      planVersionId: string | null;
+      stripeInvoiceId: string | null;
+      paidAt: Date | null;
+      settlementAttemptId: string | null;
+      allocatedMicros?: bigint | null;
+      totalMicros: bigint;
+      monthlyFeeMicros?: bigint | null;
+      outboundOverageMicros?: bigint | null;
+      apiOverageMicros?: bigint | null;
+      walletOverageMicros?: bigint | null;
+    },
+    planVersionId: string,
+    fixedFee: bigint,
+  ): boolean {
+    if (!this.isOpenUnboundUsageEstimate(invoice)) return false;
+    if (invoice.planVersionId === planVersionId && invoice.totalMicros === fixedFee) {
+      return false;
+    }
+    const overage =
+      (invoice.outboundOverageMicros ?? 0n) +
+      (invoice.apiOverageMicros ?? 0n) +
+      (invoice.walletOverageMicros ?? 0n);
+    if (overage > 0n) return false;
+    // Pure fee estimate: zero total (Free) or total equals its own monthly fee.
+    if (invoice.totalMicros === 0n) return true;
+    if (
+      invoice.monthlyFeeMicros != null &&
+      invoice.totalMicros === invoice.monthlyFeeMicros &&
+      invoice.totalMicros !== fixedFee
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Finalized / Stripe-bound / covered invoices own their planVersionId snapshot.
+   * Open unbound estimates do not.
+   */
+  private isAuthoritativeRenewalInvoicePlan(invoice: {
+    status: string;
+    purpose?: string | null;
+    planVersionId: string | null;
+    stripeInvoiceId: string | null;
+    paidAt: Date | null;
+    settlementAttemptId: string | null;
+    allocatedMicros?: bigint | null;
+  }): boolean {
+    if (!invoice.planVersionId) return false;
+    if (invoice.purpose != null && invoice.purpose !== 'usage_period') return false;
+    if (invoice.paidAt != null || invoice.settlementAttemptId != null) return true;
+    if ((invoice.allocatedMicros ?? 0n) > 0n) return true;
+    if (invoice.stripeInvoiceId != null) return true;
+    if (invoice.status === 'finalized') return true;
+    return false;
+  }
+
+  /**
+   * When a config becomes applicable for renewal identity.
+   * New rows: effectivePeriodStart is the next UTC month after the provider
+   * validation window. Legacy rows dual-wrote effective === expected (current
+   * window); treat those as applying from expectedPeriodEnd (next month) so a
+   * mid-period sync does not claim the in-progress month.
+   */
+  private syncConfigApplicabilityStart(intent: {
+    effectivePeriodStart: Date | null;
+    expectedPeriodStart: Date | null;
+    expectedPeriodEnd: Date | null;
+  }): Date | null {
+    if (!intent.effectivePeriodStart) return null;
+    if (
+      intent.expectedPeriodStart &&
+      intent.expectedPeriodEnd &&
+      intent.effectivePeriodStart.getTime() === intent.expectedPeriodStart.getTime()
+    ) {
+      return new Date(
+        Date.UTC(
+          intent.expectedPeriodEnd.getUTCFullYear(),
+          intent.expectedPeriodEnd.getUTCMonth(),
+          1,
+        ),
+      );
+    }
+    return intent.effectivePeriodStart;
+  }
+
+  /**
+   * Resolve the paid plan identity for a renewal period.
+   * 1) Authoritative usage invoice plan (finalized / Stripe-bound / covered)
+   * 2) Latest applicable verified sync config for this account/subscription:
+   *    applicability start ≤ renewal month start, highest revision wins and
+   *    carries forward until a later update/cancel supersedes (cancel → Free)
+   * 3) Mirror bootstrap only when there is genuinely no applicable history
+   */
+  private async resolveRenewalPlanVersionId(
+    tx: Tx,
+    account: {
+      id: string;
+      stripeSubscriptionId: string | null;
+      stripeCustomerId?: string | null;
+      activeSubscriptionPlanVersionId: string | null;
+      stripeSubscriptionPeriodStart: Date | null;
+      stripeSubscriptionPeriodEnd: Date | null;
+    },
+    monthStart: Date,
+    monthEnd: Date,
+    invoice: {
+      status: string;
+      purpose?: string | null;
+      planVersionId: string | null;
+      stripeInvoiceId: string | null;
+      paidAt: Date | null;
+      settlementAttemptId: string | null;
+      allocatedMicros?: bigint | null;
+    } | null,
+  ): Promise<string | null> {
+    if (invoice && this.isAuthoritativeRenewalInvoicePlan(invoice) && invoice.planVersionId) {
+      return invoice.planVersionId;
+    }
+
+    // Candidate history: synced intents for this account/subscription whose
+    // stored effective start is at or before the renewal month. Applicability
+    // may shift forward for legacy dual-write rows (see helper).
+    const history = await tx.billingSubscriptionSyncIntent.findMany({
+      where: {
+        billingAccountId: account.id,
+        status: 'synced',
+        ...(account.stripeSubscriptionId
+          ? { stripeSubscriptionId: account.stripeSubscriptionId }
+          : {}),
+        effectivePeriodStart: { lte: monthStart },
+      },
+      orderBy: { revision: 'desc' },
+      take: 100,
+      select: {
+        kind: true,
+        targetPlanVersionId: true,
+        targetUnitAmountCents: true,
+        revision: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+        stripeSubscriptionItemId: true,
+        effectivePeriodStart: true,
+        expectedPeriodStart: true,
+        expectedPeriodEnd: true,
+      },
+    });
+
+    const applicable = history.filter((row) => {
+      if (
+        account.stripeSubscriptionId &&
+        row.stripeSubscriptionId !== account.stripeSubscriptionId
+      ) {
+        return false;
+      }
+      if (
+        account.stripeCustomerId &&
+        row.stripeCustomerId &&
+        row.stripeCustomerId !== account.stripeCustomerId
+      ) {
+        return false;
+      }
+      const start = this.syncConfigApplicabilityStart(row);
+      return start != null && start.getTime() <= monthStart.getTime();
+    });
+
+    const latest = applicable[0] ?? null;
+    if (!latest) {
+      // Genuinely no applicable verified history — mirror bootstrap only.
+      if (
+        account.activeSubscriptionPlanVersionId &&
+        account.stripeSubscriptionPeriodStart != null &&
+        account.stripeSubscriptionPeriodEnd != null &&
+        account.stripeSubscriptionPeriodStart.getTime() === monthStart.getTime() &&
+        account.stripeSubscriptionPeriodEnd.getTime() === monthEnd.getTime()
+      ) {
+        return account.activeSubscriptionPlanVersionId;
+      }
+      return null;
+    }
+
+    if (latest.kind === 'cancel_at_period_end') {
+      return null;
+    }
+    if (latest.kind !== 'update_item' || !latest.targetPlanVersionId) {
+      return null;
+    }
+
+    if (latest.targetUnitAmountCents != null) {
+      const plan = await tx.billingPlanVersion.findUnique({
+        where: { id: latest.targetPlanVersionId },
+      });
+      const fee = plan?.monthlyFeeMicros ?? null;
+      if (
+        fee == null ||
+        fee <= 0n ||
+        fee % MICROS_PER_CENT !== 0n ||
+        Number(fee / MICROS_PER_CENT) !== latest.targetUnitAmountCents
+      ) {
+        return null;
+      }
+    }
+    return latest.targetPlanVersionId;
+  }
+
+  /**
+   * Rewrite an open unbound worker estimate to the verified paid renewal shape
+   * and bind the Stripe invoice id. Never touches finalized/bound/covered rows.
+   */
+  private async adoptOpenUnboundEstimateForRenewal(
+    tx: Tx,
+    args: {
+      invoice: any;
+      plan: any;
+      fixedFee: bigint;
+      stripeInvoiceId: string;
+      monthStart: Date;
+      monthEnd: Date;
+    },
+  ): Promise<any | null> {
+    const { invoice, plan, fixedFee, stripeInvoiceId, monthStart, monthEnd } = args;
+    if (
+      invoice.periodStart.getTime() !== monthStart.getTime() ||
+      invoice.periodEnd.getTime() !== monthEnd.getTime() ||
+      invoice.currency !== 'USD'
+    ) {
+      return null;
+    }
+
+    const snapshot = {
+      renewal: true,
+      planVersionId: plan.id,
+      stripeInvoiceId,
+      period: monthStart.toISOString().slice(0, 10),
+      planCode: plan.code,
+      planName: plan.name,
+      fixedFeeMicros: fixedFee.toString(),
+      adoptedFromOpenEstimate: true,
+    };
+    const snapshotHash = createHash('sha256')
+      .update(canonicalBillingJson(snapshot))
+      .digest('hex');
+
+    const claimed = await tx.billingInvoice.updateMany({
+      where: {
+        id: invoice.id,
+        status: 'open',
+        stripeInvoiceId: null,
+        paidAt: null,
+        settlementAttemptId: null,
+        allocatedMicros: 0n,
+      },
+      data: {
+        planVersionId: plan.id,
+        monthlyFeeMicros: fixedFee,
+        totalMicros: fixedFee,
+        includedOutboundMicros: plan.includedOutboundMicros,
+        includedApiCalls: plan.includedApiCalls,
+        includedWallets: plan.includedWallets,
+        outboundOverageMicros: 0n,
+        apiOverageMicros: 0n,
+        walletOverageMicros: 0n,
+        snapshotJson: snapshot as Prisma.InputJsonValue,
+        snapshotHash,
+        stripeInvoiceId,
+      },
+    });
+    if (claimed.count !== 1) return null;
+
+    await tx.billingInvoiceLine.deleteMany({ where: { invoiceId: invoice.id } });
+    await tx.billingInvoiceLine.createMany({
+      data: [
+        {
+          invoiceId: invoice.id,
+          lineType: 'monthly_fee',
+          description: `Monthly fee — ${plan.name}`,
+          quantity: 1n,
+          amountMicros: fixedFee,
+        },
+      ],
+    });
+
+    return tx.billingInvoice.findUnique({
+      where: { id: invoice.id },
+      include: { lines: true },
+    });
   }
 
   private async validateLocalRenewalInvoice(

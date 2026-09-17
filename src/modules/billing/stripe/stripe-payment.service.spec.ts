@@ -196,7 +196,11 @@ describe('StripePaymentService', () => {
             $transaction: async (work: (tx: any) => Promise<unknown>) => {
               const attemptState = await Promise.resolve(attemptCreate.mock.results.at(-1)?.value);
               return work({
-                billingAccount: { findUnique: accountFindUnique, updateMany: accountUpdateMany },
+                billingAccount: {
+                  findUnique: accountFindUnique,
+                  update: accountUpdate,
+                  updateMany: accountUpdateMany,
+                },
                 billingInvoice: { findUnique: invoiceFindFirst },
                 billingPaymentAttempt: {
                   findUnique: jest.fn().mockResolvedValue(attemptState),
@@ -209,8 +213,8 @@ describe('StripePaymentService', () => {
                     });
                   }),
                 },
-                // Row locks taken by the full-invoice coverage gate and the
-                // persistence re-check (attempt → invoice order).
+                // Account/period advisory locks + row locks (period → attempt → invoice).
+                $executeRaw: jest.fn().mockResolvedValue(undefined),
                 $queryRaw: jest.fn((strings: TemplateStringsArray) => {
                   const sql = strings.join('');
                   if (sql.includes('billing_payment_attempts'))
@@ -218,7 +222,6 @@ describe('StripePaymentService', () => {
                   if (sql.includes('billing_invoices')) return Promise.resolve([{ id: 'inv-1' }]);
                   return Promise.resolve([]);
                 }),
-                $executeRaw: jest.fn().mockResolvedValue(0),
               });
             },
           },
@@ -1061,6 +1064,7 @@ describe('StripePaymentService', () => {
 
     beforeEach(() => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
+      accountUpdate.mockResolvedValue(ACCOUNT);
       // The invoice is owned by the account, uses EXACTLY the Pro plan, and
       // its total equals the fixed fee (no overage) — the only shape that may
       // proceed to a subscription checkout.
@@ -1070,6 +1074,18 @@ describe('StripePaymentService', () => {
       planVersionFindUnique.mockResolvedValue(PRO_PLAN);
       customerCreate.mockResolvedValue({ id: 'cus_123' });
       attemptUpdate.mockResolvedValue(attempt());
+    });
+
+    it('rejects a second subscription when the account already has a live binding', async () => {
+      accountFindUnique.mockResolvedValue({
+        ...ACCOUNT,
+        stripeSubscriptionId: 'sub_existing',
+        stripeSubscriptionStatus: 'active',
+      });
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', 'plan-pro'),
+      ).rejects.toThrow(/already has a Stripe subscription/i);
+      expect(sessionCreate).not.toHaveBeenCalled();
     });
 
     it('rejects a one-time pending attempt instead of reusing it for a subscription', async () => {
@@ -1165,7 +1181,7 @@ describe('StripePaymentService', () => {
       expect(attemptCreate).not.toHaveBeenCalled();
     });
 
-    it('does not regress an already-active same-subscription mirror during recovery/persistence', async () => {
+    it('does not open a second subscription when the account already has a live binding (B4)', async () => {
       const activeAccount = {
         ...ACCOUNT,
         stripeCustomerId: 'cus_123',
@@ -1173,37 +1189,13 @@ describe('StripePaymentService', () => {
         stripeSubscriptionStatus: 'active',
       };
       accountFindUnique.mockResolvedValue(activeAccount);
-      attemptFindFirst.mockResolvedValue(null);
-      attemptCreate.mockResolvedValue(
-        attempt({
-          stripeChargeKind: 'fixed_fee',
-        }),
-      );
-      sessionCreate.mockResolvedValue({
-        id: 'cs_sub',
-        url: 'https://checkout.stripe.com/c/pay/cs_sub',
-        payment_intent: 'pi_sub',
-        subscription: 'sub_existing',
-      });
 
-      const result = await service.createSubscriptionCheckout('user-1', 'inv-1', PRO_PLAN.id);
-
-      expect(result.sessionId).toBe('cs_sub');
-      expect(sessionCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customer: 'cus_123',
-          mode: 'subscription',
-          success_url: 'https://app.example.com/billing?checkout=success&success=1',
-          cancel_url: 'https://app.example.com/billing?checkout=cancelled&canceled=1',
-          subscription_data: expect.objectContaining({
-            billing_cycle_anchor: Math.floor(Date.parse('2026-05-01T00:00:00Z') / 1000),
-            proration_behavior: 'none',
-          }),
-        }),
-        expect.objectContaining({ idempotencyKey: 'subscription-checkout:att-1' }),
-      );
-      expect(accountUpdateMany).not.toHaveBeenCalled();
-      expect(accountUpdate).not.toHaveBeenCalled();
+      await expect(
+        service.createSubscriptionCheckout('user-1', 'inv-1', PRO_PLAN.id),
+      ).rejects.toThrow(/already has a Stripe subscription/i);
+      // Plan-change sync updates the existing item; checkout must not create another.
+      expect(sessionCreate).not.toHaveBeenCalled();
+      expect(attemptCreate).not.toHaveBeenCalled();
     });
   });
 

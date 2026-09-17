@@ -4,13 +4,18 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { formatUtcMonth } from '../billing.utils';
-import { acquireBillingPeriodAdvisoryLock } from '../billing-period-lock';
+import {
+  acquireBillingAccountAdvisoryLock,
+  acquireBillingPeriodAdvisoryLock,
+} from '../billing-period-lock';
+import { BillingPlanChangeService } from '../billing-plan-change.service';
 import * as Stripe from 'stripe';
 import {
   PENDING_SESSION_REUSE_TTL_MS,
@@ -104,6 +109,7 @@ export class StripePaymentService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe | null,
+    @Optional() private readonly planChanges?: BillingPlanChangeService,
   ) {}
 
   /** Bounded worker recovery; provider calls are deliberately outside DB transactions. */
@@ -532,7 +538,61 @@ export class StripePaymentService {
     });
     if (!invoice) throw new NotFoundException('Invoice not found');
 
+    // Plan-charge upgrade invoices use one-time Checkout only — never a second
+    // subscription. Recurring fixed-fee is reserved for usage_period renewals.
+    if ((invoice as { purpose?: string }).purpose === 'plan_charge') {
+      throw new ConflictException(
+        'Plan upgrade charges must use one-time checkout, not subscription checkout',
+      );
+    }
+
     this.assertCheckoutEligible(invoice);
+
+    // One subscription per account + durable create lease (Gate 1 attempt 3).
+    const createLeaseOwner = `sub-create:${invoiceId}`;
+    await this.prisma.$transaction(async (tx) => {
+      await acquireBillingAccountAdvisoryLock(tx, account.id);
+      const fresh = await tx.billingAccount.findUnique({ where: { id: account.id } });
+      if (!fresh) throw new NotFoundException('Invoice not found');
+      if (fresh.stripeSubscriptionId) {
+        const status = fresh.stripeSubscriptionStatus;
+        const liveOrUncertain =
+          !status ||
+          status === 'active' ||
+          status === 'trialing' ||
+          status === 'past_due' ||
+          status === 'unpaid' ||
+          status === 'incomplete' ||
+          status === 'paused';
+        if (liveOrUncertain) {
+          throw new ConflictException(
+            'Account already has a Stripe subscription; use plan change sync instead of creating another',
+          );
+        }
+      }
+      const now = new Date();
+      const freshAny = fresh as typeof fresh & {
+        subscriptionCreateLeaseExpiresAt?: Date | null;
+        subscriptionCreateLeaseOwnerId?: string | null;
+      };
+      if (
+        freshAny.subscriptionCreateLeaseExpiresAt &&
+        freshAny.subscriptionCreateLeaseExpiresAt > now &&
+        freshAny.subscriptionCreateLeaseOwnerId &&
+        freshAny.subscriptionCreateLeaseOwnerId !== createLeaseOwner
+      ) {
+        throw new ConflictException(
+          'Subscription create already in progress for this account; retry shortly',
+        );
+      }
+      await tx.billingAccount.update({
+        where: { id: account.id },
+        data: {
+          subscriptionCreateLeaseOwnerId: createLeaseOwner,
+          subscriptionCreateLeaseExpiresAt: new Date(now.getTime() + 2 * 60 * 1000),
+        } as any,
+      });
+    });
 
     const planVersion = await this.prisma.billingPlanVersion.findUnique({
       where: { id: planVersionId },
@@ -706,6 +766,9 @@ export class StripePaymentService {
     if (!invoice) throw new NotFoundException('Invoice not found');
 
     this.assertCheckoutEligible(invoice);
+    if (this.planChanges && (invoice as { purpose?: string }).purpose === 'plan_charge') {
+      await this.planChanges.assertPlanChargePayable(this.prisma, invoice.id);
+    }
 
     // A one-time full-invoice Checkout charges the full `totalMicros`, so it is
     // ONLY allowed while the invoice has NO coverage: `allocatedMicros === 0`
@@ -1507,9 +1570,11 @@ export class StripePaymentService {
 
   /**
    * Only `finalized` (amount-frozen), unpaid, positive, USD, cent-aligned
-   * invoices are payable. `open`/`void`/`needs_review`/zero-amount invoices
-   * and amounts that cannot be represented losslessly in Stripe cents fail
-   * closed with a 4xx.
+   * invoices are payable. Applies to both usage_period invoices and
+   * plan_charge upgrade invoices (one-time Checkout only — never
+   * createSubscriptionCheckout for plan_charge). `open`/`void`/`needs_review`/
+   * zero-amount invoices and amounts that cannot be represented losslessly in
+   * Stripe cents fail closed with a 4xx.
    */
   private assertCheckoutEligible(
     invoice: Prisma.BillingInvoiceGetPayload<Record<string, never>>,

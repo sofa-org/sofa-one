@@ -1,5 +1,7 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Optional } from '@nestjs/common';
 import { BillingPaymentMethod, Prisma } from '@prisma/client';
+import { BillingPlanChangeService } from './billing-plan-change.service';
+import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 
 type Tx = Prisma.TransactionClient;
 type PaymentAttemptRow = Prisma.BillingPaymentAttemptGetPayload<Record<string, never>>;
@@ -58,67 +60,37 @@ const NO_OP: SettlementResult = {
 /**
  * Shared atomic invoice-settlement / coverage-allocation boundary.
  *
- * A `BillingInvoice` remains the single local accounting fact. A confirmed
- * payment attempt (Stripe or USDC) allocates coverage toward
- * `invoice.allocatedMicros`, never more than the remaining unpaid balance, and
- * the invoice is marked paid only when the cumulative allocation reaches
- * `totalMicros`. This supports the renewal-overage flow: a succeeded fixed-fee
- * renewal allocates only the fixed fee against a dynamic invoice (partial
- * coverage, invoice still unpaid), and the later overage attempt tops the
- * invoice up to `paid`.
+ * Lock order (uniform — Gate 1 attempt 3):
+ *   1. period advisory lock (from soft-read invoice period; no row locks yet)
+ *   2. attempt FOR UPDATE
+ *   3. invoice FOR UPDATE
  *
- * Concurrency isolation uses stable PostgreSQL row locks (`SELECT ... FOR
- * UPDATE`) inside the caller's interactive transaction, not just a pre-read:
- *   * Lock order is always attempt → invoice, matching the Stripe webhook's
- *     natural attempt-then-invoice order, so concurrent settlements and
- *     webhook transitions can never deadlock.
- *   * The locks make the reads below stable under Read Committed — no
- *     concurrent transaction can modify the attempt or the invoice between the
- *     read and the allocation commit — so a stale read cannot drive an
- *     allocation decision.
- *
- * Preconditions verified on the locked rows:
- *   * the attempt exists, belongs to the referenced invoice, and its `method`
- *     matches the rail that is settling;
- *   * the attempt is `succeeded` (only a confirmed payment can allocate);
- *   * the invoice is `finalized`, unpaid, and the attempt/invoice currency
- *     match;
- *   * the attempt was not already allocated (a second allocation of the same
- *     attempt is an idempotent no-op via the `allocatedAt` marker).
- *
- * The state transition is an atomic CAS: the attempt's `allocatedAt` marker
- * (guarded by `allocatedAt IS NULL`), the invoice's `allocatedMicros` increment
- * (guarded by the observed allocated value and `paidAt IS NULL AND
- * settlementAttemptId IS NULL`), and the `paidAt`/`paidVia`/`settlementAttemptId`
- * paid markers are set in one transaction. The attempt marker and the invoice
- * coverage/paid markers are therefore ALWAYS consistent: any coverage/paid-marker
- * CAS that fails to match is a genuine anomaly (the rows are already locked, so
- * a lost CAS cannot be a benign race) and is surfaced as a thrown
- * `ConflictException`. Because every caller runs inside its own interactive
- * transaction, the throw rolls the whole transaction back — the caller's own
- * writes (e.g. the webhook's pending→succeeded CAS) are rolled back too, and no
- * half-committed allocation state (attempt allocated but invoice not incremented,
- * or invoice incremented but paid markers missing) can ever be committed.
- *
- * A precondition failure (attempt not succeeded, invoice not finalized, wrong
- * currency, already-paid invoice, zero remaining balance, or a replay of an
- * attempt whose `allocatedAt` was already set under the lock) is a no-op — never
- * a throw — so a legitimate payment fact already recorded on the attempt is
- * never rolled back and Stripe/USDC delivery is never turned into a retry loop.
- * Replays of the same attempt are idempotent no-ops (`replayed: true`); a CAS
- * failure is never mislabeled as a successful replay. Invoice accounting status
- * is never changed here, and inbound payments never write to the Transaction or
- * usage ledger.
- *
- * The method takes the interactive transaction client so callers (Stripe
- * webhook, USDC confirmation, and the post-finalization renewal catch-up)
- * settle inside their own atomic transaction.
+ * Callers must not hold attempt/invoice locks before calling settleInvoice.
+ * Stripe webhook acquires the same period key first, then settleInvoice
+ * re-enters it. Coverage-first allocation + CAS semantics unchanged.
  */
 @Injectable()
 export class InvoiceSettlementService {
+  constructor(
+    @Optional() private readonly planChangeService?: BillingPlanChangeService,
+  ) {}
+
   async settleInvoice(tx: Tx, attempt: SettlementAttemptRef): Promise<SettlementResult> {
-    // Stable row locks (attempt → invoice). See class docs for the ordering
-    // rationale and deadlock-freedom argument.
+    // Soft-read period identity WITHOUT row locks.
+    const invoiceMeta = await tx.billingInvoice.findUnique({
+      where: { id: attempt.invoiceId },
+      select: { id: true, billingAccountId: true, periodStart: true },
+    });
+    if (!invoiceMeta) return NO_OP;
+
+    // 1. Period advisory BEFORE any attempt/invoice row lock.
+    await acquireBillingPeriodAdvisoryLock(
+      tx,
+      invoiceMeta.billingAccountId,
+      invoiceMeta.periodStart,
+    );
+
+    // 2–3. Row locks attempt → invoice.
     const lockedAttempt = await tx.$queryRaw<Array<{ id: string }>>`
       SELECT "id" FROM "billing_payment_attempts" WHERE "id" = ${attempt.id} FOR UPDATE`;
     if (lockedAttempt.length === 0) return NO_OP;
@@ -135,22 +107,20 @@ export class InvoiceSettlementService {
     if (!attemptRow || !invoice) return NO_OP;
     if (!this.isAllocatable(attemptRow, invoice, attempt)) return NO_OP;
 
-    // The attempt's coverage was already counted: an idempotent replay. The
-    // allocation is never applied twice, even when the invoice was later paid
-    // by a different rail. (This is a genuine replay observed under the lock —
-    // never a CAS-failure fallback.)
+    // The attempt's coverage was already counted: an idempotent replay.
     if (attemptRow.allocatedAt != null) {
+      const paid = invoice.paidAt !== null;
+      if (paid) {
+        await this.maybeActivateAfterPaid(tx, invoice);
+      }
       return {
         ...NO_OP,
-        paid: invoice.paidAt !== null,
+        paid,
         paidByThisAttempt: invoice.settlementAttemptId === attempt.id,
         replayed: true,
       };
     }
 
-    // The invoice is already fully paid: this attempt cannot add coverage.
-    // Report the paid state so callers can distinguish a competing-rail win
-    // from a precondition failure.
     if (invoice.paidAt !== null || invoice.settlementAttemptId !== null) {
       return {
         ...NO_OP,
@@ -162,21 +132,14 @@ export class InvoiceSettlementService {
     const covered = invoice.allocatedMicros ?? 0n;
     const total = invoice.totalMicros;
     const remaining = total - covered;
-    // Nothing left to allocate (fully covered but markers not yet set is a
-    // data anomaly the caller must review — never a fabricated allocation).
     if (remaining <= 0n) return NO_OP;
 
     const amount = attemptRow.amountMicros;
     if (amount <= 0n) return NO_OP;
-    // A successful attempt allocates at most the remaining balance — never
-    // more, so cumulative coverage can never exceed totalMicros.
     const coverage = amount < remaining ? amount : remaining;
     const nowCovered = covered + coverage;
     const reachesTotal = nowCovered >= total;
 
-    // Mark the attempt allocated exactly once (CAS on `allocatedAt IS NULL`).
-    // The rows are already locked, so a lost CAS here is a genuine anomaly that
-    // must roll back the whole caller transaction — never a silent replay.
     const claimed = await tx.billingPaymentAttempt.updateMany({
       where: {
         id: attempt.id,
@@ -193,11 +156,6 @@ export class InvoiceSettlementService {
       );
     }
 
-    // Increment the invoice coverage. The CAS re-verifies the observed
-    // allocated value and the unpaid/unsettled markers against a fresh
-    // snapshot. A lost CAS aborts the whole transaction (both the attempt
-    // marker and every caller write roll back) — a stale read can never
-    // double-count, over-allocate, or leave the attempt marker orphaned.
     const result = await tx.billingInvoice.updateMany({
       where: {
         id: attempt.invoiceId,
@@ -224,9 +182,6 @@ export class InvoiceSettlementService {
       };
     }
 
-    // Coverage reached the frozen total: mark the invoice paid atomically. A
-    // lost paid-marker CAS aborts the whole transaction so the coverage
-    // increment and the paid markers can never diverge.
     const paid = await tx.billingInvoice.updateMany({
       where: {
         id: attempt.invoiceId,
@@ -246,6 +201,12 @@ export class InvoiceSettlementService {
         'Stripe settlement CAS lost: invoice paid markers could not be set',
       );
     }
+
+    const paidInvoice = await tx.billingInvoice.findUnique({ where: { id: attempt.invoiceId } });
+    if (paidInvoice) {
+      await this.maybeActivateAfterPaid(tx, paidInvoice);
+    }
+
     return {
       allocated: true,
       paid: true,
@@ -253,6 +214,38 @@ export class InvoiceSettlementService {
       replayed: false,
       allocatedMicros: coverage,
     };
+  }
+
+  /**
+   * Post-paid activation under the settlement period lock (already held).
+   * Plan-change helpers must not re-acquire the period lock after row locks.
+   */
+  private async maybeActivateAfterPaid(tx: Tx, invoice: InvoiceRow): Promise<void> {
+    if (invoice.paidAt == null) return;
+    if ((invoice.allocatedMicros ?? 0n) < invoice.totalMicros) return;
+    if (!this.planChangeService) {
+      if (invoice.purpose === 'plan_charge') {
+        throw new ConflictException(
+          'Plan change service is required to activate a paid plan_charge invoice',
+        );
+      }
+      throw new ConflictException(
+        'Plan change service is required to extend entitlements after payment',
+      );
+    }
+    const opts = { periodLockAlreadyHeld: true as const };
+    if (invoice.purpose === 'plan_charge') {
+      await this.planChangeService.applyPaidPlanCharge(tx, invoice.id, new Date(), opts);
+      return;
+    }
+    if (invoice.purpose === 'usage_period') {
+      await this.planChangeService.extendEntitlementForPaidUsageInvoice(
+        tx,
+        invoice.id,
+        new Date(),
+        opts,
+      );
+    }
   }
 
   private isAllocatable(

@@ -28,6 +28,13 @@ import {
 } from './billing.utils';
 import { InvoiceSettlementService } from './invoice-settlement.service';
 import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
+import {
+  BillingPlanChangeService,
+  findUsagePeriodInvoice,
+  isAssignmentEntitlementValid,
+  validAssignmentWhere,
+} from './billing-plan-change.service';
+import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 
 // ── JSON-safe DTO shapes (no BigInt leaks) ────────────────────────────────────
 
@@ -101,15 +108,44 @@ export interface ListInvoicesResult {
   limit: number;
 }
 
-/** JSON-safe result of a self-service plan change. */
-export interface AssignPlanResult {
-  planCode: string;
-  planName: string;
-  /** YYYY-MM the new plan takes effect (always the next UTC month). */
-  effectivePeriod: string;
-  effectiveFrom: string;
-  outcome: 'changed' | 'unchanged';
-}
+/**
+ * JSON-safe result of a self-service plan change.
+ *
+ * - unchanged: already on the requested plan
+ * - payment_required: upgrade charge created (pay before entitlements change)
+ * - scheduled: downgrade/lateral move takes effect next UTC month
+ * - changed: legacy alias kept only for scheduled/applied paths that still
+ *   surface an immediate schedule outcome without payment
+ */
+export type AssignPlanResult =
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'unchanged';
+    }
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'payment_required';
+      changeId: string;
+      invoiceId: string;
+      amount: string;
+      currency: string;
+      kind: 'upgrade';
+    }
+  | {
+      planCode: string;
+      planName: string;
+      effectivePeriod: string;
+      effectiveFrom: string;
+      outcome: 'scheduled' | 'changed';
+      changeId?: string;
+      kind?: 'downgrade';
+    };
 
 export interface RecordApiCallInput {
   userId: string;
@@ -200,6 +236,8 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly invoiceSettlement?: InvoiceSettlementService,
+    @Optional() private readonly planChangeService?: BillingPlanChangeService,
+    @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
   ) {}
 
   /**
@@ -262,20 +300,16 @@ export class BillingService {
 
     return this.withRetryOnSerialization(() =>
       this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
-        const existing = await tx.billingInvoice.findUnique({
-          where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
-        });
+        const existing = await findUsagePeriodInvoice(tx, billingAccountId, start);
         if (existing) return this.toInvoiceDto(existing);
 
-        const planVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
+        const planVersion = await this.resolveUsagePlanVersion(billingAccountId, start, tx);
         // Custom/null or malformed plans fail closed; never emit a zero-priced
         // invoice for an Enterprise/custom plan.
         this.assertPlanFinalizable(planVersion);
         await this.upsertOpenInvoice(tx, billingAccountId, planVersion, start, end);
 
-        const created = await tx.billingInvoice.findUnique({
-          where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
-        });
+        const created = await findUsagePeriodInvoice(tx, billingAccountId, start);
         if (!created) throw new ConflictException('Open invoice creation was not persisted');
         return this.toInvoiceDto(created);
       }),
@@ -359,17 +393,19 @@ export class BillingService {
   }
 
   /**
-   * Self-service plan change (Phase 2A). The authenticated dashboard user picks
-   * a plan code; it takes effect at the next UTC month (never prorated, never
-   * client-supplied). The assignment uses the existing
-   * `BillingPlanAssignment` unique `(billingAccountId, periodStart)`: the same
-   * target plan is an idempotent no-op, and a different plan for the same
-   * future period safely replaces the not-yet-effective assignment row. The
-   * future period's `BillingInvoice` is created/updated as `open` (zero-usage
-   * estimate matching the new assignment); finalized/needs_review/void invoices
-   * are immutable and rejected. Enterprise/custom null terms cannot be
-   * activated by self-service. No payment provider is involved — selecting a
-   * paid plan does not imply payment.
+   * Self-service plan change (payment-aware).
+   *
+   * - Upgrade (target monthly fee > current): creates a pending_payment
+   *   BillingPlanChange + finalized plan_charge invoice with server-computed
+   *   proration. Current assignment and current usage invoice are unchanged
+   *   until the charge is fully settled.
+   * - Downgrade / lateral (target fee ≤ current): schedules the target plan at
+   *   the next UTC month boundary without rewriting the current usage invoice.
+   * - Same plan: idempotent unchanged.
+   * - A second pending upgrade to a different target is rejected (not overwritten).
+   *
+   * Never accepts client effectiveFrom/admin/userId/amount. Enterprise/custom
+   * null terms cannot be activated by self-service.
    */
   async assignPlan(userId: string, planCode: string): Promise<AssignPlanResult> {
     // Static own-property whitelist validation BEFORE any DB read/write: an
@@ -392,80 +428,82 @@ export class BillingService {
     validatePlanVersion(planVersion);
     this.assertPlanFinalizable(planVersion);
 
+    if (!this.planChangeService) {
+      throw new ServiceUnavailableException('Plan change service is not configured');
+    }
+
     const now = new Date();
-    const effectivePeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-    const effectivePeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+    // Lock on the current UTC month so upgrade charge creation serializes with
+    // other writers for this account period; downgrades still schedule next month.
+    const lockPeriodStart = this.monthStart(now);
 
-    return this.withRetryOnSerialization(() =>
-      this.withBillingPeriodLock(userId, effectivePeriodStart, async (tx, billingAccountId) => {
-        // Immutable future invoice rejects the plan change before any write.
-        const existingInvoice = await tx.billingInvoice.findUnique({
-          where: {
-            billingAccountId_periodStart: {
-              billingAccountId,
-              periodStart: effectivePeriodStart,
-            },
-          },
-        });
-        if (existingInvoice && existingInvoice.status !== 'open') {
-          throw new ConflictException(
-            'Cannot change plan: the future invoice is immutable (finalized/needs_review/void)',
-          );
-        }
+    const locked = await this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, lockPeriodStart, async (tx, billingAccountId) => {
+        // Ensure a current-month assignment exists so "current plan" is well-defined.
+        // Must use the same TX client that holds the period lock.
+        await this.ensureDefaultAssignment(billingAccountId, tx);
 
-        const existingAssignment = await tx.billingPlanAssignment.findUnique({
-          where: {
-            billingAccountId_periodStart: {
-              billingAccountId,
-              periodStart: effectivePeriodStart,
-            },
-          },
-        });
-
-        if (existingAssignment && existingAssignment.planVersionId === planVersion.id) {
-          // Same target plan: idempotent no-op; keep the open invoice consistent.
-          await this.upsertOpenInvoice(
-            tx,
-            billingAccountId,
-            planVersion,
-            effectivePeriodStart,
-            effectivePeriodEnd,
-          );
-          return this.toAssignPlanResult(planVersion, effectivePeriodStart, 'unchanged');
-        }
-
-        if (existingAssignment) {
-          // Replace the not-yet-effective assignment for the same future period.
-          await tx.billingPlanAssignment.update({
-            where: {
-              billingAccountId_periodStart: {
-                billingAccountId,
-                periodStart: effectivePeriodStart,
-              },
-            },
-            data: { planVersionId: planVersion.id },
-          });
-        } else {
-          await tx.billingPlanAssignment.create({
-            data: {
-              billingAccountId,
-              planVersionId: planVersion.id,
-              periodStart: effectivePeriodStart,
-            },
-          });
-        }
-
-        await this.upsertOpenInvoice(
-          tx,
+        const currentPlanVersion = await this.resolvePlanVersion(
           billingAccountId,
-          planVersion,
-          effectivePeriodStart,
-          effectivePeriodEnd,
+          lockPeriodStart,
+          tx,
         );
+        validatePlanVersion(currentPlanVersion);
 
-        return this.toAssignPlanResult(planVersion, effectivePeriodStart, 'changed');
+        const result = await this.planChangeService!.requestPlanChange({
+          billingAccountId,
+          userId,
+          targetPlanVersion: planVersion,
+          currentPlanVersion,
+          now,
+          tx,
+        });
+
+        return { billingAccountId, result };
       }),
     );
+
+    // Post-commit best-effort Stripe mirror sync (never rolls back local state).
+    if (
+      locked.result.outcome === 'scheduled' ||
+      locked.result.outcome === 'payment_required'
+    ) {
+      void this.subscriptionSync?.processAccountBestEffort(locked.billingAccountId);
+    }
+
+    const result = locked.result;
+    if (result.outcome === 'unchanged') {
+      return {
+        planCode: result.planCode,
+        planName: result.planName,
+        effectivePeriod: result.effectivePeriod,
+        effectiveFrom: result.effectiveFrom,
+        outcome: 'unchanged',
+      };
+    }
+    if (result.outcome === 'payment_required') {
+      return {
+        planCode: result.planCode,
+        planName: result.planName,
+        effectivePeriod: result.effectivePeriod,
+        effectiveFrom: result.effectiveFrom,
+        outcome: 'payment_required',
+        changeId: result.changeId,
+        invoiceId: result.invoiceId,
+        amount: result.amount,
+        currency: result.currency,
+        kind: 'upgrade',
+      };
+    }
+    return {
+      planCode: result.planCode,
+      planName: result.planName,
+      effectivePeriod: result.effectivePeriod,
+      effectiveFrom: result.effectiveFrom,
+      outcome: 'scheduled',
+      changeId: result.changeId,
+      kind: 'downgrade',
+    };
   }
 
   /**
@@ -482,9 +520,7 @@ export class BillingService {
     end: Date,
   ): Promise<void> {
     const plan = planVersionToConfig(planVersion);
-    const existing = await tx.billingInvoice.findUnique({
-      where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
-    });
+    const existing = await findUsagePeriodInvoice(tx, billingAccountId, start);
     if (existing) {
       if (existing.status !== 'open') {
         throw new ConflictException(
@@ -513,7 +549,12 @@ export class BillingService {
 
     const data = this.buildOpenInvoiceData(planVersion, plan, start, end);
     const created = await tx.billingInvoice.create({
-      data: { ...data, billingAccountId, status: 'open' },
+      data: {
+        ...data,
+        billingAccountId,
+        status: 'open',
+        purpose: 'usage_period',
+      },
     });
     const lines = this.buildInvoiceLines({
       invoiceId: created.id,
@@ -578,20 +619,6 @@ export class BillingService {
       totalMicros: totals.totalMicros,
       snapshotJson: snapshot as Prisma.InputJsonValue,
       snapshotHash,
-    };
-  }
-
-  private toAssignPlanResult(
-    planVersion: PlanVersion,
-    effectivePeriodStart: Date,
-    outcome: 'changed' | 'unchanged',
-  ): AssignPlanResult {
-    return {
-      planCode: planVersion.code,
-      planName: planVersion.name,
-      effectivePeriod: formatUtcMonth(effectivePeriodStart),
-      effectiveFrom: effectivePeriodStart.toISOString(),
-      outcome,
     };
   }
 
@@ -1082,12 +1109,7 @@ export class BillingService {
     billingAccountId: string,
     periodStart: Date,
   ): Promise<void> {
-    const invoice = await tx.billingInvoice.findUnique({
-      where: {
-        billingAccountId_periodStart: { billingAccountId, periodStart },
-      },
-      select: { id: true, status: true },
-    });
+    const invoice = await findUsagePeriodInvoice(tx, billingAccountId, periodStart);
     if (invoice && invoice.status === 'finalized') {
       throw new ConflictException(
         'Cannot append receipt evidence: the billing period is already finalized',
@@ -1220,7 +1242,8 @@ export class BillingService {
     await this.ensureDefaultAssignment(account.id);
     const { period: periodStr, start } = parsePeriod(period);
 
-    const planVersion = await this.resolvePlanVersion(account.id, start);
+    // Usage-period pricing anchor (not mid-month entitlement after upgrade).
+    const planVersion = await this.resolveUsagePlanVersion(account.id, start);
     const plan = planVersionToConfig(planVersion);
     // Enterprise/custom null terms cannot be summarized as an executable plan.
     this.assertPlanFinalizable(planVersion);
@@ -1354,11 +1377,7 @@ export class BillingService {
     // Cheap pre-check (never relied on alone): finalized/needs_review/void
     // invoices are immutable and returned unchanged. An `open` invoice (created
     // by a self-service plan change) proceeds to finalization.
-    const existing = await this.prisma.billingInvoice.findUnique({
-      where: {
-        billingAccountId_periodStart: { billingAccountId: account.id, periodStart: start },
-      },
-    });
+    const existing = await findUsagePeriodInvoice(this.prisma, account.id, start);
     if (existing && existing.status !== 'open') return this.toInvoiceDto(existing);
 
     // Close/grace boundary: future/current unended periods and the 24h grace
@@ -1376,16 +1395,17 @@ export class BillingService {
       this.withBillingPeriodLock(userId, start, async (tx, billingAccountId) => {
         // Re-check inside the lock so a waiter returns the existing immutable
         // invoice. An `open` invoice proceeds to finalization.
-        const lockedExisting = await tx.billingInvoice.findUnique({
-          where: {
-            billingAccountId_periodStart: { billingAccountId, periodStart: start },
-          },
-        });
+        const lockedExisting = await findUsagePeriodInvoice(tx, billingAccountId, start);
         if (lockedExisting && lockedExisting.status !== 'open') {
           return this.toInvoiceDto(lockedExisting);
         }
 
-        const planVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
+        // Pin usage-period pricing to the original period anchor (open invoice
+        // planVersionId or pre-upgrade assignment) — never the mid-month
+        // upgraded entitlement plan after a paid plan_charge.
+        const planVersion = lockedExisting
+          ? await this.loadPlanVersionOrThrow(tx, lockedExisting.planVersionId)
+          : await this.resolveUsagePlanVersion(billingAccountId, start, tx);
         const plan = planVersionToConfig(planVersion);
 
         // Enterprise custom/null terms fail closed — never convert null to 0.
@@ -1504,6 +1524,7 @@ export class BillingService {
               planVersionId: planVersion.id,
               periodStart: start,
               periodEnd: end,
+              purpose: 'usage_period',
               status: 'finalized',
               currency: 'USD',
               grossOutboundMicros: outboundVolume,
@@ -1540,11 +1561,7 @@ export class BillingService {
           return this.toInvoiceDto(created);
         } catch (err) {
           if (isUniqueConstraintError(err)) {
-            const again = await tx.billingInvoice.findUnique({
-              where: {
-                billingAccountId_periodStart: { billingAccountId, periodStart: start },
-              },
-            });
+            const again = await findUsagePeriodInvoice(tx, billingAccountId, start);
             if (again) return this.toInvoiceDto(again);
           }
           throw err;
@@ -1595,11 +1612,7 @@ export class BillingService {
 
     this.assertFinalizablePeriod(periodEnd);
 
-    const existing = await tx.billingInvoice.findUnique({
-      where: {
-        billingAccountId_periodStart: { billingAccountId, periodStart },
-      },
-    });
+    const existing = await findUsagePeriodInvoice(tx, billingAccountId, periodStart);
     if (existing) {
       throw new ConflictException(
         'Cannot create-only finalize: an invoice already exists for this period',
@@ -1616,7 +1629,7 @@ export class BillingService {
       }
       planVersion = pinned;
     } else {
-      planVersion = await this.resolvePlanVersion(billingAccountId, periodStart, tx);
+      planVersion = await this.resolveUsagePlanVersion(billingAccountId, periodStart, tx);
     }
 
     const plan = planVersionToConfig(planVersion);
@@ -1677,6 +1690,7 @@ export class BillingService {
           planVersionId: planVersion.id,
           periodStart,
           periodEnd,
+          purpose: 'usage_period',
           status: 'finalized',
           currency: 'USD',
           grossOutboundMicros: outboundVolume,
@@ -2148,61 +2162,204 @@ export class BillingService {
    */
   private async ensureDefaultAssignment(
     accountId: string,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<Prisma.BillingPlanAssignmentGetPayload<{ include: { planVersion: true } }>> {
     const currentMonthStart = this.monthStart(new Date());
-    const existing = await this.prisma.billingPlanAssignment.findFirst({
-      where: { billingAccountId: accountId, periodStart: { lte: currentMonthStart } },
+    const candidates = await db.billingPlanAssignment.findMany({
+      where: {
+        billingAccountId: accountId,
+        periodStart: { lte: currentMonthStart },
+        ...validAssignmentWhere(currentMonthStart),
+      },
       orderBy: { periodStart: 'desc' },
       include: { planVersion: true },
+      take: 20,
     });
-    if (existing) return existing;
+    for (const existing of candidates) {
+      if (isAssignmentEntitlementValid(existing, existing.planVersion, currentMonthStart)) {
+        return existing;
+      }
+    }
 
-    const freePlan = await this.prisma.billingPlanVersion.findFirst({
+    const freePlan = await db.billingPlanVersion.findFirst({
       where: { code: 'free' },
       orderBy: { version: 'desc' },
     });
     if (!freePlan) throw new Error('Free plan not initialized');
 
+    // Inspect the same-period row BEFORE insert. Legacy paid rows with null
+    // expiresAt/source fail the validity filter above but still occupy the
+    // unique (account, period) key — resolve them to Free without a P2002
+    // that would abort an interactive transaction.
+    const samePeriod = await db.billingPlanAssignment.findUnique({
+      where: {
+        billingAccountId_periodStart: {
+          billingAccountId: accountId,
+          periodStart: currentMonthStart,
+        },
+      },
+      include: { planVersion: true },
+    });
+    if (samePeriod) {
+      if (isAssignmentEntitlementValid(samePeriod, samePeriod.planVersion, currentMonthStart)) {
+        return samePeriod;
+      }
+      // Fail closed: reclassify invalid same-period row → Free (no paid proof).
+      return db.billingPlanAssignment.update({
+        where: { id: samePeriod.id },
+        data: {
+          planVersionId: freePlan.id,
+          source: 'default',
+          expiresAt: null,
+        },
+        include: { planVersion: true },
+      });
+    }
+
     try {
-      return await this.prisma.billingPlanAssignment.create({
+      return await db.billingPlanAssignment.create({
         data: {
           billingAccountId: accountId,
           planVersionId: freePlan.id,
           periodStart: currentMonthStart,
+          source: 'default',
+          expiresAt: null,
         },
         include: { planVersion: true },
       });
     } catch (err) {
-      if (isUniqueConstraintError(err)) {
-        const again = await this.prisma.billingPlanAssignment.findFirst({
-          where: { billingAccountId: accountId, periodStart: { lte: currentMonthStart } },
-          orderBy: { periodStart: 'desc' },
+      if (!isUniqueConstraintError(err)) throw err;
+      // Postgres aborts the interactive transaction after a failed statement.
+      // Never query/update on the same client. On the root Prisma client, open
+      // a fresh transaction; inside a caller TX, surface a retryable conflict.
+      if (db !== this.prisma) {
+        throw new ConflictException(
+          'Plan assignment conflict under lock; retry the request',
+        );
+      }
+      return this.prisma.$transaction(async (freshTx) => {
+        const row = await freshTx.billingPlanAssignment.findUnique({
+          where: {
+            billingAccountId_periodStart: {
+              billingAccountId: accountId,
+              periodStart: currentMonthStart,
+            },
+          },
           include: { planVersion: true },
         });
-        if (again) return again;
-      }
-      throw err;
+        if (!row) {
+          throw new ConflictException('Plan assignment conflict; row missing after unique race');
+        }
+        if (isAssignmentEntitlementValid(row, row.planVersion, currentMonthStart)) {
+          return row;
+        }
+        return freshTx.billingPlanAssignment.update({
+          where: { id: row.id },
+          data: {
+            planVersionId: freePlan.id,
+            source: 'default',
+            expiresAt: null,
+          },
+          include: { planVersion: true },
+        });
+      });
     }
   }
 
-  /** Resolves the plan version in effect at `start`, falling back to Free. */
+  /**
+   * Entitlement plan in effect at `start` (quotas / activation). Never uses
+   * BillingAccount.activeSubscriptionPlanVersionId. Paid rows require expiresAt.
+   */
   private async resolvePlanVersion(
     accountId: string,
     start: Date,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<PlanVersion> {
-    const assignment = await tx.billingPlanAssignment.findFirst({
-      where: { billingAccountId: accountId, periodStart: { lte: start } },
+    const candidates = await tx.billingPlanAssignment.findMany({
+      where: {
+        billingAccountId: accountId,
+        periodStart: { lte: start },
+        ...validAssignmentWhere(start),
+      },
       orderBy: { periodStart: 'desc' },
       include: { planVersion: true },
+      take: 20,
     });
-    if (assignment) return assignment.planVersion;
+    for (const assignment of candidates) {
+      if (isAssignmentEntitlementValid(assignment, assignment.planVersion, start)) {
+        return assignment.planVersion;
+      }
+    }
     const freePlan = await tx.billingPlanVersion.findFirst({
       where: { code: 'free' },
       orderBy: { version: 'desc' },
     });
     if (!freePlan) throw new Error('Free plan not initialized');
     return freePlan;
+  }
+
+  /**
+   * Usage-period pricing plan for summary/finalize/open invoice. Prefers the
+   * persisted usage_period invoice snapshot so a mid-month paid upgrade never
+   * replaces the period's fixed fee with the full target monthly fee.
+   */
+  private async resolveUsagePlanVersion(
+    accountId: string,
+    start: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<PlanVersion> {
+    const usageInvoice = await findUsagePeriodInvoice(tx, accountId, start);
+    if (usageInvoice) {
+      return this.loadPlanVersionOrThrow(tx, usageInvoice.planVersionId);
+    }
+
+    // No usage invoice yet: prefer non-upgrade assignment for this period
+    // (default/renewal/downgrade_schedule), else fromPlan of an applied upgrade.
+    const periodAssignment = await tx.billingPlanAssignment.findUnique({
+      where: {
+        billingAccountId_periodStart: { billingAccountId: accountId, periodStart: start },
+      },
+      include: { planVersion: true },
+    });
+    if (periodAssignment) {
+      if (
+        periodAssignment.source === 'upgrade_payment' ||
+        (periodAssignment.source === null &&
+          (periodAssignment.planVersion.monthlyFeeMicros ?? 0n) > 0n &&
+          periodAssignment.expiresAt != null)
+      ) {
+        const appliedUpgrade = await tx.billingPlanChange.findFirst({
+          where: {
+            billingAccountId: accountId,
+            periodStart: start,
+            kind: 'upgrade',
+            status: 'applied',
+          },
+          orderBy: { appliedAt: 'asc' },
+          include: { fromPlanVersion: true },
+        });
+        if (appliedUpgrade?.fromPlanVersion) {
+          return appliedUpgrade.fromPlanVersion;
+        }
+      }
+      if (isAssignmentEntitlementValid(periodAssignment, periodAssignment.planVersion, start)) {
+        // Non-upgrade path: use assignment as usage anchor.
+        if (periodAssignment.source !== 'upgrade_payment') {
+          return periodAssignment.planVersion;
+        }
+      }
+    }
+
+    return this.resolvePlanVersion(accountId, start, tx);
+  }
+
+  private async loadPlanVersionOrThrow(
+    tx: Prisma.TransactionClient,
+    planVersionId: string,
+  ): Promise<PlanVersion> {
+    const plan = await tx.billingPlanVersion.findUnique({ where: { id: planVersionId } });
+    if (!plan) throw new ConflictException('Invoice plan version not found');
+    return plan;
   }
 
   private toPlanDto(v: PlanVersion): BillingPlanDto {

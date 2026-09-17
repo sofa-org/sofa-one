@@ -4,6 +4,10 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { BillingQuotaExceededException } from './billing-quota.exception';
 import { formatUtcMonth, parsePeriod } from './billing.utils';
 import { validatePlanVersion } from './billing.service';
+import {
+  isAssignmentEntitlementValid,
+  validAssignmentWhere,
+} from './billing-plan-change.service';
 
 /** JSON-safe entitlements for a user for a UTC month. */
 export interface EntitlementsResult {
@@ -48,9 +52,13 @@ export class BillingEntitlementService {
 
   /**
    * Resolves the plan in effect at `start` for the user's BillingAccount using
-   * the existing assignment/plan resolver. `db` may be the PrismaService or an
-   * interactive-transaction client so quota decisions share the caller's
-   * transaction snapshot. Falls back to Free when no account/assignment exists.
+   * valid (non-expired) paid/scheduled assignments only. Pending upgrades never
+   * appear here (no assignment until settlement apply). Scheduled downgrades
+   * only take effect once their periodStart ≤ start. When a paid period ends
+   * without renewal the assignment expires and this falls back to Free (no
+   * grace). Never uses BillingAccount.activeSubscriptionPlanVersionId.
+   * `db` may be the PrismaService or an interactive-transaction client so quota
+   * decisions share the caller's transaction snapshot.
    */
   private async resolveEntitlements(
     userId: string,
@@ -64,28 +72,40 @@ export class BillingEntitlementService {
         effectivePeriod: formatUtcMonth(start),
       };
     }
-    const assignment = await db.billingPlanAssignment.findFirst({
-      where: { billingAccountId: account.id, periodStart: { lte: start } },
+    // Walk newest-first so an expired latest paid row cannot resurrect an
+    // older paid assignment; only a still-valid row (or Free) wins.
+    const candidates = await db.billingPlanAssignment.findMany({
+      where: {
+        billingAccountId: account.id,
+        periodStart: { lte: start },
+        ...validAssignmentWhere(start),
+      },
       orderBy: { periodStart: 'desc' },
       include: { planVersion: true },
+      take: 20,
     });
-    const planVersion = assignment?.planVersion;
-    if (!planVersion) {
+    for (const assignment of candidates) {
+      const planVersion = assignment.planVersion;
+      if (!planVersion) continue;
+      if (!isAssignmentEntitlementValid(assignment, planVersion, start)) {
+        continue;
+      }
+      // Future scheduled rows (periodStart > now for "current" queries) are
+      // already excluded by periodStart <= start. Pending upgrades never write
+      // an assignment until paid apply.
+      validatePlanVersion(planVersion);
       return {
-        ...FREE_FALLBACK,
+        planCode: planVersion.code,
+        planName: planVersion.name,
         effectivePeriod: formatUtcMonth(start),
+        includedApiCalls:
+          planVersion.includedApiCalls !== null ? Number(planVersion.includedApiCalls) : null,
+        includedWallets: planVersion.includedWallets,
       };
     }
-    // Fail closed on unknown/malformed persisted plans — never silently Free,
-    // never treated as 0 or infinite.
-    validatePlanVersion(planVersion);
     return {
-      planCode: planVersion.code,
-      planName: planVersion.name,
+      ...FREE_FALLBACK,
       effectivePeriod: formatUtcMonth(start),
-      includedApiCalls:
-        planVersion.includedApiCalls !== null ? Number(planVersion.includedApiCalls) : null,
-      includedWallets: planVersion.includedWallets,
     };
   }
 

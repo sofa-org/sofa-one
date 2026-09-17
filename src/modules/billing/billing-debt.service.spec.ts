@@ -57,6 +57,7 @@ describe('BillingDebtService', () => {
         billingAccountId: ACCOUNT.id,
         status: 'finalized',
         paidAt: null,
+        purpose: 'usage_period',
       },
       select: { id: true },
       orderBy: { periodStart: 'asc' },
@@ -98,11 +99,21 @@ describe('BillingDebtService', () => {
       billingAccountId: ACCOUNT.id,
       status: 'finalized',
       paidAt: null,
+      purpose: 'usage_period',
     });
     // No amount fields selected — avoid BigInt JSON surface.
     expect(arg.select).toEqual({ id: true });
     expect(arg.select).not.toHaveProperty('totalMicros');
     expect(arg.select).not.toHaveProperty('allocatedMicros');
+  });
+
+  it('excludes plan_charge upgrade invoices from ordinary usage debt gates', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    invoiceFindMany.mockResolvedValue([]);
+
+    await service.getDebt('user-1');
+
+    expect(invoiceFindMany.mock.calls[0][0].where.purpose).toBe('usage_period');
   });
 
   it('hasDebt mirrors getDebt.hasDebt', async () => {

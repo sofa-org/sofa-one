@@ -142,7 +142,9 @@ beforeEach(() => {
     planName: 'Pro',
     effectivePeriod: '2026-09',
     effectiveFrom: '2026-09-01T00:00:00.000Z',
-    outcome: 'changed',
+    outcome: 'scheduled',
+    changeId: 'chg_down_1',
+    kind: 'downgrade',
   });
 });
 
@@ -832,18 +834,206 @@ describe('Billing — USDC panel lifecycle', () => {
 });
 
 describe('Billing — plan change', () => {
-  it('schedules a plan change and shows a success notice', async () => {
+  const PENDING_PLAN_UPGRADE_STORAGE_KEY = 'sofa-one.billing.pendingPlanUpgrade';
+
+  let locationStub: { href: string };
+  beforeEach(() => {
+    locationStub = { href: '' };
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: locationStub,
+    });
+  });
+
+  it('schedules a downgrade and shows effective-date messaging without a payment panel', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    // Current = Pro so Starter is a downgrade.
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      currentPlanId: 'plan_pro',
+    });
+    vi.mocked(assignBillingPlanAuth).mockResolvedValue({
+      planCode: 'plan_starter',
+      planName: 'Starter',
+      effectivePeriod: '2026-09',
+      effectiveFrom: '2026-09-01T00:00:00.000Z',
+      outcome: 'scheduled',
+      changeId: 'chg_down_1',
+      kind: 'downgrade',
+    });
+
+    renderBilling();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Schedule Starter' }));
+
+    await waitFor(() =>
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_starter'),
+    );
+    expect(screen.getByText('Downgrade scheduled')).toBeInTheDocument();
+    expect(screen.getByText(/Starter begins on/i)).toBeInTheDocument();
+    expect(screen.queryByText('Payment required to upgrade')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pay with card' })).not.toBeInTheDocument();
+  });
+
+  it('handles same-plan unchanged responses idempotently', async () => {
     currentInvoices = [makePaidInvoice('inv_1')];
     renderBilling();
 
-    const select = await screen.findByLabelText('Change plan');
-    fireEvent.change(select, { target: { value: 'plan_pro' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Schedule plan change' }));
+    expect(await screen.findByRole('button', { name: 'Current plan' })).toBeDisabled();
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+  });
+
+  it('requires payment for an upgrade and keeps the current plan until confirmation', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+        period: '2026-08',
+      }),
+    ];
+    vi.mocked(assignBillingPlanAuth).mockResolvedValue({
+      planCode: 'plan_pro',
+      planName: 'Pro',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'payment_required',
+      changeId: 'chg_up_1',
+      invoiceId: 'inv_upgrade',
+      amount: '12.50',
+      currency: 'USD',
+      kind: 'upgrade',
+    });
+
+    renderBilling();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
 
     await waitFor(() =>
       expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
     );
-    expect(screen.getByText(/Plan scheduled: Pro takes effect on/i)).toBeInTheDocument();
+
+    expect(screen.getByText('Payment required to upgrade')).toBeInTheDocument();
+    expect(screen.getByText(/Amount due: USD 12.50/i)).toBeInTheDocument();
+    expect(screen.getByText('Payment required')).toBeInTheDocument();
+    // Current plan remains Starter — never called active immediately.
+    expect(screen.getAllByText('Current').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Current plan' })).toBeInTheDocument();
+    expect(screen.queryByText('Upgrade activated')).not.toBeInTheDocument();
+
+    const stored = sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY);
+    expect(stored).toBeTruthy();
+    expect(JSON.parse(stored!).invoiceId).toBe('inv_upgrade');
+
+    // One-time card checkout — never subscription for upgrade charges.
+    fireEvent.click(screen.getByRole('button', { name: 'Pay with card' }));
+    await waitFor(() =>
+      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
+        expect.any(Function),
+        'inv_upgrade',
+      ),
+    );
+    expect(createBillingSubscriptionCheckoutSessionAuth).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_upgrade');
+    expect(locationStub.href).toBe('https://checkout.stripe.example/start');
+  });
+
+  it('opens the existing USDC panel for the upgrade invoice id', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    vi.mocked(assignBillingPlanAuth).mockResolvedValue({
+      planCode: 'plan_pro',
+      planName: 'Pro',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'payment_required',
+      changeId: 'chg_up_1',
+      invoiceId: 'inv_upgrade',
+      amount: '12.50',
+      currency: 'USD',
+      kind: 'upgrade',
+    });
+
+    renderBilling();
+    fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
+    await screen.findByText('Payment required to upgrade');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pay with USDC' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_upgrade');
+  });
+
+  it('shows pending activation after the upgrade invoice is paid while the current plan is unchanged', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+
+    renderBilling();
+    expect(await screen.findByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pay with USDC' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_upgrade');
+
+    // Invoice paid; plans still report Starter (not yet activated).
+    currentInvoices = [makePaidInvoice('inv_upgrade')];
+    vi.mocked(getBillingPlansAuth).mockResolvedValue(makePlans());
+    fireEvent.click(screen.getByRole('button', { name: /refresh invoice/i }));
+
+    await waitFor(() => expect(screen.getByText('Upgrade activating')).toBeInTheDocument());
+    expect(screen.getByText(/Payment received for Pro/i)).toBeInTheDocument();
+    expect(screen.getByText(/not active yet/i)).toBeInTheDocument();
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeTruthy();
+  });
+
+  it('clears pending upgrade and shows activated once plans report the new current plan', async () => {
+    currentInvoices = [makePaidInvoice('inv_upgrade')];
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      currentPlanId: 'plan_pro',
+    });
+
+    renderBilling();
+
+    await waitFor(() => expect(screen.getByText('Upgrade activated')).toBeInTheDocument());
+    expect(screen.getByText(/Pro is now your current plan/i)).toBeInTheDocument();
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByText(/Pay to upgrade to Pro/i)).not.toBeInTheDocument();
   });
 
   it('shows the backend error message when a plan change fails', async () => {
@@ -852,17 +1042,45 @@ describe('Billing — plan change', () => {
 
     renderBilling();
 
-    const select = await screen.findByLabelText('Change plan');
-    fireEvent.change(select, { target: { value: 'plan_pro' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Schedule plan change' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
 
     expect(await screen.findByText('Plan is not available.')).toBeInTheDocument();
+    expect(screen.getByText('Could not change plan')).toBeInTheDocument();
+  });
+
+  it('does not offer subscription checkout on a pending upgrade charge invoice', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+        planVersionId: 'pv_pro',
+      }),
+    ];
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+
+    renderBilling();
+    await screen.findByText(/Pay to upgrade to Pro/i);
+
+    // Invoice table must not show Subscribe for the upgrade charge.
+    expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Card' })).toBeInTheDocument();
   });
 });
 
 describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
-  // Build a catalog entry; basePrice is widened to string | null so tests can model
-  // null/empty/custom prices the way the backend can report them.
   function makePlan(id: string, name: string, basePrice: string | null): BillingPlan {
     return {
       id,
@@ -875,31 +1093,16 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
     };
   }
 
-  function findPlanOption(select: HTMLSelectElement, planId: string): HTMLOptionElement {
-    const option = Array.from(select.options).find((o) => o.value === planId);
-    if (!option) {
-      throw new Error(`Expected a plan-change catalog option for "${planId}".`);
-    }
-    return option;
-  }
-
-  async function expectContactSalesBlocked(planId: string, planName: string) {
-    const select = (await screen.findByLabelText('Change plan')) as HTMLSelectElement;
-    const option = findPlanOption(select, planId);
-
-    // Catalog: the plan is listable but presented as contact-sales and not selectable.
-    expect(option.textContent).toBe(`${planName} — Contact sales`);
-    expect(option.disabled).toBe(true);
-
-    // Even if the value were forced onto the option, the schedule control stays locked
-    // and the plan-assignment flow cannot be invoked.
-    fireEvent.change(select, { target: { value: planId } });
-    const schedule = screen.getByRole('button', { name: 'Schedule plan change' });
-    expect(schedule).toBeDisabled();
-    fireEvent.click(schedule);
+  async function expectContactSalesBlocked(planName: string) {
+    const cards = await screen.findAllByRole('listitem');
+    const card = cards.find((el) => el.textContent?.includes(planName));
+    expect(card).toBeTruthy();
+    const contactBtn = card!.querySelector('button');
+    expect(contactBtn).toBeTruthy();
+    expect(contactBtn).toBeDisabled();
+    expect(contactBtn!.textContent).toMatch(/Contact sales/i);
+    fireEvent.click(contactBtn!);
     expect(vi.mocked(assignBillingPlanAuth)).not.toHaveBeenCalled();
-    expect(screen.queryByText(/Plan scheduled:/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/already scheduled/i)).not.toBeInTheDocument();
   }
 
   it('keeps the Enterprise id contact-sales even with a numeric base price, while sibling plans stay self-service', async () => {
@@ -912,20 +1115,24 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
         makePlan('enterprise', 'Enterprise', '1200.00'),
       ],
     });
+    vi.mocked(assignBillingPlanAuth).mockResolvedValue({
+      planCode: 'plan_pro',
+      planName: 'Pro',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'payment_required',
+      changeId: 'chg_1',
+      invoiceId: 'inv_up',
+      amount: '20.00',
+      currency: 'USD',
+      kind: 'upgrade',
+    });
 
     renderBilling();
 
-    await expectContactSalesBlocked('enterprise', 'Enterprise');
+    await expectContactSalesBlocked('Enterprise');
 
-    // A numeric-priced sibling in the same catalog is still self-service: its option is
-    // enabled and scheduling it reaches the assignment API.
-    const select = (await screen.findByLabelText('Change plan')) as HTMLSelectElement;
-    const pro = findPlanOption(select, 'plan_pro');
-    expect(pro.textContent).toBe('Pro — USD 49.00');
-    expect(pro.disabled).toBe(false);
-
-    fireEvent.change(select, { target: { value: 'plan_pro' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Schedule plan change' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
     await waitFor(() =>
       expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
     );
@@ -945,9 +1152,9 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     renderBilling();
 
-    await expectContactSalesBlocked('plan_custom_lower', 'Custom Lower');
-    await expectContactSalesBlocked('plan_custom_title', 'Custom Title');
-    await expectContactSalesBlocked('plan_custom_upper', 'Custom Upper');
+    await expectContactSalesBlocked('Custom Lower');
+    await expectContactSalesBlocked('Custom Title');
+    await expectContactSalesBlocked('Custom Upper');
   });
 
   it('treats a null base price as contact-sales', async () => {
@@ -962,7 +1169,7 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     renderBilling();
 
-    await expectContactSalesBlocked('plan_null_price', 'Custom (null base)');
+    await expectContactSalesBlocked('Custom (null base)');
   });
 
   it('treats empty and blank base prices as contact-sales', async () => {
@@ -978,7 +1185,7 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     renderBilling();
 
-    await expectContactSalesBlocked('plan_empty_price', 'Custom (empty base)');
-    await expectContactSalesBlocked('plan_blank_price', 'Custom (blank base)');
+    await expectContactSalesBlocked('Custom (empty base)');
+    await expectContactSalesBlocked('Custom (blank base)');
   });
 });
