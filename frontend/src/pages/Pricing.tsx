@@ -375,10 +375,12 @@ export default function PricingPage() {
               volume inside that band, so scaling up never raises your whole bill retroactively.
             </p>
             <p className="mt-3 text-sm leading-7 text-brand-muted">
-              Each plan includes a fixed monthly API request limit. Requests that reach or exceed
-              the limit are rejected with HTTP 429 — there is no per-call overage. Active wallets
-              over the plan limit are billed at $0.01 per wallet per month. Team member seats beyond
-              the included count are billed on Enterprise custom terms.
+              Each plan includes a monthly API request allowance. Requests beyond that allowance
+              continue to succeed and are billed per call: $0.002 on Free, $0.0015 on Starter,
+              $0.001 on Growth, $0.00075 on Scale, and $0.0005 on Business. Infrastructure rate
+              limits and abuse protection may still return HTTP 429. Active wallets over the plan
+              limit are billed at $0.01 per wallet per month. Team member seats beyond the included
+              count are billed on Enterprise custom terms.
             </p>
           </div>
 
