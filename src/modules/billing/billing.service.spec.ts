@@ -11,6 +11,7 @@ import { BillingService, buildInvoiceLineSpecs } from './billing.service';
 import { InvoiceSettlementService } from './invoice-settlement.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
 import { calculateInvoiceTotals, PLANS } from './billing-calculator';
+import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 
 const p2002 = () =>
   new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -168,6 +169,7 @@ describe('BillingService', () => {
   const queryRaw = jest.fn();
   const settleInvoice = jest.fn();
   const requestPlanChange = jest.fn();
+  const processAccountBestEffort = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -239,6 +241,10 @@ describe('BillingService', () => {
         {
           provide: BillingPlanChangeService,
           useValue: { requestPlanChange },
+        },
+        {
+          provide: StripeSubscriptionSyncService,
+          useValue: { processAccountBestEffort },
         },
       ],
     }).compile();
@@ -738,6 +744,42 @@ describe('BillingService', () => {
       const result = await service.assignPlan('user-1', 'starter');
 
       expect(result.outcome).toBe('unchanged');
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync');
+      expect(processAccountBestEffort).not.toHaveBeenCalled();
+    });
+
+    it('triggers post-commit Stripe sync when unchanged canceled a schedule, without exposing the internal flag', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      mockPlanLookup();
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: null,
+        planVersion: STARTER_VERSION,
+      });
+      requestPlanChange.mockResolvedValue({
+        outcome: 'unchanged',
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        requiresPostCommitStripeSync: true,
+      });
+      processAccountBestEffort.mockResolvedValue(undefined);
+
+      const result = await service.assignPlan('user-1', 'starter');
+
+      expect(result).toEqual({
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        outcome: 'unchanged',
+      });
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync');
+      expect(processAccountBestEffort).toHaveBeenCalledWith(ACCOUNT.id);
     });
 
     it('downgrade returns scheduled for next UTC month', async () => {
@@ -1030,10 +1072,10 @@ describe('BillingService', () => {
       mockQuotaSetup(10_000); // at limit
 
       await service.assertAndRecordApiCall({
-          userId: 'user-1',
-          sourceKey: 'api:req-2',
-          endpoint: '/v1/wallets/sign',
-        });
+        userId: 'user-1',
+        sourceKey: 'api:req-2',
+        endpoint: '/v1/wallets/sign',
+      });
       expect(usageEventCreate).toHaveBeenCalled();
     });
 
@@ -1047,10 +1089,10 @@ describe('BillingService', () => {
       usageEventFindMany.mockResolvedValue([{ quantity: 10_000n }]); // at limit
 
       await service.assertAndRecordApiCall({
-          userId: 'user-1',
-          sourceKey: 'api:req-legacy-rate',
-          endpoint: '/v1/wallets/sign',
-        });
+        userId: 'user-1',
+        sourceKey: 'api:req-legacy-rate',
+        endpoint: '/v1/wallets/sign',
+      });
       expect(usageEventCreate).toHaveBeenCalled();
     });
 
@@ -1061,12 +1103,11 @@ describe('BillingService', () => {
       usageEventFindMany.mockResolvedValue([{ quantity: 2n ** 60n }]);
 
       await service.assertAndRecordApiCall({
-          userId: 'user-1',
-          sourceKey: 'api:req-huge',
-          endpoint: '/v1/wallets/sign',
-        });
+        userId: 'user-1',
+        sourceKey: 'api:req-huge',
+        endpoint: '/v1/wallets/sign',
+      });
       expect(usageEventCreate).toHaveBeenCalledTimes(1);
-
     });
 
     it('fails closed when the persisted includedApiCalls exceeds Number.MAX_SAFE_INTEGER', async () => {
@@ -1092,10 +1133,10 @@ describe('BillingService', () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
       await service.assertAndRecordApiCall({
-          userId: 'user-1',
-          sourceKey: 'api:req-neg',
-          endpoint: '/v1/wallets/sign',
-        });
+        userId: 'user-1',
+        sourceKey: 'api:req-neg',
+        endpoint: '/v1/wallets/sign',
+      });
       expect(usageEventFindMany).not.toHaveBeenCalled();
       expect(usageEventCreate).toHaveBeenCalled();
     });

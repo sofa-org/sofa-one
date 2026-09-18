@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  Optional,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import {
   BillingInvoicePurpose,
@@ -24,7 +19,12 @@ type PlanChangeRow = Prisma.BillingPlanChangeGetPayload<{
   include: { toPlanVersion: true; fromPlanVersion: true; chargeInvoice: true };
 }>;
 
-/** JSON-safe plan-change request outcomes. */
+/**
+ * JSON-safe plan-change request outcomes.
+ *
+ * `requiresPostCommitStripeSync` is an internal signal for BillingService only —
+ * never map it onto the HTTP AssignPlanResult DTO.
+ */
 export type PlanChangeRequestResult =
   | {
       outcome: 'unchanged';
@@ -32,6 +32,8 @@ export type PlanChangeRequestResult =
       planName: string;
       effectivePeriod: string;
       effectiveFrom: string;
+      /** Internal: schedule was canceled; run best-effort Stripe sync after commit. */
+      requiresPostCommitStripeSync?: boolean;
     }
   | {
       outcome: 'payment_required';
@@ -44,6 +46,7 @@ export type PlanChangeRequestResult =
       effectivePeriod: string;
       effectiveFrom: string;
       kind: 'upgrade';
+      requiresPostCommitStripeSync?: boolean;
     }
   | {
       outcome: 'scheduled';
@@ -53,6 +56,7 @@ export type PlanChangeRequestResult =
       effectivePeriod: string;
       effectiveFrom: string;
       kind: 'downgrade';
+      requiresPostCommitStripeSync?: boolean;
     };
 
 /**
@@ -83,40 +87,61 @@ export class BillingPlanChangeService {
     const currentMonthStart = monthStartUtc(now);
     const currentMonthEnd = monthEndUtc(now);
     const nextMonthStart = currentMonthEnd;
-    const nextMonthEnd = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1),
-    );
+    const nextMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
 
     const target = args.targetPlanVersion;
     const current = args.currentPlanVersion;
+    const { tx, billingAccountId } = args;
 
     // Retire stale pending upgrades so a new target can proceed.
-    await this.retireStalePendingUpgrades(args.tx, args.billingAccountId, now);
+    await this.retireStalePendingUpgrades(tx, billingAccountId, now);
+
+    // Next-period lock before any schedule read/mutation (current-period lock
+    // is already held by BillingService.assignPlan).
+    await acquireBillingPeriodAdvisoryLock(tx, billingAccountId, nextMonthStart);
+
+    // Inspect ALL next-period scheduled rows (DB does not enforce one per
+    // account/period). Same-target idempotency only when every scheduled row
+    // targets this plan — a matching row plus a conflicting target must not
+    // short-circuit and leave the conflict worker-eligible.
+    const scheduledNext = await tx.billingPlanChange.findMany({
+      where: {
+        billingAccountId,
+        status: BillingPlanChangeStatus.scheduled,
+        periodStart: nextMonthStart,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        toPlanVersion: true,
+        fromPlanVersion: true,
+        chargeInvoice: true,
+      },
+    });
+    const sameTargetSchedules = scheduledNext.filter((row) => row.toPlanVersionId === target.id);
+    const hasConflictingSchedule = scheduledNext.some((row) => row.toPlanVersionId !== target.id);
+    if (sameTargetSchedules.length > 0 && !hasConflictingSchedule) {
+      return this.toScheduled(sameTargetSchedules[0]!);
+    }
+    // Matching + conflict (or only conflicts / empty): fall through so
+    // cancelScheduledForNextPeriod clears every scheduled row + projection,
+    // then the request path recreates or returns unchanged.
 
     // Already on target for the current entitlement window.
     if (target.id === current.id) {
-      const scheduledNext = await args.tx.billingPlanChange.findFirst({
-        where: {
-          billingAccountId: args.billingAccountId,
-          status: BillingPlanChangeStatus.scheduled,
-          periodStart: nextMonthStart,
-        },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          toPlanVersion: true,
-          fromPlanVersion: true,
-          chargeInvoice: true,
-        },
-      });
-      if (scheduledNext) {
-        // Same scheduled target → idempotent scheduled. A *different* future
-        // target must not return unchanged while silently leaving it in place.
-        if (scheduledNext.toPlanVersionId === target.id) {
-          return this.toScheduled(scheduledNext);
-        }
-        throw new ConflictException(
-          'A different plan is already scheduled for the next billing period; request that plan or wait for the boundary',
-        );
+      // A different next-period schedule: cancel it and stay on current plan.
+      const canceledId = await this.cancelScheduledForNextPeriod(
+        tx,
+        billingAccountId,
+        nextMonthStart,
+        now,
+      );
+      if (canceledId) {
+        await this.enqueueCorrectiveStripeSync(tx, {
+          billingAccountId,
+          sourcePlanChangeId: canceledId,
+          entitledPlanVersionId: current.id,
+          now,
+        });
       }
       return {
         outcome: 'unchanged',
@@ -124,6 +149,7 @@ export class BillingPlanChangeService {
         planName: target.name,
         effectivePeriod: formatUtcMonth(currentMonthStart),
         effectiveFrom: currentMonthStart.toISOString(),
+        ...(canceledId ? { requiresPostCommitStripeSync: true } : {}),
       };
     }
 
@@ -136,9 +162,28 @@ export class BillingPlanChangeService {
     }
 
     if (targetFee > currentFee) {
-      return this.requestUpgrade({
-        tx: args.tx,
-        billingAccountId: args.billingAccountId,
+      // Cancel any scheduled downgrade/lateral first (same TX). If the upgrade
+      // later conflicts on a different pending payment, full TX rollback
+      // restores the old schedule + projection.
+      const canceledId = await this.cancelScheduledForNextPeriod(
+        tx,
+        billingAccountId,
+        nextMonthStart,
+        now,
+      );
+      if (canceledId) {
+        // Corrective sync targets the currently entitled plan — never the
+        // unpaid upgrade target. Upgrade mirror sync happens only on apply.
+        await this.enqueueCorrectiveStripeSync(tx, {
+          billingAccountId,
+          sourcePlanChangeId: canceledId,
+          entitledPlanVersionId: current.id,
+          now,
+        });
+      }
+      const upgradeResult = await this.requestUpgrade({
+        tx,
+        billingAccountId,
         current,
         target,
         currentFee,
@@ -147,11 +192,15 @@ export class BillingPlanChangeService {
         periodStart: currentMonthStart,
         periodEnd: currentMonthEnd,
       });
+      if (canceledId && upgradeResult.outcome === 'payment_required') {
+        return { ...upgradeResult, requiresPostCommitStripeSync: true };
+      }
+      return upgradeResult;
     }
 
     return this.requestDowngradeOrLateral({
-      tx: args.tx,
-      billingAccountId: args.billingAccountId,
+      tx,
+      billingAccountId,
       current,
       target,
       effectiveAt: nextMonthStart,
@@ -195,18 +244,14 @@ export class BillingPlanChangeService {
       include: { toPlanVersion: true },
     });
     if (!change) {
-      throw new ConflictException(
-        'Paid plan_charge invoice has no linked BillingPlanChange',
-      );
+      throw new ConflictException('Paid plan_charge invoice has no linked BillingPlanChange');
     }
     if (change.status === BillingPlanChangeStatus.applied) return;
     if (change.status === BillingPlanChangeStatus.needs_review) return;
     if (change.status === BillingPlanChangeStatus.canceled) return;
 
     if (change.status !== BillingPlanChangeStatus.pending_payment) {
-      throw new ConflictException(
-        `Cannot apply plan change in status ${change.status}`,
-      );
+      throw new ConflictException(`Cannot apply plan change in status ${change.status}`);
     }
     if (change.kind !== BillingPlanChangeKind.upgrade) {
       throw new ConflictException('Only upgrade plan changes are payment-activated');
@@ -583,9 +628,7 @@ export class BillingPlanChangeService {
           data: { status: BillingPlanChangeStatus.needs_review },
         });
       }
-      throw new ConflictException(
-        'Plan upgrade payment window has ended for this billing period',
-      );
+      throw new ConflictException('Plan upgrade payment window has ended for this billing period');
     }
   }
 
@@ -601,6 +644,77 @@ export class BillingPlanChangeService {
         validUntil: { lte: now },
       },
       data: { status: BillingPlanChangeStatus.needs_review },
+    });
+  }
+
+  /**
+   * Cancel all next-period `scheduled` plan changes and remove only
+   * `downgrade_schedule` assignment projections. Never touches
+   * `pending_payment` upgrades or `renewal` / `upgrade_payment` assignments.
+   *
+   * @returns id of the latest canceled change (Stripe attribution), or null.
+   */
+  private async cancelScheduledForNextPeriod(
+    tx: Tx,
+    billingAccountId: string,
+    periodStart: Date,
+    now: Date,
+  ): Promise<string | null> {
+    const latest = await tx.billingPlanChange.findFirst({
+      where: {
+        billingAccountId,
+        periodStart,
+        status: BillingPlanChangeStatus.scheduled,
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    if (!latest) return null;
+
+    await tx.billingPlanChange.updateMany({
+      where: {
+        billingAccountId,
+        periodStart,
+        status: BillingPlanChangeStatus.scheduled,
+      },
+      data: {
+        status: BillingPlanChangeStatus.canceled,
+        canceledAt: now,
+      },
+    });
+
+    // Projection cleanup: only schedule-owned Free/stale rows — never delete
+    // renewal or upgrade_payment assignments for this future period.
+    await tx.billingPlanAssignment.deleteMany({
+      where: {
+        billingAccountId,
+        periodStart,
+        source: 'downgrade_schedule',
+      },
+    });
+
+    return latest.id;
+  }
+
+  /**
+   * Corrective Stripe mirror sync after a schedule cancel. Target is the
+   * currently entitled plan (not an unpaid upgrade). No-op without sync service.
+   */
+  private async enqueueCorrectiveStripeSync(
+    tx: Tx,
+    args: {
+      billingAccountId: string;
+      sourcePlanChangeId: string;
+      entitledPlanVersionId: string;
+      now: Date;
+    },
+  ): Promise<void> {
+    if (!this.subscriptionSync) return;
+    await this.subscriptionSync.enqueueFromPlanChangeInTx(tx, {
+      billingAccountId: args.billingAccountId,
+      sourcePlanChangeId: args.sourcePlanChangeId,
+      defaultTargetPlanVersionId: args.entitledPlanVersionId,
+      now: args.now,
     });
   }
 
@@ -680,9 +794,7 @@ export class BillingPlanChangeService {
       validUntil: periodEnd.toISOString(),
       computedAt: now.toISOString(),
     };
-    const snapshotHash = createHash('sha256')
-      .update(canonicalBillingJson(snapshot))
-      .digest('hex');
+    const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
 
     const invoice = await tx.billingInvoice.create({
       data: {
@@ -750,9 +862,7 @@ export class BillingPlanChangeService {
       // P2002 aborts the interactive transaction in Postgres — do NOT re-query
       // the winner inside this same aborted TX. Surface conflict for outer retry.
       if (isUniqueConstraintError(err)) {
-        throw new ConflictException(
-          'A concurrent upgrade request is already pending payment',
-        );
+        throw new ConflictException('A concurrent upgrade request is already pending payment');
       }
       throw err;
     }
@@ -768,11 +878,11 @@ export class BillingPlanChangeService {
     periodEnd: Date;
     now: Date;
   }): Promise<PlanChangeRequestResult> {
-    const { tx, billingAccountId, current, target, effectiveAt, periodStart, periodEnd } =
-      args;
+    const { tx, billingAccountId, current, target, effectiveAt, periodStart, periodEnd } = args;
 
-    // Lock the TARGET period (next month) for schedule mutations.
-    await acquireBillingPeriodAdvisoryLock(tx, billingAccountId, periodStart);
+    // Next-period lock + same-target schedule idempotency already handled in
+    // requestPlanChange. Replace any remaining different scheduled row here.
+    await this.cancelScheduledForNextPeriod(tx, billingAccountId, periodStart, args.now);
 
     const existingAssignment = await tx.billingPlanAssignment.findUnique({
       where: {
@@ -780,37 +890,30 @@ export class BillingPlanChangeService {
       },
     });
 
-    if (existingAssignment && existingAssignment.planVersionId === target.id) {
-      const existingChange = await tx.billingPlanChange.findFirst({
-        where: {
-          billingAccountId,
-          toPlanVersionId: target.id,
-          kind: BillingPlanChangeKind.downgrade,
-          status: {
-            in: [BillingPlanChangeStatus.scheduled, BillingPlanChangeStatus.applied],
-          },
-          periodStart,
-        },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          toPlanVersion: true,
-          fromPlanVersion: true,
-          chargeInvoice: true,
-        },
-      });
-      if (existingChange) {
-        return this.toScheduled(existingChange);
-      }
-    }
-
     const targetFee = target.monthlyFeeMicros ?? 0n;
 
     // Paid targets are schedule/collection intent only — never write a paid
     // assignment for next month before verified renewal coverage. Free may be
-    // projected immediately (unconditional).
+    // projected immediately when no authoritative paid projection exists.
+    // (cancelScheduledForNextPeriod already removed downgrade_schedule rows.)
     if (targetFee <= 0n) {
       const expiresAt = null;
-      if (existingAssignment) {
+      if (!existingAssignment) {
+        await tx.billingPlanAssignment.create({
+          data: {
+            billingAccountId,
+            planVersionId: target.id,
+            periodStart,
+            expiresAt,
+            source: 'downgrade_schedule',
+          },
+        });
+      } else if (
+        existingAssignment.source !== 'upgrade_payment' &&
+        existingAssignment.source !== 'renewal'
+      ) {
+        // Never overwrite renewal / upgrade_payment; other residual sources
+        // (e.g. default) may be replaced by the Free schedule projection.
         await tx.billingPlanAssignment.update({
           where: {
             billingAccountId_periodStart: { billingAccountId, periodStart },
@@ -821,44 +924,10 @@ export class BillingPlanChangeService {
             source: 'downgrade_schedule',
           },
         });
-      } else {
-        await tx.billingPlanAssignment.create({
-          data: {
-            billingAccountId,
-            planVersionId: target.id,
-            periodStart,
-            expiresAt,
-            source: 'downgrade_schedule',
-          },
-        });
-      }
-    } else if (existingAssignment) {
-      // Clear any prior unpaid paid-target projection for this future period
-      // (e.g. stale schedule) by removing paid source assignments without proof.
-      const priorPlan = await tx.billingPlanVersion.findUnique({
-        where: { id: existingAssignment.planVersionId },
-      });
-      if (
-        existingAssignment.source === 'downgrade_schedule' &&
-        (priorPlan?.monthlyFeeMicros ?? 0n) > 0n
-      ) {
-        await tx.billingPlanAssignment.delete({
-          where: { id: existingAssignment.id },
-        });
       }
     }
-
-    await tx.billingPlanChange.updateMany({
-      where: {
-        billingAccountId,
-        periodStart,
-        status: BillingPlanChangeStatus.scheduled,
-      },
-      data: {
-        status: BillingPlanChangeStatus.canceled,
-        canceledAt: args.now,
-      },
-    });
+    // Paid target: leave any remaining non-schedule assignment alone; do not
+    // create an unpaid paid assignment for the future period.
 
     const change = await tx.billingPlanChange.create({
       data: {
@@ -879,6 +948,7 @@ export class BillingPlanChangeService {
     });
 
     // Next-renewal mirror sync for the scheduled target (Free → cancel_at_period_end).
+    // Supersedes any corrective intent from a prior cancel in this same path.
     if (this.subscriptionSync) {
       await this.subscriptionSync.enqueueFromPlanChangeInTx(tx, {
         billingAccountId,
@@ -972,9 +1042,7 @@ function monthEndUtc(d: Date): Date {
 }
 
 function isUniqueConstraintError(err: unknown): boolean {
-  return (
-    err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
-  );
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 
 /** Locate the single usage_period invoice for an account+period (if any). */

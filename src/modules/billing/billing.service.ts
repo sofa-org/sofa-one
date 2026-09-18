@@ -401,7 +401,10 @@ export class BillingService {
    *   until the charge is fully settled.
    * - Downgrade / lateral (target fee ≤ current): schedules the target plan at
    *   the next UTC month boundary without rewriting the current usage invoice.
-   * - Same plan: idempotent unchanged.
+   *   A successful new selection replaces any existing next-period `scheduled`
+   *   change (not `pending_payment`) and its `downgrade_schedule` projection.
+   * - Same plan: idempotent unchanged; if a different schedule exists it is
+   *   canceled and the response is still `unchanged`.
    * - A second pending upgrade to a different target is rejected (not overwritten).
    *
    * Never accepts client effectiveFrom/admin/userId/amount. Enterprise/custom
@@ -464,15 +467,18 @@ export class BillingService {
     );
 
     // Post-commit best-effort Stripe mirror sync (never rolls back local state).
+    // Includes unchanged outcomes that canceled a next-period schedule.
     if (
       locked.result.outcome === 'scheduled' ||
-      locked.result.outcome === 'payment_required'
+      locked.result.outcome === 'payment_required' ||
+      (locked.result.outcome === 'unchanged' && locked.result.requiresPostCommitStripeSync === true)
     ) {
       void this.subscriptionSync?.processAccountBestEffort(locked.billingAccountId);
     }
 
     const result = locked.result;
     if (result.outcome === 'unchanged') {
+      // Strip internal sync flag — never expose on the HTTP DTO.
       return {
         planCode: result.planCode,
         planName: result.planName,
@@ -2134,8 +2140,7 @@ export class BillingService {
             // is custom/null and seeds the Free-plan default column value only
             // for schema non-null. Existing used versions are never rewritten.
             // Wallet overage keeps its default.
-            apiOverageRateMicros:
-              plan.apiOverageRateMicros ?? DEFAULT_API_OVERAGE_RATE_MICROS,
+            apiOverageRateMicros: plan.apiOverageRateMicros ?? DEFAULT_API_OVERAGE_RATE_MICROS,
             walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
             effectiveFrom: new Date(),
             tiers: { create: tierData },
@@ -2233,9 +2238,7 @@ export class BillingService {
       // Never query/update on the same client. On the root Prisma client, open
       // a fresh transaction; inside a caller TX, surface a retryable conflict.
       if (db !== this.prisma) {
-        throw new ConflictException(
-          'Plan assignment conflict under lock; retry the request',
-        );
+        throw new ConflictException('Plan assignment conflict under lock; retry the request');
       }
       return this.prisma.$transaction(async (freshTx) => {
         const row = await freshTx.billingPlanAssignment.findUnique({

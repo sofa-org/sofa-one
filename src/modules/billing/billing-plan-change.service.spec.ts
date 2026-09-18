@@ -2,6 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
+import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 
 const FREE = {
   id: 'plan-free-1',
@@ -42,13 +43,16 @@ describe('BillingPlanChangeService', () => {
   const invoiceFindUnique = jest.fn();
   const changeCreate = jest.fn();
   const changeFindFirst = jest.fn();
+  const changeFindMany = jest.fn();
   const changeFindUnique = jest.fn();
   const changeUpdateMany = jest.fn();
   const assignmentFindUnique = jest.fn();
   const assignmentCreate = jest.fn();
   const assignmentUpdate = jest.fn();
+  const assignmentDeleteMany = jest.fn();
   const invoiceFindFirst = jest.fn();
   const attemptFindUnique = jest.fn();
+  const enqueueFromPlanChangeInTx = jest.fn();
 
   const tx = {
     $executeRaw: executeRaw,
@@ -61,6 +65,7 @@ describe('BillingPlanChangeService', () => {
     billingPlanChange: {
       create: changeCreate,
       findFirst: changeFindFirst,
+      findMany: changeFindMany,
       findUnique: changeFindUnique,
       updateMany: changeUpdateMany,
     },
@@ -68,11 +73,16 @@ describe('BillingPlanChangeService', () => {
       findUnique: assignmentFindUnique,
       create: assignmentCreate,
       update: assignmentUpdate,
+      deleteMany: assignmentDeleteMany,
     },
     billingPaymentAttempt: {
       findUnique: attemptFindUnique,
     },
   } as any;
+
+  const subscriptionSync = {
+    enqueueFromPlanChangeInTx,
+  };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -81,10 +91,14 @@ describe('BillingPlanChangeService', () => {
       providers: [
         BillingPlanChangeService,
         { provide: PrismaService, useValue: {} },
+        { provide: StripeSubscriptionSyncService, useValue: subscriptionSync },
       ],
     }).compile();
     service = module.get(BillingPlanChangeService);
     executeRaw.mockResolvedValue(undefined);
+    enqueueFromPlanChangeInTx.mockResolvedValue(null);
+    assignmentDeleteMany.mockResolvedValue({ count: 0 });
+    changeFindMany.mockResolvedValue([]); // default: no next-period schedules
   });
 
   afterEach(() => {
@@ -93,6 +107,7 @@ describe('BillingPlanChangeService', () => {
 
   describe('requestPlanChange — upgrade', () => {
     it('creates a finalized plan_charge invoice and pending_payment change without touching assignment', async () => {
+      // findMany schedules → []; cancel → none; pending → none
       changeFindFirst.mockResolvedValue(null);
       invoiceCreate.mockResolvedValue({
         id: 'inv-charge-1',
@@ -129,6 +144,7 @@ describe('BillingPlanChangeService', () => {
       expect(result.invoiceId).toBe('inv-charge-1');
       expect(result.changeId).toBe('chg-1');
       expect(result.kind).toBe('upgrade');
+      expect(result.requiresPostCommitStripeSync).toBeUndefined();
       expect(invoiceCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -147,24 +163,29 @@ describe('BillingPlanChangeService', () => {
       );
       expect(assignmentCreate).not.toHaveBeenCalled();
       expect(assignmentUpdate).not.toHaveBeenCalled();
+      expect(executeRaw).toHaveBeenCalled(); // next-period advisory lock
+      expect(changeFindMany).toHaveBeenCalled();
     });
 
     it('is idempotent for the same pending upgrade target', async () => {
       changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue({
-        id: 'chg-1',
-        toPlanVersionId: STARTER.id,
-        toPlanVersion: STARTER,
-        fromPlanVersion: FREE,
-        periodStart: new Date('2026-08-01T00:00:00.000Z'),
-        effectiveAt: new Date('2026-08-01T00:00:00.000Z'),
-        validUntil: new Date('2026-09-01T00:00:00.000Z'),
-        chargeInvoice: {
-          id: 'inv-charge-1',
-          totalMicros: 25_000_000n,
-          currency: 'USD',
-        },
-      });
+      changeFindFirst
+        .mockResolvedValueOnce(null) // cancelScheduled latest
+        .mockResolvedValueOnce({
+          // pending upgrade
+          id: 'chg-1',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: FREE,
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-08-01T00:00:00.000Z'),
+          validUntil: new Date('2026-09-01T00:00:00.000Z'),
+          chargeInvoice: {
+            id: 'inv-charge-1',
+            totalMicros: 25_000_000n,
+            currency: 'USD',
+          },
+        });
 
       const result = await service.requestPlanChange({
         billingAccountId: 'acc-1',
@@ -181,14 +202,16 @@ describe('BillingPlanChangeService', () => {
 
     it('rejects a second pending upgrade to a different target', async () => {
       changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue({
-        id: 'chg-1',
-        toPlanVersionId: STARTER.id,
-        toPlanVersion: STARTER,
-        fromPlanVersion: FREE,
-        validUntil: new Date('2026-09-01T00:00:00.000Z'),
-        chargeInvoice: { id: 'inv-1', totalMicros: 1n, currency: 'USD' },
-      });
+      changeFindFirst
+        .mockResolvedValueOnce(null) // cancelScheduled latest
+        .mockResolvedValueOnce({
+          id: 'chg-1',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: FREE,
+          validUntil: new Date('2026-09-01T00:00:00.000Z'),
+          chargeInvoice: { id: 'inv-1', totalMicros: 1n, currency: 'USD' },
+        });
 
       await expect(
         service.requestPlanChange({
@@ -204,7 +227,7 @@ describe('BillingPlanChangeService', () => {
 
     it('returns unchanged when target equals current and nothing is scheduled', async () => {
       changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue(null);
+      changeFindFirst.mockResolvedValueOnce(null); // cancelScheduled latest
       const result = await service.requestPlanChange({
         billingAccountId: 'acc-1',
         userId: 'user-1',
@@ -213,21 +236,25 @@ describe('BillingPlanChangeService', () => {
         tx,
       });
       expect(result.outcome).toBe('unchanged');
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync', true);
       expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(enqueueFromPlanChangeInTx).not.toHaveBeenCalled();
     });
 
     it('returns scheduled idempotently when target equals current and same plan is scheduled', async () => {
       changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue({
-        id: 'chg-sched',
-        toPlanVersionId: STARTER.id,
-        toPlanVersion: STARTER,
-        fromPlanVersion: FREE,
-        periodStart: new Date('2026-09-01T00:00:00.000Z'),
-        effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
-        validUntil: new Date('2026-10-01T00:00:00.000Z'),
-        chargeInvoice: null,
-      });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-sched',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: FREE,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
       const result = await service.requestPlanChange({
         billingAccountId: 'acc-1',
         userId: 'user-1',
@@ -237,37 +264,201 @@ describe('BillingPlanChangeService', () => {
       });
       expect(result.outcome).toBe('scheduled');
       expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(changeUpdateMany).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'canceled' }),
+        }),
+      );
+      expect(assignmentDeleteMany).not.toHaveBeenCalled();
     });
 
-    it('conflicts when current plan matches request but a different plan is already scheduled', async () => {
-      changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue({
-        id: 'chg-other',
-        toPlanVersionId: FREE.id,
-        toPlanVersion: FREE,
-        fromPlanVersion: STARTER,
-        periodStart: new Date('2026-09-01T00:00:00.000Z'),
-        effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
-        validUntil: new Date('2026-10-01T00:00:00.000Z'),
-        chargeInvoice: null,
+    it('cancels a different next-period schedule when selecting the current plan and returns unchanged', async () => {
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-other',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: STARTER,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst.mockResolvedValueOnce({ id: 'chg-other' }); // cancelScheduled latest
+      assignmentDeleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: STARTER as any,
+        currentPlanVersion: STARTER as any,
+        tx,
       });
+
+      expect(result.outcome).toBe('unchanged');
+      if (result.outcome !== 'unchanged') return;
+      expect(result.requiresPostCommitStripeSync).toBe(true);
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            status: 'scheduled',
+          }),
+          data: expect.objectContaining({
+            status: 'canceled',
+            canceledAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(assignmentDeleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            source: 'downgrade_schedule',
+          }),
+        }),
+      );
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          billingAccountId: 'acc-1',
+          sourcePlanChangeId: 'chg-other',
+          defaultTargetPlanVersionId: STARTER.id,
+        }),
+      );
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(changeCreate).not.toHaveBeenCalled();
+    });
+
+    it('upgrade cancels a scheduled Free downgrade and cleans projection without voiding pending_payment path', async () => {
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-free-sched',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: STARTER,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst
+        .mockResolvedValueOnce({ id: 'chg-free-sched' }) // cancelScheduled
+        .mockResolvedValueOnce(null); // no pending upgrade
+      assignmentDeleteMany.mockResolvedValue({ count: 1 });
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-charge-up',
+        totalMicros: 25_000_000n,
+        currency: 'USD',
+      });
+      invoiceLineCreate.mockResolvedValue({});
+      changeCreate.mockResolvedValue({
+        id: 'chg-up-1',
+        toPlanVersionId: STARTER.id,
+        toPlanVersion: STARTER,
+        fromPlanVersion: FREE,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        effectiveAt: new Date('2026-08-01T00:00:00.000Z'),
+        validUntil: new Date('2026-09-01T00:00:00.000Z'),
+        chargeInvoice: {
+          id: 'inv-charge-up',
+          totalMicros: 25_000_000n,
+          currency: 'USD',
+        },
+      });
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: STARTER as any,
+        currentPlanVersion: FREE as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('payment_required');
+      if (result.outcome !== 'payment_required') return;
+      expect(result.requiresPostCommitStripeSync).toBe(true);
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'canceled' }),
+        }),
+      );
+      expect(assignmentDeleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ source: 'downgrade_schedule' }),
+        }),
+      );
+      // Corrective sync targets entitled Free, not unpaid Starter upgrade.
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          sourcePlanChangeId: 'chg-free-sched',
+          defaultTargetPlanVersionId: FREE.id,
+        }),
+      );
+      expect(changeCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'pending_payment',
+            toPlanVersionId: STARTER.id,
+          }),
+        }),
+      );
+      expect(assignmentCreate).not.toHaveBeenCalled();
+    });
+
+    it('upgrade conflict on different pending payment does not cancel schedule (cancel runs after schedule check but before pending check — TX caller rolls back)', async () => {
+      // Documents ordering: cancel is in-TX before pending conflict throw so the
+      // outer interactive transaction must roll back to preserve the old schedule.
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-sched-old',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: STARTER,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst
+        .mockResolvedValueOnce({ id: 'chg-sched-old' }) // cancelScheduled
+        .mockResolvedValueOnce({
+          id: 'chg-pending-other',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: FREE,
+          validUntil: new Date('2026-09-01T00:00:00.000Z'),
+          chargeInvoice: { id: 'inv-1', totalMicros: 1n, currency: 'USD' },
+        });
+
       await expect(
         service.requestPlanChange({
           billingAccountId: 'acc-1',
           userId: 'user-1',
-          targetPlanVersion: STARTER as any,
-          currentPlanVersion: STARTER as any,
+          targetPlanVersion: GROWTH as any,
+          currentPlanVersion: FREE as any,
           tx,
         }),
-      ).rejects.toThrow(/different plan is already scheduled/i);
+      ).rejects.toThrow(ConflictException);
+
+      // Cancel was attempted in-memory on this mock TX; real Prisma interactive
+      // TX aborts on throw so scheduled rows stay. Spec asserts conflict still fires.
       expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(changeCreate).not.toHaveBeenCalled();
     });
 
     it('retires expired pending upgrades as needs_review and allows a new target', async () => {
       changeUpdateMany.mockResolvedValue({ count: 1 }); // stale retired
       changeFindFirst
-        .mockResolvedValueOnce(null) // after retire, no active pending
-        .mockResolvedValueOnce(null);
+        .mockResolvedValueOnce(null) // cancelScheduled
+        .mockResolvedValueOnce(null); // no pending after retire
       invoiceCreate.mockResolvedValue({
         id: 'inv-charge-2',
         totalMicros: 25_000_000n,
@@ -308,7 +499,7 @@ describe('BillingPlanChangeService', () => {
   describe('requestPlanChange — downgrade', () => {
     it('schedules next-month assignment without creating a charge invoice', async () => {
       changeUpdateMany.mockResolvedValue({ count: 0 });
-      changeFindFirst.mockResolvedValue(null);
+      changeFindFirst.mockResolvedValueOnce(null); // cancelScheduled
       assignmentFindUnique.mockResolvedValue(null);
       assignmentCreate.mockResolvedValue({});
       changeCreate.mockResolvedValue({
@@ -339,6 +530,259 @@ describe('BillingPlanChangeService', () => {
           data: expect.objectContaining({
             planVersionId: FREE.id,
             periodStart: new Date('2026-09-01T00:00:00.000Z'),
+            source: 'downgrade_schedule',
+          }),
+        }),
+      );
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          sourcePlanChangeId: 'chg-down-1',
+          defaultTargetPlanVersionId: FREE.id,
+        }),
+      );
+    });
+
+    it('same already-scheduled downgrade target is idempotent (no cancel/recreate)', async () => {
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-existing',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: STARTER,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: FREE as any,
+        currentPlanVersion: STARTER as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('scheduled');
+      if (result.outcome !== 'scheduled') return;
+      expect(result.changeId).toBe('chg-existing');
+      expect(changeCreate).not.toHaveBeenCalled();
+      expect(assignmentDeleteMany).not.toHaveBeenCalled();
+      expect(assignmentCreate).not.toHaveBeenCalled();
+    });
+
+    it('matching scheduled target plus conflicting scheduled target cancels all, cleans projection, and recreates only the requested schedule', async () => {
+      // P2: DB may hold multiple scheduled rows for the same next period. A
+      // matching FREE schedule must not short-circuit while a conflicting
+      // STARTER schedule (and its Free projection) remains worker-eligible.
+      const nextStart = new Date('2026-09-01T00:00:00.000Z');
+      const nextEnd = new Date('2026-10-01T00:00:00.000Z');
+      changeUpdateMany.mockResolvedValue({ count: 2 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-match-free',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: GROWTH,
+          periodStart: nextStart,
+          effectiveAt: nextStart,
+          validUntil: nextEnd,
+          chargeInvoice: null,
+        },
+        {
+          id: 'chg-conflict-starter',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: GROWTH,
+          periodStart: nextStart,
+          effectiveAt: nextStart,
+          validUntil: nextEnd,
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst.mockResolvedValueOnce({ id: 'chg-match-free' }); // cancel attribution
+      assignmentDeleteMany.mockResolvedValue({ count: 1 });
+      assignmentFindUnique.mockResolvedValue(null); // projection cleaned
+      assignmentCreate.mockResolvedValue({});
+      changeCreate.mockResolvedValue({
+        id: 'chg-new-free',
+        toPlanVersion: FREE,
+        fromPlanVersion: GROWTH,
+        periodStart: nextStart,
+        effectiveAt: nextStart,
+        validUntil: nextEnd,
+        chargeInvoice: null,
+      });
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: FREE as any,
+        currentPlanVersion: GROWTH as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('scheduled');
+      if (result.outcome !== 'scheduled') return;
+      expect(result.changeId).toBe('chg-new-free');
+      // All scheduled rows canceled (including the matching one + conflict).
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            status: 'scheduled',
+            periodStart: nextStart,
+          }),
+          data: expect.objectContaining({
+            status: 'canceled',
+            canceledAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(assignmentDeleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            periodStart: nextStart,
+            source: 'downgrade_schedule',
+          }),
+        }),
+      );
+      // Exactly one new schedule; old matching id must not be returned as-is.
+      expect(changeCreate).toHaveBeenCalledTimes(1);
+      expect(changeCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            toPlanVersionId: FREE.id,
+            status: 'scheduled',
+          }),
+        }),
+      );
+      expect(assignmentCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: FREE.id,
+            source: 'downgrade_schedule',
+          }),
+        }),
+      );
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          sourcePlanChangeId: 'chg-new-free',
+          defaultTargetPlanVersionId: FREE.id,
+        }),
+      );
+    });
+
+    it('replacing Free schedule with a paid lateral cleans Free projection and does not create unpaid paid assignment', async () => {
+      // Growth → Starter is a downgrade/lateral (lower fee). Prior Free schedule projection cleaned.
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-old-free',
+          toPlanVersionId: FREE.id,
+          toPlanVersion: FREE,
+          fromPlanVersion: GROWTH,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst.mockResolvedValueOnce({ id: 'chg-old-free' }); // cancel old Free schedule
+      assignmentDeleteMany.mockResolvedValue({ count: 1 });
+      // After cancel, no assignment remains (Free projection deleted).
+      assignmentFindUnique.mockResolvedValue(null);
+      changeCreate.mockResolvedValue({
+        id: 'chg-starter-sched',
+        toPlanVersion: STARTER,
+        fromPlanVersion: GROWTH,
+        periodStart: new Date('2026-09-01T00:00:00.000Z'),
+        effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+        validUntil: new Date('2026-10-01T00:00:00.000Z'),
+        chargeInvoice: null,
+      });
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: STARTER as any,
+        currentPlanVersion: GROWTH as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('scheduled');
+      if (result.outcome !== 'scheduled') return;
+      expect(result.changeId).toBe('chg-starter-sched');
+      expect(assignmentDeleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ source: 'downgrade_schedule' }),
+        }),
+      );
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(assignmentUpdate).not.toHaveBeenCalled();
+      expect(changeCreate).toHaveBeenCalledTimes(1);
+      // New scheduled target sync wins (not a bare cancel corrective for Growth).
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          sourcePlanChangeId: 'chg-starter-sched',
+          defaultTargetPlanVersionId: STARTER.id,
+        }),
+      );
+    });
+
+    it('replacing a different scheduled target with Free cancels old, creates one schedule, and projects Free', async () => {
+      // Growth → Free while a Starter schedule existed (same-target FREE absent).
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      changeFindMany.mockResolvedValue([
+        {
+          id: 'chg-starter-sched',
+          toPlanVersionId: STARTER.id,
+          toPlanVersion: STARTER,
+          fromPlanVersion: GROWTH,
+          periodStart: new Date('2026-09-01T00:00:00.000Z'),
+          effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+          validUntil: new Date('2026-10-01T00:00:00.000Z'),
+          chargeInvoice: null,
+        },
+      ]);
+      changeFindFirst.mockResolvedValueOnce({ id: 'chg-starter-sched' }); // cancel Starter schedule
+      assignmentDeleteMany.mockResolvedValue({ count: 0 });
+      assignmentFindUnique.mockResolvedValue(null);
+      assignmentCreate.mockResolvedValue({});
+      changeCreate.mockResolvedValue({
+        id: 'chg-new-free',
+        toPlanVersion: FREE,
+        fromPlanVersion: GROWTH,
+        periodStart: new Date('2026-09-01T00:00:00.000Z'),
+        effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+        validUntil: new Date('2026-10-01T00:00:00.000Z'),
+        chargeInvoice: null,
+      });
+
+      const result = await service.requestPlanChange({
+        billingAccountId: 'acc-1',
+        userId: 'user-1',
+        targetPlanVersion: FREE as any,
+        currentPlanVersion: GROWTH as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('scheduled');
+      expect(changeCreate).toHaveBeenCalledTimes(1);
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'canceled' }),
+        }),
+      );
+      expect(assignmentCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: FREE.id,
             source: 'downgrade_schedule',
           }),
         }),

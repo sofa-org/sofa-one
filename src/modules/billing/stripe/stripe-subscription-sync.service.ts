@@ -1,15 +1,5 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  Logger,
-  Optional,
-} from '@nestjs/common';
-import {
-  BillingSubscriptionSyncKind,
-  BillingSubscriptionSyncStatus,
-  Prisma,
-} from '@prisma/client';
+import { ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { BillingSubscriptionSyncKind, BillingSubscriptionSyncStatus, Prisma } from '@prisma/client';
 import * as Stripe from 'stripe';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
@@ -54,8 +44,11 @@ export class StripeSubscriptionSyncService {
    * Enqueue (or supersede) a sync intent inside the caller's plan-change TX.
    * No-op when the account has no Stripe subscription binding.
    *
-   * When a future scheduled change already exists for next month, that target
-   * wins for next renewal (upgrade must not clear scheduled Free/downgrade).
+   * When a future `scheduled` change already exists for next month, that
+   * target wins for next renewal. Callers that cancel a schedule first
+   * (then enqueue a corrective sync for the currently entitled plan, or a
+   * replacement schedule) rely on this: no remaining schedule → default
+   * target; new schedule → scheduled target supersedes.
    */
   async enqueueFromPlanChangeInTx(
     tx: Tx,
@@ -75,9 +68,7 @@ export class StripeSubscriptionSyncService {
     }
 
     const now = args.now ?? new Date();
-    const nextMonthStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-    );
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
     // Explicit future schedule wins for next renewal.
     const scheduled = await tx.billingPlanChange.findFirst({
@@ -129,9 +120,7 @@ export class StripeSubscriptionSyncService {
     });
     const revision = (latest?.revision ?? 0) + 1;
     const cents =
-      kind === BillingSubscriptionSyncKind.update_item
-        ? Number(fee / MICROS_PER_CENT)
-        : null;
+      kind === BillingSubscriptionSyncKind.update_item ? Number(fee / MICROS_PER_CENT) : null;
 
     // expected* = current provider validation window (mirror period or current
     // UTC month). effective* = next renewal interval this config applies to
@@ -144,25 +133,13 @@ export class StripeSubscriptionSyncService {
     const expectedPeriodEnd =
       account.stripeSubscriptionPeriodEnd ??
       new Date(
-        Date.UTC(
-          expectedPeriodStart.getUTCFullYear(),
-          expectedPeriodStart.getUTCMonth() + 1,
-          1,
-        ),
+        Date.UTC(expectedPeriodStart.getUTCFullYear(), expectedPeriodStart.getUTCMonth() + 1, 1),
       );
     const effectivePeriodStart = new Date(
-      Date.UTC(
-        expectedPeriodEnd.getUTCFullYear(),
-        expectedPeriodEnd.getUTCMonth(),
-        1,
-      ),
+      Date.UTC(expectedPeriodEnd.getUTCFullYear(), expectedPeriodEnd.getUTCMonth(), 1),
     );
     const effectivePeriodEnd = new Date(
-      Date.UTC(
-        effectivePeriodStart.getUTCFullYear(),
-        effectivePeriodStart.getUTCMonth() + 1,
-        1,
-      ),
+      Date.UTC(effectivePeriodStart.getUTCFullYear(), effectivePeriodStart.getUTCMonth() + 1, 1),
     );
 
     // Enqueue-time freeze of local intent facts. Item/product ids are filled
@@ -225,10 +202,7 @@ export class StripeSubscriptionSyncService {
           where: {
             billingAccountId,
             status: {
-              in: [
-                BillingSubscriptionSyncStatus.pending,
-                BillingSubscriptionSyncStatus.in_flight,
-              ],
+              in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
             },
           },
         });
@@ -252,10 +226,7 @@ export class StripeSubscriptionSyncService {
         where: {
           billingAccountId,
           status: {
-            in: [
-              BillingSubscriptionSyncStatus.pending,
-              BillingSubscriptionSyncStatus.in_flight,
-            ],
+            in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
           },
           OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }],
         },
@@ -277,10 +248,7 @@ export class StripeSubscriptionSyncService {
     const outstanding = await this.prisma.billingSubscriptionSyncIntent.count({
       where: {
         status: {
-          in: [
-            BillingSubscriptionSyncStatus.pending,
-            BillingSubscriptionSyncStatus.in_flight,
-          ],
+          in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
         },
       },
     });
@@ -302,10 +270,7 @@ export class StripeSubscriptionSyncService {
     const due = await this.prisma.billingSubscriptionSyncIntent.findMany({
       where: {
         status: {
-          in: [
-            BillingSubscriptionSyncStatus.pending,
-            BillingSubscriptionSyncStatus.in_flight,
-          ],
+          in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
         },
         OR: [
           { nextRetryAt: null },
@@ -344,10 +309,7 @@ export class StripeSubscriptionSyncService {
         billingAccountId: seed.billingAccountId,
         revision: { lt: seed.revision },
         status: {
-          in: [
-            BillingSubscriptionSyncStatus.pending,
-            BillingSubscriptionSyncStatus.in_flight,
-          ],
+          in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
         },
       },
       select: { id: true, revision: true },
@@ -360,10 +322,7 @@ export class StripeSubscriptionSyncService {
       where: {
         id: seed.id,
         status: {
-          in: [
-            BillingSubscriptionSyncStatus.pending,
-            BillingSubscriptionSyncStatus.in_flight,
-          ],
+          in: [BillingSubscriptionSyncStatus.pending, BillingSubscriptionSyncStatus.in_flight],
         },
         OR: [
           { leaseExpiresAt: null },
@@ -409,21 +368,16 @@ export class StripeSubscriptionSyncService {
     try {
       const frozen = this.readFrozenPayload(intent.frozenPayloadJson);
       const frozenItemId =
-        this.asNonEmptyString(frozen.stripeSubscriptionItemId) ??
-        intent.stripeSubscriptionItemId;
+        this.asNonEmptyString(frozen.stripeSubscriptionItemId) ?? intent.stripeSubscriptionItemId;
       const frozenProductId = this.asNonEmptyString(frozen.stripeProductId);
       const frozenCents =
         typeof frozen.targetUnitAmountCents === 'number'
           ? frozen.targetUnitAmountCents
           : intent.targetUnitAmountCents;
-      const frozenCurrency =
-        this.asNonEmptyString(frozen.targetCurrency) ?? intent.targetCurrency;
-      const frozenInterval =
-        this.asNonEmptyString(frozen.interval) === 'month' ? 'month' : 'month';
+      const frozenCurrency = this.asNonEmptyString(frozen.targetCurrency) ?? intent.targetCurrency;
+      const frozenInterval = this.asNonEmptyString(frozen.interval) === 'month' ? 'month' : 'month';
       const frozenQty =
-        typeof frozen.quantity === 'number' && frozen.quantity > 0
-          ? frozen.quantity
-          : 1;
+        typeof frozen.quantity === 'number' && frozen.quantity > 0 ? frozen.quantity : 1;
 
       // Retrieve for shape/period validation only. Provider mutation facts come
       // from the frozen payload once item/product have been sealed.
@@ -481,8 +435,7 @@ export class StripeSubscriptionSyncService {
         });
         if (sealedOk.count !== 1) return 'skipped';
         // Use sealed facts for the provider call below.
-        productId =
-          intent.kind === BillingSubscriptionSyncKind.update_item ? productId : null;
+        productId = intent.kind === BillingSubscriptionSyncKind.update_item ? productId : null;
       }
 
       let updated: Stripe.Subscription;
@@ -499,7 +452,12 @@ export class StripeSubscriptionSyncService {
           return 'needs_review';
         }
         if (!productId || !itemId) {
-          await this.markNeedsReview(intent.id, workerId, 'frozen_provider_facts_missing', 'validation');
+          await this.markNeedsReview(
+            intent.id,
+            workerId,
+            'frozen_provider_facts_missing',
+            'validation',
+          );
           return 'needs_review';
         }
 
@@ -581,7 +539,10 @@ export class StripeSubscriptionSyncService {
       // Provider timeout/uncertain: stay in_flight (dispatched) with the same
       // frozen payload + idempotency key so retries are exact and newer pending
       // cannot leapfrog.
-      const backoff = Math.min(BACKOFF_MS * 2 ** Math.min(intent.retryCount, 6), 24 * 60 * 60 * 1000);
+      const backoff = Math.min(
+        BACKOFF_MS * 2 ** Math.min(intent.retryCount, 6),
+        24 * 60 * 60 * 1000,
+      );
       await this.prisma.billingSubscriptionSyncIntent.updateMany({
         where: {
           id: intent.id,
@@ -614,9 +575,7 @@ export class StripeSubscriptionSyncService {
   private extractProductId(sub: Stripe.Subscription, itemId: string): string | null {
     const existingItem = sub.items.data.find((i) => i.id === itemId) ?? sub.items.data[0];
     const existingPrice =
-      existingItem?.price && typeof existingItem.price !== 'string'
-        ? existingItem.price
-        : null;
+      existingItem?.price && typeof existingItem.price !== 'string' ? existingItem.price : null;
     if (!existingPrice) return null;
     if (typeof existingPrice.product === 'string') return existingPrice.product;
     if (existingPrice.product && typeof existingPrice.product !== 'string') {
@@ -667,8 +626,7 @@ export class StripeSubscriptionSyncService {
     if (sub.id !== intent.stripeSubscriptionId) {
       return { ok: false, code: 'subscription_id_mismatch', type: 'validation' };
     }
-    const customerId =
-      typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null;
+    const customerId = typeof sub.customer === 'string' ? sub.customer : (sub.customer?.id ?? null);
     if (!customerId || customerId !== intent.stripeCustomerId) {
       return { ok: false, code: 'customer_mismatch', type: 'validation' };
     }
