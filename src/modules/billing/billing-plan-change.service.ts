@@ -61,6 +61,33 @@ export type PlanChangeRequestResult =
     };
 
 /**
+ * Result of an explicit next-period schedule cancel.
+ *
+ * `requiresPostCommitStripeSync` is internal — never map onto the HTTP DTO.
+ */
+export type CancelScheduledPlanChangeResult = {
+  outcome: 'canceled' | 'unchanged';
+  planCode: string;
+  planName: string;
+  effectivePeriod: string;
+  effectiveFrom: string;
+  /** Internal: schedule was canceled; run best-effort Stripe sync after commit. */
+  requiresPostCommitStripeSync?: boolean;
+};
+
+/**
+ * Result of canceling an unpaid pending_payment upgrade.
+ * Never carries internal sync flags or BigInt.
+ */
+export type CancelPendingUpgradeResult = {
+  outcome: 'canceled' | 'unchanged';
+  planCode: string;
+  planName: string;
+  effectivePeriod: string;
+  effectiveFrom: string;
+};
+
+/**
  * Payment-aware plan-change boundary.
  *
  * Upgrade: pending_payment + finalized plan_charge with server proration.
@@ -76,6 +103,284 @@ export class BillingPlanChangeService {
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
     @Optional() private readonly autoSubscription?: StripeAutoSubscriptionService,
   ) {}
+
+  /**
+   * Explicit cancel of next-period scheduled downgrade/lateral only.
+   *
+   * Caller must hold the current-period billing lock (same as assignPlan).
+   * Acquires the next-period advisory lock, cancels `scheduled` rows, removes
+   * only `downgrade_schedule` projections, and enqueues corrective Stripe /
+   * auto-subscription sync targeting the currently entitled plan.
+   *
+   * Does not touch `pending_payment` upgrades or `renewal` / `upgrade_payment`
+   * assignments. Idempotent no-op when nothing is scheduled.
+   *
+   * `requiresPostCommitStripeSync` is internal — BillingService must strip it
+   * before mapping onto the public HTTP DTO.
+   */
+  async cancelScheduledPlanChange(args: {
+    billingAccountId: string;
+    currentPlanVersion: PlanVersion;
+    now?: Date;
+    tx: Tx;
+  }): Promise<CancelScheduledPlanChangeResult> {
+    const now = args.now ?? new Date();
+    const currentMonthStart = monthStartUtc(now);
+    const nextMonthStart = monthEndUtc(now);
+    const { tx, billingAccountId, currentPlanVersion: current } = args;
+
+    // Next-period lock before any schedule read/mutation (current-period lock
+    // is already held by BillingService.cancelScheduledPlan).
+    await acquireBillingPeriodAdvisoryLock(tx, billingAccountId, nextMonthStart);
+
+    const canceledId = await this.cancelScheduledForNextPeriod(
+      tx,
+      billingAccountId,
+      nextMonthStart,
+      now,
+    );
+
+    if (canceledId) {
+      await this.enqueueCorrectiveStripeSync(tx, {
+        billingAccountId,
+        sourcePlanChangeId: canceledId,
+        entitledPlanVersionId: current.id,
+        now,
+      });
+    }
+
+    return {
+      outcome: canceledId ? 'canceled' : 'unchanged',
+      planCode: current.code,
+      planName: current.name,
+      effectivePeriod: formatUtcMonth(currentMonthStart),
+      effectiveFrom: currentMonthStart.toISOString(),
+      ...(canceledId ? { requiresPostCommitStripeSync: true } : {}),
+    };
+  }
+
+  /**
+   * Cancel an unpaid `pending_payment` upgrade for the account.
+   *
+   * Caller must hold the billing-period advisory lock for `expectedPeriodStart`
+   * (from BillingService soft-read of the specific change id — never blindly
+   * "now", never "latest pending" under the lock).
+   *
+   * Lock order (deadlock-safe with settlement): period (held) → payment
+   * attempts FOR UPDATE (id asc) → invoice FOR UPDATE. Then fail-closed
+   * inspection, CAS-cancel the expected change only, void the unpaid
+   * plan_charge, and release only clean evidence-free pending attempts.
+   *
+   * Any Stripe payment-attempt row rejects cancel without writes (local status
+   * never proves remote Checkout inactivity; only zero Stripe rows are safe).
+   * USDC pending with submitted hash / receipt evidence likewise rejects;
+   * evidence-free pending USDC may be released after CAS.
+   *
+   * Never mutates confirming/succeeded attempts, plan assignments, or Stripe
+   * sync state. No assignment reads/writes. Idempotent when the expected
+   * change is already gone/canceled.
+   */
+  async cancelPendingUpgrade(args: {
+    billingAccountId: string;
+    /**
+     * Exact pending upgrade id from the soft-read. Null = no pending upgrade
+     * was observed; return unchanged without selecting a replacement row.
+     */
+    expectedChangeId: string | null;
+    /** Period of the expected change; must match the held period lock. */
+    expectedPeriodStart: Date | null;
+    now?: Date;
+    tx: Tx;
+  }): Promise<CancelPendingUpgradeResult> {
+    const now = args.now ?? new Date();
+    const { tx, billingAccountId, expectedChangeId, expectedPeriodStart } = args;
+    const fallbackPeriod = expectedPeriodStart ?? monthStartUtc(now);
+
+    const unchanged = (plan?: {
+      code: string;
+      name: string;
+    } | null, periodStart = fallbackPeriod, effectiveFrom = fallbackPeriod): CancelPendingUpgradeResult => ({
+      outcome: 'unchanged',
+      planCode: plan?.code ?? 'free',
+      planName: plan?.name ?? 'Free',
+      effectivePeriod: formatUtcMonth(periodStart),
+      effectiveFrom: effectiveFrom.toISOString(),
+    });
+
+    // No soft-read identity: do not pick an unrelated latest pending under lock.
+    if (!expectedChangeId || !expectedPeriodStart) {
+      return unchanged();
+    }
+
+    const pending = await tx.billingPlanChange.findUnique({
+      where: { id: expectedChangeId },
+      include: {
+        fromPlanVersion: true,
+        toPlanVersion: true,
+        chargeInvoice: true,
+      },
+    });
+
+    // Disappeared or already canceled by another actor → established no-op.
+    if (!pending || pending.billingAccountId !== billingAccountId) {
+      return unchanged();
+    }
+    if (pending.status === BillingPlanChangeStatus.canceled) {
+      return unchanged(pending.fromPlanVersion, pending.periodStart, pending.effectiveAt);
+    }
+    if (
+      pending.status !== BillingPlanChangeStatus.pending_payment ||
+      pending.kind !== BillingPlanChangeKind.upgrade
+    ) {
+      throw new ConflictException(
+        'Pending upgrade is no longer cancelable; retry or complete payment first',
+      );
+    }
+    // Holding the old period lock must never cancel a different-period replacement.
+    if (pending.periodStart.getTime() !== expectedPeriodStart.getTime()) {
+      throw new ConflictException(
+        'Pending upgrade period changed under lock; retry the cancellation',
+      );
+    }
+
+    const invoiceId = pending.chargeInvoiceId ?? pending.chargeInvoice?.id;
+    if (!invoiceId) {
+      throw new ConflictException('Pending upgrade is missing its charge invoice');
+    }
+
+    // 1) Lock all payment attempts for this invoice (stable id order) BEFORE the
+    //    invoice row — matches settlement's attempt-before-invoice discipline and
+    //    serializes with claim hash persistence / Stripe checkout writers.
+    await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "billing_payment_attempts"
+      WHERE "invoice_id" = ${invoiceId}
+      ORDER BY "id" ASC
+      FOR UPDATE`;
+
+    const attempts = await tx.billingPaymentAttempt.findMany({
+      where: { invoiceId },
+      orderBy: { id: 'asc' },
+    });
+
+    // Fail closed BEFORE any cancel/void writes.
+    // Maximally conservative Stripe policy: ANY Stripe payment-attempt row
+    // (pending/confirming/succeeded/needs_review/failed/expired/canceled) blocks
+    // cancel. Local status never proves remote Checkout inactivity; the only
+    // Stripe-safe path is zero Stripe attempt records on the plan_charge invoice.
+    for (const attempt of attempts) {
+      if (attempt.method === 'stripe') {
+        throw new ConflictException(
+          'Cannot cancel an upgrade while a Stripe payment attempt exists for the charge invoice',
+        );
+      }
+      if (attempt.status === 'confirming' || attempt.status === 'succeeded') {
+        throw new ConflictException(
+          'Cannot cancel an upgrade while a payment attempt is confirming or succeeded',
+        );
+      }
+      // USDC (or any non-Stripe rail): evidence/hash markers on a still-pending
+      // row mean a claim is in flight — reject without writes so cancel cannot
+      // race hash CAS. Evidence-free pending USDC may be released after CAS.
+      if (attempt.status === 'pending' && paymentAttemptHasEvidence(attempt)) {
+        throw new ConflictException(
+          'Cannot cancel an upgrade while a payment attempt has submitted evidence',
+        );
+      }
+    }
+
+    // 2) Invoice row lock after attempts.
+    const lockedInvoice = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "billing_invoices" WHERE "id" = ${invoiceId} FOR UPDATE`;
+    if (lockedInvoice.length === 0) {
+      throw new ConflictException('Upgrade charge invoice is no longer available');
+    }
+
+    const invoice = await tx.billingInvoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) {
+      throw new ConflictException('Upgrade charge invoice is no longer available');
+    }
+
+    if (invoice.purpose !== BillingInvoicePurpose.plan_charge) {
+      throw new ConflictException('Pending upgrade charge invoice has an unexpected purpose');
+    }
+    if (invoice.status !== 'finalized') {
+      throw new ConflictException('Pending upgrade charge invoice is not in a cancelable state');
+    }
+    if (invoice.paidAt != null) {
+      throw new ConflictException('Cannot cancel an upgrade that has already been paid');
+    }
+    if (invoice.settlementAttemptId != null) {
+      throw new ConflictException('Cannot cancel an upgrade that has a settlement marker');
+    }
+    if ((invoice.allocatedMicros ?? 0n) > 0n) {
+      throw new ConflictException('Cannot cancel an upgrade that already has allocated coverage');
+    }
+
+    // CAS: only the expected id while still pending_payment.
+    const cas = await tx.billingPlanChange.updateMany({
+      where: {
+        id: pending.id,
+        status: BillingPlanChangeStatus.pending_payment,
+      },
+      data: {
+        status: BillingPlanChangeStatus.canceled,
+        canceledAt: now,
+      },
+    });
+    if (cas.count !== 1) {
+      const again = await tx.billingPlanChange.findUnique({ where: { id: pending.id } });
+      if (again?.status === BillingPlanChangeStatus.canceled) {
+        return unchanged(pending.fromPlanVersion, pending.periodStart, pending.effectiveAt);
+      }
+      throw new ConflictException('Pending upgrade could not be canceled; retry or pay it first');
+    }
+
+    const voided = await tx.billingInvoice.updateMany({
+      where: {
+        id: invoice.id,
+        purpose: BillingInvoicePurpose.plan_charge,
+        status: 'finalized',
+        paidAt: null,
+        settlementAttemptId: null,
+        allocatedMicros: 0n,
+      },
+      data: { status: 'void' },
+    });
+    if (voided.count !== 1) {
+      throw new ConflictException('Upgrade charge invoice could not be voided safely');
+    }
+
+    // Release only evidence-free pending attempts (USDC quotes with no hash).
+    // Stripe pending never reaches here. Confirming/succeeded never matched.
+    const releasableIds = attempts
+      .filter((a) => a.status === 'pending' && !paymentAttemptHasEvidence(a))
+      .map((a) => a.id);
+    if (releasableIds.length > 0) {
+      await tx.billingPaymentAttempt.updateMany({
+        where: {
+          id: { in: releasableIds },
+          status: 'pending',
+          submittedTxHash: null,
+          txHash: null,
+        },
+        data: {
+          status: 'failed',
+          failedAt: now,
+          failureCode: 'upgrade_canceled',
+          failureMessage: 'Plan upgrade canceled by user',
+        },
+      });
+    }
+
+    const entitled = pending.fromPlanVersion;
+    return {
+      outcome: 'canceled',
+      planCode: entitled?.code ?? 'free',
+      planName: entitled?.name ?? 'Free',
+      effectivePeriod: formatUtcMonth(pending.periodStart),
+      effectiveFrom: pending.effectiveAt.toISOString(),
+    };
+  }
 
   async requestPlanChange(args: {
     billingAccountId: string;
@@ -615,6 +920,15 @@ export class BillingPlanChangeService {
     const invoice = await tx.billingInvoice.findUnique({ where: { id: invoiceId } });
     if (!invoice || invoice.purpose !== BillingInvoicePurpose.plan_charge) return;
 
+    // Voided / non-finalized plan_charge invoices are never payable (covers
+    // post-cancel races where checkout/quote re-reads under the invoice lock).
+    if (invoice.status !== 'finalized') {
+      throw new ConflictException('Plan upgrade is no longer payable');
+    }
+    if (invoice.paidAt != null || invoice.settlementAttemptId != null) {
+      throw new ConflictException('Plan upgrade is no longer payable');
+    }
+
     const change = await tx.billingPlanChange.findFirst({
       where: { chargeInvoiceId: invoiceId },
     });
@@ -1071,6 +1385,38 @@ function monthEndUtc(d: Date): Date {
 
 function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+}
+
+/**
+ * True when a payment attempt carries any submitted/on-chain evidence marker.
+ * A still-`pending` row with evidence must block upgrade cancel (claim in flight).
+ */
+function paymentAttemptHasEvidence(attempt: {
+  submittedTxHash: string | null;
+  txHash: string | null;
+  receiptEvidence: unknown;
+  blockNumber: bigint | null;
+  blockHash: string | null;
+  blockTimestamp: bigint | null;
+  actualBaseUnits: bigint | null;
+  logIndex: number | null;
+  payerAddress: string | null;
+  allocatedAt: Date | null;
+  succeededAt: Date | null;
+}): boolean {
+  return (
+    attempt.submittedTxHash != null ||
+    attempt.txHash != null ||
+    attempt.receiptEvidence != null ||
+    attempt.blockNumber != null ||
+    attempt.blockHash != null ||
+    attempt.blockTimestamp != null ||
+    attempt.actualBaseUnits != null ||
+    attempt.logIndex != null ||
+    attempt.payerAddress != null ||
+    attempt.allocatedAt != null ||
+    attempt.succeededAt != null
+  );
 }
 
 /** Locate the single usage_period invoice for an account+period (if any). */

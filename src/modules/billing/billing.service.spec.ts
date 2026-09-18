@@ -169,6 +169,8 @@ describe('BillingService', () => {
   const queryRaw = jest.fn();
   const settleInvoice = jest.fn();
   const requestPlanChange = jest.fn();
+  const cancelScheduledPlanChange = jest.fn();
+  const cancelPendingUpgrade = jest.fn();
   const processAccountBestEffort = jest.fn();
 
   beforeEach(async () => {
@@ -240,7 +242,7 @@ describe('BillingService', () => {
         { provide: InvoiceSettlementService, useValue: { settleInvoice } },
         {
           provide: BillingPlanChangeService,
-          useValue: { requestPlanChange },
+          useValue: { requestPlanChange, cancelScheduledPlanChange, cancelPendingUpgrade },
         },
         {
           provide: StripeSubscriptionSyncService,
@@ -450,6 +452,8 @@ describe('BillingService', () => {
           planVersionId: STARTER_VERSION.id,
           planVersion: STARTER_VERSION,
         });
+      // No explicit BillingPlanChange — assignment projection is the fallback.
+      planChangeFindFirst.mockResolvedValue(null);
       planVersionFindMany.mockResolvedValue([FREE_VERSION, STARTER_VERSION]);
 
       const result = await service.getPlans('user-1');
@@ -461,6 +465,140 @@ describe('BillingService', () => {
         planName: 'Starter',
         effectivePeriod: '2026-09',
       });
+      expect(planChangeFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            status: 'scheduled',
+          }),
+        }),
+      );
+    });
+
+    it('exposes a paid scheduled downgrade from BillingPlanChange when no future assignment exists', async () => {
+      // Growth → Starter is a paid downgrade/lateral: schedule intent only, no
+      // unpaid paid assignment projection for next month.
+      const GROWTH_VERSION = {
+        ...STARTER_VERSION,
+        id: 'plan-growth-1',
+        code: 'growth',
+        name: 'Growth',
+        monthlyFeeMicros: 199_000_000n,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(GROWTH_VERSION);
+      assignmentFindFirst
+        .mockResolvedValueOnce({
+          id: 'assign-current',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: GROWTH_VERSION.id,
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          expiresAt: new Date('2026-09-01T00:00:00.000Z'),
+          source: 'renewal',
+          planVersion: GROWTH_VERSION,
+        })
+        .mockResolvedValueOnce(null); // no future assignment projection
+      planChangeFindFirst.mockResolvedValue({
+        id: 'chg-paid-sched',
+        status: 'scheduled',
+        periodStart: new Date('2026-09-01T00:00:00.000Z'),
+        toPlanVersion: STARTER_VERSION,
+      });
+      planVersionFindMany.mockResolvedValue([FREE_VERSION, STARTER_VERSION, GROWTH_VERSION]);
+
+      const result = await service.getPlans('user-1');
+
+      expect(result.currentPlanId).toBe('growth');
+      expect(result.scheduledPlan).toEqual({
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-09',
+      });
+      expect(planChangeFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: ACCOUNT.id,
+            status: 'scheduled',
+            periodStart: { gt: new Date('2026-08-01T00:00:00.000Z') },
+          }),
+        }),
+      );
+    });
+
+    it('prefers an explicit scheduled paid change over a coexisting future renewal assignment', async () => {
+      // requestDowngradeOrLateral leaves renewal/upgrade_payment projections
+      // untouched while writing a scheduled BillingPlanChange for a paid
+      // target. Dashboard must surface the schedule (cancel-discoverable), not
+      // the residual renewal assignment plan.
+      const GROWTH_VERSION = {
+        ...STARTER_VERSION,
+        id: 'plan-growth-1',
+        code: 'growth',
+        name: 'Growth',
+        monthlyFeeMicros: 199_000_000n,
+      };
+      const nextStart = new Date('2026-09-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(GROWTH_VERSION);
+      assignmentFindFirst
+        .mockResolvedValueOnce({
+          id: 'assign-current',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: GROWTH_VERSION.id,
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          expiresAt: nextStart,
+          source: 'renewal',
+          planVersion: GROWTH_VERSION,
+        })
+        .mockResolvedValueOnce({
+          id: 'assign-future-renewal',
+          billingAccountId: ACCOUNT.id,
+          periodStart: nextStart,
+          planVersionId: GROWTH_VERSION.id,
+          expiresAt: new Date('2026-10-01T00:00:00.000Z'),
+          source: 'renewal',
+          planVersion: GROWTH_VERSION,
+        });
+      planChangeFindFirst.mockResolvedValue({
+        id: 'chg-paid-sched',
+        status: 'scheduled',
+        periodStart: nextStart,
+        toPlanVersion: STARTER_VERSION,
+      });
+      planVersionFindMany.mockResolvedValue([FREE_VERSION, STARTER_VERSION, GROWTH_VERSION]);
+
+      const result = await service.getPlans('user-1');
+
+      expect(result.currentPlanId).toBe('growth');
+      expect(result.scheduledPlan).toEqual({
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-09',
+      });
+    });
+
+    it('does not expose canceled plan changes as scheduledPlan', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(STARTER_VERSION);
+      assignmentFindFirst
+        .mockResolvedValueOnce({
+          id: 'assign-current',
+          billingAccountId: ACCOUNT.id,
+          planVersionId: STARTER_VERSION.id,
+          periodStart: new Date('2026-08-01T00:00:00.000Z'),
+          expiresAt: new Date('2026-09-01T00:00:00.000Z'),
+          source: 'renewal',
+          planVersion: STARTER_VERSION,
+        })
+        .mockResolvedValueOnce(null);
+      // Query filters status=scheduled; mock returns none (canceled rows excluded).
+      planChangeFindFirst.mockResolvedValue(null);
+      planVersionFindMany.mockResolvedValue([FREE_VERSION, STARTER_VERSION]);
+
+      const result = await service.getPlans('user-1');
+
+      expect(result.currentPlanId).toBe('starter');
+      expect(result.scheduledPlan).toBeUndefined();
     });
 
     it('reclassifies current-month legacy paid assignment (null expiresAt) to Free without P2002', async () => {
@@ -959,6 +1097,140 @@ describe('BillingService', () => {
 
       expect(result.outcome).toBe('payment_required');
       expect(requestPlanChange).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('cancelPendingUpgrade', () => {
+    it('locks the soft-read identity period and passes expected id/period without Stripe sync', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planChangeFindFirst.mockResolvedValue({
+        id: 'chg-up-1',
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+      });
+      cancelPendingUpgrade.mockResolvedValue({
+        outcome: 'canceled',
+        planCode: 'free',
+        planName: 'Free',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      });
+
+      const result = await service.cancelPendingUpgrade('user-1');
+
+      expect(cancelPendingUpgrade).toHaveBeenCalledWith(
+        expect.objectContaining({
+          billingAccountId: ACCOUNT.id,
+          expectedChangeId: 'chg-up-1',
+          expectedPeriodStart: new Date('2026-08-01T00:00:00.000Z'),
+        }),
+      );
+      expect(processAccountBestEffort).not.toHaveBeenCalled();
+      // No assignment writers on the upgrade-cancel path.
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(assignmentUpdate).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        planCode: 'free',
+        planName: 'Free',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        outcome: 'canceled',
+      });
+    });
+
+    it('is an idempotent no-op when nothing is pending and never writes assignments', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planChangeFindFirst.mockResolvedValue(null);
+      cancelPendingUpgrade.mockResolvedValue({
+        outcome: 'unchanged',
+        planCode: 'free',
+        planName: 'Free',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      });
+
+      const result = await service.cancelPendingUpgrade('user-1');
+
+      expect(cancelPendingUpgrade).toHaveBeenCalledWith(
+        expect.objectContaining({
+          expectedChangeId: null,
+          expectedPeriodStart: null,
+        }),
+      );
+      expect(result.outcome).toBe('unchanged');
+      expect(processAccountBestEffort).not.toHaveBeenCalled();
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(assignmentUpdate).not.toHaveBeenCalled();
+      expect(assignmentFindFirst).not.toHaveBeenCalled();
+      expect(assignmentFindMany).not.toHaveBeenCalled();
+      expect(assignmentFindUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelScheduledPlan', () => {
+    it('cancels via plan-change service under the period lock and strips the internal sync flag', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: new Date('2026-09-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: STARTER_VERSION,
+      });
+      cancelScheduledPlanChange.mockResolvedValue({
+        outcome: 'canceled',
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        requiresPostCommitStripeSync: true,
+      });
+      processAccountBestEffort.mockResolvedValue(undefined);
+
+      const result = await service.cancelScheduledPlan('user-1');
+
+      expect(cancelScheduledPlanChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          billingAccountId: ACCOUNT.id,
+          currentPlanVersion: STARTER_VERSION,
+        }),
+      );
+      expect(processAccountBestEffort).toHaveBeenCalledWith(ACCOUNT.id);
+      expect(result).toEqual({
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+        outcome: 'canceled',
+      });
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync');
+    });
+
+    it('is an idempotent no-op without post-commit sync when nothing is scheduled', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: new Date('2026-09-01T00:00:00.000Z'),
+        source: 'renewal',
+        planVersion: STARTER_VERSION,
+      });
+      cancelScheduledPlanChange.mockResolvedValue({
+        outcome: 'unchanged',
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      });
+
+      const result = await service.cancelScheduledPlan('user-1');
+
+      expect(result.outcome).toBe('unchanged');
+      expect(processAccountBestEffort).not.toHaveBeenCalled();
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync');
     });
   });
 

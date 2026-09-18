@@ -962,6 +962,45 @@ export async function assignBillingPlanAuth(
   });
 }
 
+/**
+ * POST /v1/billing/plan/cancel result. Cancels a pending scheduled plan change
+ * (typically a downgrade) for the next UTC month. Optional fields are present
+ * when the server still reports plan identity after cancel/no-op.
+ * - canceled: a scheduled change was removed
+ * - unchanged: nothing was scheduled (idempotent)
+ */
+export type CancelBillingPlanResponse = {
+  outcome: 'canceled' | 'unchanged';
+  effectivePeriod?: string;
+  planCode?: string;
+  planName?: string;
+};
+
+export async function cancelBillingPlanAuth(getToken: () => Promise<string | null>) {
+  return authFetch<CancelBillingPlanResponse>('/v1/billing/plan/cancel', getToken, {
+    method: 'POST',
+  });
+}
+
+/**
+ * POST /v1/billing/plan/upgrade/cancel result. Cancels a pending unpaid plan
+ * upgrade charge. Optional fields may identify the plan the user remains on.
+ * - canceled: pending upgrade was removed
+ * - unchanged: nothing was pending (idempotent)
+ */
+export type CancelBillingPlanUpgradeResponse = {
+  outcome: 'canceled' | 'unchanged';
+  effectivePeriod?: string;
+  planCode?: string;
+  planName?: string;
+};
+
+export async function cancelBillingPlanUpgradeAuth(getToken: () => Promise<string | null>) {
+  return authFetch<CancelBillingPlanUpgradeResponse>('/v1/billing/plan/upgrade/cancel', getToken, {
+    method: 'POST',
+  });
+}
+
 export async function getBillingSummaryAuth(
   getToken: () => Promise<string | null>,
   period: string,

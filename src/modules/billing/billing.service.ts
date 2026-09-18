@@ -147,6 +147,38 @@ export type AssignPlanResult =
       kind?: 'downgrade';
     };
 
+/**
+ * JSON-safe result of canceling a next-period scheduled plan change.
+ *
+ * - canceled: a scheduled downgrade/lateral was cleared
+ * - unchanged: idempotent no-op when no next-period schedule exists
+ *
+ * Never exposes internal Stripe sync flags.
+ */
+export type CancelScheduledPlanResult = {
+  planCode: string;
+  planName: string;
+  effectivePeriod: string;
+  effectiveFrom: string;
+  outcome: 'canceled' | 'unchanged';
+};
+
+/**
+ * JSON-safe result of canceling an unpaid pending_payment upgrade.
+ *
+ * - canceled: pending upgrade + voided plan_charge invoice
+ * - unchanged: idempotent no-op when no pending upgrade remains
+ *
+ * Never exposes internal flags or BigInt.
+ */
+export type CancelPendingUpgradeResult = {
+  planCode: string;
+  planName: string;
+  effectivePeriod: string;
+  effectiveFrom: string;
+  outcome: 'canceled' | 'unchanged';
+};
+
 export interface RecordApiCallInput {
   userId: string;
   /** Server-assigned unique idempotency key. Never trust a client X-Request-Id. */
@@ -349,6 +381,45 @@ export class BillingService {
       validatePlanVersion(futureAssignment.planVersion);
     }
 
+    // Authoritative next-period schedule intent lives on BillingPlanChange
+    // (status=scheduled). Paid downgrade/lateral rows intentionally omit an
+    // assignment projection, and a schedule can also coexist with a future
+    // renewal/upgrade_payment assignment for the same period — the explicit
+    // schedule always wins for dashboard `scheduledPlan` (same precedence as
+    // Stripe next-renewal resolution). Never expose canceled/pending_payment/
+    // applied rows here. When no schedule exists, fall back to a future
+    // assignment projection (e.g. Free downgrade_schedule).
+    const scheduledChange = await this.prisma.billingPlanChange.findFirst({
+      where: {
+        billingAccountId: account.id,
+        status: 'scheduled',
+        periodStart: { gt: currentMonthStart },
+      },
+      orderBy: [{ periodStart: 'asc' }, { createdAt: 'desc' }],
+      include: { toPlanVersion: true },
+    });
+    let scheduledPlan:
+      | {
+          planCode: string;
+          planName: string;
+          effectivePeriod: string;
+        }
+      | undefined;
+    if (scheduledChange?.toPlanVersion) {
+      validatePlanVersion(scheduledChange.toPlanVersion);
+      scheduledPlan = {
+        planCode: scheduledChange.toPlanVersion.code,
+        planName: scheduledChange.toPlanVersion.name,
+        effectivePeriod: formatUtcMonth(scheduledChange.periodStart),
+      };
+    } else if (futureAssignment?.planVersion) {
+      scheduledPlan = {
+        planCode: futureAssignment.planVersion.code,
+        planName: futureAssignment.planVersion.name,
+        effectivePeriod: formatUtcMonth(futureAssignment.periodStart),
+      };
+    }
+
     // The catalog listing is constrained to canonical plan codes: database
     // rows whose `code` is not an own key of the static PLANS whitelist (e.g.
     // stray claim-plan-<uuid>/test-plan-<uuid> rows left behind by interrupted
@@ -380,15 +451,7 @@ export class BillingService {
     return {
       currentPlanId: currentPlan.code,
       plans,
-      ...(futureAssignment?.planVersion
-        ? {
-            scheduledPlan: {
-              planCode: futureAssignment.planVersion.code,
-              planName: futureAssignment.planVersion.name,
-              effectivePeriod: formatUtcMonth(futureAssignment.periodStart),
-            },
-          }
-        : {}),
+      ...(scheduledPlan ? { scheduledPlan } : {}),
     };
   }
 
@@ -509,6 +572,109 @@ export class BillingService {
       outcome: 'scheduled',
       changeId: result.changeId,
       kind: 'downgrade',
+    };
+  }
+
+  /**
+   * Cancel a next-period scheduled plan downgrade/lateral for the current user.
+   *
+   * Same serializable current-period lock + serialization retry as assignPlan.
+   * No client-supplied plan/account/period. Idempotent no-op when nothing is
+   * scheduled. Post-commit Stripe sync runs only when a schedule was canceled.
+   * Never exposes internal `requiresPostCommitStripeSync` on the HTTP DTO.
+   */
+  async cancelScheduledPlan(userId: string): Promise<CancelScheduledPlanResult> {
+    if (!this.planChangeService) {
+      throw new ServiceUnavailableException('Plan change service is not configured');
+    }
+
+    const now = new Date();
+    const lockPeriodStart = this.monthStart(now);
+
+    const locked = await this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, lockPeriodStart, async (tx, billingAccountId) => {
+        await this.ensureDefaultAssignment(billingAccountId, tx);
+
+        const currentPlanVersion = await this.resolvePlanVersion(
+          billingAccountId,
+          lockPeriodStart,
+          tx,
+        );
+        validatePlanVersion(currentPlanVersion);
+
+        const result = await this.planChangeService!.cancelScheduledPlanChange({
+          billingAccountId,
+          currentPlanVersion,
+          now,
+          tx,
+        });
+
+        return { billingAccountId, result };
+      }),
+    );
+
+    // Post-commit best-effort Stripe mirror sync only when cancellation occurred.
+    if (locked.result.requiresPostCommitStripeSync === true) {
+      void this.subscriptionSync?.processAccountBestEffort(locked.billingAccountId);
+    }
+
+    // Strip internal sync flag — never expose on the HTTP DTO.
+    return {
+      planCode: locked.result.planCode,
+      planName: locked.result.planName,
+      effectivePeriod: locked.result.effectivePeriod,
+      effectiveFrom: locked.result.effectiveFrom,
+      outcome: locked.result.outcome,
+    };
+  }
+
+  /**
+   * Cancel an unpaid pending_payment plan upgrade for the current user.
+   *
+   * Soft-reads the exact pending upgrade id + periodStart, locks that period
+   * (never blindly "now"), and passes the expected identity into the locked
+   * cancel so a replacement pending row cannot be canceled under the old lock.
+   * No assignment writes. No Stripe sync. Idempotent when nothing is pending.
+   */
+  async cancelPendingUpgrade(userId: string): Promise<CancelPendingUpgradeResult> {
+    if (!this.planChangeService) {
+      throw new ServiceUnavailableException('Plan change service is not configured');
+    }
+
+    const now = new Date();
+    const account = await this.ensureAccount(userId);
+
+    // Soft-read exact identity for the period lock + locked verification.
+    const pendingSoft = await this.prisma.billingPlanChange.findFirst({
+      where: {
+        billingAccountId: account.id,
+        status: 'pending_payment',
+        kind: 'upgrade',
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, periodStart: true },
+    });
+    const lockPeriodStart = pendingSoft?.periodStart ?? this.monthStart(now);
+
+    const locked = await this.withRetryOnSerialization(() =>
+      this.withBillingPeriodLock(userId, lockPeriodStart, async (tx, billingAccountId) => {
+        // Read-only cancel path: never ensureDefaultAssignment / assignment writers.
+        return this.planChangeService!.cancelPendingUpgrade({
+          billingAccountId,
+          expectedChangeId: pendingSoft?.id ?? null,
+          expectedPeriodStart: pendingSoft?.periodStart ?? null,
+          now,
+          tx,
+        });
+      }),
+    );
+
+    return {
+      planCode: locked.planCode,
+      planName: locked.planName,
+      effectivePeriod: locked.effectivePeriod,
+      effectiveFrom: locked.effectiveFrom,
+      outcome: locked.outcome,
     };
   }
 

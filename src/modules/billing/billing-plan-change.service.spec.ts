@@ -53,14 +53,21 @@ describe('BillingPlanChangeService', () => {
   const assignmentDeleteMany = jest.fn();
   const invoiceFindFirst = jest.fn();
   const attemptFindUnique = jest.fn();
+  const attemptFindFirst = jest.fn();
+  const attemptFindMany = jest.fn();
+  const attemptUpdateMany = jest.fn();
+  const invoiceUpdateMany = jest.fn();
+  const queryRaw = jest.fn();
   const enqueueFromPlanChangeInTx = jest.fn();
 
   const tx = {
     $executeRaw: executeRaw,
+    $queryRaw: queryRaw,
     billingInvoice: {
       create: invoiceCreate,
       findUnique: invoiceFindUnique,
       findFirst: invoiceFindFirst,
+      updateMany: invoiceUpdateMany,
     },
     billingInvoiceLine: { create: invoiceLineCreate },
     billingPlanChange: {
@@ -78,6 +85,9 @@ describe('BillingPlanChangeService', () => {
     },
     billingPaymentAttempt: {
       findUnique: attemptFindUnique,
+      findFirst: attemptFindFirst,
+      findMany: attemptFindMany,
+      updateMany: attemptUpdateMany,
     },
   } as any;
 
@@ -106,6 +116,11 @@ describe('BillingPlanChangeService', () => {
     retargetPendingAutoIntentInTx.mockResolvedValue(null);
     assignmentDeleteMany.mockResolvedValue({ count: 0 });
     changeFindMany.mockResolvedValue([]); // default: no next-period schedules
+    queryRaw.mockResolvedValue([{ id: 'inv-charge-1' }]);
+    attemptFindFirst.mockResolvedValue(null);
+    attemptFindMany.mockResolvedValue([]);
+    attemptUpdateMany.mockResolvedValue({ count: 0 });
+    invoiceUpdateMany.mockResolvedValue({ count: 1 });
   });
 
   afterEach(() => {
@@ -500,6 +515,406 @@ describe('BillingPlanChangeService', () => {
           data: expect.objectContaining({ status: 'needs_review' }),
         }),
       );
+    });
+  });
+
+  describe('cancelPendingUpgrade', () => {
+    const periodStart = new Date('2026-08-01T00:00:00.000Z');
+    const chargeInvoice = {
+      id: 'inv-charge-1',
+      purpose: 'plan_charge',
+      status: 'finalized',
+      paidAt: null,
+      settlementAttemptId: null,
+      allocatedMicros: 0n,
+      periodStart,
+    };
+
+    const pendingChange = {
+      id: 'chg-up-1',
+      billingAccountId: 'acc-1',
+      status: 'pending_payment',
+      kind: 'upgrade',
+      chargeInvoiceId: 'inv-charge-1',
+      chargeInvoice,
+      periodStart,
+      effectiveAt: periodStart,
+      fromPlanVersion: FREE,
+      toPlanVersion: STARTER,
+    };
+
+    const cleanUsdcPending = {
+      id: 'att-usdc-1',
+      invoiceId: 'inv-charge-1',
+      method: 'usdc',
+      status: 'pending',
+      submittedTxHash: null,
+      txHash: null,
+      receiptEvidence: null,
+      blockNumber: null,
+      blockHash: null,
+      blockTimestamp: null,
+      actualBaseUnits: null,
+      logIndex: null,
+      payerAddress: null,
+      allocatedAt: null,
+      succeededAt: null,
+    };
+
+    const cancelArgs = {
+      billingAccountId: 'acc-1',
+      expectedChangeId: 'chg-up-1',
+      expectedPeriodStart: periodStart,
+      tx,
+    };
+
+    it('CAS-cancels the expected upgrade, voids unpaid plan_charge, and releases clean pending only', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([cleanUsdcPending]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('canceled');
+      expect(result.planCode).toBe('free');
+      expect(result.effectivePeriod).toBe('2026-08');
+      expect(changeFindUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'chg-up-1' } }),
+      );
+      expect(changeFindFirst).not.toHaveBeenCalled();
+      expect(queryRaw).toHaveBeenCalled();
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'chg-up-1', status: 'pending_payment' }),
+          data: expect.objectContaining({ status: 'canceled', canceledAt: expect.any(Date) }),
+        }),
+      );
+      expect(invoiceUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'inv-charge-1',
+            status: 'finalized',
+            paidAt: null,
+            settlementAttemptId: null,
+            allocatedMicros: 0n,
+          }),
+          data: { status: 'void' },
+        }),
+      );
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['att-usdc-1'] },
+            status: 'pending',
+            submittedTxHash: null,
+            txHash: null,
+          }),
+          data: expect.objectContaining({
+            status: 'failed',
+            failureCode: 'upgrade_canceled',
+          }),
+        }),
+      );
+      expect(enqueueFromPlanChangeInTx).not.toHaveBeenCalled();
+      expect(assignmentCreate).not.toHaveBeenCalled();
+      expect(assignmentUpdate).not.toHaveBeenCalled();
+      expect(assignmentDeleteMany).not.toHaveBeenCalled();
+      expect(assignmentFindUnique).not.toHaveBeenCalled();
+    });
+
+    it('is an idempotent no-op when no expected change id is supplied', async () => {
+      const result = await service.cancelPendingUpgrade({
+        billingAccountId: 'acc-1',
+        expectedChangeId: null,
+        expectedPeriodStart: null,
+        tx,
+      });
+
+      expect(result.outcome).toBe('unchanged');
+      expect(changeFindUnique).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('is an idempotent no-op when the expected change was already canceled', async () => {
+      changeFindUnique.mockResolvedValue({
+        ...pendingChange,
+        status: 'canceled',
+      });
+
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('unchanged');
+      expect(result.planCode).toBe('free');
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects when expected id exists but periodStart differs (replacement under old lock)', async () => {
+      changeFindUnique.mockResolvedValue({
+        ...pendingChange,
+        periodStart: new Date('2026-09-01T00:00:00.000Z'),
+      });
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on pending USDC attempt with submittedTxHash without writes', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          submittedTxHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on pending Stripe attempt without releasing it', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-1',
+          method: 'stripe',
+          status: 'pending',
+          stripeCheckoutSessionId: 'cs_test_1',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on pending Stripe attempt with missing session id (creation/recovery)', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-unc',
+          method: 'stripe',
+          status: 'pending',
+          stripeCheckoutSessionId: null,
+          failureCode: 'local_persistence_uncertain',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on Stripe needs_review with persisted checkout session (recovery exhausted)', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-review',
+          method: 'stripe',
+          status: 'needs_review',
+          stripeCheckoutSessionId: 'cs_test_exhausted',
+          reviewReason: 'checkout_recovery_exhausted',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on Stripe needs_review with missing/uncertain session evidence', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-review-unc',
+          method: 'stripe',
+          status: 'needs_review',
+          stripeCheckoutSessionId: null,
+          failureCode: 'local_persistence_uncertain',
+          reviewReason: 'checkout_recovery_exhausted',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on failed Stripe attempt even with a prior Checkout session (no remote inactivity proof)', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-failed',
+          method: 'stripe',
+          status: 'failed',
+          stripeCheckoutSessionId: 'cs_test_retryable',
+          failureCode: 'card_declined',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on expired or canceled Stripe attempt rows without writes', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-expired',
+          method: 'stripe',
+          status: 'expired',
+          stripeCheckoutSessionId: 'cs_test_expired',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('still cancels when there are no payment attempts at all', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('canceled');
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when a confirming or succeeded attempt exists', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        { ...cleanUsdcPending, id: 'att-1', status: 'confirming' },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the invoice already has paid markers or coverage', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([]);
+      invoiceFindUnique.mockResolvedValue({
+        ...chargeInvoice,
+        paidAt: new Date('2026-08-16T00:00:00.000Z'),
+      });
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('rolls back when the void CAS misses after change cancel', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 0 }); // void CAS miss
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('cancelScheduledPlanChange', () => {
+    it('cancels scheduled rows, cleans downgrade_schedule projection, and enqueues corrective sync', async () => {
+      const nextStart = new Date('2026-09-01T00:00:00.000Z');
+      changeFindFirst.mockResolvedValueOnce({ id: 'chg-sched' });
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      assignmentDeleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.cancelScheduledPlanChange({
+        billingAccountId: 'acc-1',
+        currentPlanVersion: STARTER as any,
+        tx,
+      });
+
+      expect(result.outcome).toBe('canceled');
+      expect(result.planCode).toBe('starter');
+      expect(result.effectivePeriod).toBe('2026-08');
+      expect(result.requiresPostCommitStripeSync).toBe(true);
+      expect(changeUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            periodStart: nextStart,
+            status: 'scheduled',
+          }),
+          data: expect.objectContaining({
+            status: 'canceled',
+            canceledAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(assignmentDeleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            billingAccountId: 'acc-1',
+            periodStart: nextStart,
+            source: 'downgrade_schedule',
+          }),
+        }),
+      );
+      expect(enqueueFromPlanChangeInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          sourcePlanChangeId: 'chg-sched',
+          defaultTargetPlanVersionId: STARTER.id,
+        }),
+      );
+      expect(retargetPendingAutoIntentInTx).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          targetPlanVersionId: STARTER.id,
+          sourcePlanChangeId: 'chg-sched',
+        }),
+      );
+    });
+
+    it('is an idempotent no-op when nothing is scheduled', async () => {
+      changeFindFirst.mockResolvedValueOnce(null);
+
+      const result = await service.cancelScheduledPlanChange({
+        billingAccountId: 'acc-1',
+        currentPlanVersion: STARTER as any,
+        tx,
+      });
+
+      expect(result).toEqual({
+        outcome: 'unchanged',
+        planCode: 'starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      });
+      expect(result).not.toHaveProperty('requiresPostCommitStripeSync', true);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(assignmentDeleteMany).not.toHaveBeenCalled();
+      expect(enqueueFromPlanChangeInTx).not.toHaveBeenCalled();
+      expect(retargetPendingAutoIntentInTx).not.toHaveBeenCalled();
     });
   });
 

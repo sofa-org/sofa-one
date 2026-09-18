@@ -63,6 +63,32 @@ export class BillingController {
     return this.billingService.assignPlan(userId, body.planCode);
   }
 
+  /**
+   * POST /v1/billing/plan/cancel — cancel a next-period scheduled plan
+   * downgrade/lateral. Idempotent no-op when nothing is scheduled. Takes no
+   * client-supplied plan/account/period data. Not part of the public API-key
+   * spec.
+   */
+  @Post('plan/cancel')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async cancelScheduledPlan(@CurrentUser('id') userId: string) {
+    return this.billingService.cancelScheduledPlan(userId);
+  }
+
+  /**
+   * POST /v1/billing/plan/upgrade/cancel — cancel an unpaid pending_payment
+   * plan upgrade (voids the plan_charge invoice, releases pending attempts).
+   * Idempotent no-op when nothing is pending. Takes no client-supplied
+   * plan/account/period data. Not part of the public API-key spec.
+   */
+  @Post('plan/upgrade/cancel')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async cancelPendingUpgrade(@CurrentUser('id') userId: string) {
+    return this.billingService.cancelPendingUpgrade(userId);
+  }
+
   /** GET /v1/billing/summary?period=YYYY-MM — monthly usage estimate. */
   @Get('summary')
   @FrontendOnly()

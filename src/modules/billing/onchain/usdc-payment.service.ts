@@ -252,7 +252,10 @@ export class UsdcPaymentService {
             message: 'An active USDC payment already exists for this invoice on another chain',
           });
         }
-        return this.toQuoteResult(invoice, existing);
+        // Confirming transfers already left the chain — still re-check invoice
+        // under lock so a voided plan_charge is never surfaced as payable.
+        const freshConfirming = await this.revalidateInvoicePayableUnderLock(invoice);
+        return this.toQuoteResult(freshConfirming, existing);
       }
       // Release an expired pending attempt (or one with an incomplete quote
       // snapshot) before any chain-conflict check, so an expired attempt on one
@@ -283,7 +286,8 @@ export class UsdcPaymentService {
                 message: 'An active USDC payment already exists for this invoice on another chain',
               });
             }
-            return this.toQuoteResult(invoice, current);
+            const freshReuse = await this.revalidateInvoicePayableUnderLock(invoice);
+            return this.toQuoteResult(freshReuse, current);
           }
         }
       } else if (existing.chainId !== BigInt(chain)) {
@@ -292,36 +296,25 @@ export class UsdcPaymentService {
           message: 'An active USDC payment already exists for this invoice on another chain',
         });
       } else {
-        return this.toQuoteResult(invoice, existing);
+        const freshPending = await this.revalidateInvoicePayableUnderLock(invoice);
+        return this.toQuoteResult(freshPending, existing);
       }
     }
 
     try {
-      // After a fixed-fee renewal has already allocated coverage against the
-      // finalized invoice, a new USDC quote must only ask for the remaining
-      // balance — never the full total again. The full-invoice (single-rail)
-      // behavior is preserved unchanged when nothing was allocated yet.
-      const due = this.remainingDue(invoice);
-      const attempt = await this.prisma.billingPaymentAttempt.create({
-        data: {
-          invoiceId: invoice.id,
-          method: 'usdc',
-          status: 'pending',
-          amountMicros: due,
-          currency: invoice.currency,
-          chainId: BigInt(chain),
-          tokenAddress,
-          treasuryAddress,
-          tokenDecimals: USDC_DECIMALS,
-          expectedBaseUnits: due,
-          quoteExpiresAt,
-          priceSource: 'usdc_6decimals',
-          expectedPayerAddress,
-          requiredConfirmations,
-          providerIdentity: this.providerIdentity(chain),
-        },
+      // Create the attempt under the period + invoice row lock so a concurrent
+      // upgrade cancel (void) cannot slip a new pending attempt onto a voided
+      // plan_charge. remainingDue is computed from the locked fresh invoice.
+      const { invoice: freshInvoice, attempt } = await this.createUsdcAttemptUnderLock({
+        invoice,
+        chain,
+        tokenAddress,
+        treasuryAddress,
+        expectedPayerAddress,
+        requiredConfirmations,
+        quoteExpiresAt,
       });
-      return this.toQuoteResult(invoice, attempt);
+      return this.toQuoteResult(freshInvoice, attempt);
     } catch (err) {
       if (!isUniqueConstraintError(err)) throw err;
       // A concurrent quote won the insert race. Reuse its active attempt only
@@ -337,7 +330,8 @@ export class UsdcPaymentService {
           winner.status === 'confirming' ||
           (winner.quoteExpiresAt !== null && winner.quoteExpiresAt.getTime() > Date.now());
         if (winnerActive) {
-          return this.toQuoteResult(invoice, winner);
+          const freshWinner = await this.revalidateInvoicePayableUnderLock(invoice);
+          return this.toQuoteResult(freshWinner, winner);
         }
       }
       throw new ConflictException({
@@ -1024,10 +1018,15 @@ export class UsdcPaymentService {
   ): Promise<{ matched: boolean; current: PaymentAttemptRow | null }> {
     let result: { count: number };
     try {
+      // Status must still be active: upgrade cancel marks pending → failed under
+      // attempt row locks, so a post-cancel hash attach must match zero rows and
+      // never paint evidence onto a failed/canceled attempt.
       result = await this.prisma.billingPaymentAttempt.updateMany({
         where: {
           id: attemptId,
           status: { in: [...ACTIVE_CLAIM_STATES] },
+          // First writer wins on a null hash; same-hash replay is allowed while
+          // still active. A failed/voided attempt never matches.
           OR: [{ submittedTxHash: null }, { submittedTxHash: txHash }],
         },
         data: {
@@ -1513,6 +1512,107 @@ export class UsdcPaymentService {
     if (invoice.totalMicros <= 0n) {
       throw new BadRequestException('Invoice amount must be positive');
     }
+  }
+
+  /**
+   * Period advisory + invoice FOR UPDATE, then re-check eligibility (and
+   * plan_charge payability). Closes the race where upgrade cancel voids the
+   * invoice between the soft quote preflight and attempt reuse/create.
+   */
+  private async revalidateInvoicePayableUnderLock(invoice: InvoiceRow): Promise<InvoiceRow> {
+    return this.prisma.$transaction(async (tx) => {
+      await acquireBillingPeriodAdvisoryLock(tx, invoice.billingAccountId, invoice.periodStart);
+      const locked = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "billing_invoices" WHERE "id" = ${invoice.id} FOR UPDATE`;
+      if (locked.length === 0) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is no longer payable',
+        });
+      }
+      const fresh = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
+      if (!fresh) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is no longer payable',
+        });
+      }
+      this.assertInvoiceEligible(fresh);
+      if (this.planChanges && fresh.purpose === 'plan_charge') {
+        await this.planChanges.assertPlanChargePayable(tx, fresh.id);
+      }
+      return fresh;
+    });
+  }
+
+  /**
+   * Creates a pending USDC attempt only after locking the invoice and proving
+   * it is still finalized/payable. remainingDue is computed from the locked row.
+   */
+  private async createUsdcAttemptUnderLock(args: {
+    invoice: InvoiceRow;
+    chain: number;
+    tokenAddress: string;
+    treasuryAddress: string;
+    expectedPayerAddress: string;
+    requiredConfirmations: number;
+    quoteExpiresAt: Date;
+  }): Promise<{ invoice: InvoiceRow; attempt: PaymentAttemptRow }> {
+    const {
+      invoice,
+      chain,
+      tokenAddress,
+      treasuryAddress,
+      expectedPayerAddress,
+      requiredConfirmations,
+      quoteExpiresAt,
+    } = args;
+    return this.prisma.$transaction(async (tx) => {
+      await acquireBillingPeriodAdvisoryLock(tx, invoice.billingAccountId, invoice.periodStart);
+      const locked = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "billing_invoices" WHERE "id" = ${invoice.id} FOR UPDATE`;
+      if (locked.length === 0) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is no longer payable',
+        });
+      }
+      const fresh = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
+      if (!fresh) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_INVOICE_NOT_PAYABLE,
+          message: 'Invoice is no longer payable',
+        });
+      }
+      this.assertInvoiceEligible(fresh);
+      if (this.planChanges && fresh.purpose === 'plan_charge') {
+        await this.planChanges.assertPlanChargePayable(tx, fresh.id);
+      }
+      // After a fixed-fee renewal has already allocated coverage against the
+      // finalized invoice, a new USDC quote must only ask for the remaining
+      // balance — never the full total again.
+      const due = this.remainingDue(fresh);
+      const attempt = await tx.billingPaymentAttempt.create({
+        data: {
+          invoiceId: fresh.id,
+          method: 'usdc',
+          status: 'pending',
+          amountMicros: due,
+          currency: fresh.currency,
+          chainId: BigInt(chain),
+          tokenAddress,
+          treasuryAddress,
+          tokenDecimals: USDC_DECIMALS,
+          expectedBaseUnits: due,
+          quoteExpiresAt,
+          priceSource: 'usdc_6decimals',
+          expectedPayerAddress,
+          requiredConfirmations,
+          providerIdentity: this.providerIdentity(chain),
+        },
+      });
+      return { invoice: fresh, attempt };
+    });
   }
 
   /**

@@ -32,6 +32,8 @@ describe('BillingController', () => {
     listInvoices: jest.fn(),
     getInvoice: jest.fn(),
     assignPlan: jest.fn(),
+    cancelScheduledPlan: jest.fn(),
+    cancelPendingUpgrade: jest.fn(),
   };
   const reconciliationService = {
     reconcile: jest.fn(),
@@ -133,6 +135,48 @@ describe('BillingController', () => {
     });
   });
 
+  it('delegates cancelScheduledPlan to the service with the current user id only', async () => {
+    billingService.cancelScheduledPlan.mockResolvedValue({
+      planCode: 'starter',
+      planName: 'Starter',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'canceled',
+    });
+
+    const result = await controller.cancelScheduledPlan('user-1');
+
+    expect(billingService.cancelScheduledPlan).toHaveBeenCalledWith('user-1');
+    expect(result).toEqual({
+      planCode: 'starter',
+      planName: 'Starter',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'canceled',
+    });
+  });
+
+  it('delegates cancelPendingUpgrade to the service with the current user id only', async () => {
+    billingService.cancelPendingUpgrade.mockResolvedValue({
+      planCode: 'free',
+      planName: 'Free',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'canceled',
+    });
+
+    const result = await controller.cancelPendingUpgrade('user-1');
+
+    expect(billingService.cancelPendingUpgrade).toHaveBeenCalledWith('user-1');
+    expect(result).toEqual({
+      planCode: 'free',
+      planName: 'Free',
+      effectivePeriod: '2026-08',
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      outcome: 'canceled',
+    });
+  });
+
   it('delegates checkoutInvoice to the Stripe payment service scoped to the current user', async () => {
     stripePaymentService.createCheckoutSession.mockResolvedValue({
       invoiceId: 'inv-1',
@@ -203,6 +247,8 @@ describe('BillingController', () => {
       controller.downloadInvoicePdf,
       controller.reconcile,
       controller.assignPlan,
+      controller.cancelScheduledPlan,
+      controller.cancelPendingUpgrade,
       controller.checkoutInvoice,
     ];
 

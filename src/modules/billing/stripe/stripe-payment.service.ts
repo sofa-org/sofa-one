@@ -1670,6 +1670,12 @@ export class StripePaymentService {
       if (locked.length === 0) throw new ConflictException('Invoice is no longer payable');
       const fresh = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
       if (!fresh) throw new ConflictException('Invoice is no longer payable');
+      // Re-validate finalized/payable under the invoice lock so a concurrent
+      // upgrade cancel (void) cannot slip between the soft preflight and reuse.
+      this.assertCheckoutEligible(fresh);
+      if (this.planChanges && fresh.purpose === 'plan_charge') {
+        await this.planChanges.assertPlanChargePayable(tx, fresh.id);
+      }
       await this.assertFullCheckoutNoCoverage(fresh, tx);
     });
   }
@@ -1691,6 +1697,12 @@ export class StripePaymentService {
       if (locked.length === 0) throw new ConflictException('Invoice is no longer payable');
       const fresh = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
       if (!fresh) throw new ConflictException('Invoice is no longer payable');
+      // Re-validate under lock: voided plan_charge (upgrade cancel) must not
+      // receive a new Checkout attempt.
+      this.assertCheckoutEligible(fresh);
+      if (this.planChanges && fresh.purpose === 'plan_charge') {
+        await this.planChanges.assertPlanChargePayable(tx, fresh.id);
+      }
       await this.assertFullCheckoutNoCoverage(fresh, tx);
       return this.createPendingAttemptOrReuseInFlight(
         fresh,

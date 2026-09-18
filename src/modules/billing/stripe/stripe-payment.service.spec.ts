@@ -379,6 +379,19 @@ describe('StripePaymentService', () => {
       );
     });
 
+    it('rejects a voided invoice under the locked revalidation path', async () => {
+      // Soft preflight sees finalized; lock re-read observes upgrade-cancel void.
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst
+        .mockResolvedValueOnce(invoice()) // ownership preflight
+        .mockResolvedValue(invoice({ status: 'void' })); // locked fresh reads
+
+      await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
+        ConflictException,
+      );
+      expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+
     it('rejects already-paid invoices', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice({ paidAt: new Date('2026-06-02T00:00:00.000Z') }));

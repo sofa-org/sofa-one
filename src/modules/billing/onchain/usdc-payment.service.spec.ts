@@ -216,7 +216,12 @@ describe('UsdcPaymentService', () => {
   const tx = {
     $queryRaw: txQueryRaw,
     $executeRaw: txExecuteRaw,
-    billingPaymentAttempt: { update: txAttemptUpdate, findUnique: txAttemptFindUnique },
+    billingPaymentAttempt: {
+      update: txAttemptUpdate,
+      findUnique: txAttemptFindUnique,
+      // Quote create path inserts under the invoice lock via the TX client.
+      create: attemptCreate,
+    },
     billingInvoice: { findUnique: txInvoiceFindUnique },
   };
 
@@ -297,6 +302,23 @@ describe('UsdcPaymentService', () => {
       invoiceFindFirst.mockResolvedValue(invoice({ status: 'open' }));
 
       await expect(service.quote('user-1', 'inv-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('rejects a voided invoice under the locked attempt-create path', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice()); // soft preflight finalized
+      attemptFindFirst.mockResolvedValue(null);
+      walletFindUnique.mockResolvedValue({
+        userId: 'user-1',
+        walletAddress: PAYER,
+        status: 'active',
+        frozenAt: null,
+      });
+      // Locked fresh read sees upgrade-cancel void.
+      txInvoiceFindUnique.mockResolvedValue(invoice({ status: 'void' }));
+
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
+      expect(attemptCreate).not.toHaveBeenCalled();
     });
 
     it('rejects already-paid invoices', async () => {
@@ -499,9 +521,10 @@ describe('UsdcPaymentService', () => {
     });
 
     it('quotes only the remaining balance once a fixed fee was allocated', async () => {
-      invoiceFindFirst.mockResolvedValue(
-        invoice({ totalMicros: 109_000_000n, allocatedMicros: 49_000_000n }),
-      );
+      const partial = invoice({ totalMicros: 109_000_000n, allocatedMicros: 49_000_000n });
+      invoiceFindFirst.mockResolvedValue(partial);
+      // Locked re-read must observe the same coverage (attempt create under lock).
+      txInvoiceFindUnique.mockResolvedValue(partial);
       attemptCreate.mockResolvedValue(
         usdcAttempt({ amountMicros: 60_000_000n, expectedBaseUnits: 60_000_000n }),
       );
@@ -521,6 +544,7 @@ describe('UsdcPaymentService', () => {
 
     it('keeps the full single-rail quote unchanged when nothing was allocated', async () => {
       invoiceFindFirst.mockResolvedValue(invoice());
+      txInvoiceFindUnique.mockResolvedValue(invoice());
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
@@ -534,9 +558,9 @@ describe('UsdcPaymentService', () => {
     });
 
     it('rejects a quote when the invoice is already fully covered', async () => {
-      invoiceFindFirst.mockResolvedValue(
-        invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n }),
-      );
+      const covered = invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n });
+      invoiceFindFirst.mockResolvedValue(covered);
+      txInvoiceFindUnique.mockResolvedValue(covered);
 
       await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
       expect(attemptCreate).not.toHaveBeenCalled();
@@ -2550,9 +2574,9 @@ describe('UsdcPaymentService', () => {
     });
 
     it('maps a fully covered invoice quote to USDC_INVOICE_NOT_PAYABLE', async () => {
-      invoiceFindFirst.mockResolvedValue(
-        invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n }),
-      );
+      const covered = invoice({ totalMicros: 49_000_000n, allocatedMicros: 49_000_000n });
+      invoiceFindFirst.mockResolvedValue(covered);
+      txInvoiceFindUnique.mockResolvedValue(covered);
 
       const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
 

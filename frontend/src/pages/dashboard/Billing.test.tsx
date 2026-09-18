@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BillingPage from './Billing';
 import {
   assignBillingPlanAuth,
+  cancelBillingPlanAuth,
+  cancelBillingPlanUpgradeAuth,
   createBillingCheckoutSessionAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
@@ -44,6 +46,8 @@ vi.mock('@/lib/api', async (importOriginal) => {
     createBillingCheckoutSessionAuth: vi.fn(),
     getBillingInvoicePdfAuth: vi.fn(),
     assignBillingPlanAuth: vi.fn(),
+    cancelBillingPlanAuth: vi.fn(),
+    cancelBillingPlanUpgradeAuth: vi.fn(),
   };
 });
 
@@ -143,6 +147,18 @@ beforeEach(() => {
     outcome: 'scheduled',
     changeId: 'chg_down_1',
     kind: 'downgrade',
+  });
+  vi.mocked(cancelBillingPlanAuth).mockResolvedValue({
+    outcome: 'canceled',
+    planCode: 'plan_pro',
+    planName: 'Pro',
+    effectivePeriod: '2026-08',
+  });
+  vi.mocked(cancelBillingPlanUpgradeAuth).mockResolvedValue({
+    outcome: 'canceled',
+    planCode: 'plan_starter',
+    planName: 'Starter',
+    effectivePeriod: '2026-08',
   });
 });
 
@@ -1114,6 +1130,278 @@ describe('Billing — plan change', () => {
 
     expect(await screen.findByText('Plan is not available.')).toBeInTheDocument();
     expect(screen.getByText('Could not change plan')).toBeInTheDocument();
+  });
+
+  it('renders cancel control for a paid scheduled downgrade and cancels after confirm', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    // Initial load has a paid-plan schedule; later refreshes clear it.
+    vi.mocked(getBillingPlansAuth)
+      .mockResolvedValueOnce({
+        currentPlanId: 'plan_pro',
+        scheduledPlan: {
+          planCode: 'plan_starter',
+          planName: 'Starter',
+          effectivePeriod: '2026-09',
+        },
+        plans: makePlans().plans,
+      })
+      .mockResolvedValue({
+        currentPlanId: 'plan_pro',
+        plans: makePlans().plans,
+      });
+    vi.mocked(cancelBillingPlanAuth).mockResolvedValue({
+      outcome: 'canceled',
+      planCode: 'plan_pro',
+      planName: 'Pro',
+      effectivePeriod: '2026-08',
+    });
+
+    renderBilling();
+
+    const cancelBtn = await screen.findByRole('button', {
+      name: 'Cancel scheduled change to Starter',
+    });
+    expect(screen.getByText('Scheduled downgrade')).toBeInTheDocument();
+    expect(screen.getByText(/Starter begins/i)).toBeInTheDocument();
+    // Scheduled target stays non-actionable — cancel is only on the status card.
+    expect(screen.getByRole('button', { name: 'Already scheduled' })).toBeDisabled();
+
+    fireEvent.click(cancelBtn);
+
+    expect(confirmSpy).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(cancelBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function)),
+    );
+    expect(screen.getByText('Scheduled change canceled')).toBeInTheDocument();
+    expect(screen.getByText(/You will stay on Pro/i)).toBeInTheDocument();
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('does not call cancel when the user dismisses the confirmation', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      currentPlanId: 'plan_pro',
+      scheduledPlan: {
+        planCode: 'plan_starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-09',
+      },
+      plans: makePlans().plans,
+    });
+
+    renderBilling();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cancel scheduled change to Starter' }),
+    );
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(cancelBillingPlanAuth).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
+  it('shows the backend error when canceling a scheduled change fails', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      currentPlanId: 'plan_pro',
+      scheduledPlan: {
+        planCode: 'plan_starter',
+        planName: 'Starter',
+        effectivePeriod: '2026-09',
+      },
+      plans: makePlans().plans,
+    });
+    vi.mocked(cancelBillingPlanAuth).mockRejectedValue(
+      new Error('Could not cancel scheduled plan change.'),
+    );
+
+    renderBilling();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cancel scheduled change to Starter' }),
+    );
+
+    expect(await screen.findByText('Could not cancel scheduled plan change.')).toBeInTheDocument();
+    expect(screen.getByText('Could not cancel scheduled change')).toBeInTheDocument();
+    confirmSpy.mockRestore();
+  });
+
+  it('cancels a pending upgrade after confirm and clears session state', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+    vi.mocked(cancelBillingPlanUpgradeAuth).mockResolvedValue({
+      outcome: 'canceled',
+      planCode: 'plan_starter',
+      planName: 'Starter',
+      effectivePeriod: '2026-08',
+    });
+
+    renderBilling();
+
+    await screen.findByText(/Pay to upgrade to Pro/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Pay with USDC' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_upgrade');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Cancel pending upgrade to Pro' }),
+    );
+
+    expect(confirmSpy).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(cancelBillingPlanUpgradeAuth).toHaveBeenCalledWith(expect.any(Function)),
+    );
+    expect(screen.getByText('Upgrade canceled')).toBeInTheDocument();
+    expect(screen.getByText(/You will stay on Starter/i)).toBeInTheDocument();
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByText(/Pay to upgrade to Pro/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('usdc-panel')).not.toBeInTheDocument();
+    // Scheduled-downgrade cancel control must not appear for upgrade-only state.
+    expect(screen.queryByText('Scheduled downgrade')).not.toBeInTheDocument();
+    expect(cancelBillingPlanAuth).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('does not cancel a pending upgrade when confirmation is dismissed', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+
+    renderBilling();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cancel pending upgrade to Pro' }),
+    );
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(cancelBillingPlanUpgradeAuth).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeTruthy();
+    expect(screen.getByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('shows a distinct no-op notice when upgrade cancel returns unchanged', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+    vi.mocked(cancelBillingPlanUpgradeAuth).mockResolvedValue({
+      outcome: 'unchanged',
+    });
+
+    renderBilling();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cancel pending upgrade to Pro' }),
+    );
+
+    expect(await screen.findByText('No pending upgrade')).toBeInTheDocument();
+    expect(screen.getByText(/There was no pending upgrade to cancel/i)).toBeInTheDocument();
+    // Unchanged does not clear local pending upgrade UI/session.
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeTruthy();
+    expect(screen.getByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('keeps pending upgrade state and shows the backend error when cancel fails', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_upgrade',
+        status: 'finalized',
+        amount: '12.50',
+        currency: 'USD',
+      }),
+    ];
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    sessionStorage.setItem(
+      PENDING_PLAN_UPGRADE_STORAGE_KEY,
+      JSON.stringify({
+        invoiceId: 'inv_upgrade',
+        planCode: 'plan_pro',
+        planName: 'Pro',
+        amount: '12.50',
+        currency: 'USD',
+        effectivePeriod: '2026-08',
+        effectiveFrom: '2026-08-01T00:00:00.000Z',
+      }),
+    );
+    vi.mocked(cancelBillingPlanUpgradeAuth).mockRejectedValue(
+      new Error('Could not cancel pending upgrade.'),
+    );
+
+    renderBilling();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cancel pending upgrade to Pro' }),
+    );
+
+    expect(await screen.findByText('Could not cancel pending upgrade.')).toBeInTheDocument();
+    expect(screen.getByText('Could not cancel upgrade')).toBeInTheDocument();
+    expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeTruthy();
+    expect(screen.getByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
   });
 
   it('shows Card/USDC only on a pending upgrade charge invoice — never Subscribe', async () => {

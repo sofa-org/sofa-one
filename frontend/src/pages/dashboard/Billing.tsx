@@ -21,6 +21,8 @@ import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
   assignBillingPlanAuth,
+  cancelBillingPlanAuth,
+  cancelBillingPlanUpgradeAuth,
   createBillingCheckoutSessionAuth,
   getApiErrorMessage,
   getBillingInvoicePdfAuth,
@@ -1133,6 +1135,116 @@ export default function BillingPage() {
     ],
   );
 
+  const handleCancelScheduledPlan = useCallback(async () => {
+    const scheduled = plans?.scheduledPlan;
+    if (!scheduled || planChangeLoading) return;
+
+    const confirmed = window.confirm(
+      `Cancel the scheduled change to ${scheduled.planName}? You will stay on your current plan.`,
+    );
+    if (!confirmed) return;
+
+    setPlanChangeLoading(true);
+    setPlanChangeNotice(null);
+    try {
+      const result = await cancelBillingPlanAuth(getToken);
+
+      if (result.outcome === 'unchanged') {
+        setPlanChangeNotice({
+          type: 'info',
+          title: 'No scheduled change',
+          message: 'There was no scheduled plan change to cancel.',
+        });
+        refreshBillingAfterPlanEvent();
+        return;
+      }
+
+      const keptName =
+        result.planName ??
+        plans?.plans.find((p) => p.id === plans.currentPlanId)?.name ??
+        'your current plan';
+      setPlanChangeSelectedId(plans?.currentPlanId ?? null);
+      setPlanChangeNotice({
+        type: 'success',
+        title: 'Scheduled change canceled',
+        message: `You will stay on ${keptName}. You can choose a different plan anytime.`,
+      });
+      refreshBillingAfterPlanEvent();
+    } catch (err: unknown) {
+      setPlanChangeNotice({
+        type: 'error',
+        title: 'Could not cancel scheduled change',
+        message:
+          getApiErrorMessage(err) || 'Could not cancel the scheduled change. Please try again.',
+      });
+    } finally {
+      setPlanChangeLoading(false);
+    }
+  }, [
+    getToken,
+    plans?.scheduledPlan,
+    plans?.currentPlanId,
+    plans?.plans,
+    planChangeLoading,
+    refreshBillingAfterPlanEvent,
+  ]);
+
+  const handleCancelPendingUpgrade = useCallback(async () => {
+    if (!pendingUpgrade || pendingUpgradePaid || planChangeLoading) return;
+
+    const confirmed = window.confirm(
+      `Cancel the pending upgrade to ${pendingUpgrade.planName}? You will stay on your current plan and will not be charged.`,
+    );
+    if (!confirmed) return;
+
+    setPlanChangeLoading(true);
+    setPlanChangeNotice(null);
+    try {
+      const result = await cancelBillingPlanUpgradeAuth(getToken);
+
+      if (result.outcome === 'unchanged') {
+        setPlanChangeNotice({
+          type: 'info',
+          title: 'No pending upgrade',
+          message: 'There was no pending upgrade to cancel.',
+        });
+        refreshBillingAfterPlanEvent();
+        return;
+      }
+
+      const keptName =
+        result.planName ??
+        plans?.plans.find((p) => p.id === plans.currentPlanId)?.name ??
+        'your current plan';
+      setPendingUpgradeState(null);
+      setUpgradeUsdcOpen(false);
+      setPlanChangeSelectedId(plans?.currentPlanId ?? null);
+      setPlanChangeNotice({
+        type: 'success',
+        title: 'Upgrade canceled',
+        message: `You will stay on ${keptName}. No upgrade charge is due.`,
+      });
+      refreshBillingAfterPlanEvent();
+    } catch (err: unknown) {
+      setPlanChangeNotice({
+        type: 'error',
+        title: 'Could not cancel upgrade',
+        message: getApiErrorMessage(err) || 'Could not cancel the pending upgrade. Please try again.',
+      });
+    } finally {
+      setPlanChangeLoading(false);
+    }
+  }, [
+    getToken,
+    pendingUpgrade,
+    pendingUpgradePaid,
+    plans?.currentPlanId,
+    plans?.plans,
+    planChangeLoading,
+    setPendingUpgradeState,
+    refreshBillingAfterPlanEvent,
+  ]);
+
   const handlePayUpgradeInvoice = useCallback(async () => {
     if (!pendingUpgrade) return;
     const invoice =
@@ -1360,16 +1472,32 @@ export default function BillingPage() {
                 role="status"
                 className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"
               >
-                <div className="flex items-start gap-2">
-                  <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
-                  <div>
-                    <p className="font-semibold">Scheduled downgrade</p>
-                    <p className="mt-0.5 text-blue-700">
-                      {plans.scheduledPlan.planName} begins{' '}
-                      {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}. Your current access
-                      stays until then.
-                    </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+                    <div>
+                      <p className="font-semibold">Scheduled downgrade</p>
+                      <p className="mt-0.5 text-blue-700">
+                        {plans.scheduledPlan.planName} begins{' '}
+                        {formatPeriodLabel(plans.scheduledPlan.effectivePeriod)}. Your current access
+                        stays until then.
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelScheduledPlan()}
+                    disabled={planChangeLoading}
+                    aria-label={`Cancel scheduled change to ${plans.scheduledPlan.planName}`}
+                    className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-full border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-800 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+                  >
+                    {planChangeLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {planChangeLoading ? 'Canceling…' : 'Cancel scheduled change'}
+                  </button>
                 </div>
               </div>
             )}
@@ -1409,6 +1537,7 @@ export default function BillingPage() {
                         type="button"
                         onClick={() => void handlePayUpgradeInvoice()}
                         disabled={
+                          planChangeLoading ||
                           checkoutLoadingId === pendingUpgrade.invoiceId ||
                           (pendingUpgradeInvoice !== null &&
                             !isInvoicePayableByCard(pendingUpgradeInvoice))
@@ -1428,8 +1557,9 @@ export default function BillingPage() {
                         type="button"
                         onClick={() => setUpgradeUsdcOpen((open) => !open)}
                         disabled={
-                          pendingUpgradeInvoice !== null &&
-                          !isInvoicePayableByUsdc(pendingUpgradeInvoice)
+                          planChangeLoading ||
+                          (pendingUpgradeInvoice !== null &&
+                            !isInvoicePayableByUsdc(pendingUpgradeInvoice))
                         }
                         aria-expanded={upgradeUsdcOpen}
                         className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -1440,6 +1570,20 @@ export default function BillingPage() {
                       >
                         <Coins className="h-3.5 w-3.5" aria-hidden="true" />
                         {upgradeUsdcOpen ? 'Close USDC' : 'Pay with USDC'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleCancelPendingUpgrade()}
+                        disabled={planChangeLoading}
+                        aria-label={`Cancel pending upgrade to ${pendingUpgrade.planName}`}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-950 shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {planChangeLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {planChangeLoading ? 'Canceling…' : 'Cancel upgrade'}
                       </button>
                     </div>
                   )}
