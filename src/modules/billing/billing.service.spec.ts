@@ -2694,6 +2694,97 @@ describe('BillingService', () => {
       expect(assignmentCreate).toHaveBeenCalledTimes(1);
       expect(result.planId).toBe('free');
     });
+
+    it('current-month summary uses paid entitlement allowances while pricing stays Free-anchored', async () => {
+      // Fake clock is 2026-08-25 → current UTC month 2026-08. After a mid-month
+      // paid upgrade the usage_period invoice still anchors pricing to Free, but
+      // dashboard free-allowance fields must reflect the live Starter entitlement.
+      const periodStart = new Date('2026-08-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+      // Existing Free usage_period invoice for the current month (pricing anchor).
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-aug',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: FREE_VERSION.id,
+        status: 'open',
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === STARTER_VERSION.id) return STARTER_VERSION;
+        if (where?.id === FREE_VERSION.id) return FREE_VERSION;
+        return null;
+      });
+      usageEventFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-08');
+
+      // Pricing identity + estimates remain Free-anchored (no reprice).
+      expect(result.period).toBe('2026-08');
+      expect(result.planId).toBe('free');
+      expect(result.planName).toBe('Free');
+      expect(result.estimatedBaseCost).toBe('0');
+      expect(result.estimatedOverageCost).toBe('0');
+      expect(result.estimatedTotal).toBe('0');
+      // Allowances follow the current valid paid entitlement.
+      expect(result.outboundFreeAllowance).toBe('250000');
+      expect(result.apiCallsFreeAllowance).toBe('100000');
+      expect(result.activeWalletsFreeAllowance).toBe('100');
+    });
+
+    it('historical-period summary keeps allowances on the period pricing plan', async () => {
+      // May 2026 is not the current UTC month (clock = 2026-08). Even with a
+      // current paid entitlement, historical allowances must stay Free-priced.
+      const historicalStart = new Date('2026-05-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart: historicalStart,
+        planVersionId: FREE_VERSION.id,
+        status: 'finalized',
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === FREE_VERSION.id) return FREE_VERSION;
+        if (where?.id === STARTER_VERSION.id) return STARTER_VERSION;
+        return null;
+      });
+      usageEventFindMany.mockResolvedValue([]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      expect(result.period).toBe('2026-05');
+      expect(result.planId).toBe('free');
+      expect(result.planName).toBe('Free');
+      expect(result.estimatedBaseCost).toBe('0');
+      // Historical allowances stay on the Free pricing plan, not live Starter.
+      expect(result.outboundFreeAllowance).toBe('50000');
+      expect(result.apiCallsFreeAllowance).toBe('10000');
+      expect(result.activeWalletsFreeAllowance).toBe('10');
+    });
   });
 
   describe('listInvoices', () => {

@@ -655,6 +655,27 @@ describe('Billing — open invoice UX', () => {
   });
 });
 
+describe('Billing — estimated cost overage note', () => {
+  it('renders the formatted outbound free allowance and never shows outbound_volume', async () => {
+    vi.mocked(getBillingSummaryAuth).mockResolvedValue({
+      ...makeSummary(),
+      outboundFreeAllowance: '250000',
+      overageRate: '0.0100%',
+      overageUnit: 'outbound_volume',
+      currency: 'USD',
+    });
+
+    renderBilling();
+
+    const note = await screen.findByText(/Overage rate:/i);
+    expect(note).toHaveTextContent(
+      'Overage rate: 0.0100% per 250000 outbound volume beyond the free allowance.',
+    );
+    expect(note).not.toHaveTextContent('USD');
+    expect(note).not.toHaveTextContent('outbound_volume');
+  });
+});
+
 describe('Billing — invoice payment actions and user-visible errors', () => {
   let locationStub: { href: string };
   beforeEach(() => {

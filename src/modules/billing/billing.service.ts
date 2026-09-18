@@ -1241,6 +1241,13 @@ export class BillingService {
    * pure calculator. Period defaults to the current UTC month. Ensures the
    * default account, plan catalog, and default Free assignment on first access.
    * All amounts are returned as decimal USD strings; counts as integer strings.
+   *
+   * Pricing (`planId`/`planName`, estimated base/overage/tiers) is always
+   * anchored to the usage-period pricing plan via `resolveUsagePlanVersion` so a
+   * mid-month paid upgrade never reprices an already-open period. Dashboard
+   * free-allowance fields for the *current* UTC month follow the live
+   * entitlement plan (`resolvePlanVersion`); historical periods keep allowances
+   * from the period pricing plan.
    */
   async getSummary(userId: string, period?: string): Promise<BillingSummaryDto> {
     const account = await this.ensureAccount(userId);
@@ -1249,10 +1256,23 @@ export class BillingService {
     const { period: periodStr, start } = parsePeriod(period);
 
     // Usage-period pricing anchor (not mid-month entitlement after upgrade).
-    const planVersion = await this.resolveUsagePlanVersion(account.id, start);
-    const plan = planVersionToConfig(planVersion);
+    const pricingPlanVersion = await this.resolveUsagePlanVersion(account.id, start);
+    const pricingPlan = planVersionToConfig(pricingPlanVersion);
     // Enterprise/custom null terms cannot be summarized as an executable plan.
-    this.assertPlanFinalizable(planVersion);
+    this.assertPlanFinalizable(pricingPlanVersion);
+
+    // Current-month quotas follow live entitlement; historical periods keep
+    // allowances tied to the immutable period pricing plan.
+    const currentMonthStart = this.monthStart(new Date());
+    let allowancePlanVersion = pricingPlanVersion;
+    let allowancePlan = pricingPlan;
+    if (start.getTime() === currentMonthStart.getTime()) {
+      allowancePlanVersion = await this.resolvePlanVersion(account.id, start);
+      if (allowancePlanVersion.id !== pricingPlanVersion.id) {
+        allowancePlan = planVersionToConfig(allowancePlanVersion);
+        this.assertPlanFinalizable(allowancePlanVersion);
+      }
+    }
 
     const [usageEvents, activeWallets] = await Promise.all([
       this.prisma.billingUsageEvent.findMany({
@@ -1291,25 +1311,25 @@ export class BillingService {
     }
 
     const totals = calculateInvoiceTotals({
-      plan,
+      plan: pricingPlan,
       grossOutboundMicros: outboundVolume,
       activeWallets,
       apiCallsTotal: toSafeCount(apiCalls),
-      apiOverageRateMicros: planVersion.apiOverageRateMicros,
-      walletOverageRateMicros: planVersion.walletOverageRateMicros,
+      apiOverageRateMicros: pricingPlanVersion.apiOverageRateMicros,
+      walletOverageRateMicros: pricingPlanVersion.walletOverageRateMicros,
     });
 
     return {
       period: periodStr,
-      planId: planVersion.code,
-      planName: planVersion.name,
+      planId: pricingPlanVersion.code,
+      planName: pricingPlanVersion.name,
       outboundVolume: microsToDecimalUsd(outboundVolume),
-      outboundFreeAllowance: microsToDecimalUsd(plan.includedOutboundMicros ?? 0n),
+      outboundFreeAllowance: microsToDecimalUsd(allowancePlan.includedOutboundMicros ?? 0n),
       outboundOverage: microsToDecimalUsd(totals.outboundOverageMicros),
       apiCalls: String(apiCalls),
-      apiCallsFreeAllowance: String(plan.includedApiCallsPerMonth ?? 0),
+      apiCallsFreeAllowance: String(allowancePlan.includedApiCallsPerMonth ?? 0),
       activeWallets: String(activeWallets),
-      activeWalletsFreeAllowance: String(plan.includedWallets ?? 0),
+      activeWalletsFreeAllowance: String(allowancePlan.includedWallets ?? 0),
       estimatedBaseCost: microsToDecimalUsd(totals.monthlyFeeMicros),
       estimatedOverageCost: microsToDecimalUsd(
         totals.outboundOverageMicros + totals.apiOverageMicros + totals.walletOverageMicros,

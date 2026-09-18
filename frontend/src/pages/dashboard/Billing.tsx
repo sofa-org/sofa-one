@@ -1763,8 +1763,9 @@ export default function BillingPage() {
 
             {summary.overageRate && summary.overageRate !== '0' && (
               <p className="text-xs text-brand-muted">
-                Overage rate: {formatAmount(summary.overageRate, summary.currency)} per
-                {summary.overageUnit || ' unit'} beyond the free allowance.
+                Overage rate: {formatAmount(summary.overageRate, summary.currency)} per{' '}
+                {formatAmount(summary.outboundFreeAllowance)} outbound volume beyond the free
+                allowance.
               </p>
             )}
           </div>
