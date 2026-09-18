@@ -7,7 +7,6 @@ import BillingPage from './Billing';
 import {
   assignBillingPlanAuth,
   createBillingCheckoutSessionAuth,
-  createBillingSubscriptionCheckoutSessionAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
   listBillingInvoicesAuth,
@@ -43,7 +42,6 @@ vi.mock('@/lib/api', async (importOriginal) => {
     getBillingSummaryAuth: vi.fn(),
     listBillingInvoicesAuth: vi.fn(),
     createBillingCheckoutSessionAuth: vi.fn(),
-    createBillingSubscriptionCheckoutSessionAuth: vi.fn(),
     getBillingInvoicePdfAuth: vi.fn(),
     assignBillingPlanAuth: vi.fn(),
   };
@@ -136,11 +134,6 @@ beforeEach(() => {
     invoiceId: 'inv_1',
     sessionId: 'cs_1',
     checkoutUrl: 'https://checkout.stripe.example/start',
-  });
-  vi.mocked(createBillingSubscriptionCheckoutSessionAuth).mockResolvedValue({
-    invoiceId: 'inv_1',
-    sessionId: 'cs_sub',
-    checkoutUrl: 'https://checkout.stripe.example/subscribe',
   });
   vi.mocked(assignBillingPlanAuth).mockResolvedValue({
     planCode: 'plan_pro',
@@ -639,12 +632,15 @@ describe('Billing — open invoice UX', () => {
     renderBilling();
 
     expect(
-      await screen.findByText(
-        /Finalized invoices can be paid by Card or USDC\. Open invoices are estimates for the current period/i,
-      ),
+      await screen.findByText(/Finalized invoices can be paid by Card or USDC/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/payment options appear here after the period ends and the invoice is finalized/i),
+      screen.getByText(/Open invoices are estimates for the current period/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /payment options appear after the period ends and the invoice is finalized/i,
+      ),
     ).toBeInTheDocument();
 
     const finalizationHint = await screen.findByLabelText('Available after finalization');
@@ -656,7 +652,6 @@ describe('Billing — open invoice UX', () => {
     expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
     expect(screen.queryByText('—')).not.toBeInTheDocument();
     expect(createBillingCheckoutSessionAuth).not.toHaveBeenCalled();
-    expect(createBillingSubscriptionCheckoutSessionAuth).not.toHaveBeenCalled();
   });
 });
 
@@ -720,10 +715,10 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
     expect(screen.getByRole('button', { name: 'Card' })).toBeEnabled();
   });
 
-  it('offers subscription checkout when the invoice has a plan version id and redirects', async () => {
+  it('shows Card and USDC only on finalized invoices — never a separate Subscribe action', async () => {
     currentInvoices = [
       makeInvoice({
-        id: 'inv_sub',
+        id: 'inv_plan',
         status: 'finalized',
         amount: '49.00',
         currency: 'USD',
@@ -732,39 +727,52 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
     ];
     renderBilling();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Subscribe' }));
-
-    await waitFor(() =>
-      expect(createBillingSubscriptionCheckoutSessionAuth).toHaveBeenCalledWith(
-        expect.any(Function),
-        'inv_sub',
-        'pv_1',
-      ),
-    );
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_sub');
-    expect(locationStub.href).toBe('https://checkout.stripe.example/subscribe');
+    expect(await screen.findByRole('button', { name: 'Card' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'USDC' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
   });
 
-  it('surfaces the backend message for a failing subscription checkout (409) without hanging', async () => {
+  it('pays a finalized plan invoice with one-time card checkout even when planVersionId is present', async () => {
     currentInvoices = [
       makeInvoice({
-        id: 'inv_sub',
+        id: 'inv_plan',
         status: 'finalized',
         amount: '49.00',
         currency: 'USD',
         planVersionId: 'pv_1',
       }),
     ];
-    vi.mocked(createBillingSubscriptionCheckoutSessionAuth).mockRejectedValue(
-      apiError(409, { code: 'INVOICE_CONFLICT', message: 'Invoice is no longer payable.' }),
-    );
-
     renderBilling();
-    fireEvent.click(await screen.findByRole('button', { name: 'Subscribe' }));
 
-    expect(await screen.findByText('Invoice is no longer payable.')).toBeInTheDocument();
-    expect(screen.queryByText('Redirecting…')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Subscribe' })).toBeEnabled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Card' }));
+
+    await waitFor(() =>
+      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
+        expect.any(Function),
+        'inv_plan',
+      ),
+    );
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_plan');
+    expect(locationStub.href).toBe('https://checkout.stripe.example/start');
+  });
+
+  it('does not start card checkout when the user only opens USDC', async () => {
+    currentInvoices = [
+      makeInvoice({
+        id: 'inv_plan',
+        status: 'finalized',
+        amount: '49.00',
+        currency: 'USD',
+        planVersionId: 'pv_1',
+      }),
+    ];
+    renderBilling();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'USDC' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_plan');
+    expect(createBillingCheckoutSessionAuth).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+    expect(locationStub.href).toBe('');
   });
 
   it('keeps an invoice-load 409 visible with a working retry', async () => {
@@ -966,7 +974,8 @@ describe('Billing — plan change', () => {
     expect(stored).toBeTruthy();
     expect(JSON.parse(stored!).invoiceId).toBe('inv_upgrade');
 
-    // One-time card checkout — never subscription for upgrade charges.
+    // Upgrade plan_charge uses the same one-time card checkout path — no Subscribe.
+    expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Pay with card' }));
     await waitFor(() =>
       expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
@@ -974,7 +983,6 @@ describe('Billing — plan change', () => {
         'inv_upgrade',
       ),
     );
-    expect(createBillingSubscriptionCheckoutSessionAuth).not.toHaveBeenCalled();
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_upgrade');
     expect(locationStub.href).toBe('https://checkout.stripe.example/start');
   });
@@ -1087,7 +1095,7 @@ describe('Billing — plan change', () => {
     expect(screen.getByText('Could not change plan')).toBeInTheDocument();
   });
 
-  it('does not offer subscription checkout on a pending upgrade charge invoice', async () => {
+  it('shows Card/USDC only on a pending upgrade charge invoice — never Subscribe', async () => {
     currentInvoices = [
       makeInvoice({
         id: 'inv_upgrade',
@@ -1113,9 +1121,11 @@ describe('Billing — plan change', () => {
     renderBilling();
     await screen.findByText(/Pay to upgrade to Pro/i);
 
-    // Invoice table must not show Subscribe for the upgrade charge.
     expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Card' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'USDC' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pay with card' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pay with USDC' })).toBeInTheDocument();
   });
 });
 

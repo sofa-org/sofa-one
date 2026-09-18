@@ -308,6 +308,8 @@ export class StripePaymentService {
         : {
             customer,
             mode: 'payment',
+            // Auto-subscription + overage off-session paths require a Card PM.
+            payment_method_types: ['card'],
             line_items: [
               {
                 quantity: 1,
@@ -321,7 +323,11 @@ export class StripePaymentService {
             success_url: successUrl,
             cancel_url: cancelUrl,
             metadata: { invoiceId: row.invoiceId, attemptId: row.id, period },
-            payment_intent_data: { metadata: { invoiceId: row.invoiceId, attemptId: row.id } },
+            payment_intent_data: {
+              // Persist the card for off-session overage + first auto-subscription.
+              setup_future_usage: 'off_session',
+              metadata: { invoiceId: row.invoiceId, attemptId: row.id },
+            },
             client_reference_id: row.invoiceId,
           },
       { idempotencyKey: `${fixed ? 'subscription-' : ''}checkout:${row.id}` },
@@ -822,6 +828,9 @@ export class StripePaymentService {
         {
           customer: customerId,
           mode: 'payment',
+          // Restrict to Card so setup_future_usage + auto-subscription PM path
+          // never attach a non-card method as the customer default.
+          payment_method_types: ['card'],
           line_items: [
             {
               quantity: 1,
@@ -844,6 +853,10 @@ export class StripePaymentService {
             period,
           },
           payment_intent_data: {
+            // Save the Card for later off-session overage charges and for the
+            // post-payment first-subscription create (next UTC month). Without
+            // this, Checkout is one-shot and Customer has no default PM.
+            setup_future_usage: 'off_session',
             metadata: {
               invoiceId: invoice.id,
               attemptId: attempt.id,

@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
 
 const FREE = {
   id: 'plan-free-1',
@@ -83,6 +84,10 @@ describe('BillingPlanChangeService', () => {
   const subscriptionSync = {
     enqueueFromPlanChangeInTx,
   };
+  const retargetPendingAutoIntentInTx = jest.fn();
+  const autoSubscription = {
+    retargetPendingAutoIntentInTx,
+  };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -92,11 +97,13 @@ describe('BillingPlanChangeService', () => {
         BillingPlanChangeService,
         { provide: PrismaService, useValue: {} },
         { provide: StripeSubscriptionSyncService, useValue: subscriptionSync },
+        { provide: StripeAutoSubscriptionService, useValue: autoSubscription },
       ],
     }).compile();
     service = module.get(BillingPlanChangeService);
     executeRaw.mockResolvedValue(undefined);
     enqueueFromPlanChangeInTx.mockResolvedValue(null);
+    retargetPendingAutoIntentInTx.mockResolvedValue(null);
     assignmentDeleteMany.mockResolvedValue({ count: 0 });
     changeFindMany.mockResolvedValue([]); // default: no next-period schedules
   });

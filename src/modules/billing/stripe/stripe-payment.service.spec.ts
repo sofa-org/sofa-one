@@ -467,8 +467,12 @@ describe('StripePaymentService', () => {
               },
             },
           ],
+          payment_method_types: ['card'],
           metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
-          payment_intent_data: { metadata: { invoiceId: 'inv-1', attemptId: 'att-1' } },
+          payment_intent_data: {
+            setup_future_usage: 'off_session',
+            metadata: { invoiceId: 'inv-1', attemptId: 'att-1' },
+          },
           client_reference_id: 'inv-1',
         }),
         // Deterministic idempotency key derived from the local attempt so a

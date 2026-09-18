@@ -103,6 +103,18 @@ enum BillingSubscriptionSyncStatus {
   failed
 }
 
+/// First recurring Stripe subscription after a successful one-time Card payment.
+/// Distinct from BillingSubscriptionSyncIntent (which only updates/cancels an
+/// already-bound subscription). Provider create runs outside DB transactions.
+enum BillingAutoSubscriptionStatus {
+  pending
+  in_flight
+  completed
+  needs_review
+  failed
+  superseded
+}
+
 model User {
   id             String    @id @default(uuid()) @db.Uuid
   socialProvider String    @map("social_provider") @db.VarChar(20)
@@ -463,6 +475,7 @@ model BillingAccount {
   invoices            BillingInvoice[]
   planChanges         BillingPlanChange[]
   subscriptionSyncs   BillingSubscriptionSyncIntent[]
+  autoSubscriptions   BillingAutoSubscriptionIntent[]
 
   @@map("billing_accounts")
 }
@@ -490,6 +503,7 @@ model BillingPlanVersion {
   planChangesFrom      BillingPlanChange[]              @relation("PlanChangeFrom")
   planChangesTo        BillingPlanChange[]              @relation("PlanChangeTo")
   subscriptionSyncs    BillingSubscriptionSyncIntent[]
+  autoSubscriptions    BillingAutoSubscriptionIntent[]
 
   @@unique([code, version])
   @@map("billing_plan_versions")
@@ -620,6 +634,52 @@ model BillingSubscriptionSyncIntent {
   // Partial unique (one in_flight per account) lives in SQL migrations only:
   // 20260917150000_sync_intent_queue_behind_in_flight.
   @@map("billing_subscription_sync_intents")
+}
+
+/// Durable first-subscription create intent after a successful one-time Card
+/// payment (plan_charge upgrade or fixed-fee usage_period first invoice).
+/// Stripe Subscriptions.create runs outside DB transactions with a stable
+/// operation idempotency key. Billing starts at the next UTC month — never a
+/// historical invoice periodStart anchor.
+model BillingAutoSubscriptionIntent {
+  id                       String                         @id @default(uuid()) @db.Uuid
+  billingAccountId         String                         @map("billing_account_id") @db.Uuid
+  sourceInvoiceId          String                         @map("source_invoice_id") @db.Uuid
+  sourceAttemptId          String                         @unique @map("source_attempt_id") @db.Uuid
+  planVersionId            String                         @map("plan_version_id") @db.Uuid
+  stripeCustomerId         String                         @map("stripe_customer_id") @db.VarChar(255)
+  // Proven PaymentMethod id (from PaymentIntent after attach/default save).
+  stripePaymentMethodId    String?                        @map("stripe_payment_method_id") @db.VarChar(255)
+  // First subscription billing window: next UTC month after the paid invoice.
+  effectivePeriodStart     DateTime                       @map("effective_period_start") @db.Timestamptz()
+  effectivePeriodEnd       DateTime                       @map("effective_period_end") @db.Timestamptz()
+  unitAmountCents          Int                            @map("unit_amount_cents")
+  currency                 String                         @default("usd") @map("currency") @db.VarChar(10)
+  status                   BillingAutoSubscriptionStatus  @default(pending) @map("status")
+  // Stable provider idempotency key for the exact create payload (never rotates).
+  operationIdempotencyKey  String                         @unique @map("operation_idempotency_key") @db.VarChar(160)
+  frozenPayloadJson        Json?                          @map("frozen_payload_json")
+  stripeSubscriptionId     String?                        @map("stripe_subscription_id") @db.VarChar(255)
+  dispatchedAt             DateTime?                      @map("dispatched_at") @db.Timestamptz()
+  paymentMethodSavedAt     DateTime?                      @map("payment_method_saved_at") @db.Timestamptz()
+  retryCount               Int                            @default(0) @map("retry_count")
+  nextRetryAt              DateTime?                      @map("next_retry_at") @db.Timestamptz()
+  leaseOwnerId             String?                        @map("lease_owner_id") @db.VarChar(80)
+  leaseExpiresAt           DateTime?                      @map("lease_expires_at") @db.Timestamptz()
+  lastErrorCode            String?                        @map("last_error_code") @db.VarChar(80)
+  lastErrorType            String?                        @map("last_error_type") @db.VarChar(80)
+  completedAt              DateTime?                      @map("completed_at") @db.Timestamptz()
+  createdAt                DateTime                       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime                       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  billingAccount BillingAccount     @relation(fields: [billingAccountId], references: [id])
+  planVersion    BillingPlanVersion @relation(fields: [planVersionId], references: [id])
+
+  @@index([status, nextRetryAt])
+  @@index([billingAccountId, status])
+  @@index([sourceInvoiceId])
+  // Partial unique (one unfinished per account) lives in SQL migrations only.
+  @@map("billing_auto_subscription_intents")
 }
 
 model BillingReconciliationRun {
@@ -906,4 +966,16 @@ model BillingWorkerHeartbeat {
   updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@map("billing_worker_heartbeats")
+}
+
+/// Singleton keyset cursor for auto-subscription missing-intent recovery.
+/// Advances past skipped/ineligible candidates so later eligible rows are not
+/// starved across worker ticks.
+model BillingAutoSubRecoveryCursor {
+  id                 String    @id @db.VarChar(40)
+  cursorSucceededAt  DateTime? @map("cursor_succeeded_at") @db.Timestamptz()
+  cursorAttemptId    String?   @map("cursor_attempt_id") @db.Uuid
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("billing_auto_sub_recovery_cursors")
 }

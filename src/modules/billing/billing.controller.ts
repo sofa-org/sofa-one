@@ -22,12 +22,15 @@ import { GetSummaryQueryDto } from './dto/get-summary-query.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
 import { ReconcileBodyDto } from './dto/reconcile-body.dto';
 import { AssignPlanBodyDto } from './dto/assign-plan-body.dto';
-import { CreateSubscriptionCheckoutDto } from './dto/create-subscription-checkout.dto';
 
 /**
  * Frontend-only billing routes. These are intentionally NOT part of the public
  * API-key spec (openapi.yaml) and require an Openfort IAM bearer token plus the
  * FrontendOnlyGuard origin/referer check.
+ *
+ * First recurring Stripe subscription is created automatically after a
+ * successful one-time Card checkout (webhook + worker) — there is no dashboard
+ * subscription-checkout route.
  */
 @Controller('v1/billing')
 export class BillingController {
@@ -129,18 +132,6 @@ export class BillingController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.stripePaymentService.createCheckoutSession(userId, id);
-  }
-
-  /** Dashboard-only recurring fixed-fee subscription Checkout. */
-  @Post('invoices/:id/subscription-checkout')
-  @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
-  async checkoutSubscription(
-    @CurrentUser('id') userId: string,
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() body: CreateSubscriptionCheckoutDto,
-  ) {
-    return this.stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId);
   }
 
   /**

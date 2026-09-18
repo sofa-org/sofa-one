@@ -14,6 +14,7 @@ import { UsdcPaymentService } from './onchain/usdc-payment.service';
 import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
 import {
   STRIPE_CHARGE_KIND_OVERAGE,
   STRIPE_CLIENT,
@@ -88,6 +89,7 @@ export class BillingWorkerService implements OnModuleInit {
     @Optional() private readonly stripePayments?: StripePaymentService,
     @Optional() private readonly planChanges?: BillingPlanChangeService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
+    @Optional() private readonly autoSubscription?: StripeAutoSubscriptionService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -133,8 +135,9 @@ export class BillingWorkerService implements OnModuleInit {
       // Every bounded stage reports an aggregate success/failure result. Scoped
       // failures never throw out of the scheduler; they only flip the aggregate
       // so the final heartbeat is `failed` while unrelated work still runs.
-      // Subscription sync before lower-priority recovery (Gate 1 attempt 3).
+      // Subscription sync + first auto-subscription before lower-priority recovery.
       let ok = await this.processSubscriptionSync();
+      ok = (await this.processAutoSubscriptions()) && ok;
       ok = (await this.reconcileAndFinalizeAll()) && ok;
       ok = (await this.applyDuePlanChanges()) && ok;
       ok = (await this.recoverUsdcClaims()) && ok;
@@ -979,6 +982,35 @@ export class BillingWorkerService implements OnModuleInit {
     } catch (error) {
       this.logger.warn(
         `Billing worker subscription sync failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Process durable first-subscription create intents (outside DB TX).
+   * Enqueued by Stripe webhook after a successful one-time Card settlement of a
+   * plan_charge or fixed monthly usage_period invoice. PM attach/default +
+   * Subscriptions.create use stable idempotency keys; needs_review/retryable
+   * fail the tick heartbeat without rolling back paid benefits.
+   */
+  private async processAutoSubscriptions(): Promise<StageResult> {
+    if (!this.autoSubscription) return true;
+    try {
+      // processDue also runs recoverMissingPaidIntents (paid full attempt, no intent).
+      const result = await this.autoSubscription.processDue(this.workerId, 25);
+      if (result.needsReview > 0 || result.retryable > 0) {
+        if (result.needsReview > 0) {
+          this.logger.warn(
+            `Billing worker auto-subscription needs_review count=${result.needsReview} recovered=${result.recovered} workerId=${this.workerId}`,
+          );
+        }
+        return false;
+      }
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `Billing worker auto-subscription failed: ${sanitizeErrorMessage(getErrorText(error))}`,
       );
       return false;
     }

@@ -12,6 +12,7 @@ import { formatUtcMonth, microsToDecimalUsd } from './billing.utils';
 import { calculateUpgradeProrationMicros } from './billing-plan-change.proration';
 import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
 
 type Tx = Prisma.TransactionClient;
 type PlanVersion = Prisma.BillingPlanVersionGetPayload<Record<string, never>>;
@@ -73,6 +74,7 @@ export class BillingPlanChangeService {
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
+    @Optional() private readonly autoSubscription?: StripeAutoSubscriptionService,
   ) {}
 
   async requestPlanChange(args: {
@@ -304,6 +306,16 @@ export class BillingPlanChangeService {
     }
 
     // Durable Stripe mirror sync intent (same TX). Provider call is post-commit.
+    // Also retarget any never-dispatched first-subscription intent so a delayed
+    // create does not charge a superseded plan.
+    if (this.autoSubscription) {
+      await this.autoSubscription.retargetPendingAutoIntentInTx(tx, {
+        billingAccountId: change.billingAccountId,
+        targetPlanVersionId: change.toPlanVersionId,
+        sourcePlanChangeId: change.id,
+        now,
+      });
+    }
     if (this.subscriptionSync) {
       await this.subscriptionSync.enqueueFromPlanChangeInTx(tx, {
         billingAccountId: change.billingAccountId,
@@ -709,6 +721,14 @@ export class BillingPlanChangeService {
       now: Date;
     },
   ): Promise<void> {
+    if (this.autoSubscription) {
+      await this.autoSubscription.retargetPendingAutoIntentInTx(tx, {
+        billingAccountId: args.billingAccountId,
+        targetPlanVersionId: args.entitledPlanVersionId,
+        sourcePlanChangeId: args.sourcePlanChangeId,
+        now: args.now,
+      });
+    }
     if (!this.subscriptionSync) return;
     await this.subscriptionSync.enqueueFromPlanChangeInTx(tx, {
       billingAccountId: args.billingAccountId,
@@ -947,8 +967,16 @@ export class BillingPlanChangeService {
       },
     });
 
-    // Next-renewal mirror sync for the scheduled target (Free → cancel_at_period_end).
-    // Supersedes any corrective intent from a prior cancel in this same path.
+    // Retarget never-dispatched first-sub intent, then enqueue mirror sync for
+    // the scheduled target (Free → cancel_at_period_end).
+    if (this.autoSubscription) {
+      await this.autoSubscription.retargetPendingAutoIntentInTx(tx, {
+        billingAccountId,
+        targetPlanVersionId: target.id,
+        sourcePlanChangeId: change.id,
+        now: args.now,
+      });
+    }
     if (this.subscriptionSync) {
       await this.subscriptionSync.enqueueFromPlanChangeInTx(tx, {
         billingAccountId,

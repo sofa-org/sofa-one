@@ -5,6 +5,7 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { acquireBillingPeriodAdvisoryLock } from '../billing-period-lock';
 import { STRIPE_CLIENT } from './stripe.constants';
+import { readStripeSubscriptionPeriodBounds } from './stripe-subscription-period';
 
 type Tx = Prisma.TransactionClient;
 type SyncIntent = Prisma.BillingSubscriptionSyncIntentGetPayload<Record<string, never>>;
@@ -679,31 +680,32 @@ export class StripeSubscriptionSyncService {
     if (price.recurring?.usage_type === 'metered') {
       return { ok: false, code: 'metered_price', type: 'validation' };
     }
-    // Basil API: period bounds live on subscription items — both required + exact.
-    const itemBounds = item as {
-      current_period_start?: number;
-      current_period_end?: number;
-    };
-    const itemStart = itemBounds.current_period_start;
-    const itemEnd = itemBounds.current_period_end;
-    if (typeof itemStart !== 'number' || typeof itemEnd !== 'number') {
+    // Basil: prefer item current_period_*; fall back to top-level (shared helper).
+    const period = readStripeSubscriptionPeriodBounds(sub);
+    if (!period) {
       return { ok: false, code: 'item_period_bounds_missing', type: 'validation' };
     }
     if (!intent.expectedPeriodStart || !intent.expectedPeriodEnd) {
       return { ok: false, code: 'expected_period_null', type: 'validation' };
     }
-    if (itemStart * 1000 !== intent.expectedPeriodStart.getTime()) {
+    if (period.startSec * 1000 !== intent.expectedPeriodStart.getTime()) {
       return { ok: false, code: 'period_start_mismatch', type: 'validation' };
     }
-    if (itemEnd * 1000 !== intent.expectedPeriodEnd.getTime()) {
+    if (period.endSec * 1000 !== intent.expectedPeriodEnd.getTime()) {
       return { ok: false, code: 'period_end_mismatch', type: 'validation' };
     }
-    // billing_cycle_anchor must equal expected period start (no mid-cycle reset).
+    // billing_cycle_anchor:
+    // - steady-state month: anchor == expected period start
+    // - mid-month first create (proration none + future anchor): first item
+    //   period is [create_time, anchor) so anchor == expected period END
     const anchor = subExtras.billing_cycle_anchor;
     if (typeof anchor !== 'number') {
       return { ok: false, code: 'billing_cycle_anchor_missing', type: 'validation' };
     }
-    if (anchor * 1000 !== intent.expectedPeriodStart.getTime()) {
+    const anchorMs = anchor * 1000;
+    const matchesStart = anchorMs === intent.expectedPeriodStart.getTime();
+    const matchesEnd = anchorMs === intent.expectedPeriodEnd.getTime();
+    if (!matchesStart && !matchesEnd) {
       return { ok: false, code: 'billing_cycle_anchor_mismatch', type: 'validation' };
     }
     return { ok: true, itemId: item.id };

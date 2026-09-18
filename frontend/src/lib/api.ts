@@ -350,7 +350,7 @@ export interface BillingInvoice {
   createdAt: string;
   paidAt: string | null;
   pdfUrl: string | null;
-  /** Set by the server when the invoice was generated from a plan version. Required for subscription checkout. */
+  /** Set by the server when the invoice was generated from a plan version. */
   planVersionId?: string | null;
 }
 
@@ -1045,21 +1045,6 @@ export async function createBillingCheckoutSessionAuth(
     {
       method: 'POST',
       signal,
-    },
-  );
-}
-
-export async function createBillingSubscriptionCheckoutSessionAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  planVersionId: string,
-) {
-  return authFetch<BillingCheckoutResponse>(
-    `/v1/billing/invoices/${invoiceId}/subscription-checkout`,
-    getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify({ planVersionId }),
     },
   );
 }

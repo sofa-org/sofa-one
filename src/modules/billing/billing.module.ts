@@ -16,6 +16,7 @@ import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller';
 import { stripeClientProvider } from './stripe/stripe-client.provider';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
 import { UsdcPaymentController } from './onchain/usdc-payment.controller';
 import { UsdcPaymentService } from './onchain/usdc-payment.service';
 import { ViemUsdcReceiptProvider } from './onchain/usdc-receipt.provider';
@@ -36,6 +37,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     StripePaymentService,
     StripeWebhookService,
     StripeSubscriptionSyncService,
+    StripeAutoSubscriptionService,
     stripeClientProvider,
     UsdcPaymentService,
     { provide: USDC_RECEIPT_PROVIDER, useClass: ViemUsdcReceiptProvider },
@@ -49,6 +51,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     InvoiceSettlementService,
     StripePaymentService,
     StripeSubscriptionSyncService,
+    StripeAutoSubscriptionService,
   ],
 })
 export class BillingModule {}

@@ -22,7 +22,6 @@ import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
   assignBillingPlanAuth,
   createBillingCheckoutSessionAuth,
-  createBillingSubscriptionCheckoutSessionAuth,
   getApiErrorMessage,
   getBillingInvoicePdfAuth,
   getBillingPlansAuth,
@@ -252,11 +251,6 @@ function isInvoicePayableByUsdc(invoice: BillingInvoice): boolean {
   return isInvoicePayable(invoice);
 }
 
-/** Subscription checkout additionally requires the server-provided plan version id. */
-function isInvoicePayableBySubscription(invoice: BillingInvoice): boolean {
-  return isInvoicePayableByCard(invoice) && Boolean(invoice.planVersionId);
-}
-
 function friendlyCheckoutError(error: unknown): string {
   if (isApiError(error) && error.statusCode === 503) {
     return 'Checkout is temporarily unavailable. Please try again in a moment.';
@@ -411,9 +405,6 @@ export default function BillingPage() {
 
   const [checkoutLoadingId, setCheckoutLoadingId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [subscriptionCheckoutLoadingId, setSubscriptionCheckoutLoadingId] = useState<string | null>(
-    null,
-  );
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
@@ -1022,37 +1013,6 @@ export default function BillingPage() {
     [getToken],
   );
 
-  const handleSubscriptionCheckout = useCallback(
-    async (invoice: BillingInvoice) => {
-      if (!isInvoicePayableBySubscription(invoice) || !invoice.planVersionId) return;
-      setSubscriptionCheckoutLoadingId(invoice.id);
-      setCheckoutError(null);
-      try {
-        const response = await createBillingSubscriptionCheckoutSessionAuth(
-          getToken,
-          invoice.id,
-          invoice.planVersionId,
-        );
-        sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, invoice.id);
-        window.location.href = response.checkoutUrl;
-      } catch (err: unknown) {
-        if (isApiError(err) && err.statusCode === 503) {
-          setCheckoutError(
-            'Subscription checkout is temporarily unavailable. Please try again in a moment.',
-          );
-        } else {
-          setCheckoutError(
-            getApiErrorMessage(err) ||
-              'Could not start subscription checkout. The invoice must be a finalized fixed-fee plan invoice.',
-          );
-        }
-      } finally {
-        setSubscriptionCheckoutLoadingId(null);
-      }
-    },
-    [getToken],
-  );
-
   const handleDownloadPdf = useCallback(
     async (invoice: BillingInvoice) => {
       if (pdfLoadingId === invoice.id) return;
@@ -1189,7 +1149,7 @@ export default function BillingPage() {
         planVersionId: null,
       } satisfies BillingInvoice);
 
-    // Upgrade charges must use one-time card checkout — never subscription.
+    // Upgrade charges use the same one-time card checkout path as finalized invoices.
     if (!isInvoicePayableByCard(invoice) && pendingUpgradeInvoice) return;
     if (pendingUpgradeInvoice && !isInvoicePayableByCard(pendingUpgradeInvoice)) return;
 
@@ -1239,9 +1199,12 @@ export default function BillingPage() {
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
         <p className="font-medium">Secure checkout</p>
         <p className="mt-1 text-amber-700">
-          Eligible invoices can be paid by card or USDC. All payment amounts and recipient addresses
-          are set by the server. Upgrades activate only after payment confirmation; downgrades begin
-          at the next UTC billing period.
+          Pay finalized invoices with card or USDC. A card payment settles the current invoice and
+          can save your payment method for automatic renewal at the fixed plan fee from the next UTC
+          month. Failed renewals or bank authentication checks may still need your attention. USDC
+          pays only the invoice you select and is not saved for auto-renewal. Amounts and recipient
+          addresses are set by the server. Upgrades activate after payment confirmation; downgrades
+          begin at the next UTC billing period.
         </p>
       </div>
 
@@ -1431,7 +1394,7 @@ export default function BillingPage() {
                       <p className="mt-1 text-sm text-amber-900/90">
                         {pendingUpgradePaid
                           ? 'Payment is confirmed. The new plan is not active until the server finishes applying it.'
-                          : 'This charge is set by the server. Your current plan stays active until payment is confirmed.'}
+                          : 'Pay the current upgrade charge to activate. Card payment can also save your method for monthly auto-renewal at the fixed plan fee from the next UTC month. USDC pays only this charge and does not enable card auto-renewal. Your current plan stays active until payment is confirmed.'}
                       </p>
                       {!pendingUpgradePaid && (
                         <p className="mt-2 text-sm font-semibold text-amber-950">
@@ -1811,7 +1774,7 @@ export default function BillingPage() {
       {/* Invoices */}
       <DashboardCard
         title="Invoices"
-        description="Finalized invoices can be paid by Card or USDC. Open invoices are estimates for the current period — payment options appear here after the period ends and the invoice is finalized."
+        description="Finalized invoices can be paid by Card or USDC. Card payment settles the invoice and can save your method for automatic renewal from the next UTC month; USDC pays only the invoice shown. Open invoices are estimates for the current period — payment options appear after the period ends and the invoice is finalized."
       >
         {invoicesLoading ? (
           <InlineSpinner />
@@ -1848,17 +1811,10 @@ export default function BillingPage() {
                   const paid = isInvoicePaid(invoice);
                   const canPayCard = isInvoicePayableByCard(invoice);
                   const canPayUsdc = isInvoicePayableByUsdc(invoice);
-                  // Upgrade plan-charge invoices must never use subscription checkout.
-                  const isUpgradeChargeInvoice =
-                    pendingUpgrade?.invoiceId === invoice.id;
-                  const canPaySubscription =
-                    !isUpgradeChargeInvoice && isInvoicePayableBySubscription(invoice);
-                  const hasActions = canPayCard || canPayUsdc || canPaySubscription;
+                  const hasActions = canPayCard || canPayUsdc;
                   const isOpenUnpaid = !paid && invoice.status === 'open';
                   const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
-                  const isLoadingSubscriptionCheckout =
-                    subscriptionCheckoutLoadingId === invoice.id;
                   const isLoadingPdf = pdfLoadingId === invoice.id;
                   const usdcPanelOpen = usdcPanelInvoiceId === invoice.id;
                   return (
@@ -1895,7 +1851,8 @@ export default function BillingPage() {
                                   <button
                                     type="button"
                                     onClick={() => handlePayInvoice(invoice)}
-                                    disabled={isLoadingCheckout || isLoadingSubscriptionCheckout}
+                                    disabled={isLoadingCheckout}
+                                    title="Pays this invoice and can save your card for monthly auto-renewal from the next UTC month"
                                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     {isLoadingCheckout ? (
@@ -1906,21 +1863,6 @@ export default function BillingPage() {
                                     {isLoadingCheckout ? 'Redirecting…' : 'Card'}
                                   </button>
                                 )}
-                                {canPaySubscription && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSubscriptionCheckout(invoice)}
-                                    disabled={isLoadingCheckout || isLoadingSubscriptionCheckout}
-                                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text shadow-sm transition-all hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    {isLoadingSubscriptionCheckout ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <Calendar className="h-3.5 w-3.5" />
-                                    )}
-                                    {isLoadingSubscriptionCheckout ? 'Redirecting…' : 'Subscribe'}
-                                  </button>
-                                )}
                                 {canPayUsdc && (
                                   <button
                                     type="button"
@@ -1929,7 +1871,7 @@ export default function BillingPage() {
                                         current === invoice.id ? null : invoice.id,
                                       )
                                     }
-                                    disabled={isLoadingSubscriptionCheckout}
+                                    title="Pays only this invoice — USDC is not saved for auto-renewal"
                                     className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                                       usdcPanelOpen
                                         ? 'border border-brand-border bg-brand-surface text-brand-text'

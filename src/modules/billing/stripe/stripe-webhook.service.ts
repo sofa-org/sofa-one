@@ -16,6 +16,7 @@ import { SecurityEventService } from '../../security-events/security-event.servi
 import { InvoiceSettlementService } from '../invoice-settlement.service';
 import { BillingPlanChangeService } from '../billing-plan-change.service';
 import { StripeSubscriptionSyncService } from './stripe-subscription-sync.service';
+import { StripeAutoSubscriptionService } from './stripe-auto-subscription.service';
 import { canonicalBillingJson } from '../billing-json';
 import { acquireBillingPeriodAdvisoryLock } from '../billing-period-lock';
 import * as Stripe from 'stripe';
@@ -29,6 +30,7 @@ import {
   STRIPE_RENEWAL_EVENT_TYPES,
   STRIPE_WEBHOOK_EVENT_TYPES,
 } from './stripe.constants';
+import { readStripeSubscriptionPeriodBounds } from './stripe-subscription-period';
 
 type Tx = Prisma.TransactionClient;
 type PaymentAttemptRow = Prisma.BillingPaymentAttemptGetPayload<Record<string, never>>;
@@ -156,6 +158,7 @@ export class StripeWebhookService {
     @Optional() private readonly securityEvents?: SecurityEventService,
     @Optional() private readonly planChanges?: BillingPlanChangeService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
+    @Optional() private readonly autoSubscription?: StripeAutoSubscriptionService,
   ) {}
 
   async handleWebhook(rawBody: Buffer | undefined, signature: string | undefined): Promise<void> {
@@ -271,6 +274,9 @@ export class StripeWebhookService {
     const queueAudit = (input: SecurityEventInput): void => {
       audits.push(input);
     };
+    // First-subscription intents enqueued inside the settlement TX; PM save +
+    // provider create run only AFTER commit (never inside the DB transaction).
+    const autoSubPostCommit: Array<{ intentId: string; billingAccountId: string }> = [];
 
     const outcome = await this.prisma.$transaction(async (tx) => {
       // Dedupe is read-only. A new event must pass the complete identity/provider
@@ -646,6 +652,50 @@ export class StripeWebhookService {
               result: 'allowed',
               metadata: { invoiceId: attempt.invoiceId, attemptId: attempt.id },
             });
+            // One-time Card full settlement enqueues a durable first-subscription
+            // intent (next UTC month) as an atomic outbox write in THIS TX.
+            // Provider create stays post-commit. Write failures throw so the
+            // whole webhook TX rolls back and Stripe retries (never catch-and-
+            // continue after a Postgres error in the interactive TX).
+            if (
+              this.autoSubscription &&
+              attempt.method === 'stripe' &&
+              attempt.stripeChargeKind === STRIPE_CHARGE_KIND_FULL
+            ) {
+              // Re-read succeeded attempt + paid invoice evidence under the
+              // same TX — the pre-CAS snapshot may still say `pending`.
+              const succeededAttempt = await tx.billingPaymentAttempt.findUnique({
+                where: { id: attempt.id },
+              });
+              const paidInvoice = await tx.billingInvoice.findUnique({
+                where: { id: attempt.invoiceId },
+              });
+              const paidAccount = paidInvoice
+                ? await tx.billingAccount.findUnique({
+                    where: { id: paidInvoice.billingAccountId },
+                  })
+                : null;
+              if (
+                succeededAttempt &&
+                succeededAttempt.status === 'succeeded' &&
+                paidInvoice &&
+                paidInvoice.paidAt != null &&
+                paidInvoice.settlementAttemptId === succeededAttempt.id &&
+                paidAccount
+              ) {
+                const enqueued = await this.autoSubscription.enqueueAfterPaidCardInTx(tx, {
+                  account: paidAccount,
+                  invoice: paidInvoice,
+                  attempt: succeededAttempt,
+                });
+                if (enqueued) {
+                  autoSubPostCommit.push({
+                    intentId: enqueued.intentId,
+                    billingAccountId: paidAccount.id,
+                  });
+                }
+              }
+            }
           } else {
             queueAudit({
               actorType: 'system',
@@ -775,6 +825,20 @@ export class StripeWebhookService {
     for (const input of audits) {
       await this.audit(input);
     }
+
+    // Post-commit: first-subscription processing acquires a unique lease token
+    // then runs PM save + create under that fence. Never call unfenced PM save.
+    // Failures leave intents in retry/review — paid benefits are never rolled back.
+    if (this.autoSubscription && autoSubPostCommit.length > 0) {
+      const seenAccounts = new Set<string>();
+      for (const item of autoSubPostCommit) {
+        if (!seenAccounts.has(item.billingAccountId)) {
+          seenAccounts.add(item.billingAccountId);
+          await this.autoSubscription.processAccountBestEffort(item.billingAccountId);
+        }
+      }
+    }
+
     return outcome;
   }
 
@@ -1232,20 +1296,18 @@ export class StripeWebhookService {
     if (event.type === 'customer.subscription.created') {
       data.stripeSubscriptionId = raw.id as string;
       data.stripeSubscriptionStatus = typeof raw.status === 'string' ? raw.status : 'active';
-      if (typeof raw.current_period_start === 'number') {
-        data.stripeSubscriptionPeriodStart = new Date(raw.current_period_start * 1000);
-      }
-      if (typeof raw.current_period_end === 'number') {
-        data.stripeSubscriptionPeriodEnd = new Date(raw.current_period_end * 1000);
+      const createdPeriod = readStripeSubscriptionPeriodBounds(raw);
+      if (createdPeriod) {
+        data.stripeSubscriptionPeriodStart = new Date(createdPeriod.startSec * 1000);
+        data.stripeSubscriptionPeriodEnd = new Date(createdPeriod.endSec * 1000);
       }
     } else if (event.type === 'customer.subscription.updated') {
       data.stripeSubscriptionId = raw.id as string;
       data.stripeSubscriptionStatus = typeof raw.status === 'string' ? raw.status : 'active';
-      if (typeof raw.current_period_start === 'number') {
-        data.stripeSubscriptionPeriodStart = new Date(raw.current_period_start * 1000);
-      }
-      if (typeof raw.current_period_end === 'number') {
-        data.stripeSubscriptionPeriodEnd = new Date(raw.current_period_end * 1000);
+      const updatedPeriod = readStripeSubscriptionPeriodBounds(raw);
+      if (updatedPeriod) {
+        data.stripeSubscriptionPeriodStart = new Date(updatedPeriod.startSec * 1000);
+        data.stripeSubscriptionPeriodEnd = new Date(updatedPeriod.endSec * 1000);
       }
     } else if (event.type === 'customer.subscription.deleted') {
       // Only cancel the mirror when the deleted subscription IS the bound one
@@ -2400,14 +2462,7 @@ export class StripeWebhookService {
             'incomplete_expired',
           ].includes(status);
       if (!valid) return { ok: false, reason: 'provider_status_mismatch' };
-      if (
-        !event.type.endsWith('.deleted') &&
-        (typeof raw.current_period_start !== 'number' ||
-          typeof raw.current_period_end !== 'number' ||
-          !Number.isSafeInteger(raw.current_period_start) ||
-          !Number.isSafeInteger(raw.current_period_end) ||
-          raw.current_period_start >= raw.current_period_end)
-      ) {
+      if (!event.type.endsWith('.deleted') && !readStripeSubscriptionPeriodBounds(raw)) {
         return { ok: false, reason: 'provider_period_missing' };
       }
       return { ok: true };
@@ -2493,14 +2548,9 @@ export class StripeWebhookService {
       ) {
         return { ok: false, reason: 'provider_lifecycle_identity_invalid' };
       }
-      if (
-        !event.type.endsWith('.deleted') &&
-        (typeof rawObject.current_period_start !== 'number' ||
-          typeof rawObject.current_period_end !== 'number' ||
-          !Number.isSafeInteger(rawObject.current_period_start) ||
-          !Number.isSafeInteger(rawObject.current_period_end) ||
-          rawObject.current_period_start >= rawObject.current_period_end)
-      ) {
+      // Basil: item current_period_* preferred; top-level fallback via shared parser.
+      // Matched-attempt lifecycle events must accept item-only payloads.
+      if (!event.type.endsWith('.deleted') && !readStripeSubscriptionPeriodBounds(rawObject)) {
         return { ok: false, reason: 'provider_period_missing' };
       }
       return { ok: true };
@@ -2930,14 +2980,14 @@ export class StripeWebhookService {
 
   private eventPeriod(event: Stripe.Event): Date | null {
     const raw = event.data.object as StripeObjectLike;
-    const period =
-      event.type.startsWith('customer.subscription') &&
-      typeof raw.current_period_start === 'number' &&
-      typeof raw.current_period_end === 'number'
-        ? { start: raw.current_period_start, end: raw.current_period_end }
-        : event.type.startsWith('invoice')
-          ? this.invoicePeriod(raw)
-          : (raw.period ?? raw.lines?.data?.[0]?.period);
+    const subBounds = event.type.startsWith('customer.subscription')
+      ? readStripeSubscriptionPeriodBounds(raw)
+      : null;
+    const period = subBounds
+      ? { start: subBounds.startSec, end: subBounds.endSec }
+      : event.type.startsWith('invoice')
+        ? this.invoicePeriod(raw)
+        : (raw.period ?? raw.lines?.data?.[0]?.period);
     if (period && typeof period.start === 'number' && Number.isSafeInteger(period.start)) {
       return this.utcMonthStart(new Date(period.start * 1000));
     }
