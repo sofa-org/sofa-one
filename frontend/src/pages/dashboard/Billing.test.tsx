@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useUser } from '@openfort/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import BillingPage from './Billing';
 import {
@@ -74,7 +74,12 @@ vi.mock('./UsdcPaymentPanel', () => {
 
 function LocationProbe() {
   const location = useLocation();
-  return <div data-testid="location-search">{location.search}</div>;
+  return (
+    <>
+      <div data-testid="location-search">{location.search}</div>
+      <div data-testid="location-hash">{location.hash}</div>
+    </>
+  );
 }
 
 function renderBilling(initialPath = '/dashboard/billing') {
@@ -1111,6 +1116,123 @@ describe('Billing — plan change', () => {
     // Invoice table must not show Subscribe for the upgrade charge.
     expect(screen.queryByRole('button', { name: 'Subscribe' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Card' })).toBeInTheDocument();
+  });
+});
+
+describe('Billing — plan deep-link selection and scroll', () => {
+  let scrollIntoViewMock: ReturnType<typeof vi.fn>;
+  let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
+  let originalRaf: typeof window.requestAnimationFrame;
+  let originalCancelRaf: typeof window.cancelAnimationFrame;
+
+  beforeEach(() => {
+    originalScrollIntoView = Element.prototype.scrollIntoView;
+    scrollIntoViewMock = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    originalRaf = window.requestAnimationFrame;
+    originalCancelRaf = window.cancelAnimationFrame;
+    // Run the chooser scroll effect synchronously once plans paint.
+    window.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      cb(0);
+      return 1;
+    }) as typeof window.requestAnimationFrame;
+    window.cancelAnimationFrame = vi.fn() as typeof window.cancelAnimationFrame;
+  });
+
+  afterEach(() => {
+    Element.prototype.scrollIntoView = originalScrollIntoView;
+    window.requestAnimationFrame = originalRaf;
+    window.cancelAnimationFrame = originalCancelRaf;
+  });
+
+  function findPlanCard(planName: string) {
+    const cards = screen.getAllByRole('listitem');
+    const card = cards.find((el) => el.textContent?.includes(planName));
+    expect(card).toBeTruthy();
+    return card!;
+  }
+
+  it('selects and scrolls to ?plan=plan_pro#choose-a-plan without auto-assigning', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    renderBilling('/dashboard/billing?plan=plan_pro#choose-a-plan');
+
+    // Plans load → Pro is the deep-link selection (not current Starter).
+    await screen.findByRole('button', { name: 'Upgrade to Pro' });
+
+    await waitFor(() => {
+      expect(findPlanCard('Pro').className).toMatch(/ring-brand-accent/);
+    });
+
+    await waitFor(() => expect(scrollIntoViewMock).toHaveBeenCalled());
+    expect(scrollIntoViewMock).toHaveBeenCalledWith(
+      expect.objectContaining({ behavior: 'smooth', block: 'start' }),
+    );
+
+    // Deep-link only highlights; assign waits for an explicit click.
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+  });
+
+  it('after Stripe ?success=1 cleanup, keeps plan query and deep-link selection', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    renderBilling('/dashboard/billing?success=1&plan=plan_pro#choose-a-plan');
+
+    expect(screen.getByText('Payment processing')).toBeInTheDocument();
+
+    // success/canceled markers are stripped; plan deep-link query must remain.
+    await waitFor(() => {
+      expect(screen.getByTestId('location-search')).toHaveTextContent('plan=plan_pro');
+      expect(screen.getByTestId('location-search')).not.toHaveTextContent('success=');
+      expect(screen.getByTestId('location-hash')).toHaveTextContent('#choose-a-plan');
+    });
+
+    // Selection still targets Pro after marker cleanup (driven by ?plan=, not hash alone).
+    await screen.findByRole('button', { name: 'Upgrade to Pro' });
+    await waitFor(() => {
+      expect(findPlanCard('Pro').className).toMatch(/ring-brand-accent/);
+    });
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+  });
+
+  it('ignores an unknown plan query and falls back to the current plan without mutation', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    renderBilling('/dashboard/billing?plan=not_a_real_plan#choose-a-plan');
+
+    expect(await screen.findByRole('button', { name: 'Current plan' })).toBeDisabled();
+    // Current (Starter) is selected; Pro is not highlighted as the deep-link target.
+    expect(findPlanCard('Starter').className).toMatch(/ring-green/);
+    expect(findPlanCard('Pro').className).not.toMatch(/ring-brand-accent/);
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
+  });
+
+  it('ignores enterprise plan query (contact-sales) without auto mutation', async () => {
+    currentInvoices = [makePaidInvoice('inv_1')];
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      currentPlanId: 'plan_starter',
+      plans: [
+        ...makePlans().plans,
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'Enterprise plan',
+          basePrice: 'custom',
+          currency: 'USD',
+          billingPeriod: 'Monthly',
+          features: [],
+        },
+      ],
+    });
+
+    renderBilling('/dashboard/billing?plan=enterprise#choose-a-plan');
+
+    expect(await screen.findByRole('button', { name: 'Current plan' })).toBeDisabled();
+    expect(findPlanCard('Starter').className).toMatch(/ring-green/);
+    // Enterprise stays contact-sales and is not treated as a self-service deep-link target.
+    const enterpriseCard = findPlanCard('Enterprise');
+    expect(enterpriseCard.querySelector('button')?.textContent).toMatch(/Contact sales/i);
+    expect(assignBillingPlanAuth).not.toHaveBeenCalled();
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
   });
 });
 

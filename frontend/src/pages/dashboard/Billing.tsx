@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '@openfort/react';
 import {
   Activity,
@@ -445,11 +445,16 @@ export default function BillingPage() {
   // Ref to suppress state updates after the page unmounts.
   const isMountedRef = useRef(true);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [paymentNotice, setPaymentNotice] = useState<{
     type: PaymentNoticeType;
     message: string;
   } | null>(null);
+
+  /** Deep-link plan from Pricing / sign-in return (`?plan=`). */
+  const requestedPlanId = searchParams.get('plan');
 
   const currentPlan = useMemo(() => {
     if (!plans) return null;
@@ -471,11 +476,47 @@ export default function BillingPage() {
     return plans.currentPlanId === pendingUpgrade.planCode;
   }, [pendingUpgrade, plans]);
 
+  /**
+   * Resolve initial plan-change selection once plans load.
+   * Prefer a valid self-service `?plan=` target so the Pricing deep-link is not
+   * overwritten by the current-plan default. Never auto-submits assign.
+   */
   useEffect(() => {
-    if (plans && planChangeSelectedId === null) {
-      setPlanChangeSelectedId(plans.currentPlanId);
-    }
-  }, [plans, planChangeSelectedId]);
+    if (!plans || planChangeSelectedId !== null) return;
+
+    const matched =
+      requestedPlanId && requestedPlanId.length > 0
+        ? plans.plans.find((p) => p.id === requestedPlanId && isSelfServicePlan(p))
+        : undefined;
+
+    setPlanChangeSelectedId(matched?.id ?? plans.currentPlanId);
+  }, [plans, planChangeSelectedId, requestedPlanId]);
+
+  /** Scroll to the chooser when arriving with `#choose-a-plan` and a valid `plan` query. */
+  const scrolledToChooserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!plans) return;
+    if (location.hash !== '#choose-a-plan') return;
+    if (!requestedPlanId) return;
+
+    const valid = plans.plans.some(
+      (p) => p.id === requestedPlanId && isSelfServicePlan(p),
+    );
+    if (!valid) return;
+
+    const scrollKey = `${requestedPlanId}${location.hash}`;
+    if (scrolledToChooserRef.current === scrollKey) return;
+    scrolledToChooserRef.current = scrollKey;
+
+    // Wait a frame so the chooser is in the DOM after plans render.
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('choose-a-plan')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [plans, location.hash, requestedPlanId]);
 
   const setPendingUpgradeState = useCallback((value: PendingPlanUpgrade | null) => {
     writePendingPlanUpgrade(value);
@@ -856,10 +897,20 @@ export default function BillingPage() {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('success');
     nextParams.delete('canceled');
-    setSearchParams(nextParams, { replace: true });
+    const nextSearch = nextParams.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : '',
+        hash: location.hash,
+      },
+      { replace: true },
+    );
   }, [
     searchParams,
-    setSearchParams,
+    navigate,
+    location.pathname,
+    location.hash,
     authLoading,
     isAuthenticated,
     startPaymentConfirmationPolling,
@@ -1458,7 +1509,7 @@ export default function BillingPage() {
               </div>
             )}
 
-            <div>
+            <div id="choose-a-plan" className="scroll-mt-24">
               <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted">
                 Choose a plan
               </p>

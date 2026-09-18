@@ -1,7 +1,9 @@
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useOpenfort } from '@openfort/react';
+import { useOpenfort, useUser } from '@openfort/react';
 import { Activity, ArrowLeft, Check, Mail, Users, Wallet, Zap } from 'lucide-react';
 import AuthProviders from '../components/AuthProviders';
+import { getBillingPlansAuth } from '@/lib/api';
 
 type PlanId = 'free' | 'starter' | 'growth' | 'scale' | 'business' | 'enterprise';
 
@@ -17,9 +19,9 @@ interface PricingPlan {
   team: number | string;
   features: readonly string[];
   cta: string;
-  ctaTo: string;
-  external?: boolean;
   recommended?: boolean;
+  external?: boolean;
+  externalHref?: string;
 }
 
 const PLANS: readonly PricingPlan[] = [
@@ -42,7 +44,6 @@ const PLANS: readonly PricingPlan[] = [
       'Standard rate limits',
     ],
     cta: 'Start for free',
-    ctaTo: '/sign-in',
   },
   {
     id: 'starter',
@@ -63,7 +64,6 @@ const PLANS: readonly PricingPlan[] = [
       'Email support',
     ],
     cta: 'Get Starter',
-    ctaTo: '/sign-in',
   },
   {
     id: 'growth',
@@ -84,7 +84,6 @@ const PLANS: readonly PricingPlan[] = [
       'Priority weekday support',
     ],
     cta: 'Get Growth',
-    ctaTo: '/sign-in',
     recommended: true,
   },
   {
@@ -106,7 +105,6 @@ const PLANS: readonly PricingPlan[] = [
       'Priority technical support',
     ],
     cta: 'Get Scale',
-    ctaTo: '/sign-in',
   },
   {
     id: 'business',
@@ -127,7 +125,6 @@ const PLANS: readonly PricingPlan[] = [
       'Production incident priority response + SLA options',
     ],
     cta: 'Get Business',
-    ctaTo: '/sign-in',
   },
   {
     id: 'enterprise',
@@ -148,8 +145,8 @@ const PLANS: readonly PricingPlan[] = [
       'Compliance, audit & operations reporting',
     ],
     cta: 'Contact sales',
-    ctaTo: 'mailto:sales@sofa.one?subject=SOFA%20ONE%20Enterprise%20pricing',
     external: true,
+    externalHref: 'mailto:sales@sofa.one?subject=SOFA%20ONE%20Enterprise%20pricing',
   },
 ];
 
@@ -165,6 +162,15 @@ const OUTBOUND_TIERS: readonly { range: string; rate: string }[] = [
   { range: '$50M – $200M', rate: '0.0015%' },
   { range: '$200M+', rate: '0.0010% and up' },
 ];
+
+/** Canonical billing deep-link target used by Pricing CTAs and sign-in return state. */
+function billingPlanTarget(planId: string) {
+  return {
+    pathname: '/dashboard/billing',
+    search: `?plan=${encodeURIComponent(planId)}`,
+    hash: '#choose-a-plan',
+  } as const;
+}
 
 function formatCount(value: number | string): string {
   if (typeof value === 'string') return value;
@@ -199,16 +205,88 @@ function HeaderAuthAction() {
   );
 }
 
-function PlanCard({ plan }: { plan: PricingPlan }) {
-  const isRecommended = plan.recommended === true;
+type PlanHighlight = 'recommended' | 'current' | null;
+
+type PlanCardView = {
+  plan: PricingPlan;
+  highlight: PlanHighlight;
+  ctaLabel: string;
+  external: boolean;
+  /** Internal Link `to` (string path or location object). */
+  to?: ReturnType<typeof billingPlanTarget> | '/sign-in';
+  /** React Router location state (anonymous sign-in return). */
+  linkState?: { from: ReturnType<typeof billingPlanTarget> };
+  href?: string;
+};
+
+/**
+ * Build card presentation from auth + optional canonical current plan.
+ * currentPlanId is only set after a successful billing-plans fetch — never invent it.
+ */
+function buildPlanCardViews(
+  isLoggedIn: boolean,
+  currentPlanId: string | null,
+): PlanCardView[] {
+  const highlightCurrent = currentPlanId !== null;
+
+  return PLANS.map((plan) => {
+    if (plan.external && plan.externalHref) {
+      return {
+        plan,
+        highlight:
+          highlightCurrent && currentPlanId === plan.id
+            ? 'current'
+            : !highlightCurrent && plan.recommended
+              ? 'recommended'
+              : null,
+        ctaLabel: plan.cta,
+        external: true,
+        href: plan.externalHref,
+      };
+    }
+
+    const isCurrent = highlightCurrent && currentPlanId === plan.id;
+    const highlight: PlanHighlight = isCurrent
+      ? 'current'
+      : !highlightCurrent && plan.recommended
+        ? 'recommended'
+        : null;
+
+    if (isLoggedIn) {
+      return {
+        plan,
+        highlight,
+        ctaLabel: isCurrent ? 'Manage billing' : plan.cta,
+        external: false,
+        to: billingPlanTarget(plan.id),
+      };
+    }
+
+    return {
+      plan,
+      highlight,
+      ctaLabel: plan.cta,
+      external: false,
+      to: '/sign-in',
+      linkState: { from: billingPlanTarget(plan.id) },
+    };
+  });
+}
+
+function PlanCard({ view }: { view: PlanCardView }) {
+  const { plan, highlight, ctaLabel, external, to, linkState, href } = view;
+  const isRecommended = highlight === 'recommended';
+  const isCurrent = highlight === 'current';
   const isEnterprise = plan.id === 'enterprise';
 
   const cardClasses = [
     'relative flex flex-col rounded-3xl border p-6 transition-all duration-200',
     'bg-white/80 backdrop-blur-sm',
-    isRecommended
-      ? 'border-brand-accent shadow-xl ring-1 ring-brand-accent'
-      : 'border-brand-border hover:border-brand-accent/60 hover:shadow-lg',
+    isCurrent
+      ? 'border-green-300 shadow-xl ring-1 ring-green-200'
+      : isRecommended
+        ? 'border-brand-accent shadow-xl ring-1 ring-brand-accent'
+        : 'border-brand-border hover:border-brand-accent/60 hover:shadow-lg',
   ].join(' ');
 
   const ctaClasses = [
@@ -220,7 +298,7 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
   const ctaContent = (
     <>
       {isEnterprise && <Mail className="mr-2 h-4 w-4" aria-hidden="true" />}
-      {plan.cta}
+      {ctaLabel}
     </>
   );
 
@@ -229,6 +307,11 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
       {isRecommended && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-accent px-4 py-1 text-xs font-semibold tracking-wide text-white shadow-sm">
           Most popular
+        </span>
+      )}
+      {isCurrent && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-green-600 px-4 py-1 text-xs font-semibold tracking-wide text-white shadow-sm">
+          Current plan
         </span>
       )}
 
@@ -288,16 +371,21 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
         ))}
       </ul>
 
-      {plan.external ? (
+      {external && href ? (
         <a
-          href={plan.ctaTo}
+          href={href}
           className={ctaClasses}
-          aria-label={`${plan.cta} for SOFA ONE Enterprise`}
+          aria-label={`${ctaLabel} for SOFA ONE Enterprise`}
         >
           {ctaContent}
         </a>
       ) : (
-        <Link to={plan.ctaTo} className={ctaClasses} aria-label={`${plan.cta} on SOFA ONE`}>
+        <Link
+          to={to ?? '/sign-in'}
+          state={linkState}
+          className={ctaClasses}
+          aria-label={`${ctaLabel} on SOFA ONE`}
+        >
           {ctaContent}
         </Link>
       )}
@@ -305,11 +393,95 @@ function PlanCard({ plan }: { plan: PricingPlan }) {
   );
 }
 
-export default function PricingPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const fromBilling = location.state?.fromBilling === true;
+function PlansGrid({ views }: { views: PlanCardView[] }) {
+  return (
+    <section aria-label="Pricing plans" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      {views.map((view) => (
+        <PlanCard key={view.plan.id} view={view} />
+      ))}
+    </section>
+  );
+}
 
+/**
+ * Nested under AuthProviders so Openfort hooks are valid.
+ * Auth must be settled before treating the visitor as logged in or fetching plans.
+ */
+function PricingOpenfortContent({
+  fromBilling,
+  onBack,
+}: {
+  fromBilling: boolean;
+  onBack: () => void;
+}) {
+  const { isLoading: authLoading, user } = useOpenfort();
+  const { getAccessToken } = useUser();
+  /** Canonical current plan from API — null while loading, anonymous, or on failure. */
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+
+  const authSettled = !authLoading;
+  const isLoggedIn = authSettled && Boolean(user);
+
+  useEffect(() => {
+    if (!authSettled) return;
+
+    if (!user) {
+      setCurrentPlanId(null);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const data = await getBillingPlansAuth(async () => {
+          const token = await getAccessToken();
+          if (!token) {
+            throw new Error('Openfort session is not ready.');
+          }
+          return token;
+        }, controller.signal);
+        if (!cancelled) {
+          setCurrentPlanId(data.currentPlanId);
+        }
+      } catch {
+        // Keep marketing highlight (Growth most popular); never invent a current plan.
+        if (!cancelled) {
+          setCurrentPlanId(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [authSettled, user, getAccessToken]);
+
+  const views = buildPlanCardViews(isLoggedIn, currentPlanId);
+
+  return (
+    <PricingShell
+      fromBilling={fromBilling}
+      onBack={onBack}
+      headerAction={<HeaderAuthAction />}
+      plans={<PlansGrid views={views} />}
+    />
+  );
+}
+
+function PricingShell({
+  fromBilling,
+  onBack,
+  headerAction,
+  plans,
+}: {
+  fromBilling: boolean;
+  onBack: () => void;
+  headerAction: ReactNode;
+  plans: ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text antialiased selection:bg-brand-accent selection:text-white">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
@@ -323,7 +495,7 @@ export default function PricingPage() {
           {fromBilling && (
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={onBack}
               className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
               aria-label="Back to Billing"
             >
@@ -331,18 +503,7 @@ export default function PricingPage() {
               Back
             </button>
           )}
-          {HAS_OPENFORT_CONFIG ? (
-            <AuthProviders>
-              <HeaderAuthAction />
-            </AuthProviders>
-          ) : (
-            <Link
-              to="/sign-in"
-              className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text transition-all hover:border-brand-text hover:bg-brand-surface"
-            >
-              SIGN IN
-            </Link>
-          )}
+          {headerAction}
         </div>
       </header>
 
@@ -358,11 +519,7 @@ export default function PricingPage() {
           </p>
         </section>
 
-        <section aria-label="Pricing plans" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {PLANS.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
-          ))}
-        </section>
+        {plans}
 
         <section className="mt-16 grid gap-6 md:grid-cols-2">
           <div className="rounded-3xl border border-brand-border bg-white/80 p-6 backdrop-blur-sm sm:p-8">
@@ -428,5 +585,37 @@ export default function PricingPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromBilling = location.state?.fromBilling === true;
+  const onBack = () => navigate(-1);
+
+  // Missing Openfort keys: keep the public marketing page (Growth most popular). Never show a config error wall.
+  if (!HAS_OPENFORT_CONFIG) {
+    return (
+      <PricingShell
+        fromBilling={fromBilling}
+        onBack={onBack}
+        headerAction={
+          <Link
+            to="/sign-in"
+            className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text transition-all hover:border-brand-text hover:bg-brand-surface"
+          >
+            SIGN IN
+          </Link>
+        }
+        plans={<PlansGrid views={buildPlanCardViews(false, null)} />}
+      />
+    );
+  }
+
+  return (
+    <AuthProviders>
+      <PricingOpenfortContent fromBilling={fromBilling} onBack={onBack} />
+    </AuthProviders>
   );
 }
