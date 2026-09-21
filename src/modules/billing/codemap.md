@@ -133,6 +133,11 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   - `GET /summary?period=` → `billingService.getSummary`
   - `GET /invoices?page=&limit=` → `billingService.listInvoices`
   - `GET /invoices/:id` → `billingService.getInvoice`
+  - `GET /invoices/:id/payment-status` → `billingService.getInvoicePaymentStatus`
+    (BILL-018 invoice-level read-only recovery: active attempt, wallet
+    reservation, all unresolved needs_review/reorged attempts + blocking
+    reasons; never creates quote/attempt or calls providers; never returns
+    calldata/receipts/RPC/hashes; ownership-scoped)
   - `POST /invoices/:id/checkout` → `stripePaymentService.createCheckoutSession`
   - `POST /invoices/:id/subscription-checkout` → `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)`
   - `POST /reconcile` → `reconciliationService.reconcile(userId, { limit })`
@@ -197,6 +202,12 @@ GET /v1/billing/summary?period=YYYY-MM
 
 GET /v1/billing/invoices, GET /v1/billing/invoices/:id
   → account-scoped paginated list / single invoice (NotFound if not owned)
+
+GET /v1/billing/invoices/:id/payment-status (BILL-018)
+  → ownership-scoped read-only recovery: active pending/confirming attempt,
+    wallet reservation, and ALL unresolved needs_review/reorged attempts
+    (oldest first) with blockingReasons — never latest-pending-only;
+    never creates quote/attempt or calls external providers; safe DTO only
 
 finalizeInvoice (service-internal, no route)
   → pre-check: non-open invoice returned unchanged

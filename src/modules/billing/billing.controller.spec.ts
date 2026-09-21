@@ -1,4 +1,4 @@
-import { GUARDS_METADATA } from '@nestjs/common/constants';
+import { METHOD_METADATA, PATH_METADATA, GUARDS_METADATA } from '@nestjs/common/constants';
 
 jest.mock('./billing.service', () => ({
   BillingService: class BillingService {},
@@ -22,7 +22,7 @@ jest.mock('../../common/guards/frontend-only.guard', () => ({
 import { BillingController } from './billing.controller';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { StreamableFile } from '@nestjs/common';
+import { RequestMethod, StreamableFile } from '@nestjs/common';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 
 describe('BillingController', () => {
@@ -31,6 +31,7 @@ describe('BillingController', () => {
     getSummary: jest.fn(),
     listInvoices: jest.fn(),
     getInvoice: jest.fn(),
+    getInvoicePaymentStatus: jest.fn(),
     assignPlan: jest.fn(),
     cancelScheduledPlan: jest.fn(),
     cancelPendingUpgrade: jest.fn(),
@@ -91,6 +92,19 @@ describe('BillingController', () => {
 
     expect(billingService.getInvoice).toHaveBeenCalledWith('user-1', 'inv-1');
     expect(result).toEqual({ id: 'inv-1' });
+  });
+
+  it('delegates getInvoicePaymentStatus to the service (BILL-018 read-only)', async () => {
+    billingService.getInvoicePaymentStatus.mockResolvedValue({
+      invoiceId: 'inv-1',
+      hasUnresolvedReview: true,
+      unresolvedReviewAttempts: [],
+    });
+
+    const result = await controller.getInvoicePaymentStatus('user-1', 'inv-1');
+
+    expect(billingService.getInvoicePaymentStatus).toHaveBeenCalledWith('user-1', 'inv-1');
+    expect(result).toMatchObject({ invoiceId: 'inv-1', hasUnresolvedReview: true });
   });
 
   it('delegates reconcile to the reconciliation service scoped to the current user', async () => {
@@ -244,6 +258,7 @@ describe('BillingController', () => {
       controller.getSummary,
       controller.listInvoices,
       controller.getInvoice,
+      controller.getInvoicePaymentStatus,
       controller.downloadInvoicePdf,
       controller.reconcile,
       controller.assignPlan,
@@ -258,5 +273,14 @@ describe('BillingController', () => {
       expect(guards).toContain(FrontendOnlyGuard);
       expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, route)).toBe(true);
     }
+  });
+
+  it('exposes invoice payment-status as GET (no write semantics)', () => {
+    expect(
+      Reflect.getMetadata(PATH_METADATA, controller.getInvoicePaymentStatus),
+    ).toBe('invoices/:id/payment-status');
+    expect(
+      Reflect.getMetadata(METHOD_METADATA, controller.getInvoicePaymentStatus),
+    ).toBe(RequestMethod.GET);
   });
 });

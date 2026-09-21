@@ -3212,6 +3212,253 @@ describe('BillingService', () => {
     });
   });
 
+  describe('getInvoicePaymentStatus (BILL-018)', () => {
+    const finalizedInvoice = {
+      id: 'inv-1',
+      billingAccountId: ACCOUNT.id,
+      periodStart: new Date('2026-05-01T00:00:00.000Z'),
+      status: 'finalized',
+      currency: 'USD',
+      totalMicros: 252_710_000n,
+      createdAt: new Date('2026-06-01T00:00:00.000Z'),
+      paidAt: null,
+      planVersionId: 'plan-scale-1',
+    };
+
+    function attemptRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'att-review-1',
+        invoiceId: 'inv-1',
+        method: 'usdc',
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        createdAt: new Date('2026-06-01T01:00:00.000Z'),
+        walletPaymentReserved: false,
+        chainId: 84532n,
+        quoteExpiresAt: new Date('2026-06-02T01:00:00.000Z'),
+        // Sensitive fields that must never leak into the DTO:
+        txHash: '0x' + 'aa'.repeat(32),
+        submittedTxHash: '0x' + 'bb'.repeat(32),
+        blockHash: '0x' + 'cc'.repeat(32),
+        providerIdentity: 'deadbeef',
+        receiptEvidence: { logs: ['secret'] },
+        stripeCheckoutSessionId: 'cs_secret',
+        checkoutUrl: 'https://checkout.stripe.com/secret',
+        ...overrides,
+      };
+    }
+
+    it('throws NotFound when the user has no account (cross-user safe)', async () => {
+      accountFindUnique.mockResolvedValue(null);
+
+      await expect(service.getInvoicePaymentStatus('user-1', 'inv-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(attemptFindMany).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when the invoice is not owned (cross-user reject)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(null);
+
+      await expect(service.getInvoicePaymentStatus('user-1', 'inv-other')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(attemptFindMany).not.toHaveBeenCalled();
+    });
+
+    it('surfaces manual needs_review after refresh (not only latest pending)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      const review = attemptRow({
+        id: 'att-review-old',
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        createdAt: new Date('2026-06-01T01:00:00.000Z'),
+      });
+      const pending = attemptRow({
+        id: 'att-pending-new',
+        status: 'pending',
+        reviewReason: null,
+        createdAt: new Date('2026-06-01T03:00:00.000Z'),
+        txHash: null,
+        submittedTxHash: null,
+      });
+      attemptFindMany.mockResolvedValue([review, pending]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(result.invoiceId).toBe('inv-1');
+      expect(result.paid).toBe(false);
+      expect(result.hasUnresolvedReview).toBe(true);
+      expect(result.blockingReasons).toEqual(['duplicate_unallocated']);
+      expect(result.activeAttempt?.paymentAttemptId).toBe('att-pending-new');
+      expect(result.activeAttempt?.status).toBe('pending');
+      // Older needs_review must remain visible alongside the newer pending quote.
+      expect(result.unresolvedReviewAttempts).toHaveLength(1);
+      expect(result.unresolvedReviewAttempts[0]).toMatchObject({
+        paymentAttemptId: 'att-review-old',
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        method: 'usdc',
+      });
+    });
+
+    it('returns multiple unresolved reviews on the same invoice (oldest first)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      attemptFindMany.mockResolvedValue([
+        attemptRow({
+          id: 'att-r1',
+          status: 'needs_review',
+          reviewReason: 'duplicate_unallocated',
+          createdAt: new Date('2026-06-01T01:00:00.000Z'),
+        }),
+        attemptRow({
+          id: 'att-r2',
+          status: 'needs_review',
+          reviewReason: 'amount_mismatch',
+          createdAt: new Date('2026-06-01T02:00:00.000Z'),
+        }),
+        attemptRow({
+          id: 'att-pending',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: new Date('2026-06-01T04:00:00.000Z'),
+        }),
+      ]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(result.unresolvedReviewAttempts.map((a) => a.paymentAttemptId)).toEqual([
+        'att-r1',
+        'att-r2',
+      ]);
+      expect(result.blockingReasons).toEqual(['duplicate_unallocated', 'amount_mismatch']);
+      expect(result.activeAttempt?.paymentAttemptId).toBe('att-pending');
+    });
+
+    it('returns wallet reservation alongside needs_review', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      const reservedReview = attemptRow({
+        id: 'att-wallet',
+        status: 'needs_review',
+        reviewReason: 'wallet_payment_awaiting_evidence',
+        walletPaymentReserved: true,
+      });
+      attemptFindMany.mockResolvedValue([reservedReview]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(result.walletReservation).toMatchObject({
+        paymentAttemptId: 'att-wallet',
+        walletPaymentReserved: true,
+        status: 'needs_review',
+        reviewReason: 'wallet_payment_awaiting_evidence',
+      });
+      expect(result.hasUnresolvedReview).toBe(true);
+      expect(result.activeAttempt).toBeNull();
+    });
+
+    it('surfaces review on a paid invoice (duplicate_unallocated after another rail won)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue({
+        ...finalizedInvoice,
+        paidAt: new Date('2026-06-01T05:00:00.000Z'),
+        status: 'finalized',
+      });
+      attemptFindMany.mockResolvedValue([
+        attemptRow({
+          id: 'att-dup',
+          status: 'needs_review',
+          reviewReason: 'duplicate_unallocated',
+          method: 'usdc',
+        }),
+      ]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(result.paid).toBe(true);
+      expect(result.paidAt).toBe('2026-06-01T05:00:00.000Z');
+      expect(result.hasUnresolvedReview).toBe(true);
+      expect(result.unresolvedReviewAttempts[0].reviewReason).toBe('duplicate_unallocated');
+      expect(result.activeAttempt).toBeNull();
+    });
+
+    it('GET is read-only: never creates attempts or mutates rows', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      attemptFindMany.mockResolvedValue([]);
+
+      await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(attemptFindMany).toHaveBeenCalledTimes(1);
+      expect(attemptFindMany).toHaveBeenCalledWith({
+        where: {
+          invoiceId: 'inv-1',
+          OR: [
+            { status: { in: ['pending', 'confirming', 'needs_review', 'reorged'] } },
+            { walletPaymentReserved: true },
+          ],
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      // No write paths used by this handler.
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+    });
+
+    it('omits sensitive hashes, receipts, provider and Stripe details from the DTO', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      attemptFindMany.mockResolvedValue([attemptRow()]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+      const payload = JSON.stringify(result);
+
+      expect(payload).not.toMatch(/0x[a-f0-9]{64}/i);
+      expect(payload).not.toMatch(/calldata|receiptEvidence|providerIdentity|openfort|cs_secret/i);
+      expect(payload).not.toContain('checkout.stripe.com');
+      expect(result.unresolvedReviewAttempts[0]).toEqual({
+        paymentAttemptId: 'att-review-1',
+        method: 'usdc',
+        status: 'needs_review',
+        reviewReason: 'duplicate_unallocated',
+        createdAt: '2026-06-01T01:00:00.000Z',
+        walletPaymentReserved: false,
+        chainId: 84532,
+        quoteExpiresAt: '2026-06-02T01:00:00.000Z',
+      });
+      expect(result.unresolvedReviewAttempts[0]).not.toHaveProperty('txHash');
+      expect(result.unresolvedReviewAttempts[0]).not.toHaveProperty('submittedTxHash');
+      expect(result.unresolvedReviewAttempts[0]).not.toHaveProperty('blockHash');
+      expect(result.unresolvedReviewAttempts[0]).not.toHaveProperty('receiptEvidence');
+      expect(result.unresolvedReviewAttempts[0]).not.toHaveProperty('checkoutUrl');
+    });
+
+    it('returns empty recovery state when no relevant attempts exist', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      attemptFindMany.mockResolvedValue([]);
+
+      const result = await service.getInvoicePaymentStatus('user-1', 'inv-1');
+
+      expect(result).toEqual({
+        invoiceId: 'inv-1',
+        invoiceStatus: 'finalized',
+        paid: false,
+        paidAt: null,
+        activeAttempt: null,
+        walletReservation: null,
+        unresolvedReviewAttempts: [],
+        hasUnresolvedReview: false,
+        blockingReasons: [],
+      });
+    });
+  });
+
   describe('ensureOpenInvoiceForPeriod', () => {
     it('creates the next due period through the locked upsert path and is idempotent', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);

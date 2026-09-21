@@ -5,12 +5,14 @@ import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
   createUsdcClaimAuth,
   createUsdcQuoteAuth,
+  getInvoicePaymentStatusAuth,
   getUsdcPaymentStatusAuth,
   payUsdcFromWalletAuth,
   type BillingInvoice,
 } from '@/lib/api';
 import {
   apiError,
+  makeInvoicePaymentStatus,
   makePayableInvoice,
   makeQuote,
   makeWalletPayResult,
@@ -29,6 +31,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
     createUsdcClaimAuth: vi.fn(),
     payUsdcFromWalletAuth: vi.fn(),
     getUsdcPaymentStatusAuth: vi.fn(),
+    getInvoicePaymentStatusAuth: vi.fn(),
   };
 });
 
@@ -59,12 +62,17 @@ function renderPanel(
   return { view, onChange, invoice, getToken };
 }
 
-/** Render the panel and wait until a quote has loaded and the claim form is usable. */
+/** Render the panel, request a quote (user-triggered), and wait until the claim form is usable. */
 async function renderWithQuote() {
+  vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
   vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
   vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
 
   const ctx = renderPanel();
+
+  // BILL-018: panel loads invoice status only — user must request a quote.
+  await screen.findByRole('button', { name: /Get quote/i });
+  fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
   // The amount/claim form only renders once a quote is present.
   const txInput = await screen.findByLabelText('Transaction hash');
@@ -85,7 +93,9 @@ beforeEach(() => {
   vi.mocked(createUsdcClaimAuth).mockReset();
   vi.mocked(payUsdcFromWalletAuth).mockReset();
   vi.mocked(getUsdcPaymentStatusAuth).mockReset();
+  vi.mocked(getInvoicePaymentStatusAuth).mockReset();
   vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
+  vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
   vi.mocked(getDashboardStepUpToken).mockReturnValue(null);
   vi.mocked(requestStepUpToken).mockResolvedValue('step-up-token');
 });
@@ -223,10 +233,12 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
       treasuryAddress: '0x2222222222222222222222222222222222222222',
       chainId: 84532,
     });
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
     vi.mocked(createUsdcQuoteAuth).mockResolvedValue(quote);
     vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
 
     renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
 
     expect(await screen.findByText('12.50')).toBeInTheDocument();
     expect(screen.getByText(/12\.5 USDC/)).toBeInTheDocument();
@@ -239,10 +251,12 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
   });
 
   it('does not auto-submit wallet pay on quote load', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
     vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
     vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
 
     renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
     await screen.findByRole('button', { name: /Pay from wallet/i });
 
     expect(payUsdcFromWalletAuth).not.toHaveBeenCalled();
@@ -348,6 +362,7 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
   });
 
   it('restores reserved wallet payment state from status after quote load', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
     vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
     vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(
       makeWalletPayResult({
@@ -360,6 +375,7 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
     );
 
     renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
 
     expect(await screen.findByText(/Submitting payment/i)).toBeInTheDocument();
     expect(payFromWalletButton()).toBeDisabled();
@@ -429,12 +445,14 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
 
 describe('UsdcPaymentPanel — fail-closed recovery (B5)', () => {
   it('locks pay and manual claim when quote restores but payment-status returns 503', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
     vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
     vi.mocked(getUsdcPaymentStatusAuth).mockRejectedValue(
       apiError(503, { code: 'INTERNAL_ERROR', message: 'Service unavailable' }),
     );
 
     renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
 
     expect(await screen.findByText(/Status unconfirmed/i)).toBeInTheDocument();
     expect(screen.getByText(/Payment status could not be confirmed/i)).toBeInTheDocument();
@@ -453,10 +471,12 @@ describe('UsdcPaymentPanel — fail-closed recovery (B5)', () => {
       paid: false,
       status: 'pending',
     });
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
     vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
     vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValueOnce(reserved);
 
     renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
     expect(await screen.findByText(/Submitting payment/i)).toBeInTheDocument();
     expect(payFromWalletButton()).toBeDisabled();
 
@@ -513,5 +533,113 @@ describe('UsdcPaymentPanel — fail-closed recovery (B5)', () => {
     expect(payFromWalletButton()).toBeDisabled();
     expect(claimButton()).toBeDisabled();
     expect(screen.queryByText(/Paid and settled/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('UsdcPaymentPanel — BILL-018 invoice payment status recovery', () => {
+  it('does not auto-create a quote on open; only loads invoice-level payment status', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
+    renderPanel();
+
+    expect(await screen.findByRole('button', { name: /Get quote/i })).toBeInTheDocument();
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalled();
+    expect(screen.queryByLabelText('Transaction hash')).not.toBeInTheDocument();
+  });
+
+  it('blocks new quotes when unresolved needs_review is restored from the server', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        hasUnresolvedReview: true,
+        blockingReasons: ['duplicate_unallocated'],
+        unresolvedReviewAttempts: [
+          {
+            paymentAttemptId: 'att_review',
+            method: 'usdc',
+            status: 'needs_review',
+            reviewReason: 'duplicate_unallocated',
+            createdAt: '2026-08-01T00:00:00.000Z',
+            walletPaymentReserved: false,
+            chainId: 84532,
+            quoteExpiresAt: null,
+          },
+        ],
+      }),
+    );
+
+    renderPanel();
+
+    expect(await screen.findByText(/Payment needs manual review/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/already applied to another invoice/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Get quote/i })).not.toBeInTheDocument();
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+    // Safe recovery must not leak hashes or provider details.
+    expect(screen.queryByText(/0x/i)).not.toBeInTheDocument();
+  });
+
+  it('shows continue entry for an active pending USDC quote without auto-quoting', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        activeAttempt: {
+          paymentAttemptId: 'att_pending',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderPanel();
+
+    expect(await screen.findByText(/USDC payment in progress/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue this payment/i })).toBeInTheDocument();
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+
+    vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote({ paymentAttemptId: 'att_pending' }));
+    vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue this payment/i }));
+
+    expect(await screen.findByLabelText('Transaction hash')).toBeInTheDocument();
+    expect(createUsdcQuoteAuth).toHaveBeenCalled();
+    // Quote path always re-reads invoice status first.
+    expect(vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('refuses Get quote when invoice-level status reports unresolved review', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth)
+      .mockResolvedValueOnce(makeInvoicePaymentStatus())
+      .mockResolvedValueOnce(
+        makeInvoicePaymentStatus({
+          hasUnresolvedReview: true,
+          blockingReasons: ['duplicate_unallocated'],
+          unresolvedReviewAttempts: [
+            {
+              paymentAttemptId: 'att_review',
+              method: 'usdc',
+              status: 'needs_review',
+              reviewReason: 'duplicate_unallocated',
+              createdAt: '2026-08-01T00:00:00.000Z',
+              walletPaymentReserved: false,
+              chainId: 84532,
+              quoteExpiresAt: null,
+            },
+          ],
+        }),
+      );
+
+    renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
+
+    expect(
+      await screen.findByText(/still needs manual review/i),
+    ).toBeInTheDocument();
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
   });
 });

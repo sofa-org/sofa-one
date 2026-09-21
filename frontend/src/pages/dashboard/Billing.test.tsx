@@ -11,6 +11,7 @@ import {
   createBillingCheckoutSessionAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
+  getInvoicePaymentStatusAuth,
   listBillingInvoicesAuth,
   type BillingInvoice,
   type BillingInvoicesResponse,
@@ -20,6 +21,7 @@ import {
   apiError,
   invoicesResponse,
   makeInvoice,
+  makeInvoicePaymentStatus,
   makePaidInvoice,
   makePayableInvoice,
   makePlans,
@@ -48,6 +50,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
     assignBillingPlanAuth: vi.fn(),
     cancelBillingPlanAuth: vi.fn(),
     cancelBillingPlanUpgradeAuth: vi.fn(),
+    getInvoicePaymentStatusAuth: vi.fn(),
   };
 });
 
@@ -160,6 +163,9 @@ beforeEach(() => {
     planName: 'Starter',
     effectivePeriod: '2026-08',
   });
+  vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (_getToken, invoiceId) =>
+    makeInvoicePaymentStatus({ invoiceId }),
+  );
 });
 
 describe('Billing — Stripe return markers and query cleanup', () => {
@@ -745,9 +751,9 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
     renderBilling();
     fireEvent.click(await screen.findByRole('button', { name: 'Card' }));
 
-    expect(
-      await screen.findByText('Could not start checkout. Please check the invoice and try again.'),
-    ).toBeInTheDocument();
+    // BILL-003: 409 surfaces the server conflict message (or active-payment copy) instead of a
+    // generic "Could not start checkout" so the user knows why card was refused.
+    expect(await screen.findByText(/Invoice is no longer payable/i)).toBeInTheDocument();
     expect(screen.queryByText('Redirecting…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Card' })).toBeEnabled();
   });
@@ -1662,5 +1668,79 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     await expectContactSalesBlocked('Custom (empty base)');
     await expectContactSalesBlocked('Custom (blank base)');
+  });
+});
+
+describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', () => {
+  it('loads invoice-level payment status after invoices and surfaces needs_review without auto-opening USDC', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        invoiceId: 'inv_1',
+        hasUnresolvedReview: true,
+        blockingReasons: ['duplicate_unallocated'],
+        unresolvedReviewAttempts: [
+          {
+            paymentAttemptId: 'att_review',
+            method: 'usdc',
+            status: 'needs_review',
+            reviewReason: 'duplicate_unallocated',
+            createdAt: '2026-08-01T00:00:00.000Z',
+            walletPaymentReserved: false,
+            chainId: 84532,
+            quoteExpiresAt: null,
+          },
+        ],
+      }),
+    );
+
+    renderBilling();
+
+    expect(await screen.findByText(/Payment needs review/i)).toBeInTheDocument();
+    expect(screen.getByText(/already used on another invoice/i)).toBeInTheDocument();
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledWith(
+      expect.any(Function),
+      'inv_1',
+      expect.anything(),
+    );
+
+    const cardBtn = screen.getByRole('button', { name: /Card unavailable/i });
+    expect(cardBtn).toBeDisabled();
+    expect(screen.queryByTestId('usdc-panel')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Status' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_1');
+  });
+
+  it('disables card and shows continue entry while an active USDC quote is pending (BILL-003)', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        invoiceId: 'inv_1',
+        activeAttempt: {
+          paymentAttemptId: 'att_pending',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderBilling();
+
+    expect(await screen.findByText(/USDC in progress/i)).toBeInTheDocument();
+    expect(screen.getByText(/finish or wait for expiry/i)).toBeInTheDocument();
+
+    const cardBtn = screen.getByRole('button', { name: /Card unavailable/i });
+    expect(cardBtn).toBeDisabled();
+    fireEvent.click(cardBtn);
+    expect(createBillingCheckoutSessionAuth).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_1');
   });
 });

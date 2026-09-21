@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
@@ -11,11 +12,16 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { getAddress, isAddress } from 'viem';
 import { getSupportedChain } from '../../../common/chains/supported-chains';
 import { API_ERROR_CODES } from '../../../common/errors/api-error-codes';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { SecurityEventService } from '../../security-events/security-event.service';
+import {
+  isDeferredDestinationPolicyDenial,
+  WithdrawalDestinationPolicyService,
+} from '../../withdrawal-destination/withdrawal-destination-policy.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
 import { BillingPlanChangeService } from '../billing-plan-change.service';
 import { StripeSubscriptionSyncService } from '../stripe/stripe-subscription-sync.service';
@@ -36,6 +42,25 @@ import type { UsdcReceipt, UsdcReceiptLog, UsdcReceiptProvider } from './usdc-re
 type Tx = Prisma.TransactionClient;
 type PaymentAttemptRow = Prisma.BillingPaymentAttemptGetPayload<Record<string, never>>;
 type InvoiceRow = Prisma.BillingInvoiceGetPayload<Record<string, never>>;
+/** Prisma client shape used for destination/allowlist reads (root or TX). */
+type DestinationClient = PrismaService | Prisma.TransactionClient;
+
+/**
+ * BILL-011: CAS predicates for safe expired/incomplete pending release.
+ * Only evidence-free, unreserved pending attempts may be expired for requote;
+ * any submitted hash or payment evidence stays pinned for recovery/review.
+ */
+const RELEASABLE_PENDING_WHERE = {
+  status: 'pending' as const,
+  walletPaymentReserved: false,
+  submittedTxHash: null,
+  txHash: null,
+  logIndex: null,
+  actualBaseUnits: null,
+  blockNumber: null,
+  blockHash: null,
+  payerAddress: null,
+};
 
 /** A transaction hash is exactly 32 bytes (64 hex chars) after the 0x prefix. */
 const TX_HASH_REGEX = /^0x[0-9a-fA-F]{64}$/;
@@ -173,6 +198,12 @@ export class UsdcPaymentService {
     private readonly config: ConfigService,
     private readonly settlementService: InvoiceSettlementService,
     @Inject(USDC_RECEIPT_PROVIDER) private readonly receiptProvider: UsdcReceiptProvider,
+    /**
+     * BILL-011: shared withdrawal-destination allowlist/cooldown leaf (same
+     * WithdrawalPolicy / WithdrawalAddress rows as wallet withdraw). Optional
+     * only for unit tests that omit it; production BillingModule always wires it.
+     */
+    @Optional() private readonly destinationPolicy?: WithdrawalDestinationPolicyService,
     @Optional() private readonly securityEvents?: SecurityEventService,
     @Optional() private readonly planChanges?: BillingPlanChangeService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
@@ -359,12 +390,20 @@ export class UsdcPaymentService {
         return this.toQuoteResult(freshReserved, existing);
       }
       if (expired || incomplete) {
+        // BILL-011: never expire/release an attempt that already carries a
+        // submitted hash or any payment evidence — pin it to needs_review for
+        // recovery and refuse a replacement quote (no rail/TTL swap).
+        if (this.hasPaymentEvidence(existing)) {
+          await this.pinPendingWithEvidenceToReview(existing, expired);
+          throw new ConflictException({
+            code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+            message: 'An active USDC payment already exists for this invoice',
+          });
+        }
         const released = await this.prisma.billingPaymentAttempt.updateMany({
           where: {
             id: existing.id,
-            status: 'pending',
-            // Do not race-release a reservation that landed between reads.
-            walletPaymentReserved: false,
+            ...RELEASABLE_PENDING_WHERE,
           },
           data: expired
             ? { status: 'expired', reviewReason: 'quote_expired' }
@@ -374,9 +413,17 @@ export class UsdcPaymentService {
           // A concurrent claim changed the attempt before the release CAS:
           // reuse it only when it is still active AND on the requested chain.
           // A confirming attempt on another chain is a conflict, never a reuse.
+          // Evidence-bearing pending that raced in is pinned, never released.
           const current = await this.prisma.billingPaymentAttempt.findUnique({
             where: { id: existing.id },
           });
+          if (current && this.hasPaymentEvidence(current) && current.status === 'pending') {
+            await this.pinPendingWithEvidenceToReview(current, expired);
+            throw new ConflictException({
+              code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+              message: 'An active USDC payment already exists for this invoice',
+            });
+          }
           if (current && (current.status === 'pending' || current.status === 'confirming')) {
             if (current.chainId !== BigInt(chain)) {
               throw new ConflictException({
@@ -399,11 +446,20 @@ export class UsdcPaymentService {
       }
     }
 
+    // BILL-011: before creating a new quote (and starting TTL), if the expected
+    // payer's withdrawal allowlist is enabled, the treasury must already be
+    // allowlisted and past availableAt. Fail closed with a stable code + time
+    // field — no payment attempt, no TTL consumption.
+    await this.assertQuoteTreasuryDestinationReady(userId, treasuryAddress, chain);
+
     try {
       // Create the attempt under the period + invoice row lock so a concurrent
       // upgrade cancel (void) cannot slip a new pending attempt onto a voided
       // plan_charge. remainingDue is computed from the locked fresh invoice.
+      // BILL-011: destination allowlist is re-checked under the destination
+      // advisory lock inside createUsdcAttemptUnderLock before insert.
       const { invoice: freshInvoice, attempt } = await this.createUsdcAttemptUnderLock({
+        userId,
         invoice,
         chain,
         tokenAddress,
@@ -414,6 +470,14 @@ export class UsdcPaymentService {
       });
       return this.toQuoteResult(freshInvoice, attempt);
     } catch (err) {
+      if (isDeferredDestinationPolicyDenial(err)) {
+        await this.destinationPolicy?.recordDeferredDenial(err);
+        throw await this.enrichDestinationDenialHttp(
+          err.httpException,
+          userId,
+          treasuryAddress,
+        );
+      }
       if (!isUniqueConstraintError(err)) throw err;
       // A concurrent quote won the insert race. Reuse its active attempt only
       // when it is on the requested chain: a confirming winner is mid-payment
@@ -1884,8 +1948,11 @@ export class UsdcPaymentService {
   /**
    * Creates a pending USDC attempt only after locking the invoice and proving
    * it is still finalized/payable. remainingDue is computed from the locked row.
+   * BILL-011: re-checks treasury destination allowlist under the user destination
+   * advisory lock before insert so an allowlist race cannot start TTL early.
    */
   private async createUsdcAttemptUnderLock(args: {
+    userId: string;
     invoice: InvoiceRow;
     chain: number;
     tokenAddress: string;
@@ -1895,6 +1962,7 @@ export class UsdcPaymentService {
     quoteExpiresAt: Date;
   }): Promise<{ invoice: InvoiceRow; attempt: PaymentAttemptRow }> {
     const {
+      userId,
       invoice,
       chain,
       tokenAddress,
@@ -1924,6 +1992,21 @@ export class UsdcPaymentService {
       if (this.planChanges && fresh.purpose === 'plan_charge') {
         await this.planChanges.assertPlanChargePayable(tx, fresh.id);
       }
+
+      // BILL-011 in-lock destination recheck (defer audit — no SIEM under locks).
+      if (this.destinationPolicy) {
+        await this.destinationPolicy.acquireUserDestinationLock(userId, tx);
+        await this.destinationPolicy.assertDestinationsAllowed(
+          userId,
+          [treasuryAddress],
+          { actorType: 'user', chainId: chain },
+          { prisma: tx, deferAudit: true },
+        );
+      } else {
+        // Fail closed when the leaf is unavailable (production always wires it).
+        await this.assertTreasuryAllowlistReadyDirect(userId, treasuryAddress, chain, tx);
+      }
+
       // After a fixed-fee renewal has already allocated coverage against the
       // finalized invoice, a new USDC quote must only ask for the remaining
       // balance — never the full total again.
@@ -1948,6 +2031,228 @@ export class UsdcPaymentService {
         },
       });
       return { invoice: fresh, attempt };
+    });
+  }
+
+  /**
+   * BILL-011 outer preflight: when the expected payer's withdrawal allowlist is
+   * enabled, the quote treasury must exist on the allowlist and `availableAt`
+   * must already be due. No attempt is created and no quote TTL starts.
+   * Policy missing / allowlist disabled → allow-all (existing behavior).
+   */
+  private async assertQuoteTreasuryDestinationReady(
+    userId: string,
+    treasuryAddress: string,
+    chainId: number,
+  ): Promise<void> {
+    try {
+      if (this.destinationPolicy) {
+        await this.destinationPolicy.assertDestinationsAllowed(
+          userId,
+          [treasuryAddress],
+          { actorType: 'user', chainId },
+        );
+      } else {
+        await this.assertTreasuryAllowlistReadyDirect(userId, treasuryAddress, chainId, this.prisma);
+      }
+    } catch (err) {
+      if (err instanceof ForbiddenException) {
+        throw await this.enrichDestinationDenialHttp(err, userId, treasuryAddress);
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Direct allowlist/cooldown read used when destinationPolicy is absent (tests)
+   * or as a fail-closed fallback. Mirrors WithdrawalDestinationPolicyService
+   * semantics and always surfaces `availableAt` on cooldown denials.
+   */
+  private async assertTreasuryAllowlistReadyDirect(
+    userId: string,
+    treasuryAddress: string,
+    chainId: number,
+    client: DestinationClient,
+  ): Promise<void> {
+    let policy: {
+      id: string;
+      requireAddressAllowlist: boolean;
+      newAddressCooldownHours: number;
+    } | null;
+    try {
+      policy = await client.withdrawalPolicy.findUnique({
+        where: { userId },
+        select: {
+          id: true,
+          requireAddressAllowlist: true,
+          newAddressCooldownHours: true,
+        },
+      });
+    } catch (err) {
+      this.logger.error(
+        { message: 'USDC quote destination policy lookup failed', userId, chainId },
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        message: 'Withdrawal destination policy is temporarily unavailable',
+      });
+    }
+
+    if (!policy || policy.requireAddressAllowlist !== true) {
+      return;
+    }
+
+    let normalized: string;
+    if (!isAddress(treasuryAddress, { strict: false })) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        message: 'Withdrawal address is not allowlisted',
+      });
+    }
+    try {
+      normalized = getAddress(treasuryAddress).toLowerCase();
+    } catch {
+      normalized = `0x${treasuryAddress.trim().slice(2).toLowerCase()}`;
+    }
+
+    let row: { availableAt: Date } | null;
+    try {
+      row = await client.withdrawalAddress.findUnique({
+        where: { userId_address: { userId, address: normalized } },
+        select: { availableAt: true },
+      });
+    } catch (err) {
+      this.logger.error(
+        { message: 'USDC quote treasury allowlist lookup failed', userId, chainId },
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        message: 'Withdrawal destination policy is temporarily unavailable',
+      });
+    }
+
+    if (!row) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        message: 'Withdrawal address is not allowlisted',
+      });
+    }
+
+    if (row.availableAt.getTime() > Date.now()) {
+      throw new ForbiddenException({
+        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN,
+        message: 'Withdrawal address is still in cooldown',
+        availableAt: row.availableAt.toISOString(),
+        cooldownHours: policy.newAddressCooldownHours,
+      });
+    }
+  }
+
+  /**
+   * Ensures cooldown denials carry a stable ISO `availableAt` for clients even
+   * when the destination leaf only put it in audit metadata.
+   */
+  private async enrichDestinationDenialHttp(
+    err: unknown,
+    userId: string,
+    treasuryAddress: string,
+  ): Promise<never> {
+    if (!(err instanceof ForbiddenException)) {
+      throw err;
+    }
+    const body = err.getResponse();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      throw err;
+    }
+    const record = body as Record<string, unknown>;
+    if (record.code !== API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN) {
+      throw err;
+    }
+    if (typeof record.availableAt === 'string' && record.availableAt.length > 0) {
+      throw err;
+    }
+    const availableAt = await this.lookupTreasuryAvailableAt(userId, treasuryAddress);
+    if (!availableAt) {
+      throw err;
+    }
+    throw new ForbiddenException({
+      code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN,
+      message:
+        typeof record.message === 'string'
+          ? record.message
+          : 'Withdrawal address is still in cooldown',
+      availableAt,
+      ...(typeof record.cooldownHours === 'number' ? { cooldownHours: record.cooldownHours } : {}),
+    });
+  }
+
+  private async lookupTreasuryAvailableAt(
+    userId: string,
+    treasuryAddress: string,
+    client: DestinationClient = this.prisma,
+  ): Promise<string | null> {
+    if (!isAddress(treasuryAddress, { strict: false })) return null;
+    let normalized: string;
+    try {
+      normalized = getAddress(treasuryAddress).toLowerCase();
+    } catch {
+      normalized = `0x${treasuryAddress.trim().slice(2).toLowerCase()}`;
+    }
+    try {
+      const row = await client.withdrawalAddress.findUnique({
+        where: { userId_address: { userId, address: normalized } },
+        select: { availableAt: true },
+      });
+      return row?.availableAt ? row.availableAt.toISOString() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * True when any claim/payment evidence is bound to the attempt — these must
+   * never be CAS-expired for requote or rail rotation (BILL-011).
+   */
+  private hasPaymentEvidence(attempt: PaymentAttemptRow): boolean {
+    return (
+      attempt.submittedTxHash != null ||
+      attempt.txHash != null ||
+      attempt.logIndex !== null ||
+      attempt.actualBaseUnits !== null ||
+      attempt.blockNumber !== null ||
+      attempt.blockHash != null ||
+      attempt.payerAddress != null ||
+      attempt.receiptEvidence != null
+    );
+  }
+
+  /**
+   * Pin an evidence-bearing pending attempt to needs_review so worker/claim
+   * recovery can finish it. Never frees the active slot for a fresh quote.
+   */
+  private async pinPendingWithEvidenceToReview(
+    attempt: PaymentAttemptRow,
+    expired: boolean,
+  ): Promise<void> {
+    const reason = attempt.submittedTxHash
+      ? expired
+        ? 'quote_expired_with_submitted_hash'
+        : 'snapshot_incomplete_with_submitted_hash'
+      : expired
+        ? 'quote_expired_with_evidence'
+        : 'snapshot_incomplete_with_evidence';
+    await this.prisma.billingPaymentAttempt.updateMany({
+      where: {
+        id: attempt.id,
+        status: 'pending',
+        walletPaymentReserved: false,
+      },
+      data: {
+        status: 'needs_review',
+        reviewReason: reason,
+      },
     });
   }
 

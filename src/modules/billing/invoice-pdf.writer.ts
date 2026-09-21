@@ -5,9 +5,14 @@
  * ASCII text — no third-party library, no CJK/brand fonts (out of scope). All
  * input text is sanitized to printable ASCII and PDF-escaped before it reaches
  * the content stream, so snapshot/metadata/receipts or unprocessed user input
- * are never embedded as-is. Amounts and layout are caller-supplied display
- * strings only; the caller owns all business/integrity validation.
+ * are never embedded as-is. Known billing-description punctuation (em dash,
+ * arrows) is mapped to readable ASCII first so persisted copy like
+ * `Plan upgrade proration — Free → Starter` does not render as `? Free ? Starter`.
+ * Amounts and layout are caller-supplied display strings only; the caller owns
+ * all business/integrity validation.
  */
+
+import { mapBillingDescriptionToAscii } from './invoice-pdf-description-map';
 
 export interface InvoicePdfLineItem {
   /** Human-readable description (display-safe, sanitized to ASCII). */
@@ -44,10 +49,12 @@ const OBJECT_COUNT = 7; // catalog, pages, page, F1, F2, contents = 6 objects + 
 
 /**
  * Reduces arbitrary text to printable ASCII (7-bit) and escapes the PDF
- * text-string delimiters `\`, `(`, and `)`. Line breaks collapse to a space.
+ * text-string delimiters `\`, `(`, and `)`. Known billing punctuation is mapped
+ * to readable ASCII first; remaining non-ASCII becomes `?`. Line breaks
+ * collapse to a space.
  */
 export function escapePdfText(text: string): string {
-  return text
+  return mapBillingDescriptionToAscii(text)
     .replace(/[\r\n]+/g, ' ')
     .replace(/[^\x20-\x7E]/g, '?')
     .replace(/\\/g, '\\\\')

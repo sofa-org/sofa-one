@@ -13,11 +13,14 @@ import { CopyButton } from '@/components/CopyButton';
 import {
   createUsdcClaimAuth,
   createUsdcQuoteAuth,
+  getInvoicePaymentStatusAuth,
   getUsdcPaymentStatusAuth,
   hasApiErrorCode,
   isApiError,
   payUsdcFromWalletAuth,
   type BillingInvoice,
+  type InvoicePaymentAttemptStatus,
+  type InvoicePaymentStatus,
   type UsdcClaimResponse,
   type UsdcClaimStatus,
   type UsdcQuoteResponse,
@@ -65,6 +68,56 @@ function formatExpiry(value: string | null | undefined): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+}
+
+/** Map server reviewReason codes to safe, actionable copy (no hashes/provider ids). */
+function humanizeReviewReason(reason: string | null | undefined): string {
+  if (!reason) return 'This payment needs manual review before anything else can settle.';
+  switch (reason) {
+    case 'duplicate_unallocated':
+      return 'This transfer was already applied to another invoice and cannot settle this one.';
+    case 'amount_mismatch':
+      return 'The payment amount did not match the quoted amount.';
+    case 'wallet_payment_awaiting_evidence':
+    case 'wallet_payment_dispatch_unknown':
+      return 'A wallet payment was started but still needs manual confirmation.';
+    case 'reorged':
+      return 'The chain reorganized after detection; settlement is paused for review.';
+    default:
+      // Keep unknown codes short and non-technical — never echo raw provider payloads.
+      return 'This payment needs manual review before anything else can settle.';
+  }
+}
+
+function isUsdcMethod(method: string | null | undefined): boolean {
+  if (!method) return false;
+  return method === 'usdc' || method.startsWith('usdc');
+}
+
+function isActiveRailAttempt(attempt: InvoicePaymentAttemptStatus | null | undefined): boolean {
+  if (!attempt) return false;
+  return attempt.status === 'pending' || attempt.status === 'confirming';
+}
+
+/** True when invoice-level status must block starting a new payment rail. */
+function blocksNewPayment(status: InvoicePaymentStatus | null | undefined): boolean {
+  if (!status || status.paid) return false;
+  if (status.hasUnresolvedReview) return true;
+  if (status.walletReservation) return true;
+  if (isActiveRailAttempt(status.activeAttempt)) return true;
+  return false;
+}
+
+function recoveryAttemptFromStatus(
+  status: InvoicePaymentStatus | null | undefined,
+): InvoicePaymentAttemptStatus | null {
+  if (!status) return null;
+  if (status.walletReservation) return status.walletReservation;
+  if (isActiveRailAttempt(status.activeAttempt)) return status.activeAttempt;
+  if (status.unresolvedReviewAttempts.length > 0) {
+    return status.unresolvedReviewAttempts[0] ?? null;
+  }
+  return null;
 }
 
 function quoteExpiryState(quoteExpiresAt: string | null | undefined): {
@@ -458,17 +511,27 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     'idle' | 'pending' | 'success' | 'error'
   >('idle');
 
+  /** BILL-018: invoice-level payment status from the server (not browser memory). */
+  const [invoicePaymentStatus, setInvoicePaymentStatus] = useState<InvoicePaymentStatus | null>(
+    null,
+  );
+  const [invoiceStatusLoading, setInvoiceStatusLoading] = useState(true);
+  const [invoiceStatusError, setInvoiceStatusError] = useState<string | null>(null);
+
   const quoteRequestIdRef = useRef(0);
   const statusRequestIdRef = useRef(0);
+  const invoiceStatusRequestIdRef = useRef(0);
   const isMountedRef = useRef(true);
   const pollTimerRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
   const pollAbortRef = useRef<AbortController | null>(null);
   const paymentRecoveryRef = useRef<WalletPaymentRecovery | null>(null);
   const walletPayResultRef = useRef<UsdcWalletPayResult | null>(null);
+  const invoicePaymentStatusRef = useRef<InvoicePaymentStatus | null>(null);
 
   paymentRecoveryRef.current = paymentRecovery;
   walletPayResultRef.current = walletPayResult;
+  invoicePaymentStatusRef.current = invoicePaymentStatus;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -674,6 +737,72 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     [fetchPaymentStatus, stopStatusPolling],
   );
 
+  /**
+   * BILL-018: read invoice-level payment status only. Never creates a quote.
+   * Used on mount/reopen and before any new quote request.
+   */
+  const loadInvoicePaymentStatus = useCallback(
+    async (signal?: AbortSignal): Promise<InvoicePaymentStatus | null> => {
+      const requestId = (invoiceStatusRequestIdRef.current += 1);
+      setInvoiceStatusLoading(true);
+      setInvoiceStatusError(null);
+
+      try {
+        const data = await getInvoicePaymentStatusAuth(getToken, invoice.id, signal);
+        if (signal?.aborted) return null;
+        if (requestId !== invoiceStatusRequestIdRef.current) return null;
+        if (!isMountedRef.current) return null;
+
+        setInvoicePaymentStatus(data);
+        invoicePaymentStatusRef.current = data;
+
+        if (data.paid === true) {
+          void onChange();
+        }
+
+        // Align chain selector with server-known attempt when present.
+        const recovery = recoveryAttemptFromStatus(data);
+        if (recovery?.chainId != null && Number.isFinite(recovery.chainId)) {
+          setSelectedChainId(recovery.chainId);
+        }
+
+        return data;
+      } catch (err: unknown) {
+        if (signal?.aborted) return null;
+        if (requestId !== invoiceStatusRequestIdRef.current) return null;
+        if (!isMountedRef.current) return null;
+
+        setInvoiceStatusError(
+          friendlyUsdcError(
+            err,
+            'Could not load payment status for this invoice. Refresh and try again before starting a new payment.',
+          ),
+        );
+        return null;
+      } finally {
+        if (
+          isMountedRef.current &&
+          !signal?.aborted &&
+          requestId === invoiceStatusRequestIdRef.current
+        ) {
+          setInvoiceStatusLoading(false);
+        }
+      }
+    },
+    [getToken, invoice.id, onChange],
+  );
+
+  // On open/refresh: restore server payment state only — never auto-create a quote.
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadInvoicePaymentStatus(controller.signal);
+    return () => controller.abort();
+  }, [loadInvoicePaymentStatus]);
+
+  /**
+   * User-triggered quote. Always re-reads invoice-level status first so unresolved
+   * review / active rails stay authoritative after refresh (BILL-018).
+   */
   const fetchQuote = useCallback(
     async (signal?: AbortSignal) => {
       const requestId = (quoteRequestIdRef.current += 1);
@@ -687,17 +816,11 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
       // Never wipe reserved/unknown/recovery state while fail-closed — refresh must not
       // re-enable a second payment until the server confirms safe/paid/terminal release.
       if (!keepFailClosed) {
-        setQuote(null);
         setQuoteError(null);
         setClaimResult(null);
         setClaimError(null);
-        setWalletPayResult(null);
-        walletPayResultRef.current = null;
         setWalletPayError(null);
         setStatusPollNote(null);
-        clearPaymentRecovery();
-        setTxHash('');
-        setTxHashTouched(false);
         setInvoiceRefreshPhase('idle');
       } else {
         setQuoteError(null);
@@ -708,11 +831,63 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
       setQuoteLoading(true);
 
       try {
+        // Gate: invoice-level status before any write-like quote create.
+        const invoiceStatus = await loadInvoicePaymentStatus(signal);
+        if (signal?.aborted) return;
+        if (requestId !== quoteRequestIdRef.current) return;
+
+        if (!invoiceStatus) {
+          // Fail closed when status cannot be confirmed — do not create a quote.
+          setQuoteError(
+            'Could not confirm payment status for this invoice. Do not start a new payment until status loads successfully.',
+          );
+          return;
+        }
+
+        if (invoiceStatus.paid === true) {
+          setQuote(null);
+          setQuoteError(null);
+          void onChange();
+          return;
+        }
+
+        if (invoiceStatus.hasUnresolvedReview) {
+          // Unresolved needs_review/reorged must block new quotes (BILL-018).
+          if (!keepFailClosed) {
+            setQuote(null);
+            setClaimResult(null);
+            setWalletPayResult(null);
+            walletPayResultRef.current = null;
+            clearPaymentRecovery();
+            setTxHash('');
+            setTxHashTouched(false);
+          }
+          setQuoteError(
+            'A previous payment for this invoice still needs manual review. Contact support and do not start another payment until it is resolved.',
+          );
+          return;
+        }
+
+        // Active non-USDC rail (e.g. card checkout pending): wait — do not open a parallel USDC quote.
+        const active = invoiceStatus.activeAttempt;
+        if (
+          isActiveRailAttempt(active) &&
+          active &&
+          !isUsdcMethod(active.method) &&
+          !invoiceStatus.walletReservation
+        ) {
+          setQuoteError(
+            'Another payment method is already in progress for this invoice. Finish or wait for it before starting USDC.',
+          );
+          return;
+        }
+
         const data = await createUsdcQuoteAuth(getToken, invoice.id, selectedChainId, signal);
         if (signal?.aborted) return;
         if (requestId !== quoteRequestIdRef.current) return; // stale response
         setQuote(data);
         setSelectedChainId(data.chainId);
+        setQuoteError(null);
 
         // Restore reserved/in-flight wallet payment from server status (no auto-submit).
         try {
@@ -740,6 +915,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
             STATUS_UNCONFIRMED_MESSAGE,
           );
         }
+
+        // Refresh invoice-level view after quote so Billing list stays in sync if parent reloads.
+        void loadInvoicePaymentStatus(signal);
       } catch (err: unknown) {
         if (signal?.aborted) return;
         if (requestId !== quoteRequestIdRef.current) return;
@@ -770,17 +948,13 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
       getToken,
       invoice.id,
       isActiveWalletPayment,
+      loadInvoicePaymentStatus,
+      onChange,
       selectedChainId,
       startStatusPolling,
       stopStatusPolling,
     ],
   );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchQuote(controller.signal);
-    return () => controller.abort();
-  }, [fetchQuote]);
 
   const handlePayFromWallet = useCallback(async () => {
     if (!quote || quoteLoading || walletPayLoading) return;
@@ -933,17 +1107,26 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
   ]);
 
   const handleCheckStatus = useCallback(async () => {
+    // Prefer quote/wallet attempt ids; fall back to invoice-level recovery (server truth).
+    const recovery = recoveryAttemptFromStatus(invoicePaymentStatusRef.current);
     const attemptId =
       quote?.paymentAttemptId ??
       paymentRecoveryRef.current?.paymentAttemptId ??
-      walletPayResultRef.current?.paymentAttemptId;
-    if (!attemptId) return;
+      walletPayResultRef.current?.paymentAttemptId ??
+      (recovery && isUsdcMethod(recovery.method) ? recovery.paymentAttemptId : null);
+
     setWalletPayError(null);
+
+    // Always refresh invoice-level status so review/active rails stay visible after refresh.
+    await loadInvoicePaymentStatus();
+
+    if (!attemptId) return;
+
     const data = await fetchPaymentStatus(attemptId, { showSpinner: true });
     if (data && walletPayStatusDisplay(data).shouldPoll) {
       startStatusPolling(attemptId);
     }
-  }, [fetchPaymentStatus, quote, startStatusPolling]);
+  }, [fetchPaymentStatus, loadInvoicePaymentStatus, quote, startStatusPolling]);
 
   const handleClaim = useCallback(
     async (event: React.FormEvent) => {
@@ -1081,8 +1264,21 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
   const claimStatus = claimResult ? claimStatusDisplay(claimResult) : null;
   const walletStatus = walletPayResult ? walletPayStatusDisplay(walletPayResult) : null;
   const recoveryLocked = paymentRecovery !== null;
+
+  const hasUnresolvedReview = invoicePaymentStatus?.hasUnresolvedReview === true;
+  const invoicePaid = invoicePaymentStatus?.paid === true;
+  const serverBlocksNewPayment = blocksNewPayment(invoicePaymentStatus);
+  const recoveryAttempt = recoveryAttemptFromStatus(invoicePaymentStatus);
+  const activeUsdcAttempt =
+    recoveryAttempt && isUsdcMethod(recoveryAttempt.method) ? recoveryAttempt : null;
+  const reviewBlocked = hasUnresolvedReview && !invoicePaid;
+
   const paymentActionsLocked =
-    recoveryLocked || walletStatus?.lockActions === true || walletPayLoading;
+    recoveryLocked ||
+    walletStatus?.lockActions === true ||
+    walletPayLoading ||
+    reviewBlocked ||
+    invoicePaid;
 
   const claimFormLocked =
     (claimResult !== null &&
@@ -1096,7 +1292,8 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     !isValidTxHash(txHash) ||
     claimFormLocked ||
     invoiceRefreshPhase === 'pending' ||
-    invoiceRefreshPhase === 'error';
+    invoiceRefreshPhase === 'error' ||
+    reviewBlocked;
 
   const payFromWalletDisabled =
     walletPayLoading ||
@@ -1107,24 +1304,39 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     expiry.expired ||
     expiry.expiringSoon ||
     invoiceRefreshPhase === 'pending' ||
-    invoiceRefreshPhase === 'error';
+    invoiceRefreshPhase === 'error' ||
+    reviewBlocked;
 
   const controlsLocked =
     invoiceRefreshPhase === 'pending' ||
     invoiceRefreshPhase === 'error' ||
     walletPayLoading ||
     recoveryLocked ||
+    reviewBlocked ||
+    invoiceStatusLoading ||
     (walletStatus?.lockActions === true && walletPayResult?.paid !== true);
 
   const settledPaid =
+    invoicePaid ||
     walletPayResult?.paid === true ||
     (claimResult?.paid === true && claimResult.status === 'succeeded');
 
   const canCheckStatus = Boolean(
     quote?.paymentAttemptId ||
     paymentRecovery?.paymentAttemptId ||
-    walletPayResult?.paymentAttemptId,
+    walletPayResult?.paymentAttemptId ||
+    (activeUsdcAttempt?.paymentAttemptId ?? null) ||
+    invoicePaymentStatus !== null,
   );
+
+  const quoteButtonLabel = quote ? 'Refresh quote' : 'Get quote';
+  /** Continue reuses the server attempt via quote (idempotent) — never invents a new rail silently. */
+  const showContinueEntry =
+    !quote &&
+    !reviewBlocked &&
+    !invoicePaid &&
+    Boolean(activeUsdcAttempt) &&
+    serverBlocksNewPayment;
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-5">
@@ -1136,47 +1348,207 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
         Pay from your SOFA platform wallet using the server quote, or send the exact transfer
         yourself and claim with the transaction hash. Only the quoted payer, token, treasury,
         amount, and chain are accepted — the invoice is paid only after the server confirms
-        settlement.
+        settlement. Opening this panel loads payment status from the server and does not create a
+        new quote until you ask.
       </p>
 
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
-        <div className="flex-1 space-y-1.5">
-          <label
-            htmlFor={`usdc-network-${invoice.id}`}
-            className="text-[11px] font-bold uppercase tracking-widest text-brand-muted"
-          >
-            Network
-          </label>
-          <select
-            id={`usdc-network-${invoice.id}`}
-            value={selectedChainId}
-            onChange={(event) => setSelectedChainId(Number(event.target.value))}
-            disabled={quoteLoading || claimLoading || walletPayLoading || controlsLocked}
-            className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
-          >
-            {USDC_CHAIN_OPTIONS.map((option) => (
-              <option key={option.chainId} value={option.chainId}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={() => fetchQuote()}
-          disabled={
-            quoteLoading || claimLoading || walletPayLoading || invoiceRefreshPhase === 'pending'
-          }
-          className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-surface disabled:opacity-60"
+      {invoiceStatusLoading && !invoicePaymentStatus && (
+        <div
+          role="status"
+          className="mt-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800"
         >
-          {quoteLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-          Refresh quote
-        </button>
-      </div>
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+          <span>Loading payment status for this invoice…</span>
+        </div>
+      )}
+
+      {invoiceStatusError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{invoiceStatusError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadInvoicePaymentStatus()}
+              disabled={invoiceStatusLoading}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+            >
+              {invoiceStatusLoading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              Retry status
+            </button>
+          </div>
+        </div>
+      )}
+
+      {reviewBlocked && invoicePaymentStatus && (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-900"
+        >
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="min-w-0 space-y-2">
+              <p className="font-semibold">Payment needs manual review</p>
+              <p>
+                A previous payment attempt for this invoice is unresolved. New card or USDC payments
+                are blocked until support resolves it. Do not send another transfer.
+              </p>
+              {(invoicePaymentStatus.blockingReasons.length > 0
+                ? invoicePaymentStatus.blockingReasons
+                : invoicePaymentStatus.unresolvedReviewAttempts.map((a) => a.reviewReason)
+              )
+                .filter((r): r is string => typeof r === 'string' && r.length > 0)
+                .filter((r, i, arr) => arr.indexOf(r) === i)
+                .map((reason) => (
+                  <p key={reason} className="text-red-800">
+                    {humanizeReviewReason(reason)}
+                  </p>
+                ))}
+              <p className="font-medium text-red-950">
+                Contact support with your account email and invoice period. Do not resubmit the same
+                payment unless support asks you to.
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadInvoicePaymentStatus()}
+                disabled={invoiceStatusLoading}
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-red-800 hover:bg-red-100 disabled:opacity-60"
+              >
+                {invoiceStatusLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+                Refresh review status
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showContinueEntry && activeUsdcAttempt && (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"
+        >
+          <div className="flex items-start gap-2">
+            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+            <div className="min-w-0 space-y-2">
+              <p className="font-semibold">
+                {activeUsdcAttempt.walletPaymentReserved
+                  ? 'Wallet payment reserved'
+                  : activeUsdcAttempt.status === 'confirming'
+                    ? 'USDC payment confirming'
+                    : 'USDC payment in progress'}
+              </p>
+              <p>
+                {activeUsdcAttempt.walletPaymentReserved
+                  ? 'A wallet payment is already reserved for this invoice. Continue to restore the quote and check status — do not start a second payment or switch to card.'
+                  : 'An active USDC quote is already open for this invoice. Continue to restore it, or wait until it expires. Card checkout stays unavailable while this quote is active.'}
+              </p>
+              {activeUsdcAttempt.quoteExpiresAt && (
+                <p className="text-amber-900">
+                  Quote expires: {formatExpiry(activeUsdcAttempt.quoteExpiresAt)}
+                  {activeUsdcAttempt.chainId != null
+                    ? ` · ${getChainOption(activeUsdcAttempt.chainId)?.name ?? `Chain ${activeUsdcAttempt.chainId}`}`
+                    : ''}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void fetchQuote()}
+                  disabled={quoteLoading || invoiceStatusLoading}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-text/90 disabled:opacity-60"
+                >
+                  {quoteLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Wallet className="h-3 w-3" />
+                  )}
+                  Continue this payment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCheckStatus()}
+                  disabled={statusRefreshing || invoiceStatusLoading}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+                >
+                  {statusRefreshing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  Check status
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!reviewBlocked && !invoicePaid && (
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <label
+              htmlFor={`usdc-network-${invoice.id}`}
+              className="text-[11px] font-bold uppercase tracking-widest text-brand-muted"
+            >
+              Network
+            </label>
+            <select
+              id={`usdc-network-${invoice.id}`}
+              value={selectedChainId}
+              onChange={(event) => setSelectedChainId(Number(event.target.value))}
+              disabled={
+                quoteLoading ||
+                claimLoading ||
+                walletPayLoading ||
+                controlsLocked ||
+                showContinueEntry
+              }
+              className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent disabled:opacity-60"
+            >
+              {USDC_CHAIN_OPTIONS.map((option) => (
+                <option key={option.chainId} value={option.chainId}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => void fetchQuote()}
+            disabled={
+              quoteLoading ||
+              claimLoading ||
+              walletPayLoading ||
+              invoiceRefreshPhase === 'pending' ||
+              invoiceStatusLoading ||
+              Boolean(invoiceStatusError) ||
+              // Active USDC recovery uses Continue — avoid a second unlabeled "Get quote" path.
+              (showContinueEntry && !quote)
+            }
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-surface disabled:opacity-60"
+          >
+            {quoteLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            {quoteButtonLabel}
+          </button>
+        </div>
+      )}
 
       {quoteError && (
         <div

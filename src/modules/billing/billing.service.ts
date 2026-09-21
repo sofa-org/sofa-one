@@ -101,6 +101,49 @@ export interface BillingInvoiceDto {
   pdfUrl: string | null;
 }
 
+/**
+ * BILL-018: safe, JSON-only projection of a payment attempt for dashboard
+ * recovery. Never includes calldata, receipts, RPC/provider details, checkout
+ * URLs, Stripe object ids, or chain/tx hashes.
+ */
+export interface InvoicePaymentAttemptStatusDto {
+  paymentAttemptId: string;
+  method: string;
+  status: string;
+  reviewReason: string | null;
+  createdAt: string;
+  walletPaymentReserved: boolean;
+  chainId: number | null;
+  quoteExpiresAt: string | null;
+}
+
+/**
+ * Invoice-level read-only payment status (dashboard IAM only).
+ *
+ * Surfaces active rail attempts, wallet reservations, and ALL unresolved
+ * manual/review attempts — never collapses to "latest pending" alone, which
+ * would hide an earlier `needs_review` after refresh (BILL-018).
+ */
+export interface InvoicePaymentStatusDto {
+  invoiceId: string;
+  invoiceStatus: string;
+  paid: boolean;
+  paidAt: string | null;
+  /** At most one pending/confirming attempt (cross-rail active-payment invariant). */
+  activeAttempt: InvoicePaymentAttemptStatusDto | null;
+  /** Wallet-payment reservation when present (any status, incl. needs_review). */
+  walletReservation: InvoicePaymentAttemptStatusDto | null;
+  /**
+   * Unresolved manual/review attempts (needs_review + reorged), oldest first.
+   * Never replaced by a newer pending quote on the same invoice.
+   */
+  unresolvedReviewAttempts: InvoicePaymentAttemptStatusDto[];
+  /** True when any unresolved review must stay visible after refresh. */
+  hasUnresolvedReview: boolean;
+  /** Distinct non-empty reviewReason values from unresolved reviews. */
+  blockingReasons: string[];
+}
+
 export interface ListInvoicesResult {
   items: BillingInvoiceDto[];
   total: number;
@@ -1548,6 +1591,71 @@ export class BillingService {
   }
 
   /**
+   * BILL-018: invoice-level read-only payment status for dashboard recovery.
+   *
+   * - Ownership-scoped (same NotFound shape as getInvoice for cross-user).
+   * - GET-only: never creates quote/attempt rows and never calls external
+   *   providers (Stripe/RPC/Openfort).
+   * - Returns active pending/confirming attempt, wallet reservation, and
+   *   every unresolved needs_review/reorged attempt so a newer pending quote
+   *   cannot hide an earlier manual review after refresh.
+   * - Safe DTO only: no calldata, receipts, RPC/provider details, or hashes.
+   */
+  async getInvoicePaymentStatus(
+    userId: string,
+    invoiceId: string,
+  ): Promise<InvoicePaymentStatusDto> {
+    const account = await this.prisma.billingAccount.findUnique({ where: { userId } });
+    if (!account) throw new NotFoundException('Invoice not found');
+
+    const invoice = await this.prisma.billingInvoice.findFirst({
+      where: { id: invoiceId, billingAccountId: account.id },
+    });
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    // Read-only: relevant attempts only. Include wallet reservations at any
+    // status so a reserved needs_review row is never dropped from recovery.
+    const attempts = await this.prisma.billingPaymentAttempt.findMany({
+      where: {
+        invoiceId: invoice.id,
+        OR: [
+          { status: { in: ['pending', 'confirming', 'needs_review', 'reorged'] } },
+          { walletPaymentReserved: true },
+        ],
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const activeRow =
+      attempts.find((a) => a.status === 'pending' || a.status === 'confirming') ?? null;
+    const reservedRow = attempts.find((a) => a.walletPaymentReserved === true) ?? null;
+    const reviewRows = attempts.filter(
+      (a) => a.status === 'needs_review' || a.status === 'reorged',
+    );
+
+    const unresolvedReviewAttempts = reviewRows.map((a) => this.toPaymentAttemptStatusDto(a));
+    const blockingReasons = [
+      ...new Set(
+        unresolvedReviewAttempts
+          .map((a) => a.reviewReason)
+          .filter((r): r is string => typeof r === 'string' && r.length > 0),
+      ),
+    ];
+
+    return {
+      invoiceId: invoice.id,
+      invoiceStatus: invoice.status,
+      paid: Boolean(invoice.paidAt),
+      paidAt: invoice.paidAt ? invoice.paidAt.toISOString() : null,
+      activeAttempt: activeRow ? this.toPaymentAttemptStatusDto(activeRow) : null,
+      walletReservation: reservedRow ? this.toPaymentAttemptStatusDto(reservedRow) : null,
+      unresolvedReviewAttempts,
+      hasUnresolvedReview: unresolvedReviewAttempts.length > 0,
+      blockingReasons,
+    };
+  }
+
+  /**
    * Service-internal: finalizes an immutable invoice for a UTC month. Aggregates
    * usage, computes totals via the calculator, and persists a BillingInvoice
    * with lines and a SHA-256 snapshot hash. If an invoice already exists for the
@@ -2627,6 +2735,26 @@ export class BillingService {
       planVersionId: inv.planVersionId ?? null,
       // No Stripe hosted invoice PDF is used; keep null.
       pdfUrl: null,
+    };
+  }
+
+  /**
+   * Safe attempt projection for BILL-018 invoice payment-status. Explicit allowlist
+   * — never spreads the Prisma row (would leak hashes, provider ids, receipts).
+   */
+  private toPaymentAttemptStatusDto(
+    attempt: Prisma.BillingPaymentAttemptGetPayload<Record<string, never>>,
+  ): InvoicePaymentAttemptStatusDto {
+    return {
+      paymentAttemptId: attempt.id,
+      method: attempt.method,
+      status: attempt.status,
+      reviewReason: attempt.reviewReason ?? null,
+      createdAt: attempt.createdAt.toISOString(),
+      walletPaymentReserved: attempt.walletPaymentReserved === true,
+      chainId:
+        attempt.chainId !== null && attempt.chainId !== undefined ? Number(attempt.chainId) : null,
+      quoteExpiresAt: attempt.quoteExpiresAt ? attempt.quoteExpiresAt.toISOString() : null,
     };
   }
 

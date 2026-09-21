@@ -1,3 +1,4 @@
+import { mapBillingDescriptionToAscii } from './invoice-pdf-description-map';
 import { buildInvoicePdf, escapePdfText, type InvoicePdfDocument } from './invoice-pdf.writer';
 
 function sampleDocument(): InvoicePdfDocument {
@@ -17,17 +18,36 @@ function sampleDocument(): InvoicePdfDocument {
   };
 }
 
+describe('mapBillingDescriptionToAscii', () => {
+  it('maps plan-upgrade proration punctuation to readable ASCII', () => {
+    expect(mapBillingDescriptionToAscii('Plan upgrade proration — Free → Starter')).toBe(
+      'Plan upgrade proration - Free -> Starter',
+    );
+  });
+
+  it('leaves unknown non-ASCII unchanged for the generic sanitizer', () => {
+    expect(mapBillingDescriptionToAscii('价格')).toBe('价格');
+  });
+});
+
 describe('escapePdfText', () => {
   it('keeps plain printable ASCII unchanged', () => {
     expect(escapePdfText('SOFA ONE Invoice 2026-05')).toBe('SOFA ONE Invoice 2026-05');
   });
 
-  it('replaces non-ASCII characters so only ASCII reaches the PDF', () => {
-    expect(escapePdfText('Monthly fee — 价格 100%')).toBe('Monthly fee ? ?? 100%');
+  it('maps known billing punctuation then replaces remaining non-ASCII with ?', () => {
+    expect(escapePdfText('Monthly fee — 价格 100%')).toBe('Monthly fee - ?? 100%');
   });
 
-  it('escapes PDF text-string delimiters', () => {
+  it('renders real upgrade proration descriptions without ? placeholders for arrows/dashes', () => {
+    expect(escapePdfText('Plan upgrade proration — Free → Starter')).toBe(
+      'Plan upgrade proration - Free -> Starter',
+    );
+  });
+
+  it('escapes PDF text-string delimiters after ASCII mapping', () => {
     expect(escapePdfText('a(b)\\c')).toBe('a\\(b\\)\\\\c');
+    expect(escapePdfText('fee — (Starter)')).toBe('fee - \\(Starter\\)');
   });
 
   it('collapses line breaks into a single space', () => {
@@ -66,7 +86,22 @@ describe('buildInvoicePdf', () => {
     expect(text).toContain('(Invoice: inv-1)');
     expect(text).toContain('(Period: 2026-05)');
     expect(text).toContain('(Amount: 84 USD)');
-    expect(text).toContain('(Monthly fee ? Starter)');
+    expect(text).toContain('(Monthly fee - Starter)');
+  });
+
+  it('embeds plan upgrade proration descriptions with readable ASCII arrows/dashes', () => {
+    const doc = sampleDocument();
+    doc.lines = [
+      {
+        description: 'Plan upgrade proration — Free → Starter',
+        amount: '12.34',
+      },
+    ];
+    const text = buildInvoicePdf(doc).toString('ascii');
+    expect(text).toContain('(Plan upgrade proration - Free -> Starter)');
+    expect(text).not.toContain('? Free ?');
+    expect(text).not.toContain('\u2014');
+    expect(text).not.toContain('\u2192');
   });
 
   it('positions text with a full six-operand text matrix so readers extract it', () => {

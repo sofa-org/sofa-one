@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { API_ERROR_CODES } from '../../../common/errors/api-error-codes';
+import { WithdrawalDestinationPolicyService } from '../../withdrawal-destination/withdrawal-destination-policy.service';
 import { InvoiceSettlementService } from '../invoice-settlement.service';
 import { USDC_RECEIPT_PROVIDER, USDC_TRANSFER_TOPIC0 } from './usdc.constants';
 import { UsdcPaymentService } from './usdc-payment.service';
@@ -202,6 +204,24 @@ describe('UsdcPaymentService', () => {
   const getTransactionReceipt = jest.fn();
   const getBlockNumber = jest.fn();
   const configGet = jest.fn();
+  const assertDestinationsAllowed = jest.fn();
+  const acquireUserDestinationLock = jest.fn();
+  const recordDeferredDenial = jest.fn();
+  const withdrawalPolicyFindUnique = jest.fn();
+  const withdrawalAddressFindUnique = jest.fn();
+
+  /** BILL-011: evidence-free pending release CAS predicates. */
+  const releasablePendingWhere = {
+    status: 'pending',
+    walletPaymentReserved: false,
+    submittedTxHash: null,
+    txHash: null,
+    logIndex: null,
+    actualBaseUnits: null,
+    blockNumber: null,
+    blockHash: null,
+    payerAddress: null,
+  };
 
   /**
    * Quote does two findFirsts: (1) walletPaymentReserved=true, (2) pending/confirming.
@@ -232,6 +252,8 @@ describe('UsdcPaymentService', () => {
     },
     userWallet: { findUnique: walletFindUnique },
     transaction: { findUnique: transactionFindUnique },
+    withdrawalPolicy: { findUnique: withdrawalPolicyFindUnique },
+    withdrawalAddress: { findUnique: withdrawalAddressFindUnique },
     $transaction: jest.fn(),
   };
 
@@ -246,10 +268,17 @@ describe('UsdcPaymentService', () => {
       create: attemptCreate,
     },
     billingInvoice: { findUnique: txInvoiceFindUnique },
+    withdrawalPolicy: { findUnique: withdrawalPolicyFindUnique },
+    withdrawalAddress: { findUnique: withdrawalAddressFindUnique },
   };
 
   const receiptProvider = { getTransactionReceipt, getBlockNumber };
   const settlementService = { settleInvoice };
+  const destinationPolicy = {
+    assertDestinationsAllowed,
+    acquireUserDestinationLock,
+    recordDeferredDenial,
+  };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -284,6 +313,12 @@ describe('UsdcPaymentService', () => {
     // The claim path re-reads the invoice under the row lock to reject stale
     // quotes whose persisted amount exceeds the current remaining balance.
     txInvoiceFindUnique.mockResolvedValue(invoice({ settlementAttemptId: null }));
+    // BILL-011: default destination policy allows (allowlist off / ready).
+    assertDestinationsAllowed.mockResolvedValue(undefined);
+    acquireUserDestinationLock.mockResolvedValue(undefined);
+    recordDeferredDenial.mockResolvedValue(undefined);
+    withdrawalPolicyFindUnique.mockResolvedValue(null);
+    withdrawalAddressFindUnique.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -292,6 +327,7 @@ describe('UsdcPaymentService', () => {
         { provide: ConfigService, useValue: { get: configGet } },
         { provide: InvoiceSettlementService, useValue: settlementService },
         { provide: USDC_RECEIPT_PROVIDER, useValue: receiptProvider },
+        { provide: WithdrawalDestinationPolicyService, useValue: destinationPolicy },
       ],
     }).compile();
 
@@ -728,7 +764,7 @@ describe('UsdcPaymentService', () => {
       const result = await service.quote('user-1', 'inv-1', 8453);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
+        where: { id: 'att-usdc', ...releasablePendingWhere },
         data: expect.objectContaining({ status: 'expired', reviewReason: 'quote_expired' }),
       });
       expect(attemptCreate).toHaveBeenCalledTimes(1);
@@ -742,7 +778,7 @@ describe('UsdcPaymentService', () => {
       const result = await service.quote('user-1', 'inv-1', 8453);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
+        where: { id: 'att-usdc', ...releasablePendingWhere },
         data: expect.objectContaining({
           status: 'needs_review',
           reviewReason: 'snapshot_incomplete',
@@ -800,7 +836,7 @@ describe('UsdcPaymentService', () => {
       const result = await service.quote('user-1', 'inv-1', 84532);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
+        where: { id: 'att-usdc', ...releasablePendingWhere },
         data: expect.objectContaining({ status: 'expired', reviewReason: 'quote_expired' }),
       });
       expect(attemptCreate).toHaveBeenCalledWith({
@@ -897,6 +933,174 @@ describe('UsdcPaymentService', () => {
 
       await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
       expect(attemptCreate).toHaveBeenCalledTimes(1);
+    });
+
+    // ── BILL-011: treasury allowlist readiness + evidence-aware expiry ────────
+
+    it('BILL-011: allows quote when allowlist policy is not enabled (no side effects beyond create)', async () => {
+      mockQuoteActiveAttempt(null);
+      attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-fresh' }));
+      // destinationPolicy resolves (allow-all when policy off).
+      assertDestinationsAllowed.mockResolvedValue(undefined);
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      expect(assertDestinationsAllowed).toHaveBeenCalledWith(
+        'user-1',
+        [TREASURY_8453],
+        expect.objectContaining({ actorType: 'user', chainId: 8453 }),
+      );
+      // In-lock recheck under destination advisory.
+      expect(acquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
+      expect(assertDestinationsAllowed).toHaveBeenCalledTimes(2);
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
+      expect(result.paymentAttemptId).toBe('att-fresh');
+    });
+
+    it('BILL-011: rejects quote before create when treasury availableAt is still in the future', async () => {
+      mockQuoteActiveAttempt(null);
+      const availableAt = new Date(Date.now() + 60_000);
+      assertDestinationsAllowed.mockRejectedValue(
+        new ForbiddenException({
+          code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN,
+          message: 'Withdrawal address is still in cooldown',
+        }),
+      );
+      withdrawalAddressFindUnique.mockResolvedValue({ availableAt });
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN,
+          message: 'Withdrawal address is still in cooldown',
+          availableAt: availableAt.toISOString(),
+        }),
+      );
+      // No payment attempt, no TTL started, no release CAS.
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(acquireUserDestinationLock).not.toHaveBeenCalled();
+    });
+
+    it('BILL-011: allows quote when treasury availableAt equals now (boundary inclusive)', async () => {
+      mockQuoteActiveAttempt(null);
+      attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-ready' }));
+      // Leaf treats availableAt <= now as ready; outer + in-lock both pass.
+      assertDestinationsAllowed.mockResolvedValue(undefined);
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      expect(result.paymentAttemptId).toBe('att-ready');
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
+      expect(assertDestinationsAllowed).toHaveBeenCalledTimes(2);
+    });
+
+    it('BILL-011: allows quote when treasury availableAt is in the past', async () => {
+      mockQuoteActiveAttempt(null);
+      attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-past' }));
+      assertDestinationsAllowed.mockResolvedValue(undefined);
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      expect(result.paymentAttemptId).toBe('att-past');
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it('BILL-011: rejects quote when treasury is not on the allowlist (no attempt created)', async () => {
+      mockQuoteActiveAttempt(null);
+      assertDestinationsAllowed.mockRejectedValue(
+        new ForbiddenException({
+          code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+          message: 'Withdrawal address is not allowlisted',
+        }),
+      );
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        }),
+      );
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('BILL-011: never releases an expired pending attempt that already has submittedTxHash', async () => {
+      mockQuoteActiveAttempt(
+        usdcAttempt({
+          quoteExpiresAt: new Date(Date.now() - 1000),
+          submittedTxHash: TX_HASH,
+        }),
+      );
+
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
+
+      // Pinned to needs_review for recovery — never expired for rail/requote.
+      expect(attemptUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'att-usdc',
+          status: 'pending',
+          walletPaymentReserved: false,
+        },
+        data: expect.objectContaining({
+          status: 'needs_review',
+          reviewReason: 'quote_expired_with_submitted_hash',
+        }),
+      });
+      expect(attemptCreate).not.toHaveBeenCalled();
+      // Destination preflight never runs when evidence blocks release.
+      expect(assertDestinationsAllowed).not.toHaveBeenCalled();
+    });
+
+    it('BILL-011: never releases an expired pending attempt that has any payment evidence', async () => {
+      mockQuoteActiveAttempt(
+        usdcAttempt({
+          quoteExpiresAt: new Date(Date.now() - 1000),
+          txHash: TX_HASH,
+          blockNumber: 100n,
+          blockHash: BLOCK_HASH,
+        }),
+      );
+
+      await expect(service.quote('user-1', 'inv-1', 84532)).rejects.toThrow(ConflictException);
+
+      expect(attemptUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'att-usdc',
+          status: 'pending',
+          walletPaymentReserved: false,
+        },
+        data: expect.objectContaining({
+          status: 'needs_review',
+          reviewReason: 'quote_expired_with_evidence',
+        }),
+      });
+      expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('BILL-011: in-lock destination denial does not create an attempt (no TTL side effect)', async () => {
+      mockQuoteActiveAttempt(null);
+      // Outer preflight passes; in-lock recheck fails (allowlist raced on).
+      assertDestinationsAllowed
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(
+          new ForbiddenException({
+            code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+            message: 'Withdrawal address is not allowlisted',
+          }),
+        );
+
+      // Deferred path uses DeferredDestinationPolicyDenial; without it the
+      // plain Forbidden bubbles from the TX. Simulate plain Forbidden from leaf.
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ForbiddenException);
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(acquireUserDestinationLock).toHaveBeenCalled();
     });
   });
 

@@ -117,6 +117,25 @@ export class BillingController {
   }
 
   /**
+   * GET /v1/billing/invoices/:id/payment-status — invoice-level read-only
+   * payment recovery (BILL-018). Returns the active attempt, wallet
+   * reservation, and every unresolved needs_review/reorged attempt so a
+   * newer pending quote cannot hide an earlier manual review after refresh.
+   * Ownership-scoped; never creates quote/attempt rows or calls external
+   * providers; never returns calldata, receipts, RPC/provider details, or
+   * sensitive hashes. Not part of the public API-key spec.
+   */
+  @Get('invoices/:id/payment-status')
+  @FrontendOnly()
+  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  async getInvoicePaymentStatus(
+    @CurrentUser('id') userId: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.billingService.getInvoicePaymentStatus(userId, id);
+  }
+
+  /**
    * GET /v1/billing/invoices/:id/pdf — downloads the immutable PDF for a
    * finalized (or paid) invoice owned by the current user. Pricing comes only
    * from the persisted snapshot/lines, never the current plan; the service

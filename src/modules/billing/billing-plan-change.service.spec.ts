@@ -755,7 +755,7 @@ describe('BillingPlanChangeService', () => {
       expect(attemptUpdateMany).not.toHaveBeenCalled();
     });
 
-    it('fails closed on failed Stripe attempt even with a prior Checkout session (no remote inactivity proof)', async () => {
+    it('allows cancel when Stripe attempt is terminal failed (non-charging), leaving the row intact', async () => {
       changeFindUnique.mockResolvedValue(pendingChange);
       attemptFindMany.mockResolvedValue([
         {
@@ -767,14 +767,20 @@ describe('BillingPlanChangeService', () => {
           failureCode: 'card_declined',
         },
       ]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
 
-      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
-      expect(changeUpdateMany).not.toHaveBeenCalled();
-      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('canceled');
+      expect(changeUpdateMany).toHaveBeenCalled();
+      expect(invoiceUpdateMany).toHaveBeenCalled();
+      // Terminal Stripe rows are never deleted or released.
       expect(attemptUpdateMany).not.toHaveBeenCalled();
     });
 
-    it('fails closed on expired or canceled Stripe attempt rows without writes', async () => {
+    it('allows cancel when Stripe attempt is terminal expired (non-charging), leaving the row intact', async () => {
       changeFindUnique.mockResolvedValue(pendingChange);
       attemptFindMany.mockResolvedValue([
         {
@@ -785,10 +791,15 @@ describe('BillingPlanChangeService', () => {
           stripeCheckoutSessionId: 'cs_test_expired',
         },
       ]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
 
-      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
-      expect(changeUpdateMany).not.toHaveBeenCalled();
-      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('canceled');
+      expect(changeUpdateMany).toHaveBeenCalled();
+      expect(invoiceUpdateMany).toHaveBeenCalled();
       expect(attemptUpdateMany).not.toHaveBeenCalled();
     });
 
@@ -803,6 +814,92 @@ describe('BillingPlanChangeService', () => {
 
       expect(result.outcome).toBe('canceled');
       expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when mixed terminal Stripe and active Stripe attempts coexist', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-expired',
+          method: 'stripe',
+          status: 'expired',
+          stripeCheckoutSessionId: 'cs_test_expired',
+        },
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-pending',
+          method: 'stripe',
+          status: 'pending',
+          stripeCheckoutSessionId: 'cs_test_open',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when mixed terminal Stripe and uncertain needs_review coexist', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-failed',
+          method: 'stripe',
+          status: 'failed',
+          stripeCheckoutSessionId: 'cs_test_failed',
+          failureCode: 'card_declined',
+        },
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-review',
+          method: 'stripe',
+          status: 'needs_review',
+          stripeCheckoutSessionId: 'cs_test_review',
+          reviewReason: 'checkout_recovery_exhausted',
+        },
+      ]);
+
+      await expect(service.cancelPendingUpgrade(cancelArgs)).rejects.toThrow(ConflictException);
+      expect(changeUpdateMany).not.toHaveBeenCalled();
+      expect(invoiceUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('cancels with terminal Stripe plus clean USDC pending (releases USDC only)', async () => {
+      changeFindUnique.mockResolvedValue(pendingChange);
+      attemptFindMany.mockResolvedValue([
+        {
+          ...cleanUsdcPending,
+          id: 'att-stripe-expired',
+          method: 'stripe',
+          status: 'expired',
+          stripeCheckoutSessionId: 'cs_test_expired',
+        },
+        cleanUsdcPending,
+      ]);
+      invoiceFindUnique.mockResolvedValue(chargeInvoice);
+      changeUpdateMany.mockResolvedValue({ count: 1 });
+      invoiceUpdateMany.mockResolvedValue({ count: 1 });
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.cancelPendingUpgrade(cancelArgs);
+
+      expect(result.outcome).toBe('canceled');
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['att-usdc-1'] },
+            status: 'pending',
+          }),
+          data: expect.objectContaining({
+            status: 'failed',
+            failureCode: 'upgrade_canceled',
+          }),
+        }),
+      );
     });
 
     it('fails closed when a confirming or succeeded attempt exists', async () => {

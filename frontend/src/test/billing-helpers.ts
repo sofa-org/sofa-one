@@ -4,6 +4,7 @@ import {
   type BillingInvoicesResponse,
   type BillingPlanResponse,
   type BillingSummary,
+  type InvoicePaymentStatus,
   type UsdcQuoteResponse,
   type UsdcWalletPayResult,
 } from '@/lib/api';
@@ -131,6 +132,24 @@ export function makeWalletPayResult(over?: Partial<UsdcWalletPayResult>): UsdcWa
     chainId: 84532,
     transactionHash: null,
     reviewReason: null,
+    ...over,
+  };
+}
+
+/** BILL-018 invoice-level payment status (safe fields only). */
+export function makeInvoicePaymentStatus(
+  over?: Partial<InvoicePaymentStatus>,
+): InvoicePaymentStatus {
+  return {
+    invoiceId: 'inv_1',
+    invoiceStatus: 'finalized',
+    paid: false,
+    paidAt: null,
+    activeAttempt: null,
+    walletReservation: null,
+    unresolvedReviewAttempts: [],
+    hasUnresolvedReview: false,
+    blockingReasons: [],
     ...over,
   };
 }

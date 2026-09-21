@@ -165,6 +165,10 @@ export interface ApiKeyRecord {
   displayPrefix: string;
   name: string | null;
   revoked: boolean;
+  /** ISO timestamp when the key was frozen; null when not frozen. */
+  frozenAt: string | null;
+  /** Server-provided freeze reason (safe metadata only); null when not frozen. */
+  frozenReason: string | null;
   expiresAt: string | null;
   createdAt: string;
   lastUsedAt: string | null;
@@ -175,6 +179,114 @@ export interface ApiKeyRecord {
   allowedFunctionSelectors: string[];
   dailySpendLimit: string | null;
   monthlySpendLimit: string | null;
+}
+
+/** Lifecycle status for dashboard display. Priority: revoked > frozen > expired > active. */
+export type ApiKeyLifecycleStatus = 'revoked' | 'frozen' | 'expired' | 'active';
+
+export type ApiKeyLifecycleFields = Pick<ApiKeyRecord, 'revoked' | 'frozenAt' | 'expiresAt'>;
+
+/**
+ * Single source of truth for API key lifecycle status.
+ * Priority is revoked > frozen > expired > active (calibrated to revoked/frozenAt/expiresAt).
+ */
+export function getApiKeyLifecycleStatus(
+  key: ApiKeyLifecycleFields,
+  nowMs: number = Date.now(),
+): ApiKeyLifecycleStatus {
+  if (key.revoked) return 'revoked';
+  if (key.frozenAt) return 'frozen';
+  if (key.expiresAt) {
+    const expiryTime = new Date(key.expiresAt).getTime();
+    if (!Number.isNaN(expiryTime) && expiryTime <= nowMs) return 'expired';
+  }
+  return 'active';
+}
+
+export function isApiKeyLifecycleActive(
+  key: ApiKeyLifecycleFields,
+  nowMs: number = Date.now(),
+): boolean {
+  return getApiKeyLifecycleStatus(key, nowMs) === 'active';
+}
+
+export function matchesApiKeyLifecycleFilter(
+  key: ApiKeyLifecycleFields,
+  filter: 'all' | ApiKeyLifecycleStatus,
+  nowMs: number = Date.now(),
+): boolean {
+  if (filter === 'all') return true;
+  return getApiKeyLifecycleStatus(key, nowMs) === filter;
+}
+
+/** Rank for list sorting: usable first, then attention states, revoked last. */
+export function getApiKeyLifecycleSortRank(status: ApiKeyLifecycleStatus): number {
+  switch (status) {
+    case 'active':
+      return 0;
+    case 'frozen':
+      return 1;
+    case 'expired':
+      return 2;
+    case 'revoked':
+      return 3;
+  }
+}
+
+export function getApiKeyLifecycleLabel(status: ApiKeyLifecycleStatus): string {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'frozen':
+      return 'Frozen';
+    case 'expired':
+      return 'Expired';
+    case 'revoked':
+      return 'Revoked';
+  }
+}
+
+export function getApiKeyLifecycleBadgeClass(status: ApiKeyLifecycleStatus): string {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-700';
+    case 'frozen':
+      return 'bg-amber-100 text-amber-800';
+    case 'expired':
+      return 'bg-orange-100 text-orange-800';
+    case 'revoked':
+      return 'bg-red-100 text-red-700';
+  }
+}
+
+/** Map server freeze reasons to short, user-safe copy (never exposes raw secrets). */
+export function formatApiKeyFrozenReason(reason: string | null | undefined): string {
+  if (!reason || !reason.trim()) {
+    return 'This key was frozen for security review.';
+  }
+
+  const normalized = reason.trim();
+  const lower = normalized.toLowerCase();
+
+  if (lower.includes('suspicious') || lower === 'api_key_frozen') {
+    return 'Frozen after suspicious API key usage was detected.';
+  }
+  if (lower.includes('context_changed') || lower.includes('repeated_context')) {
+    return 'Frozen after unexpected IP or client changes on a high-risk key.';
+  }
+  if (lower.includes('critical risk') || lower.includes('high_risk')) {
+    return 'Frozen due to a critical risk signal. Rotate keys before reuse.';
+  }
+  if (lower.includes('account_takeover')) {
+    return 'Frozen as part of an account-takeover response.';
+  }
+
+  // Keep server text when already human-readable; strip overly technical codes only lightly.
+  if (/^[a-z0-9_.:-]+$/i.test(normalized) && normalized.includes('_')) {
+    return `Frozen: ${normalized.replace(/_/g, ' ')}.`;
+  }
+
+  return normalized;
 }
 
 export interface ApiKeyPermissions {
@@ -432,6 +544,38 @@ export interface UsdcWalletPayResult {
   /** Chain tx hash when known — never provider/UserOp ids. */
   transactionHash: string | null;
   reviewReason: string | null;
+}
+
+/**
+ * BILL-018: safe projection of a payment attempt for invoice-level recovery.
+ * Never includes calldata, receipts, RPC/provider details, checkout URLs, or hashes.
+ */
+export interface InvoicePaymentAttemptStatus {
+  paymentAttemptId: string;
+  method: string;
+  status: string;
+  reviewReason: string | null;
+  createdAt: string;
+  walletPaymentReserved: boolean;
+  chainId: number | null;
+  quoteExpiresAt: string | null;
+}
+
+/**
+ * GET /v1/billing/invoices/:id/payment-status — read-only dashboard recovery.
+ * Surfaces active pending/confirming, wallet reservation, and every unresolved
+ * needs_review/reorged attempt so a newer quote cannot hide earlier review.
+ */
+export interface InvoicePaymentStatus {
+  invoiceId: string;
+  invoiceStatus: string;
+  paid: boolean;
+  paidAt: string | null;
+  activeAttempt: InvoicePaymentAttemptStatus | null;
+  walletReservation: InvoicePaymentAttemptStatus | null;
+  unresolvedReviewAttempts: InvoicePaymentAttemptStatus[];
+  hasUnresolvedReview: boolean;
+  blockingReasons: string[];
 }
 
 export class ApiError extends Error {
@@ -1196,6 +1340,23 @@ export async function getUsdcPaymentStatusAuth(
   const query = new URLSearchParams({ paymentAttemptId });
   return authFetch<UsdcWalletPayResult>(
     `/v1/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
+    getToken,
+    { signal },
+  );
+}
+
+/**
+ * GET /v1/billing/invoices/:id/payment-status
+ * Invoice-level read-only payment recovery (BILL-018). Never creates quotes
+ * or attempts. Safe fields only — no hashes, receipts, or provider details.
+ */
+export async function getInvoicePaymentStatusAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<InvoicePaymentStatus>(
+    `/v1/billing/invoices/${invoiceId}/payment-status`,
     getToken,
     { signal },
   );

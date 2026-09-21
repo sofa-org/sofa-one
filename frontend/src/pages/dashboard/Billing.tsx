@@ -28,6 +28,8 @@ import {
   getBillingInvoicePdfAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
+  getInvoicePaymentStatusAuth,
+  hasApiErrorCode,
   isApiError,
   listBillingInvoicesAuth,
   type BillingInvoice,
@@ -35,6 +37,7 @@ import {
   type BillingPlanResponse,
   type BillingSummary,
   type BillingTierBreakdown,
+  type InvoicePaymentStatus,
 } from '@/lib/api';
 
 const INVOICE_PAGE_SIZE = 20;
@@ -257,7 +260,62 @@ function friendlyCheckoutError(error: unknown): string {
   if (isApiError(error) && error.statusCode === 503) {
     return 'Checkout is temporarily unavailable. Please try again in a moment.';
   }
+  if (isApiError(error) && error.statusCode === 409) {
+    if (
+      hasApiErrorCode(
+        error,
+        'USDC_PAYMENT_IN_PROGRESS',
+        'USDC_WALLET_PAYMENT_RESERVED',
+        'PAYMENT_IN_PROGRESS',
+        'ACTIVE_PAYMENT_EXISTS',
+      )
+    ) {
+      return 'Another payment is already in progress for this invoice. Finish the active USDC quote or wait for it to expire before paying with card.';
+    }
+    return (
+      getApiErrorMessage(error) ||
+      'Checkout could not start because another payment is already active for this invoice.'
+    );
+  }
   return 'Could not start checkout. Please check the invoice and try again.';
+}
+
+/** Safe review copy for invoice list badges (no hashes/provider details). */
+function humanizeBillingReviewReason(reason: string | null | undefined): string {
+  if (!reason) return 'A previous payment needs manual review.';
+  switch (reason) {
+    case 'duplicate_unallocated':
+      return 'A transfer was already used on another invoice.';
+    case 'amount_mismatch':
+      return 'Payment amount did not match the quote.';
+    case 'wallet_payment_awaiting_evidence':
+    case 'wallet_payment_dispatch_unknown':
+      return 'A wallet payment still needs manual confirmation.';
+    default:
+      return 'A previous payment needs manual review.';
+  }
+}
+
+function isUsdcPaymentMethod(method: string | null | undefined): boolean {
+  if (!method) return false;
+  return method === 'usdc' || method.startsWith('usdc');
+}
+
+/** Active USDC rail or wallet reservation — card must not look freely switchable (BILL-003). */
+function hasActiveUsdcPayment(status: InvoicePaymentStatus | null | undefined): boolean {
+  if (!status || status.paid) return false;
+  if (status.walletReservation) return true;
+  const active = status.activeAttempt;
+  if (!active) return false;
+  if (active.status !== 'pending' && active.status !== 'confirming') return false;
+  return isUsdcPaymentMethod(active.method);
+}
+
+function formatQuoteExpiryShort(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString();
 }
 
 function getCurrentUtcMonth(): string {
@@ -411,6 +469,16 @@ export default function BillingPage() {
   const [pdfError, setPdfError] = useState<string | null>(null);
 
   const [usdcPanelInvoiceId, setUsdcPanelInvoiceId] = useState<string | null>(null);
+
+  /** BILL-018: server invoice-level payment status keyed by invoice id (not attemptId memory). */
+  const [paymentStatusByInvoiceId, setPaymentStatusByInvoiceId] = useState<
+    Record<string, InvoicePaymentStatus>
+  >({});
+  const [paymentStatusLoadingIds, setPaymentStatusLoadingIds] = useState<Record<string, boolean>>(
+    {},
+  );
+  const paymentStatusAbortRef = useRef<AbortController | null>(null);
+  const paymentStatusGenerationRef = useRef(0);
 
   const [planChangeSelectedId, setPlanChangeSelectedId] = useState<string | null>(null);
   const [planChangeLoading, setPlanChangeLoading] = useState(false);
@@ -612,6 +680,100 @@ export default function BillingPage() {
     [getToken],
   );
 
+  /**
+   * BILL-018: load invoice-level payment status for unpaid finalized invoices.
+   * Read-only — never creates quotes. Survives refresh without browser attemptId memory.
+   */
+  const loadPaymentStatusesForInvoices = useCallback(
+    async (invoiceList: BillingInvoice[], signal?: AbortSignal) => {
+      const targets = invoiceList.filter(
+        (inv) => !isInvoicePaid(inv) && (inv.status === 'finalized' || inv.status === 'open'),
+      );
+      if (targets.length === 0) {
+        if (!signal?.aborted) setPaymentStatusByInvoiceId({});
+        return;
+      }
+
+      paymentStatusAbortRef.current?.abort();
+      const controller = new AbortController();
+      paymentStatusAbortRef.current = controller;
+      const generation = (paymentStatusGenerationRef.current += 1);
+
+      let abortListener: (() => void) | undefined;
+      if (signal) {
+        if (signal.aborted) {
+          controller.abort();
+        } else {
+          abortListener = () => controller.abort();
+          signal.addEventListener('abort', abortListener, { once: true });
+        }
+      }
+
+      const loadingMap: Record<string, boolean> = {};
+      for (const inv of targets) loadingMap[inv.id] = true;
+      if (isMountedRef.current && !controller.signal.aborted) {
+        setPaymentStatusLoadingIds((prev) => ({ ...prev, ...loadingMap }));
+      }
+
+      try {
+        const results = await Promise.all(
+          targets.map(async (inv) => {
+            try {
+              const status = await getInvoicePaymentStatusAuth(
+                getToken,
+                inv.id,
+                controller.signal,
+              );
+              return { id: inv.id, status, error: false as const };
+            } catch {
+              return { id: inv.id, status: null, error: true as const };
+            }
+          }),
+        );
+
+        if (
+          !isMountedRef.current ||
+          controller.signal.aborted ||
+          generation !== paymentStatusGenerationRef.current
+        ) {
+          return;
+        }
+
+        setPaymentStatusByInvoiceId((prev) => {
+          const next: Record<string, InvoicePaymentStatus> = { ...prev };
+          // Drop statuses for invoices no longer in the list.
+          const keep = new Set(invoiceList.map((i) => i.id));
+          for (const key of Object.keys(next)) {
+            if (!keep.has(key)) delete next[key];
+          }
+          for (const row of results) {
+            if (row.status) next[row.id] = row.status;
+          }
+          return next;
+        });
+      } finally {
+        if (signal && abortListener) {
+          signal.removeEventListener('abort', abortListener);
+        }
+        if (paymentStatusAbortRef.current === controller) {
+          paymentStatusAbortRef.current = null;
+        }
+        if (
+          isMountedRef.current &&
+          !controller.signal.aborted &&
+          generation === paymentStatusGenerationRef.current
+        ) {
+          setPaymentStatusLoadingIds((prev) => {
+            const next = { ...prev };
+            for (const inv of targets) delete next[inv.id];
+            return next;
+          });
+        }
+      }
+    },
+    [getToken],
+  );
+
   const refreshInvoicesSilently = useCallback(
     async (signal?: AbortSignal): Promise<boolean> => {
       // Share the same generation/abort fence with the initial load.
@@ -643,6 +805,7 @@ export default function BillingPage() {
         invoicesRef.current = data.items;
         setInvoicesLoading(false);
         setInvoicesError(null);
+        // Payment-status recovery reloads via the invoices effect (BILL-018).
         return true;
       } catch (err: unknown) {
         // Silent refresh: do not swap the table for a spinner or unmount open panels.
@@ -679,6 +842,22 @@ export default function BillingPage() {
   useEffect(() => {
     invoicesRef.current = invoices;
   }, [invoices]);
+
+  // After the initial invoice list settles, load invoice-level payment statuses.
+  useEffect(() => {
+    if (invoicesLoading || invoicesError) return;
+    if (!isAuthenticated || authLoading) return;
+    const controller = new AbortController();
+    void loadPaymentStatusesForInvoices(invoices, controller.signal);
+    return () => controller.abort();
+  }, [
+    authLoading,
+    isAuthenticated,
+    invoices,
+    invoicesError,
+    invoicesLoading,
+    loadPaymentStatusesForInvoices,
+  ]);
 
   // Track mount state so async invoice loads never update state after unmount.
   useEffect(() => {
@@ -921,6 +1100,7 @@ export default function BillingPage() {
   useEffect(() => {
     return () => {
       invoiceLoadAbortRef.current?.abort();
+      paymentStatusAbortRef.current?.abort();
       stopPaymentConfirmationPolling();
     };
   }, [stopPaymentConfirmationPolling]);
@@ -1000,6 +1180,19 @@ export default function BillingPage() {
   const handlePayInvoice = useCallback(
     async (invoice: BillingInvoice) => {
       if (!isInvoicePayableByCard(invoice)) return;
+      const payStatus = paymentStatusByInvoiceId[invoice.id];
+      if (payStatus?.hasUnresolvedReview) {
+        setCheckoutError(
+          'A previous payment for this invoice still needs manual review. Contact support before starting another payment.',
+        );
+        return;
+      }
+      if (hasActiveUsdcPayment(payStatus)) {
+        setCheckoutError(
+          'A USDC payment is already in progress for this invoice. Finish it or wait for the quote to expire before paying with card.',
+        );
+        return;
+      }
       setCheckoutLoadingId(invoice.id);
       setCheckoutError(null);
       try {
@@ -1012,7 +1205,7 @@ export default function BillingPage() {
         setCheckoutLoadingId(null);
       }
     },
-    [getToken],
+    [getToken, paymentStatusByInvoiceId],
   );
 
   const handleDownloadPdf = useCallback(
@@ -1265,6 +1458,20 @@ export default function BillingPage() {
     if (!isInvoicePayableByCard(invoice) && pendingUpgradeInvoice) return;
     if (pendingUpgradeInvoice && !isInvoicePayableByCard(pendingUpgradeInvoice)) return;
 
+    const payStatus = paymentStatusByInvoiceId[pendingUpgrade.invoiceId];
+    if (payStatus?.hasUnresolvedReview) {
+      setCheckoutError(
+        'A previous payment for this upgrade still needs manual review. Contact support before starting another payment.',
+      );
+      return;
+    }
+    if (hasActiveUsdcPayment(payStatus)) {
+      setCheckoutError(
+        'A USDC payment is already in progress for this upgrade. Finish it or wait for the quote to expire before paying with card.',
+      );
+      return;
+    }
+
     setCheckoutLoadingId(pendingUpgrade.invoiceId);
     setCheckoutError(null);
     try {
@@ -1276,7 +1483,7 @@ export default function BillingPage() {
     } finally {
       setCheckoutLoadingId(null);
     }
-  }, [getToken, pendingUpgrade, pendingUpgradeInvoice]);
+  }, [getToken, pendingUpgrade, pendingUpgradeInvoice, paymentStatusByInvoiceId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -1533,14 +1740,31 @@ export default function BillingPage() {
                   </div>
                   {!pendingUpgradePaid && (
                     <div className="flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const upgradePayStatus =
+                          paymentStatusByInvoiceId[pendingUpgrade.invoiceId];
+                        const upgradeReviewBlocked =
+                          upgradePayStatus?.hasUnresolvedReview === true;
+                        const upgradeUsdcActive = hasActiveUsdcPayment(upgradePayStatus);
+                        const cardBlocked = upgradeReviewBlocked || upgradeUsdcActive;
+                        return (
+                          <>
                       <button
                         type="button"
                         onClick={() => void handlePayUpgradeInvoice()}
                         disabled={
                           planChangeLoading ||
                           checkoutLoadingId === pendingUpgrade.invoiceId ||
+                          cardBlocked ||
                           (pendingUpgradeInvoice !== null &&
                             !isInvoicePayableByCard(pendingUpgradeInvoice))
+                        }
+                        title={
+                          upgradeReviewBlocked
+                            ? 'A previous payment needs manual review — contact support'
+                            : upgradeUsdcActive
+                              ? 'Finish the active USDC payment or wait for the quote to expire'
+                              : undefined
                         }
                         className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60"
                       >
@@ -1551,7 +1775,9 @@ export default function BillingPage() {
                         )}
                         {checkoutLoadingId === pendingUpgrade.invoiceId
                           ? 'Redirecting…'
-                          : 'Pay with card'}
+                          : upgradeUsdcActive
+                            ? 'Card unavailable'
+                            : 'Pay with card'}
                       </button>
                       <button
                         type="button"
@@ -1559,7 +1785,9 @@ export default function BillingPage() {
                         disabled={
                           planChangeLoading ||
                           (pendingUpgradeInvoice !== null &&
-                            !isInvoicePayableByUsdc(pendingUpgradeInvoice))
+                            !isInvoicePayableByUsdc(pendingUpgradeInvoice) &&
+                            !upgradeUsdcActive &&
+                            !upgradeReviewBlocked)
                         }
                         aria-expanded={upgradeUsdcOpen}
                         className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -1569,8 +1797,17 @@ export default function BillingPage() {
                         }`}
                       >
                         <Coins className="h-3.5 w-3.5" aria-hidden="true" />
-                        {upgradeUsdcOpen ? 'Close USDC' : 'Pay with USDC'}
+                        {upgradeUsdcOpen
+                          ? 'Close USDC'
+                          : upgradeReviewBlocked
+                            ? 'View payment status'
+                            : upgradeUsdcActive
+                              ? 'Continue USDC'
+                              : 'Pay with USDC'}
                       </button>
+                          </>
+                        );
+                      })()}
                       <button
                         type="button"
                         onClick={() => void handleCancelPendingUpgrade()}
@@ -1589,10 +1826,16 @@ export default function BillingPage() {
                   )}
                 </div>
 
-                {upgradeUsdcOpen &&
-                  !pendingUpgradePaid &&
-                  pendingUpgradeInvoice &&
-                  isInvoicePayableByUsdc(pendingUpgradeInvoice) && (
+                {(() => {
+                  const upgradePayStatus = paymentStatusByInvoiceId[pendingUpgrade.invoiceId];
+                  const canShowUpgradeUsdc =
+                    upgradeUsdcOpen &&
+                    !pendingUpgradePaid &&
+                    pendingUpgradeInvoice &&
+                    (isInvoicePayableByUsdc(pendingUpgradeInvoice) ||
+                      hasActiveUsdcPayment(upgradePayStatus) ||
+                      upgradePayStatus?.hasUnresolvedReview === true);
+                  return canShowUpgradeUsdc ? (
                     <UsdcPaymentPanel
                       invoice={pendingUpgradeInvoice}
                       getToken={getToken}
@@ -1605,7 +1848,8 @@ export default function BillingPage() {
                         return ok;
                       }}
                     />
-                  )}
+                  ) : null;
+                })()}
 
                 {upgradeUsdcOpen && !pendingUpgradeInvoice && !pendingUpgradePaid && (
                   <p className="text-sm text-amber-900">
@@ -1954,14 +2198,38 @@ export default function BillingPage() {
               <tbody className="divide-y divide-brand-border">
                 {invoices.map((invoice) => {
                   const paid = isInvoicePaid(invoice);
-                  const canPayCard = isInvoicePayableByCard(invoice);
-                  const canPayUsdc = isInvoicePayableByUsdc(invoice);
-                  const hasActions = canPayCard || canPayUsdc;
+                  const payStatus = paymentStatusByInvoiceId[invoice.id];
+                  const payStatusLoading = paymentStatusLoadingIds[invoice.id] === true;
+                  const reviewBlocked = !paid && payStatus?.hasUnresolvedReview === true;
+                  const usdcActive = !paid && hasActiveUsdcPayment(payStatus);
+                  const canPayCard =
+                    isInvoicePayableByCard(invoice) && !reviewBlocked && !usdcActive;
+                  const canPayUsdc =
+                    isInvoicePayableByUsdc(invoice) || usdcActive || reviewBlocked;
+                  const showCardButton =
+                    isInvoicePayableByCard(invoice) || usdcActive || reviewBlocked;
+                  const hasActions =
+                    (!paid && (canPayCard || canPayUsdc || showCardButton)) ||
+                    usdcActive ||
+                    reviewBlocked;
                   const isOpenUnpaid = !paid && invoice.status === 'open';
                   const canDownloadPdf = paid || invoice.status === 'finalized';
                   const isLoadingCheckout = checkoutLoadingId === invoice.id;
                   const isLoadingPdf = pdfLoadingId === invoice.id;
                   const usdcPanelOpen = usdcPanelInvoiceId === invoice.id;
+                  const activeUsdc = payStatus?.walletReservation ??
+                    (payStatus?.activeAttempt &&
+                    isUsdcPaymentMethod(payStatus.activeAttempt.method)
+                      ? payStatus.activeAttempt
+                      : null);
+                  const quoteExpiryLabel = formatQuoteExpiryShort(
+                    activeUsdc?.quoteExpiresAt ?? null,
+                  );
+                  const reviewReasons = payStatus?.blockingReasons?.length
+                    ? payStatus.blockingReasons
+                    : (payStatus?.unresolvedReviewAttempts ?? [])
+                        .map((a) => a.reviewReason)
+                        .filter((r): r is string => typeof r === 'string' && r.length > 0);
                   return (
                     <Fragment key={invoice.id}>
                       <tr className="transition-colors hover:bg-brand-surface">
@@ -1969,13 +2237,35 @@ export default function BillingPage() {
                           {formatPeriodLabel(invoice.period)}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                              paid ? statusTone('paid') : statusTone(invoice.status)
-                            }`}
-                          >
-                            {paid ? 'Paid' : formatInvoiceStatus(invoice.status)}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                paid ? statusTone('paid') : statusTone(invoice.status)
+                              }`}
+                            >
+                              {paid ? 'Paid' : formatInvoiceStatus(invoice.status)}
+                            </span>
+                            {reviewBlocked && (
+                              <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                                Payment needs review
+                              </span>
+                            )}
+                            {!reviewBlocked && usdcActive && (
+                              <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                                {activeUsdc?.walletPaymentReserved
+                                  ? 'Wallet payment reserved'
+                                  : activeUsdc?.status === 'confirming'
+                                    ? 'USDC confirming'
+                                    : 'USDC in progress'}
+                              </span>
+                            )}
+                            {payStatusLoading && !payStatus && !paid && (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-brand-muted">
+                                <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                                Checking payment…
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-brand-text">
                           {formatAmount(invoice.amount, invoice.currency)}
@@ -1992,12 +2282,23 @@ export default function BillingPage() {
                               </span>
                             ) : hasActions ? (
                               <>
-                                {canPayCard && (
+                                {showCardButton && (
                                   <button
                                     type="button"
                                     onClick={() => handlePayInvoice(invoice)}
-                                    disabled={isLoadingCheckout}
-                                    title="Pays this invoice and can save your card for monthly auto-renewal from the next UTC month"
+                                    disabled={
+                                      isLoadingCheckout ||
+                                      !canPayCard ||
+                                      reviewBlocked ||
+                                      usdcActive
+                                    }
+                                    title={
+                                      reviewBlocked
+                                        ? 'A previous payment needs manual review — contact support'
+                                        : usdcActive
+                                          ? 'Finish the active USDC payment or wait for the quote to expire before paying with card'
+                                          : 'Pays this invoice and can save your card for monthly auto-renewal from the next UTC month'
+                                    }
                                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-brand-text/90 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     {isLoadingCheckout ? (
@@ -2005,7 +2306,11 @@ export default function BillingPage() {
                                     ) : (
                                       <CreditCard className="h-3.5 w-3.5" />
                                     )}
-                                    {isLoadingCheckout ? 'Redirecting…' : 'Card'}
+                                    {isLoadingCheckout
+                                      ? 'Redirecting…'
+                                      : usdcActive || reviewBlocked
+                                        ? 'Card unavailable'
+                                        : 'Card'}
                                   </button>
                                 )}
                                 {canPayUsdc && (
@@ -2016,7 +2321,13 @@ export default function BillingPage() {
                                         current === invoice.id ? null : invoice.id,
                                       )
                                     }
-                                    title="Pays only this invoice — USDC is not saved for auto-renewal"
+                                    title={
+                                      reviewBlocked
+                                        ? 'View payment review status — new payments are blocked'
+                                        : usdcActive
+                                          ? 'Continue the active USDC payment for this invoice'
+                                          : 'Pays only this invoice — USDC is not saved for auto-renewal'
+                                    }
                                     className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                                       usdcPanelOpen
                                         ? 'border border-brand-border bg-brand-surface text-brand-text'
@@ -2024,7 +2335,13 @@ export default function BillingPage() {
                                     }`}
                                   >
                                     <Coins className="h-3.5 w-3.5" />
-                                    {usdcPanelOpen ? 'Close' : 'USDC'}
+                                    {usdcPanelOpen
+                                      ? 'Close'
+                                      : reviewBlocked
+                                        ? 'Status'
+                                        : usdcActive
+                                          ? 'Continue'
+                                          : 'USDC'}
                                   </button>
                                 )}
                               </>
@@ -2073,6 +2390,61 @@ export default function BillingPage() {
                           </div>
                         </td>
                       </tr>
+                      {(reviewBlocked || usdcActive) && !paid && !usdcPanelOpen && (
+                        <tr>
+                          <td colSpan={5} className="bg-brand-bg/20 px-4 py-2">
+                            <div
+                              className={`rounded-lg border px-3 py-2 text-xs ${
+                                reviewBlocked
+                                  ? 'border-red-200 bg-red-50 text-red-900'
+                                  : 'border-amber-200 bg-amber-50 text-amber-950'
+                              }`}
+                            >
+                              {reviewBlocked ? (
+                                <div className="space-y-1">
+                                  <p className="font-semibold">Payment needs manual review</p>
+                                  {reviewReasons.map((reason) => (
+                                    <p key={reason}>{humanizeBillingReviewReason(reason)}</p>
+                                  ))}
+                                  <p>
+                                    Contact support with your account email and invoice period. Do
+                                    not start another card or USDC payment until this is resolved.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setUsdcPanelInvoiceId(invoice.id)}
+                                    className="mt-1 inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline"
+                                  >
+                                    View status details <ArrowRight className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <p className="font-semibold">
+                                    {activeUsdc?.walletPaymentReserved
+                                      ? 'Wallet payment reserved — do not switch to card'
+                                      : 'USDC payment in progress — finish or wait for expiry'}
+                                  </p>
+                                  {quoteExpiryLabel && (
+                                    <p>Quote expires: {quoteExpiryLabel}</p>
+                                  )}
+                                  <p>
+                                    Close USDC only hides this panel; the server quote stays active
+                                    until it expires or settles.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setUsdcPanelInvoiceId(invoice.id)}
+                                    className="mt-1 inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline"
+                                  >
+                                    Continue USDC payment <ArrowRight className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                       {usdcPanelOpen && !paid && (
                         <tr>
                           <td colSpan={5} className="bg-brand-bg/30 px-4 py-4">

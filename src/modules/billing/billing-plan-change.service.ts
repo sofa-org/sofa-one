@@ -171,8 +171,11 @@ export class BillingPlanChangeService {
    * inspection, CAS-cancel the expected change only, void the unpaid
    * plan_charge, and release only clean evidence-free pending attempts.
    *
-   * Any Stripe payment-attempt row rejects cancel without writes (local status
-   * never proves remote Checkout inactivity; only zero Stripe rows are safe).
+   * Stripe attempts: only non-charging terminal local statuses
+   * (`failed` / `expired` / `reorged`) may coexist with cancel — they are left
+   * intact (never deleted). Active/open/in-flight (`pending` / `confirming`),
+   * charged (`succeeded`), and uncertain (`needs_review` or any other status)
+   * fail closed without writes. Mixed terminal + active/uncertain → fail closed.
    * USDC pending with submitted hash / receipt evidence likewise rejects;
    * evidence-free pending USDC may be released after CAS.
    *
@@ -267,15 +270,18 @@ export class BillingPlanChangeService {
     });
 
     // Fail closed BEFORE any cancel/void writes.
-    // Maximally conservative Stripe policy: ANY Stripe payment-attempt row
-    // (pending/confirming/succeeded/needs_review/failed/expired/canceled) blocks
-    // cancel. Local status never proves remote Checkout inactivity; the only
-    // Stripe-safe path is zero Stripe attempt records on the plan_charge invoice.
+    // Stripe: allow only non-charging terminal statuses (failed/expired/reorged);
+    // leave those rows intact. Active/open/in-flight, succeeded, needs_review,
+    // and any unknown status reject without writes (mixed sets fail closed).
     for (const attempt of attempts) {
       if (attempt.method === 'stripe') {
-        throw new ConflictException(
-          'Cannot cancel an upgrade while a Stripe payment attempt exists for the charge invoice',
-        );
+        if (!isStripeAttemptNonChargingTerminal(attempt.status)) {
+          throw new ConflictException(
+            'Cannot cancel an upgrade while a Stripe payment attempt is still active or unsettled',
+          );
+        }
+        // Terminal non-charging Stripe row: do not delete or release; continue.
+        continue;
       }
       if (attempt.status === 'confirming' || attempt.status === 'succeeded') {
         throw new ConflictException(
@@ -362,10 +368,13 @@ export class BillingPlanChangeService {
     }
 
     // Release only evidence-free pending attempts (USDC quotes with no hash).
-    // Never release wallet-payment reservations (B2). Stripe pending never reaches here.
+    // Never release wallet-payment reservations (B2). Never delete or mutate
+    // Stripe terminal rows (failed/expired/reorged) — they are left intact.
+    // Active Stripe pending never reaches here (fail-closed above).
     const releasableIds = attempts
       .filter(
         (a) =>
+          a.method !== 'stripe' &&
           a.status === 'pending' &&
           !(a as { walletPaymentReserved?: boolean }).walletPaymentReserved &&
           !paymentAttemptHasEvidence(a),
@@ -1402,6 +1411,16 @@ function monthEndUtc(d: Date): Date {
 
 function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+}
+
+/**
+ * Stripe local statuses that are terminal and cannot collect further charge
+ * under the attempt state machine + cleanup semantics. Cancel may proceed
+ * while these rows remain (never deleted). Everything else is active,
+ * charged, or uncertain and must fail closed.
+ */
+function isStripeAttemptNonChargingTerminal(status: string): boolean {
+  return status === 'failed' || status === 'expired' || status === 'reorged';
 }
 
 /**
