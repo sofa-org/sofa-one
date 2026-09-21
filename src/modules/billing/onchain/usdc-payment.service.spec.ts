@@ -116,6 +116,10 @@ function usdcAttempt(overrides: Record<string, unknown> = {}) {
     lastCheckedAt: null,
     submittedTxHash: null,
     nextCheckAt: null,
+    // Phase 2B: legacy client quotes are non-reserved unless a test opts in.
+    walletPaymentReserved: false,
+    walletPaymentTransactionId: null,
+    walletDispatchStartedAt: null,
     createdAt: new Date('2026-06-01T00:00:00.000Z'),
     updatedAt: new Date('2026-06-01T00:00:00.000Z'),
     succeededAt: null,
@@ -189,6 +193,7 @@ describe('UsdcPaymentService', () => {
   const attemptUpdate = jest.fn();
   const attemptUpdateMany = jest.fn();
   const walletFindUnique = jest.fn();
+  const transactionFindUnique = jest.fn();
   const txQueryRaw = jest.fn();
   const txAttemptUpdate = jest.fn();
   const txAttemptFindUnique = jest.fn();
@@ -197,6 +202,23 @@ describe('UsdcPaymentService', () => {
   const getTransactionReceipt = jest.fn();
   const getBlockNumber = jest.fn();
   const configGet = jest.fn();
+
+  /**
+   * Quote does two findFirsts: (1) walletPaymentReserved=true, (2) pending/confirming.
+   * Route mocks so reserved lookup only returns explicitly reserved fixtures.
+   */
+  function mockQuoteActiveAttempt(attempt: ReturnType<typeof usdcAttempt> | null) {
+    attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+      const where = args.where ?? {};
+      if (where.walletPaymentReserved === true) {
+        if (attempt && attempt.walletPaymentReserved === true) {
+          return Promise.resolve(attempt);
+        }
+        return Promise.resolve(null);
+      }
+      return Promise.resolve(attempt);
+    });
+  }
 
   const prisma = {
     billingAccount: { findUnique: accountFindUnique },
@@ -209,6 +231,7 @@ describe('UsdcPaymentService', () => {
       updateMany: attemptUpdateMany,
     },
     userWallet: { findUnique: walletFindUnique },
+    transaction: { findUnique: transactionFindUnique },
     $transaction: jest.fn(),
   };
 
@@ -680,7 +703,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('reuses an existing compatible pending attempt idempotently', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt());
+      mockQuoteActiveAttempt(usdcAttempt());
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
@@ -689,7 +712,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('reuses a confirming attempt (mid-payment)', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt({ status: 'confirming' }));
+      mockQuoteActiveAttempt(usdcAttempt({ status: 'confirming' }));
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
@@ -698,15 +721,14 @@ describe('UsdcPaymentService', () => {
     });
 
     it('releases an expired pending attempt and quotes fresh', async () => {
-      attemptFindFirst.mockResolvedValue(
-        usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }),
-      );
+      // Non-reserved client quote — reserved retention is covered separately.
+      mockQuoteActiveAttempt(usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }));
       attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-fresh' }));
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending' },
+        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
         data: expect.objectContaining({ status: 'expired', reviewReason: 'quote_expired' }),
       });
       expect(attemptCreate).toHaveBeenCalledTimes(1);
@@ -714,13 +736,13 @@ describe('UsdcPaymentService', () => {
     });
 
     it('releases a pending attempt with an incomplete snapshot and quotes fresh', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt({ providerIdentity: null }));
+      mockQuoteActiveAttempt(usdcAttempt({ providerIdentity: null }));
       attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-fresh' }));
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending' },
+        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
         data: expect.objectContaining({
           status: 'needs_review',
           reviewReason: 'snapshot_incomplete',
@@ -730,13 +752,27 @@ describe('UsdcPaymentService', () => {
       expect(result.paymentAttemptId).toBe('att-fresh');
     });
 
+    it('retains a reserved wallet-payment attempt instead of expiring it', async () => {
+      mockQuoteActiveAttempt(
+        usdcAttempt({
+          walletPaymentReserved: true,
+          walletPaymentTransactionId: 'tx-bound',
+          quoteExpiresAt: new Date(Date.now() - 1000),
+        }),
+      );
+
+      const result = await service.quote('user-1', 'inv-1', 8453);
+
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(result.paymentAttemptId).toBe('att-usdc');
+    });
+
     it('reuses the attempt when a concurrent claim changed it before the release CAS', async () => {
       // The quote read an expired pending attempt, but a concurrent claim
       // confirmed it before the release CAS ran: the pending-only CAS matches
       // zero rows and the active attempt is reused — never overwritten.
-      attemptFindFirst.mockResolvedValue(
-        usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }),
-      );
+      mockQuoteActiveAttempt(usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }));
       attemptUpdateMany.mockResolvedValue({ count: 0 });
       attemptFindUnique.mockResolvedValue(usdcAttempt({ status: 'confirming', txHash: TX_HASH }));
 
@@ -747,7 +783,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('conflicts when an active attempt exists on another chain', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt({ chainId: 84532n }));
+      mockQuoteActiveAttempt(usdcAttempt({ chainId: 84532n }));
 
       await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
     });
@@ -756,7 +792,7 @@ describe('UsdcPaymentService', () => {
       // An expired 8453 pending attempt must not permanently block a fresh
       // 84532 quote: the expired attempt is released first, then a new attempt
       // is created on the requested chain.
-      attemptFindFirst.mockResolvedValue(
+      mockQuoteActiveAttempt(
         usdcAttempt({ chainId: 8453n, quoteExpiresAt: new Date(Date.now() - 1000) }),
       );
       attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-84532', chainId: 84532n }));
@@ -764,7 +800,7 @@ describe('UsdcPaymentService', () => {
       const result = await service.quote('user-1', 'inv-1', 84532);
 
       expect(attemptUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'att-usdc', status: 'pending' },
+        where: { id: 'att-usdc', status: 'pending', walletPaymentReserved: false },
         data: expect.objectContaining({ status: 'expired', reviewReason: 'quote_expired' }),
       });
       expect(attemptCreate).toHaveBeenCalledWith({
@@ -774,16 +810,23 @@ describe('UsdcPaymentService', () => {
     });
 
     it('never releases a non-expired confirming attempt on another chain', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt({ chainId: 8453n, status: 'confirming' }));
+      mockQuoteActiveAttempt(usdcAttempt({ chainId: 8453n, status: 'confirming' }));
 
       await expect(service.quote('user-1', 'inv-1', 84532)).rejects.toThrow(ConflictException);
       expect(attemptUpdateMany).not.toHaveBeenCalled();
     });
 
     it('reuses the concurrent winner on a P2002 insert race', async () => {
-      attemptFindFirst.mockResolvedValue(null);
+      // First: reserved=null, active=null; after P2002: winner lookup.
+      let calls = 0;
+      attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+        const where = args.where ?? {};
+        if (where.walletPaymentReserved === true) return Promise.resolve(null);
+        calls += 1;
+        if (calls === 1) return Promise.resolve(null);
+        return Promise.resolve(usdcAttempt({ id: 'att-winner' }));
+      });
       attemptCreate.mockRejectedValueOnce(p2002());
-      attemptFindFirst.mockResolvedValueOnce(usdcAttempt({ id: 'att-winner' }));
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
@@ -794,7 +837,7 @@ describe('UsdcPaymentService', () => {
       // The quote read an expired pending attempt on 8453; a concurrent claim
       // confirmed it before the release CAS ran. The requested chain is 84532:
       // the active confirming attempt on 8453 must be a conflict, never reused.
-      attemptFindFirst.mockResolvedValue(
+      mockQuoteActiveAttempt(
         usdcAttempt({ chainId: 8453n, quoteExpiresAt: new Date(Date.now() - 1000) }),
       );
       attemptUpdateMany.mockResolvedValue({ count: 0 });
@@ -810,16 +853,22 @@ describe('UsdcPaymentService', () => {
       // A concurrent quote created a confirming attempt on 8453 whose quote has
       // since expired. The insert-race fallback must reuse it (confirming
       // attempts are never released), not treat it as expirable.
-      attemptFindFirst.mockResolvedValue(null);
+      let calls = 0;
+      attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+        const where = args.where ?? {};
+        if (where.walletPaymentReserved === true) return Promise.resolve(null);
+        calls += 1;
+        if (calls === 1) return Promise.resolve(null);
+        return Promise.resolve(
+          usdcAttempt({
+            id: 'att-winner',
+            chainId: 8453n,
+            status: 'confirming',
+            quoteExpiresAt: new Date(Date.now() - 1000),
+          }),
+        );
+      });
       attemptCreate.mockRejectedValueOnce(p2002());
-      attemptFindFirst.mockResolvedValueOnce(
-        usdcAttempt({
-          id: 'att-winner',
-          chainId: 8453n,
-          status: 'confirming',
-          quoteExpiresAt: new Date(Date.now() - 1000),
-        }),
-      );
 
       const result = await service.quote('user-1', 'inv-1', 8453);
 
@@ -1692,6 +1741,208 @@ describe('UsdcPaymentService', () => {
         invoiceId: 'inv-1',
         method: 'usdc',
       });
+    });
+
+    function trustedBoundTx(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'tx-bound',
+        userId: 'user-1',
+        txHash: TX_HASH,
+        chainId: 8453n,
+        walletAddress: PAYER,
+        operationType: 'billing_payment',
+        authMethod: 'iam',
+        apiKeyId: null,
+        details: { paymentAttemptId: 'att-usdc', invoiceId: 'inv-1', type: 'billing_payment' },
+        ...overrides,
+      };
+    }
+
+    it('B2: wallet_server reopens recoverable needs_review and settles matching trusted hash', async () => {
+      const reserved = usdcAttempt({
+        status: 'needs_review',
+        reviewReason: 'wallet_payment_dispatch_unknown',
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        submittedTxHash: TX_HASH,
+      });
+      const reopened = usdcAttempt({
+        status: 'pending',
+        reviewReason: null,
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        submittedTxHash: TX_HASH,
+      });
+      attemptFindUnique.mockResolvedValueOnce(reserved).mockResolvedValue(reopened);
+      transactionFindUnique.mockResolvedValue(trustedBoundTx());
+      // reopen CAS + persistSubmittedHash
+      attemptUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValue({ count: 1 });
+      txAttemptFindUnique.mockResolvedValue(reopened);
+      getBlockNumber.mockResolvedValue(104n);
+      settleInvoice.mockResolvedValue({
+        allocated: true,
+        paid: true,
+        paidByThisAttempt: true,
+        replayed: false,
+        allocatedMicros: AMOUNT,
+      });
+
+      const result = await service.claimFromWalletServerBinding('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+        boundTransactionId: 'tx-bound',
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.paid).toBe(true);
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'needs_review',
+            walletPaymentReserved: true,
+            submittedTxHash: TX_HASH,
+            reviewReason: expect.objectContaining({ in: expect.any(Array) }),
+          }),
+          data: expect.objectContaining({ status: 'pending', reviewReason: null }),
+        }),
+      );
+      expect(settleInvoice).toHaveBeenCalled();
+    });
+
+    it('B2: wallet_server leaves manual evidence-conflict needs_review locked (no settle)', async () => {
+      const locked = usdcAttempt({
+        status: 'needs_review',
+        reviewReason: 'amount_mismatch',
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        submittedTxHash: TX_HASH,
+      });
+      attemptFindUnique.mockResolvedValue(locked);
+      transactionFindUnique.mockResolvedValue(trustedBoundTx());
+
+      const result = await service.claimFromWalletServerBinding('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+        boundTransactionId: 'tx-bound',
+      });
+
+      expect(result.status).toBe('needs_review');
+      expect(result.paid).toBe(false);
+      expect(result.reviewReason).toBe('amount_mismatch');
+      expect(settleInvoice).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('B2: userop_unattributed cannot reopen/pay from matching bare hash alone', async () => {
+      const unattributed = usdcAttempt({
+        status: 'needs_review',
+        reviewReason: 'wallet_payment_userop_unattributed',
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        submittedTxHash: TX_HASH,
+      });
+      attemptFindUnique.mockResolvedValue(unattributed);
+      transactionFindUnique.mockResolvedValue(trustedBoundTx());
+
+      const result = await service.claimFromWalletServerBinding('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+        boundTransactionId: 'tx-bound',
+      });
+
+      expect(result.status).toBe('needs_review');
+      expect(result.paid).toBe(false);
+      expect(result.reviewReason).toBe('wallet_payment_userop_unattributed');
+      expect(settleInvoice).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('B2: wallet_server rejects missing bound Transaction', async () => {
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({
+          walletPaymentReserved: true,
+          walletPaymentTransactionId: 'tx-bound',
+          submittedTxHash: TX_HASH,
+        }),
+      );
+      transactionFindUnique.mockResolvedValue(null);
+
+      await expect(
+        service.claimFromWalletServerBinding('user-1', 'inv-1', {
+          paymentAttemptId: 'att-usdc',
+          txHash: TX_HASH,
+          boundTransactionId: 'tx-bound',
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('B2: wallet_server rejects null bound txHash (seeded hash alone insufficient)', async () => {
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({
+          walletPaymentReserved: true,
+          walletPaymentTransactionId: 'tx-bound',
+          submittedTxHash: TX_HASH,
+        }),
+      );
+      transactionFindUnique.mockResolvedValue(trustedBoundTx({ txHash: null }));
+
+      await expect(
+        service.claimFromWalletServerBinding('user-1', 'inv-1', {
+          paymentAttemptId: 'att-usdc',
+          txHash: TX_HASH,
+          boundTransactionId: 'tx-bound',
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('B2: wallet_server rejects mismatched payer/auth identity on bound Transaction', async () => {
+      attemptFindUnique.mockResolvedValue(
+        usdcAttempt({
+          walletPaymentReserved: true,
+          walletPaymentTransactionId: 'tx-bound',
+          submittedTxHash: TX_HASH,
+        }),
+      );
+      transactionFindUnique.mockResolvedValue(
+        trustedBoundTx({
+          walletAddress: '0x9999999999999999999999999999999999999999',
+          authMethod: 'api_key',
+          apiKeyId: 'key-1',
+        }),
+      );
+
+      await expect(
+        service.claimFromWalletServerBinding('user-1', 'inv-1', {
+          paymentAttemptId: 'att-usdc',
+          txHash: TX_HASH,
+          boundTransactionId: 'tx-bound',
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('B2: client claim cannot reopen recoverable wallet needs_review', async () => {
+      const reserved = usdcAttempt({
+        status: 'needs_review',
+        reviewReason: 'wallet_payment_dispatch_unknown',
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        submittedTxHash: TX_HASH,
+      });
+      attemptFindUnique.mockResolvedValue(reserved);
+      transactionFindUnique.mockResolvedValue(trustedBoundTx());
+
+      const result = await service.claim('user-1', 'inv-1', {
+        paymentAttemptId: 'att-usdc',
+        txHash: TX_HASH,
+      });
+
+      expect(result.status).toBe('needs_review');
+      expect(result.paid).toBe(false);
+      expect(settleInvoice).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
     });
 
     it('canonicalizes the claimed txHash to lowercase for lookup, evidence, and persistence', async () => {
@@ -2590,7 +2841,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('maps an active attempt on another chain to USDC_PAYMENT_IN_PROGRESS', async () => {
-      attemptFindFirst.mockResolvedValue(usdcAttempt({ chainId: 84532n }));
+      mockQuoteActiveAttempt(usdcAttempt({ chainId: 84532n }));
 
       const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
 
@@ -2601,6 +2852,27 @@ describe('UsdcPaymentService', () => {
           message: 'An active USDC payment already exists for this invoice on another chain',
         }),
       );
+    });
+
+    it('maps a reserved wallet attempt on another chain to wallet-reservation conflict', async () => {
+      mockQuoteActiveAttempt(
+        usdcAttempt({
+          chainId: 84532n,
+          walletPaymentReserved: true,
+          walletPaymentTransactionId: 'tx-bound',
+        }),
+      );
+
+      const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+          message: 'An active wallet payment reservation exists for this invoice',
+        }),
+      );
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
     });
 
     it('maps a unified active-reservation insert race to USDC_PAYMENT_IN_PROGRESS', async () => {

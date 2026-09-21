@@ -195,6 +195,10 @@ model ApiKey {
   allowedFunctionSelectors String[]  @default([]) @map("allowed_function_selectors")
   dailySpendLimit          String?   @map("daily_spend_limit") @db.VarChar(40)
   monthlySpendLimit        String?   @map("monthly_spend_limit") @db.VarChar(40)
+  // BILL-016: operator ack that API-key sends honor the user's withdrawal
+  // destination allowlist. NULL = not authorized for new direct-egress sends.
+  // Never auto-set on create; requires explicit step-up authorize action.
+  directEgressPolicyAcceptedAt DateTime? @map("direct_egress_policy_accepted_at") @db.Timestamptz()
   createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   lastUsedAt               DateTime? @map("last_used_at") @db.Timestamptz()
   lastUsedIp               String?   @map("last_used_ip") @db.VarChar(64)
@@ -342,6 +346,11 @@ model Transaction {
   user               User                @relation(fields: [userId], references: [id])
   apiKey             ApiKey?             @relation(fields: [apiKeyId], references: [id])
   billingUsageEvents BillingUsageEvent[]
+  // Phase 2B: reverse link(s) from reserved USDC wallet-payment attempts.
+  // Modeled 1:N in Prisma so the FK need not be @unique (full-table unique would
+  // conflict with multiple NULL FKs). DB enforces at-most-one non-null binding
+  // via migration-only partial unique index on wallet_payment_transaction_id.
+  walletPaymentAttempts BillingPaymentAttempt[] @relation("WalletPaymentReservation")
 
   @@unique([userId, operationType, chainId, idempotencyKey])
   @@index([apiKeyId, createdAt])
@@ -901,6 +910,17 @@ model BillingPaymentAttempt {
   checkoutNextRetryAt     DateTime?                  @map("checkout_next_retry_at") @db.Timestamptz()
   checkoutRetryOwnerId    String?                    @map("checkout_retry_owner_id") @db.VarChar(80)
   checkoutRetryLeaseExpiresAt DateTime?              @map("checkout_retry_lease_expires_at") @db.Timestamptz()
+  // ── BILL-014 post-paid sibling Checkout Session cleanup (durable lease).
+  //    Triggered only after the invoice is fully paid. Expires open sibling
+  //    Sessions outside DB locks; never refunds, cancels subscriptions, or
+  //    mutates paid/settlement facts. Late duplicate payments remain
+  //    duplicate_unallocated / needs_review.
+  sessionCleanupStatus          String?   @map("session_cleanup_status") @db.VarChar(20)
+  sessionCleanupRetryCount      Int       @default(0) @map("session_cleanup_retry_count")
+  sessionCleanupNextRetryAt     DateTime? @map("session_cleanup_next_retry_at") @db.Timestamptz()
+  sessionCleanupOwnerId         String?   @map("session_cleanup_owner_id") @db.VarChar(80)
+  sessionCleanupLeaseExpiresAt  DateTime? @map("session_cleanup_lease_expires_at") @db.Timestamptz()
+  sessionCleanupCompletedAt     DateTime? @map("session_cleanup_completed_at") @db.Timestamptz()
   // User-submitted USDC hash canonicalized and CAS-persisted BEFORE receipt
   // verification, so a worker/recovery path can resume a pending/confirming
   // claim across process restarts by reusing the existing verification path.
@@ -916,9 +936,22 @@ model BillingPaymentAttempt {
   // idempotent no-op; it is also the durable marker the overage worker uses to
   // prove a fixed-fee renewal attempt has already been allocated.
   allocatedAt             DateTime?                  @map("allocated_at") @db.Timestamptz()
+  // ── Phase 2B wallet-payment reservation (dashboard pay-from-wallet).
+  //    Binding to a billing_payment Transaction created under the acceptance
+  //    lock before Openfort dispatch. Uniqueness of non-null FKs is a
+  //    **migration-only partial unique index** (NULLs distinct) — not @unique,
+  //    so Prisma does not invent a full-table unique that conflicts with
+  //    multiple unbound rows. Reserved lookup index is also migration-only
+  //    (WHERE wallet_payment_reserved = true).
+  walletPaymentTransactionId String?   @map("wallet_payment_transaction_id") @db.Uuid
+  walletPaymentReserved      Boolean   @default(false) @map("wallet_payment_reserved")
+  walletDispatchStartedAt    DateTime? @map("wallet_dispatch_started_at") @db.Timestamptz()
 
   invoice        BillingInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   settledInvoice BillingInvoice? @relation("InvoiceSettlement")
+  // RESTRICT: deleting a bound billing_payment Transaction must not null the FK
+  // while walletPaymentReserved remains true (B2). Unbind/release first if ever needed.
+  walletPaymentTransaction Transaction? @relation("WalletPaymentReservation", fields: [walletPaymentTransactionId], references: [id], onDelete: Restrict)
 
   // USDC Transfer evidence uniqueness: only populated for method='usdc' rows;
   // Postgres treats NULLs as distinct, so partial evidence never conflicts.
@@ -927,6 +960,8 @@ model BillingPaymentAttempt {
   @@index([invoiceId, method, status])
   @@index([invoiceId, createdAt])
   @@index([submittedTxHash])
+  // Non-partial helper index only; reserved-true partial index is migration-only.
+  @@index([walletPaymentReserved])
   @@map("billing_payment_attempts")
 }
 

@@ -104,6 +104,8 @@ describe('Frontend-only access control (e2e)', () => {
 
   async function cleanDatabase() {
     await prisma.signingRequest.deleteMany();
+    // RESTRICT: payment attempts reference transactions — delete attempts first.
+    await prisma.billingPaymentAttempt.deleteMany().catch(() => undefined);
     await prisma.transaction.deleteMany();
     await prisma.apiKeyEvent.deleteMany();
     await prisma.apiKey.deleteMany();

@@ -9,6 +9,8 @@ import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { BillingWorkerService } from './billing-worker.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
+import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
+import { StripeCheckoutSessionCleanupService } from './stripe/stripe-checkout-session-cleanup.service';
 import { STRIPE_CLIENT } from './stripe/stripe.constants';
 import { formatUtcMonth } from './billing.utils';
 
@@ -45,6 +47,14 @@ describe('BillingWorkerService', () => {
     recoverOverageCharge: jest.fn(),
     recoverPendingCheckouts: jest.fn(),
   };
+  const autoSubscription = {
+    processDue: jest.fn(),
+  };
+  const sessionCleanup = {
+    processDue: jest.fn(),
+  };
+  const autoIntentCount = jest.fn();
+  const paymentAttemptCount = jest.fn();
 
   const ACCOUNT_A = { id: 'acc-a', userId: 'user-a' };
 
@@ -150,7 +160,11 @@ describe('BillingWorkerService', () => {
               updateMany: accountUpdateMany,
             },
             billingInvoice: { findMany: invoiceFindMany, findFirst: invoiceFindFirst },
-            billingPaymentAttempt: { findMany: paymentAttemptFindMany },
+            billingPaymentAttempt: {
+              findMany: paymentAttemptFindMany,
+              count: paymentAttemptCount,
+            },
+            billingAutoSubscriptionIntent: { count: autoIntentCount },
             $queryRaw: queryRaw,
             stripeWebhookEvent: {
               findMany: stripeWebhookEventFindMany,
@@ -188,6 +202,14 @@ describe('BillingWorkerService', () => {
           useValue: stripePayments,
         },
         {
+          provide: StripeAutoSubscriptionService,
+          useValue: autoSubscription,
+        },
+        {
+          provide: StripeCheckoutSessionCleanupService,
+          useValue: sessionCleanup,
+        },
+        {
           provide: SecurityEventService,
           useValue: { record: securityRecord },
         },
@@ -213,6 +235,30 @@ describe('BillingWorkerService', () => {
     recoverRenewalAllocation.mockResolvedValue(undefined);
     webhookReconcileOverage.mockResolvedValue('settled');
     heartbeatUpsert.mockResolvedValue({ id: 'hb', status: 'healthy' });
+    stripePayments.recoverPendingCheckouts.mockResolvedValue({
+      attempted: 0,
+      recovered: 0,
+      needsReview: 0,
+      retryable: 0,
+    });
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 0,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    sessionCleanup.processDue.mockResolvedValue({
+      attempted: 0,
+      expired: 0,
+      alreadyClosed: 0,
+      needsReview: 0,
+      retryable: 0,
+    });
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
   });
 
   it('is disabled by default: tick() is a no-op and no timer is started', async () => {
@@ -1086,6 +1132,7 @@ describe('BillingWorkerService', () => {
       {
         id: 'att-1',
         invoiceId: 'inv-1',
+        walletPaymentReserved: false,
         submittedTxHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
         invoice: { billingAccount: { userId: 'user-a' } },
       },
@@ -1094,12 +1141,34 @@ describe('BillingWorkerService', () => {
 
     await service.tick();
 
+    // Phase 2B B2: client claims + reserved due nextCheckAt + succeeded marker repair.
+    // Reserved branch must require nextCheckAt <= now (no null = due).
     expect(paymentAttemptFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           method: 'usdc',
-          status: { in: ['pending', 'confirming'] },
-          submittedTxHash: { not: null },
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              walletPaymentReserved: false,
+              status: { in: ['pending', 'confirming'] },
+              submittedTxHash: { not: null },
+            }),
+            expect.objectContaining({
+              walletPaymentReserved: true,
+              status: { in: ['pending', 'confirming', 'needs_review'] },
+              nextCheckAt: expect.objectContaining({ lte: expect.any(Date) }),
+            }),
+            expect.objectContaining({
+              walletPaymentReserved: true,
+              status: 'succeeded',
+              walletPaymentTransaction: expect.objectContaining({
+                is: expect.objectContaining({
+                  billingReconciledAt: null,
+                  operationType: 'billing_payment',
+                }),
+              }),
+            }),
+          ]),
         }),
       }),
     );
@@ -1989,6 +2058,412 @@ describe('BillingWorkerService', () => {
       expect.objectContaining({
         create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
         update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-020: keeps the tick healthy for terminal no-funds auto-subscription review alone', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 1,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 1,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    // No persisted unfinished backlog (terminal review is excluded).
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+        update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-020: fails the tick for retryable auto-subscription work', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 1,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 1,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020: fails the tick for non-terminal auto-subscription needs_review', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 1,
+      completed: 0,
+      needsReview: 1,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020: fails the tick when recovery scan fails even with zero due work', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 0,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: true,
+    });
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020: fails a later tick when persisted cleanup/in-flight backlog remains', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    // Current tick counters are clean (nothing due).
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 0,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    sessionCleanup.processDue.mockResolvedValue({
+      attempted: 0,
+      expired: 0,
+      alreadyClosed: 0,
+      needsReview: 0,
+      retryable: 0,
+    });
+    // Persisted cleanup backlog still unresolved (not due this tick).
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(2);
+
+    await service.tick();
+
+    expect(paymentAttemptCount).toHaveBeenCalled();
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020 B4: fails tick when needs_review has null/partial terminal labels (not safe)', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 0,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    // pending=0, unresolved needs_review (partial labels)=1
+    autoIntentCount.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(autoIntentCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: 'needs_review',
+          // Explicit OR (not NOT/AND): nullables, partial labels, fences.
+          OR: [
+            { lastErrorType: null },
+            { lastErrorType: { not: 'terminal_no_funds' } },
+            { lastErrorCode: null },
+            { lastErrorCode: { not: 'payment_method_not_reusable' } },
+            { dispatchedAt: { not: null } },
+            { stripeSubscriptionId: { not: null } },
+          ],
+        }),
+      }),
+    );
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020 B4: processDue terminalNoFundsReview alone does not fail the tick', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    // Immediate classification reported terminal; no retryable/needsReview/scan fail.
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 1,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 1,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    // Persisted row is safe terminal → backlog counts 0.
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+        update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-020 B4: processDue needsReview/retryable still fails the tick', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 1,
+      completed: 0,
+      needsReview: 1,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020 B4: processDue retryable (in-flight/uncertain) fails even with terminalNoFundsReview present', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    // Mixed tick: one safe terminal outcome must not mask retryable/uncertain work.
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 2,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 1,
+      retryable: 1,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020 B4: safe terminal predicate excludes only exact type+code+never-dispatched', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoSubscription.processDue.mockResolvedValue({
+      attempted: 0,
+      completed: 0,
+      needsReview: 0,
+      terminalNoFundsReview: 0,
+      retryable: 0,
+      recovered: 0,
+      recoveryScanFailed: false,
+    });
+    // No pending, no unresolved needs_review (safe terminal excluded by WHERE), no cleanup
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+        update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-020: fails closed when unresolved backlog probe throws (DB/infra)', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    autoIntentCount.mockRejectedValue(new Error('db unavailable'));
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
+      }),
+    );
+  });
+
+  it('BILL-020: normal open Checkout pending does not fail via cleanup backlog probe', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    // Zero cleanup statuses; a plain pending Checkout attempt is not counted.
+    autoIntentCount.mockResolvedValue(0);
+    paymentAttemptCount.mockResolvedValue(0);
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+        update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-014: keeps the tick healthy when sibling session cleanup completes', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    sessionCleanup.processDue.mockResolvedValue({
+      attempted: 2,
+      expired: 1,
+      alreadyClosed: 1,
+      needsReview: 0,
+      retryable: 0,
+    });
+
+    await service.tick();
+
+    expect(sessionCleanup.processDue).toHaveBeenCalled();
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+        update: expect.objectContaining({ status: 'healthy', consecutiveFailures: 0 }),
+      }),
+    );
+  });
+
+  it('BILL-014: fails the tick when session cleanup has retryable or needs_review work', async () => {
+    setupEnabled();
+    service.onModuleInit();
+    heartbeatUpsert.mockClear();
+    accountFindMany.mockResolvedValueOnce([]);
+    sessionCleanup.processDue.mockResolvedValue({
+      attempted: 1,
+      expired: 0,
+      alreadyClosed: 0,
+      needsReview: 0,
+      retryable: 1,
+    });
+
+    await service.tick();
+
+    expect(heartbeatUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ status: 'failed', consecutiveFailures: 1 }),
+        update: expect.objectContaining({
+          status: 'failed',
+          consecutiveFailures: { increment: 1 },
+        }),
       }),
     );
   });

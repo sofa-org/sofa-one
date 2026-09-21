@@ -33,6 +33,7 @@ import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.d
 import type { WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
+import { isDeferredDestinationPolicyDenial } from '../withdrawal-destination/withdrawal-destination-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
@@ -529,8 +530,12 @@ export class WalletService {
     const supportedChain = getSupportedChain(chainId);
     const publicClient = this.getPublicClient(chainId);
     const stablecoins = [
-      ...(supportedChain.usdcAddress ? [{ token: 'USDC', address: supportedChain.usdcAddress }] : []),
-      ...(supportedChain.usdtAddress ? [{ token: 'USDT', address: supportedChain.usdtAddress }] : []),
+      ...(supportedChain.usdcAddress
+        ? [{ token: 'USDC', address: supportedChain.usdcAddress }]
+        : []),
+      ...(supportedChain.usdtAddress
+        ? [{ token: 'USDT', address: supportedChain.usdtAddress }]
+        : []),
     ];
 
     type BalanceEntry =
@@ -720,13 +725,30 @@ export class WalletService {
           return { tx: existing, created: false };
         }
 
-        // Re-check debt under the same tx snapshot before daily-limit lock / pending create.
+        // Re-check debt under the same tx snapshot before destination lock / create.
         await this.assertNoBillingDebtForOutbound(
           userId,
           {
             chainId,
             walletId: wallet.id,
             operation: 'withdraw',
+          },
+          txClient,
+        );
+
+        // BILL-016 order (no RPC/Openfort under lock):
+        // 1) user destination advisory lock
+        // 2) final allowlist/cooldown on params.to (fail closed)
+        // 3) daily-limit policy row FOR UPDATE
+        // 4) create pending withdrawal
+        await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        await this.withdrawalPolicy.assertDestinationAllowedInTx(
+          userId,
+          params.to,
+          {
+            chainId,
+            walletId: wallet.id,
+            walletAddress,
           },
           txClient,
         );
@@ -767,6 +789,11 @@ export class WalletService {
         );
       }));
     } catch (error: any) {
+      // After TX rollback: destination advisory released — safe to audit once.
+      if (isDeferredDestinationPolicyDenial(error)) {
+        await this.withdrawalPolicy.recordDeferredDestinationDenial(error);
+        throw error.httpException;
+      }
       if (error?.code !== 'P2002') throw error;
 
       const existing = await this.findExistingWithdrawal(userId, {
@@ -783,11 +810,14 @@ export class WalletService {
       return this.toWithdrawalResponse(tx);
     }
 
-    let observedUserOpHash: string | null = (tx as any).userOpHash ?? (
-      tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details) &&
+    let observedUserOpHash: string | null =
+      (tx as any).userOpHash ??
+      (tx.details &&
+      typeof tx.details === 'object' &&
+      !Array.isArray(tx.details) &&
       typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
-        ? (tx.details as Record<string, unknown>).userOpHash as string : null
-    );
+        ? ((tx.details as Record<string, unknown>).userOpHash as string)
+        : null);
     try {
       const interaction = isNativeWithdrawal
         ? {
@@ -824,11 +854,18 @@ export class WalletService {
         onUserOperationHash: async (userOpHash) => {
           observedUserOpHash = userOpHash;
           await this.prisma.transaction.updateMany({
-            where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
-              billingReconciledAt: null,
-              userOpHash: null,
-              status: { in: ['submitting', 'unknown', 'pending'] },
-            }),
+            where: this.withdrawalCasWhere(
+              tx,
+              userId,
+              chainId,
+              params.idempotencyKey!,
+              requestHash,
+              {
+                billingReconciledAt: null,
+                userOpHash: null,
+                status: { in: ['submitting', 'unknown', 'pending'] },
+              },
+            ),
             data: { userOpHash, status: 'pending', completedAt: null },
           });
         },
@@ -838,20 +875,49 @@ export class WalletService {
       // remains recoverable and cannot trigger a duplicate submission.
       observedUserOpHash = submitted.userOpHash;
       await this.prisma.transaction.updateMany({
-        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'unknown', 'pending'] }, userOpHash: null, billingReconciledAt: null }),
-        data: { userOpHash: submitted.userOpHash, status: 'pending', completedAt: null, details: { ...((tx.details as Record<string, unknown>) ?? {}), userOpHash: submitted.userOpHash } as any },
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'unknown', 'pending'] },
+          userOpHash: null,
+          billingReconciledAt: null,
+        }),
+        data: {
+          userOpHash: submitted.userOpHash,
+          status: 'pending',
+          completedAt: null,
+          details: {
+            ...((tx.details as Record<string, unknown>) ?? {}),
+            userOpHash: submitted.userOpHash,
+          } as any,
+        },
       });
-      const receipt = await this.openfort.waitForUserOperationReceipt({ chainId, userOpHash: submitted.userOpHash });
+      const receipt = await this.openfort.waitForUserOperationReceipt({
+        chainId,
+        userOpHash: submitted.userOpHash,
+      });
 
       const finalData = {
         ...(receipt.transactionHash ? { txHash: receipt.transactionHash } : {}),
-        userOpSuccess: receipt.success === false ? false : receipt.success === true && receipt.transactionHash ? true : null,
+        userOpSuccess:
+          receipt.success === false
+            ? false
+            : receipt.success === true && receipt.transactionHash
+              ? true
+              : null,
         status: receipt.success === false || !receipt.transactionHash ? 'unknown' : 'pending',
         completedAt: null,
-        details: { ...((tx.details as Record<string, unknown>) ?? {}), userOpHash: submitted.userOpHash, userOperationSuccess: receipt.success } as any,
+        details: {
+          ...((tx.details as Record<string, unknown>) ?? {}),
+          userOpHash: submitted.userOpHash,
+          userOperationSuccess: receipt.success,
+        } as any,
       };
       const finalWrite = await this.prisma.transaction.updateMany({
-        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpHash: submitted.userOpHash, userOpSuccess: null, billingReconciledAt: null }),
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          userOpHash: submitted.userOpHash,
+          userOpSuccess: null,
+          billingReconciledAt: null,
+        }),
         data: finalData,
       });
       if (finalWrite.count !== 1) return this.toWithdrawalResponse(tx);
@@ -864,15 +930,39 @@ export class WalletService {
       };
     } catch (error) {
       await this.prisma.transaction.updateMany({
-        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null, ...(observedUserOpHash ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}) }),
-        data: observedUserOpHash ? { userOpHash: observedUserOpHash, status: 'unknown', completedAt: null } : { status: 'unknown', completedAt: null },
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          userOpSuccess: null,
+          billingReconciledAt: null,
+          ...(observedUserOpHash
+            ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] }
+            : {}),
+        }),
+        data: observedUserOpHash
+          ? { userOpHash: observedUserOpHash, status: 'unknown', completedAt: null }
+          : { status: 'unknown', completedAt: null },
       });
       throw error;
     }
   }
 
-  private withdrawalCasWhere(tx: any, userId: string, chainId: number, idempotencyKey: string, requestHash: string, extra: Record<string, unknown>) {
-    return { id: tx.id, userId, operationType: 'withdraw', chainId: BigInt(chainId), idempotencyKey, requestHash, ...extra };
+  private withdrawalCasWhere(
+    tx: any,
+    userId: string,
+    chainId: number,
+    idempotencyKey: string,
+    requestHash: string,
+    extra: Record<string, unknown>,
+  ) {
+    return {
+      id: tx.id,
+      userId,
+      operationType: 'withdraw',
+      chainId: BigInt(chainId),
+      idempotencyKey,
+      requestHash,
+      ...extra,
+    };
   }
 
   private async assertWithdrawalPolicy(
@@ -947,7 +1037,9 @@ export class WalletService {
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     const createdAt = new Date();
-    const billingPeriodStart = new Date(Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1));
+    const billingPeriodStart = new Date(
+      Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1),
+    );
     const tx = await prisma.transaction.create({
       data: {
         userId,

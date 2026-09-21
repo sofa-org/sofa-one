@@ -18,6 +18,7 @@ describe('ApiKeyService', () => {
 
   const prisma: any = {
     $transaction: jest.fn((callback: (tx: any) => unknown) => callback(prisma)),
+    $queryRaw: jest.fn(),
     apiKey: {
       count: jest.fn(),
       findFirst: jest.fn(),
@@ -48,6 +49,8 @@ describe('ApiKeyService', () => {
     prisma.apiKey.updateMany.mockResolvedValue({ count: 1 });
     prisma.apiKeyEvent.create.mockResolvedValue({ id: 'event-1' });
     securityEvents.record.mockResolvedValue({ id: 'security-event-1' });
+    // Default FOR UPDATE lock rows empty unless a test sets them.
+    prisma.$queryRaw.mockResolvedValue([]);
     jest.mocked(argon2.hash).mockResolvedValue('argon2-hash' as never);
   });
 
@@ -242,16 +245,18 @@ describe('ApiKeyService', () => {
   });
 
   it('audits single-key revocation and rejects unknown keys', async () => {
-    prisma.apiKey.findFirst.mockResolvedValue({
-      id: 'key-1',
-      userId: 'user-1',
-      keyPrefix: 'sk_1234567890abcdef12345678',
-      name: 'Production key',
-      revoked: false,
-    });
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        id: 'key-1',
+        key_prefix: 'sk_1234567890abcdef12345678',
+        name: 'Production key',
+        revoked: false,
+      },
+    ]);
     const service = createService();
 
     await expect(service.revokeApiKey('key-1', 'user-1')).resolves.toEqual({ count: 1 });
+    expect(prisma.$queryRaw).toHaveBeenCalled();
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -276,7 +281,7 @@ describe('ApiKeyService', () => {
       prisma,
     );
 
-    prisma.apiKey.findFirst.mockResolvedValue(null);
+    prisma.$queryRaw.mockResolvedValue([]);
     await expect(service.revokeApiKey('missing', 'user-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
@@ -499,6 +504,12 @@ describe('ApiKeyService', () => {
         canSendTransaction: false,
         canReadTransactionStatus: true,
         canUseEoaExecution: false,
+        allowedIps: [],
+        allowedContracts: [],
+        allowedFunctionSelectors: [],
+        dailySpendLimit: null,
+        monthlySpendLimit: null,
+        directEgressPolicyAcceptedAt: null,
       },
     ]);
     const service = createService();
@@ -522,15 +533,107 @@ describe('ApiKeyService', () => {
           canReadTransactionStatus: true,
           canUseEoaExecution: false,
         },
+        allowedIps: [],
+        allowedContracts: [],
+        allowedFunctionSelectors: [],
+        dailySpendLimit: null,
+        monthlySpendLimit: null,
+        directEgressPolicyAcceptedAt: null,
       },
     ]);
 
     expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'user-1' },
+        select: expect.objectContaining({
+          directEgressPolicyAcceptedAt: true,
+        }),
+      }),
+    );
+    expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
         select: expect.not.objectContaining({ apiKeyHash: true }),
       }),
     );
+  });
+
+  describe('authorizeDirectEgress', () => {
+    function lockRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'key-1',
+        key_prefix: 'sk_abc',
+        name: 'Send key',
+        revoked: false,
+        frozen_at: null,
+        expires_at: null,
+        can_send_transaction: true,
+        direct_egress_policy_accepted_at: null,
+        ...overrides,
+      };
+    }
+
+    it('CAS-sets directEgressPolicyAcceptedAt for an eligible send key', async () => {
+      prisma.$queryRaw.mockResolvedValue([lockRow()]);
+      prisma.apiKey.updateMany.mockResolvedValue({ count: 1 });
+      const service = createService();
+
+      const result = await service.authorizeDirectEgress('key-1', 'user-1');
+      expect(result.outcome).toBe('authorized');
+      expect(result.directEgressPolicyAcceptedAt).toBeInstanceOf(Date);
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(prisma.apiKey.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'key-1',
+            directEgressPolicyAcceptedAt: null,
+            canSendTransaction: true,
+          }),
+          data: expect.objectContaining({
+            directEgressPolicyAcceptedAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(securityEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: 'api_key.direct_egress_authorized',
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('is idempotent when already authorized', async () => {
+      const acceptedAt = new Date('2026-06-01T00:00:00.000Z');
+      prisma.$queryRaw.mockResolvedValue([
+        lockRow({ direct_egress_policy_accepted_at: acceptedAt }),
+      ]);
+      const service = createService();
+
+      await expect(service.authorizeDirectEgress('key-1', 'user-1')).resolves.toEqual({
+        id: 'key-1',
+        directEgressPolicyAcceptedAt: acceptedAt,
+        outcome: 'unchanged',
+      });
+      expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects revoked, frozen, expired, and non-send keys', async () => {
+      const service = createService();
+      prisma.$queryRaw.mockResolvedValue([lockRow({ revoked: true })]);
+      await expect(service.authorizeDirectEgress('key-1', 'user-1')).rejects.toThrow(/revoked/i);
+
+      prisma.$queryRaw.mockResolvedValue([lockRow({ frozen_at: new Date() })]);
+      await expect(service.authorizeDirectEgress('key-1', 'user-1')).rejects.toThrow(/frozen/i);
+
+      prisma.$queryRaw.mockResolvedValue([
+        lockRow({ expires_at: new Date('2020-01-01T00:00:00.000Z') }),
+      ]);
+      await expect(service.authorizeDirectEgress('key-1', 'user-1')).rejects.toThrow(/expired/i);
+
+      prisma.$queryRaw.mockResolvedValue([lockRow({ can_send_transaction: false })]);
+      await expect(service.authorizeDirectEgress('key-1', 'user-1')).rejects.toThrow(
+        /not allowed to send/i,
+      );
+    });
   });
 
   // ── SEC-APIKEY-002: High-risk permissions require IP allowlist ──

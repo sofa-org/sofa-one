@@ -5,6 +5,7 @@ import {
   type BillingPlanResponse,
   type BillingSummary,
   type UsdcQuoteResponse,
+  type UsdcWalletPayResult,
 } from '@/lib/api';
 
 /** Wrap a list of invoices in the exact response shape `listBillingInvoicesAuth` returns. */
@@ -110,8 +111,26 @@ export function makeQuote(over?: Partial<UsdcQuoteResponse>): UsdcQuoteResponse 
     amountBaseUnits: '10000000',
     amountUsd: '10.00',
     currency: 'USD',
-    quoteExpiresAt: '2026-08-31T23:59:59.000Z',
+    // Far-future default so wallet-pay expiry guards stay open in unit tests.
+    quoteExpiresAt: '2099-12-31T23:59:59.000Z',
     requiredConfirmations: 1,
+    ...over,
+  };
+}
+
+export function makeWalletPayResult(over?: Partial<UsdcWalletPayResult>): UsdcWalletPayResult {
+  return {
+    invoiceId: 'inv_1',
+    paymentAttemptId: 'attempt_1',
+    status: 'pending',
+    paid: false,
+    accepted: false,
+    reserved: false,
+    isExecutor: false,
+    phase: 'status',
+    chainId: 84532,
+    transactionHash: null,
+    reviewReason: null,
     ...over,
   };
 }

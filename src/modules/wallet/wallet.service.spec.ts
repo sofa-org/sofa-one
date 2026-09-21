@@ -179,19 +179,31 @@ describe('WalletService.withdraw()', () => {
           provide: PrismaService,
           useValue: {
             userWallet: { findUnique: mockFindUnique },
-            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate, updateMany: mockUpdateMany },
+            transaction: {
+              findFirst: mockFindFirst,
+              create: mockCreate,
+              update: mockUpdate,
+              updateMany: mockUpdateMany,
+            },
             $transaction: mockTransaction,
           },
         },
         {
           provide: OpenfortService,
-          useValue: { submitUserOperation: mockSendUserOperation, waitForUserOperationReceipt: mockWaitForUserOperationReceipt, sendUserOperation: mockSendUserOperation, signData: jest.fn() },
+          useValue: {
+            submitUserOperation: mockSendUserOperation,
+            waitForUserOperationReceipt: mockWaitForUserOperationReceipt,
+            sendUserOperation: mockSendUserOperation,
+            signData: jest.fn(),
+          },
         },
         {
           provide: WithdrawalPolicyService,
           useValue: {
             assertWithdrawalAllowed: mockAssertWithdrawalAllowed,
             assertDailyLimitWithUserLock: mockAssertDailyLimitWithUserLock,
+            acquireUserDestinationLock: jest.fn().mockResolvedValue(undefined),
+            assertDestinationAllowedInTx: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -320,14 +332,12 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
-    mockFindFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'tx-existing',
-        txHash: null,
-        status: 'submitting',
-        requestHash: 'different-request',
-      });
+    mockFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'tx-existing',
+      txHash: null,
+      status: 'submitting',
+      requestHash: 'different-request',
+    });
     mockTxFindFirst.mockResolvedValue(null);
     mockCreate.mockRejectedValue({ code: 'P2002' });
 
@@ -572,41 +582,52 @@ describe('WalletService.withdraw()', () => {
   it('persists typed UserOperation success and safe compatibility details', async () => {
     await service.withdraw('user-1', VALID_DTO);
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        userOpSuccess: true,
-        details: expect.objectContaining({ userOperationSuccess: true }),
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userOpSuccess: true,
+          details: expect.objectContaining({ userOperationSuccess: true }),
+        }),
       }),
-    }));
+    );
   });
 
   it('persists typed UserOperation failure without marking it billable', async () => {
-    mockWaitForUserOperationReceipt.mockResolvedValue({ success: false, transactionHash: '0xbundle' });
+    mockWaitForUserOperationReceipt.mockResolvedValue({
+      success: false,
+      transactionHash: '0xbundle',
+    });
 
     await service.withdraw('user-1', VALID_DTO);
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        userOpSuccess: false,
-        details: expect.objectContaining({ userOperationSuccess: false }),
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userOpSuccess: false,
+          details: expect.objectContaining({ userOperationSuccess: false }),
+        }),
       }),
-    }));
+    );
     const completionWrite = mockUpdateMany.mock.calls.find(
       (call: any[]) => call[0].data.userOpSuccess === false,
     );
-    expect(completionWrite?.[0].where).toEqual(expect.objectContaining({
-      userOpSuccess: null,
-      billingReconciledAt: null,
-    }));
+    expect(completionWrite?.[0].where).toEqual(
+      expect.objectContaining({
+        userOpSuccess: null,
+        billingReconciledAt: null,
+      }),
+    );
   });
 
   it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
     mockSendUserOperation.mockRejectedValue(new Error('Openfort down'));
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ status: 'unknown' }),
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'unknown' }),
+      }),
+    );
   });
 
   // ── Billing debt gate ──────────────────────────────────────────────────────

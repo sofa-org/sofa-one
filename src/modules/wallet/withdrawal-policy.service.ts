@@ -12,6 +12,11 @@ import {
 } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { SecurityEventService } from '../security-events/security-event.service';
+import {
+  isDeferredDestinationPolicyDenial,
+  WithdrawalDestinationPolicyService,
+  type DeferredDestinationPolicyDenial,
+} from '../withdrawal-destination/withdrawal-destination-policy.service';
 
 type WithdrawalPolicyRecord = {
   id: string;
@@ -40,6 +45,7 @@ export class WithdrawalPolicyService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     @Optional()
     private readonly securityEvents?: SecurityEventService,
   ) {}
@@ -65,60 +71,74 @@ export class WithdrawalPolicyService {
   async addWithdrawalAddress(userId: string, dto: CreateWithdrawalAddressDto) {
     const normalizedAddress = this.normalizeAddress(dto.address);
     const label = dto.label?.trim() || null;
-    const policy = await this.prisma.withdrawalPolicy.upsert({
-      where: { userId },
-      update: { requireAddressAllowlist: true },
-      create: { userId, requireAddressAllowlist: true },
-    });
-    const availableAt = new Date(
-      Date.now() + Math.max(0, policy.newAddressCooldownHours) * 60 * 60 * 1000,
-    );
 
+    let address: WithdrawalAddressRecord;
+    let cooldownHours: number;
     try {
-      const address = (await this.prisma.withdrawalAddress.create({
-        data: {
-          userId,
-          address: normalizedAddress,
-          label,
-          availableAt,
-        },
-      })) as WithdrawalAddressRecord;
-
-      this.logger.warn({
-        event: 'security',
-        message: 'Withdrawal address allowlisted',
-        userId,
-        withdrawalAddressId: address.id,
-        address: normalizedAddress,
-        availableAt: address.availableAt.toISOString(),
-        cooldownHours: policy.newAddressCooldownHours,
+      // BILL-016: hold the shared user destination advisory lock for the whole
+      // mutation so send/withdraw acceptance cannot race allowlist writes.
+      // No RPC/Openfort inside the lock.
+      const created = await this.prisma.$transaction(async (tx) => {
+        await this.destinationPolicy.acquireUserDestinationLock(userId, tx);
+        const policy = await tx.withdrawalPolicy.upsert({
+          where: { userId },
+          update: { requireAddressAllowlist: true },
+          create: { userId, requireAddressAllowlist: true },
+        });
+        const availableAt = new Date(
+          Date.now() + Math.max(0, policy.newAddressCooldownHours) * 60 * 60 * 1000,
+        );
+        const row = (await tx.withdrawalAddress.create({
+          data: {
+            userId,
+            address: normalizedAddress,
+            label,
+            availableAt,
+          },
+        })) as WithdrawalAddressRecord;
+        return { row, cooldownHours: policy.newAddressCooldownHours };
       });
-      await this.recordSecurityEvent({
-        eventType: 'withdrawal_address.added',
-        userId,
-        riskLevel: 'medium',
-        result: 'allowed',
-        reason: 'withdrawal_address_added',
-        metadata: {
-          withdrawalAddressId: address.id,
-          address: normalizedAddress,
-          availableAt: address.availableAt.toISOString(),
-          cooldownHours: policy.newAddressCooldownHours,
-        },
-      });
-
-      return this.toWithdrawalAddressResponse(address);
+      address = created.row;
+      cooldownHours = created.cooldownHours;
     } catch (error: unknown) {
       if (this.isPrismaUniqueConstraintError(error)) {
         throw new BadRequestException('Withdrawal address is already allowlisted');
       }
       throw error;
     }
+
+    this.logger.warn({
+      event: 'security',
+      message: 'Withdrawal address allowlisted',
+      userId,
+      withdrawalAddressId: address.id,
+      address: normalizedAddress,
+      availableAt: address.availableAt.toISOString(),
+      cooldownHours,
+    });
+    await this.recordSecurityEvent({
+      eventType: 'withdrawal_address.added',
+      userId,
+      riskLevel: 'medium',
+      result: 'allowed',
+      reason: 'withdrawal_address_added',
+      metadata: {
+        withdrawalAddressId: address.id,
+        address: normalizedAddress,
+        availableAt: address.availableAt.toISOString(),
+        cooldownHours,
+      },
+    });
+
+    return this.toWithdrawalAddressResponse(address);
   }
 
   async removeWithdrawalAddress(userId: string, addressId: string) {
-    const result = await this.prisma.withdrawalAddress.deleteMany({
-      where: { id: addressId, userId },
+    const result = await this.prisma.$transaction(async (tx) => {
+      await this.destinationPolicy.acquireUserDestinationLock(userId, tx);
+      return tx.withdrawalAddress.deleteMany({
+        where: { id: addressId, userId },
+      });
     });
     if (result.count === 0) {
       throw new BadRequestException('Withdrawal address not found');
@@ -140,6 +160,57 @@ export class WithdrawalPolicyService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Shared user-scoped destination advisory lock (BILL-016). Must run inside an
+   * interactive transaction. Never perform RPC/Openfort while holding it.
+   */
+  async acquireUserDestinationLock(
+    userId: string,
+    prisma: Prisma.TransactionClient,
+  ): Promise<void> {
+    await this.destinationPolicy.acquireUserDestinationLock(userId, prisma);
+  }
+
+  /**
+   * Final in-TX destination/cooldown check for withdraw acceptance.
+   * Caller should already hold the user destination advisory lock.
+   * Fail closed via WithdrawalDestinationPolicyService.
+   */
+  async assertDestinationAllowedInTx(
+    userId: string,
+    to: string,
+    context: { chainId: number; walletId?: string; walletAddress?: string },
+    prisma: WithdrawalPolicyClient,
+  ): Promise<void> {
+    await this.destinationPolicy.assertDestinationsAllowed(
+      userId,
+      [to],
+      {
+        // IAM/dashboard withdraw — never attribute denials to an API key.
+        actorType: 'user',
+        chainId: context.chainId,
+        walletId: context.walletId,
+      },
+      // Always defer when called under a TX client so no root audit runs while
+      // destination advisory / policy row locks are held.
+      { prisma, deferAudit: true },
+    );
+  }
+
+  /** Post-rollback audit for deferred destination denials (wallet withdraw path). */
+  async recordDeferredDestinationDenial(err: unknown): Promise<void> {
+    if (isDeferredDestinationPolicyDenial(err)) {
+      await this.destinationPolicy.recordDeferredDenial(err);
+    }
+  }
+
+  rethrowDeferredDestinationDenial(err: unknown): never {
+    if (isDeferredDestinationPolicyDenial(err)) {
+      throw (err as DeferredDestinationPolicyDenial).httpException;
+    }
+    throw err;
   }
 
   async assertWithdrawalAllowed(
@@ -295,22 +366,42 @@ export class WithdrawalPolicyService {
       'dailyWithdrawalLimit',
     );
     const dayStart = this.startOfUtcDay(new Date());
-    const withdrawals = await prisma.transaction.findMany({
-      where: {
-        userId,
-        operationType: 'withdraw',
-        chainId: BigInt(params.chainId),
-        status: { in: [...WITHDRAWAL_COUNTED_STATUSES] },
-        createdAt: { gte: dayStart },
-        details: { path: ['token'], equals: params.token },
-      },
-      select: { details: true },
-    });
-
-    const usedToday = withdrawals.reduce(
-      (total, tx) => total + this.extractWithdrawalAmount(tx.details),
-      0n,
-    );
+    // BILL-016 Phase 2B (B2): daily limit aggregates withdraw + billing_payment.
+    // Settled/historical rows are UTC-day bounded; unresolved active reservations
+    // (submitting/pending/unknown) count regardless of createdAt so yesterday's
+    // unknown wallet-pay still blocks today's spend.
+    const UNRESOLVED = ['submitting', 'pending', 'unknown'] as const;
+    const [dayBounded, unresolved] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          userId,
+          operationType: { in: ['withdraw', 'billing_payment'] },
+          chainId: BigInt(params.chainId),
+          status: { in: [...WITHDRAWAL_COUNTED_STATUSES] },
+          createdAt: { gte: dayStart },
+          details: { path: ['token'], equals: params.token },
+        },
+        select: { id: true, details: true },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          userId,
+          operationType: { in: ['withdraw', 'billing_payment'] },
+          chainId: BigInt(params.chainId),
+          status: { in: [...UNRESOLVED] },
+          createdAt: { lt: dayStart },
+          details: { path: ['token'], equals: params.token },
+        },
+        select: { id: true, details: true },
+      }),
+    ]);
+    const seen = new Set<string>();
+    let usedToday = 0n;
+    for (const row of [...dayBounded, ...unresolved]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      usedToday += this.extractWithdrawalAmount(row.details);
+    }
     if (usedToday + amount > dailyLimit) {
       await this.reject('Withdrawal amount exceeds daily withdrawal limit', {
         ...context,

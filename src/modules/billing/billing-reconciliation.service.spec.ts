@@ -109,8 +109,9 @@ describe('BillingReconciliationService', () => {
 
   function expectNoTransactionStateMutation() {
     const mutations = txUpdateMany.mock.calls.filter(([args]) =>
-      Object.keys((args as { data?: Record<string, unknown> }).data ?? {})
-        .some((key) => key !== 'billingLastAttemptedAt'),
+      Object.keys((args as { data?: Record<string, unknown> }).data ?? {}).some(
+        (key) => key !== 'billingLastAttemptedAt',
+      ),
     );
     expect(mutations).toHaveLength(0);
   }
@@ -130,7 +131,12 @@ describe('BillingReconciliationService', () => {
               findUnique: runFindUnique,
               updateMany: runUpdateMany,
             },
-            transaction: { findMany: txFindMany, count: txCount, updateMany: txUpdateMany, update: txUpdate },
+            transaction: {
+              findMany: txFindMany,
+              count: txCount,
+              updateMany: txUpdateMany,
+              update: txUpdate,
+            },
             userWallet: { findUnique: walletFindUnique },
             $transaction: async (work: (db: unknown) => Promise<unknown>) =>
               work({
@@ -198,7 +204,11 @@ describe('BillingReconciliationService', () => {
         billingPeriodStart: PERIOD_START,
         createdAt: { lt: PERIOD_END },
       },
-      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: [
+        { billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } },
+        { createdAt: 'asc' },
+        { id: 'asc' },
+      ],
       take: 5,
     });
     expect(txFindMany).toHaveBeenNthCalledWith(2, {
@@ -215,7 +225,11 @@ describe('BillingReconciliationService', () => {
         ],
         id: { notIn: [] },
       },
-      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: [
+        { billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } },
+        { createdAt: 'asc' },
+        { id: 'asc' },
+      ],
       // the sparse non-confirmed set rolls its slice into the confirmed slice
       take: 10,
     });
@@ -308,7 +322,9 @@ describe('BillingReconciliationService', () => {
     });
     expect(first.scanned).toBe(200);
     expect(recordSuccessfulOutbound).toHaveBeenCalled();
-    const firstCompletion = runUpdateMany.mock.calls.find((c) => c[0]?.data?.status === 'completed');
+    const firstCompletion = runUpdateMany.mock.calls.find(
+      (c) => c[0]?.data?.status === 'completed',
+    );
     expect(firstCompletion[0].data.summary.complete).toBe(false);
 
     // Second run: the durable marker excludes the 200 already reconciled rows
@@ -322,7 +338,9 @@ describe('BillingReconciliationService', () => {
       targetPeriodEnd: PERIOD_END,
     });
     expect(second.scanned).toBe(0);
-    const secondCompletion = runUpdateMany.mock.calls.find((c) => c[0]?.data?.status === 'completed');
+    const secondCompletion = runUpdateMany.mock.calls.find(
+      (c) => c[0]?.data?.status === 'completed',
+    );
     expect(secondCompletion[0].data.summary.complete).toBe(true);
   });
 
@@ -433,8 +451,9 @@ describe('BillingReconciliationService', () => {
       }),
     );
     // reverted receipt evidence never leaks logs or calldata
-    const data = txUpdateMany.mock.calls.find(([args]) =>
-      (args as { data?: Record<string, unknown> }).data?.failureReason === 'receipt_reverted',
+    const data = txUpdateMany.mock.calls.find(
+      ([args]) =>
+        (args as { data?: Record<string, unknown> }).data?.failureReason === 'receipt_reverted',
     )?.[0].data;
     expect(data.details.receipt).not.toHaveProperty('logs');
     expect(data.details.receipt).not.toHaveProperty('calldata');
@@ -546,24 +565,37 @@ describe('BillingReconciliationService', () => {
     mockCandidates([txRow({ userOpHash: '0x' + 'a'.repeat(64), userOpSuccess: false })]);
     getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
 
-    const result = await service.reconcile('user-1', { targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
+    const result = await service.reconcile('user-1', {
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
 
     expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
     expect(getReceipt).not.toHaveBeenCalled();
     expect(result.reverted).toBe(1);
-    expect(txUpdateMany.mock.calls.some(([args]) =>
-      (args as { data?: Record<string, unknown> }).data?.status === 'failed',
-    )).toBe(true);
+    expect(
+      txUpdateMany.mock.calls.some(
+        ([args]) => (args as { data?: Record<string, unknown> }).data?.status === 'failed',
+      ),
+    ).toBe(true);
   });
 
   it('recovers a stored UserOperation hash from sanitized success and false results', async () => {
-    mockCandidates([txRow({ txHash: null, userOpHash: '0x' + 'b'.repeat(64), userOpSuccess: null })]);
+    mockCandidates([
+      txRow({ txHash: null, userOpHash: '0x' + 'b'.repeat(64), userOpSuccess: null }),
+    ]);
     waitForUserOperationReceipt.mockResolvedValueOnce({ success: true, transactionHash: TX_HASH });
     getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
 
-    await service.reconcile('user-1', { targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
+    await service.reconcile('user-1', {
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
 
-    expect(waitForUserOperationReceipt).toHaveBeenCalledWith({ chainId: 8453, userOpHash: '0x' + 'b'.repeat(64) });
+    expect(waitForUserOperationReceipt).toHaveBeenCalledWith({
+      chainId: 8453,
+      userOpHash: '0x' + 'b'.repeat(64),
+    });
     expect(recordSuccessfulOutbound).toHaveBeenCalled();
 
     jest.clearAllMocks();
@@ -571,10 +603,15 @@ describe('BillingReconciliationService', () => {
     runFindFirst.mockResolvedValue(null);
     runUpdateMany.mockResolvedValue({ count: 1 });
     txCount.mockResolvedValue(0);
-    mockCandidates([txRow({ txHash: null, userOpHash: '0x' + 'c'.repeat(64), userOpSuccess: null })]);
+    mockCandidates([
+      txRow({ txHash: null, userOpHash: '0x' + 'c'.repeat(64), userOpSuccess: null }),
+    ]);
     waitForUserOperationReceipt.mockResolvedValue({ success: false, transactionHash: null });
 
-    const failed = await service.reconcile('user-1', { targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
+    const failed = await service.reconcile('user-1', {
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
     expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
     expect(failed.reverted).toBe(1);
   });
@@ -665,7 +702,11 @@ describe('BillingReconciliationService', () => {
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', status: 'quarantined', amountUsdMicros: 0n }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+      }),
     );
   });
 
@@ -704,7 +745,13 @@ describe('BillingReconciliationService', () => {
     });
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:log:0', status: 'quarantined', amountUsdMicros: 0n, reconciliationRunId: 'run-1', metadata: expect.objectContaining({ reason: 'unknown_token' }) }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        reconciliationRunId: 'run-1',
+        metadata: expect.objectContaining({ reason: 'unknown_token' }),
+      }),
     );
   });
 
@@ -761,7 +808,394 @@ describe('BillingReconciliationService', () => {
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', metadata: expect.objectContaining({ reason: 'unsafe_removed' }) }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        metadata: expect.objectContaining({ reason: 'unsafe_removed' }),
+      }),
+    );
+  });
+
+  // ── BILL-017: topic0 discriminator before topic-shape; multi-log Calibur ──
+
+  /** Well-formed non-Transfer topic0 (32-byte hex, not ERC-20 Transfer). */
+  const NON_TRANSFER_TOPIC0 = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const NON_TRANSFER_TOPIC0_B =
+    '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+  const NON_TRANSFER_TOPIC0_C =
+    '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
+  const NON_TRANSFER_TOPIC0_D =
+    '0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd';
+  const NFT_TOKEN_ID_TOPIC = '0x0000000000000000000000000000000000000000000000000000000000000001';
+  const UNKNOWN_TOKEN = '0x2222222222222222222222222222222222222222';
+
+  function nonTransferLog(
+    topicCount: 0 | 1 | 2 | 4,
+    logIndex: number,
+    topic0: string = NON_TRANSFER_TOPIC0,
+  ) {
+    const extra = '0x' + 'e'.repeat(64);
+    const topics =
+      topicCount === 0
+        ? []
+        : topicCount === 1
+          ? [topic0]
+          : topicCount === 2
+            ? [topic0, extra]
+            : [topic0, extra, extra, extra];
+    return {
+      address: '0x1111111111111111111111111111111111111111',
+      topics,
+      data: '0x' + 'f'.repeat(64),
+      logIndex,
+      removed: false,
+    };
+  }
+
+  it('BILL-017: ignores non-Transfer logs with 0/1/2/4 topics and posts the mid-receipt USDC Transfer', async () => {
+    // Calibur/UserOperation-shaped multi-log receipt: unrelated protocol logs
+    // with topic counts matching production (0/1/2/4) surround a canonical
+    // ERC-20 USDC Transfer at log index 2. Pre-fix this quarantined the
+    // whole receipt as incomplete_log before scanning the Transfer.
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(2, 0, NON_TRANSFER_TOPIC0),
+        nonTransferLog(1, 1, NON_TRANSFER_TOPIC0_B),
+        transferLog({
+          logIndex: 2,
+          data: amountData(63_430_000n),
+        }),
+        nonTransferLog(4, 3, NON_TRANSFER_TOPIC0_C),
+        nonTransferLog(0, 4, NON_TRANSFER_TOPIC0_D),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
+    // Multi-log receipts use the aggregate receipt identity (not per-log keys).
+    // Confirmation is requested through the billing append fence (not a separate
+    // needs_review regression): reconciliationTransactionStatus stays confirmed.
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'posted',
+        amountUsdMicros: 63_430_000n,
+        baseUnitAmount: 63_430_000n,
+        quantity: 1n,
+        assetId: USDC_BASE,
+        reconciliationTransactionStatus: 'confirmed',
+        receipt: expect.objectContaining({
+          receiptRef: `${TX_HASH}:receipt`,
+          receiptLogIndex: null,
+        }),
+        metadata: expect.objectContaining({ logCount: 1 }),
+      }),
+    );
+    expect(result).toMatchObject({ posted: 1, quarantined: 0, updated: 1 });
+  });
+
+  it('BILL-017: scans every log — a trailing malformed Transfer candidate still quarantines after unrelated logs', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(2, 0),
+        nonTransferLog(1, 1),
+        transferLog({ logIndex: 2 }),
+        // Transfer topic0 with truncated topics — malformed candidate, not ignore.
+        {
+          address: USDC_BASE,
+          topics: [TRANSFER_TOPIC0, paddedAddress(WALLET)],
+          data: amountData(1_000_000n),
+          logIndex: 3,
+          removed: false,
+        },
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        metadata: expect.objectContaining({ reason: 'incomplete_log' }),
+      }),
+    );
+    expect(result).toMatchObject({ quarantined: 1, posted: 0 });
+    expectNoTransactionStateMutation();
+  });
+
+  it('BILL-017: quarantines NFT-shaped (4-topic) Transfer topic0 as malformed candidate evidence', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(1, 0),
+        {
+          address: UNKNOWN_TOKEN,
+          topics: [
+            TRANSFER_TOPIC0,
+            paddedAddress(WALLET),
+            paddedAddress(OTHER),
+            NFT_TOKEN_ID_TOPIC,
+          ],
+          data: '0x' + '0'.repeat(64),
+          logIndex: 1,
+          removed: false,
+        },
+        transferLog({ logIndex: 2 }),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        metadata: expect.objectContaining({ reason: 'incomplete_log' }),
+      }),
+    );
+    expect(result).toMatchObject({ quarantined: 1, posted: 0 });
+    expectNoTransactionStateMutation();
+  });
+
+  it('BILL-017: posts a single USDT outbound amid unrelated non-Transfer logs', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(2, 0),
+        transferLog({
+          address: USDT_BASE,
+          topics: [TRANSFER_TOPIC0, paddedAddress(WALLET), paddedAddress(OTHER)],
+          data: amountData(2_500_000n),
+          logIndex: 1,
+        }),
+        nonTransferLog(4, 2),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'posted',
+        amountUsdMicros: 2_500_000n,
+        assetId: USDT_BASE,
+        metadata: expect.objectContaining({ logCount: 1 }),
+      }),
+    );
+    expect(result).toMatchObject({ posted: 1, quarantined: 0 });
+  });
+
+  it('BILL-017: preserves unknown-asset quarantine when Transfer is from a non-catalog token amid unrelated logs', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(1, 0),
+        transferLog({ address: UNKNOWN_TOKEN, logIndex: 1 }),
+        nonTransferLog(2, 2),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    // Multi-log path quarantines the whole receipt when any outbound Transfer
+    // cannot be priced (unknown token), preserving zero-volume accounting.
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        metadata: expect.objectContaining({ reason: 'unknown_token' }),
+      }),
+    );
+    expect(result).toMatchObject({ quarantined: 1, posted: 0 });
+  });
+
+  it('BILL-017: preserves removed-log quarantine when a removed Transfer coexists with unrelated logs', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(2, 0),
+        transferLog({ removed: true, logIndex: 1 }),
+        nonTransferLog(1, 2),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    // removed === true is classified as unsafe_removed on the Transfer candidate
+    // (strict boolean false required); multi-log path quarantines the receipt.
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        metadata: expect.objectContaining({ reason: 'unsafe_removed' }),
+      }),
+    );
+    expect(result).toMatchObject({ quarantined: 1, posted: 0 });
+    expectNoTransactionStateMutation();
+  });
+
+  it('BILL-017: skips non-owner (inbound) Transfer amid unrelated logs and confirms with no usage', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(1, 0),
+        transferLog({
+          topics: [TRANSFER_TOPIC0, paddedAddress(OTHER), paddedAddress(WALLET)],
+          logIndex: 1,
+        }),
+        nonTransferLog(4, 2),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    // Owner/outbound filter: inbound Transfer is ignored; no usage row; the
+    // multi-log empty-transfer path still confirms execution after a full scan.
+    expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ posted: 0, quarantined: 0 });
+    expect(
+      txUpdateMany.mock.calls.some(
+        ([args]) => (args as { data?: Record<string, unknown> }).data?.status === 'confirmed',
+      ),
+    ).toBe(true);
+  });
+
+  it('BILL-017: aggregates two same-asset outbound Transfers with distinct log indexes amid unrelated logs', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(2, 0),
+        transferLog({ logIndex: 1, data: amountData(1_000_000n) }),
+        nonTransferLog(1, 2),
+        transferLog({ logIndex: 3, data: amountData(2_000_000n) }),
+        nonTransferLog(4, 4),
+      ]),
+    });
+
+    const result = await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'posted',
+        amountUsdMicros: 3_000_000n,
+        baseUnitAmount: 3_000_000n,
+        quantity: 2n,
+        assetId: USDC_BASE,
+      }),
+    );
+    expect(result).toMatchObject({ posted: 1, quarantined: 0 });
+  });
+
+  it('BILL-017: still quarantines mixed USDC+USDT multi-log receipts (accounting unchanged)', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        nonTransferLog(1, 0),
+        transferLog({ logIndex: 1 }),
+        transferLog({
+          address: USDT_BASE,
+          topics: [TRANSFER_TOPIC0, paddedAddress(WALLET), paddedAddress(OTHER)],
+          data: amountData(2_000_000n),
+          logIndex: 2,
+        }),
+      ]),
+    });
+
+    await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+        metadata: expect.objectContaining({ reason: 'mixed_receipt_assets' }),
+      }),
+    );
+  });
+
+  it('BILL-017: quarantines a malformed Transfer candidate topic0 (non-hex) rather than ignoring it', async () => {
+    mockCandidates([txRow()]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        {
+          address: USDC_BASE,
+          topics: ['not-a-topic0', paddedAddress(WALLET), paddedAddress(OTHER)],
+          data: amountData(1_000_000n),
+          logIndex: 0,
+          removed: false,
+        },
+      ]),
+    });
+
+    await service.reconcile('user-1', {
+      limit: 50,
+      targetPeriodStart: PERIOD_START,
+      targetPeriodEnd: PERIOD_END,
+    });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:log:0',
+        status: 'quarantined',
+        metadata: { reason: 'incomplete_log' },
+      }),
     );
   });
 
@@ -785,7 +1219,11 @@ describe('BillingReconciliationService', () => {
     // The receipt is quarantined once as a single atomic accounting unit.
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', status: 'quarantined', amountUsdMicros: 0n }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        amountUsdMicros: 0n,
+      }),
     );
     expect(result).toMatchObject({ quarantined: 1, posted: 0 });
   });
@@ -919,7 +1357,11 @@ describe('BillingReconciliationService', () => {
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', status: 'quarantined', metadata: expect.objectContaining({ reason: 'incomplete_log' }) }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        metadata: expect.objectContaining({ reason: 'incomplete_log' }),
+      }),
     );
   });
 
@@ -941,7 +1383,11 @@ describe('BillingReconciliationService', () => {
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', status: 'quarantined', metadata: expect.objectContaining({ reason: 'incomplete_log' }) }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'quarantined',
+        metadata: expect.objectContaining({ reason: 'incomplete_log' }),
+      }),
     );
   });
 
@@ -1016,7 +1462,11 @@ describe('BillingReconciliationService', () => {
 
     expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
     expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceKey: 'tx:tx-1:receipt', status: 'posted', amountUsdMicros: 2_000_000n }),
+      expect.objectContaining({
+        sourceKey: 'tx:tx-1:receipt',
+        status: 'posted',
+        amountUsdMicros: 2_000_000n,
+      }),
     );
   });
 
@@ -1458,10 +1908,12 @@ describe('BillingReconciliationService', () => {
     // The old owner's completion update must not match (taken over by another
     // worker, so workerId no longer equals 'worker-a'). Heartbeats still pass
     // until the takeover lands.
-    runUpdateMany.mockImplementation((args: { where?: { workerId?: string }; data?: { status?: string } }) => {
-      if (args.data?.status === 'completed') return Promise.resolve({ count: 0 });
-      return Promise.resolve({ count: 1 });
-    });
+    runUpdateMany.mockImplementation(
+      (args: { where?: { workerId?: string }; data?: { status?: string } }) => {
+        if (args.data?.status === 'completed') return Promise.resolve({ count: 0 });
+        return Promise.resolve({ count: 1 });
+      },
+    );
 
     const result = await service.reconcile('user-1', {
       limit: 50,

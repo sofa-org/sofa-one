@@ -28,11 +28,31 @@ let boundAttempt: Record<string, unknown> | null = null;
 
 function gateAwareFindFirst(value: unknown) {
   boundAttempt = (value as Record<string, unknown>) ?? null;
-  return jest.fn(({ where }: any) =>
-    where?.stripeChargeKind === 'fixed_fee' && where?.status === 'succeeded'
-      ? Promise.resolve(null)
-      : Promise.resolve(value),
-  );
+  return jest.fn(({ where }: any) => {
+    // Full-checkout coverage gate probe — never false-positive on a Stripe row.
+    if (where?.stripeChargeKind === 'fixed_fee' && where?.status === 'succeeded') {
+      return Promise.resolve(null);
+    }
+    // Cross-rail "other active" lookup: only return non-stripe / reserved-usdc rows.
+    const or = where?.OR as Array<Record<string, unknown>> | undefined;
+    if (Array.isArray(or)) {
+      const crossRail = or.some(
+        (c) =>
+          (c as { method?: { not?: string } }).method?.not === 'stripe' ||
+          c.walletPaymentReserved === true ||
+          c.method === 'usdc',
+      );
+      if (crossRail) {
+        const row = value as Record<string, unknown> | null;
+        if (!row) return Promise.resolve(null);
+        if (row.method === 'usdc' || row.walletPaymentReserved === true) {
+          return Promise.resolve(value);
+        }
+        return Promise.resolve(null);
+      }
+    }
+    return Promise.resolve(value);
+  });
 }
 
 /**
@@ -105,8 +125,12 @@ function attempt(overrides: Record<string, unknown> = {}) {
     status: 'pending',
     amountMicros: 49_000_000n,
     currency: 'USD',
+    // Default one-time full-invoice charge kind (subscription tests override).
+    stripeChargeKind: 'full',
     stripeCheckoutSessionId: null,
     stripePaymentIntentId: null,
+    stripeInvoiceId: null,
+    stripeSubscriptionId: null,
     checkoutUrl: null,
     failureCode: null,
     failureMessage: null,
@@ -609,12 +633,11 @@ describe('StripePaymentService', () => {
       });
     });
 
-    it('reuses the concurrent winner attempt when the pending insert races (P2002)', async () => {
+    it('reuses a concurrent winner already visible under the short lock (no P2002 poll)', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      attemptFindFirst.mockResolvedValue(null);
-      attemptCreate.mockRejectedValueOnce(p2002());
-      // The winner already persisted its session id.
+      // BILL-001: under-lock preflight sees the winner with a session — reuse,
+      // never insert-then-poll on an aborted TX.
       attemptFindFirst.mockImplementation(
         gateAwareFindFirst(
           attempt({
@@ -626,12 +649,31 @@ describe('StripePaymentService', () => {
 
       const result = await service.createCheckoutSession('user-1', 'inv-1');
 
+      expect(attemptCreate).not.toHaveBeenCalled();
       expect(sessionCreate).not.toHaveBeenCalled();
       expect(result).toEqual({
         invoiceId: 'inv-1',
         sessionId: 'cs_winner',
         checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_winner',
       });
+    });
+
+    it('BILL-001: P2002 under lock becomes stable 409 without querying the aborted TX', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptFindFirst.mockResolvedValue(null);
+      attemptCreate.mockRejectedValueOnce(p2002());
+      const findFirstCallsBefore = attemptFindFirst.mock.calls.length;
+
+      await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
+        /already being created|please retry/i,
+      );
+
+      expect(sessionCreate).not.toHaveBeenCalled();
+      // After the rejected create, no additional findFirst recovery on aborted TX:
+      // only the under-lock preflight lookups may have run (not a 15× poll loop).
+      const postCalls = attemptFindFirst.mock.calls.length - findFirstCallsBefore;
+      expect(postCalls).toBeLessThan(8);
     });
 
     it('marks the attempt failed and propagates when Stripe session creation fails', async () => {
@@ -834,10 +876,7 @@ describe('StripePaymentService', () => {
     it('returns a retryable conflict for a young in-flight pending attempt instead of creating a second one', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      attemptFindFirst.mockResolvedValue(null);
-      attemptCreate.mockRejectedValueOnce(p2002());
-      // The winner is still creating its Stripe session: young pending attempt
-      // with no session id yet.
+      // BILL-001: under-lock preflight sees young in-flight row — 409, no insert.
       attemptFindFirst.mockImplementation(
         gateAwareFindFirst(
           attempt({
@@ -848,28 +887,25 @@ describe('StripePaymentService', () => {
       );
 
       await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
-        ConflictException,
+        /already being created|please retry/i,
       );
 
-      // Only the initial (failed) insert happened — no second pending attempt
-      // and no Stripe session.
-      expect(attemptCreate).toHaveBeenCalledTimes(1);
+      expect(attemptCreate).not.toHaveBeenCalled();
       expect(sessionCreate).not.toHaveBeenCalled();
     });
 
     it('releases a clearly stale pending attempt and creates a fresh one', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      attemptFindFirst.mockResolvedValue(null);
-      attemptCreate.mockRejectedValueOnce(p2002()).mockResolvedValueOnce(attempt({ id: 'att-2' }));
-      // The winner died long ago: stale pending attempt older than the reuse TTL.
       const stale = attempt({
         id: 'att-stale',
         createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
         updatedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
       });
+      // First under-lock reads see stale; after release create succeeds.
       attemptFindFirst.mockImplementation(gateAwareFindFirst(stale));
-      attemptUpdate.mockResolvedValue({ ...stale, status: 'failed' });
+      attemptCreate.mockResolvedValue(attempt({ id: 'att-2' }));
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
       userFindUnique.mockResolvedValue(null);
       customerCreate.mockResolvedValue({ id: 'cus_123' });
       accountUpdate.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_123' });
@@ -895,7 +931,7 @@ describe('StripePaymentService', () => {
           failureCode: 'checkout_session_creation_timeout',
         }),
       });
-      expect(attemptCreate).toHaveBeenCalledTimes(2);
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
         invoiceId: 'inv-1',
         sessionId: 'cs_2',
@@ -923,16 +959,12 @@ describe('StripePaymentService', () => {
           }),
         ),
       );
-      attemptCreate.mockRejectedValueOnce(p2002());
+      // Release CAS cannot match provider-bound identity → count 0.
+      attemptUpdateMany.mockResolvedValue({ count: 0 });
 
       await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
         ConflictException,
       );
-      // The stale release CAS is attempted once but can never match a
-      // provider-bound attempt: its WHERE demands every identity column be
-      // NULL, so count 0 → fail closed. Never a replacement attempt and never a
-      // second session.
-      expect(attemptUpdateMany).toHaveBeenCalledTimes(1);
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -952,16 +984,14 @@ describe('StripePaymentService', () => {
         }),
       );
       expect(sessionCreate).not.toHaveBeenCalled();
-      expect(attemptCreate).toHaveBeenCalledTimes(1);
+      expect(attemptCreate).not.toHaveBeenCalled();
     });
 
-    it('creates a fresh attempt when the winner released the pending slot', async () => {
+    it('BILL-001: empty slot after concurrent release creates once under lock (no aborted-TX poll)', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
       attemptFindFirst.mockResolvedValue(null);
-      attemptCreate.mockRejectedValueOnce(p2002()).mockResolvedValueOnce(attempt({ id: 'att-2' }));
-      // The winner's Stripe call failed and it released the slot (no pending row).
-      attemptFindFirst.mockResolvedValue(null);
+      attemptCreate.mockResolvedValue(attempt({ id: 'att-2' }));
       userFindUnique.mockResolvedValue(null);
       customerCreate.mockResolvedValue({ id: 'cus_123' });
       accountUpdate.mockResolvedValue({ ...ACCOUNT, stripeCustomerId: 'cus_123' });
@@ -980,7 +1010,7 @@ describe('StripePaymentService', () => {
 
       const result = await service.createCheckoutSession('user-1', 'inv-1');
 
-      expect(attemptCreate).toHaveBeenCalledTimes(2);
+      expect(attemptCreate).toHaveBeenCalledTimes(1);
       expect(sessionCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: { invoiceId: 'inv-1', attemptId: 'att-2', period: '2026-05' },
@@ -997,27 +1027,31 @@ describe('StripePaymentService', () => {
     it('conflicts (never double-charges) when an active USDC attempt holds the unified reservation slot', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      // The initial insert and the fresh re-create are both rejected by the
-      // unified active-payment index (`billing_payment_attempts_one_active_payment_per_invoice_idx`).
-      attemptCreate.mockRejectedValueOnce(p2002()).mockRejectedValueOnce(p2002());
+      // BILL-001: under-lock other-rail preflight sees USDC — 409 before create.
       attemptFindFirst.mockImplementation(({ where }: any) => {
-        // The cross-rail conflict lookup (any active rail) finds the USDC attempt.
-        if (where?.status && Array.isArray(where.status.in)) {
+        const or = where?.OR as Array<Record<string, unknown>> | undefined;
+        const reservedBranch = or?.some(
+          (c) => c.walletPaymentReserved === true || c.method === 'usdc',
+        );
+        const notStripe = or?.some(
+          (c) => (c as { method?: { not?: string } }).method?.not === 'stripe',
+        );
+        if (reservedBranch || notStripe) {
           return Promise.resolve({
             id: 'att-usdc-active',
             invoiceId: 'inv-1',
             method: 'usdc',
             status: 'confirming',
+            walletPaymentReserved: false,
           });
         }
-        // No reusable/pending Stripe attempt exists.
         return Promise.resolve(null);
       });
 
       await expect(service.createCheckoutSession('user-1', 'inv-1')).rejects.toThrow(
         'An active payment of another rail is already in progress for this invoice',
       );
-      expect(attemptCreate).toHaveBeenCalledTimes(2);
+      expect(attemptCreate).not.toHaveBeenCalled();
       expect(sessionCreate).not.toHaveBeenCalled();
     });
   });
@@ -1238,7 +1272,7 @@ describe('StripePaymentService', () => {
     it('rejects a retrieved session whose complete local identity does not match', async () => {
       const row = recoveryRow();
       attemptFindMany.mockResolvedValue([row]);
-      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row)); // post-lease + coverage gate
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
       sessionRetrieve.mockResolvedValue({
         id: 'cs_recover',
@@ -1246,6 +1280,8 @@ describe('StripePaymentService', () => {
         payment_intent: 'pi_other',
         subscription: null,
         mode: 'payment',
+        status: 'open',
+        payment_status: 'unpaid',
         amount_total: 4900,
         currency: 'usd',
         customer: 'cus_123',
@@ -1282,6 +1318,8 @@ describe('StripePaymentService', () => {
         payment_intent: 'pi_recover',
         subscription: null,
         mode: 'payment',
+        status: 'open',
+        payment_status: 'unpaid',
         amount_total: 4900,
         currency: 'usd',
         customer: 'cus_123',
@@ -1336,6 +1374,8 @@ describe('StripePaymentService', () => {
           extra: 'expanded',
         },
         mode: 'subscription',
+        status: 'open',
+        payment_status: 'unpaid',
         amount_total: 4900,
         currency: 'usd',
         customer: 'cus_123',
@@ -1352,6 +1392,218 @@ describe('StripePaymentService', () => {
 
       expect(result.recovered).toBe(1);
       expect(accountUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('BILL-002: open/unpaid null-PaymentIntent one-time session is legitimate pending recovery', async () => {
+      const row = recoveryRow({ stripePaymentIntentId: null, checkoutRetryCount: 0 });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+      invoiceFindFirst.mockResolvedValue(invoice());
+      attemptCreate.mockResolvedValue(row);
+      await attemptCreate({ data: row });
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover',
+        url: 'https://stripe.test/recover',
+        payment_intent: null,
+        subscription: null,
+        mode: 'payment',
+        status: 'open',
+        payment_status: 'unpaid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+      // Null PI + open/unpaid is recovered pending — not identity failure, not retry budget.
+      expect(result).toEqual({ attempted: 1, recovered: 1, needsReview: 0, retryable: 0 });
+      expect(sessionRetrieve).toHaveBeenCalledTimes(1);
+      // Lease claim must NOT increment checkoutRetryCount.
+      expect(attemptUpdateMany.mock.calls[0][0].data).not.toEqual(
+        expect.objectContaining({ checkoutRetryCount: expect.anything() }),
+      );
+      expect(attemptUpdateMany.mock.calls[0][0].data.checkoutRetryCount).toBeUndefined();
+      // Success clear lease without budget burn.
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            checkoutNextRetryAt: null,
+            checkoutRetryOwnerId: null,
+          }),
+        }),
+      );
+      // No failure-path increment either.
+      expect(attemptUpdateMany).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ checkoutRetryCount: expect.anything() }),
+        }),
+      );
+    });
+
+    it('BILL-002: repeated open/null-PI observations never increment checkoutRetryCount', async () => {
+      const openNullPi = {
+        id: 'cs_recover',
+        url: 'https://stripe.test/recover',
+        payment_intent: null,
+        subscription: null,
+        mode: 'payment' as const,
+        status: 'open',
+        payment_status: 'unpaid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      };
+      for (let i = 0; i < 3; i++) {
+        const row = recoveryRow({
+          stripePaymentIntentId: null,
+          checkoutRetryCount: 0, // stays 0 across successful observations
+        });
+        attemptFindMany.mockResolvedValue([row]);
+        attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+        invoiceFindFirst.mockResolvedValue(invoice());
+        attemptCreate.mockResolvedValue(row);
+        await attemptCreate({ data: row });
+        attemptUpdateMany.mockResolvedValue({ count: 1 });
+        sessionRetrieve.mockResolvedValue(openNullPi);
+
+        const pass = await service.recoverPendingCheckouts('worker-1');
+        expect(pass).toEqual({ attempted: 1, recovered: 1, needsReview: 0, retryable: 0 });
+        for (const call of attemptUpdateMany.mock.calls) {
+          expect(call[0].data?.checkoutRetryCount).toBeUndefined();
+        }
+        attemptUpdateMany.mockClear();
+        sessionRetrieve.mockClear();
+      }
+    });
+
+    it('BILL-002: unknown/missing session status fails closed and consumes retry budget', async () => {
+      const row = recoveryRow({ checkoutRetryCount: 0 });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover',
+        url: 'https://stripe.test/recover',
+        payment_intent: 'pi_recover',
+        subscription: null,
+        mode: 'payment',
+        // status omitted / unknown — must not be treated as open or complete
+        payment_status: 'unpaid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 1 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            checkoutRetryCount: 1,
+            checkoutNextRetryAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('BILL-002: unrecognized session status fails closed (never recover/complete)', async () => {
+      const row = recoveryRow({ checkoutRetryCount: 1 });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover',
+        url: 'https://stripe.test/recover',
+        payment_intent: 'pi_recover',
+        subscription: null,
+        mode: 'payment',
+        status: 'weird_partial',
+        payment_status: 'unpaid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 1 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ checkoutRetryCount: 2 }),
+        }),
+      );
+    });
+
+    it('BILL-002: expired Checkout Session becomes needs_review without retry storm', async () => {
+      const row = recoveryRow({ stripePaymentIntentId: null });
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover',
+        url: null,
+        payment_intent: null,
+        subscription: null,
+        mode: 'payment',
+        status: 'expired',
+        payment_status: 'unpaid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+      expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 1, retryable: 0 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'needs_review',
+            reviewReason: 'checkout_session_expired',
+          }),
+        }),
+      );
+    });
+
+    it('BILL-002: complete/paid session clears lease without consuming retry budget', async () => {
+      const row = recoveryRow();
+      attemptFindMany.mockResolvedValue([row]);
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
+      attemptUpdateMany.mockResolvedValue({ count: 1 });
+      sessionRetrieve.mockResolvedValue({
+        id: 'cs_recover',
+        url: 'https://stripe.test/recover',
+        payment_intent: 'pi_recover',
+        subscription: null,
+        mode: 'payment',
+        status: 'complete',
+        payment_status: 'paid',
+        amount_total: 4900,
+        currency: 'usd',
+        customer: 'cus_123',
+        client_reference_id: 'inv-1',
+        metadata: { invoiceId: 'inv-1', attemptId: 'att-1', period: '2026-05' },
+      });
+
+      const result = await service.recoverPendingCheckouts('worker-1');
+      expect(result).toEqual({ attempted: 1, recovered: 1, needsReview: 0, retryable: 0 });
+      expect(attemptUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            checkoutNextRetryAt: null,
+            checkoutRetryOwnerId: null,
+          }),
+        }),
+      );
     });
 
     it('does not recover a terminal or lease-lost attempt', async () => {
@@ -1552,6 +1804,8 @@ describe('StripePaymentService', () => {
         payment_intent: 'pi_recover',
         subscription: null,
         mode: 'payment',
+        status: 'open',
+        payment_status: 'unpaid',
         amount_total: 4900,
         currency: 'usd',
         customer: 'cus_123',
@@ -1615,6 +1869,8 @@ describe('StripePaymentService', () => {
           billing_cycle_anchor: Math.floor(Date.parse('2026-04-01T00:00:00Z') / 1000), // mismatched anchor
         },
         mode: 'subscription',
+        status: 'open',
+        payment_status: 'unpaid',
         amount_total: 4900,
         currency: 'usd',
         customer: 'cus_123',
@@ -1634,18 +1890,18 @@ describe('StripePaymentService', () => {
     });
 
     it('counts a non-exhausted recovery failure as retryable while the row stays pending/retryable', async () => {
-      const row = recoveryRow();
+      const row = recoveryRow({ checkoutRetryCount: 0 });
       attemptFindMany.mockResolvedValue([row]);
-      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
       sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
 
       const result = await service.recoverPendingCheckouts('worker-1');
 
-      // The non-exhausted retry reschedule was persisted by THIS worker
-      // (updateMany count 1): it is an explicit retryable failure, not a benign
-      // miss — the row remains pending with a future backoff.
+      // BILL-002: actual provider failure consumes budget (increment on failure only).
       expect(result).toEqual({ attempted: 1, recovered: 0, needsReview: 0, retryable: 1 });
+      // Lease claim has no increment.
+      expect(attemptUpdateMany.mock.calls[0][0].data.checkoutRetryCount).toBeUndefined();
       expect(attemptUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -1654,7 +1910,10 @@ describe('StripePaymentService', () => {
             checkoutRetryOwnerId: 'worker-1',
             checkoutRetryLeaseExpiresAt: expect.objectContaining({ gt: expect.any(Date) }),
           }),
-          data: expect.objectContaining({ checkoutNextRetryAt: expect.any(Date) }),
+          data: expect.objectContaining({
+            checkoutRetryCount: 1,
+            checkoutNextRetryAt: expect.any(Date),
+          }),
         }),
       );
     });
@@ -1662,7 +1921,7 @@ describe('StripePaymentService', () => {
     it('counts an exhausted recovery transition as needsReview only when this worker owns the CAS', async () => {
       const row = recoveryRow({ checkoutRetryCount: 4 }); // 4 + 1 >= 5 → exhausted
       attemptFindMany.mockResolvedValue([row]);
-      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
       attemptUpdateMany.mockResolvedValueOnce({ count: 1 }); // lease claim
       sessionRetrieve.mockRejectedValue(new Error('stripe timeout'));
 
@@ -1674,6 +1933,7 @@ describe('StripePaymentService', () => {
           data: expect.objectContaining({
             status: 'needs_review',
             reviewReason: 'checkout_recovery_exhausted',
+            checkoutRetryCount: 5,
             checkoutNextRetryAt: null,
           }),
         }),
@@ -1683,7 +1943,7 @@ describe('StripePaymentService', () => {
     it('never counts a lease/CAS-miss reschedule as a retryable failure (benign race)', async () => {
       const row = recoveryRow();
       attemptFindMany.mockResolvedValue([row]);
-      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
       attemptUpdateMany
         .mockResolvedValueOnce({ count: 1 }) // lease claim wins
         .mockResolvedValue({ count: 0 }); // reschedule CAS misses — another worker completed the attempt
@@ -1699,7 +1959,7 @@ describe('StripePaymentService', () => {
     it('never counts an exhausted transition whose CAS misses as needsReview (benign race)', async () => {
       const row = recoveryRow({ checkoutRetryCount: 4 });
       attemptFindMany.mockResolvedValue([row]);
-      attemptFindFirst.mockResolvedValue(row); // post-lease re-read
+      attemptFindFirst.mockImplementation(gateAwareFindFirst(row));
       attemptUpdateMany
         .mockResolvedValueOnce({ count: 1 }) // lease claim wins
         .mockResolvedValue({ count: 0 }); // exhaustion CAS misses — a concurrent processor owns the row

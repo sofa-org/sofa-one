@@ -16,9 +16,20 @@ export const API_ERROR_CODES = {
   USDC_PAYMENT_IN_PROGRESS: 'USDC_PAYMENT_IN_PROGRESS',
   USDC_INVALID_ATTEMPT: 'USDC_INVALID_ATTEMPT',
   USDC_WALLET_NOT_ACTIVE: 'USDC_WALLET_NOT_ACTIVE',
+  /** Quote expires too soon to safely start wallet-payment provider dispatch. */
+  USDC_QUOTE_EXPIRY_TOO_SOON: 'USDC_QUOTE_EXPIRY_TOO_SOON',
+  /** Usage debt is present; only usage_period invoices may be paid from wallet. */
+  USDC_WALLET_USAGE_DEBT_ONLY: 'USDC_WALLET_USAGE_DEBT_ONLY',
+  /** Wallet-payment reservation already bound; cannot release/replace. */
+  USDC_WALLET_PAYMENT_RESERVED: 'USDC_WALLET_PAYMENT_RESERVED',
   BILLING_OUTBOUND_BLOCKED: 'BILLING_OUTBOUND_BLOCKED',
   BILLING_ASSET_FLOW_UNVERIFIABLE: 'BILLING_ASSET_FLOW_UNVERIFIABLE',
   BILLING_DEBT_CHECK_UNAVAILABLE: 'BILLING_DEBT_CHECK_UNAVAILABLE',
+  /** API key has not acknowledged destination-policy binding for direct egress. */
+  API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED: 'API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED',
+  WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED: 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED',
+  WITHDRAWAL_ADDRESS_IN_COOLDOWN: 'WITHDRAWAL_ADDRESS_IN_COOLDOWN',
+  WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE: 'WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE',
   AGENT_REGISTRATION_PENDING: 'AGENT_REGISTRATION_PENDING',
   PAYMASTER_POLICY_NOT_CONFIGURED: 'PAYMASTER_POLICY_NOT_CONFIGURED',
   USER_OPERATION_GAS_PRICE_UNAVAILABLE: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
@@ -78,6 +89,18 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   }
   if (normalized.includes('wallet service unavailable')) {
     return API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE;
+  }
+  if (normalized.includes('direct egress') && normalized.includes('reauth')) {
+    return API_ERROR_CODES.API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED;
+  }
+  if (normalized.includes('not allowlisted')) {
+    return API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED;
+  }
+  if (normalized.includes('still in cooldown')) {
+    return API_ERROR_CODES.WITHDRAWAL_ADDRESS_IN_COOLDOWN;
+  }
+  if (normalized.includes('destination policy is temporarily unavailable')) {
+    return API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE;
   }
   if (statusCode === HttpStatus.UNAUTHORIZED) return API_ERROR_CODES.UNAUTHORIZED;
   if (statusCode === HttpStatus.NOT_FOUND) return API_ERROR_CODES.NOT_FOUND;

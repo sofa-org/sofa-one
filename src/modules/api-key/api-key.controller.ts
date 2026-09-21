@@ -48,6 +48,19 @@ export class ApiKeyController {
     return { success: true, revokedCount: result.count };
   }
 
+  /**
+   * POST /v1/api-keys/:id/authorize-direct-egress — acknowledge destination-policy
+   * binding for API-key direct asset egress (BILL-016). Requires step-up.
+   * Dashboard-only; omitted from public openapi.yaml.
+   */
+  @RequireStepUp()
+  @UseGuards(StepUpGuard)
+  @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
+  @Post(':id/authorize-direct-egress')
+  async authorizeDirectEgress(@CurrentUser('id') userId: string, @Param('id') keyId: string) {
+    return this.apiKeyService.authorizeDirectEgress(keyId, userId);
+  }
+
   /** DELETE /v1/api-keys/:id — revoke a specific key. Requires step-up. */
   @RequireStepUp()
   @UseGuards(StepUpGuard)

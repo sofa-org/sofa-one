@@ -6,6 +6,35 @@ Operational helper scripts (not part of the NestJS runtime or public API).
 | -------------------------- | ------------------------------- | ----------------------------------------------------------------------------------- |
 | `billing-testnet-smoke.ts` | `npm run billing:testnet-smoke` | Read-only billing smoke                                                             |
 | `billing-fixture.ts`       | `npm run billing:fixture`       | Historical unpaid-invoice fixture with HMAC manifests + atomic create-only finalize |
+| `billing-e2e-runner.ts`    | `npm run test:e2e:billing`      | Runner-owned fresh DB+role, migrate, billing + Phase2/3 E2E, forced drop            |
+
+## Billing E2E runner (Gate 1)
+
+Provisions a **new** PostgreSQL database and login role per run (names embed a
+unique run id), verifies `current_database` / `current_user` / `session_user` /
+database owner / `application_name`, runs `prisma migrate deploy`, then Jest for
+`billing-e2e-database` gate tests + `billing-http` + claim/settlement concurrency +
+`api-key-direct-egress` + concurrency lock evidence (BILL-016 Phase 2A) +
+`usdc-wallet-payment` (Phase 2B quote-bound pay-from-wallet; providers mocked) +
+`phase3-billing` (Phase 3 disposable-DB evidence: cross-rail checkout conflict,
+cleanup lease/late-session discovery CAS, worker unresolved backlog vs terminal
+review health; Stripe/Openfort mocked only — no live provider contract claimed).
+Drops the database `WITH (FORCE)` and the role in `finally`.
+
+**Hard rules**
+
+- Admin input only: `BILLING_E2E_ADMIN_DATABASE_URL` (superuser → maintenance
+  `postgres` DB). Never falls back to `DATABASE_URL` or a static shared test DB.
+- Child Jest receives only the generated target URL + runner metadata
+  (`BILLING_E2E_PROVISIONED=runner-v1`, run id, expected db/user/owner/app name,
+  `BILLING_E2E_DISPOSABLE_DB=true`). The admin URL is stripped from the child env.
+- Credentials and full URLs are never logged.
+- Gate-only (no Postgres): `npm run test:e2e:billing:gate`
+
+```bash
+export BILLING_E2E_ADMIN_DATABASE_URL='postgresql://postgres:…@localhost:5432/postgres'
+npm run test:e2e:billing
+```
 
 ## Billing historical fixture
 

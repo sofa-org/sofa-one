@@ -1,24 +1,23 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  Logger,
-  Optional,
-} from '@nestjs/common';
-import {
-  BillingAutoSubscriptionStatus,
-  Prisma,
-} from '@prisma/client';
+import { ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { BillingAutoSubscriptionStatus, Prisma } from '@prisma/client';
 import { createHash, randomUUID } from 'node:crypto';
 import * as Stripe from 'stripe';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { getErrorText, sanitizeErrorMessage } from '../../../common/utils/sanitize';
 import { STRIPE_CHARGE_KIND_FULL, STRIPE_CLIENT } from './stripe.constants';
 import {
+  AUTO_SUB_PM_NOT_REUSABLE_CODE,
+  AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+  classifyAutoSubNeedsReviewOutcome,
+} from './auto-subscription-terminal-no-funds';
+import {
   readStripeSubscriptionPeriodBounds,
   stripePeriodBoundsToDates,
 } from './stripe-subscription-period';
 import { StripeSubscriptionSyncService } from './stripe-subscription-sync.service';
+
+/** Re-export terminal labels for existing call sites / specs. */
+export { AUTO_SUB_PM_NOT_REUSABLE_CODE, AUTO_SUB_TERMINAL_NO_FUNDS_TYPE };
 
 type Tx = Prisma.TransactionClient;
 type AutoIntent = Prisma.BillingAutoSubscriptionIntentGetPayload<Record<string, never>>;
@@ -41,9 +40,26 @@ const FREE_SUPERSEDE_CODE = 'scheduled_free_no_subscription';
 export type AutoSubProcessResult = {
   attempted: number;
   completed: number;
+  /**
+   * Operator-review outcomes that still signal unfinished/uncertain work and
+   * must fail the worker heartbeat (validation conflicts, exhausted uncertain
+   * retries, foreign subscription, etc.).
+   */
   needsReview: number;
+  /**
+   * BILL-020: terminal no-funds-side-effect review (e.g. detached/non-reusable
+   * PaymentMethod). Observable via counters/logs but must NOT fail worker
+   * heartbeat or production readiness — paid benefits stay intact and no
+   * provider funds side effect remains in flight.
+   */
+  terminalNoFundsReview: number;
   retryable: number;
   recovered: number;
+  /**
+   * BILL-020: recovery-scan / infrastructure failure must propagate to the
+   * worker heartbeat even when no due intent was processed this tick.
+   */
+  recoveryScanFailed: boolean;
 };
 
 /**
@@ -173,15 +189,9 @@ export class StripeAutoSubscriptionService {
     }
 
     // Next UTC month — never reuse the paid invoice's (possibly past) periodStart.
-    const effectivePeriodStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-    );
+    const effectivePeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
     const effectivePeriodEnd = new Date(
-      Date.UTC(
-        effectivePeriodStart.getUTCFullYear(),
-        effectivePeriodStart.getUTCMonth() + 1,
-        1,
-      ),
+      Date.UTC(effectivePeriodStart.getUTCFullYear(), effectivePeriodStart.getUTCMonth() + 1, 1),
     );
 
     const operationIdempotencyKey = StripeAutoSubscriptionService.buildOperationIdempotencyKey({
@@ -220,10 +230,7 @@ export class StripeAutoSubscriptionService {
         OR: [
           {
             status: {
-              in: [
-                BillingAutoSubscriptionStatus.pending,
-                BillingAutoSubscriptionStatus.in_flight,
-              ],
+              in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
             },
           },
           {
@@ -284,8 +291,9 @@ export class StripeAutoSubscriptionService {
     const cursorId = cursorRow?.cursorAttemptId ?? null;
 
     // Keyset: (succeeded_at, id) > cursor. succeeded_at IS NOT NULL for stable order.
-    const missing = cursorAt && cursorId
-      ? await this.prisma.$queryRaw<Array<{ id: string; succeeded_at: Date }>>`
+    const missing =
+      cursorAt && cursorId
+        ? await this.prisma.$queryRaw<Array<{ id: string; succeeded_at: Date }>>`
           SELECT a.id, a.succeeded_at
           FROM billing_payment_attempts a
           INNER JOIN billing_invoices i ON i.id = a.invoice_id
@@ -329,7 +337,7 @@ export class StripeAutoSubscriptionService {
           ORDER BY a.succeeded_at ASC, a.id ASC
           LIMIT ${limit}
         `
-      : await this.prisma.$queryRaw<Array<{ id: string; succeeded_at: Date }>>`
+        : await this.prisma.$queryRaw<Array<{ id: string; succeeded_at: Date }>>`
           SELECT a.id, a.succeeded_at
           FROM billing_payment_attempts a
           INNER JOIN billing_invoices i ON i.id = a.invoice_id
@@ -452,10 +460,7 @@ export class StripeAutoSubscriptionService {
    * needed, and set Customer invoice_settings.default_payment_method.
    * Requires a lease token — unfenced callers are rejected.
    */
-  async savePaymentMethodBestEffort(
-    intentId: string,
-    leaseOwnerId: string,
-  ): Promise<boolean> {
+  async savePaymentMethodBestEffort(intentId: string, leaseOwnerId: string): Promise<boolean> {
     if (!leaseOwnerId) return false;
     const stripe = this.stripe;
     if (!stripe) return false;
@@ -479,12 +484,7 @@ export class StripeAutoSubscriptionService {
       where: { id: intent.sourceAttemptId },
     });
     if (!attempt?.stripePaymentIntentId) {
-      await this.markRetryOrReview(
-        intent.id,
-        'missing_payment_intent',
-        'validation',
-        leaseOwnerId,
-      );
+      await this.markRetryOrReview(intent.id, 'missing_payment_intent', 'validation', leaseOwnerId);
       return false;
     }
 
@@ -586,6 +586,24 @@ export class StripeAutoSubscriptionService {
     } catch (err) {
       const msg = sanitizeErrorMessage(getErrorText(err));
       this.logger.warn(`Auto-subscription PM save ${intent.id} failed: ${msg}`);
+      // BILL-020: detached / previously-used / non-reusable PaymentMethods are
+      // deterministic permanent failures — immediate terminal no-funds review,
+      // never a generic pm_save_error retry storm that fails readiness. Only
+      // narrow provider-code classification + never-dispatched fence may
+      // terminalize; ambiguous failures stay uncertain/retryable.
+      if (isPermanentPaymentMethodError(err)) {
+        const terminalized = await this.markTerminalNoFundsReview(
+          intent.id,
+          AUTO_SUB_PM_NOT_REUSABLE_CODE,
+          leaseOwnerId,
+        );
+        if (!terminalized) {
+          // Dispatched / uncertain provider result / lost lease: never pretend
+          // terminal — keep the generic uncertain path.
+          await this.markRetryOrReview(intent.id, 'pm_save_error', 'uncertain', leaseOwnerId);
+        }
+        return false;
+      }
       await this.markRetryOrReview(intent.id, 'pm_save_error', 'uncertain', leaseOwnerId);
       return false;
     }
@@ -598,10 +616,7 @@ export class StripeAutoSubscriptionService {
         where: {
           billingAccountId,
           status: {
-            in: [
-              BillingAutoSubscriptionStatus.pending,
-              BillingAutoSubscriptionStatus.in_flight,
-            ],
+            in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
           },
           OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }],
         },
@@ -622,10 +637,15 @@ export class StripeAutoSubscriptionService {
   /** Worker entry: recovery scan + process due intents with unique leases. */
   async processDue(workerId: string, limit = BATCH): Promise<AutoSubProcessResult> {
     let recovered = 0;
+    let recoveryScanFailed = false;
     try {
-      const recovery = await this.recoverMissingPaidIntents(workerId, Math.min(limit, RECOVERY_BATCH));
+      const recovery = await this.recoverMissingPaidIntents(
+        workerId,
+        Math.min(limit, RECOVERY_BATCH),
+      );
       recovered = recovery.enqueued;
     } catch (err) {
+      recoveryScanFailed = true;
       this.logger.warn(
         `Auto-subscription recovery scan failed: ${sanitizeErrorMessage(getErrorText(err))}`,
       );
@@ -635,10 +655,7 @@ export class StripeAutoSubscriptionService {
       const outstanding = await this.prisma.billingAutoSubscriptionIntent.count({
         where: {
           status: {
-            in: [
-              BillingAutoSubscriptionStatus.pending,
-              BillingAutoSubscriptionStatus.in_flight,
-            ],
+            in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
           },
         },
       });
@@ -655,20 +672,27 @@ export class StripeAutoSubscriptionService {
           attempted: outstanding,
           completed: 0,
           needsReview: 0,
+          terminalNoFundsReview: 0,
           retryable: outstanding,
           recovered,
+          recoveryScanFailed,
         };
       }
-      return { attempted: 0, completed: 0, needsReview: 0, retryable: 0, recovered };
+      return {
+        attempted: 0,
+        completed: 0,
+        needsReview: 0,
+        terminalNoFundsReview: 0,
+        retryable: 0,
+        recovered,
+        recoveryScanFailed,
+      };
     }
 
     const due = await this.prisma.billingAutoSubscriptionIntent.findMany({
       where: {
         status: {
-          in: [
-            BillingAutoSubscriptionStatus.pending,
-            BillingAutoSubscriptionStatus.in_flight,
-          ],
+          in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
         },
         OR: [
           { nextRetryAt: null },
@@ -682,22 +706,32 @@ export class StripeAutoSubscriptionService {
 
     let completed = 0;
     let needsReview = 0;
+    let terminalNoFundsReview = 0;
     let retryable = 0;
     for (const intent of due) {
       // Unique lease token per process invocation (workerId is a prefix only).
       const leaseToken = `${workerId}:${randomUUID()}`;
       const outcome = await this.processOne(intent, leaseToken);
       if (outcome === 'completed') completed += 1;
+      else if (outcome === 'terminal_no_funds_review') terminalNoFundsReview += 1;
       else if (outcome === 'needs_review') needsReview += 1;
       else if (outcome === 'retryable') retryable += 1;
     }
-    return { attempted: due.length, completed, needsReview, retryable, recovered };
+    return {
+      attempted: due.length,
+      completed,
+      needsReview,
+      terminalNoFundsReview,
+      retryable,
+      recovered,
+      recoveryScanFailed,
+    };
   }
 
   private async processOne(
     seed: AutoIntent,
     leaseToken: string,
-  ): Promise<'completed' | 'needs_review' | 'retryable' | 'skipped'> {
+  ): Promise<'completed' | 'needs_review' | 'terminal_no_funds_review' | 'retryable' | 'skipped'> {
     const stripe = this.stripe;
     if (!stripe) return 'skipped';
 
@@ -705,10 +739,7 @@ export class StripeAutoSubscriptionService {
       where: {
         id: seed.id,
         status: {
-          in: [
-            BillingAutoSubscriptionStatus.pending,
-            BillingAutoSubscriptionStatus.in_flight,
-          ],
+          in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
         },
         OR: [
           { leaseExpiresAt: null },
@@ -799,9 +830,10 @@ export class StripeAutoSubscriptionService {
       fresh.leaseOwnerId !== leaseToken ||
       fresh.status === BillingAutoSubscriptionStatus.needs_review
     ) {
-      return fresh?.status === BillingAutoSubscriptionStatus.needs_review
-        ? 'needs_review'
-        : 'skipped';
+      if (fresh?.status === BillingAutoSubscriptionStatus.needs_review) {
+        return this.classifyNeedsReviewOutcome(fresh);
+      }
+      return 'skipped';
     }
     if (!pmOk || !fresh.stripePaymentMethodId || !fresh.paymentMethodSavedAt) {
       return 'retryable';
@@ -809,9 +841,7 @@ export class StripeAutoSubscriptionService {
 
     const frozen = this.readFrozenPayload(fresh.frozenPayloadJson);
     const cents =
-      typeof frozen.unitAmountCents === 'number'
-        ? frozen.unitAmountCents
-        : fresh.unitAmountCents;
+      typeof frozen.unitAmountCents === 'number' ? frozen.unitAmountCents : fresh.unitAmountCents;
     const currency = this.asNonEmptyString(frozen.currency) ?? fresh.currency ?? 'usd';
     const anchorUnix =
       typeof frozen.billingCycleAnchorUnix === 'number'
@@ -962,10 +992,7 @@ export class StripeAutoSubscriptionService {
   private async findExistingSubscriptionByIntent(
     stripe: NonNullable<typeof this.stripe>,
     intent: AutoIntent,
-  ): Promise<
-    | { ok: true; sub: Stripe.Subscription }
-    | { ok: false; code: string }
-  > {
+  ): Promise<{ ok: true; sub: Stripe.Subscription } | { ok: false; code: string }> {
     try {
       const listed = await stripe.subscriptions.list({
         customer: intent.stripeCustomerId,
@@ -1007,10 +1034,7 @@ export class StripeAutoSubscriptionService {
     stripe: NonNullable<typeof this.stripe>,
     intent: AutoIntent,
     subscriptionId: string,
-  ): Promise<
-    | { ok: true; sub: Stripe.Subscription }
-    | { ok: false; code: string }
-  > {
+  ): Promise<{ ok: true; sub: Stripe.Subscription } | { ok: false; code: string }> {
     try {
       const sub = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ['items.data.price'],
@@ -1231,8 +1255,7 @@ export class StripeAutoSubscriptionService {
     intent: AutoIntent,
     sub: Stripe.Subscription,
   ): { ok: true } | { ok: false; code: string } {
-    const customerId =
-      typeof sub.customer === 'string' ? sub.customer : (sub.customer?.id ?? null);
+    const customerId = typeof sub.customer === 'string' ? sub.customer : (sub.customer?.id ?? null);
     if (!customerId || customerId !== intent.stripeCustomerId) {
       return { ok: false, code: 'response_customer_mismatch' };
     }
@@ -1307,10 +1330,7 @@ export class StripeAutoSubscriptionService {
         OR: [
           {
             status: {
-              in: [
-                BillingAutoSubscriptionStatus.pending,
-                BillingAutoSubscriptionStatus.in_flight,
-              ],
+              in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
             },
           },
           {
@@ -1338,10 +1358,7 @@ export class StripeAutoSubscriptionService {
           id: pending.id,
           dispatchedAt: null,
           status: {
-            in: [
-              BillingAutoSubscriptionStatus.pending,
-              BillingAutoSubscriptionStatus.superseded,
-            ],
+            in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.superseded],
           },
         },
         data: {
@@ -1360,15 +1377,9 @@ export class StripeAutoSubscriptionService {
     if (!Number.isSafeInteger(cents) || cents <= 0) return null;
 
     // Always rebuild anchor from current UTC time (cross-month Free→paid safety).
-    const effectivePeriodStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-    );
+    const effectivePeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
     const effectivePeriodEnd = new Date(
-      Date.UTC(
-        effectivePeriodStart.getUTCFullYear(),
-        effectivePeriodStart.getUTCMonth() + 1,
-        1,
-      ),
+      Date.UTC(effectivePeriodStart.getUTCFullYear(), effectivePeriodStart.getUTCMonth() + 1, 1),
     );
 
     const operationIdempotencyKey = StripeAutoSubscriptionService.buildOperationIdempotencyKey({
@@ -1406,10 +1417,7 @@ export class StripeAutoSubscriptionService {
         id: pending.id,
         dispatchedAt: null,
         status: {
-          in: [
-            BillingAutoSubscriptionStatus.pending,
-            BillingAutoSubscriptionStatus.superseded,
-          ],
+          in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.superseded],
         },
       },
       data: {
@@ -1559,10 +1567,7 @@ export class StripeAutoSubscriptionService {
       id,
       leaseOwnerId,
       status: {
-        in: [
-          BillingAutoSubscriptionStatus.pending,
-          BillingAutoSubscriptionStatus.in_flight,
-        ],
+        in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
       },
     };
   }
@@ -1585,6 +1590,56 @@ export class StripeAutoSubscriptionService {
     });
   }
 
+  /**
+   * BILL-020: fenced terminal CAS for permanent no-funds PM failures.
+   *
+   * Terminalizes only when the intent is still lease-owned, never dispatched,
+   * has no provider subscription id (no uncertain create result), and is still
+   * pending/in_flight. A lost race or prior dispatch returns false so the
+   * caller keeps the non-terminal uncertain path.
+   */
+  private async markTerminalNoFundsReview(
+    id: string,
+    code: string,
+    leaseOwnerId: string,
+  ): Promise<boolean> {
+    const updated = await this.prisma.billingAutoSubscriptionIntent.updateMany({
+      where: {
+        id,
+        leaseOwnerId,
+        status: {
+          in: [BillingAutoSubscriptionStatus.pending, BillingAutoSubscriptionStatus.in_flight],
+        },
+        dispatchedAt: null,
+        stripeSubscriptionId: null,
+      },
+      data: {
+        status: BillingAutoSubscriptionStatus.needs_review,
+        lastErrorCode: code.slice(0, 80),
+        lastErrorType: AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+        leaseExpiresAt: null,
+        nextRetryAt: null,
+      },
+    });
+    return updated.count === 1;
+  }
+
+  /**
+   * BILL-020: split terminal no-funds review from other needs_review outcomes so
+   * the worker heartbeat can stay healthy for isolated permanent PM failures.
+   * Delegates to the shared fenced predicate (exact type+code, never dispatched,
+   * no subscription binding; null/partial labels stay needs_review).
+   */
+  private classifyNeedsReviewOutcome(intent: {
+    status?: string | null;
+    lastErrorType?: string | null;
+    lastErrorCode?: string | null;
+    dispatchedAt?: Date | null;
+    stripeSubscriptionId?: string | null;
+  }): 'needs_review' | 'terminal_no_funds_review' {
+    return classifyAutoSubNeedsReviewOutcome(intent);
+  }
+
   private async markRetryOrReview(
     id: string,
     code: string,
@@ -1600,10 +1655,7 @@ export class StripeAutoSubscriptionService {
       await this.markNeedsReview(id, code, type, leaseOwnerId);
       return;
     }
-    const backoff = Math.min(
-      BACKOFF_MS * 2 ** Math.min(intent.retryCount, 6),
-      24 * 60 * 60 * 1000,
-    );
+    const backoff = Math.min(BACKOFF_MS * 2 ** Math.min(intent.retryCount, 6), 24 * 60 * 60 * 1000);
     await this.prisma.billingAutoSubscriptionIntent.updateMany({
       where: this.leaseFenceWhere(id, leaseOwnerId),
       data: {
@@ -1625,6 +1677,95 @@ export class StripeAutoSubscriptionService {
   private asNonEmptyString(value: unknown): string | null {
     return typeof value === 'string' && value.length > 0 ? value : null;
   }
+}
+
+/**
+ * BILL-020: narrow provider-code classifier for permanent PaymentMethod attach
+ * failures (detached / previously used without customer / cannot be reused).
+ *
+ * Installed Stripe Node SDK shape: `StripeInvalidRequestError` sets
+ * `err.type = 'StripeInvalidRequestError'` (class name) while the API type
+ * lives on `rawType` / `raw.type` (`invalid_request_error`). Prefer those
+ * fields — never treat the class-name `type` as the API type gate.
+ *
+ * Message text alone never terminalizes — ambiguous 4xx/unknown errors stay
+ * retryable. 429/5xx/network infrastructure always returns false.
+ */
+export function isPermanentPaymentMethodError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as {
+    code?: unknown;
+    type?: unknown;
+    param?: unknown;
+    message?: unknown;
+    raw?: {
+      code?: unknown;
+      type?: unknown;
+      param?: unknown;
+      message?: unknown;
+      message_code?: unknown;
+      statusCode?: unknown;
+    };
+    rawType?: unknown;
+    statusCode?: unknown;
+    status?: unknown;
+  };
+
+  // Retryable infrastructure — never treat as permanent PM failure.
+  // Prefer top-level statusCode (SDK) then raw/network fallbacks.
+  const status = Number(e.statusCode ?? e.status ?? e.raw?.statusCode ?? 0);
+  if (status === 429 || (status >= 500 && status < 600)) return false;
+
+  const code = String(e.code ?? e.raw?.code ?? '').toLowerCase();
+  if (code === 'rate_limit' || code === 'lock_timeout') return false;
+
+  // Connection/network class names are never permanent PM failures.
+  const classType = String(e.type ?? '').toLowerCase();
+  if (
+    classType === 'stripeconnectionerror' ||
+    classType === 'stripeapierror' ||
+    classType.includes('connection')
+  ) {
+    return false;
+  }
+
+  // Explicit permanent Stripe codes (class-type agnostic).
+  if (code === 'payment_method_unreusable') return true;
+
+  // API error type: Stripe SDK puts invalid_request_error on rawType/raw.type,
+  // while err.type is the class name (StripeInvalidRequestError). Prefer API
+  // fields; fall back to plain objects that only set type=invalid_request_error.
+  const apiType = String(e.rawType ?? e.raw?.type ?? '').toLowerCase();
+  const type =
+    apiType || (classType === 'stripeinvalidrequesterror' ? 'invalid_request_error' : classType);
+
+  const param = String(e.param ?? e.raw?.param ?? '').toLowerCase();
+  const message = String(e.message ?? e.raw?.message ?? '').toLowerCase();
+
+  // Documented Stripe attach refusal shape: invalid_request_error +
+  // resource_missing scoped to the payment_method param, confirmed by the
+  // provider's non-reusable wording. Code+param are required; message alone
+  // is never enough (no broad free-text matching beyond the allowlisted phrases).
+  if (
+    type === 'invalid_request_error' &&
+    code === 'resource_missing' &&
+    (param === 'payment_method' || param === 'id') &&
+    confirmsNonReusablePaymentMethodMessage(message)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/** Secondary confirmation used only with a permanent-class provider code. */
+function confirmsNonReusablePaymentMethodMessage(message: string): boolean {
+  if (message.includes('may not be used again')) return true;
+  if (message.includes('cannot be used again')) return true;
+  if (message.includes('previously used without being attached')) return true;
+  if (message.includes('was detached from a customer')) return true;
+  if (message.includes('not reusable')) return true;
+  return false;
 }
 
 function providerPaymentMethodId(value: unknown): string | null {

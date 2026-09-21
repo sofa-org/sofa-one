@@ -46,6 +46,20 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 /** States a claim may transition from while the attempt is still active. */
 const ACTIVE_CLAIM_STATES = ['pending', 'confirming'] as const;
 
+/**
+ * B2: wallet_server recovery may reopen these `needs_review` reasons when a
+ * matching **trusted** server-bound hash is presented for exact receipt
+ * settlement. `wallet_payment_userop_unattributed` is intentionally excluded —
+ * enclosing UserOp/bundle hash is forensic only and never auto-pays.
+ * Manual evidence conflicts, hash conflicts, and quote/identity invalid reasons
+ * stay locked.
+ */
+const RECOVERABLE_WALLET_PAYMENT_REVIEW_REASONS = [
+  'wallet_payment_dispatch_unknown',
+  'wallet_payment_awaiting_evidence',
+  'wallet_payment_user_op_hash_missing',
+] as const;
+
 /** Backoff before the worker retries a retryable (pending/rpc_error) claim. */
 export const USDC_RETRY_BACKOFF_MS = 60_000;
 
@@ -169,15 +183,59 @@ export class UsdcPaymentService {
    * writes a sanitized security audit for material outcomes (settled, and any
    * high-risk blocked/review/failed outcome). Audit/notification failures are
    * isolated and never affect the claim result.
+   *
+   * Client claims never first-write a hash onto a wallet-reserved attempt
+   * (B3). Server wallet dispatch uses {@link claimFromWalletServerBinding}.
    */
   async claim(
     userId: string,
     invoiceId: string,
     input: { paymentAttemptId: string; txHash: string },
   ): Promise<UsdcClaimResult> {
-    const result = await this.claimImpl(userId, invoiceId, input);
+    const result = await this.claimImpl(userId, invoiceId, input, { source: 'client' });
     await this.auditClaim(userId, invoiceId, result);
     return result;
+  }
+
+  /**
+   * Server-only claim after wallet-payment UserOp produced a chain hash.
+   * Binds `boundTransactionId` to the reservation and may first-write
+   * `submittedTxHash` only when it matches the bound Transaction.
+   */
+  async claimFromWalletServerBinding(
+    userId: string,
+    invoiceId: string,
+    input: { paymentAttemptId: string; txHash: string; boundTransactionId: string },
+  ): Promise<UsdcClaimResult> {
+    const result = await this.claimImpl(userId, invoiceId, input, {
+      source: 'wallet_server',
+      boundTransactionId: input.boundTransactionId,
+    });
+    await this.auditClaim(userId, invoiceId, result);
+    return result;
+  }
+
+  /**
+   * Phase 2B wallet-pay: full claim-grade quote snapshot + exact remaining due.
+   * Reuses private assertSnapshotComplete (canonical token/treasury/provider/…).
+   */
+  assertWalletPayQuoteExecutable(attempt: PaymentAttemptRow, invoice: InvoiceRow): void {
+    this.assertInvoiceEligible(invoice);
+    this.assertSnapshotComplete(attempt, invoice);
+    const allocated = invoice.allocatedMicros ?? 0n;
+    const remaining = invoice.totalMicros - allocated;
+    if (remaining <= 0n || attempt.amountMicros !== remaining) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt amount no longer matches invoice remaining due',
+      });
+    }
+    if (attempt.expectedBaseUnits !== attempt.amountMicros) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payment attempt quote amount is inconsistent',
+      });
+    }
   }
 
   /**
@@ -238,6 +296,27 @@ export class UsdcPaymentService {
     const requiredConfirmations = this.requiredConfirmations();
     const quoteExpiresAt = this.quoteExpiry();
 
+    // Phase 2B B2: any wallet-payment reservation (any status, incl. needs_review)
+    // blocks a replacement quote — never auto-release or rotate while reserved.
+    const walletReservedAttempt = await this.prisma.billingPaymentAttempt.findFirst({
+      where: {
+        invoiceId: invoice.id,
+        method: 'usdc',
+        walletPaymentReserved: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (walletReservedAttempt) {
+      if (walletReservedAttempt.chainId !== BigInt(chain)) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+          message: 'An active wallet payment reservation exists for this invoice',
+        });
+      }
+      const freshReserved = await this.revalidateInvoicePayableUnderLock(invoice);
+      return this.toQuoteResult(freshReserved, walletReservedAttempt);
+    }
+
     const existing = await this.prisma.billingPaymentAttempt.findFirst({
       where: { invoiceId: invoice.id, method: 'usdc', status: { in: ['pending', 'confirming'] } },
     });
@@ -265,9 +344,28 @@ export class UsdcPaymentService {
       // attempt in the meantime is never overwritten.
       const expired = !existing.quoteExpiresAt || existing.quoteExpiresAt.getTime() <= Date.now();
       const incomplete = !this.hasQuoteSnapshot(existing);
+      // Phase 2B: never auto-release a wallet-payment reservation (unknown dispatch
+      // must retain the binding; rotation requires an explicit new quote path).
+      const walletReserved =
+        (existing as { walletPaymentReserved?: boolean }).walletPaymentReserved === true;
+      if (walletReserved) {
+        if (existing.chainId !== BigInt(chain)) {
+          throw new ConflictException({
+            code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
+            message: 'An active wallet payment reservation exists for this invoice',
+          });
+        }
+        const freshReserved = await this.revalidateInvoicePayableUnderLock(invoice);
+        return this.toQuoteResult(freshReserved, existing);
+      }
       if (expired || incomplete) {
         const released = await this.prisma.billingPaymentAttempt.updateMany({
-          where: { id: existing.id, status: 'pending' },
+          where: {
+            id: existing.id,
+            status: 'pending',
+            // Do not race-release a reservation that landed between reads.
+            walletPaymentReserved: false,
+          },
           data: expired
             ? { status: 'expired', reviewReason: 'quote_expired' }
             : { status: 'needs_review', reviewReason: 'snapshot_incomplete' },
@@ -369,6 +467,10 @@ export class UsdcPaymentService {
     userId: string,
     invoiceId: string,
     input: { paymentAttemptId: string; txHash: string },
+    opts: {
+      source: 'client' | 'wallet_server';
+      boundTransactionId?: string;
+    } = { source: 'client' },
   ): Promise<UsdcClaimResult> {
     this.assertEnabled();
     const invoice = await this.loadOwnedInvoice(userId, invoiceId);
@@ -379,7 +481,7 @@ export class UsdcPaymentService {
       });
     }
 
-    const attempt = await this.prisma.billingPaymentAttempt.findUnique({
+    let attempt = await this.prisma.billingPaymentAttempt.findUnique({
       where: { id: input.paymentAttemptId },
     });
     if (!attempt || attempt.invoiceId !== invoice.id) {
@@ -409,6 +511,57 @@ export class UsdcPaymentService {
     const txHash = canonicalizeTxHash(input.txHash);
     const chainId = Number(attempt.chainId);
 
+    // Phase 2B (B3): wallet reservation owns hash binding.
+    // - Client: never first-write submittedTxHash; only verify when hash already
+    //   matches server-bound submittedTxHash or bound Transaction.txHash.
+    // - wallet_server: may first-write only when boundTransactionId matches the
+    //   reservation and the bound row does not hold a different hash.
+    const walletReserved = attempt.walletPaymentReserved === true;
+    if (walletReserved) {
+      const boundTxId = attempt.walletPaymentTransactionId;
+      const boundTx = boundTxId
+        ? await this.prisma.transaction.findUnique({ where: { id: boundTxId } })
+        : null;
+      const boundTxHash = typeof boundTx?.txHash === 'string' ? boundTx.txHash.toLowerCase() : null;
+      const serverBound =
+        (typeof attempt.submittedTxHash === 'string'
+          ? attempt.submittedTxHash.toLowerCase()
+          : null) ?? boundTxHash;
+
+      if (opts.source === 'client') {
+        if (!serverBound) {
+          throw new ConflictException({
+            code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+            message:
+              'Wallet payment reservation has no server-bound hash yet; client claim cannot attach one',
+          });
+        }
+        if (serverBound !== txHash) {
+          throw new ConflictException({
+            code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+            message: 'Wallet payment reservation already bound to a different transaction hash',
+          });
+        }
+      } else {
+        // wallet_server path — require full bound Transaction identity, not a bare FK.
+        this.assertTrustedWalletServerBinding({
+          attempt,
+          invoice,
+          userId,
+          txHash,
+          boundTransactionId: opts.boundTransactionId,
+          boundTx,
+          boundTxHash,
+        });
+      }
+    } else if (opts.source === 'wallet_server') {
+      // Server claim is only valid on a reserved wallet-payment attempt.
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment server claim requires an active reservation binding',
+      });
+    }
+
     // Terminal states are returned as-is (idempotent replays).
     if (attempt.status === 'succeeded') {
       return this.toClaimResult(invoice, attempt, { status: 'succeeded' });
@@ -417,7 +570,23 @@ export class UsdcPaymentService {
       return this.toClaimResult(invoice, attempt, { status: 'expired', retryable: true });
     }
     if (attempt.status === 'needs_review') {
-      return this.toClaimResult(invoice, attempt, { status: 'needs_review' });
+      // B2: wallet_server may reopen recoverable reservation-review reasons when
+      // a matching server-bound hash is claimed for real receipt settlement.
+      // Client claims and manual/evidence-conflict review stay locked.
+      if (opts.source === 'wallet_server') {
+        const reopened = await this.tryReopenRecoverableWalletReview(
+          attempt,
+          txHash,
+          opts.boundTransactionId,
+        );
+        if (reopened) {
+          attempt = reopened;
+        } else {
+          return this.toClaimResult(invoice, attempt, { status: 'needs_review' });
+        }
+      } else {
+        return this.toClaimResult(invoice, attempt, { status: 'needs_review' });
+      }
     }
     if (attempt.status === 'failed') {
       return this.toClaimResult(invoice, attempt, { status: 'failed', retryable: true });
@@ -438,9 +607,20 @@ export class UsdcPaymentService {
     // The CAS outcome is authoritative: when a competing claim owns a different
     // submitted hash (or a concurrent transition won), this losing request must
     // NOT call RPC and must NOT mutate/evaluate the owner's terminal state.
-    const persisted = await this.persistSubmittedHash(attempt.id, txHash, USDC_RETRY_BACKOFF_MS);
+    // B1: client CAS requires still-unreserved; server CAS requires reserved binding.
+    const persisted = await this.persistSubmittedHash(attempt.id, txHash, USDC_RETRY_BACKOFF_MS, {
+      source: opts.source,
+    });
     if (!persisted.matched) {
       if (!persisted.current) throw new NotFoundException('Payment attempt not found');
+      // Client lost to wallet reservation — never treat as success.
+      if (opts.source === 'client' && persisted.current.walletPaymentReserved === true) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+          message:
+            'Wallet payment reservation won the attempt lock; client claim cannot attach evidence',
+        });
+      }
       return this.toClaimResultFromRow(invoice, persisted.current);
     }
 
@@ -865,7 +1045,10 @@ export class UsdcPaymentService {
           return this.toClaimResultFromRow(invoice, outcome.row);
         case 'paid': {
           // Post-commit best-effort Stripe mirror sync (local entitlement already committed).
-          if (this.subscriptionSync && (invoice as { purpose?: string }).purpose === 'plan_charge') {
+          if (
+            this.subscriptionSync &&
+            (invoice as { purpose?: string }).purpose === 'plan_charge'
+          ) {
             void this.subscriptionSync.processAccountBestEffort(invoice.billingAccountId);
           }
           if (outcome.wroteEvidence) {
@@ -1011,20 +1194,173 @@ export class UsdcPaymentService {
    * terminal state. The losing caller must not perform RPC work nor mutate the
    * owner's state.
    */
+  /**
+   * B2: wallet_server claim requires a fully attributed bound billing_payment
+   * Transaction — not a bare FK or forensic enclosing hash alone.
+   */
+  private assertTrustedWalletServerBinding(args: {
+    attempt: PaymentAttemptRow;
+    invoice: InvoiceRow;
+    userId: string;
+    txHash: string;
+    boundTransactionId?: string;
+    boundTx: {
+      id: string;
+      userId: string;
+      txHash: string | null;
+      chainId: bigint;
+      walletAddress: string;
+      operationType: string | null;
+      authMethod: string;
+      apiKeyId: string | null;
+      details?: unknown;
+    } | null;
+    boundTxHash: string | null;
+  }): void {
+    const { attempt, invoice, userId, txHash, boundTransactionId, boundTx, boundTxHash } = args;
+    const boundTxId = attempt.walletPaymentTransactionId;
+    if (!boundTxId || !boundTransactionId || boundTransactionId !== boundTxId) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment server claim requires matching bound transaction',
+      });
+    }
+    if (!boundTx) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction is missing',
+      });
+    }
+    // Non-null bound hash equal to claimed hash — forensic-null alone is not enough.
+    if (!boundTxHash || boundTxHash !== txHash) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message:
+          'Wallet payment server claim requires a non-null bound transaction hash matching the claim',
+      });
+    }
+    if (attempt.submittedTxHash && attempt.submittedTxHash.toLowerCase() !== txHash) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment reservation already bound to a different transaction hash',
+      });
+    }
+    if (boundTx.userId !== userId) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction user mismatch',
+      });
+    }
+    if (boundTx.operationType !== 'billing_payment') {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction operation type mismatch',
+      });
+    }
+    if (boundTx.authMethod !== 'iam' || boundTx.apiKeyId !== null) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction auth attribution mismatch',
+      });
+    }
+    if (Number(boundTx.chainId) !== Number(attempt.chainId)) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction chain mismatch',
+      });
+    }
+    const expectedPayer = (attempt.expectedPayerAddress ?? '').toLowerCase();
+    if (!expectedPayer || boundTx.walletAddress.toLowerCase() !== expectedPayer) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+        message: 'Wallet payment bound transaction payer mismatch',
+      });
+    }
+    const d = boundTx.details;
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+      const details = d as Record<string, unknown>;
+      if (typeof details.paymentAttemptId === 'string' && details.paymentAttemptId !== attempt.id) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+          message: 'Wallet payment bound transaction attempt binding mismatch',
+        });
+      }
+      if (typeof details.invoiceId === 'string' && details.invoiceId !== invoice.id) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+          message: 'Wallet payment bound transaction invoice binding mismatch',
+        });
+      }
+    }
+  }
+
+  /**
+   * B2: reopen a recoverable wallet-payment `needs_review` row for server claim.
+   * Requires reserved binding + matching boundTransactionId + allowlisted reason
+   * + existing matching submittedTxHash (trusted claim CAS evidence). Unattributed
+   * UserOp review and bare forensic hashes never reopen.
+   */
+  private async tryReopenRecoverableWalletReview(
+    attempt: PaymentAttemptRow,
+    txHash: string,
+    boundTransactionId?: string,
+  ): Promise<PaymentAttemptRow | null> {
+    if (attempt.walletPaymentReserved !== true) return null;
+    if (!boundTransactionId || boundTransactionId !== attempt.walletPaymentTransactionId) {
+      return null;
+    }
+    const reason = attempt.reviewReason ?? '';
+    if (!(RECOVERABLE_WALLET_PAYMENT_REVIEW_REASONS as readonly string[]).includes(reason)) {
+      return null;
+    }
+    // Trusted path only: submittedTxHash must already equal the claim hash.
+    // A bare Transaction.txHash forensic seed is insufficient to reopen.
+    if (
+      typeof attempt.submittedTxHash !== 'string' ||
+      attempt.submittedTxHash.toLowerCase() !== txHash
+    ) {
+      return null;
+    }
+
+    const targetStatus = attempt.txHash ? 'confirming' : 'pending';
+    const updated = await this.prisma.billingPaymentAttempt.updateMany({
+      where: {
+        id: attempt.id,
+        status: 'needs_review',
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: boundTransactionId,
+        reviewReason: { in: [...RECOVERABLE_WALLET_PAYMENT_REVIEW_REASONS] },
+        submittedTxHash: txHash,
+      },
+      data: {
+        status: targetStatus,
+        reviewReason: null,
+        lastCheckedAt: new Date(),
+      },
+    });
+    if (updated.count === 0) return null;
+    return this.prisma.billingPaymentAttempt.findUnique({ where: { id: attempt.id } });
+  }
+
   private async persistSubmittedHash(
     attemptId: string,
     txHash: string,
     backoffMs: number,
+    opts: { source: 'client' | 'wallet_server' } = { source: 'client' },
   ): Promise<{ matched: boolean; current: PaymentAttemptRow | null }> {
     let result: { count: number };
     try {
       // Status must still be active: upgrade cancel marks pending → failed under
       // attempt row locks, so a post-cancel hash attach must match zero rows and
       // never paint evidence onto a failed/canceled attempt.
+      // B1: client may only first-write while unreserved; wallet_server only while reserved.
       result = await this.prisma.billingPaymentAttempt.updateMany({
         where: {
           id: attemptId,
           status: { in: [...ACTIVE_CLAIM_STATES] },
+          ...(opts.source === 'client'
+            ? { walletPaymentReserved: false }
+            : { walletPaymentReserved: true }),
           // First writer wins on a null hash; same-hash replay is allowed while
           // still active. A failed/voided attempt never matches.
           OR: [{ submittedTxHash: null }, { submittedTxHash: txHash }],

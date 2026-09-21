@@ -28,9 +28,26 @@ import {
 /** 1 cent = 10,000 microdollars. Stripe amounts are integer cents. */
 const MICROS_PER_CENT = 10_000n;
 
-/** How long to wait for a concurrent request to persist its session id. */
+/**
+ * How long to wait for a concurrent request to persist its session id.
+ * BILL-001: polling is only allowed on the root Prisma client (never under an
+ * interactive transaction lock, and never after a P2002 aborts the TX).
+ */
 const IN_FLIGHT_POLL_ATTEMPTS = 15;
 const IN_FLIGHT_POLL_DELAY_MS = 100;
+
+/**
+ * BILL-002: explicit Checkout Session recovery dispositions.
+ * Only `recover` clears the lease as success; only `provider_failure` and
+ * hard `identity_mismatch` consume the retry budget. Legitimate open/unpaid
+ * null-PaymentIntent sessions are pending state, not failures.
+ */
+type CheckoutSessionDisposition =
+  | { kind: 'recover'; paymentIntentId: string | null; subscriptionId: string | null; url: string }
+  | { kind: 'identity_mismatch'; reason: string }
+  | { kind: 'expired'; reason: string }
+  | { kind: 'complete_await_webhook'; reason: string }
+  | { kind: 'provider_incomplete'; reason: string };
 
 /** Bounded retry budget for automatic overage charges (worker-driven). */
 const OVERAGE_MAX_RETRIES = 3;
@@ -136,6 +153,8 @@ export class StripePaymentService {
     let needsReview = 0;
     let retryable = 0;
     for (let row of rows) {
+      // BILL-002: lease only — do NOT increment checkoutRetryCount here.
+      // Budget is consumed only on actual provider/identity failures below.
       const lease = await attempts.updateMany({
         where: {
           id: row.id,
@@ -148,7 +167,6 @@ export class StripePaymentService {
         data: {
           checkoutRetryOwnerId: workerId,
           checkoutRetryLeaseExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
-          checkoutRetryCount: { increment: 1 },
         },
       });
       if (lease.count !== 1) continue;
@@ -162,6 +180,19 @@ export class StripePaymentService {
           include: { invoice: { include: { billingAccount: true } } },
         });
         if (!fresh || !(await this.isRecoveryAttemptEligible(fresh, workerId))) {
+          // Release lease without consuming retry budget.
+          await attempts.updateMany({
+            where: {
+              id: row.id,
+              status: 'pending',
+              checkoutRetryOwnerId: workerId,
+              checkoutRetryLeaseExpiresAt: { gt: new Date() },
+            },
+            data: {
+              checkoutRetryOwnerId: null,
+              checkoutRetryLeaseExpiresAt: null,
+            },
+          });
           continue;
         }
         row = fresh;
@@ -170,22 +201,59 @@ export class StripePaymentService {
             row.stripeCheckoutSessionId,
             { expand: ['subscription'] },
           );
-          const url = typeof session.url === 'string' ? session.url : row.checkoutUrl;
-          const paymentIntentId = providerObjectId(session.payment_intent, 'payment_intent');
-          const subscriptionId = providerObjectId(session.subscription, 'subscription');
-          if (
-            !url ||
-            !this.isRecoveredSessionCompatible(row, session, paymentIntentId, subscriptionId)
-          )
-            throw new ConflictException('Stripe checkout identity could not be proven');
-          await this.persistRecoveredCheckout(
-            row,
-            session.id,
-            url,
-            paymentIntentId,
-            subscriptionId,
-            workerId,
-          );
+          const disposition = this.classifyCheckoutSessionDisposition(row, session);
+          if (disposition.kind === 'recover') {
+            await this.persistRecoveredCheckout(
+              row,
+              session.id,
+              disposition.url,
+              disposition.paymentIntentId,
+              disposition.subscriptionId,
+              workerId,
+            );
+          } else if (disposition.kind === 'complete_await_webhook') {
+            // Paid/complete at provider — webhook owns settlement. Clear lease
+            // without consuming retry budget or marking needs_review.
+            await attempts.updateMany({
+              where: {
+                id: row.id,
+                status: 'pending',
+                checkoutRetryOwnerId: workerId,
+                checkoutRetryLeaseExpiresAt: { gt: new Date() },
+              },
+              data: {
+                checkoutNextRetryAt: null,
+                checkoutRetryOwnerId: null,
+                checkoutRetryLeaseExpiresAt: null,
+                lastCheckedAt: new Date(),
+              },
+            });
+            recovered++;
+            continue;
+          } else if (disposition.kind === 'expired') {
+            // Terminal provider expiry — durable needs_review, not a retry storm.
+            // Does not increment checkoutRetryCount (terminal, not a failed attempt).
+            const marked = await attempts.updateMany({
+              where: {
+                id: row.id,
+                status: 'pending',
+                checkoutRetryOwnerId: workerId,
+                checkoutRetryLeaseExpiresAt: { gt: new Date() },
+              },
+              data: {
+                status: 'needs_review',
+                reviewReason: disposition.reason.slice(0, 255),
+                checkoutRetryOwnerId: null,
+                checkoutRetryLeaseExpiresAt: null,
+                checkoutNextRetryAt: null,
+              },
+            });
+            if (marked.count === 1) needsReview++;
+            continue;
+          } else {
+            // identity_mismatch | provider_incomplete — consume retry budget.
+            throw new ConflictException(disposition.reason);
+          }
         } else {
           // Renewal attempts are mapped to Stripe invoices, not new Checkout
           // sessions. A missing session on such an attempt is out-of-order or
@@ -195,6 +263,7 @@ export class StripePaymentService {
           }
           await this.createCheckoutForExistingAttempt(row, workerId);
         }
+        // Successful recover / create-for-existing: clear lease, no budget burn.
         await attempts.updateMany({
           where: {
             id: row.id,
@@ -206,11 +275,15 @@ export class StripePaymentService {
             checkoutNextRetryAt: null,
             checkoutRetryOwnerId: null,
             checkoutRetryLeaseExpiresAt: null,
+            lastCheckedAt: new Date(),
           },
         });
         recovered++;
       } catch {
-        const exhausted = row.checkoutRetryCount + 1 >= 5;
+        // BILL-002: only actual provider/identity failures reach here and consume
+        // the retry budget. Legitimate open/null-PI pending never throws.
+        const nextCount = (row.checkoutRetryCount ?? 0) + 1;
+        const exhausted = nextCount >= 5;
         const rescheduled = await attempts.updateMany({
           where: {
             id: row.id,
@@ -222,13 +295,16 @@ export class StripePaymentService {
             ? {
                 status: 'needs_review',
                 reviewReason: 'checkout_recovery_exhausted',
+                checkoutRetryCount: nextCount,
                 checkoutRetryOwnerId: null,
                 checkoutRetryLeaseExpiresAt: null,
                 checkoutNextRetryAt: null,
               }
             : {
+                checkoutRetryCount: nextCount,
                 checkoutNextRetryAt: new Date(
-                  Date.now() + Math.min(60 * 60 * 1000, 2 ** row.checkoutRetryCount * 60 * 1000),
+                  Date.now() +
+                    Math.min(60 * 60 * 1000, 2 ** (row.checkoutRetryCount ?? 0) * 60 * 1000),
                 ),
                 checkoutRetryOwnerId: null,
                 checkoutRetryLeaseExpiresAt: null,
@@ -334,12 +410,14 @@ export class StripePaymentService {
     );
     const paymentIntentId = providerObjectId(session.payment_intent, 'payment_intent');
     const subscriptionId = providerObjectId(session.subscription, 'subscription');
-    if (
-      !session.url ||
-      !providerObjectId(session.id, 'checkout_session') ||
-      (!fixed && !paymentIntentId)
-    )
+    // BILL-002: one-time Checkout may legitimately return open/unpaid with a
+    // null PaymentIntent until the customer pays — same rule as create path.
+    if (!session.url || !providerObjectId(session.id, 'checkout_session')) {
       throw new ConflictException('Stripe checkout returned incomplete identity');
+    }
+    if (fixed && !subscriptionId) {
+      throw new ConflictException('Stripe subscription checkout returned incomplete identity');
+    }
     await this.persistRecoveredCheckout(
       row,
       session.id,
@@ -444,40 +522,67 @@ export class StripePaymentService {
     return true;
   }
 
-  private isRecoveredSessionCompatible(
+  /**
+   * BILL-002: classify a retrieved Checkout Session for recovery.
+   * Shared strict identity rules with create; open/unpaid + null PaymentIntent
+   * is legitimate pending for one-time payment mode (not a failure).
+   */
+  private classifyCheckoutSessionDisposition(
     row: PaymentAttemptRow & { invoice: any },
     session: Stripe.Checkout.Session,
-    paymentIntentId: string | null,
-    subscriptionId: string | null,
-  ): boolean {
+  ): CheckoutSessionDisposition {
     const invoice = row.invoice;
     const metadata = session.metadata;
-    if (session.id !== row.stripeCheckoutSessionId || !metadata) return false;
+    const paymentIntentId = providerObjectId(session.payment_intent, 'payment_intent');
+    const subscriptionId = providerObjectId(session.subscription, 'subscription');
+    const url =
+      typeof session.url === 'string' && session.url.length > 0
+        ? session.url
+        : typeof row.checkoutUrl === 'string' && row.checkoutUrl.length > 0
+          ? row.checkoutUrl
+          : null;
+
+    if (session.id !== row.stripeCheckoutSessionId || !metadata) {
+      return { kind: 'identity_mismatch', reason: 'checkout_session_id_or_metadata_missing' };
+    }
     if (
       metadata.invoiceId !== row.invoiceId ||
       metadata.attemptId !== row.id ||
       metadata.period !== formatUtcMonth(invoice.periodStart) ||
       session.client_reference_id !== row.invoiceId
-    )
-      return false;
+    ) {
+      return { kind: 'identity_mismatch', reason: 'checkout_metadata_binding_mismatch' };
+    }
     if (
       typeof session.customer !== 'string' ||
       session.customer !== invoice.billingAccount?.stripeCustomerId
-    )
-      return false;
+    ) {
+      return { kind: 'identity_mismatch', reason: 'checkout_customer_mismatch' };
+    }
     if (
       typeof session.currency !== 'string' ||
       session.currency.toLowerCase() !== row.currency.toLowerCase()
-    )
-      return false;
-    if (session.amount_total !== Number(row.amountMicros / MICROS_PER_CENT)) return false;
-    if (row.stripePaymentIntentId !== null && row.stripePaymentIntentId !== paymentIntentId)
-      return false;
+    ) {
+      return { kind: 'identity_mismatch', reason: 'checkout_currency_mismatch' };
+    }
+    if (session.amount_total !== Number(row.amountMicros / MICROS_PER_CENT)) {
+      return { kind: 'identity_mismatch', reason: 'checkout_amount_mismatch' };
+    }
+    // Existing PI binding is immutable: null→set is ok; different PI is mismatch.
+    if (row.stripePaymentIntentId !== null && row.stripePaymentIntentId !== paymentIntentId) {
+      return { kind: 'identity_mismatch', reason: 'checkout_payment_intent_mismatch' };
+    }
+
     if (row.stripeChargeKind === STRIPE_CHARGE_KIND_FIXED_FEE) {
-      if (session.mode !== 'subscription' || !subscriptionId) return false;
-      if (row.stripeSubscriptionId !== null && row.stripeSubscriptionId !== subscriptionId)
-        return false;
-      if (metadata.planVersionId !== invoice.planVersionId) return false;
+      if (session.mode !== 'subscription' || !subscriptionId) {
+        return { kind: 'identity_mismatch', reason: 'checkout_subscription_mode_required' };
+      }
+      if (row.stripeSubscriptionId !== null && row.stripeSubscriptionId !== subscriptionId) {
+        return { kind: 'identity_mismatch', reason: 'checkout_subscription_id_mismatch' };
+      }
+      if (metadata.planVersionId !== invoice.planVersionId) {
+        return { kind: 'identity_mismatch', reason: 'checkout_plan_version_mismatch' };
+      }
       const sub =
         typeof session.subscription === 'object' && session.subscription !== null
           ? (session.subscription as any)
@@ -486,24 +591,89 @@ export class StripePaymentService {
         !sub ||
         typeof sub.current_period_start !== 'number' ||
         typeof sub.current_period_end !== 'number'
-      )
-        return false;
+      ) {
+        return { kind: 'identity_mismatch', reason: 'checkout_subscription_period_missing' };
+      }
       if (
         sub.current_period_start * 1000 !== invoice.periodStart.getTime() ||
         sub.current_period_end * 1000 !== invoice.periodEnd.getTime()
-      )
-        return false;
-      // The subscription billing-cycle anchor must EXACTLY match the local
-      // invoice period start; a provider period fabricated outside that cycle
-      // cannot be proven and must not be recovered.
+      ) {
+        return { kind: 'identity_mismatch', reason: 'checkout_subscription_period_mismatch' };
+      }
       if (
         typeof sub.billing_cycle_anchor !== 'number' ||
         sub.billing_cycle_anchor * 1000 !== invoice.periodStart.getTime()
-      )
-        return false;
-    } else if (session.mode !== 'payment' || subscriptionId !== null || !paymentIntentId)
-      return false;
-    return true;
+      ) {
+        return { kind: 'identity_mismatch', reason: 'checkout_billing_cycle_anchor_mismatch' };
+      }
+    } else {
+      // One-time full payment Checkout.
+      if (session.mode !== 'payment' || subscriptionId !== null) {
+        return { kind: 'identity_mismatch', reason: 'checkout_payment_mode_required' };
+      }
+    }
+
+    const status = typeof session.status === 'string' ? session.status : null;
+    const paymentStatus =
+      typeof session.payment_status === 'string' ? session.payment_status : null;
+
+    // Terminal expired at provider — stop retrying.
+    if (status === 'expired') {
+      return { kind: 'expired', reason: 'checkout_session_expired' };
+    }
+
+    // Complete + paid: webhook owns settlement; do not consume retry budget.
+    if (status === 'complete' && paymentStatus === 'paid') {
+      return { kind: 'complete_await_webhook', reason: 'checkout_session_complete_paid' };
+    }
+
+    // Complete but unpaid/no_payment_required oddities → incomplete, not auto-pay.
+    if (status === 'complete') {
+      return { kind: 'provider_incomplete', reason: 'checkout_session_complete_unpaid' };
+    }
+
+    // Legitimate pending: open session still unpaid. Null PaymentIntent is OK
+    // for one-time Checkout until the customer pays (matches create path).
+    if (
+      status === 'open' &&
+      (paymentStatus === 'unpaid' || paymentStatus === 'no_payment_required')
+    ) {
+      if (!url) {
+        return { kind: 'provider_incomplete', reason: 'checkout_session_url_missing' };
+      }
+      return {
+        kind: 'recover',
+        paymentIntentId,
+        subscriptionId,
+        url,
+      };
+    }
+
+    // BILL-002: unknown/missing/partial provider status fails closed — never
+    // treat as recover/success/complete. Missing status is not open.
+    if (status === null || status === undefined) {
+      return { kind: 'provider_incomplete', reason: 'checkout_session_status_missing' };
+    }
+    if (status === 'open') {
+      // open but payment_status not a recognized unpaid form
+      return {
+        kind: 'provider_incomplete',
+        reason: 'checkout_session_payment_status_unrecognized',
+      };
+    }
+    return { kind: 'provider_incomplete', reason: 'checkout_session_status_unrecognized' };
+  }
+
+  /** @deprecated Prefer classifyCheckoutSessionDisposition (BILL-002). */
+  private isRecoveredSessionCompatible(
+    row: PaymentAttemptRow & { invoice: any },
+    session: Stripe.Checkout.Session,
+    paymentIntentId: string | null,
+    subscriptionId: string | null,
+  ): boolean {
+    const d = this.classifyCheckoutSessionDisposition(row, session);
+    if (d.kind !== 'recover') return false;
+    return d.paymentIntentId === paymentIntentId && d.subscriptionId === subscriptionId;
   }
 
   /**
@@ -984,16 +1154,14 @@ export class StripePaymentService {
     });
     if (!fixedFeeCoverage) return 'skipped';
 
-    // Cross-rail exclusion: an ACTIVE USDC attempt (pending or confirming) on
-    // the same invoice means the user is paying on-chain right now. Starting an
-    // off-session Stripe charge in parallel could double-collect — skip and let
-    // the USDC rail finish. The DB-level active-charge partial unique index is
-    // the second, stronger gate (the insert below fails closed on a race).
+    // Cross-rail exclusion: an ACTIVE USDC attempt (pending/confirming) OR any
+    // wallet-payment reservation (including needs_review/unknown) means the
+    // user has an in-flight on-chain payment — skip off-session Stripe charge.
     const activeUsdc = await this.prisma.billingPaymentAttempt.findFirst({
       where: {
         invoiceId: invoice.id,
         method: 'usdc',
-        status: { in: ['pending', 'confirming'] },
+        OR: [{ status: { in: ['pending', 'confirming'] } }, { walletPaymentReserved: true }],
       },
     });
     if (activeUsdc) return 'skipped';
@@ -1683,33 +1851,138 @@ export class StripePaymentService {
   /**
    * Creates (or reuses) the pending full-invoice Checkout attempt ATOMICALLY
    * with the coverage gate: the billing-period advisory lock + the invoice row
-   * lock (attempt→invoice order, matching settlement) are held while the
-   * coverage invariants are re-checked and the attempt is created/reused, so a
-   * fixed-fee allocation can never slip between the gate and the insert. A lost
-   * insert race is resolved under the same locks (reuse a compatible pending
-   * Stripe session or fail closed on a cross-rail reservation).
+   * lock (period → attempt → invoice order, matching settlement) are held while
+   * the coverage invariants are re-checked and the attempt is created/reused.
+   *
+   * BILL-001: never poll or continue querying on an aborted interactive TX after
+   * P2002. Under locks we only preflight existing active rows and insert once;
+   * a unique race becomes a stable 409 Conflict without touching the aborted
+   * client. In-flight session polling (if needed) happens only on the root
+   * client after the short lock transaction commits.
    */
   private async createFullCheckoutAttempt(invoice: BillingInvoiceRow): Promise<PaymentAttemptRow> {
-    return this.prisma.$transaction(async (tx) => {
+    const underLock = await this.prisma.$transaction(async (tx) => {
       await acquireBillingPeriodAdvisoryLock(tx, invoice.billingAccountId, invoice.periodStart);
+      // Stable lock order: period advisory already held → attempt scan → invoice FOR UPDATE.
+      const existingPending = await tx.billingPaymentAttempt.findFirst({
+        where: { invoiceId: invoice.id, method: 'stripe', status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+      });
       const locked = await tx.$queryRaw<Array<{ id: string }>>`
         SELECT "id" FROM "billing_invoices" WHERE "id" = ${invoice.id} FOR UPDATE`;
       if (locked.length === 0) throw new ConflictException('Invoice is no longer payable');
       const fresh = await tx.billingInvoice.findUnique({ where: { id: invoice.id } });
       if (!fresh) throw new ConflictException('Invoice is no longer payable');
-      // Re-validate under lock: voided plan_charge (upgrade cancel) must not
-      // receive a new Checkout attempt.
       this.assertCheckoutEligible(fresh);
       if (this.planChanges && fresh.purpose === 'plan_charge') {
         await this.planChanges.assertPlanChargePayable(tx, fresh.id);
       }
       await this.assertFullCheckoutNoCoverage(fresh, tx);
-      return this.createPendingAttemptOrReuseInFlight(
-        fresh,
-        { stripeChargeKind: STRIPE_CHARGE_KIND_FULL },
-        tx,
-      );
+
+      // Cross-rail / reserved wallet active payment blocks a new Stripe attempt.
+      const otherActive = await tx.billingPaymentAttempt.findFirst({
+        where: {
+          invoiceId: fresh.id,
+          OR: [
+            { status: { in: ['pending', 'confirming'] }, method: { not: 'stripe' } },
+            { method: 'usdc', walletPaymentReserved: true },
+          ],
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (otherActive) {
+        throw new ConflictException(
+          'An active payment of another rail is already in progress for this invoice',
+        );
+      }
+
+      if (existingPending) {
+        // Re-read under invoice lock for freshness (same client, still open TX).
+        const pending = await tx.billingPaymentAttempt.findFirst({
+          where: { id: existingPending.id, method: 'stripe', status: 'pending' },
+        });
+        if (pending) {
+          if (
+            pending.stripeChargeKind === STRIPE_CHARGE_KIND_FULL &&
+            pending.amountMicros === fresh.totalMicros &&
+            pending.currency === fresh.currency
+          ) {
+            if (pending.stripeCheckoutSessionId && pending.checkoutUrl) {
+              return { kind: 'ready' as const, attempt: pending };
+            }
+            if (
+              (pending as { failureCode?: string | null }).failureCode ===
+              'local_persistence_uncertain'
+            ) {
+              return { kind: 'ready' as const, attempt: pending };
+            }
+            if (isStalePendingAttempt(pending)) {
+              const released = await tx.billingPaymentAttempt.updateMany({
+                where: {
+                  id: pending.id,
+                  method: 'stripe',
+                  status: 'pending',
+                  amountMicros: fresh.totalMicros,
+                  currency: fresh.currency,
+                  stripeCheckoutSessionId: null,
+                  stripePaymentIntentId: null,
+                  stripeInvoiceId: null,
+                  stripeSubscriptionId: null,
+                  checkoutUrl: null,
+                  stripeChargeKind: STRIPE_CHARGE_KIND_FULL,
+                  createdAt: pending.createdAt,
+                },
+                data: {
+                  status: 'failed',
+                  failedAt: new Date(),
+                  failureCode: 'checkout_session_creation_timeout',
+                  failureMessage: 'Checkout session creation did not complete; please retry',
+                },
+              });
+              if (released.count === 0) {
+                throw new ConflictException(
+                  'The pending payment changed while it was being released',
+                );
+              }
+              // Fall through to create after releasing stale slot.
+            } else {
+              // Young in-flight Stripe create — never poll under locks.
+              throw new ConflictException(
+                'A checkout session is already being created for this invoice; please retry',
+              );
+            }
+          } else {
+            throw new ConflictException(
+              'A pending payment of a different type already exists for this invoice',
+            );
+          }
+        }
+      }
+
+      try {
+        const created = await tx.billingPaymentAttempt.create({
+          data: {
+            invoiceId: fresh.id,
+            method: 'stripe',
+            status: 'pending',
+            amountMicros: fresh.totalMicros,
+            currency: fresh.currency,
+            stripeChargeKind: STRIPE_CHARGE_KIND_FULL,
+          },
+        });
+        return { kind: 'ready' as const, attempt: created };
+      } catch (err) {
+        // BILL-001: P2002 aborts the interactive TX — never query/continue on it.
+        if (isUniqueConstraintError(err)) {
+          throw new ConflictException(
+            'A payment attempt is already being created for this invoice; please retry',
+          );
+        }
+        throw err;
+      }
     });
+
+    return underLock.attempt;
   }
 
   // ── Attempt lifecycle ──────────────────────────────────────────────────────
@@ -1746,20 +2019,11 @@ export class StripePaymentService {
   }
 
   /**
-   * Inserts a pending Stripe attempt for the invoice. On a unique-constraint
-   * race (partial pending index per invoice + method) the existing pending
-   * Stripe attempt is re-fetched: if it already carries a session id AND
-   * matches the requested charge kind it is reused; if the winner released the
-   * slot (failed) a fresh attempt is created; a clearly stale attempt (older
-   * than the reuse TTL) is released and replaced. A young pending attempt that
-   * is still being created by a legitimate slow Stripe request is never
-   * disturbed — the caller gets a retryable conflict instead of a second
-   * pending attempt/session. When `rejectKindMismatch` is set (subscription
-   * checkout), a pending attempt of a different charge kind (e.g. a one-time
-   * full-invoice pending attempt) is never reused and never released — it is a
-   * hard conflict so a subscription charge can never ride on a one-time
-   * attempt. A USDC pending attempt never blocks or satisfies a Stripe request
-   * (method-scoped lookups).
+   * Inserts a pending Stripe attempt for the invoice (subscription / non-atomic
+   * paths). BILL-001: when `tx` is provided this is lock-scoped create-only —
+   * P2002 becomes an immediate stable 409 and never queries the aborted TX.
+   * When called on the root client, a unique race may briefly poll for the
+   * winner's session id (still never under locks).
    */
   private async createPendingAttemptOrReuseInFlight(
     invoice: Prisma.BillingInvoiceGetPayload<Record<string, never>>,
@@ -1769,7 +2033,6 @@ export class StripePaymentService {
     } = {},
     tx?: Tx,
   ): Promise<PaymentAttemptRow> {
-    const db = tx ?? this.prisma;
     const attemptData = {
       invoiceId: invoice.id,
       method: 'stripe' as const,
@@ -1783,6 +2046,22 @@ export class StripePaymentService {
       (requestedKind === null || row.stripeChargeKind === requestedKind) &&
       row.amountMicros === attemptData.amountMicros &&
       row.currency === attemptData.currency;
+
+    // BILL-001: under an interactive TX, insert once; never poll/continue after P2002.
+    if (tx) {
+      try {
+        return await tx.billingPaymentAttempt.create({ data: attemptData });
+      } catch (err) {
+        if (isUniqueConstraintError(err)) {
+          throw new ConflictException(
+            'A payment attempt is already being created for this invoice; please retry',
+          );
+        }
+        throw err;
+      }
+    }
+
+    const db = this.prisma;
     try {
       return await db.billingPaymentAttempt.create({
         data: attemptData,
@@ -1791,39 +2070,31 @@ export class StripePaymentService {
       if (!isUniqueConstraintError(err)) throw err;
     }
 
-    // A concurrent request holds the single pending Stripe slot. Wait briefly
-    // for its session id to appear before deciding how to proceed.
+    // Root-client only: concurrent request holds the pending Stripe slot.
     for (let attempt = 0; attempt < IN_FLIGHT_POLL_ATTEMPTS; attempt++) {
       const existing = await db.billingPaymentAttempt.findFirst({
         where: { invoiceId: invoice.id, method: 'stripe', status: 'pending' },
         orderBy: { createdAt: 'desc' },
       });
       if (!existing) {
-        // The winner released the slot (its Stripe call failed) — create fresh
-        // under the unified active-payment reservation (a lost race to ANOTHER
-        // active rail is a hard conflict, never a second attempt).
-        return this.createStripeAttemptOrConflict(attemptData, tx);
+        return this.createStripeAttemptOrConflict(attemptData);
       }
       if (isStalePendingAttempt(existing)) {
-        break; // clearly stale — release below (a stale slot is never reused)
+        break;
       }
       if (!isKindCompatible(existing)) {
-        // A different charge kind occupies the pending slot. Rejecting is the
-        // only safe action: a one-time pending attempt must never be reused or
-        // released by a subscription checkout.
         throw new ConflictException(
           'A pending payment of a different type already exists for this invoice',
         );
       }
       if (existing.stripeCheckoutSessionId && existing.checkoutUrl) {
-        return existing; // winner persisted its session — reuse it
+        return existing;
       }
       if (attempt < IN_FLIGHT_POLL_ATTEMPTS - 1) {
         await sleep(IN_FLIGHT_POLL_DELAY_MS);
       }
     }
 
-    // Re-check after the poll: the winner may have just persisted its session.
     const pending = await db.billingPaymentAttempt.findFirst({
       where: { invoiceId: invoice.id, method: 'stripe', status: 'pending' },
       orderBy: { createdAt: 'desc' },
@@ -1857,7 +2128,7 @@ export class StripePaymentService {
         if (released.count === 0) {
           throw new ConflictException('The pending payment changed while it was being released');
         }
-        return this.createStripeAttemptOrConflict(attemptData, tx);
+        return this.createStripeAttemptOrConflict(attemptData);
       }
       if (!isKindCompatible(pending)) {
         throw new ConflictException(
@@ -1868,15 +2139,10 @@ export class StripePaymentService {
         return pending;
       }
       if ((pending as any).failureCode === 'local_persistence_uncertain') {
-        // The provider call may have created a session while the local write
-        // failed. Reuse this exact attempt so the deterministic idempotency key
-        // is retained; never create a second local attempt.
         return pending;
       }
     }
 
-    // Still being created by a legitimate slow request — never manufacture a
-    // second pending attempt/session.
     throw new ConflictException(
       'A checkout session is already being created for this invoice; please retry',
     );
@@ -1884,27 +2150,24 @@ export class StripePaymentService {
 
   /**
    * Creates a pending Stripe attempt under the unified active-payment
-   * reservation (`billing_payment_attempts_one_active_payment_per_invoice_idx`,
-   * migration-only): at most ONE active payment attempt per invoice across all
-   * rails. A lost unique-constraint race therefore means another ACTIVE rail
-   * (e.g. a confirming USDC transfer or a concurrent different-kind Stripe
-   * attempt) holds the invoice-level slot — a hard Conflict, never a second
-   * attempt that could double-charge. The same rail's own active attempt is
-   * reused by the caller, so this never blocks a legitimate same-rail flow.
+   * reservation. BILL-001: P2002 never continues on an interactive TX client —
+   * this helper is root-client only.
    */
   private async createStripeAttemptOrConflict(
     attemptData: Prisma.BillingPaymentAttemptUncheckedCreateInput,
-    tx?: Tx,
   ): Promise<PaymentAttemptRow> {
-    const db = tx ?? this.prisma;
     try {
-      return await db.billingPaymentAttempt.create({ data: attemptData });
+      return await this.prisma.billingPaymentAttempt.create({ data: attemptData });
     } catch (err) {
       if (!isUniqueConstraintError(err)) throw err;
-      const active = await db.billingPaymentAttempt.findFirst({
+      // Root client only — safe to inspect who holds the slot after rollback.
+      const active = await this.prisma.billingPaymentAttempt.findFirst({
         where: {
-          invoiceId: attemptData.invoiceId,
-          status: { in: ['pending', 'confirming'] },
+          invoiceId: attemptData.invoiceId as string,
+          OR: [
+            { status: { in: ['pending', 'confirming'] } },
+            { method: 'usdc', walletPaymentReserved: true },
+          ],
         },
         orderBy: { createdAt: 'asc' },
       });

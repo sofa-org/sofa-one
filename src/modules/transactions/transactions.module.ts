@@ -7,9 +7,16 @@ import { SessionKeyModule } from '../session-key/session-key.module';
 import { TransactionPolicyService } from './transaction-policy.service';
 import { TransactionSimulationService } from './transaction-simulation.service';
 import { BillingModule } from '../billing/billing.module';
+import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawal-destination.module';
 
 @Module({
-  imports: [SecurityEventModule, EoaExecutionModule, SessionKeyModule, BillingModule],
+  imports: [
+    SecurityEventModule,
+    EoaExecutionModule,
+    SessionKeyModule,
+    BillingModule,
+    WithdrawalDestinationModule,
+  ],
   controllers: [TransactionsController],
   providers: [TransactionsService, TransactionPolicyService, TransactionSimulationService],
 })

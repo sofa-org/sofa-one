@@ -1,6 +1,7 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../core/database/prisma.service';
+import { SESSION_CLEANUP_STATUS_NEEDS_REVIEW } from '../billing/stripe/stripe.constants';
 
 export type HealthBaseResponse = {
   status: 'ok';
@@ -105,6 +106,11 @@ export class HealthService {
    * workers a fresh healthy row wins, otherwise a fresh running row, otherwise
    * a fresh failed row, otherwise a fresh starting row, otherwise the worker is
    * stale. `enabled=false` reports disabled and requires no heartbeat row.
+   *
+   * BILL-020 B3: healthy-wins multi-worker aggregation is the readiness signal.
+   * Persisted unresolved backlog is enforced on the worker tick (which writes
+   * failed/healthy heartbeats) — HealthService must NOT override a fresh healthy
+   * aggregate based on global backlog counts.
    */
   private async workerHealth(): Promise<BillingWorkerHealth> {
     const enabled = this.config.get<boolean>('billing.worker.enabled') === true;
@@ -176,19 +182,42 @@ export class HealthService {
   /**
    * Informational aggregate across existing billing review surfaces: invoices
    * and payment attempts in `needs_review`, Stripe webhook events in
-   * `needs_review`/`failed`, and quarantined usage events. It does not invent a
-   * pager or fail readiness by itself.
+   * `needs_review`/`failed`, quarantined usage events, auto-subscription
+   * intents in `needs_review` (including BILL-020 terminal no-funds), and
+   * post-paid Checkout Session cleanup rows stuck in `needs_review`. It does
+   * not invent a pager or fail readiness by itself — terminal no-funds review
+   * remains countable without forcing a failed worker heartbeat. Readiness
+   * failure comes only from heartbeat aggregation (worker tick owns backlog).
    */
   private async countNeedsReview(): Promise<number> {
-    const [invoices, attempts, webhookEvents, quarantined] = await Promise.all([
-      this.prisma.billingInvoice.count({ where: { status: 'needs_review' } }),
-      this.prisma.billingPaymentAttempt.count({ where: { status: 'needs_review' } }),
-      this.prisma.stripeWebhookEvent.count({
-        where: { status: { in: ['needs_review', 'failed'] } },
-      }),
-      this.prisma.billingUsageEvent.count({ where: { status: 'quarantined' } }),
-    ]);
-    return invoices + attempts + webhookEvents + quarantined;
+    const autoIntent = (
+      this.prisma as {
+        billingAutoSubscriptionIntent?: {
+          count: (args: unknown) => Promise<number>;
+        };
+      }
+    ).billingAutoSubscriptionIntent;
+    // sessionCleanupStatus is additive (BILL-014); cast until generated client is current.
+    const attemptsClient = this.prisma.billingPaymentAttempt as {
+      count: (args: unknown) => Promise<number>;
+    };
+    const [invoices, attempts, webhookEvents, quarantined, autoSubs, sessionCleanup] =
+      await Promise.all([
+        this.prisma.billingInvoice.count({ where: { status: 'needs_review' } }),
+        this.prisma.billingPaymentAttempt.count({ where: { status: 'needs_review' } }),
+        this.prisma.stripeWebhookEvent.count({
+          where: { status: { in: ['needs_review', 'failed'] } },
+        }),
+        this.prisma.billingUsageEvent.count({ where: { status: 'quarantined' } }),
+        autoIntent ? autoIntent.count({ where: { status: 'needs_review' } }) : Promise.resolve(0),
+        attemptsClient.count({
+          where: { sessionCleanupStatus: SESSION_CLEANUP_STATUS_NEEDS_REVIEW } as Record<
+            string,
+            unknown
+          >,
+        } as unknown),
+      ]);
+    return invoices + attempts + webhookEvents + quarantined + autoSubs + sessionCleanup;
   }
 
   private unavailableInProduction(status: string): boolean {

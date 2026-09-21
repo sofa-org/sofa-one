@@ -9,6 +9,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 - `transaction-policy.service.ts` — pre-wallet risk policy: interaction/calldata limits, native value, Permit/approval selectors, allowlists, spend limits.
 - `transaction-simulation.service.ts` — per-interaction `eth_call` preflight via a cached viem public client; plus `simulateAssetFlowEvidence` (explicit per-chain HTTPS `rpcUrl`, never default public `http()`).
 - `transaction-asset-flow.policy.ts` — pure static batch asset-flow classifier (Aave/Uniswap/WETH/ERC-4626/revoke-only auth + transfer family).
+- `direct-transfer-intents.ts` — strict ERC-20-shaped `transfer` / owner-sourced `transferFrom` destination extraction for BILL-016 allowlist/cooldown (not an asset-flow classifier).
 - `asset-flow-rules/weth-addresses.ts` — chain-scoped official wrapped-native addresses (`SUPPORTED_CHAINS_WETH`).
 - `asset-flow-rules/trusted-spenders.ts` — chain-scoped revoke-only spender/operator allowlist (`TRUSTED_SPENDERS`; Aave pools + Uni routers).
 - `asset-flow-rules/erc4626-vaults.ts` — chain-scoped ERC-4626 vault allowlist (`ERC4626_VAULTS`).
@@ -87,7 +88,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 ## Integration
 - **Guards/decorators**: `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `RequireApiKeyPermission`, `OpenfortUserGuard`, `FrontendOnlyGuard`, `FrontendOnly`, `CurrentUser` from `src/common`.
 - **Services**: `PrismaService` (Transaction/UserWallet reads and writes), `OpenfortService` (`sendUserOperation`, `sendBackendTransaction`), `RequestContextService` (client IP + log context), `EoaExecutionPolicyService`, `SessionKeyPolicyService`, `RiskEvaluationService`, `SecurityEventService` (via policy/simulation services).
-- **Modules**: `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule` (debt snapshot via billing debt helper on the send path; Stripe/USDC settlement remains outside this module).
+- **Modules**: `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule` (debt snapshot via billing debt helper on the send path; Stripe/USDC settlement remains outside this module), `WithdrawalDestinationModule` (destination/cooldown leaf for API-key direct egress; no WalletModule cycle).
 - **Common utils**: `getSupportedChain` (`src/common/chains/supported-chains`), `hashRequest` (`src/common/utils/request-hash`), `sanitizeErrorMessage` (`src/common/utils/sanitize`), `AgentStatus` (`src/common/agent/agent-status`).
 - **DTOs**: `SendTransactionDto` / `InteractionDto` (shared constants `MAX_TRANSACTION_INTERACTIONS`, `MAX_INTERACTION_CALLDATA_BYTES` consumed by the policy service) and `ListTransactionsQueryDto`; see `dto/codemap.md`.
 - **Data model**: Prisma `Transaction` (`transactions` table) with `@@unique([userId, operationType, chainId, idempotencyKey])` and indexes on `[apiKeyId, createdAt]`, `[requestHash]`, `[userId, createdAt]`, `[userId, status]`; `details` JSON holds safe send metadata (execution mode, sponsorship, interaction count, agent wallet/key hash, `userOpHash`).

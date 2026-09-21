@@ -412,6 +412,28 @@ export interface UsdcClaimResponse {
   retryable: boolean;
 }
 
+/**
+ * Quote-bound wallet-payment response (POST pay-from-wallet / GET payment-status).
+ * `paid` is authoritative for invoice settlement — never treat accepted/reserved/
+ * transactionHash alone as paid.
+ */
+export type UsdcWalletPayPhase = 'paid' | 'submitting' | 'unknown' | 'status' | 'accepted';
+
+export interface UsdcWalletPayResult {
+  invoiceId: string;
+  paymentAttemptId: string;
+  status: string;
+  paid: boolean;
+  accepted: boolean;
+  reserved: boolean;
+  isExecutor: boolean;
+  phase: UsdcWalletPayPhase;
+  chainId: number | null;
+  /** Chain tx hash when known — never provider/UserOp ids. */
+  transactionHash: string | null;
+  reviewReason: string | null;
+}
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -481,6 +503,26 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'This request is blocked by the API key IP allowlist.';
     case 'BILLING_OUTBOUND_BLOCKED':
       return 'Withdrawals are blocked until you settle your unpaid invoice. Open Billing to pay the finalized invoice, then try again.';
+    case 'USDC_INVOICE_NOT_PAYABLE':
+      return 'This invoice is no longer payable. It may already be paid, finalized, or fully covered.';
+    case 'USDC_PAYMENT_IN_PROGRESS':
+      return 'A USDC payment is already in progress for this invoice. Wait for it to complete, then refresh the quote.';
+    case 'USDC_INVALID_ATTEMPT':
+      return 'This payment attempt or quote is no longer valid. Request a new quote to continue.';
+    case 'USDC_WALLET_NOT_ACTIVE':
+      return 'Your wallet is not active yet. Finish wallet setup and try again.';
+    case 'USDC_QUOTE_EXPIRY_TOO_SOON':
+      return 'This quote expires too soon to start a wallet payment safely. Request a fresh quote and try again.';
+    case 'USDC_WALLET_USAGE_DEBT_ONLY':
+      return 'Usage debt is open. Only usage-period invoices can be paid from your wallet until that debt is settled.';
+    case 'USDC_WALLET_PAYMENT_RESERVED':
+      return 'A wallet payment is already reserved for this quote. Check status instead of starting another payment.';
+    case 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED':
+      return 'The payment destination is not on your withdrawal allowlist. Add it on the Wallet page and wait out the cooldown if needed.';
+    case 'WITHDRAWAL_ADDRESS_IN_COOLDOWN':
+      return 'The payment destination is still in cooldown. Wait until the cooldown ends, then try again.';
+    case 'WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE':
+      return 'Destination policy checks are temporarily unavailable. Try again shortly.';
     default:
       return fallback;
   }
@@ -1096,15 +1138,11 @@ export async function createUsdcQuoteAuth(
 ) {
   const body: { chainId?: number } = {};
   if (chainId !== undefined) body.chainId = chainId;
-  return authFetch<UsdcQuoteResponse>(
-    `/v1/billing/invoices/${invoiceId}/usdc/quote`,
-    getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-      signal,
-    },
-  );
+  return authFetch<UsdcQuoteResponse>(`/v1/billing/invoices/${invoiceId}/usdc/quote`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    signal,
+  });
 }
 
 export async function createUsdcClaimAuth(
@@ -1115,13 +1153,50 @@ export async function createUsdcClaimAuth(
   signal?: AbortSignal,
 ) {
   const body: UsdcClaimRequest = { paymentAttemptId, txHash };
-  return authFetch<UsdcClaimResponse>(
-    `/v1/billing/invoices/${invoiceId}/usdc/claim`,
+  return authFetch<UsdcClaimResponse>(`/v1/billing/invoices/${invoiceId}/usdc/claim`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+/**
+ * POST /v1/billing/invoices/:id/usdc/pay-from-wallet
+ * Body is paymentAttemptId only (server-bound quote facts). Requires step-up.
+ */
+export async function payUsdcFromWalletAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  paymentAttemptId: string,
+  stepUpToken?: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<UsdcWalletPayResult>(
+    `/v1/billing/invoices/${invoiceId}/usdc/pay-from-wallet`,
     getToken,
     {
       method: 'POST',
-      body: JSON.stringify(body),
+      headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+      body: JSON.stringify({ paymentAttemptId }),
       signal,
     },
+  );
+}
+
+/**
+ * GET /v1/billing/invoices/:id/usdc/payment-status?paymentAttemptId=
+ * Poll reserved wallet-payment state without step-up. Safe fields only.
+ */
+export async function getUsdcPaymentStatusAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  paymentAttemptId: string,
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams({ paymentAttemptId });
+  return authFetch<UsdcWalletPayResult>(
+    `/v1/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
+    getToken,
+    { signal },
   );
 }

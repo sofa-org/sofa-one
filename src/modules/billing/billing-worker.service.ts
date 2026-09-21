@@ -11,11 +11,17 @@ import { formatUtcMonth } from './billing.utils';
 import { BillingReconciliationService } from './billing-reconciliation.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
 import { UsdcPaymentService } from './onchain/usdc-payment.service';
+import { UsdcWalletPaymentService } from './onchain/usdc-wallet-payment.service';
 import { StripeWebhookService } from './stripe/stripe-webhook.service';
 import { StripePaymentService } from './stripe/stripe-payment.service';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
+import { prismaWhereUnresolvedAutoSubNeedsReview } from './stripe/auto-subscription-terminal-no-funds';
+import { StripeCheckoutSessionCleanupService } from './stripe/stripe-checkout-session-cleanup.service';
 import {
+  SESSION_CLEANUP_STATUS_IN_FLIGHT,
+  SESSION_CLEANUP_STATUS_NEEDS_REVIEW,
+  SESSION_CLEANUP_STATUS_PENDING,
   STRIPE_CHARGE_KIND_OVERAGE,
   STRIPE_CLIENT,
   STRIPE_DEFERRED_BACKOFF_MS,
@@ -90,6 +96,8 @@ export class BillingWorkerService implements OnModuleInit {
     @Optional() private readonly planChanges?: BillingPlanChangeService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
     @Optional() private readonly autoSubscription?: StripeAutoSubscriptionService,
+    @Optional() private readonly usdcWalletPayment?: UsdcWalletPaymentService,
+    @Optional() private readonly sessionCleanup?: StripeCheckoutSessionCleanupService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -150,6 +158,18 @@ export class BillingWorkerService implements OnModuleInit {
         // non-exhausted retry) means the recovery did not complete — the tick
         // must report failed. Benign lease/CAS misses are never counted.
         if (checkout && (checkout.needsReview > 0 || checkout.retryable > 0)) ok = false;
+      }
+      // BILL-014: expire open sibling Checkout Sessions only after full paid.
+      ok = (await this.cleanupPaidCheckoutSessions()) && ok;
+      // BILL-020: heartbeat must reflect persisted unresolved backlog (cleanup
+      // review/retry/in-flight, auto-sub pending/in_flight, non-terminal review),
+      // not only the current tick's processDue counters. Terminal no-funds
+      // review alone does not fail; normal open user Checkout pending is ignored.
+      if (ok && (await this.hasPersistedUnresolvedWorkerBacklog())) {
+        ok = false;
+        this.logger.warn(
+          `Billing worker tick found persisted unresolved backlog workerId=${this.workerId}`,
+        );
       }
       if (ok) {
         // Only after every bounded stage/account completed successfully: mark
@@ -993,12 +1013,33 @@ export class BillingWorkerService implements OnModuleInit {
    * plan_charge or fixed monthly usage_period invoice. PM attach/default +
    * Subscriptions.create use stable idempotency keys; needs_review/retryable
    * fail the tick heartbeat without rolling back paid benefits.
+   *
+   * BILL-020: processDue classifies via the shared safe-terminal predicate.
+   * `terminalNoFundsReview` alone (exact type+code, never dispatched, no
+   * subscription binding) is observable via counters/logs but does NOT fail
+   * heartbeat/readiness. Retryable, uncertain/in-flight, non-terminal
+   * needs_review, and recovery-scan/infrastructure failures DO fail the tick.
    */
   private async processAutoSubscriptions(): Promise<StageResult> {
     if (!this.autoSubscription) return true;
     try {
       // processDue also runs recoverMissingPaidIntents (paid full attempt, no intent).
       const result = await this.autoSubscription.processDue(this.workerId, 25);
+      if (result.terminalNoFundsReview > 0) {
+        // Safe terminal alone must not flip the stage — log and continue.
+        this.logger.warn(
+          `Billing worker auto-subscription terminal_no_funds review count=${result.terminalNoFundsReview} recovered=${result.recovered} workerId=${this.workerId}`,
+        );
+      }
+      // BILL-020: recovery-scan / infrastructure failures always fail the tick.
+      if (result.recoveryScanFailed) {
+        this.logger.warn(
+          `Billing worker auto-subscription recovery scan failed recovered=${result.recovered} workerId=${this.workerId}`,
+        );
+        return false;
+      }
+      // Non-terminal needs_review + retryable (in-flight/uncertain) fail.
+      // terminalNoFundsReview is intentionally omitted from this gate.
       if (result.needsReview > 0 || result.retryable > 0) {
         if (result.needsReview > 0) {
           this.logger.warn(
@@ -1016,13 +1057,131 @@ export class BillingWorkerService implements OnModuleInit {
     }
   }
 
+  /**
+   * BILL-020: persisted unfinished worker work that must fail heartbeat even
+   * when the current tick processed zero due rows.
+   *
+   * Includes: auto-sub pending/in_flight, auto-sub needs_review that fails the
+   * complete safe terminal no-funds predicate (exact type+code, dispatchedAt
+   * null, stripeSubscriptionId null — null/partial/dispatched remain unresolved),
+   * and session-cleanup pending/in_flight/needs_review. Excludes only fully
+   * safe terminal no-funds review and normal user-open Checkout pending
+   * (no sessionCleanupStatus).
+   *
+   * A backlog query failure fails closed (returns true) so infrastructure
+   * errors cannot report a healthy tick. HealthService does not re-probe this;
+   * the tick writes failed/healthy and healthy-wins aggregation stays unchanged.
+   */
+  private async hasPersistedUnresolvedWorkerBacklog(): Promise<boolean> {
+    try {
+      const attemptsClient = this.prisma.billingPaymentAttempt as {
+        count: (args: unknown) => Promise<number>;
+      };
+      const autoIntent = (
+        this.prisma as {
+          billingAutoSubscriptionIntent?: {
+            count: (args: unknown) => Promise<number>;
+          };
+        }
+      ).billingAutoSubscriptionIntent;
+
+      const autoPending = autoIntent
+        ? await autoIntent.count({
+            where: {
+              status: { in: ['pending', 'in_flight'] },
+            },
+          })
+        : 0;
+      // B4: explicit OR unresolved predicate (null labels, partial labels,
+      // dispatchedAt set, subscription bound). Safe terminal exact type+code
+      // with both fences null is excluded. processDue only scans pending/
+      // in_flight so safe terminal needs_review never becomes needsReview here.
+      const autoNonTerminalReview = autoIntent
+        ? await autoIntent.count({
+            where: prismaWhereUnresolvedAutoSubNeedsReview(),
+          })
+        : 0;
+      const cleanupUnresolved = await attemptsClient.count({
+        where: {
+          sessionCleanupStatus: {
+            in: [
+              SESSION_CLEANUP_STATUS_PENDING,
+              SESSION_CLEANUP_STATUS_IN_FLIGHT,
+              SESSION_CLEANUP_STATUS_NEEDS_REVIEW,
+            ],
+          },
+        } as Record<string, unknown>,
+      } as unknown);
+
+      return autoPending + autoNonTerminalReview + cleanupUnresolved > 0;
+    } catch (error) {
+      this.logger.warn(
+        `Billing worker unresolved backlog probe failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+      return true;
+    }
+  }
+
+  /**
+   * BILL-014: after invoices are fully paid, durably expire open sibling Stripe
+   * Checkout Sessions outside DB locks. Retryable/permanent cleanup failures
+   * fail the tick; already-closed sessions are success. Never refunds or
+   * mutates paid facts.
+   */
+  private async cleanupPaidCheckoutSessions(): Promise<StageResult> {
+    if (!this.sessionCleanup) return true;
+    try {
+      const result = await this.sessionCleanup.processDue(this.workerId, 50);
+      if (result.needsReview > 0 || result.retryable > 0) {
+        this.logger.warn(
+          `Billing worker checkout session cleanup incomplete needsReview=${result.needsReview} retryable=${result.retryable} expired=${result.expired} alreadyClosed=${result.alreadyClosed} workerId=${this.workerId}`,
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `Billing worker checkout session cleanup failed: ${sanitizeErrorMessage(getErrorText(error))}`,
+      );
+      return false;
+    }
+  }
+
   private async recoverUsdcClaims(): Promise<StageResult> {
     const due = await this.prisma.billingPaymentAttempt.findMany({
       where: {
         method: 'usdc',
-        status: { in: ['pending', 'confirming'] },
-        submittedTxHash: { not: null },
-        nextCheckAt: { lte: new Date() },
+        OR: [
+          // Classic client-claim recovery (non-reserved).
+          {
+            walletPaymentReserved: false,
+            status: { in: ['pending', 'confirming'] },
+            submittedTxHash: { not: null },
+            nextCheckAt: { lte: new Date() },
+          },
+          // Phase 2B B2/B6: reserved recovery only when nextCheckAt is due.
+          // nextCheckAt null is NOT due — bind sets lease end so in-flight
+          // executor rows are never stolen into needs_review. recoverReservedPayment
+          // also re-checks the dispatch lease before mutating.
+          {
+            walletPaymentReserved: true,
+            status: { in: ['pending', 'confirming', 'needs_review'] },
+            nextCheckAt: { lte: new Date() },
+          },
+          // B2: settlement-marker repair — succeeded/paid coverage whose bound
+          // billing_payment Transaction never received billingReconciledAt.
+          {
+            walletPaymentReserved: true,
+            status: 'succeeded',
+            walletPaymentTransaction: {
+              is: {
+                operationType: 'billing_payment',
+                billingReconciledAt: null,
+                txHash: { not: null },
+              },
+            },
+          },
+        ],
       },
       orderBy: { nextCheckAt: 'asc' },
       take: USDC_CLAIM_BATCH,
@@ -1034,6 +1193,55 @@ export class BillingWorkerService implements OnModuleInit {
     for (const attempt of due) {
       const userId = attempt.invoice.billingAccount.userId;
       try {
+        if (attempt.walletPaymentReserved === true && this.usdcWalletPayment) {
+          // Evidence-only wallet recovery — never client claim, never blind submit.
+          const result = await this.usdcWalletPayment.recoverReservedPayment(
+            userId,
+            attempt.invoiceId,
+            attempt.id,
+          );
+          // M2: stable awaiting-evidence (unknown/needs_review, reservation retained)
+          // is observable via audit but must NOT permanently fail worker health.
+          // Only unexpected paid=false after we had a hash and claim failed hard
+          // is treated as scoped failure when status is failed (not needs_review).
+          if (result.paid) {
+            await this.audit({
+              actorType: 'system',
+              eventType: 'billing.usdc.wallet_payment_recovered',
+              userId,
+              riskLevel: 'low',
+              result: 'allowed',
+              reason: result.status,
+              metadata: {
+                paymentAttemptId: attempt.id,
+                invoiceId: attempt.invoiceId,
+                status: result.status,
+                phase: result.phase,
+                workerId: this.workerId,
+              },
+            });
+          } else if (result.status === 'failed') {
+            ok = false;
+            await this.audit({
+              actorType: 'system',
+              eventType: 'billing.usdc.wallet_payment_recovered',
+              userId,
+              riskLevel: 'high',
+              result: 'denied',
+              reason: result.reviewReason ?? result.status,
+              metadata: {
+                paymentAttemptId: attempt.id,
+                invoiceId: attempt.invoiceId,
+                status: result.status,
+                phase: result.phase,
+                workerId: this.workerId,
+              },
+            });
+          }
+          // needs_review / unknown awaiting evidence: schedule already set; tick stays healthy.
+          continue;
+        }
+
         const result = await this.usdc.claim(userId, attempt.invoiceId, {
           paymentAttemptId: attempt.id,
           txHash: attempt.submittedTxHash ?? attempt.txHash ?? '',

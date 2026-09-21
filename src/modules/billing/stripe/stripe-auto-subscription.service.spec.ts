@@ -3,7 +3,12 @@ import { Prisma } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { STRIPE_CLIENT } from './stripe.constants';
-import { StripeAutoSubscriptionService } from './stripe-auto-subscription.service';
+import {
+  AUTO_SUB_PM_NOT_REUSABLE_CODE,
+  AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+  isPermanentPaymentMethodError,
+  StripeAutoSubscriptionService,
+} from './stripe-auto-subscription.service';
 import { StripeSubscriptionSyncService } from './stripe-subscription-sync.service';
 
 const ACCOUNT_ID = 'a1111111-1111-4111-8111-111111111111';
@@ -453,9 +458,7 @@ describe('StripeAutoSubscriptionService', () => {
   describe('savePaymentMethodBestEffort', () => {
     it('attaches a Card PM and sets Customer default_payment_method under lease', async () => {
       const lease = 'lease-tok-1';
-      autoFindUnique.mockResolvedValue(
-        autoIntent({ status: 'in_flight', leaseOwnerId: lease }),
-      );
+      autoFindUnique.mockResolvedValue(autoIntent({ status: 'in_flight', leaseOwnerId: lease }));
       attemptFindUnique.mockResolvedValue(attempt());
       paymentIntentRetrieve.mockResolvedValue({
         id: 'pi_123',
@@ -472,9 +475,7 @@ describe('StripeAutoSubscriptionService', () => {
       });
       autoUpdateMany.mockResolvedValue({ count: 1 });
 
-      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(
-        true,
-      );
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(true);
       expect(paymentMethodAttach).toHaveBeenCalledWith('pm_abc', { customer: 'cus_123' });
       expect(autoUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -488,17 +489,15 @@ describe('StripeAutoSubscriptionService', () => {
       autoFindUnique.mockResolvedValue(
         autoIntent({ status: 'in_flight', leaseOwnerId: 'owner-A' }),
       );
-      await expect(
-        service.savePaymentMethodBestEffort(autoIntent().id, 'owner-B'),
-      ).resolves.toBe(false);
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, 'owner-B')).resolves.toBe(
+        false,
+      );
       expect(paymentIntentRetrieve).not.toHaveBeenCalled();
     });
 
     it('fails closed when PaymentMethod type is not card', async () => {
       const lease = 'lease-tok-2';
-      autoFindUnique.mockResolvedValue(
-        autoIntent({ status: 'in_flight', leaseOwnerId: lease }),
-      );
+      autoFindUnique.mockResolvedValue(autoIntent({ status: 'in_flight', leaseOwnerId: lease }));
       attemptFindUnique.mockResolvedValue(attempt());
       paymentIntentRetrieve.mockResolvedValue({
         id: 'pi_123',
@@ -525,6 +524,362 @@ describe('StripeAutoSubscriptionService', () => {
           }),
         }),
       );
+    });
+
+    it('BILL-020: permanent detached/non-reusable PM becomes terminal_no_funds needs_review immediately', async () => {
+      const lease = 'lease-tok-pm-perm';
+      autoFindUnique.mockResolvedValue(
+        autoIntent({
+          status: 'in_flight',
+          leaseOwnerId: lease,
+          retryCount: 1,
+          dispatchedAt: null,
+          stripeSubscriptionId: null,
+        }),
+      );
+      attemptFindUnique.mockResolvedValue(attempt());
+      paymentIntentRetrieve.mockResolvedValue({
+        id: 'pi_123',
+        status: 'succeeded',
+        customer: 'cus_123',
+        payment_method: 'pm_detached',
+      });
+      paymentMethodRetrieve.mockResolvedValue({
+        id: 'pm_detached',
+        type: 'card',
+        customer: null,
+      });
+      // Real installed Stripe SDK error shape (class type + rawType/raw.type).
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Stripe = require('stripe') as typeof import('stripe');
+      paymentMethodAttach.mockRejectedValue(
+        new Stripe.errors.StripeInvalidRequestError({
+          message:
+            'This PaymentMethod was previously used without being attached to a Customer or was detached from a Customer, and may not be used again.',
+          code: 'resource_missing',
+          param: 'payment_method',
+          type: 'invalid_request_error',
+        }),
+      );
+      autoUpdateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(
+        false,
+      );
+      expect(autoUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            dispatchedAt: null,
+            stripeSubscriptionId: null,
+            leaseOwnerId: lease,
+          }),
+          data: expect.objectContaining({
+            status: 'needs_review',
+            lastErrorCode: AUTO_SUB_PM_NOT_REUSABLE_CODE,
+            lastErrorType: AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+          }),
+        }),
+      );
+      // Must NOT schedule a generic pm_save_error retry.
+      const retryWrite = autoUpdateMany.mock.calls.find(
+        (c) => c[0]?.data?.lastErrorCode === 'pm_save_error',
+      );
+      expect(retryWrite).toBeUndefined();
+    });
+
+    it('BILL-020: retryable 429/5xx on PM attach stays pm_save_error uncertain (not terminal)', async () => {
+      const lease = 'lease-tok-pm-429';
+      autoFindUnique.mockResolvedValue(
+        autoIntent({ status: 'in_flight', leaseOwnerId: lease, retryCount: 1 }),
+      );
+      attemptFindUnique.mockResolvedValue(attempt());
+      paymentIntentRetrieve.mockResolvedValue({
+        id: 'pi_123',
+        status: 'succeeded',
+        customer: 'cus_123',
+        payment_method: 'pm_abc',
+      });
+      paymentMethodRetrieve.mockResolvedValue({
+        id: 'pm_abc',
+        type: 'card',
+        customer: null,
+      });
+      paymentMethodAttach.mockRejectedValue(
+        Object.assign(new Error('rate limited'), { statusCode: 429, code: 'rate_limit' }),
+      );
+      autoUpdateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(
+        false,
+      );
+      expect(autoUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            lastErrorCode: 'pm_save_error',
+            lastErrorType: 'uncertain',
+            nextRetryAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('BILL-020: unknown/ambiguous PM attach error stays uncertain (message alone never terminal)', async () => {
+      const lease = 'lease-tok-pm-unknown';
+      autoFindUnique.mockResolvedValue(
+        autoIntent({ status: 'in_flight', leaseOwnerId: lease, retryCount: 1 }),
+      );
+      attemptFindUnique.mockResolvedValue(attempt());
+      paymentIntentRetrieve.mockResolvedValue({
+        id: 'pi_123',
+        status: 'succeeded',
+        customer: 'cus_123',
+        payment_method: 'pm_abc',
+      });
+      paymentMethodRetrieve.mockResolvedValue({
+        id: 'pm_abc',
+        type: 'card',
+        customer: null,
+      });
+      // Message looks permanent but lacks a permanent provider code → not terminal.
+      paymentMethodAttach.mockRejectedValue(
+        Object.assign(new Error('This PaymentMethod may not be used again.'), {
+          type: 'invalid_request_error',
+        }),
+      );
+      autoUpdateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(
+        false,
+      );
+      expect(autoUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            lastErrorCode: 'pm_save_error',
+            lastErrorType: 'uncertain',
+          }),
+        }),
+      );
+      const terminalWrite = autoUpdateMany.mock.calls.find(
+        (c) => c[0]?.data?.lastErrorType === AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+      );
+      expect(terminalWrite).toBeUndefined();
+    });
+
+    it('BILL-020: already-dispatched intent refuses terminal CAS and stays uncertain', async () => {
+      const lease = 'lease-tok-pm-dispatched';
+      const dispatched = autoIntent({
+        status: 'in_flight',
+        leaseOwnerId: lease,
+        retryCount: 1,
+        dispatchedAt: new Date('2026-09-18T12:00:00.000Z'),
+      });
+      autoFindUnique.mockResolvedValue(dispatched);
+      attemptFindUnique.mockResolvedValue(attempt());
+      paymentIntentRetrieve.mockResolvedValue({
+        id: 'pi_123',
+        status: 'succeeded',
+        customer: 'cus_123',
+        payment_method: 'pm_dead',
+      });
+      paymentMethodRetrieve.mockResolvedValue({
+        id: 'pm_dead',
+        type: 'card',
+        customer: null,
+      });
+      // Real SDK permanent-shaped error still must not terminalize when dispatched.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Stripe = require('stripe') as typeof import('stripe');
+      paymentMethodAttach.mockRejectedValue(
+        new Stripe.errors.StripeInvalidRequestError({
+          message:
+            'This PaymentMethod was previously used without being attached to a Customer or was detached from a Customer, and may not be used again.',
+          code: 'resource_missing',
+          param: 'payment_method',
+          type: 'invalid_request_error',
+        }),
+      );
+      // First write = terminal CAS (0 rows due to dispatched fence);
+      // second = uncertain retry (1 row).
+      autoUpdateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 1 });
+
+      await expect(service.savePaymentMethodBestEffort(autoIntent().id, lease)).resolves.toBe(
+        false,
+      );
+      expect(autoUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            dispatchedAt: null,
+            stripeSubscriptionId: null,
+          }),
+          data: expect.objectContaining({
+            lastErrorType: AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+          }),
+        }),
+      );
+      expect(autoUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            lastErrorCode: 'pm_save_error',
+            lastErrorType: 'uncertain',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('isPermanentPaymentMethodError', () => {
+    type RealStripeInvalidRequestError = {
+      type: string;
+      rawType: string;
+      code?: string;
+      param?: string;
+      message: string;
+      statusCode?: number;
+      raw?: { type?: string; code?: string; param?: string; message?: string };
+    };
+
+    /** Real installed Stripe SDK constructor (not a hand-rolled plain Error). */
+    function realStripeInvalidRequestError(opts: {
+      message: string;
+      code?: string;
+      param?: string;
+      statusCode?: number;
+    }): RealStripeInvalidRequestError {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Stripe = require('stripe') as typeof import('stripe');
+      return new Stripe.errors.StripeInvalidRequestError({
+        message: opts.message,
+        code: opts.code,
+        param: opts.param,
+        type: 'invalid_request_error',
+        statusCode: opts.statusCode,
+      }) as unknown as RealStripeInvalidRequestError;
+    }
+
+    it('classifies explicit permanent provider codes as permanent', () => {
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('not reusable'), {
+            type: 'invalid_request_error',
+            code: 'payment_method_unreusable',
+          }),
+        ),
+      ).toBe(true);
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(
+            new Error(
+              'This PaymentMethod was previously used without being attached to a Customer or was detached from a Customer, and may not be used again.',
+            ),
+            {
+              type: 'invalid_request_error',
+              code: 'resource_missing',
+              param: 'payment_method',
+            },
+          ),
+        ),
+      ).toBe(true);
+    });
+
+    it('BILL-020: classifies real StripeInvalidRequestError (rawType/raw.type) as permanent', () => {
+      const err = realStripeInvalidRequestError({
+        message:
+          'This PaymentMethod was previously used without being attached to a Customer or was detached from a Customer, and may not be used again.',
+        code: 'resource_missing',
+        param: 'payment_method',
+      });
+      // Prove installed SDK shape: class-name type, API type on rawType/raw.type.
+      expect(err.type).toBe('StripeInvalidRequestError');
+      expect(err.rawType).toBe('invalid_request_error');
+      expect(err.raw?.type).toBe('invalid_request_error');
+      expect(err.code).toBe('resource_missing');
+      expect(err.param).toBe('payment_method');
+      expect(isPermanentPaymentMethodError(err)).toBe(true);
+    });
+
+    it('never terminalizes on message text alone or ambiguous codes', () => {
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('may not be used again'), {
+            type: 'invalid_request_error',
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('was detached from a Customer'), {
+            type: 'invalid_request_error',
+            code: 'resource_missing',
+            // wrong param — not PM-scoped
+            param: 'customer',
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('something failed'), {
+            type: 'invalid_request_error',
+            code: 'parameter_invalid',
+          }),
+        ),
+      ).toBe(false);
+      // Real SDK error with wrong param must stay non-terminal.
+      expect(
+        isPermanentPaymentMethodError(
+          realStripeInvalidRequestError({
+            message: 'was detached from a Customer and may not be used again',
+            code: 'resource_missing',
+            param: 'customer',
+          }),
+        ),
+      ).toBe(false);
+      // Real SDK error missing allowlisted non-reusable wording stays non-terminal.
+      expect(
+        isPermanentPaymentMethodError(
+          realStripeInvalidRequestError({
+            message: 'No such payment_method: pm_missing',
+            code: 'resource_missing',
+            param: 'payment_method',
+          }),
+        ),
+      ).toBe(false);
+    });
+
+    it('never treats 429/5xx/network infrastructure failures as permanent PM errors', () => {
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('rate limited'), { statusCode: 429 }),
+        ),
+      ).toBe(false);
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('server error'), { statusCode: 503 }),
+        ),
+      ).toBe(false);
+      expect(
+        isPermanentPaymentMethodError(
+          Object.assign(new Error('may not be used again'), {
+            statusCode: 500,
+            code: 'payment_method_unreusable',
+          }),
+        ),
+      ).toBe(false);
+      // Real SDK rate-limit shaped status must stay non-terminal even with PM codes.
+      expect(
+        isPermanentPaymentMethodError(
+          realStripeInvalidRequestError({
+            message: 'may not be used again',
+            code: 'payment_method_unreusable',
+            statusCode: 429,
+          }),
+        ),
+      ).toBe(false);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Stripe = require('stripe') as typeof import('stripe');
+      const connectionErr = new Stripe.errors.StripeConnectionError({
+        message: 'network down',
+      });
+      expect(isPermanentPaymentMethodError(connectionErr)).toBe(false);
     });
   });
 
@@ -599,10 +954,10 @@ describe('StripeAutoSubscriptionService', () => {
 
       const result = await service.processDue('worker-1', 10);
       expect(result.completed).toBe(1);
-      expect(productCreate).toHaveBeenCalledWith(
-        expect.any(Object),
-        { idempotencyKey: `${intent.operationIdempotencyKey}:p` },
-      );
+      expect(result.terminalNoFundsReview).toBe(0);
+      expect(productCreate).toHaveBeenCalledWith(expect.any(Object), {
+        idempotencyKey: `${intent.operationIdempotencyKey}:p`,
+      });
       expect(subscriptionCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           customer: 'cus_123',
@@ -710,6 +1065,7 @@ describe('StripeAutoSubscriptionService', () => {
 
       const result = await service.processDue('worker-1');
       expect(result.needsReview).toBe(1);
+      expect(result.terminalNoFundsReview).toBe(0);
       expect(subscriptionCreate).not.toHaveBeenCalled();
       expect(autoUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -719,6 +1075,91 @@ describe('StripeAutoSubscriptionService', () => {
           }),
         }),
       );
+    });
+
+    it('BILL-020: counts permanent PM failure as terminalNoFundsReview (not needsReview)', async () => {
+      const intent = autoIntent({
+        stripePaymentMethodId: null,
+        paymentMethodSavedAt: null,
+        dispatchedAt: null,
+        stripeSubscriptionId: null,
+      });
+      queryRaw.mockResolvedValue([]);
+      autoFindMany.mockResolvedValue([intent]);
+      let currentLease: string | null = null;
+      autoUpdateMany.mockImplementation(async (args: { data?: any }) => {
+        if (typeof args.data?.leaseOwnerId === 'string') {
+          currentLease = args.data.leaseOwnerId;
+        }
+        return { count: 1 };
+      });
+      // After PM permanent failure, intent is needs_review with terminal_no_funds.
+      autoFindUnique.mockImplementation(async () => {
+        if (
+          autoUpdateMany.mock.calls.some(
+            (c) => c[0]?.data?.lastErrorCode === AUTO_SUB_PM_NOT_REUSABLE_CODE,
+          )
+        ) {
+          return {
+            ...intent,
+            status: 'needs_review',
+            leaseOwnerId: currentLease,
+            lastErrorCode: AUTO_SUB_PM_NOT_REUSABLE_CODE,
+            lastErrorType: AUTO_SUB_TERMINAL_NO_FUNDS_TYPE,
+            dispatchedAt: null,
+            stripeSubscriptionId: null,
+          };
+        }
+        return {
+          ...intent,
+          status: 'in_flight',
+          leaseOwnerId: currentLease,
+          dispatchedAt: null,
+          stripeSubscriptionId: null,
+        };
+      });
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      attemptFindUnique.mockResolvedValue(attempt());
+      paymentIntentRetrieve.mockResolvedValue({
+        id: 'pi_123',
+        status: 'succeeded',
+        customer: 'cus_123',
+        payment_method: 'pm_dead',
+      });
+      paymentMethodRetrieve.mockResolvedValue({
+        id: 'pm_dead',
+        type: 'card',
+        customer: null,
+      });
+      paymentMethodAttach.mockRejectedValue(
+        Object.assign(
+          new Error(
+            'This PaymentMethod was previously used without being attached to a Customer or was detached from a Customer, and may not be used again.',
+          ),
+          {
+            type: 'invalid_request_error',
+            code: 'resource_missing',
+            param: 'payment_method',
+          },
+        ),
+      );
+
+      const result = await service.processDue('worker-1');
+      expect(result.terminalNoFundsReview).toBe(1);
+      expect(result.needsReview).toBe(0);
+      expect(result.retryable).toBe(0);
+      expect(result.recoveryScanFailed).toBe(false);
+      expect(subscriptionCreate).not.toHaveBeenCalled();
+    });
+
+    it('BILL-020: recovery scan infrastructure failure propagates recoveryScanFailed', async () => {
+      queryRaw.mockRejectedValue(new Error('relation does not exist'));
+      autoFindMany.mockResolvedValue([]);
+
+      const result = await service.processDue('worker-1');
+      expect(result.recoveryScanFailed).toBe(true);
+      expect(result.attempted).toBe(0);
+      expect(result.terminalNoFundsReview).toBe(0);
     });
 
     it('completes when live binding is proven owned by this intent', async () => {
@@ -1218,7 +1659,17 @@ describe('StripeAutoSubscriptionService', () => {
         status: 'active',
         customer: 'cus_123',
         metadata: { autoSubscriptionIntentId: 'someone-else' },
-        items: { data: [{ price: { currency: 'usd', unit_amount: 4900, recurring: { interval: 'month', interval_count: 1 } } }] },
+        items: {
+          data: [
+            {
+              price: {
+                currency: 'usd',
+                unit_amount: 4900,
+                recurring: { interval: 'month', interval_count: 1 },
+              },
+            },
+          ],
+        },
       });
 
       const result = await service.processDue('worker-1');

@@ -9,6 +9,7 @@ describe('HealthService', () => {
     billingPaymentAttempt: { count: jest.fn() },
     stripeWebhookEvent: { count: jest.fn() },
     billingUsageEvent: { count: jest.fn() },
+    billingAutoSubscriptionIntent: { count: jest.fn() },
   };
   const config = {
     get: jest.fn(),
@@ -64,6 +65,7 @@ describe('HealthService', () => {
     prisma.billingPaymentAttempt.count.mockResolvedValue(count);
     prisma.stripeWebhookEvent.count.mockResolvedValue(count);
     prisma.billingUsageEvent.count.mockResolvedValue(count);
+    prisma.billingAutoSubscriptionIntent.count.mockResolvedValue(count);
   }
 
   beforeEach(() => {
@@ -116,7 +118,9 @@ describe('HealthService', () => {
     expect(bw.lastSuccessAt).toEqual(new Date(now - 60_000).toISOString());
     expect(bw.lastFailureAt).toBeNull();
     expect(bw.consecutiveFailures).toBe(0);
-    expect(bw.needsReviewCount).toBe(4);
+    // 6 review surfaces × 1 each (invoice, attempt, webhook, quarantined,
+    // auto-subscription needs_review, session-cleanup needs_review).
+    expect(bw.needsReviewCount).toBe(6);
     // Never exposes worker IDs.
     expect(JSON.stringify(bw)).not.toContain('billing-worker-');
   });
@@ -257,12 +261,15 @@ describe('HealthService', () => {
     workerEnabled();
     prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row({ status: 'healthy' })]);
     prisma.billingInvoice.count.mockResolvedValue(2);
-    prisma.billingPaymentAttempt.count.mockResolvedValue(3);
+    // payment attempts counted twice: status needs_review + sessionCleanupStatus
+    prisma.billingPaymentAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(1);
     prisma.stripeWebhookEvent.count.mockResolvedValue(4);
     prisma.billingUsageEvent.count.mockResolvedValue(5);
+    prisma.billingAutoSubscriptionIntent.count.mockResolvedValue(2);
 
     const response = await service.ready();
-    expect(response.checks.billingWorker.needsReviewCount).toBe(14);
+    // 2 + 3 + 4 + 5 + 2 auto-sub + 1 session cleanup = 17
+    expect(response.checks.billingWorker.needsReviewCount).toBe(17);
     expect(prisma.billingInvoice.count).toHaveBeenCalledWith({
       where: { status: 'needs_review' },
     });
@@ -275,5 +282,66 @@ describe('HealthService', () => {
     expect(prisma.billingUsageEvent.count).toHaveBeenCalledWith({
       where: { status: 'quarantined' },
     });
+    expect(prisma.billingAutoSubscriptionIntent.count).toHaveBeenCalledWith({
+      where: { status: 'needs_review' },
+    });
+  });
+
+  it('BILL-020 B3: healthy-wins multi-worker aggregation is unchanged with terminal review counters', async () => {
+    workerEnabled();
+    // Fresh healthy row wins over fresh failed — HealthService does not override.
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([
+      row({ status: 'failed', consecutiveFailures: 3 }),
+      row({ status: 'healthy', consecutiveFailures: 0 }),
+    ]);
+    prisma.billingAutoSubscriptionIntent.count.mockResolvedValue(4);
+
+    const response = await service.ready();
+    expect(response.checks.billingWorker.status).toBe('healthy');
+    expect(response.checks.billingWorker.needsReviewCount).toBeGreaterThan(0);
+  });
+
+  it('BILL-020 B3: does not demote a fresh healthy heartbeat based on cleanup backlog counts', async () => {
+    workerEnabled();
+    // Worker tick owns backlog→failed heartbeats; HealthService only aggregates.
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row({ status: 'healthy' })]);
+    prisma.billingPaymentAttempt.count.mockResolvedValue(5);
+    prisma.billingAutoSubscriptionIntent.count.mockResolvedValue(2);
+
+    const response = await service.ready();
+    expect(response.checks.billingWorker.status).toBe('healthy');
+    expect(response.checks.billingWorker.needsReviewCount).toBeGreaterThan(0);
+  });
+
+  it('BILL-020 B3: mixed healthy/failed workers keep healthy-wins even when review counters are high', async () => {
+    workerEnabled();
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([
+      row({ status: 'failed', consecutiveFailures: 2 }),
+      row({ status: 'healthy', consecutiveFailures: 0 }),
+      row({ status: 'running', consecutiveFailures: 0 }),
+    ]);
+    mockCounts(9);
+
+    const response = await service.ready();
+    expect(response.checks.billingWorker.status).toBe('healthy');
+  });
+
+  it('BILL-020: terminal no-funds rows remain countable without flipping healthy heartbeat', async () => {
+    workerEnabled();
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row({ status: 'healthy' })]);
+    prisma.billingAutoSubscriptionIntent.count.mockResolvedValue(3);
+
+    const response = await service.ready();
+    expect(response.checks.billingWorker.status).toBe('healthy');
+    expect(response.checks.billingWorker.needsReviewCount).toBe(3);
+  });
+
+  it('fails closed to stale when needsReview count query fails', async () => {
+    workerEnabled();
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row({ status: 'healthy' })]);
+    prisma.billingInvoice.count.mockRejectedValue(new Error('db down'));
+
+    const response = await service.ready();
+    expect(response.checks.billingWorker.status).toBe('stale');
   });
 });

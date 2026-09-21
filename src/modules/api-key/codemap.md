@@ -19,6 +19,7 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 | `revokeApiKey(keyId, userId)` | Revoke one owned key; 404 if not found, no-op if already revoked; audit `api_key.revoked`. |
 | `revokeAllKeys(userId)` | Revoke every active key; audit `api_key.revoked` per key with `reason: 'bulk_revoke'`. |
 | `rotateApiKey(userId, name)` | Atomically revoke all active keys and create a replacement; audit `api_key.revoked` (reason `rotation`) + `api_key.rotated`; return raw key once. |
+| `authorizeDirectEgress(keyId, userId)` | BILL-016: step-up owned-key CAS set of `directEgressPolicyAcceptedAt`; rejects revoked/expired/frozen/non-send keys; idempotent when already set. |
 
 ### Types / constants
 - `ApiKeyPermissions` — `canSign`, `canSendTransaction`, `canReadTransactionStatus`, `canUseEoaExecution`.

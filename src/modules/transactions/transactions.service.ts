@@ -31,6 +31,10 @@ import { RiskEvaluationService } from '../security-events/risk-evaluation.servic
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
 import {
+  isDeferredDestinationPolicyDenial,
+  WithdrawalDestinationPolicyService,
+} from '../withdrawal-destination/withdrawal-destination-policy.service';
+import {
   classifyTransactionAssetFlow,
   type AssetFlowBatchClassification,
 } from './transaction-asset-flow.policy';
@@ -40,6 +44,11 @@ import {
   type AssetFlowSimulationMode,
   type AssetFlowVerificationResult,
 } from './transaction-asset-flow.verifier';
+import {
+  extractDirectTransferIntents,
+  uniqueDirectTransferDestinations,
+  type DirectTransferIntent,
+} from './direct-transfer-intents';
 
 /** Exact outer-gate proof binding carried into the create transaction (no raw evidence). */
 type BoundAssetFlowVerification = {
@@ -81,6 +90,19 @@ type ApiKeyTransactionContext = {
   allowedFunctionSelectors?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
+  /** BILL-016: null/undefined = not authorized for new direct-egress sends. */
+  directEgressPolicyAcceptedAt?: Date | string | null;
+};
+
+type DestinationGateContext = {
+  userId: string;
+  destinations: string[];
+  intents: DirectTransferIntent[];
+  chainId: number;
+  walletId?: string;
+  apiKeyId?: string;
+  apiKeyPrefix?: string;
+  executionMode: ExecutionMode;
 };
 
 @Injectable()
@@ -93,6 +115,7 @@ export class TransactionsService {
     private readonly transactionPolicy: TransactionPolicyService,
     private readonly billingDebt: BillingDebtService,
     private readonly config: ConfigService,
+    private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -212,14 +235,51 @@ export class TransactionsService {
       requestHash,
     });
     if (existingTransaction) {
+      // Idempotent hit: no destination re-check, no Openfort, no broadcast.
       this.logExistingTransaction(existingTransaction, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(existingTransaction);
     }
 
-    // Owner for asset-flow classification + evidence binding:
+    // Owner for asset-flow classification + destination policy + evidence binding:
     // session_key executes as the user wallet; eoa executes as the agent backend wallet.
     const assetFlowOwnerAddress =
       executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress!;
+
+    // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
+    // Self-transfers (recipient === execution owner) are excluded by the parser.
+    const destinationExtract = extractDirectTransferIntents(
+      dto.interactions,
+      assetFlowOwnerAddress,
+    );
+    if (!destinationExtract.ok) {
+      throw new BadRequestException(destinationExtract.message);
+    }
+    const destinationGate: DestinationGateContext | null =
+      destinationExtract.intents.length > 0
+        ? {
+            userId,
+            destinations: uniqueDirectTransferDestinations(destinationExtract.intents),
+            intents: destinationExtract.intents,
+            chainId,
+            walletId: wallet.id,
+            apiKeyId: apiKeyRecord.id,
+            apiKeyPrefix: apiKeyRecord.keyPrefix,
+            executionMode,
+          }
+        : null;
+
+    if (destinationGate) {
+      this.assertDirectEgressReauthorized(apiKeyRecord);
+      await this.destinationPolicy.assertDestinationsAllowed(userId, destinationGate.destinations, {
+        actorType: 'api_key',
+        chainId,
+        walletId: wallet.id,
+        apiKeyId: apiKeyRecord.id,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        executionMode,
+      });
+    }
+
     const assetFlow = classifyTransactionAssetFlow({
       interactions: dto.interactions,
       ownerAddress: assetFlowOwnerAddress,
@@ -272,6 +332,7 @@ export class TransactionsService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
         verification: boundVerification,
       },
+      destinationGate,
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
@@ -279,11 +340,14 @@ export class TransactionsService {
       return this.toSendResponse(tx);
     }
 
-    let observedUserOpHash = (tx as any).userOpHash ?? (
-      tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details) &&
+    let observedUserOpHash =
+      (tx as any).userOpHash ??
+      (tx.details &&
+      typeof tx.details === 'object' &&
+      !Array.isArray(tx.details) &&
       typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
-        ? (tx.details as Record<string, unknown>).userOpHash as string : null
-    );
+        ? ((tx.details as Record<string, unknown>).userOpHash as string)
+        : null);
     try {
       this.logger.log(
         this.logContext({
@@ -324,32 +388,59 @@ export class TransactionsService {
         // timeout is therefore recoverable without resubmission.
         await this.prisma.transaction.updateMany({
           where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
-            status: { in: ['submitting', 'unknown', 'pending'] }, userOpHash: null, billingReconciledAt: null,
+            status: { in: ['submitting', 'unknown', 'pending'] },
+            userOpHash: null,
+            billingReconciledAt: null,
           }),
-          data: { userOpHash: submission.userOpHash, status: 'pending', completedAt: null,
-            details: { ...((tx.details as Record<string, unknown>) ?? {}), userOpHash: submission.userOpHash } as any },
+          data: {
+            userOpHash: submission.userOpHash,
+            status: 'pending',
+            completedAt: null,
+            details: {
+              ...((tx.details as Record<string, unknown>) ?? {}),
+              userOpHash: submission.userOpHash,
+            } as any,
+          },
         });
         try {
-          const receipt = await this.openfort.waitForUserOperationReceipt({ chainId, userOpHash: submission.userOpHash });
-          submission = { ...submission, transactionHash: receipt.transactionHash, userOperationSuccess: receipt.success };
+          const receipt = await this.openfort.waitForUserOperationReceipt({
+            chainId,
+            userOpHash: submission.userOpHash,
+          });
+          submission = {
+            ...submission,
+            transactionHash: receipt.transactionHash,
+            userOperationSuccess: receipt.success,
+          };
         } catch (error) {
           await this.prisma.transaction.updateMany({
-            where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash,
-              { status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null }),
+            where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+              status: { in: ['submitting', 'pending', 'unknown'] },
+              userOpSuccess: null,
+              billingReconciledAt: null,
+            }),
             data: { status: 'unknown', completedAt: null },
           });
           throw error;
         }
       }
 
-      let finalStatus: 'confirmed' | 'pending' | 'unknown' = submission.transactionHash ? 'confirmed' : 'pending';
+      let finalStatus: 'confirmed' | 'pending' | 'unknown' = submission.transactionHash
+        ? 'confirmed'
+        : 'pending';
       if (submission.userOperationSuccess === false) finalStatus = 'unknown';
       if (submission.transactionHash) {
         try {
-          const receipt = await this.openfort.getTransactionReceipt(chainId, submission.transactionHash);
-          finalStatus = submission.userOperationSuccess === false
-            ? 'unknown'
-            : receipt.status === 'success' ? 'confirmed' : 'unknown';
+          const receipt = await this.openfort.getTransactionReceipt(
+            chainId,
+            submission.transactionHash,
+          );
+          finalStatus =
+            submission.userOperationSuccess === false
+              ? 'unknown'
+              : receipt.status === 'success'
+                ? 'confirmed'
+                : 'unknown';
         } catch {
           // The broadcast already returned a hash; inability to read its receipt
           // is recoverable uncertainty, never a failed submission.
@@ -358,14 +449,26 @@ export class TransactionsService {
       }
       const finalData = {
         ...(submission.transactionHash ? { txHash: submission.transactionHash } : {}),
-        ...(submission.userOpHash ? { userOpSuccess: submission.transactionHash ? submission.userOperationSuccess ?? null : null } : {}),
-        status: submission.userOpHash && submission.userOperationSuccess === true && !submission.transactionHash
-          ? 'unknown' : finalStatus,
+        ...(submission.userOpHash
+          ? {
+              userOpSuccess: submission.transactionHash
+                ? (submission.userOperationSuccess ?? null)
+                : null,
+            }
+          : {}),
+        status:
+          submission.userOpHash &&
+          submission.userOperationSuccess === true &&
+          !submission.transactionHash
+            ? 'unknown'
+            : finalStatus,
         completedAt: finalStatus === 'confirmed' ? new Date() : null,
         details: {
           ...((tx.details as Record<string, unknown>) ?? {}),
           ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : {}),
-          ...(submission.userOperationSuccess !== undefined ? { userOperationSuccess: submission.userOperationSuccess } : {}),
+          ...(submission.userOperationSuccess !== undefined
+            ? { userOperationSuccess: submission.userOperationSuccess }
+            : {}),
         } as any,
       };
       const finalWrite = await this.prisma.transaction.updateMany({
@@ -413,15 +516,26 @@ export class TransactionsService {
       const knownUserOperation = Boolean(observedUserOpHash);
       await this.prisma.transaction.updateMany({
         where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
-          status: { in: ['submitting', 'pending', 'unknown'] }, userOpSuccess: null, billingReconciledAt: null,
-          ...(knownUserOperation ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] } : {}),
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          userOpSuccess: null,
+          billingReconciledAt: null,
+          ...(knownUserOperation
+            ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] }
+            : {}),
         }),
         data: {
-          ...(knownUserOperation ? { userOpHash: observedUserOpHash, status: 'unknown', failureReason: null, completedAt: null } : {
-            status: uncertain ? 'unknown' : 'failed',
-            failureReason: uncertain ? null : this.toFailureReason(error),
-            completedAt: uncertain ? null : new Date(),
-          }),
+          ...(knownUserOperation
+            ? {
+                userOpHash: observedUserOpHash,
+                status: 'unknown',
+                failureReason: null,
+                completedAt: null,
+              }
+            : {
+                status: uncertain ? 'unknown' : 'failed',
+                failureReason: uncertain ? null : this.toFailureReason(error),
+                completedAt: uncertain ? null : new Date(),
+              }),
         },
       });
       throw error;
@@ -432,8 +546,23 @@ export class TransactionsService {
     return mode ?? 'session_key';
   }
 
-  private sendCasWhere(tx: any, userId: string, chainId: number, idempotencyKey: string, requestHash: string, extra: Record<string, unknown>) {
-    return { id: tx.id, userId, operationType: 'send', chainId: BigInt(chainId), idempotencyKey, requestHash, ...extra };
+  private sendCasWhere(
+    tx: any,
+    userId: string,
+    chainId: number,
+    idempotencyKey: string,
+    requestHash: string,
+    extra: Record<string, unknown>,
+  ) {
+    return {
+      id: tx.id,
+      userId,
+      operationType: 'send',
+      chainId: BigInt(chainId),
+      idempotencyKey,
+      requestHash,
+      ...extra,
+    };
   }
 
   private async assertEoaExecutionAllowed(
@@ -463,7 +592,10 @@ export class TransactionsService {
     }
   }
 
-  private assertWalletNotFrozen(wallet: { frozenAt?: Date | string | null; frozenReason?: string | null }): void {
+  private assertWalletNotFrozen(wallet: {
+    frozenAt?: Date | string | null;
+    frozenReason?: string | null;
+  }): void {
     if (wallet.frozenAt) {
       throw new ForbiddenException(wallet.frozenReason ?? 'Wallet is frozen');
     }
@@ -480,7 +612,11 @@ export class TransactionsService {
       sponsorship?: SendTransactionDto['sponsorship'];
       onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
     },
-  ): Promise<{ transactionHash?: string | null; userOpHash?: string; userOperationSuccess?: boolean | null }> {
+  ): Promise<{
+    transactionHash?: string | null;
+    userOpHash?: string;
+    userOperationSuccess?: boolean | null;
+  }> {
     if (executionMode === 'eoa') {
       return this.openfort.sendBackendTransaction({
         accountId: params.agentOpenfortAccountId,
@@ -535,7 +671,11 @@ export class TransactionsService {
     agentOpenfortAccountId?: string | null;
     agentWalletAddress?: string | null;
   }): void {
-    if (wallet.status !== 'active' || !wallet.agentOpenfortAccountId || !wallet.agentWalletAddress) {
+    if (
+      wallet.status !== 'active' ||
+      !wallet.agentOpenfortAccountId ||
+      !wallet.agentWalletAddress
+    ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
   }
@@ -633,9 +773,11 @@ export class TransactionsService {
       walletAddress: string;
       details: Record<string, unknown>;
       billingGate?: BillingAssetFlowGateContext;
+      destinationGate?: DestinationGateContext | null;
     },
   ) {
-    // Interactive transaction: inner idempotency + debt recheck (no RPC) + create only.
+    // Interactive transaction: inner idempotency + destination lock/recheck +
+    // debt recheck (no RPC) + create only.
     // On unique-key race (P2002) the interactive tx aborts — never re-query on the
     // failed txClient. Recover outside with the root PrismaService after rollback.
     try {
@@ -652,6 +794,29 @@ export class TransactionsService {
         );
         if (existingInTx) {
           return { tx: existingInTx, created: false };
+        }
+
+        // BILL-016: user-scoped destination lock + live API-key reauth + destination
+        // re-assert before insert. Never trust the HTTP-auth snapshot alone.
+        // Lock first so allowlist mutations cannot race acceptance. No RPC here.
+        if (params.destinationGate && params.destinationGate.destinations.length > 0) {
+          await this.destinationPolicy.acquireUserDestinationLock(userId, txClient);
+          await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+          // deferAudit: never write security_events under ApiKey FOR UPDATE
+          // (FK key-share would deadlock). Caller records after rollback.
+          await this.destinationPolicy.assertDestinationsAllowed(
+            userId,
+            params.destinationGate.destinations,
+            {
+              actorType: 'api_key',
+              chainId: params.destinationGate.chainId,
+              walletId: params.destinationGate.walletId,
+              apiKeyId: params.destinationGate.apiKeyId,
+              apiKeyPrefix: params.destinationGate.apiKeyPrefix,
+              executionMode: params.destinationGate.executionMode,
+            },
+            { prisma: txClient, deferAudit: true },
+          );
         }
 
         if (params.billingGate) {
@@ -690,6 +855,11 @@ export class TransactionsService {
         return { tx, created: true };
       });
     } catch (error: any) {
+      // After TX rollback: locks released — safe to audit deferred destination denials.
+      if (isDeferredDestinationPolicyDenial(error)) {
+        await this.destinationPolicy.recordDeferredDenial(error);
+        throw error.httpException;
+      }
       if (error?.code !== 'P2002') throw error;
 
       const existing = await this.findExistingTransactionRequest(userId, {
@@ -701,6 +871,88 @@ export class TransactionsService {
       if (!existing) throw error;
       return { tx: existing, created: false };
     }
+  }
+
+  /**
+   * BILL-016: canSendTransaction keys must explicitly acknowledge destination
+   * policy before any new direct-egress send. Read/status and non-egress calls
+   * are unaffected. Never auto-set on key create. Outer preflight only — the
+   * create transaction re-reads key state via assertDirectEgressKeyStateInTx.
+   */
+  private assertDirectEgressReauthorized(apiKeyRecord: ApiKeyTransactionContext): void {
+    if (apiKeyRecord.directEgressPolicyAcceptedAt) {
+      return;
+    }
+    this.throwDirectEgressReauthRequired();
+  }
+
+  /**
+   * Live ApiKey row check under the create transaction. Takes
+   * `SELECT ... FOR UPDATE` on the owned api_keys row (after the user destination
+   * advisory lock) so revoke/freeze/expiry updates serialize with acceptance.
+   * Lock is held until the interactive TX commits/rolls back. No Openfort/RPC
+   * while locked. Missing/invalid keys → stable reauth 403 (no Transaction create).
+   */
+  private async assertDirectEgressKeyStateInTx(
+    userId: string,
+    apiKeyId: string | undefined,
+    db: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (!apiKeyId) {
+      this.throwDirectEgressReauthRequired();
+    }
+
+    type KeyRow = {
+      user_id: string;
+      revoked: boolean;
+      frozen_at: Date | null;
+      expires_at: Date | null;
+      can_send_transaction: boolean;
+      direct_egress_policy_accepted_at: Date | null;
+    };
+
+    let rows: KeyRow[];
+    try {
+      // FOR UPDATE blocks concurrent non-key-field updates (revoke/freeze/reauth)
+      // until this acceptance TX ends. Table/column names match Prisma @@map.
+      rows = await db.$queryRaw<KeyRow[]>`
+        SELECT
+          "user_id",
+          "revoked",
+          "frozen_at",
+          "expires_at",
+          "can_send_transaction",
+          "direct_egress_policy_accepted_at"
+        FROM "api_keys"
+        WHERE "id" = ${apiKeyId}::uuid
+        FOR UPDATE`;
+    } catch {
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.INTERNAL_ERROR,
+        message: 'API key state is temporarily unavailable',
+      });
+    }
+
+    const key = rows[0];
+    if (
+      !key ||
+      key.user_id !== userId ||
+      key.revoked ||
+      key.frozen_at != null ||
+      (key.expires_at != null && key.expires_at.getTime() <= Date.now()) ||
+      !key.can_send_transaction ||
+      key.direct_egress_policy_accepted_at == null
+    ) {
+      this.throwDirectEgressReauthRequired();
+    }
+  }
+
+  private throwDirectEgressReauthRequired(): never {
+    throw new ForbiddenException({
+      code: API_ERROR_CODES.API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED,
+      message:
+        'API key direct-egress reauthorization required. Authorize this key for destination-policy-bound sends before transferring assets.',
+    });
   }
 
   private async findExistingTransactionRequest(
@@ -751,7 +1003,12 @@ export class TransactionsService {
     }
 
     if (context.assetFlow.classification === 'external_transfer') {
-      this.logBillingAssetFlowBlocked(userId, context, snapshot.invoiceIds.length, 'external_transfer');
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        snapshot.invoiceIds.length,
+        'external_transfer',
+      );
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
         message: 'Outbound transfers are blocked until outstanding invoices are settled',
@@ -759,7 +1016,11 @@ export class TransactionsService {
     }
 
     // Debt + retained/unknown: require simulation evidence + verifier (DB-tx outside).
-    return this.verifyDebtSensitiveAssetFlowWithEvidence(userId, context, snapshot.invoiceIds.length);
+    return this.verifyDebtSensitiveAssetFlowWithEvidence(
+      userId,
+      context,
+      snapshot.invoiceIds.length,
+    );
   }
 
   /**
@@ -845,16 +1106,19 @@ export class TransactionsService {
     }
 
     if (!this.transactionSimulation?.simulateAssetFlowEvidence) {
-      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'simulation_service_unavailable');
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        invoiceCount,
+        'simulation_service_unavailable',
+      );
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
         message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
       });
     }
 
-    let evidence: Awaited<
-      ReturnType<TransactionSimulationService['simulateAssetFlowEvidence']>
-    >;
+    let evidence: Awaited<ReturnType<TransactionSimulationService['simulateAssetFlowEvidence']>>;
     try {
       evidence = await this.transactionSimulation.simulateAssetFlowEvidence({
         interactions: context.interactions,
@@ -913,7 +1177,12 @@ export class TransactionsService {
     }
 
     if (verdict.status === 'external_transfer') {
-      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, verdict.rule || 'verified_external');
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        invoiceCount,
+        verdict.rule || 'verified_external',
+      );
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
         message: 'Outbound transfers are blocked until outstanding invoices are settled',
@@ -972,7 +1241,12 @@ export class TransactionsService {
       binding.executionMode !== context.executionMode ||
       (binding.executionMode !== 'session_key' && binding.executionMode !== 'eoa')
     ) {
-      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_execution_mode_mismatch');
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        invoiceCount,
+        'binding_execution_mode_mismatch',
+      );
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
         message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
@@ -1003,7 +1277,12 @@ export class TransactionsService {
       interactions: context.interactions,
     });
     if (!expectedDigest || binding.planDigest !== expectedDigest) {
-      this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'binding_plan_digest_mismatch');
+      this.logBillingAssetFlowBlocked(
+        userId,
+        context,
+        invoiceCount,
+        'binding_plan_digest_mismatch',
+      );
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
         message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
@@ -1046,7 +1325,10 @@ export class TransactionsService {
         message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
       });
     }
-    if (verification.chainId !== plan.chainId || verification.executionMode !== plan.executionMode) {
+    if (
+      verification.chainId !== plan.chainId ||
+      verification.executionMode !== plan.executionMode
+    ) {
       throw new ForbiddenException({
         code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
         message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
@@ -1259,7 +1541,7 @@ export class TransactionsService {
 function isOpenfortTimeout(error: unknown): boolean {
   const candidate = error as { message?: unknown; response?: unknown };
   const message = [candidate?.message, candidate?.response]
-    .map((value) => typeof value === 'string' ? value : JSON.stringify(value))
+    .map((value) => (typeof value === 'string' ? value : JSON.stringify(value)))
     .join(' ');
   return /timed out|timeout|timedout/i.test(message);
 }

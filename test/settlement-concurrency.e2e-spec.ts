@@ -1,23 +1,42 @@
 /**
  * Real-PostgreSQL concurrency integration test for invoice settlement.
  *
- * Uses the real DATABASE_URL (docker-compose Postgres) — no mocks. Creates its
- * own finalized invoice + succeeded attempts, actually races two settlements
- * and a success/failure transition in concurrent interactive transactions,
- * asserts the invariants (at most one settlement, consistent paidVia/pointer,
- * no state overwrite), and cleans up its own data.
+ * Runner-provisioned BILLING_E2E_* target only (see test/billing-e2e-database.ts
+ * + scripts/billing-e2e-runner.ts). Never falls back to inherited DATABASE_URL
+ * or a static shared database. Creates its own finalized invoice + succeeded
+ * attempts, races two settlements and a success/failure transition in concurrent
+ * interactive transactions, asserts the invariants, and cleans up its own data.
  *
- * Runs via `npm run test:e2e` (maxWorkers=1) following the repo convention for
- * DB-dependent tests. Requires a reachable Postgres at DATABASE_URL.
+ * Run via `npm run test:e2e:billing`.
  */
-import 'dotenv/config';
 import { randomUUID } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { InvoiceSettlementService } from '../src/modules/billing/invoice-settlement.service';
+import {
+  applyBillingE2eDatabaseUrl,
+  assertBillingE2eDatabaseIdentity,
+  queryBillingE2eIdentityWithPrisma,
+  resolveBillingE2eDatabaseTarget,
+} from './billing-e2e-database';
 
-const prisma = new PrismaClient({ adapter: new PrismaPg(process.env.DATABASE_URL!) });
-const settlementService = new InvoiceSettlementService();
+const billingE2eDb = applyBillingE2eDatabaseUrl(resolveBillingE2eDatabaseTarget());
+const prisma = new PrismaClient({ adapter: new PrismaPg(billingE2eDb.url) });
+
+/**
+ * Minimal no-op plan-change double for concurrency E2E only.
+ * InvoiceSettlementService requires BillingPlanChangeService after paid to run
+ * entitlement side effects; this suite asserts settlement/CAS/row-lock
+ * invariants only — not entitlement activation. Methods resolve without
+ * mutating plan assignments or pretending activation succeeded beyond the
+ * settlement path under test.
+ */
+const noopPlanChangeService = {
+  applyPaidPlanCharge: async () => undefined,
+  extendEntitlementForPaidUsageInvoice: async () => undefined,
+};
+
+const settlementService = new InvoiceSettlementService(noopPlanChangeService as never);
 
 const AMOUNT_MICROS = 49_000_000n;
 
@@ -106,18 +125,38 @@ async function cleanup(seed: SeededInvoice): Promise<void> {
 describe('InvoiceSettlementService concurrency (real PostgreSQL)', () => {
   const seeds: SeededInvoice[] = [];
 
+  let dbIdentityVerified = false;
+
   beforeAll(async () => {
     await prisma.$connect();
+    await assertBillingE2eDatabaseIdentity(billingE2eDb, () =>
+      queryBillingE2eIdentityWithPrisma(prisma),
+    );
+    dbIdentityVerified = true;
   });
 
   afterEach(async () => {
-    for (const seed of seeds.splice(0)) {
+    if (!dbIdentityVerified) return;
+    // Pop only after successful cleanup so a failed delete retains the record.
+    while (seeds.length > 0) {
+      const seed = seeds[seeds.length - 1]!;
       await cleanup(seed);
+      seeds.pop();
     }
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    try {
+      if (dbIdentityVerified) {
+        while (seeds.length > 0) {
+          const seed = seeds[seeds.length - 1]!;
+          await cleanup(seed);
+          seeds.pop();
+        }
+      }
+    } finally {
+      await prisma.$disconnect();
+    }
   });
 
   it('settles at most once when two rails race on the same invoice', async () => {

@@ -2166,11 +2166,17 @@ export class BillingService {
     // close without their usage ever reaching the ledger. The worker always
     // reconciles a period before finalizing it, so this is the closure proof,
     // not the scheduling driver.
-    const [unresolvedPending, unresolvedConfirmed] = await Promise.all([
+    // Outbound metering set (send/withdraw) plus billing_payment wallet-pay.
+    // H1: billing_payment becomes "resolved" only after quote-bound settlement
+    // sets billingReconciledAt (success path). Unknown/no-hash/needs_review
+    // rows stay without the marker and continue to block finalization.
+    // Reconciliation intentionally does NOT meter billing_payment as usage.
+    const outboundOps = ['send', 'withdraw'] as const;
+    const [unresolvedPending, unresolvedConfirmed, unresolvedWalletPay] = await Promise.all([
       tx.transaction.count({
         where: {
           userId,
-          operationType: { in: ['send', 'withdraw'] },
+          operationType: { in: [...outboundOps] },
           status: { in: ['submitting', 'pending', 'unknown'] },
           // Typed membership is authoritative. A NULL membership is retained
           // as unresolved for this account so it blocks closure conservatively,
@@ -2181,14 +2187,31 @@ export class BillingService {
       tx.transaction.count({
         where: {
           userId,
-          operationType: { in: ['send', 'withdraw'] },
+          operationType: { in: [...outboundOps] },
           status: 'confirmed',
           OR: [{ txHash: null }, { billingReconciledAt: null }],
           AND: [{ OR: [{ billingPeriodStart: start }, { billingPeriodStart: null }] }],
         },
       }),
+      // Wallet-pay barrier: unfinished reservation/dispatch OR confirmed without
+      // post-settlement reconcile marker. Successful paid wallet pays set
+      // billingReconciledAt and no longer block.
+      tx.transaction.count({
+        where: {
+          userId,
+          operationType: 'billing_payment',
+          OR: [
+            { status: { in: ['submitting', 'pending', 'unknown'] } },
+            {
+              status: 'confirmed',
+              OR: [{ txHash: null }, { billingReconciledAt: null }],
+            },
+          ],
+          AND: [{ OR: [{ billingPeriodStart: start }, { billingPeriodStart: null }] }],
+        },
+      }),
     ]);
-    if (unresolvedPending + unresolvedConfirmed > 0) {
+    if (unresolvedPending + unresolvedConfirmed + unresolvedWalletPay > 0) {
       throw new ConflictException(
         'Cannot finalize invoice: unresolved outbound transactions require reconciliation',
       );

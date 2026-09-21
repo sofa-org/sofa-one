@@ -32,8 +32,15 @@ Public liveness and readiness probes for the SOFA ONE backend.
   all states).
 - `needsReviewCount` aggregates existing billing review surfaces — invoices and
   payment attempts in `needs_review`, Stripe webhook events in
-  `needs_review`/`failed`, and quarantined usage events — and is informational
-  only (it does not fail readiness or invent a pager).
+  `needs_review`/`failed`, quarantined usage events, auto-subscription intents
+  in `needs_review` (including BILL-020 terminal no-funds), and session-cleanup
+  rows stuck in `needs_review` — and is informational only (it does not fail
+  readiness or invent a pager).
+- BILL-020 B3: multi-worker aggregation is healthy-wins among fresh rows.
+  HealthService must **not** demote a fresh `healthy` aggregate solely because
+  `needsReviewCount` (or any persisted backlog counter) is nonzero. Worker tick
+  owns unresolved-risk classification and writes `failed`/`healthy` heartbeats;
+  readiness only aggregates those heartbeats.
 
 ## Flow
 

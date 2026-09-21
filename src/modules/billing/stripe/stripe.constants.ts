@@ -65,6 +65,24 @@ export const STRIPE_DEFERRED_MAX_RETRIES = 5;
 /** Base backoff for deferred renewal retries (capped, bounded). */
 export const STRIPE_DEFERRED_BACKOFF_MS = 5 * 60 * 1000;
 
+/**
+ * BILL-014: max times a post-paid sibling Checkout Session expire is retried
+ * before operator review. Provider calls stay outside DB locks.
+ */
+export const STRIPE_SESSION_CLEANUP_MAX_RETRIES = 5;
+
+/** BILL-014: lease window while a worker owns a session-cleanup attempt. */
+export const STRIPE_SESSION_CLEANUP_LEASE_MS = 2 * 60 * 1000;
+
+/** BILL-014: base backoff for retryable session-cleanup provider failures. */
+export const STRIPE_SESSION_CLEANUP_BACKOFF_MS = 60 * 1000;
+
+/** BILL-014 cleanup status vocabulary (persisted on the payment attempt). */
+export const SESSION_CLEANUP_STATUS_PENDING = 'pending';
+export const SESSION_CLEANUP_STATUS_IN_FLIGHT = 'in_flight';
+export const SESSION_CLEANUP_STATUS_COMPLETED = 'completed';
+export const SESSION_CLEANUP_STATUS_NEEDS_REVIEW = 'needs_review';
+
 /** A renewal attempt's `stripeChargeKind` for the fixed plan fee rail. */
 export const STRIPE_CHARGE_KIND_FIXED_FEE = 'fixed_fee';
 

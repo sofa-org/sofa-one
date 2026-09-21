@@ -187,7 +187,10 @@ describe('API-key public security flow (e2e)', () => {
     });
 
     it('POST /v1/transactions/send submits transaction and stores hashes without calldata', async () => {
-      const calldata = '0xa9059cbb000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
+      // Non-egress unknown selector (not a canonical transfer). A truncated
+      // 0xa9059cbb payload is now a malformed direct-transfer 400 (BILL-016);
+      // this suite is not the direct-egress runtime evidence path.
+      const calldata = '0xdeadbeef000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
 
       const res = await request(app.getHttpServer())
         .post('/v1/transactions/send')
@@ -540,6 +543,8 @@ describe('API-key public security flow (e2e)', () => {
 
   async function cleanDatabase() {
     await prisma.signingRequest.deleteMany();
+    // RESTRICT: payment attempts reference transactions — delete attempts first.
+    await prisma.billingPaymentAttempt.deleteMany().catch(() => undefined);
     await prisma.transaction.deleteMany();
     await prisma.apiKeyEvent.deleteMany();
     await prisma.apiKey.deleteMany();

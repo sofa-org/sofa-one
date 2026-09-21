@@ -196,10 +196,14 @@ export class BillingPlanChangeService {
     const { tx, billingAccountId, expectedChangeId, expectedPeriodStart } = args;
     const fallbackPeriod = expectedPeriodStart ?? monthStartUtc(now);
 
-    const unchanged = (plan?: {
-      code: string;
-      name: string;
-    } | null, periodStart = fallbackPeriod, effectiveFrom = fallbackPeriod): CancelPendingUpgradeResult => ({
+    const unchanged = (
+      plan?: {
+        code: string;
+        name: string;
+      } | null,
+      periodStart = fallbackPeriod,
+      effectiveFrom = fallbackPeriod,
+    ): CancelPendingUpgradeResult => ({
       outcome: 'unchanged',
       planCode: plan?.code ?? 'free',
       planName: plan?.name ?? 'Free',
@@ -278,6 +282,13 @@ export class BillingPlanChangeService {
           'Cannot cancel an upgrade while a payment attempt is confirming or succeeded',
         );
       }
+      // Phase 2B: wallet-payment reservation is active across rails at any status
+      // (including needs_review/unknown) — never cancel/void while reserved.
+      if ((attempt as { walletPaymentReserved?: boolean }).walletPaymentReserved === true) {
+        throw new ConflictException(
+          'Cannot cancel an upgrade while a wallet payment reservation is active',
+        );
+      }
       // USDC (or any non-Stripe rail): evidence/hash markers on a still-pending
       // row mean a claim is in flight — reject without writes so cancel cannot
       // race hash CAS. Evidence-free pending USDC may be released after CAS.
@@ -351,9 +362,14 @@ export class BillingPlanChangeService {
     }
 
     // Release only evidence-free pending attempts (USDC quotes with no hash).
-    // Stripe pending never reaches here. Confirming/succeeded never matched.
+    // Never release wallet-payment reservations (B2). Stripe pending never reaches here.
     const releasableIds = attempts
-      .filter((a) => a.status === 'pending' && !paymentAttemptHasEvidence(a))
+      .filter(
+        (a) =>
+          a.status === 'pending' &&
+          !(a as { walletPaymentReserved?: boolean }).walletPaymentReserved &&
+          !paymentAttemptHasEvidence(a),
+      )
       .map((a) => a.id);
     if (releasableIds.length > 0) {
       await tx.billingPaymentAttempt.updateMany({
@@ -362,6 +378,7 @@ export class BillingPlanChangeService {
           status: 'pending',
           submittedTxHash: null,
           txHash: null,
+          walletPaymentReserved: false,
         },
         data: {
           status: 'failed',
@@ -1403,7 +1420,9 @@ function paymentAttemptHasEvidence(attempt: {
   payerAddress: string | null;
   allocatedAt: Date | null;
   succeededAt: Date | null;
+  walletPaymentReserved?: boolean;
 }): boolean {
+  if (attempt.walletPaymentReserved === true) return true;
   return (
     attempt.submittedTxHash != null ||
     attempt.txHash != null ||

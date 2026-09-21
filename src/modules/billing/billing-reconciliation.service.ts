@@ -13,7 +13,8 @@ import { SUPPORTED_CHAINS } from '../../common/chains/supported-chains';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 
 /** ERC-20 `Transfer(address,address,uint256)` topic0. */
-const TRANSFER_TOPIC0 = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';/** A uint256 amount is exactly 32 bytes (64 hex chars) after the 0x prefix. */
+const TRANSFER_TOPIC0 =
+  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'; /** A uint256 amount is exactly 32 bytes (64 hex chars) after the 0x prefix. */
 const AMOUNT_DATA_REGEX = /^0x[0-9a-fA-F]{64}$/;
 /** An indexed address topic is exactly 32 bytes (64 hex chars) after 0x. */
 const INDEXED_ADDRESS_REGEX = /^0x[0-9a-fA-F]{64}$/;
@@ -157,11 +158,7 @@ export class BillingReconciliationService {
     const targetPeriodEnd =
       opts.targetPeriodEnd ??
       new Date(
-        Date.UTC(
-          targetPeriodStart.getUTCFullYear(),
-          targetPeriodStart.getUTCMonth() + 1,
-          1,
-        ),
+        Date.UTC(targetPeriodStart.getUTCFullYear(), targetPeriodStart.getUTCMonth() + 1, 1),
       );
 
     const summary: Summary = {
@@ -184,12 +181,7 @@ export class BillingReconciliationService {
     // Account + target-period run acquisition (DB-backed, takeover-aware). The
     // shared advisory lock serializes acquisition against finalization; a live
     // competing run makes this call skip without overlapping.
-    const acquired = await this.acquireRun(
-      userId,
-      targetPeriodStart,
-      targetPeriodEnd,
-      workerId,
-    );
+    const acquired = await this.acquireRun(userId, targetPeriodStart, targetPeriodEnd, workerId);
     if (acquired.kind === 'skip') {
       return {
         runId: acquired.runId ?? '',
@@ -201,15 +193,19 @@ export class BillingReconciliationService {
     const run = acquired.run;
 
     try {
-      const candidates = await this.selectCandidates(userId, targetPeriodStart, targetPeriodEnd, limit);
+      const candidates = await this.selectCandidates(
+        userId,
+        targetPeriodStart,
+        targetPeriodEnd,
+        limit,
+      );
 
       summary.scanned = candidates.length;
 
       // A candidate with missing/invalid createdAt cannot prove the high-water
       // contract; surface it as a safe error so the run is never treated as
       // clean exhaustive.
-      const invalidCreatedAtCount = candidates.filter((c) => !isValidCreatedAt(c.createdAt))
-        .length;
+      const invalidCreatedAtCount = candidates.filter((c) => !isValidCreatedAt(c.createdAt)).length;
       if (invalidCreatedAtCount > 0) {
         summary.errors += invalidCreatedAtCount;
         this.logger.warn(
@@ -235,8 +231,14 @@ export class BillingReconciliationService {
         }
         try {
           await this.processTransaction(
-            userId, tx, summary, run.id, run.workerId, run.billingAccountId,
-            targetPeriodStart, targetPeriodEnd,
+            userId,
+            tx,
+            summary,
+            run.id,
+            run.workerId,
+            run.billingAccountId,
+            targetPeriodStart,
+            targetPeriodEnd,
           );
           if (summary.ownershipLost) break;
         } catch (error) {
@@ -257,7 +259,11 @@ export class BillingReconciliationService {
       // clean only when NO unresolved candidate remains after this scan. This
       // is the durable closure proof (the JSON high-water mark alone is
       // coverage metadata, never a closure proof).
-      const remaining = await this.countUnresolvedCandidates(userId, targetPeriodStart, targetPeriodEnd);
+      const remaining = await this.countUnresolvedCandidates(
+        userId,
+        targetPeriodStart,
+        targetPeriodEnd,
+      );
       const exhausted = remaining === 0;
 
       const complete = this.isCompleteRun(summary, invalidCreatedAtCount, exhausted);
@@ -305,8 +311,17 @@ export class BillingReconciliationService {
       // A failed run is never complete; userId/complete are still persisted.
       // Owner-checked so a takeover owner's state is never clobbered.
       const persistedSummary = this.buildPersistedSummary(
-        summary, userId, false, null, [], null, run.id, run.billingAccountId,
-        targetPeriodStart, targetPeriodEnd, RECONCILE_RUN_TYPE,
+        summary,
+        userId,
+        false,
+        null,
+        [],
+        null,
+        run.id,
+        run.billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+        RECONCILE_RUN_TYPE,
       );
       const failureNow = new Date();
       const failed = await this.prisma.billingReconciliationRun.updateMany({
@@ -425,7 +440,11 @@ export class BillingReconciliationService {
           });
           return {
             kind: 'acquired',
-            run: { id: run.id, workerId, billingAccountId: run.billingAccountId ?? billingAccountId },
+            run: {
+              id: run.id,
+              workerId,
+              billingAccountId: run.billingAccountId ?? billingAccountId,
+            },
           } as const;
         } catch (err) {
           if (isUniqueConstraintError(err)) {
@@ -537,9 +556,18 @@ export class BillingReconciliationService {
     exhausted: boolean,
   ): boolean {
     const counters = [
-      summary.scanned, summary.notFound, summary.transientError, summary.reverted,
-      summary.posted, summary.quarantined, summary.updated, summary.errors,
-      summary.conflicts, summary.replayed, summary.casNoops, summary.noHash,
+      summary.scanned,
+      summary.notFound,
+      summary.transientError,
+      summary.reverted,
+      summary.posted,
+      summary.quarantined,
+      summary.updated,
+      summary.errors,
+      summary.conflicts,
+      summary.replayed,
+      summary.casNoops,
+      summary.noHash,
       summary.retryable,
     ];
     return (
@@ -595,10 +623,14 @@ export class BillingReconciliationService {
   ): Promise<TransactionRow[]> {
     // Keep the private seam tolerant for older unit callers; production always
     // supplies the explicit target period end.
-    const targetPeriodEnd = targetPeriodEndOrLimit instanceof Date
-      ? targetPeriodEndOrLimit
-      : new Date(Date.UTC(targetPeriodStart.getUTCFullYear(), targetPeriodStart.getUTCMonth() + 1, 1));
-    const pageLimit = typeof targetPeriodEndOrLimit === 'number' ? targetPeriodEndOrLimit : limit ?? 50;
+    const targetPeriodEnd =
+      targetPeriodEndOrLimit instanceof Date
+        ? targetPeriodEndOrLimit
+        : new Date(
+            Date.UTC(targetPeriodStart.getUTCFullYear(), targetPeriodStart.getUTCMonth() + 1, 1),
+          );
+    const pageLimit =
+      typeof targetPeriodEndOrLimit === 'number' ? targetPeriodEndOrLimit : (limit ?? 50);
     if (pageLimit <= 0) return [];
 
     // A one-row page still probes both queues.  Choosing the confirmed row
@@ -609,6 +641,9 @@ export class BillingReconciliationService {
     const confirmedSlice = Math.max(1, Math.floor(pageLimit / 2));
     const nonConfirmedSlice = pageLimit - confirmedSlice;
 
+    // Intentional exclusion: billing_payment is quote-bound treasury settlement,
+    // not outbound usage volume. Wallet-pay recovery is UsdcWalletPaymentService
+    // + worker evidence path — never metered here (avoids double-charge semantics).
     const nonConfirmed = await this.prisma.transaction.findMany({
       where: {
         userId,
@@ -617,7 +652,11 @@ export class BillingReconciliationService {
         billingPeriodStart: targetPeriodStart,
         createdAt: { lt: targetPeriodEnd },
       },
-      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: [
+        { billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } },
+        { createdAt: 'asc' },
+        { id: 'asc' },
+      ],
       take: Math.max(1, nonConfirmedSlice),
     });
 
@@ -642,7 +681,11 @@ export class BillingReconciliationService {
         ],
         id: { notIn: nonConfirmed.map((tx) => tx.id) },
       },
-      orderBy: [{ billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: [
+        { billingLastAttemptedAt: { sort: 'asc', nulls: 'first' } },
+        { createdAt: 'asc' },
+        { id: 'asc' },
+      ],
       take: confirmedTake,
     });
 
@@ -673,7 +716,11 @@ export class BillingReconciliationService {
    * never be reconciled) — keep the count above zero, so a run is only clean
    * when the scan was exhaustive.
    */
-  private async countUnresolvedCandidates(userId: string, targetPeriodStart: Date, targetPeriodEnd: Date): Promise<number> {
+  private async countUnresolvedCandidates(
+    userId: string,
+    targetPeriodStart: Date,
+    targetPeriodEnd: Date,
+  ): Promise<number> {
     const [nonConfirmed, confirmed] = await Promise.all([
       this.prisma.transaction.count({
         where: {
@@ -733,9 +780,12 @@ export class BillingReconciliationService {
       return;
     }
 
-    const txDetails = tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details)
-      ? tx.details as Record<string, unknown> : {};
-    const storedUserOpHash = tx.userOpHash ?? (typeof txDetails.userOpHash === 'string' ? txDetails.userOpHash : null);
+    const txDetails =
+      tx.details && typeof tx.details === 'object' && !Array.isArray(tx.details)
+        ? (tx.details as Record<string, unknown>)
+        : {};
+    const storedUserOpHash =
+      tx.userOpHash ?? (typeof txDetails.userOpHash === 'string' ? txDetails.userOpHash : null);
     const isUserOperation = Boolean(
       storedUserOpHash ||
       txDetails.executionMode === 'session_key' ||
@@ -746,7 +796,11 @@ export class BillingReconciliationService {
       const terminal = await this.fencedStateUpdate(
         tx,
         { status: 'failed', billingReconciledAt: new Date() },
-        runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
       if (terminal !== 1) summary.conflicts++;
       else summary.reverted++;
@@ -778,7 +832,11 @@ export class BillingReconciliationService {
           const terminal = await this.fencedStateUpdate(
             tx,
             { userOpSuccess: false, status: 'failed', billingReconciledAt: new Date() },
-            runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+            runId,
+            workerId,
+            billingAccountId,
+            targetPeriodStart,
+            targetPeriodEnd,
           );
           if (terminal === 1) summary.reverted++;
           else summary.conflicts++;
@@ -788,7 +846,11 @@ export class BillingReconciliationService {
           const recoveredUpdate = await this.fencedStateUpdate(
             tx,
             { userOpSuccess: true, txHash: recovered.transactionHash, status: 'pending' },
-            runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+            runId,
+            workerId,
+            billingAccountId,
+            targetPeriodStart,
+            targetPeriodEnd,
           );
           if (recoveredUpdate !== 1) {
             summary.conflicts++;
@@ -845,7 +907,11 @@ export class BillingReconciliationService {
             receiptBlockHash: '',
             receiptBlockTimestamp: 0n,
             receiptStatus: 'unknown',
-            receiptData: { txHash, chainId: tx.chainId.toString(), evidence: 'none_unsupported_chain' },
+            receiptData: {
+              txHash,
+              chainId: tx.chainId.toString(),
+              evidence: 'none_unsupported_chain',
+            },
             reconciledAt: new Date(),
           },
           metadata: { reason: 'unsupported_chain' },
@@ -888,7 +954,13 @@ export class BillingReconciliationService {
     // A reverted receipt is never metered.
     if (result.status === 'reverted') {
       const count = await this.markReverted(
-        tx, receipt, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd,
+        tx,
+        receipt,
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
       );
       if (count > 0) summary.reverted++;
       else summary.casNoops++;
@@ -994,7 +1066,7 @@ export class BillingReconciliationService {
       tx,
       receipt,
       walletAddresses,
-       periodStart,
+      periodStart,
       blockDate,
       runId,
       workerId,
@@ -1006,7 +1078,6 @@ export class BillingReconciliationService {
     else if (outcome === 'quarantined') summary.quarantined++;
     else if (outcome === 'replayed') summary.replayed++;
     if (outcome === 'posted' || outcome === 'replayed') summary.updated++;
-
   }
 
   /**
@@ -1039,7 +1110,7 @@ export class BillingReconciliationService {
         receipt,
         receipt.logs[0],
         walletAddresses,
-         periodStart,
+        periodStart,
         blockDate,
         runId,
         0,
@@ -1111,7 +1182,13 @@ export class BillingReconciliationService {
         transfers.push({
           address: parsed.address,
           amount: parsed.amount,
-          log: { address: parsed.address, topics: parsed.topics, data: parsed.data, logIndex: parsed.logIndex, removed: false },
+          log: {
+            address: parsed.address,
+            topics: parsed.topics,
+            data: parsed.data,
+            logIndex: parsed.logIndex,
+            removed: false,
+          },
         });
       }
     }
@@ -1133,12 +1210,14 @@ export class BillingReconciliationService {
     }
 
     const first = transfers[0];
-    const pricing = transfers.map((item) => evaluatePricing({
-      chainId: Number(tx.chainId),
-      tokenAddress: item.address,
-      amountBaseUnits: item.amount,
-      observedAt: blockDate,
-    }));
+    const pricing = transfers.map((item) =>
+      evaluatePricing({
+        chainId: Number(tx.chainId),
+        tokenAddress: item.address,
+        amountBaseUnits: item.amount,
+        observedAt: blockDate,
+      }),
+    );
     if (pricing.some((item) => item.status !== 'priced')) {
       const reason = pricing.find((item) => item.status !== 'priced');
       return this.quarantine(
@@ -1152,7 +1231,10 @@ export class BillingReconciliationService {
           occurredAt: blockDate,
           assetId: first.address,
           receipt: this.buildReceiptEvidence(receipt, null, `${receipt.transactionHash}:receipt`),
-          metadata: { reason: reason?.status === 'quarantined' ? reason.reason : 'mixed_receipt_evidence', logCount: transfers.length },
+          metadata: {
+            reason: reason?.status === 'quarantined' ? reason.reason : 'mixed_receipt_evidence',
+            logCount: transfers.length,
+          },
         },
         runId,
         workerId,
@@ -1162,7 +1244,14 @@ export class BillingReconciliationService {
       );
     }
     const priced = pricing as Array<Extract<(typeof pricing)[number], { status: 'priced' }>>;
-    if (priced.some((item) => item.tokenAddress !== priced[0].tokenAddress || item.priceUsdMicros !== priced[0].priceUsdMicros || item.tokenDecimals !== priced[0].tokenDecimals)) {
+    if (
+      priced.some(
+        (item) =>
+          item.tokenAddress !== priced[0].tokenAddress ||
+          item.priceUsdMicros !== priced[0].priceUsdMicros ||
+          item.tokenDecimals !== priced[0].tokenDecimals,
+      )
+    ) {
       return this.quarantine(
         userId,
         tx,
@@ -1618,13 +1707,22 @@ export class BillingReconciliationService {
         reconciledAt: new Date().toISOString(),
       },
     };
-    return this.fencedTransactionUpdate(tx, receipt, {
-      status: 'failed',
-      failureReason: 'receipt_reverted',
-      completedAt: new Date(),
-      billingReconciledAt: new Date(),
-      details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
-    }, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd);
+    return this.fencedTransactionUpdate(
+      tx,
+      receipt,
+      {
+        status: 'failed',
+        failureReason: 'receipt_reverted',
+        completedAt: new Date(),
+        billingReconciledAt: new Date(),
+        details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
+      },
+      runId,
+      workerId,
+      billingAccountId,
+      targetPeriodStart,
+      targetPeriodEnd,
+    );
   }
 
   private async markConfirmed(
@@ -1646,12 +1744,21 @@ export class BillingReconciliationService {
         reconciledAt: new Date().toISOString(),
       },
     };
-    return this.fencedTransactionUpdate(tx, receipt, {
-      status: 'confirmed',
-      completedAt: new Date(),
-      billingReconciledAt: new Date(),
-      details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
-    }, runId, workerId, billingAccountId, targetPeriodStart, targetPeriodEnd);
+    return this.fencedTransactionUpdate(
+      tx,
+      receipt,
+      {
+        status: 'confirmed',
+        completedAt: new Date(),
+        billingReconciledAt: new Date(),
+        details: { ...((tx.details as Record<string, unknown>) ?? {}), ...receiptDetails } as any,
+      },
+      runId,
+      workerId,
+      billingAccountId,
+      targetPeriodStart,
+      targetPeriodEnd,
+    );
   }
 
   /**
@@ -1671,9 +1778,17 @@ export class BillingReconciliationService {
     targetPeriodEnd: Date | undefined,
   ): Promise<number> {
     if (
-      !runId || !workerId || !billingAccountId || !targetPeriodStart || !targetPeriodEnd ||
-      tx.txHash === null || tx.txHash === undefined || tx.walletAddress === null || tx.walletAddress === undefined ||
-      tx.chainId === null || tx.chainId === undefined
+      !runId ||
+      !workerId ||
+      !billingAccountId ||
+      !targetPeriodStart ||
+      !targetPeriodEnd ||
+      tx.txHash === null ||
+      tx.txHash === undefined ||
+      tx.walletAddress === null ||
+      tx.walletAddress === undefined ||
+      tx.chainId === null ||
+      tx.chainId === undefined
     ) {
       return 0;
     }
@@ -1765,6 +1880,15 @@ type ParsedLogResult =
  * values at runtime. Every field is validated before use so no TypeError can
  * escape (topics[0], topics.length, logIndex, address, data, ...).
  *
+ * BILL-017: the event discriminator (topic0) is inspected before ERC-20
+ * topic-shape validation. Clearly unrelated logs whose topic0 is a well-formed
+ * non-Transfer 32-byte topic — or that carry no topics at all — are ignored
+ * (`not_transfer`) regardless of topic count (0/1/2/4+). Only logs whose
+ * topic0 is the ERC-20 Transfer signature become Transfer candidates and are
+ * then strictly shape-validated (exactly 3 topics, indexed addresses, data,
+ * address, removed). Malformed Transfer candidates and unclassifiable topic0
+ * values remain `incomplete_log` quarantine evidence.
+ *
  * A Transfer log is only postable when its removal flag is the explicit
  * boolean `false`; a missing/non-boolean/true `removed` is `unsafe_removed`
  * and is quarantined — usage is never metered from an unsafe log.
@@ -1787,19 +1911,35 @@ function parseReceiptLog(log: unknown, arrayIndex: number): ParsedLogResult {
   const removed = l.removed;
   const removedIsFalse = removed === false;
 
-  // topics must be an array with at least 3 elements.
-  if (!Array.isArray(l.topics) || l.topics.length !== 3) {
+  // topics must be an array so topic0 can be inspected. A non-array value is
+  // unclassifiable evidence (not a clearly unrelated valid log).
+  if (!Array.isArray(l.topics)) {
     return { kind: 'invalid', reason: 'incomplete_log', logIndex, arrayIndex };
   }
 
-  // topic0 must be exactly 32-byte hex; only the ERC-20 Transfer topic enters
-  // Transfer parsing. A valid non-Transfer topic is safely ignored.
+  // No topics at all cannot be an ERC-20 Transfer (Transfer always has a
+  // topic0). Treat as unrelated and ignore — never quarantine the receipt.
+  if (l.topics.length === 0) {
+    return { kind: 'not_transfer' };
+  }
+
+  // BILL-017: classify by topic0 discriminator BEFORE ERC-20 topic-shape
+  // checks so smart-account / protocol logs with 1/2/4 topics are ignored
+  // instead of aborting multi-log receipt scanning as incomplete_log.
   const topic0 = l.topics[0];
   if (typeof topic0 !== 'string' || !INDEXED_ADDRESS_REGEX.test(topic0)) {
+    // Present but unclassifiable topic0 (wrong type/length/hex) is malformed
+    // evidence, not a clearly unrelated valid event.
     return { kind: 'invalid', reason: 'incomplete_log', logIndex, arrayIndex };
   }
   if (topic0.toLowerCase() !== TRANSFER_TOPIC0) {
     return { kind: 'not_transfer' };
+  }
+
+  // Candidate ERC-20 Transfer: require the exact 3-topic shape. NFT-shaped
+  // (4-topic) Transfer topic0 and truncated Transfer candidates quarantine.
+  if (l.topics.length !== 3) {
+    return { kind: 'invalid', reason: 'incomplete_log', logIndex, arrayIndex };
   }
 
   // topics[1]/topics[2] must be strictly 0x+64 hex with zero ABI padding.

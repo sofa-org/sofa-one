@@ -1,22 +1,13 @@
 /**
  * Real-PostgreSQL concurrency integration test for USDC claims.
  *
- * Uses the real DATABASE_URL (docker-compose Postgres) — no mocks for the
- * database. Only the RPC provider is mocked (deterministic receipts); the
- * claim service runs against real Postgres with real row locks and CAS
- * transitions. Creates its own finalized invoices + pending USDC attempts,
- * actually races concurrent `claim()` calls, asserts the invariants:
- * persist-before-RPC / first-writer-wins (the first claim to persist the
- * canonical submitted hash owns the attempt; a different-hash loser never
- * calls RPC), at most one settlement, consistent paidVia/pointer, stale
- * claims cannot regress a terminal state, and the unique submitted_tx_hash /
- * Transfer-evidence indexes fail closed to duplicate_unallocated review.
- * Cleans up its own data.
+ * Runner-provisioned BILLING_E2E_* target only (see test/billing-e2e-database.ts
+ * + scripts/billing-e2e-runner.ts). Never falls back to inherited DATABASE_URL
+ * or a static shared database. Only the RPC provider is mocked; the claim
+ * service runs against real Postgres with real row locks and CAS transitions.
  *
- * Runs via `npm run test:e2e` (maxWorkers=1) following the repo convention for
- * DB-dependent tests. Requires a reachable Postgres at DATABASE_URL.
+ * Run via `npm run test:e2e:billing`.
  */
-import 'dotenv/config';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
 import { PrismaClient } from '@prisma/client';
@@ -31,8 +22,15 @@ import type {
   UsdcReceiptLog,
   UsdcReceiptProvider,
 } from '../src/modules/billing/onchain/usdc-receipt.provider';
+import {
+  applyBillingE2eDatabaseUrl,
+  assertBillingE2eDatabaseIdentity,
+  queryBillingE2eIdentityWithPrisma,
+  resolveBillingE2eDatabaseTarget,
+} from './billing-e2e-database';
 
-const prisma = new PrismaClient({ adapter: new PrismaPg(process.env.DATABASE_URL!) });
+const billingE2eDb = applyBillingE2eDatabaseUrl(resolveBillingE2eDatabaseTarget());
+const prisma = new PrismaClient({ adapter: new PrismaPg(billingE2eDb.url) });
 
 const AMOUNT_MICROS = 49_000_000n;
 const TREASURY = '0x1111111111111111111111111111111111111111';
@@ -219,8 +217,8 @@ async function seedSecondInvoice(seed: SeededUsdcInvoice): Promise<SeededUsdcInv
 async function cleanup(seed: SeededUsdcInvoice): Promise<void> {
   // A second invoice for the same user shares the account/plan/wallet/user;
   // delete all of the user's billing rows at once, once per user.
+  // Mark cleaned only after deletes succeed so a failed cleanup can retry.
   if (cleanedUsers.has(seed.userId)) return;
-  cleanedUsers.add(seed.userId);
   const invoiceIds = await prisma.billingInvoice.findMany({
     where: { billingAccountId: seed.accountId },
     select: { id: true },
@@ -233,6 +231,7 @@ async function cleanup(seed: SeededUsdcInvoice): Promise<void> {
   await prisma.billingAccount.delete({ where: { id: seed.accountId } });
   await prisma.userWallet.deleteMany({ where: { userId: seed.userId } });
   await prisma.user.delete({ where: { id: seed.userId } });
+  cleanedUsers.add(seed.userId);
 }
 
 const cleanedUsers = new Set<string>();
@@ -252,10 +251,17 @@ function buildService(provider: UsdcReceiptProvider): UsdcPaymentService {
       return values[key];
     },
   };
+  // Settlement needs BillingPlanChangeService after paid; this suite only
+  // races claim/CAS/settlement locks — not entitlement activation. No-op
+  // doubles satisfy the guard without mutating plan assignments.
+  const noopPlanChangeService = {
+    applyPaidPlanCharge: async () => undefined,
+    extendEntitlementForPaidUsageInvoice: async () => undefined,
+  };
   return new UsdcPaymentService(
     prisma as unknown as PrismaService,
     config as unknown as ConfigService,
-    new InvoiceSettlementService(),
+    new InvoiceSettlementService(noopPlanChangeService as never),
     provider,
   );
 }
@@ -270,19 +276,37 @@ async function waitFor(predicate: () => boolean, timeoutMs = 10_000): Promise<vo
 
 describe('UsdcPaymentService claim concurrency (real PostgreSQL)', () => {
   const seeds: SeededUsdcInvoice[] = [];
+  let dbIdentityVerified = false;
 
   beforeAll(async () => {
     await prisma.$connect();
+    await assertBillingE2eDatabaseIdentity(billingE2eDb, () =>
+      queryBillingE2eIdentityWithPrisma(prisma),
+    );
+    dbIdentityVerified = true;
   });
 
   afterEach(async () => {
-    for (const seed of seeds.splice(0)) {
+    if (!dbIdentityVerified) return;
+    while (seeds.length > 0) {
+      const seed = seeds[seeds.length - 1]!;
       await cleanup(seed);
+      seeds.pop();
     }
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    try {
+      if (dbIdentityVerified) {
+        while (seeds.length > 0) {
+          const seed = seeds[seeds.length - 1]!;
+          await cleanup(seed);
+          seeds.pop();
+        }
+      }
+    } finally {
+      await prisma.$disconnect();
+    }
   });
 
   it('settles at most once when two claims race on the same attempt', async () => {

@@ -21,6 +21,7 @@ describe('ApiKeyController', () => {
     listApiKeys: jest.fn(),
     revokeApiKey: jest.fn(),
     revokeAllKeys: jest.fn(),
+    authorizeDirectEgress: jest.fn(),
   };
 
   let controller: ApiKeyController;
@@ -113,5 +114,18 @@ describe('ApiKeyController', () => {
       revokedCount: 3,
     });
     expect(apiKeyService.revokeAllKeys).toHaveBeenCalledWith('user-1');
+  });
+
+  it('delegates authorize-direct-egress to apiKeyService.authorizeDirectEgress', async () => {
+    apiKeyService.authorizeDirectEgress.mockResolvedValue({
+      id: 'key-1',
+      outcome: 'authorized',
+      directEgressPolicyAcceptedAt: new Date('2026-06-01T00:00:00.000Z'),
+    });
+
+    await expect(controller.authorizeDirectEgress('user-1', 'key-1')).resolves.toEqual(
+      expect.objectContaining({ id: 'key-1', outcome: 'authorized' }),
+    );
+    expect(apiKeyService.authorizeDirectEgress).toHaveBeenCalledWith('key-1', 'user-1');
   });
 });
