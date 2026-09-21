@@ -8,6 +8,7 @@ import {
   assignBillingPlanAuth,
   cancelBillingPlanAuth,
   cancelBillingPlanUpgradeAuth,
+  cancelUsdcQuoteAuth,
   createBillingCheckoutSessionAuth,
   getBillingPlansAuth,
   getBillingSummaryAuth,
@@ -50,6 +51,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
     assignBillingPlanAuth: vi.fn(),
     cancelBillingPlanAuth: vi.fn(),
     cancelBillingPlanUpgradeAuth: vi.fn(),
+    cancelUsdcQuoteAuth: vi.fn(),
     getInvoicePaymentStatusAuth: vi.fn(),
   };
 });
@@ -163,9 +165,18 @@ beforeEach(() => {
     planName: 'Starter',
     effectivePeriod: '2026-08',
   });
+  vi.mocked(cancelUsdcQuoteAuth).mockReset();
+  vi.mocked(cancelUsdcQuoteAuth).mockResolvedValue({
+    invoiceId: 'inv_1',
+    paymentAttemptId: 'att_pending',
+    status: 'cancelled',
+    cancelledAt: '2026-08-01T12:00:00.000Z',
+    cancelReason: 'user_requested',
+  });
   vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (_getToken, invoiceId) =>
     makeInvoicePaymentStatus({ invoiceId }),
   );
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
 describe('Billing — Stripe return markers and query cleanup', () => {
@@ -1732,8 +1743,10 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
 
     renderBilling();
 
-    expect(await screen.findByText(/USDC in progress/i)).toBeInTheDocument();
-    expect(screen.getByText(/finish or wait for expiry/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Unused USDC quote — continue, cancel, or wait for expiry/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^USDC in progress$/i)).toBeInTheDocument();
 
     const cardBtn = screen.getByRole('button', { name: /Card unavailable/i });
     expect(cardBtn).toBeDisabled();
@@ -1742,5 +1755,135 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_1');
+  });
+
+  it('offers Cancel quote for a clean pending USDC attempt and cancels after confirm', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth)
+      .mockResolvedValueOnce(
+        makeInvoicePaymentStatus({
+          invoiceId: 'inv_1',
+          activeAttempt: {
+            paymentAttemptId: 'att_pending',
+            method: 'usdc',
+            status: 'pending',
+            reviewReason: null,
+            createdAt: '2026-08-01T00:00:00.000Z',
+            walletPaymentReserved: false,
+            chainId: 84532,
+            quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+          },
+        }),
+      )
+      .mockResolvedValue(makeInvoicePaymentStatus({ invoiceId: 'inv_1' }));
+
+    renderBilling();
+
+    const cancelBtn = await screen.findByRole('button', {
+      name: /Cancel unused USDC quote/i,
+    });
+    fireEvent.click(cancelBtn);
+
+    await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(
+      expect.any(Function),
+      'inv_1',
+      'att_pending',
+    );
+    expect(window.confirm).toHaveBeenCalled();
+    expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
+  });
+
+  it('does not cancel when confirmation is dismissed', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        invoiceId: 'inv_1',
+        activeAttempt: {
+          paymentAttemptId: 'att_pending',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderBilling();
+    fireEvent.click(
+      await screen.findByRole('button', { name: /Cancel unused USDC quote/i }),
+    );
+    expect(cancelUsdcQuoteAuth).not.toHaveBeenCalled();
+  });
+
+  it('hides Cancel quote while confirming or reserved (no misleading cancel)', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        invoiceId: 'inv_1',
+        activeAttempt: {
+          paymentAttemptId: 'att_confirming',
+          method: 'usdc',
+          status: 'confirming',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderBilling();
+    expect(
+      await screen.findByText(/USDC confirming — do not cancel or switch to card/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^USDC confirming$/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Cancel unused USDC quote/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('USDC_CANCEL_NOT_ALLOWED shows conflict notice and refreshes payment status', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        invoiceId: 'inv_1',
+        activeAttempt: {
+          paymentAttemptId: 'att_pending',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+    vi.mocked(cancelUsdcQuoteAuth).mockRejectedValue(
+      apiError(409, { code: 'USDC_CANCEL_NOT_ALLOWED' }),
+    );
+
+    renderBilling();
+    const statusCallsBefore = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    fireEvent.click(
+      await screen.findByRole('button', { name: /Cancel unused USDC quote/i }),
+    );
+
+    expect(await screen.findByText(/can no longer be cancelled/i)).toBeInTheDocument();
+    // Never invent cancel success on 409.
+    expect(screen.queryByText(/USDC quote cancelled/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
+    // Conflict path refreshes invoice list payment status.
+    await waitFor(() =>
+      expect(vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length).toBeGreaterThan(
+        statusCallsBefore,
+      ),
+    );
   });
 });

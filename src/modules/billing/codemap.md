@@ -148,6 +148,9 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   - `POST /quote` → `usdcPaymentService.quote(userId, id, body.chainId)`
   - `POST /claim` → `usdcPaymentService.claim(userId, id, body)` with a tight
     route throttle (`5/60s`, `20/3600s`) to bound RPC amplification.
+  - `POST /cancel` → `usdcPaymentService.cancel(userId, id, body.paymentAttemptId)`
+    (BILL-003: clean evidence-free pending only; no RPC; throttle `10/60s`,
+    `60/3600s`; omitted from openapi).
 
 ### Plans
 
@@ -331,6 +334,12 @@ POST /v1/billing/invoices/:id/usdc/quote { chainId? }
     (providerIdentity = sha256 of RPC URL, never the raw URL); the quote amount
     is the CURRENT remaining balance (`totalMicros - allocatedMicros`) once a
     fixed-fee renewal has allocated coverage, and the full total otherwise
+
+POST /v1/billing/invoices/:id/usdc/cancel { paymentAttemptId } (BILL-003)
+  → ownership-scoped; period → attempt FOR UPDATE → invoice FOR UPDATE
+  → only pending + unreserved + fully evidence-free USDC may CAS to cancelled
+    (cancelledAt + cancelReason=user_requested); confirming/reserved/evidence/
+    other terminals fail closed; already-cancelled idempotent; no RPC/settlement
 
 POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
   → assertSnapshotComplete (every snapshot field present + consistent with

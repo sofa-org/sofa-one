@@ -4,14 +4,16 @@
 
 Request-body DTOs for the dashboard-only native USDC invoice payment flow
 (`UsdcPaymentController`). This folder defines the **only** client-supplied
-inputs for the two USDC endpoints:
+inputs for the USDC endpoints:
 
 - `UsdcQuoteDto` — optional chain selector for `POST /v1/billing/invoices/:id/usdc/quote`.
 - `UsdcClaimDto` — `{ paymentAttemptId, txHash }` for `POST /v1/billing/invoices/:id/usdc/claim`.
+- `UsdcCancelDto` — `{ paymentAttemptId }` for `POST /v1/billing/invoices/:id/usdc/cancel` (BILL-003).
 
 The DTOs deliberately expose a minimal surface: every payment fact (token,
 treasury, RPC, decimals, amount, payer, chain, confirmations) is derived
 server-side from the attempt's quote snapshot, never accepted from the client.
+Cancel accepts no hash, receipt, chain, or provider fields.
 
 ## Design / Patterns
 
@@ -40,10 +42,14 @@ server-side from the attempt's quote snapshot, never accepted from the client.
    - The whole DTO is forwarded to `UsdcPaymentService.claim(userId, id, body)`,
      which verifies `txHash` against the attempt's server-side quote snapshot
      and advances the payment lifecycle.
+3. `POST /v1/billing/invoices/:id/usdc/cancel` (BILL-003)
+   - `@Body()` is parsed/validated as `UsdcCancelDto`.
+   - `body.paymentAttemptId` is forwarded to
+     `UsdcPaymentService.cancel(userId, id, body.paymentAttemptId)`.
 
-Both routes are guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; the claim
-route additionally carries a tight route-level `@Throttle` (5/60s, 20/3600s)
-because it performs RPC lookups.
+All three routes are guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; claim
+carries a tight route-level `@Throttle` (5/60s, 20/3600s) for RPC amplification;
+cancel is throttled (10/60s, 60/3600s) as a write path.
 
 ## Integration
 
@@ -51,11 +57,14 @@ because it performs RPC lookups.
   - `usdc-quote.dto.ts` — exports `UsdcQuoteDto` (`chainId?: number`).
   - `usdc-claim.dto.ts` — exports `UsdcClaimDto` (`paymentAttemptId: string`,
     `txHash: string`) and the module-private `TX_HASH_REGEX`.
+  - `usdc-cancel.dto.ts` — exports `UsdcCancelDto` (`paymentAttemptId: string`).
 - **Key symbols / inputs / outputs**
   - `UsdcQuoteDto`: input `{ chainId?: number }` → validated output
     `{ chainId?: number }` (absent when not supplied).
   - `UsdcClaimDto`: input `{ paymentAttemptId: UUID, txHash: 0x + 64 hex }` →
     validated output of the same shape.
+  - `UsdcCancelDto`: input `{ paymentAttemptId: UUID }` → validated output of
+    the same shape.
 - **Dependencies**
   - `class-validator` (`IsUUID`, `Matches`, `IsInt`, `IsOptional`).
   - Global `ValidationPipe` in `src/app.module.ts` (whitelist +

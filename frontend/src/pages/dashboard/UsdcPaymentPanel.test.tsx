@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsdcPaymentPanel } from './UsdcPaymentPanel';
 import {
+  cancelUsdcQuoteAuth,
   createUsdcClaimAuth,
   createUsdcQuoteAuth,
   getInvoicePaymentStatusAuth,
@@ -29,6 +30,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
     ...actual,
     createUsdcQuoteAuth: vi.fn(),
     createUsdcClaimAuth: vi.fn(),
+    cancelUsdcQuoteAuth: vi.fn(),
     payUsdcFromWalletAuth: vi.fn(),
     getUsdcPaymentStatusAuth: vi.fn(),
     getInvoicePaymentStatusAuth: vi.fn(),
@@ -91,13 +93,22 @@ const payFromWalletButton = () => screen.queryByRole('button', { name: /Pay from
 beforeEach(() => {
   vi.mocked(createUsdcQuoteAuth).mockReset();
   vi.mocked(createUsdcClaimAuth).mockReset();
+  vi.mocked(cancelUsdcQuoteAuth).mockReset();
   vi.mocked(payUsdcFromWalletAuth).mockReset();
   vi.mocked(getUsdcPaymentStatusAuth).mockReset();
   vi.mocked(getInvoicePaymentStatusAuth).mockReset();
   vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(makeWalletPayResult());
   vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
+  vi.mocked(cancelUsdcQuoteAuth).mockResolvedValue({
+    invoiceId: 'inv_1',
+    paymentAttemptId: 'attempt_1',
+    status: 'cancelled',
+    cancelledAt: '2026-08-01T12:00:00.000Z',
+    cancelReason: 'user_requested',
+  });
   vi.mocked(getDashboardStepUpToken).mockReturnValue(null);
   vi.mocked(requestStepUpToken).mockResolvedValue('step-up-token');
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
 describe('UsdcPaymentPanel — 409 USDC conflict classification', () => {
@@ -641,5 +652,208 @@ describe('UsdcPaymentPanel — BILL-018 invoice payment status recovery', () => 
       await screen.findByText(/still needs manual review/i),
     ).toBeInTheDocument();
     expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+  });
+});
+
+describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
+  const cancelButton = () =>
+    screen.queryByRole('button', { name: /Cancel this unused USDC quote/i });
+
+  it('shows Cancel quote for a clean idle pending quote and cancels after confirm', async () => {
+    const { onChange, getToken } = await renderWithQuote();
+
+    expect(cancelButton()).toBeInTheDocument();
+    expect(cancelButton()).not.toBeDisabled();
+
+    fireEvent.click(cancelButton()!);
+
+    await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(getToken, 'inv_1', 'attempt_1');
+    expect(window.confirm).toHaveBeenCalled();
+    expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
+    // Local quote cleared so claim/pay are gone until a new quote.
+    expect(claimButton()).not.toBeInTheDocument();
+    expect(payFromWalletButton()).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenCalled();
+    // Status refreshed after cancel (initial + after cancel at least).
+    expect(vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not call cancel when the user dismisses confirmation', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    await renderWithQuote();
+
+    fireEvent.click(cancelButton()!);
+    expect(cancelUsdcQuoteAuth).not.toHaveBeenCalled();
+  });
+
+  it('hides Cancel quote while wallet payment is reserved or confirming', async () => {
+    await renderWithQuote();
+
+    // After pay reserved, cancel must disappear (confirming/reserved block).
+    vi.mocked(payUsdcFromWalletAuth).mockResolvedValue(
+      makeWalletPayResult({
+        accepted: true,
+        reserved: true,
+        phase: 'accepted',
+        paid: false,
+        status: 'pending',
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Pay from wallet/i }));
+    expect(await screen.findByText(/Payment accepted/i)).toBeInTheDocument();
+    expect(cancelButton()).not.toBeInTheDocument();
+  });
+
+  it('hides Cancel quote on continue entry when status is confirming', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        activeAttempt: {
+          paymentAttemptId: 'att_confirming',
+          method: 'usdc',
+          status: 'confirming',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: false,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderPanel();
+    expect(await screen.findByText(/USDC payment confirming/i)).toBeInTheDocument();
+    expect(cancelButton()).not.toBeInTheDocument();
+  });
+
+  it('hides Cancel quote when wallet reservation is active on continue entry', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({
+        walletReservation: {
+          paymentAttemptId: 'att_reserved',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: true,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+        activeAttempt: {
+          paymentAttemptId: 'att_reserved',
+          method: 'usdc',
+          status: 'pending',
+          reviewReason: null,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          walletPaymentReserved: true,
+          chainId: 84532,
+          quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+        },
+      }),
+    );
+
+    renderPanel();
+    expect(await screen.findByText(/Wallet payment reserved/i)).toBeInTheDocument();
+    expect(cancelButton()).not.toBeInTheDocument();
+  });
+
+  it('shows Cancel on clean pending continue entry and cancels without opening a quote first', async () => {
+    vi.mocked(getInvoicePaymentStatusAuth)
+      .mockResolvedValueOnce(
+        makeInvoicePaymentStatus({
+          activeAttempt: {
+            paymentAttemptId: 'att_pending',
+            method: 'usdc',
+            status: 'pending',
+            reviewReason: null,
+            createdAt: '2026-08-01T00:00:00.000Z',
+            walletPaymentReserved: false,
+            chainId: 84532,
+            quoteExpiresAt: '2099-12-31T23:59:59.000Z',
+          },
+        }),
+      )
+      .mockResolvedValue(makeInvoicePaymentStatus());
+
+    const { onChange, getToken } = renderPanel();
+    expect(await screen.findByText(/USDC payment in progress/i)).toBeInTheDocument();
+    expect(cancelButton()).toBeInTheDocument();
+
+    fireEvent.click(cancelButton()!);
+
+    await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(getToken, 'inv_1', 'att_pending');
+    expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalled();
+    // Never auto-quoted.
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+  });
+
+  it('USDC_CANCEL_NOT_ALLOWED shows conflict copy, refreshes status, and does not claim cancel success', async () => {
+    await renderWithQuote();
+
+    vi.mocked(cancelUsdcQuoteAuth).mockRejectedValue(
+      apiError(409, { code: 'USDC_CANCEL_NOT_ALLOWED' }),
+    );
+    vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValue(
+      makeWalletPayResult({
+        reserved: true,
+        accepted: true,
+        phase: 'status',
+        status: 'confirming',
+        paid: false,
+        transactionHash: VALID_TX_HASH,
+      }),
+    );
+
+    fireEvent.click(cancelButton()!);
+
+    expect(
+      await screen.findByText(/can no longer be cancelled/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/USDC quote cancelled/i)).not.toBeInTheDocument();
+    // Status refresh path after 409.
+    await waitFor(() =>
+      expect(getUsdcPaymentStatusAuth).toHaveBeenCalledWith(
+        expect.any(Function),
+        'inv_1',
+        'attempt_1',
+        undefined,
+      ),
+    );
+    expect(await screen.findByText(/Confirming on-chain/i)).toBeInTheDocument();
+    // After confirming, cancel control must not remain misleadingly enabled.
+    expect(cancelButton()).not.toBeInTheDocument();
+  });
+
+  it('prevents duplicate cancel submits while a cancel is in flight', async () => {
+    let resolveCancel: (value: unknown) => void = () => undefined;
+    vi.mocked(cancelUsdcQuoteAuth).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCancel = resolve as (value: unknown) => void;
+        }),
+    );
+
+    await renderWithQuote();
+    fireEvent.click(cancelButton()!);
+
+    // Aria-label stays stable; visible label switches to Canceling… and stays disabled.
+    const loadingBtn = await screen.findByRole('button', {
+      name: /Cancel this unused USDC quote/i,
+    });
+    expect(loadingBtn).toBeDisabled();
+    expect(loadingBtn).toHaveTextContent(/Canceling/i);
+    fireEvent.click(loadingBtn);
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1);
+
+    resolveCancel({
+      invoiceId: 'inv_1',
+      paymentAttemptId: 'attempt_1',
+      status: 'cancelled',
+      cancelledAt: '2026-08-01T12:00:00.000Z',
+      cancelReason: 'user_requested',
+    });
+    expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
   });
 });

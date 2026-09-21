@@ -661,6 +661,8 @@ function friendlyErrorMessage(code: string, fallback: string) {
       return 'Usage debt is open. Only usage-period invoices can be paid from your wallet until that debt is settled.';
     case 'USDC_WALLET_PAYMENT_RESERVED':
       return 'A wallet payment is already reserved for this quote. Check status instead of starting another payment.';
+    case 'USDC_CANCEL_NOT_ALLOWED':
+      return 'This USDC quote can no longer be cancelled. It may already be confirming, reserved, under review, or settled. Refresh payment status before trying anything else.';
     case 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED':
       return 'The payment destination is not on your withdrawal allowlist. Add it on the Wallet page and wait out the cooldown if needed.';
     case 'WITHDRAWAL_ADDRESS_IN_COOLDOWN':
@@ -1342,6 +1344,41 @@ export async function getUsdcPaymentStatusAuth(
     `/v1/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
     getToken,
     { signal },
+  );
+}
+
+/**
+ * BILL-003: safe result of cancelling a clean evidence-free pending USDC quote.
+ * Never includes hashes, receipts, provider ids, or secrets.
+ */
+export interface UsdcCancelResult {
+  invoiceId: string;
+  paymentAttemptId: string;
+  status: 'cancelled';
+  cancelledAt: string;
+  cancelReason: string | null;
+}
+
+/**
+ * POST /v1/billing/invoices/:id/usdc/cancel
+ * Body is paymentAttemptId only. Cancels only clean pending (unreserved,
+ * evidence-free) USDC quotes. Confirming/reserved/evidence/review/terminal
+ * return 409 USDC_CANCEL_NOT_ALLOWED (or related conflicts).
+ */
+export async function cancelUsdcQuoteAuth(
+  getToken: () => Promise<string | null>,
+  invoiceId: string,
+  paymentAttemptId: string,
+  signal?: AbortSignal,
+) {
+  return authFetch<UsdcCancelResult>(
+    `/v1/billing/invoices/${invoiceId}/usdc/cancel`,
+    getToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({ paymentAttemptId }),
+      signal,
+    },
   );
 }
 

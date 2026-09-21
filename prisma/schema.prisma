@@ -52,6 +52,8 @@ enum BillingPaymentAttemptStatus {
   expired
   needs_review
   reorged
+  /// User-initiated cancel of a clean evidence-free pending USDC quote (BILL-003).
+  cancelled
 }
 
 enum StripeWebhookEventStatus {
@@ -931,6 +933,11 @@ model BillingPaymentAttempt {
   updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz()
   succeededAt             DateTime?                  @map("succeeded_at") @db.Timestamptz()
   failedAt                DateTime?                  @map("failed_at") @db.Timestamptz()
+  // BILL-003: user-initiated cancel of a clean evidence-free pending USDC quote.
+  // Distinct from failedAt/failureCode (provider/receipt failures) and from
+  // reviewReason (needs_review evidence conflicts). Only set when status=cancelled.
+  cancelledAt             DateTime?                  @map("cancelled_at") @db.Timestamptz()
+  cancelReason            String?                    @map("cancel_reason") @db.VarChar(80)
   // Set exactly once when this attempt's coverage was counted toward the
   // invoice's allocatedMicros. A second allocation of the same attempt is an
   // idempotent no-op; it is also the durable marker the overage worker uses to

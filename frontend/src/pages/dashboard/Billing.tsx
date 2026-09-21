@@ -23,6 +23,7 @@ import {
   assignBillingPlanAuth,
   cancelBillingPlanAuth,
   cancelBillingPlanUpgradeAuth,
+  cancelUsdcQuoteAuth,
   createBillingCheckoutSessionAuth,
   getApiErrorMessage,
   getBillingInvoicePdfAuth,
@@ -37,6 +38,7 @@ import {
   type BillingPlanResponse,
   type BillingSummary,
   type BillingTierBreakdown,
+  type InvoicePaymentAttemptStatus,
   type InvoicePaymentStatus,
 } from '@/lib/api';
 
@@ -311,6 +313,24 @@ function hasActiveUsdcPayment(status: InvoicePaymentStatus | null | undefined): 
   return isUsdcPaymentMethod(active.method);
 }
 
+/**
+ * BILL-003: only clean pending (unreserved, evidence-free) USDC quotes may show Cancel.
+ * Confirming / reserved / review must never offer a misleading cancel control.
+ */
+function isCancellableCleanPendingUsdc(
+  attempt: InvoicePaymentAttemptStatus | null | undefined,
+  status?: InvoicePaymentStatus | null,
+): boolean {
+  if (!attempt) return false;
+  if (status?.paid) return false;
+  if (status?.hasUnresolvedReview) return false;
+  if (status?.walletReservation) return false;
+  if (!isUsdcPaymentMethod(attempt.method)) return false;
+  if (attempt.status !== 'pending') return false;
+  if (attempt.walletPaymentReserved === true) return false;
+  return true;
+}
+
 function formatQuoteExpiryShort(value: string | null | undefined): string | null {
   if (!value) return null;
   const date = new Date(value);
@@ -479,6 +499,14 @@ export default function BillingPage() {
   );
   const paymentStatusAbortRef = useRef<AbortController | null>(null);
   const paymentStatusGenerationRef = useRef(0);
+
+  /** BILL-003: cancel clean pending USDC quote from the invoice list. */
+  const [usdcCancelLoadingId, setUsdcCancelLoadingId] = useState<string | null>(null);
+  const [usdcCancelNotice, setUsdcCancelNotice] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const usdcCancelInFlightRef = useRef(false);
 
   const [planChangeSelectedId, setPlanChangeSelectedId] = useState<string | null>(null);
   const [planChangeLoading, setPlanChangeLoading] = useState(false);
@@ -1208,6 +1236,109 @@ export default function BillingPage() {
     [getToken, paymentStatusByInvoiceId],
   );
 
+  /**
+   * BILL-003: cancel a clean pending USDC quote from the invoice list.
+   * Only enabled for unreserved pending; 409 refreshes status without inventing success.
+   */
+  const handleCancelUsdcQuote = useCallback(
+    async (invoice: BillingInvoice) => {
+      if (usdcCancelInFlightRef.current || usdcCancelLoadingId) return;
+      const payStatus = paymentStatusByInvoiceId[invoice.id];
+      const attempt =
+        payStatus?.activeAttempt && isUsdcPaymentMethod(payStatus.activeAttempt.method)
+          ? payStatus.activeAttempt
+          : null;
+      if (!isCancellableCleanPendingUsdc(attempt, payStatus) || !attempt) {
+        setUsdcCancelNotice({
+          type: 'error',
+          message:
+            'This USDC quote can no longer be cancelled. Refresh billing and check payment status before trying again.',
+        });
+        return;
+      }
+
+      const confirmed = window.confirm(
+        'Cancel this unused USDC quote? You can request a new quote or pay with card afterward. Cancel is refused once a wallet payment is reserved or evidence is submitted.',
+      );
+      if (!confirmed) return;
+
+      usdcCancelInFlightRef.current = true;
+      setUsdcCancelLoadingId(invoice.id);
+      setUsdcCancelNotice(null);
+      setCheckoutError(null);
+
+      try {
+        const result = await cancelUsdcQuoteAuth(
+          getToken,
+          invoice.id,
+          attempt.paymentAttemptId,
+        );
+        if (!isMountedRef.current) return;
+
+        setUsdcCancelNotice({
+          type: 'success',
+          message:
+            result.status === 'cancelled'
+              ? 'USDC quote cancelled. You can request a new quote or pay with card.'
+              : 'USDC quote cancelled.',
+        });
+        // Refresh invoices + payment statuses so card unlocks when the rail is gone.
+        await refreshInvoicesSilently();
+        if (isMountedRef.current) {
+          void loadPaymentStatusesForInvoices(invoicesRef.current);
+        }
+      } catch (err: unknown) {
+        if (!isMountedRef.current) return;
+
+        if (
+          isApiError(err) &&
+          err.statusCode === 409 &&
+          hasApiErrorCode(
+            err,
+            'USDC_CANCEL_NOT_ALLOWED',
+            'USDC_WALLET_PAYMENT_RESERVED',
+            'USDC_PAYMENT_IN_PROGRESS',
+            'USDC_INVALID_ATTEMPT',
+            'USDC_INVOICE_NOT_PAYABLE',
+          )
+        ) {
+          setUsdcCancelNotice({
+            type: 'error',
+            message:
+              getApiErrorMessage(err) ||
+              'This USDC quote can no longer be cancelled. Payment status was refreshed — do not assume cancel succeeded.',
+          });
+          await refreshInvoicesSilently();
+          if (isMountedRef.current) {
+            void loadPaymentStatusesForInvoices(invoicesRef.current);
+          }
+          return;
+        }
+
+        setUsdcCancelNotice({
+          type: 'error',
+          message:
+            getApiErrorMessage(err) ||
+            'Could not cancel this USDC quote. Refresh billing and try again.',
+        });
+        await refreshInvoicesSilently();
+        if (isMountedRef.current) {
+          void loadPaymentStatusesForInvoices(invoicesRef.current);
+        }
+      } finally {
+        usdcCancelInFlightRef.current = false;
+        if (isMountedRef.current) setUsdcCancelLoadingId(null);
+      }
+    },
+    [
+      getToken,
+      loadPaymentStatusesForInvoices,
+      paymentStatusByInvoiceId,
+      refreshInvoicesSilently,
+      usdcCancelLoadingId,
+    ],
+  );
+
   const handleDownloadPdf = useCallback(
     async (invoice: BillingInvoice) => {
       if (pdfLoadingId === invoice.id) return;
@@ -1550,6 +1681,37 @@ export default function BillingPage() {
             type="button"
             onClick={() => setCheckoutError(null)}
             className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {usdcCancelNotice && (
+        <div
+          role={usdcCancelNotice.type === 'error' ? 'alert' : 'status'}
+          className={`flex flex-col gap-3 rounded-xl border p-4 text-sm font-medium shadow-sm sm:flex-row sm:items-center sm:justify-between ${
+            usdcCancelNotice.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : 'border-amber-200 bg-amber-50 text-amber-950'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {usdcCancelNotice.type === 'success' ? (
+              <Check className="h-5 w-5 shrink-0 text-green-600" aria-hidden="true" />
+            ) : (
+              <AlertCircle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+            )}
+            <span>{usdcCancelNotice.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUsdcCancelNotice(null)}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-full border bg-white px-4 py-1.5 text-xs font-semibold transition-all ${
+              usdcCancelNotice.type === 'success'
+                ? 'border-green-200 text-green-800 hover:bg-green-100'
+                : 'border-amber-300 text-amber-950 hover:bg-amber-100'
+            }`}
           >
             Dismiss
           </button>
@@ -2222,6 +2384,8 @@ export default function BillingPage() {
                     isUsdcPaymentMethod(payStatus.activeAttempt.method)
                       ? payStatus.activeAttempt
                       : null);
+                  const canCancelUsdcQuote = isCancellableCleanPendingUsdc(activeUsdc, payStatus);
+                  const isCancelingUsdc = usdcCancelLoadingId === invoice.id;
                   const quoteExpiryLabel = formatQuoteExpiryShort(
                     activeUsdc?.quoteExpiresAt ?? null,
                   );
@@ -2423,22 +2587,45 @@ export default function BillingPage() {
                                   <p className="font-semibold">
                                     {activeUsdc?.walletPaymentReserved
                                       ? 'Wallet payment reserved — do not switch to card'
-                                      : 'USDC payment in progress — finish or wait for expiry'}
+                                      : activeUsdc?.status === 'confirming'
+                                        ? 'USDC confirming — do not cancel or switch to card'
+                                        : canCancelUsdcQuote
+                                          ? 'Unused USDC quote — continue, cancel, or wait for expiry'
+                                          : 'USDC payment in progress — finish or wait for expiry'}
                                   </p>
                                   {quoteExpiryLabel && (
                                     <p>Quote expires: {quoteExpiryLabel}</p>
                                   )}
                                   <p>
-                                    Close USDC only hides this panel; the server quote stays active
-                                    until it expires or settles.
+                                    {canCancelUsdcQuote
+                                      ? 'Cancel quote frees this invoice for a new USDC quote or card payment. Cancel is refused once a wallet payment is reserved or evidence is submitted.'
+                                      : 'Close USDC only hides this panel; the server quote stays active until it expires or settles. Cancel is not available while confirming, reserved, or under review.'}
                                   </p>
-                                  <button
-                                    type="button"
-                                    onClick={() => setUsdcPanelInvoiceId(invoice.id)}
-                                    className="mt-1 inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline"
-                                  >
-                                    Continue USDC payment <ArrowRight className="h-3 w-3" />
-                                  </button>
+                                  <div className="mt-1 flex flex-wrap items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => setUsdcPanelInvoiceId(invoice.id)}
+                                      className="inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline"
+                                    >
+                                      Continue USDC payment <ArrowRight className="h-3 w-3" />
+                                    </button>
+                                    {canCancelUsdcQuote && (
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleCancelUsdcQuote(invoice)}
+                                        disabled={isCancelingUsdc || payStatusLoading}
+                                        aria-label={`Cancel unused USDC quote for ${formatPeriodLabel(invoice.period)}`}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        {isCancelingUsdc ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                                        ) : (
+                                          <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                                        )}
+                                        {isCancelingUsdc ? 'Canceling…' : 'Cancel quote'}
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>

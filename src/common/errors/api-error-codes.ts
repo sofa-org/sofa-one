@@ -22,6 +22,12 @@ export const API_ERROR_CODES = {
   USDC_WALLET_USAGE_DEBT_ONLY: 'USDC_WALLET_USAGE_DEBT_ONLY',
   /** Wallet-payment reservation already bound; cannot release/replace. */
   USDC_WALLET_PAYMENT_RESERVED: 'USDC_WALLET_PAYMENT_RESERVED',
+  /**
+   * BILL-003: user cancel refused — attempt is not a clean evidence-free
+   * pending USDC quote (confirming, reserved, evidence-bearing, or already
+   * terminal non-cancelled). Fail closed; never rewrite evidence.
+   */
+  USDC_CANCEL_NOT_ALLOWED: 'USDC_CANCEL_NOT_ALLOWED',
   BILLING_OUTBOUND_BLOCKED: 'BILLING_OUTBOUND_BLOCKED',
   BILLING_ASSET_FLOW_UNVERIFIABLE: 'BILLING_ASSET_FLOW_UNVERIFIABLE',
   BILLING_DEBT_CHECK_UNAVAILABLE: 'BILLING_DEBT_CHECK_UNAVAILABLE',
@@ -32,6 +38,11 @@ export const API_ERROR_CODES = {
   WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE: 'WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE',
   /** Destination protection on; batch is not fully proven direct egress. */
   UNPROVEN_ASSET_OUTFLOW_BLOCKED: 'UNPROVEN_ASSET_OUTFLOW_BLOCKED',
+  /**
+   * Destination protection on (`requireAddressAllowlist === true`);
+   * API-key message/typed_data signing is fail-closed for all execution modes.
+   */
+  SIGNING_BLOCKED_BY_DESTINATION_PROTECTION: 'SIGNING_BLOCKED_BY_DESTINATION_PROTECTION',
   AGENT_REGISTRATION_PENDING: 'AGENT_REGISTRATION_PENDING',
   PAYMASTER_POLICY_NOT_CONFIGURED: 'PAYMASTER_POLICY_NOT_CONFIGURED',
   USER_OPERATION_GAS_PRICE_UNAVAILABLE: 'USER_OPERATION_GAS_PRICE_UNAVAILABLE',
@@ -106,6 +117,12 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   }
   if (normalized.includes('unproven asset outflow')) {
     return API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED;
+  }
+  if (
+    normalized.includes('signing is not allowed while destination protection') ||
+    normalized.includes('blocked by destination protection')
+  ) {
+    return API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION;
   }
   if (statusCode === HttpStatus.UNAUTHORIZED) return API_ERROR_CODES.UNAUTHORIZED;
   if (statusCode === HttpStatus.NOT_FOUND) return API_ERROR_CODES.NOT_FOUND;

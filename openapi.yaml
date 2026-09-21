@@ -100,6 +100,10 @@ paths:
         |------|------|----------|
         | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
         | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData`；如同时传 `chainId` 必须一致 |
+
+        当用户启用提现地址保护（`WithdrawalPolicy.requireAddressAllowlist=true`）时，本端点对所有 `message`/`typed_data` 与 `session_key`/`eoa` 组合 fail-closed 拒绝（`SIGNING_BLOCKED_BY_DESTINATION_PROTECTION`）。
+        空 allowlist、已放行合约、冷却中地址或 reauth 状态均不能绕过。策略查询失败返回 503。
+        启用保护前已受理并进入 Openfort 的签名不在撤销范围内。
       operationId: signData
       requestBody:
         required: true
@@ -150,6 +154,36 @@ paths:
           $ref: '#/components/responses/NotFound'
         '400':
           $ref: '#/components/responses/ValidationError'
+        '403':
+          description: |
+            提现地址保护已启用时拒绝 API-key 离线签名，或其它策略拒绝。
+            稳定码 `SIGNING_BLOCKED_BY_DESTINATION_PROTECTION`：`requireAddressAllowlist=true` 时对 message/typed_data × session_key/eoa 一律拒绝（无 SigningRequest、无 Openfort signData）。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 403
+                code: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION
+                message: "API-key signing is not allowed while destination protection is enabled"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/wallets/sign"
+        '503':
+          description: |
+            无法安全读取提现地址保护策略，因此拒绝签名（fail closed）。
+            稳定码 `WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE`。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 503
+                code: WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE
+                message: "Withdrawal destination policy is temporarily unavailable"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/wallets/sign"
 
   # ──────────────────────────── Transactions ────────────────────────────
   /v1/transactions/send:

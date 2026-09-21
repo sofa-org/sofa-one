@@ -62,6 +62,20 @@ const RELEASABLE_PENDING_WHERE = {
   payerAddress: null,
 };
 
+/**
+ * BILL-003: CAS predicates for user-initiated cancel of a clean pending USDC
+ * quote (extends RELEASABLE_PENDING_WHERE). `receiptEvidence` is gated via
+ * `hasPaymentEvidence` before CAS and via Prisma `DbNull` in the updateMany
+ * where clause — Json nullable columns cannot use bare `null` in WHERE.
+ * Never cancels reserved or evidence-bearing rows.
+ */
+const CANCELLABLE_PENDING_WHERE = {
+  ...RELEASABLE_PENDING_WHERE,
+};
+
+/** Durable cancel reason for user-initiated clean pending cancel (BILL-003). */
+const USER_CANCEL_REASON = 'user_requested' as const;
+
 /** A transaction hash is exactly 32 bytes (64 hex chars) after the 0x prefix. */
 const TX_HASH_REGEX = /^0x[0-9a-fA-F]{64}$/;
 
@@ -111,7 +125,8 @@ export type UsdcClaimStatus =
   | 'succeeded' // settled (invoice paid by this attempt)
   | 'expired' // quote expired — re-quote to retry
   | 'needs_review' // mismatch/manual review — never auto-settled
-  | 'failed'; // reverted receipt — re-quote to retry
+  | 'failed' // reverted receipt — re-quote to retry
+  | 'cancelled'; // BILL-003 user-cancelled clean pending quote
 
 /** JSON-safe USDC claim result (no BigInt, no logs/calldata/secrets). */
 export interface UsdcClaimResult {
@@ -128,6 +143,18 @@ export interface UsdcClaimResult {
   blockTimestamp: string | null;
   reviewReason: string | null;
   retryable: boolean;
+}
+
+/**
+ * BILL-003: JSON-safe user-cancel result. Never includes tx hash, receipt,
+ * block evidence, provider identity, RPC URLs, or secrets.
+ */
+export interface UsdcCancelResult {
+  invoiceId: string;
+  paymentAttemptId: string;
+  status: 'cancelled';
+  cancelledAt: string;
+  cancelReason: string | null;
 }
 
 /** A strictly decoded canonical USDC Transfer log. */
@@ -244,6 +271,144 @@ export class UsdcPaymentService {
     });
     await this.auditClaim(userId, invoiceId, result);
     return result;
+  }
+
+  /**
+   * BILL-003: user-initiated cancel of a clean evidence-free pending USDC quote.
+   *
+   * Allowed only when the attempt is owned by the invoice, method=usdc,
+   * status=pending, walletPaymentReserved=false, and fully evidence-free
+   * (no submitted hash, transfer evidence, or receipt payload). Confirming,
+   * reserved, evidence-bearing, unknown/inconsistent, and other terminal
+   * states fail closed without rewriting evidence. Already-cancelled is
+   * idempotent. No RPC/provider/broadcast calls.
+   *
+   * Lock order (compatible with quote/claim/wallet-pay/plan-cancel):
+   * billing-period advisory → payment attempt FOR UPDATE → invoice FOR UPDATE,
+   * then a pending-only evidence-free CAS to `cancelled`.
+   */
+  async cancel(
+    userId: string,
+    invoiceId: string,
+    paymentAttemptId: string,
+  ): Promise<UsdcCancelResult> {
+    this.assertEnabled();
+    const invoice = await this.loadOwnedInvoice(userId, invoiceId);
+
+    return this.prisma.$transaction(async (tx: Tx) => {
+      await acquireBillingPeriodAdvisoryLock(tx, invoice.billingAccountId, invoice.periodStart);
+
+      // period → attempt → invoice (same order as settle / wallet-pay).
+      const lockedAttempt = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "billing_payment_attempts"
+        WHERE "id" = ${paymentAttemptId}::uuid
+        FOR UPDATE`;
+      if (lockedAttempt.length === 0) {
+        throw new NotFoundException('Payment attempt not found');
+      }
+      const lockedInvoice = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "billing_invoices"
+        WHERE "id" = ${invoice.id}::uuid
+        FOR UPDATE`;
+      if (lockedInvoice.length === 0) {
+        throw new NotFoundException('Invoice not found');
+      }
+
+      const attempt = await tx.billingPaymentAttempt.findUnique({
+        where: { id: paymentAttemptId },
+      });
+      if (!attempt || attempt.invoiceId !== invoice.id) {
+        throw new NotFoundException('Payment attempt not found');
+      }
+
+      // Idempotent replay: already cancelled → safe DTO, no further writes.
+      if (attempt.status === 'cancelled') {
+        return this.toCancelResult(invoice, attempt);
+      }
+
+      if (attempt.method !== 'usdc') {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+          message: 'Payment attempt is not a USDC payment',
+        });
+      }
+
+      // Active reservation: never cancel or clear binding (fail closed).
+      if (attempt.walletPaymentReserved === true) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED,
+          message: 'Cannot cancel a wallet payment reservation',
+        });
+      }
+
+      // Confirming / any on-chain or hash evidence: never release or rewrite.
+      if (attempt.status === 'confirming' || this.hasPaymentEvidence(attempt)) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED,
+          message:
+            attempt.status === 'confirming'
+              ? 'Cannot cancel a confirming USDC payment'
+              : 'Cannot cancel a USDC payment that has submitted evidence',
+        });
+      }
+
+      // Only clean pending may cancel; other terminals return stable conflict.
+      if (attempt.status !== 'pending') {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED,
+          message: `Cannot cancel a USDC payment in status ${attempt.status}`,
+        });
+      }
+
+      // Inconsistent markers on a still-pending row (settlement/success stamps).
+      if (attempt.allocatedAt != null || attempt.succeededAt != null) {
+        throw new ConflictException({
+          code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED,
+          message: 'Cannot cancel a USDC payment with inconsistent settlement markers',
+        });
+      }
+
+      const now = new Date();
+      const cas = await tx.billingPaymentAttempt.updateMany({
+        where: {
+          id: attempt.id,
+          invoiceId: invoice.id,
+          method: 'usdc',
+          ...CANCELLABLE_PENDING_WHERE,
+          allocatedAt: null,
+          succeededAt: null,
+          // Json nullable: bare null is not a valid filter; DbNull matches SQL NULL.
+          receiptEvidence: { equals: Prisma.DbNull },
+        },
+        data: {
+          status: 'cancelled',
+          cancelledAt: now,
+          cancelReason: USER_CANCEL_REASON,
+        },
+      });
+
+      if (cas.count === 1) {
+        return this.toCancelResult(invoice, {
+          ...attempt,
+          status: 'cancelled',
+          cancelledAt: now,
+          cancelReason: USER_CANCEL_REASON,
+        });
+      }
+
+      // Race: concurrent claim/reservation/cancel won the CAS. Re-read and
+      // return idempotent cancel or fail closed — never invent a success.
+      const latest = await tx.billingPaymentAttempt.findUnique({
+        where: { id: attempt.id },
+      });
+      if (latest && latest.invoiceId === invoice.id && latest.status === 'cancelled') {
+        return this.toCancelResult(invoice, latest);
+      }
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED,
+        message: 'USDC payment could not be cancelled; retry or complete payment first',
+      });
+    });
   }
 
   /**
@@ -633,6 +798,10 @@ export class UsdcPaymentService {
     if (attempt.status === 'expired') {
       return this.toClaimResult(invoice, attempt, { status: 'expired', retryable: true });
     }
+    if (attempt.status === 'cancelled') {
+      // BILL-003: user-cancelled clean pending — never resume claim/RPC.
+      return this.toClaimResult(invoice, attempt, { status: 'cancelled', retryable: false });
+    }
     if (attempt.status === 'needs_review') {
       // B2: wallet_server may reopen recoverable reservation-review reasons when
       // a matching server-bound hash is claimed for real receipt settlement.
@@ -976,7 +1145,8 @@ export class UsdcPaymentService {
         if (
           current.status === 'needs_review' ||
           current.status === 'expired' ||
-          current.status === 'failed'
+          current.status === 'failed' ||
+          current.status === 'cancelled'
         ) {
           return {
             kind: 'terminal',
@@ -1866,6 +2036,8 @@ export class UsdcPaymentService {
         return this.toClaimResult(invoice, attempt, { status: 'expired', retryable: true });
       case 'failed':
         return this.toClaimResult(invoice, attempt, { status: 'failed', retryable: true });
+      case 'cancelled':
+        return this.toClaimResult(invoice, attempt, { status: 'cancelled', retryable: false });
       case 'needs_review':
         return this.toClaimResult(invoice, attempt, { status: 'needs_review' });
       case 'confirming':
@@ -2518,6 +2690,20 @@ export class UsdcPaymentService {
       currency: 'USD',
       quoteExpiresAt: attempt.quoteExpiresAt!.toISOString(),
       requiredConfirmations: attempt.requiredConfirmations!,
+    };
+  }
+
+  /**
+   * BILL-003 safe cancel DTO — identifiers + cancel markers only. Never hash,
+   * receipt, block, provider, RPC, or secret fields.
+   */
+  private toCancelResult(invoice: InvoiceRow, attempt: PaymentAttemptRow): UsdcCancelResult {
+    return {
+      invoiceId: invoice.id,
+      paymentAttemptId: attempt.id,
+      status: 'cancelled',
+      cancelledAt: (attempt.cancelledAt ?? new Date()).toISOString(),
+      cancelReason: attempt.cancelReason ?? USER_CANCEL_REASON,
     };
   }
 

@@ -126,6 +126,9 @@ function usdcAttempt(overrides: Record<string, unknown> = {}) {
     updatedAt: new Date('2026-06-01T00:00:00.000Z'),
     succeededAt: null,
     failedAt: null,
+    cancelledAt: null,
+    cancelReason: null,
+    allocatedAt: null,
     ...overrides,
   };
 }
@@ -198,6 +201,7 @@ describe('UsdcPaymentService', () => {
   const transactionFindUnique = jest.fn();
   const txQueryRaw = jest.fn();
   const txAttemptUpdate = jest.fn();
+  const txAttemptUpdateMany = jest.fn();
   const txAttemptFindUnique = jest.fn();
   const txInvoiceFindUnique = jest.fn();
   const settleInvoice = jest.fn();
@@ -221,6 +225,11 @@ describe('UsdcPaymentService', () => {
     blockNumber: null,
     blockHash: null,
     payerAddress: null,
+  };
+
+  /** BILL-003: cancellable pending CAS predicates (receiptEvidence uses DbNull). */
+  const cancellablePendingWhere = {
+    ...releasablePendingWhere,
   };
 
   /**
@@ -263,6 +272,7 @@ describe('UsdcPaymentService', () => {
     $executeRaw: txExecuteRaw,
     billingPaymentAttempt: {
       update: txAttemptUpdate,
+      updateMany: txAttemptUpdateMany,
       findUnique: txAttemptFindUnique,
       // Quote create path inserts under the invoice lock via the TX client.
       create: attemptCreate,
@@ -310,6 +320,7 @@ describe('UsdcPaymentService', () => {
     });
     txAttemptFindUnique.mockResolvedValue(usdcAttempt());
     attemptUpdateMany.mockResolvedValue({ count: 1 });
+    txAttemptUpdateMany.mockResolvedValue({ count: 1 });
     // The claim path re-reads the invoice under the row lock to reject stale
     // quotes whose persisted amount exceeds the current remaining balance.
     txInvoiceFindUnique.mockResolvedValue(invoice({ settlementAttemptId: null }));
@@ -3215,6 +3226,305 @@ describe('UsdcPaymentService', () => {
         ((unavailable as ServiceUnavailableException).getResponse() as Record<string, unknown>)
           .code,
       ).toBeUndefined();
+    });
+  });
+
+  // ── BILL-003 user cancel ────────────────────────────────────────────────────
+
+  describe('cancel (BILL-003)', () => {
+    function setupOwnedInvoiceAndAttempt(
+      attemptOverrides: Record<string, unknown> = {},
+      invoiceOverrides: Record<string, unknown> = {},
+    ) {
+      const att = usdcAttempt(attemptOverrides);
+      const inv = invoice(invoiceOverrides);
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(inv);
+      txAttemptFindUnique.mockResolvedValue(att);
+      txQueryRaw.mockImplementation((strings: TemplateStringsArray) => {
+        const sql = strings.join('');
+        if (sql.includes('billing_payment_attempts')) {
+          return Promise.resolve([{ id: att.id }]);
+        }
+        if (sql.includes('billing_invoices')) {
+          return Promise.resolve([{ id: inv.id }]);
+        }
+        return Promise.resolve([]);
+      });
+      return { att, inv };
+    }
+
+    it('fails closed with 503 when USDC billing is disabled', async () => {
+      configGet.mockImplementation((key: string) =>
+        key === 'billing.usdc.enabled' ? false : undefined,
+      );
+      await expect(service.cancel('user-1', 'inv-1', 'att-usdc')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when the invoice is not owned', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(null);
+      await expect(service.cancel('user-1', 'inv-other', 'att-usdc')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when the attempt is missing under lock', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      invoiceFindFirst.mockResolvedValue(invoice());
+      txQueryRaw.mockResolvedValue([]);
+      await expect(service.cancel('user-1', 'inv-1', 'att-missing')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when the attempt belongs to another invoice', async () => {
+      setupOwnedInvoiceAndAttempt({ invoiceId: 'inv-other' });
+      await expect(service.cancel('user-1', 'inv-1', 'att-usdc')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('cancels a clean evidence-free pending USDC quote (CAS + safe DTO)', async () => {
+      const { att } = setupOwnedInvoiceAndAttempt();
+      txAttemptUpdateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.cancel('user-1', 'inv-1', att.id);
+
+      expect(result).toEqual({
+        invoiceId: 'inv-1',
+        paymentAttemptId: att.id,
+        status: 'cancelled',
+        cancelledAt: expect.any(String),
+        cancelReason: 'user_requested',
+      });
+      // No hash/receipt/provider/RPC fields on the safe DTO.
+      expect(result).not.toHaveProperty('txHash');
+      expect(result).not.toHaveProperty('submittedTxHash');
+      expect(result).not.toHaveProperty('blockHash');
+      expect(result).not.toHaveProperty('receiptEvidence');
+      expect(result).not.toHaveProperty('providerIdentity');
+      expect(txAttemptUpdateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          id: att.id,
+          invoiceId: 'inv-1',
+          method: 'usdc',
+          ...cancellablePendingWhere,
+          allocatedAt: null,
+          succeededAt: null,
+          receiptEvidence: { equals: Prisma.DbNull },
+        }),
+        data: expect.objectContaining({
+          status: 'cancelled',
+          cancelReason: 'user_requested',
+          cancelledAt: expect.any(Date),
+        }),
+      });
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(getBlockNumber).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent when the attempt is already cancelled', async () => {
+      const cancelledAt = new Date('2026-06-02T12:00:00.000Z');
+      setupOwnedInvoiceAndAttempt({
+        status: 'cancelled',
+        cancelledAt,
+        cancelReason: 'user_requested',
+      });
+
+      const result = await service.cancel('user-1', 'inv-1', 'att-usdc');
+
+      expect(result).toEqual({
+        invoiceId: 'inv-1',
+        paymentAttemptId: 'att-usdc',
+        status: 'cancelled',
+        cancelledAt: cancelledAt.toISOString(),
+        cancelReason: 'user_requested',
+      });
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('rejects confirming attempts without mutating evidence', async () => {
+      setupOwnedInvoiceAndAttempt({
+        status: 'confirming',
+        txHash: TX_HASH,
+        submittedTxHash: TX_HASH,
+        blockNumber: 100n,
+        blockHash: BLOCK_HASH,
+      });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('rejects wallet-payment reserved attempts', async () => {
+      setupOwnedInvoiceAndAttempt({ walletPaymentReserved: true });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_WALLET_PAYMENT_RESERVED }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects pending attempts that already have a submitted hash', async () => {
+      setupOwnedInvoiceAndAttempt({ submittedTxHash: TX_HASH });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('rejects pending attempts with any payment evidence', async () => {
+      setupOwnedInvoiceAndAttempt({
+        blockNumber: 100n,
+        blockHash: BLOCK_HASH,
+        payerAddress: PAYER,
+      });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects non-USDC attempts', async () => {
+      setupOwnedInvoiceAndAttempt({ method: 'stripe' });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_INVALID_ATTEMPT }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('returns stable conflict for already-succeeded attempts', async () => {
+      setupOwnedInvoiceAndAttempt({ status: 'succeeded', succeededAt: new Date() });
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+      );
+      expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('returns stable conflict for expired/failed terminal attempts', async () => {
+      for (const status of ['expired', 'failed', 'needs_review', 'reorged'] as const) {
+        jest.clearAllMocks();
+        prisma.$transaction.mockImplementation(async (fn: (t: typeof tx) => Promise<unknown>) =>
+          fn(tx),
+        );
+        txExecuteRaw.mockResolvedValue(undefined);
+        setupOwnedInvoiceAndAttempt({ status });
+
+        const err = await captureError(() => service.cancel('user-1', 'inv-1', 'att-usdc'));
+        expect(err).toBeInstanceOf(ConflictException);
+        expect((err as ConflictException).getResponse()).toEqual(
+          expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+        );
+        expect(txAttemptUpdateMany).not.toHaveBeenCalled();
+      }
+    });
+
+    it('CAS race: concurrent claim wins → fail closed, no provider/settlement side effects', async () => {
+      const { att } = setupOwnedInvoiceAndAttempt();
+      // First CAS loses (claim attached hash concurrently); re-read shows pending+hash.
+      txAttemptUpdateMany.mockResolvedValue({ count: 0 });
+      txAttemptFindUnique
+        .mockResolvedValueOnce(att)
+        .mockResolvedValueOnce(usdcAttempt({ submittedTxHash: TX_HASH, status: 'pending' }));
+
+      const err = await captureError(() => service.cancel('user-1', 'inv-1', att.id));
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toEqual(
+        expect.objectContaining({ code: API_ERROR_CODES.USDC_CANCEL_NOT_ALLOWED }),
+      );
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(getBlockNumber).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('CAS race: concurrent cancel wins → idempotent cancelled result', async () => {
+      const { att } = setupOwnedInvoiceAndAttempt();
+      const cancelledAt = new Date('2026-06-02T15:00:00.000Z');
+      txAttemptUpdateMany.mockResolvedValue({ count: 0 });
+      txAttemptFindUnique
+        .mockResolvedValueOnce(att)
+        .mockResolvedValueOnce(
+          usdcAttempt({
+            status: 'cancelled',
+            cancelledAt,
+            cancelReason: 'user_requested',
+          }),
+        );
+
+      const result = await service.cancel('user-1', 'inv-1', att.id);
+      expect(result).toEqual({
+        invoiceId: 'inv-1',
+        paymentAttemptId: att.id,
+        status: 'cancelled',
+        cancelledAt: cancelledAt.toISOString(),
+        cancelReason: 'user_requested',
+      });
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+    });
+
+    it('uses period → attempt → invoice lock order (no provider under the lock)', async () => {
+      const { att } = setupOwnedInvoiceAndAttempt();
+      txAttemptUpdateMany.mockResolvedValue({ count: 1 });
+      const order: string[] = [];
+      txExecuteRaw.mockImplementation(async () => {
+        order.push('period');
+      });
+      txQueryRaw.mockImplementation((strings: TemplateStringsArray) => {
+        const sql = strings.join('');
+        if (sql.includes('billing_payment_attempts')) {
+          order.push('attempt');
+          return Promise.resolve([{ id: att.id }]);
+        }
+        if (sql.includes('billing_invoices')) {
+          order.push('invoice');
+          return Promise.resolve([{ id: 'inv-1' }]);
+        }
+        return Promise.resolve([]);
+      });
+      txAttemptUpdateMany.mockImplementation(async () => {
+        order.push('cas');
+        return { count: 1 };
+      });
+
+      await service.cancel('user-1', 'inv-1', att.id);
+      expect(order).toEqual(['period', 'attempt', 'invoice', 'cas']);
+      expect(getTransactionReceipt).not.toHaveBeenCalled();
     });
   });
 });

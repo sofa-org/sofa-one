@@ -37,8 +37,39 @@ import { isDeferredDestinationPolicyDenial } from '../withdrawal-destination/wit
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SecurityEventService } from '../security-events/security-event.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
+
+/** Fixed public reason for BILL-016 sign blocks (no payload fields). */
+const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
+  'API-key signing is not allowed while destination protection is enabled';
+
+type SigningDestinationProtectionAudit = {
+  userId: string;
+  apiKeyId?: string;
+  apiKeyPrefix?: string;
+  walletId?: string;
+  chainId: number;
+  type: string;
+  executionMode: ExecutionMode;
+};
+
+/**
+ * Thrown inside the interactive create TX so advisory lock is released before
+ * SecurityEvent write. Caller audits once after rollback, then rethrows HTTP.
+ */
+class DeferredSigningDestinationProtectionDenial extends Error {
+  readonly httpException: ForbiddenException;
+  readonly audit: SigningDestinationProtectionAudit;
+
+  constructor(httpException: ForbiddenException, audit: SigningDestinationProtectionAudit) {
+    super('DeferredSigningDestinationProtectionDenial');
+    this.name = 'DeferredSigningDestinationProtectionDenial';
+    this.httpException = httpException;
+    this.audit = audit;
+  }
+}
 
 const ERC20_BALANCE_ABI = [
   {
@@ -82,6 +113,13 @@ export class WalletService {
     private readonly riskEvaluation?: RiskEvaluationService,
     @Optional()
     private readonly sessionKeyPolicy?: SessionKeyPolicyService,
+    /**
+     * Audit only for destination-protection sign denials. Optional so missing
+     * wiring never blocks the 403/503 fail-closed path; never used to gate the
+     * protection check itself.
+     */
+    @Optional()
+    private readonly securityEvents?: SecurityEventService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -151,6 +189,23 @@ export class WalletService {
       allowedContracts: apiKeyRecord.allowedContracts,
       allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
     };
+
+    // BILL-016 root preflight: after API-key permission, before EOA / SigningPolicy /
+    // risk / session-key / Openfort. requireAddressAllowlist === true → fail closed
+    // for all message/typed_data × session_key/eoa. Empty allowlist / allowlisted
+    // contracts / cooldown / reauth cannot bypass. Query failures → 503.
+    // Does not revoke signatures already accepted before protection was enabled.
+    const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
+    if (destinationProtectionEnabled) {
+      await this.throwSigningBlockedByDestinationProtection({
+        userId,
+        apiKeyId: apiKeyRecord.id,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        chainId,
+        type: params.type,
+        executionMode,
+      });
+    }
 
     if (executionMode === 'eoa') {
       this.assertPermission(
@@ -252,27 +307,61 @@ export class WalletService {
       }
     }
 
-    const signingRequest = await this.prisma.signingRequest.create({
-      data: {
-        userId,
-        apiKeyId: apiKeyRecord?.id,
-        authMethod: 'api_key',
-        apiKeyPrefix: apiKeyRecord?.keyPrefix,
-        apiKeyName: apiKeyRecord?.name,
-        type: params.type,
-        chainId: chainId === undefined ? undefined : BigInt(chainId),
-        walletAddress: signingWalletAddress,
-        requestHash: hashRequest({
-          type: params.type,
-          chainId,
-          digest: data,
-          executionMode,
-          ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
-        }),
-        digest: data,
-        status: 'submitting',
-      },
-    });
+    // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
+    // policy mutations. Final requireAddressAllowlist read + SigningRequest.create
+    // share one interactive TX (READ COMMITTED). Openfort/RPC stay outside lock/TX.
+    // Race: entry false → final true rejects with zero create/signData (mutation
+    // committed first wins). Sign already accepted before enablement is out of scope.
+    const signingBlockedAudit: SigningDestinationProtectionAudit = {
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      walletId: wallet.id,
+      chainId,
+      type: params.type,
+      executionMode,
+    };
+    let signingRequest: { id: string };
+    try {
+      signingRequest = await this.prisma.$transaction(async (txClient) => {
+        await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
+        if (protectionOn) {
+          throw new DeferredSigningDestinationProtectionDenial(
+            this.buildSigningBlockedException(),
+            signingBlockedAudit,
+          );
+        }
+        return txClient.signingRequest.create({
+          data: {
+            userId,
+            apiKeyId: apiKeyRecord?.id,
+            authMethod: 'api_key',
+            apiKeyPrefix: apiKeyRecord?.keyPrefix,
+            apiKeyName: apiKeyRecord?.name,
+            type: params.type,
+            chainId: BigInt(chainId),
+            walletAddress: signingWalletAddress,
+            requestHash: hashRequest({
+              type: params.type,
+              chainId,
+              digest: data,
+              executionMode,
+              ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
+            }),
+            digest: data,
+            status: 'submitting',
+          },
+        });
+      });
+    } catch (error) {
+      // After TX rollback: destination advisory released — safe to audit once.
+      if (error instanceof DeferredSigningDestinationProtectionDenial) {
+        await this.recordSigningBlockedByDestinationProtection(error.audit);
+        throw error.httpException;
+      }
+      throw error;
+    }
 
     this.logger.log(
       this.logContext({
@@ -408,6 +497,123 @@ export class WalletService {
   private assertPermission(allowed: boolean | undefined, message: string): void {
     if (allowed !== true) {
       throw new ForbiddenException(message);
+    }
+  }
+
+  /**
+   * BILL-016: whether the user's withdrawal destination allowlist is enforced.
+   * Missing policy or requireAddressAllowlist !== true → protection off (legacy
+   * SigningPolicy path). DB failures fail closed (503) — never assume off.
+   */
+  private async isDestinationProtectionEnabled(
+    userId: string,
+    db: PrismaService | Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    try {
+      const policy = await db.withdrawalPolicy.findUnique({
+        where: { userId },
+        select: { requireAddressAllowlist: true },
+      });
+      return policy?.requireAddressAllowlist === true;
+    } catch (err) {
+      this.logger.error(
+        {
+          message: 'Destination protection policy lookup failed',
+          userId,
+        },
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        message: 'Withdrawal destination policy is temporarily unavailable',
+      });
+    }
+  }
+
+  private buildSigningBlockedException(): ForbiddenException {
+    return new ForbiddenException({
+      code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+      message: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+    });
+  }
+
+  /**
+   * Preflight denial: audit once (best-effort), then 403. Never logs message,
+   * typedData, domain, primaryType, calldata, digest, requestHash, or signature.
+   */
+  private async throwSigningBlockedByDestinationProtection(
+    audit: SigningDestinationProtectionAudit,
+  ): Promise<never> {
+    this.logger.warn(
+      this.logContext({
+        message: 'Signing blocked by destination protection',
+        userId: audit.userId,
+        chainId: audit.chainId,
+        type: audit.type,
+        executionMode: audit.executionMode,
+        apiKeyPrefix: audit.apiKeyPrefix,
+        code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+      }),
+    );
+    await this.recordSigningBlockedByDestinationProtection(audit);
+    throw this.buildSigningBlockedException();
+  }
+
+  /**
+   * Best-effort `signing.policy_denied` audit. Failures never change 403/503.
+   * Metadata is safe fields only (code, fixed reason, type, chainId, executionMode,
+   * apiKeyPrefix, walletId) — no payload/digest/signature.
+   */
+  private async recordSigningBlockedByDestinationProtection(
+    audit: SigningDestinationProtectionAudit,
+  ): Promise<void> {
+    if (!this.securityEvents) {
+      this.logger.warn(
+        this.logContext({
+          message: 'Signing blocked by destination protection (no security event service)',
+          userId: audit.userId,
+          chainId: audit.chainId,
+          type: audit.type,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix,
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+      );
+      return;
+    }
+
+    try {
+      await this.securityEvents.record({
+        actorType: 'api_key',
+        eventType: 'signing.policy_denied',
+        userId: audit.userId,
+        apiKeyId: audit.apiKeyId ?? null,
+        walletId: audit.walletId ?? null,
+        result: 'denied',
+        reason: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+        metadata: {
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          reason: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+          type: audit.type,
+          chainId: audit.chainId,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix ?? null,
+          walletId: audit.walletId ?? null,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        this.logContext({
+          message: 'Failed to record destination-protection signing denial',
+          userId: audit.userId,
+          chainId: audit.chainId,
+          type: audit.type,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix,
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 

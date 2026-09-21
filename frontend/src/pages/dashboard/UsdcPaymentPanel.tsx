@@ -6,11 +6,13 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import {
+  cancelUsdcQuoteAuth,
   createUsdcClaimAuth,
   createUsdcQuoteAuth,
   getInvoicePaymentStatusAuth,
@@ -99,6 +101,51 @@ function isActiveRailAttempt(attempt: InvoicePaymentAttemptStatus | null | undef
   return attempt.status === 'pending' || attempt.status === 'confirming';
 }
 
+/**
+ * BILL-003: cancel is only safe for clean pending USDC quotes — unreserved,
+ * evidence-free, not confirming/review/reorged/terminal. Server is final authority.
+ */
+function isCancellableCleanPendingAttempt(
+  attempt: InvoicePaymentAttemptStatus | null | undefined,
+): boolean {
+  if (!attempt) return false;
+  if (!isUsdcMethod(attempt.method)) return false;
+  if (attempt.status !== 'pending') return false;
+  if (attempt.walletPaymentReserved === true) return false;
+  return true;
+}
+
+/**
+ * BILL-003: wallet-pay status that still looks like a clean idle quote (no
+ * reservation, hash, confirming, review, or terminal). Used with a local quote.
+ */
+function isCancellableWalletPayState(result: UsdcWalletPayResult | null | undefined): boolean {
+  if (!result) return true;
+  if (result.paid === true) return false;
+  if (result.reserved === true || result.accepted === true) return false;
+  if (result.transactionHash) return false;
+  if (
+    result.phase === 'submitting' ||
+    result.phase === 'accepted' ||
+    result.phase === 'unknown' ||
+    result.phase === 'paid'
+  ) {
+    return false;
+  }
+  if (
+    result.status === 'confirming' ||
+    result.status === 'needs_review' ||
+    result.status === 'failed' ||
+    result.status === 'expired' ||
+    result.status === 'succeeded' ||
+    result.status === 'cancelled'
+  ) {
+    return false;
+  }
+  // Idle pending (or lagging phase "status" without reservation) may cancel.
+  return result.status === 'pending' || result.phase === 'status';
+}
+
 /** True when invoice-level status must block starting a new payment rail. */
 function blocksNewPayment(status: InvoicePaymentStatus | null | undefined): boolean {
   if (!status || status.paid) return false;
@@ -166,6 +213,9 @@ function friendlyUsdcError(error: unknown, fallback: string): string {
     }
     if (error.code === 'USDC_WALLET_PAYMENT_RESERVED') {
       return 'A wallet payment is already reserved for this quote. Use Check status instead of starting another payment.';
+    }
+    if (error.code === 'USDC_CANCEL_NOT_ALLOWED') {
+      return 'This USDC quote can no longer be cancelled. It may already be confirming, reserved, under review, or settled. Refresh payment status before trying anything else.';
     }
     if (error.code === 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED') {
       return 'The treasury destination is not on your withdrawal allowlist. Add it on the Wallet page first.';
@@ -511,6 +561,11 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     'idle' | 'pending' | 'success' | 'error'
   >('idle');
 
+  /** BILL-003: user-initiated cancel of a clean pending USDC quote. */
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
+
   /** BILL-018: invoice-level payment status from the server (not browser memory). */
   const [invoicePaymentStatus, setInvoicePaymentStatus] = useState<InvoicePaymentStatus | null>(
     null,
@@ -528,6 +583,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
   const paymentRecoveryRef = useRef<WalletPaymentRecovery | null>(null);
   const walletPayResultRef = useRef<UsdcWalletPayResult | null>(null);
   const invoicePaymentStatusRef = useRef<InvoicePaymentStatus | null>(null);
+  const cancelInFlightRef = useRef(false);
 
   paymentRecoveryRef.current = paymentRecovery;
   walletPayResultRef.current = walletPayResult;
@@ -822,11 +878,14 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
         setWalletPayError(null);
         setStatusPollNote(null);
         setInvoiceRefreshPhase('idle');
+        setCancelError(null);
+        setCancelSuccess(null);
       } else {
         setQuoteError(null);
         setClaimError(null);
         setWalletPayError(null);
         setStatusPollNote(null);
+        setCancelError(null);
       }
       setQuoteLoading(true);
 
@@ -1128,6 +1187,112 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     }
   }, [fetchPaymentStatus, loadInvoicePaymentStatus, quote, startStatusPolling]);
 
+  /**
+   * BILL-003: user cancel of a clean evidence-free pending USDC quote only.
+   * Confirming/reserved/evidence/review/terminal must never show a misleading cancel path.
+   */
+  const handleCancelQuote = useCallback(
+    async (paymentAttemptId: string) => {
+      if (!paymentAttemptId || cancelInFlightRef.current || cancelLoading) return;
+      if (paymentRecoveryRef.current) return;
+      if (walletPayLoading || claimLoading || quoteLoading) return;
+
+      const confirmed = window.confirm(
+        'Cancel this USDC quote? You can request a new quote afterward. Only unused pending quotes can be cancelled — if a wallet payment was already started, cancel will be refused.',
+      );
+      if (!confirmed) return;
+
+      cancelInFlightRef.current = true;
+      setCancelLoading(true);
+      setCancelError(null);
+      setCancelSuccess(null);
+      setQuoteError(null);
+      setWalletPayError(null);
+      setClaimError(null);
+
+      try {
+        const result = await cancelUsdcQuoteAuth(getToken, invoice.id, paymentAttemptId);
+        if (!isMountedRef.current) return;
+
+        // Success: clear local quote/attempt UI and refresh server payment status.
+        quoteRequestIdRef.current += 1;
+        stopStatusPolling();
+        clearPaymentRecovery();
+        setQuote(null);
+        setClaimResult(null);
+        setWalletPayResult(null);
+        walletPayResultRef.current = null;
+        setTxHash('');
+        setTxHashTouched(false);
+        setInvoiceRefreshPhase('idle');
+        setCancelSuccess(
+          result.status === 'cancelled'
+            ? 'USDC quote cancelled. You can request a new quote or pay with another method.'
+            : 'USDC quote cancelled.',
+        );
+
+        await loadInvoicePaymentStatus();
+        if (!isMountedRef.current) return;
+        void onChange();
+      } catch (err: unknown) {
+        if (!isMountedRef.current) return;
+
+        // 409 conflict: quote is no longer cancellable — refresh truthfully, never invent success.
+        if (
+          isApiError(err) &&
+          err.statusCode === 409 &&
+          hasApiErrorCode(
+            err,
+            'USDC_CANCEL_NOT_ALLOWED',
+            'USDC_WALLET_PAYMENT_RESERVED',
+            'USDC_PAYMENT_IN_PROGRESS',
+            'USDC_INVALID_ATTEMPT',
+            'USDC_INVOICE_NOT_PAYABLE',
+          )
+        ) {
+          setCancelError(
+            friendlyUsdcError(
+              err,
+              'This USDC quote can no longer be cancelled. Refresh payment status before trying anything else.',
+            ),
+          );
+          await loadInvoicePaymentStatus();
+          if (!isMountedRef.current) return;
+          // Restore attempt-level status when we still have an id (may now be reserved/confirming).
+          void fetchPaymentStatus(paymentAttemptId, { showSpinner: true }).then((status) => {
+            if (status && walletPayStatusDisplay(status).shouldPoll) {
+              startStatusPolling(paymentAttemptId);
+            }
+          });
+          void onChange();
+          return;
+        }
+
+        setCancelError(
+          friendlyUsdcError(err, 'Could not cancel this USDC quote. Refresh status and try again.'),
+        );
+        await loadInvoicePaymentStatus();
+      } finally {
+        cancelInFlightRef.current = false;
+        if (isMountedRef.current) setCancelLoading(false);
+      }
+    },
+    [
+      cancelLoading,
+      claimLoading,
+      clearPaymentRecovery,
+      fetchPaymentStatus,
+      getToken,
+      invoice.id,
+      loadInvoicePaymentStatus,
+      onChange,
+      quoteLoading,
+      startStatusPolling,
+      stopStatusPolling,
+      walletPayLoading,
+    ],
+  );
+
   const handleClaim = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -1278,7 +1443,8 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     walletStatus?.lockActions === true ||
     walletPayLoading ||
     reviewBlocked ||
-    invoicePaid;
+    invoicePaid ||
+    cancelLoading;
 
   const claimFormLocked =
     (claimResult !== null &&
@@ -1293,7 +1459,8 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     claimFormLocked ||
     invoiceRefreshPhase === 'pending' ||
     invoiceRefreshPhase === 'error' ||
-    reviewBlocked;
+    reviewBlocked ||
+    cancelLoading;
 
   const payFromWalletDisabled =
     walletPayLoading ||
@@ -1305,7 +1472,8 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     expiry.expiringSoon ||
     invoiceRefreshPhase === 'pending' ||
     invoiceRefreshPhase === 'error' ||
-    reviewBlocked;
+    reviewBlocked ||
+    cancelLoading;
 
   const controlsLocked =
     invoiceRefreshPhase === 'pending' ||
@@ -1314,6 +1482,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     recoveryLocked ||
     reviewBlocked ||
     invoiceStatusLoading ||
+    cancelLoading ||
     (walletStatus?.lockActions === true && walletPayResult?.paid !== true);
 
   const settledPaid =
@@ -1337,6 +1506,52 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
     !invoicePaid &&
     Boolean(activeUsdcAttempt) &&
     serverBlocksNewPayment;
+
+  /**
+   * BILL-003: Cancel only for clean pending (unreserved, evidence-free).
+   * Never offer cancel for confirming/reserved/recovery/review/terminal states.
+   */
+  const cancellableAttemptId = (() => {
+    if (invoicePaid || reviewBlocked || recoveryLocked || settledPaid) return null;
+    if (walletStatus?.lockActions === true) return null;
+
+    // Local quote path: only when wallet-pay state is still a clean idle pending.
+    if (quote?.paymentAttemptId && isCancellableWalletPayState(walletPayResult)) {
+      // Prefer server invoice status when it still reports this attempt as clean pending.
+      const active = invoicePaymentStatus?.activeAttempt;
+      if (
+        active &&
+        active.paymentAttemptId === quote.paymentAttemptId &&
+        !isCancellableCleanPendingAttempt(active)
+      ) {
+        return null;
+      }
+      if (invoicePaymentStatus?.walletReservation) return null;
+      return quote.paymentAttemptId;
+    }
+
+    // Continue-entry path (no local quote yet): clean pending from invoice status only.
+    if (
+      !quote &&
+      isCancellableCleanPendingAttempt(activeUsdcAttempt) &&
+      activeUsdcAttempt?.paymentAttemptId
+    ) {
+      return activeUsdcAttempt.paymentAttemptId;
+    }
+
+    return null;
+  })();
+
+  const showCancelQuote = Boolean(cancellableAttemptId);
+  const cancelDisabled =
+    cancelLoading ||
+    quoteLoading ||
+    walletPayLoading ||
+    claimLoading ||
+    statusRefreshing ||
+    invoiceStatusLoading ||
+    invoiceRefreshPhase === 'pending' ||
+    !cancellableAttemptId;
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-5">
@@ -1467,7 +1682,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
                 <button
                   type="button"
                   onClick={() => void fetchQuote()}
-                  disabled={quoteLoading || invoiceStatusLoading}
+                  disabled={quoteLoading || invoiceStatusLoading || cancelLoading}
                   className="inline-flex items-center gap-1.5 rounded-full bg-brand-text px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-text/90 disabled:opacity-60"
                 >
                   {quoteLoading ? (
@@ -1480,7 +1695,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
                 <button
                   type="button"
                   onClick={() => void handleCheckStatus()}
-                  disabled={statusRefreshing || invoiceStatusLoading}
+                  disabled={statusRefreshing || invoiceStatusLoading || cancelLoading}
                   className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
                 >
                   {statusRefreshing ? (
@@ -1490,7 +1705,30 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
                   )}
                   Check status
                 </button>
+                {showCancelQuote && cancellableAttemptId && (
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelQuote(cancellableAttemptId)}
+                    disabled={cancelDisabled}
+                    aria-label="Cancel this unused USDC quote"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    {cancelLoading ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-3 w-3" />
+                    )}
+                    {cancelLoading ? 'Canceling…' : 'Cancel quote'}
+                  </button>
+                )}
               </div>
+              {isCancellableCleanPendingAttempt(activeUsdcAttempt) && (
+                <p className="text-[11px] text-amber-900">
+                  This quote is still unused. You can cancel it to free the slot for a new quote or
+                  card payment — cancel is refused once a wallet payment is reserved or evidence is
+                  submitted.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -1558,6 +1796,45 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>{quoteError}</span>
+          </div>
+        </div>
+      )}
+
+      {cancelSuccess && (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-800"
+        >
+          <div className="flex items-start gap-2">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{cancelSuccess}</span>
+          </div>
+        </div>
+      )}
+
+      {cancelError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"
+        >
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="min-w-0 space-y-2">
+              <span>{cancelError}</span>
+              <button
+                type="button"
+                onClick={() => void handleCheckStatus()}
+                disabled={statusRefreshing || invoiceStatusLoading || cancelLoading}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+              >
+                {statusRefreshing ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+                Refresh payment status
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1794,6 +2071,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
                   statusRefreshing ||
                   quoteLoading ||
                   walletPayLoading ||
+                  cancelLoading ||
                   invoiceRefreshPhase === 'pending'
                 }
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-4 py-2.5 text-xs font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-surface disabled:opacity-60"
@@ -1805,7 +2083,32 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
                 )}
                 Check status
               </button>
+
+              {showCancelQuote && cancellableAttemptId && (
+                <button
+                  type="button"
+                  onClick={() => void handleCancelQuote(cancellableAttemptId)}
+                  disabled={cancelDisabled}
+                  aria-label="Cancel this unused USDC quote"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-border bg-white px-4 py-2.5 text-xs font-semibold text-brand-text transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {cancelLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  )}
+                  {cancelLoading ? 'Canceling…' : 'Cancel quote'}
+                </button>
+              )}
             </div>
+
+            {showCancelQuote && (
+              <p className="text-[11px] leading-5 text-brand-muted">
+                Cancel quote only works while this attempt is still a clean unused pending quote.
+                Once a wallet payment is reserved, confirming, or has evidence, cancel is blocked
+                and you should use Check status instead.
+              </p>
+            )}
 
             {paymentRecovery && (
               <div

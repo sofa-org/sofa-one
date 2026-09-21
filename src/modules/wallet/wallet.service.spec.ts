@@ -716,6 +716,11 @@ describe('WalletService.sign()', () => {
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
   const mockAssertEoaExecutionAllowed = jest.fn();
+  const mockWithdrawalPolicyFindUnique = jest.fn();
+  const mockTxWithdrawalPolicyFindUnique = jest.fn();
+  const mockTransaction = jest.fn();
+  const mockAcquireUserDestinationLock = jest.fn();
+  const mockSecurityEventRecord = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -730,6 +735,17 @@ describe('WalletService.sign()', () => {
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
     mockAssertEoaExecutionAllowed.mockResolvedValue(undefined);
+    // BILL-016 default: destination protection OFF (legacy SigningPolicy path).
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockAcquireUserDestinationLock.mockResolvedValue(undefined);
+    mockSecurityEventRecord.mockResolvedValue({});
+    mockTransaction.mockImplementation(async (callback) =>
+      callback({
+        signingRequest: { create: mockSigningRequestCreate },
+        withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique },
+      }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -739,6 +755,8 @@ describe('WalletService.sign()', () => {
           useValue: {
             userWallet: { findUnique: mockFindUnique },
             signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate },
+            withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique },
+            $transaction: mockTransaction,
           },
         },
         {
@@ -758,7 +776,7 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: SecurityEventService,
-          useValue: { record: jest.fn().mockResolvedValue({}) },
+          useValue: { record: mockSecurityEventRecord },
         },
         {
           provide: WithdrawalPolicyService,
@@ -767,6 +785,7 @@ describe('WalletService.sign()', () => {
             listWithdrawalAddresses: jest.fn(),
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
+            acquireUserDestinationLock: mockAcquireUserDestinationLock,
           },
         },
         {
@@ -1313,6 +1332,308 @@ describe('WalletService.sign()', () => {
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  // ── BILL-016 destination protection on public sign ─────────────────────────
+
+  const expectNoSignSideEffects = () => {
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  };
+
+  const expectSigningBlocked = async (promise: Promise<unknown>) => {
+    await expect(promise).rejects.toBeInstanceOf(ForbiddenException);
+    try {
+      await promise;
+    } catch (err) {
+      expect((err as ForbiddenException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          message: expect.stringMatching(/destination protection/i),
+        }),
+      );
+    }
+    expectNoSignSideEffects();
+  };
+
+  it.each([
+    {
+      name: 'message × session_key',
+      dto: { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 },
+      apiKey: API_KEY_CONTEXT,
+    },
+    {
+      name: 'message × eoa',
+      dto: {
+        type: 'message',
+        message: 'Hello, SOFA ONE!',
+        chainId: 84532,
+        executionMode: 'eoa',
+      },
+      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+    },
+    {
+      name: 'typed_data × session_key',
+      dto: { type: 'typed_data', typedData: createTypedData(84532), chainId: 84532 },
+      apiKey: API_KEY_CONTEXT,
+    },
+    {
+      name: 'typed_data × eoa',
+      dto: {
+        type: 'typed_data',
+        typedData: createTypedData(84532),
+        chainId: 84532,
+        executionMode: 'eoa',
+      },
+      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+    },
+  ])(
+    'blocks all sign types when requireAddressAllowlist=true ($name)',
+    async ({ dto, apiKey }) => {
+      mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+      await expectSigningBlocked(service.sign('user-1', dto as any, apiKey));
+
+      expect(mockAcquireUserDestinationLock).not.toHaveBeenCalled();
+      expect(mockTransaction).not.toHaveBeenCalled();
+      expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
+      expect(mockAssertEoaExecutionAllowed).not.toHaveBeenCalled();
+      expect(mockSecurityEventRecord).toHaveBeenCalledTimes(1);
+      expect(mockSecurityEventRecord).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorType: 'api_key',
+          eventType: 'signing.policy_denied',
+          userId: 'user-1',
+          result: 'denied',
+          metadata: expect.objectContaining({
+            code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+            type: dto.type,
+            chainId: 84532,
+            executionMode: (dto as any).executionMode ?? 'session_key',
+            apiKeyPrefix: API_KEY_PREFIX,
+          }),
+        }),
+      );
+      const auditJson = JSON.stringify(mockSecurityEventRecord.mock.calls[0][0]);
+      expect(auditJson).not.toMatch(/Hello|typedData|domain|primaryType|calldata|digest|requestHash|signature/i);
+    },
+  );
+
+  it('blocks when protection is on even with empty allowlist / no reauth path', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+    expectNoSignSideEffects();
+  });
+
+  it.each([
+    { label: 'null policy', policy: null },
+    { label: 'requireAddressAllowlist false', policy: { requireAddressAllowlist: false } },
+  ])('allows sign when destination protection is off ($label)', async ({ policy }) => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(policy);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(policy);
+
+    const result = await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(result.signature).toBe(WRAPPED_SIGNATURE);
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockSigningRequestCreate).toHaveBeenCalled();
+    expect(mockSignData).toHaveBeenCalled();
+    expect(mockSecurityEventRecord).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+      }),
+    );
+  });
+
+  it('preserves SigningPolicy denial when protection is off', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+
+    const typedData = {
+      ...createTypedData(84532),
+      primaryType: 'Permit',
+      types: {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      },
+      message: {
+        owner: WALLET.walletAddress,
+        spender: '0x1111111111111111111111111111111111111111',
+        value: '1',
+        nonce: 0,
+        deadline: 9999999999,
+      },
+    };
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'typed_data', typedData, chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('Permit typed data signing is not allowed');
+
+    expectNoSignSideEffects();
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and no side effects when preflight policy lookup fails', async () => {
+    mockWithdrawalPolicyFindUnique.mockRejectedValue(new Error('db down'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    try {
+      await service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      );
+    } catch (err) {
+      expect((err as ServiceUnavailableException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        }),
+      );
+    }
+
+    expectNoSignSideEffects();
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects false→true race under lock with zero create/signData', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockTransaction).toHaveBeenCalled();
+    // SigningPolicy may have recorded an allow event before the final gate; denial is once.
+    const blockedAudits = mockSecurityEventRecord.mock.calls.filter(
+      ([payload]) =>
+        payload?.eventType === 'signing.policy_denied' &&
+        payload?.metadata?.code === API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    );
+    expect(blockedAudits).toHaveLength(1);
+    expect(blockedAudits[0][0]).toEqual(
+      expect.objectContaining({
+        eventType: 'signing.policy_denied',
+        metadata: expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          walletId: WALLET.id,
+        }),
+      }),
+    );
+  });
+
+  it('returns 503 and no side effects when final policy lookup fails under lock', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockRejectedValue(new Error('tx db down'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expectNoSignSideEffects();
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalled();
+  });
+
+  it('returns lock/transaction failure with no create/signData side effects', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockAcquireUserDestinationLock.mockRejectedValue(new Error('lock failed'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('lock failed');
+
+    expectNoSignSideEffects();
+  });
+
+  it('still returns 403 when destination-protection audit recording fails', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+    mockSecurityEventRecord.mockRejectedValue(new Error('audit down'));
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+
+    expect(mockSecurityEventRecord).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  it('creates SigningRequest only inside the interactive TX after lock when protection is off', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
+
+    let createOrder = 0;
+    let lockOrder = 0;
+    let finalCheckOrder = 0;
+    mockAcquireUserDestinationLock.mockImplementation(async () => {
+      lockOrder = ++createOrder;
+    });
+    mockTxWithdrawalPolicyFindUnique.mockImplementation(async () => {
+      finalCheckOrder = ++createOrder;
+      return null;
+    });
+    mockSigningRequestCreate.mockImplementation(async () => {
+      expect(lockOrder).toBeGreaterThan(0);
+      expect(finalCheckOrder).toBeGreaterThan(lockOrder);
+      return { id: 'signing-request-1' };
+    });
+
+    await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(mockSignData).toHaveBeenCalled();
+    // Openfort must run after TX (create already completed via $transaction).
+    expect(mockTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSignData.mock.invocationCallOrder[0],
+    );
   });
 });
 

@@ -53,6 +53,14 @@ describe('resolveApiErrorCode', () => {
       'Transaction send blocked: unproven asset outflow under destination protection',
       API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
     ],
+    [
+      'API-key signing is not allowed while destination protection is enabled',
+      API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    ],
+    [
+      'Signing blocked by destination protection',
+      API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    ],
   ])('maps "%s" to %s', (message, expectedCode) => {
     expect(resolveApiErrorCode(HttpStatus.BAD_REQUEST, message)).toBe(expectedCode);
   });
