@@ -1451,12 +1451,13 @@ export class BillingService {
    * default account, plan catalog, and default Free assignment on first access.
    * All amounts are returned as decimal USD strings; counts as integer strings.
    *
-   * Pricing (`planId`/`planName`, estimated base/overage/tiers) is always
-   * anchored to the usage-period pricing plan via `resolveUsagePlanVersion` so a
-   * mid-month paid upgrade never reprices an already-open period. Dashboard
-   * free-allowance fields for the *current* UTC month follow the live
-   * entitlement plan (`resolvePlanVersion`); historical periods keep allowances
-   * from the period pricing plan.
+   * BILL-009 hybrid pricing (aligned with `finalizeInvoice`):
+   * - Fixed monthly fee + `planId`/`planName` identity stay on the usage-period
+   *   pricing anchor (`resolveUsagePlanVersion`) so a mid-month paid upgrade
+   *   never double-charges the full target monthly fee.
+   * - Included allowances and API/wallet/outbound overage rates follow the live
+   *   entitlement plan for the period (`resolvePlanVersion`).
+   * - A period with no upgrade (anchor === entitlement) is unchanged end-to-end.
    */
   async getSummary(userId: string, period?: string): Promise<BillingSummaryDto> {
     const account = await this.ensureAccount(userId);
@@ -1464,24 +1465,10 @@ export class BillingService {
     await this.ensureDefaultAssignment(account.id);
     const { period: periodStr, start } = parsePeriod(period);
 
-    // Usage-period pricing anchor (not mid-month entitlement after upgrade).
-    const pricingPlanVersion = await this.resolveUsagePlanVersion(account.id, start);
-    const pricingPlan = planVersionToConfig(pricingPlanVersion);
-    // Enterprise/custom null terms cannot be summarized as an executable plan.
-    this.assertPlanFinalizable(pricingPlanVersion);
-
-    // Current-month quotas follow live entitlement; historical periods keep
-    // allowances tied to the immutable period pricing plan.
-    const currentMonthStart = this.monthStart(new Date());
-    let allowancePlanVersion = pricingPlanVersion;
-    let allowancePlan = pricingPlan;
-    if (start.getTime() === currentMonthStart.getTime()) {
-      allowancePlanVersion = await this.resolvePlanVersion(account.id, start);
-      if (allowancePlanVersion.id !== pricingPlanVersion.id) {
-        allowancePlan = planVersionToConfig(allowancePlanVersion);
-        this.assertPlanFinalizable(allowancePlanVersion);
-      }
-    }
+    // Fee/identity anchor vs live entitlement (usage allowances + overage rates).
+    const feePlanVersion = await this.resolveUsagePlanVersion(account.id, start);
+    const usagePlanVersion = await this.resolvePlanVersion(account.id, start);
+    const hybrid = this.buildHybridPeriodPricing(feePlanVersion, usagePlanVersion);
 
     const [usageEvents, activeWallets] = await Promise.all([
       this.prisma.billingUsageEvent.findMany({
@@ -1520,25 +1507,28 @@ export class BillingService {
     }
 
     const totals = calculateInvoiceTotals({
-      plan: pricingPlan,
+      plan: hybrid.calculatorPlan,
       grossOutboundMicros: outboundVolume,
       activeWallets,
       apiCallsTotal: toSafeCount(apiCalls),
-      apiOverageRateMicros: pricingPlanVersion.apiOverageRateMicros,
-      walletOverageRateMicros: pricingPlanVersion.walletOverageRateMicros,
+      apiOverageRateMicros: hybrid.apiOverageRateMicros,
+      walletOverageRateMicros: hybrid.walletOverageRateMicros,
     });
 
     return {
       period: periodStr,
-      planId: pricingPlanVersion.code,
-      planName: pricingPlanVersion.name,
+      // Invoice/summary identity stays on the fee anchor (not the upgraded plan).
+      planId: hybrid.feePlanVersion.code,
+      planName: hybrid.feePlanVersion.name,
       outboundVolume: microsToDecimalUsd(outboundVolume),
-      outboundFreeAllowance: microsToDecimalUsd(allowancePlan.includedOutboundMicros ?? 0n),
+      outboundFreeAllowance: microsToDecimalUsd(
+        hybrid.calculatorPlan.includedOutboundMicros ?? 0n,
+      ),
       outboundOverage: microsToDecimalUsd(totals.outboundOverageMicros),
       apiCalls: String(apiCalls),
-      apiCallsFreeAllowance: String(allowancePlan.includedApiCallsPerMonth ?? 0),
+      apiCallsFreeAllowance: String(hybrid.calculatorPlan.includedApiCallsPerMonth ?? 0),
       activeWallets: String(activeWallets),
-      activeWalletsFreeAllowance: String(allowancePlan.includedWallets ?? 0),
+      activeWalletsFreeAllowance: String(hybrid.calculatorPlan.includedWallets ?? 0),
       estimatedBaseCost: microsToDecimalUsd(totals.monthlyFeeMicros),
       estimatedOverageCost: microsToDecimalUsd(
         totals.outboundOverageMicros + totals.apiOverageMicros + totals.walletOverageMicros,
@@ -1700,16 +1690,18 @@ export class BillingService {
           return this.toInvoiceDto(lockedExisting);
         }
 
-        // Pin usage-period pricing to the original period anchor (open invoice
-        // planVersionId or pre-upgrade assignment) — never the mid-month
-        // upgraded entitlement plan after a paid plan_charge.
-        const planVersion = lockedExisting
+        // BILL-009: fee/identity anchor stays on the original period plan
+        // (open invoice planVersionId or pre-upgrade assignment). Usage
+        // allowances + API/wallet/outbound overage rates follow live
+        // entitlement for the period — never replace the fixed fee with the
+        // full target monthly fee after a mid-month paid plan_charge.
+        const feePlanVersion = lockedExisting
           ? await this.loadPlanVersionOrThrow(tx, lockedExisting.planVersionId)
           : await this.resolveUsagePlanVersion(billingAccountId, start, tx);
-        const plan = planVersionToConfig(planVersion);
-
-        // Enterprise custom/null terms fail closed — never convert null to 0.
-        this.assertPlanFinalizable(planVersion);
+        const usagePlanVersion = await this.resolvePlanVersion(billingAccountId, start, tx);
+        const hybrid = this.buildHybridPeriodPricing(feePlanVersion, usagePlanVersion);
+        const planVersion = hybrid.feePlanVersion;
+        const plan = hybrid.calculatorPlan;
 
         // Unresolved accounting risk (quarantined usage + reconciliation runs)
         // blocks auto-finalize, evaluated inside the locked transaction.
@@ -1758,14 +1750,17 @@ export class BillingService {
           grossOutboundMicros: outboundVolume,
           activeWallets,
           apiCallsTotal: apiCallsSafe,
-          apiOverageRateMicros: planVersion.apiOverageRateMicros,
-          walletOverageRateMicros: planVersion.walletOverageRateMicros,
+          apiOverageRateMicros: hybrid.apiOverageRateMicros,
+          walletOverageRateMicros: hybrid.walletOverageRateMicros,
         });
 
         const snapshot = this.buildSnapshot({
           period: periodStr,
           planVersion,
+          usagePlanVersion: hybrid.usagePlanVersion,
           plan,
+          apiOverageRateMicros: hybrid.apiOverageRateMicros,
+          walletOverageRateMicros: hybrid.walletOverageRateMicros,
           outboundVolume,
           apiCalls: apiCallsSafe,
           activeWallets,
@@ -1778,6 +1773,7 @@ export class BillingService {
         try {
           if (lockedExisting) {
             // Update the pre-existing open invoice and replace its lines.
+            // planVersionId stays the fee anchor (never rewritten to target).
             const updated = await tx.billingInvoice.update({
               where: { id: lockedExisting.id },
               data: {
@@ -1811,6 +1807,8 @@ export class BillingService {
               apiCalls: apiCallsSafe,
               activeWallets,
               totals,
+              apiOverageRateMicros: hybrid.apiOverageRateMicros,
+              walletOverageRateMicros: hybrid.walletOverageRateMicros,
             });
             if (lines.length > 0) {
               await tx.billingInvoiceLine.createMany({ data: lines });
@@ -1854,6 +1852,8 @@ export class BillingService {
             apiCalls: apiCallsSafe,
             activeWallets,
             totals,
+            apiOverageRateMicros: hybrid.apiOverageRateMicros,
+            walletOverageRateMicros: hybrid.walletOverageRateMicros,
           });
           if (lines.length > 0) {
             await tx.billingInvoiceLine.createMany({ data: lines });
@@ -2622,6 +2622,14 @@ export class BillingService {
    * Usage-period pricing plan for summary/finalize/open invoice. Prefers the
    * persisted usage_period invoice snapshot so a mid-month paid upgrade never
    * replaces the period's fixed fee with the full target monthly fee.
+   *
+   * Fail-closed vs compatibility:
+   * - Explicit `source='upgrade_payment'` without a recoverable applied-upgrade
+   *   `fromPlanVersion` fails closed (never silently prices the full target
+   *   monthly fee as the usage-period fixed fee).
+   * - Legacy `source=null` paid rows still fall back to the assignment's own
+   *   plan as the fee anchor when fromPlan cannot be recovered (compat path;
+   *   not a full fail-closed for every paid assignment).
    */
   private async resolveUsagePlanVersion(
     accountId: string,
@@ -2642,12 +2650,12 @@ export class BillingService {
       include: { planVersion: true },
     });
     if (periodAssignment) {
-      if (
+      const isUpgradeLike =
         periodAssignment.source === 'upgrade_payment' ||
         (periodAssignment.source === null &&
           (periodAssignment.planVersion.monthlyFeeMicros ?? 0n) > 0n &&
-          periodAssignment.expiresAt != null)
-      ) {
+          periodAssignment.expiresAt != null);
+      if (isUpgradeLike) {
         const appliedUpgrade = await tx.billingPlanChange.findFirst({
           where: {
             billingAccountId: accountId,
@@ -2661,9 +2669,16 @@ export class BillingService {
         if (appliedUpgrade?.fromPlanVersion) {
           return appliedUpgrade.fromPlanVersion;
         }
+        // Explicit upgrade_payment only: missing from-plan fails closed.
+        if (periodAssignment.source === 'upgrade_payment') {
+          throw new ConflictException(
+            'Cannot resolve usage-period pricing: upgrade assignment is incomplete',
+          );
+        }
       }
       if (isAssignmentEntitlementValid(periodAssignment, periodAssignment.planVersion, start)) {
-        // Non-upgrade path: use assignment as usage anchor.
+        // Non-upgrade_payment path: use assignment as fee anchor. Legacy
+        // source=null paid rows that missed fromPlan recovery land here.
         if (periodAssignment.source !== 'upgrade_payment') {
           return periodAssignment.planVersion;
         }
@@ -2680,6 +2695,55 @@ export class BillingService {
     const plan = await tx.billingPlanVersion.findUnique({ where: { id: planVersionId } });
     if (!plan) throw new ConflictException('Invoice plan version not found');
     return plan;
+  }
+
+  /**
+   * BILL-009 hybrid period pricing:
+   * - Fixed monthly fee from the usage-period fee anchor (`feePlanVersion`).
+   * - Included allowances + API/wallet overage rates from the live entitlement
+   *   / target plan (`usagePlanVersion`).
+   * - Outbound overage tiers are global (`STANDARD_OUTBOUND_TIERS`); only the
+   *   included outbound allowance is plan-scoped and comes from usage.
+   *
+   * Both plans must be finalizable (Enterprise/custom nulls fail closed).
+   * Returns an immutable calculator config — never mutates catalog rows.
+   */
+  private buildHybridPeriodPricing(
+    feePlanVersion: PlanVersion,
+    usagePlanVersion: PlanVersion,
+  ): {
+    feePlanVersion: PlanVersion;
+    usagePlanVersion: PlanVersion;
+    calculatorPlan: BillingPlanConfig;
+    apiOverageRateMicros: bigint;
+    walletOverageRateMicros: bigint;
+  } {
+    this.assertPlanFinalizable(feePlanVersion);
+    this.assertPlanFinalizable(usagePlanVersion);
+    const feePlan = planVersionToConfig(feePlanVersion);
+    const usagePlan = planVersionToConfig(usagePlanVersion);
+    const apiOverageRateMicros =
+      usagePlanVersion.apiOverageRateMicros ??
+      usagePlan.apiOverageRateMicros ??
+      DEFAULT_API_OVERAGE_RATE_MICROS;
+    const walletOverageRateMicros =
+      usagePlanVersion.walletOverageRateMicros ?? DEFAULT_WALLET_OVERAGE_RATE_MICROS;
+    return {
+      feePlanVersion,
+      usagePlanVersion,
+      calculatorPlan: {
+        id: usagePlan.id,
+        name: usagePlan.name,
+        // Only the fixed fee is taken from the period anchor.
+        monthlyFeeMicros: feePlan.monthlyFeeMicros,
+        includedOutboundMicros: usagePlan.includedOutboundMicros,
+        includedWallets: usagePlan.includedWallets,
+        includedApiCallsPerMonth: usagePlan.includedApiCallsPerMonth,
+        apiOverageRateMicros: usagePlan.apiOverageRateMicros,
+      },
+      apiOverageRateMicros,
+      walletOverageRateMicros,
+    };
   }
 
   private toPlanDto(v: PlanVersion): BillingPlanDto {
@@ -2760,27 +2824,56 @@ export class BillingService {
 
   private buildSnapshot(args: {
     period: string;
+    /**
+     * Fee-anchor plan identity. Root `planVersionId` and nested `plan.code/name/
+     * version` stay on this id so Stripe bootstrap keeps fee identity stable.
+     */
     planVersion: PlanVersion;
+    /**
+     * Entitlement / usage-pricing plan for the period (allowances + overage
+     * rates). Defaults to `planVersion` for single-plan open estimates and
+     * fixture paths.
+     */
+    usagePlanVersion?: PlanVersion;
+    /**
+     * Calculator plan actually used for amounts this period. Under BILL-009
+     * hybrid this carries fee-anchor monthlyFee with entitlement allowances;
+     * nested `plan` terms below are those applied parameters (not a pure
+     * catalog row dump).
+     */
     plan: BillingPlanConfig;
+    /** Overage rates actually applied (entitlement plan under BILL-009). */
+    apiOverageRateMicros?: bigint;
+    walletOverageRateMicros?: bigint;
     outboundVolume: bigint;
     apiCalls: number;
     activeWallets: number;
     totals: ReturnType<typeof calculateInvoiceTotals>;
   }): Record<string, unknown> {
     const { period, planVersion, plan, outboundVolume, apiCalls, activeWallets, totals } = args;
+    const feePlanVersion = planVersion;
+    const usagePlanVersion = args.usagePlanVersion ?? planVersion;
+    const pricingMode: 'single_plan' | 'hybrid_period' =
+      feePlanVersion.id === usagePlanVersion.id ? 'single_plan' : 'hybrid_period';
+    const apiRate = args.apiOverageRateMicros ?? usagePlanVersion.apiOverageRateMicros;
+    const walletRate = args.walletOverageRateMicros ?? usagePlanVersion.walletOverageRateMicros;
     return {
       version: 1,
       period,
-      // Keep the immutable plan identity at the snapshot root as well as in
-      // the human-readable plan object. Stripe bootstrap and the canonical
-      // serializer both validate this exact deterministic payload.
-      planVersionId: planVersion.id,
+      // Root fee-anchor identity (Stripe / bootstrap). Additive BILL-009
+      // provenance below records usage-pricing origin without rewriting this id.
+      planVersionId: feePlanVersion.id,
+      pricingMode,
+      feePlanVersionId: feePlanVersion.id,
+      usagePlanVersionId: usagePlanVersion.id,
       plan: {
-        code: planVersion.code,
-        name: planVersion.name,
+        code: feePlanVersion.code,
+        name: feePlanVersion.name,
         // Immutable plan catalog version identity (additive; used by fixture
         // integrity checks and deterministic snapshot hashing).
-        version: planVersion.version,
+        version: feePlanVersion.version,
+        // Applied period terms: monthlyFee from fee anchor; allowances/rates
+        // from usage entitlement when pricingMode is hybrid_period.
         monthlyFeeMicros:
           plan.monthlyFeeMicros === null ? null : microsToDecimalUsd(plan.monthlyFeeMicros),
         includedOutboundMicros:
@@ -2790,8 +2883,8 @@ export class BillingService {
         includedApiCalls:
           plan.includedApiCallsPerMonth === null ? null : String(plan.includedApiCallsPerMonth),
         includedWallets: plan.includedWallets,
-        apiOverageRateMicros: microsToDecimalUsd(planVersion.apiOverageRateMicros),
-        walletOverageRateMicros: microsToDecimalUsd(planVersion.walletOverageRateMicros),
+        apiOverageRateMicros: microsToDecimalUsd(apiRate),
+        walletOverageRateMicros: microsToDecimalUsd(walletRate),
       },
       usage: {
         outboundVolumeMicros: microsToDecimalUsd(outboundVolume),
@@ -2823,6 +2916,8 @@ export class BillingService {
     apiCalls: number;
     activeWallets: number;
     totals: ReturnType<typeof calculateInvoiceTotals>;
+    apiOverageRateMicros?: bigint;
+    walletOverageRateMicros?: bigint;
   }): Prisma.BillingInvoiceLineCreateManyInput[] {
     return buildInvoiceLineSpecs({
       planVersionName: args.planVersion.name,
@@ -2830,8 +2925,9 @@ export class BillingService {
       apiCalls: args.apiCalls,
       activeWallets: args.activeWallets,
       totals: args.totals,
-      apiOverageRateMicros: args.planVersion.apiOverageRateMicros,
-      walletOverageRateMicros: args.planVersion.walletOverageRateMicros,
+      apiOverageRateMicros: args.apiOverageRateMicros ?? args.planVersion.apiOverageRateMicros,
+      walletOverageRateMicros:
+        args.walletOverageRateMicros ?? args.planVersion.walletOverageRateMicros,
     }).map((spec) => ({
       invoiceId: args.invoiceId,
       lineType: spec.lineType,

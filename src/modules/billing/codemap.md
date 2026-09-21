@@ -196,7 +196,10 @@ Outbound transfer (receipt-confirmed) → BillingReconciliationService
 
 ```
 GET /v1/billing/summary?period=YYYY-MM
-  → ensureAccount/planVersions/defaultAssignment; resolvePlanVersion
+  → ensureAccount/planVersions/defaultAssignment; resolve fee anchor
+    (`resolveUsagePlanVersion`) and period entitlement (`resolvePlanVersion`)
+  → hybrid pricing: fixed monthly fee + identity from fee anchor; included
+    allowances and API/wallet/outbound overage rates from period entitlement
   → aggregate usage (posted outbound + usage api_call) and active-wallet count
   → calculateInvoiceTotals → decimal-string BillingSummaryDto + tier breakdown
 
@@ -212,10 +215,18 @@ GET /v1/billing/invoices/:id/payment-status (BILL-018)
 finalizeInvoice (service-internal, no route)
   → pre-check: non-open invoice returned unchanged
   → assertFinalizablePeriod (period ended + 24h UTC grace)
-  → withBillingPeriodLock: re-check, resolve plan, assertPlanFinalizable,
-    assertNoUnresolvedBillingRisk (quarantined usage + risky reconciliation
-    runs), aggregate usage, calculateInvoiceTotals, build snapshot + SHA-256
-    hash, create/update finalized invoice + lines (P2002 race returns existing)
+  → withBillingPeriodLock: re-check, resolve fee anchor + period entitlement,
+    build hybrid pricing, assertPlanFinalizable, assertNoUnresolvedBillingRisk
+    (quarantined usage + risky reconciliation runs), aggregate usage,
+    calculateInvoiceTotals, build snapshot + SHA-256 hash, create/update
+    finalized invoice + lines (P2002 race returns existing)
+  → snapshot keeps root `planVersionId`/`plan` identity as fee anchor and adds
+    `pricingMode`, `feePlanVersionId`, and `usagePlanVersionId`; nested plan
+    terms are the applied period terms (hybrid allowance/rates when upgraded)
+  → historical requested periods resolve that period's entitlement rather than
+    the current plan; outbound tiers remain global standard tiers; explicit
+    `upgrade_payment` without recoverable from-plan fails closed, while legacy
+    `source=null` paid rows retain their compatibility fallback
 ```
 
 ### Reconciliation

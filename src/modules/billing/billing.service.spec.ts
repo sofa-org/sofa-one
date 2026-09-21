@@ -2969,8 +2969,9 @@ describe('BillingService', () => {
 
     it('current-month summary uses paid entitlement allowances while pricing stays Free-anchored', async () => {
       // Fake clock is 2026-08-25 → current UTC month 2026-08. After a mid-month
-      // paid upgrade the usage_period invoice still anchors pricing to Free, but
-      // dashboard free-allowance fields must reflect the live Starter entitlement.
+      // paid upgrade the usage_period invoice still anchors fixed fee identity to
+      // Free, but allowances + overage rates follow live Starter entitlement
+      // (BILL-009).
       const periodStart = new Date('2026-08-01T00:00:00.000Z');
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
@@ -3002,7 +3003,7 @@ describe('BillingService', () => {
 
       const result = await service.getSummary('user-1', '2026-08');
 
-      // Pricing identity + estimates remain Free-anchored (no reprice).
+      // Fee identity + base cost remain Free-anchored (no full Starter fee).
       expect(result.period).toBe('2026-08');
       expect(result.planId).toBe('free');
       expect(result.planName).toBe('Free');
@@ -3017,19 +3018,39 @@ describe('BillingService', () => {
 
     it('historical-period summary keeps allowances on the period pricing plan', async () => {
       // May 2026 is not the current UTC month (clock = 2026-08). Even with a
-      // current paid entitlement, historical allowances must stay Free-priced.
+      // current paid entitlement starting in August, May's period entitlement is
+      // still Free — hybrid must not bleed live Starter into historical months.
       const historicalStart = new Date('2026-05-01T00:00:00.000Z');
+      const freeAssignment = {
+        id: 'assign-free-may',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        periodStart: historicalStart,
+        expiresAt: null,
+        source: 'default',
+        planVersion: FREE_VERSION,
+      };
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION);
-      assignmentFindFirst.mockResolvedValue({
-        id: 'assign-starter',
-        billingAccountId: ACCOUNT.id,
-        planVersionId: STARTER_VERSION.id,
-        periodStart: new Date('2026-08-01T00:00:00.000Z'),
-        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
-        source: 'upgrade_payment',
-        planVersion: STARTER_VERSION,
+      // Entitlement resolver walks findMany with periodStart lte query target.
+      assignmentFindMany.mockImplementation(async (args: any) => {
+        const lte = args?.where?.periodStart?.lte as Date | undefined;
+        if (lte && lte.getTime() < new Date('2026-08-01T00:00:00.000Z').getTime()) {
+          return [freeAssignment];
+        }
+        return [
+          {
+            id: 'assign-starter',
+            billingAccountId: ACCOUNT.id,
+            planVersionId: STARTER_VERSION.id,
+            periodStart: new Date('2026-08-01T00:00:00.000Z'),
+            expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+            source: 'upgrade_payment',
+            planVersion: STARTER_VERSION,
+          },
+        ];
       });
+      assignmentFindFirst.mockResolvedValue(freeAssignment);
       invoiceFindFirst.mockResolvedValue({
         id: 'inv-usage-may',
         billingAccountId: ACCOUNT.id,
@@ -3052,10 +3073,227 @@ describe('BillingService', () => {
       expect(result.planId).toBe('free');
       expect(result.planName).toBe('Free');
       expect(result.estimatedBaseCost).toBe('0');
-      // Historical allowances stay on the Free pricing plan, not live Starter.
+      // Historical allowances stay on the Free period plan, not live Starter.
       expect(result.outboundFreeAllowance).toBe('50000');
       expect(result.apiCallsFreeAllowance).toBe('10000');
       expect(result.activeWalletsFreeAllowance).toBe('10');
+    });
+
+    // ── BILL-009 hybrid usage pricing (current-month mid-month upgrade) ─────
+
+    it('BILL-009: current-month Free→Starter uses target allowances/rates; fixed fee stays Free', async () => {
+      // Mid-month paid upgrade: Free fee anchor + Starter entitlement.
+      // Usage exceeds Free allowance but stays under Starter → outbound overage 0
+      // with Starter included; Free-only pricing would have charged overage.
+      const periodStart = new Date('2026-08-01T00:00:00.000Z');
+      const starterWithRates = {
+        ...STARTER_VERSION,
+        apiOverageRateMicros: 1_500n,
+        walletOverageRateMicros: 10_000n,
+      };
+      const freeWithRates = {
+        ...FREE_VERSION,
+        apiOverageRateMicros: 2_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(freeWithRates);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: starterWithRates.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: starterWithRates,
+      });
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-aug',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: freeWithRates.id,
+        status: 'open',
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === starterWithRates.id) return starterWithRates;
+        if (where?.id === freeWithRates.id) return freeWithRates;
+        return null;
+      });
+      // $100K outbound: under Starter $250K included, over Free $50K included.
+      // 50_000 API calls: under Starter 100K, over Free 10K.
+      // 50 wallets: under Starter 100, over Free 10.
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 100_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+        { metric: 'api_call', quantity: 50_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(50);
+
+      const result = await service.getSummary('user-1', '2026-08');
+
+      expect(result.planId).toBe('free');
+      expect(result.planName).toBe('Free');
+      expect(result.estimatedBaseCost).toBe('0'); // never full Starter $49
+      expect(result.outboundFreeAllowance).toBe('250000');
+      expect(result.apiCallsFreeAllowance).toBe('100000');
+      expect(result.activeWalletsFreeAllowance).toBe('100');
+      // Target allowances absorb all usage → no overage; Free would have charged.
+      expect(result.outboundOverage).toBe('0');
+      expect(result.estimatedOverageCost).toBe('0');
+      expect(result.estimatedTotal).toBe('0');
+    });
+
+    it('BILL-009: current-month Free→Growth overage rates use Growth not Free', async () => {
+      const periodStart = new Date('2026-08-01T00:00:00.000Z');
+      const GROWTH_VERSION = {
+        ...STARTER_VERSION,
+        id: 'plan-growth-1',
+        code: 'growth',
+        name: 'Growth',
+        monthlyFeeMicros: 199_000_000n,
+        includedOutboundMicros: 1_000_000_000_000n, // $1M
+        includedApiCalls: 1_000_000n,
+        includedWallets: 1_000,
+        apiOverageRateMicros: 1_000n, // $0.001 / call
+        walletOverageRateMicros: 10_000n,
+      };
+      const freeWithRates = {
+        ...FREE_VERSION,
+        apiOverageRateMicros: 2_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(freeWithRates);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-growth',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: GROWTH_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: GROWTH_VERSION,
+      });
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-aug',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: freeWithRates.id,
+        status: 'open',
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === GROWTH_VERSION.id) return GROWTH_VERSION;
+        if (where?.id === freeWithRates.id) return freeWithRates;
+        return null;
+      });
+      // 1_100_000 API calls vs Growth 1_000_000 included → 100_000 * $0.001 = $100
+      // Free rate would be 1_090_000 * $0.002 (Free included 10K).
+      usageEventFindMany.mockResolvedValue([
+        { metric: 'api_call', quantity: 1_100_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-08');
+
+      expect(result.planId).toBe('free');
+      expect(result.estimatedBaseCost).toBe('0');
+      expect(result.apiCallsFreeAllowance).toBe('1000000');
+      expect(result.estimatedOverageCost).toBe('100');
+      expect(result.estimatedTotal).toBe('100');
+    });
+
+    it('BILL-009: same-plan period is unchanged (no hybrid split)', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+        expiresAt: null,
+        source: 'default',
+      });
+      invoiceFindFirst.mockResolvedValue(null);
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 600_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      const result = await service.getSummary('user-1', '2026-05');
+
+      expect(result.planId).toBe('free');
+      expect(result.outboundFreeAllowance).toBe('50000');
+      expect(result.outboundOverage).toBe('53.75');
+      expect(result.estimatedBaseCost).toBe('0');
+      expect(result.estimatedTotal).toBe('53.75');
+    });
+
+    it('BILL-009: incomplete upgrade_payment assignment fails closed on summary', async () => {
+      const periodStart = new Date('2026-08-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      // No usage invoice → resolveUsagePlanVersion inspects period assignment.
+      invoiceFindFirst.mockResolvedValue(null);
+      assignmentFindUnique.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+      // Applied upgrade row missing / no fromPlanVersion.
+      planChangeFindFirst.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+
+      await expect(service.getSummary('user-1', '2026-08')).rejects.toThrow(ConflictException);
+    });
+
+    it('BILL-009: missing fee-anchor plan version fails closed on summary', async () => {
+      const periodStart = new Date('2026-08-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-aug',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: 'missing-plan-version',
+        status: 'open',
+      });
+      planVersionFindUnique.mockResolvedValue(null);
+
+      await expect(service.getSummary('user-1', '2026-08')).rejects.toThrow(ConflictException);
     });
   });
 
@@ -3551,6 +3789,10 @@ describe('BillingService', () => {
             totalMicros: 53_750_000n,
             snapshotHash: expect.stringMatching(/^[a-f0-9]{64}$/),
             snapshotJson: expect.objectContaining({
+              planVersionId: FREE_VERSION.id,
+              pricingMode: 'single_plan',
+              feePlanVersionId: FREE_VERSION.id,
+              usagePlanVersionId: FREE_VERSION.id,
               plan: expect.objectContaining({
                 code: FREE_VERSION.code,
                 name: FREE_VERSION.name,
@@ -5150,6 +5392,605 @@ describe('BillingService', () => {
       expect(check(null, 'user-1')).toBe(true);
       expect(check(null, null)).toBe(true);
       expect(check(null, 'user-other')).toBe(false);
+    });
+
+    // ── BILL-009 hybrid finalize (mid-month paid upgrade) ──────────────────
+
+    it('BILL-009: finalize Free→Starter uses target allowances/rates; fixed fee stays Free', async () => {
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      const starterWithRates = {
+        ...STARTER_VERSION,
+        apiOverageRateMicros: 1_500n,
+        walletOverageRateMicros: 10_000n,
+      };
+      const freeWithRates = {
+        ...FREE_VERSION,
+        apiOverageRateMicros: 2_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(freeWithRates);
+      // Open usage_period invoice still pinned to Free fee anchor.
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: freeWithRates.id,
+        status: 'open',
+      });
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: starterWithRates.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: starterWithRates,
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === starterWithRates.id) return starterWithRates;
+        if (where?.id === freeWithRates.id) return freeWithRates;
+        return null;
+      });
+      // $100K outbound under Starter $250K included; 50K API under 100K; 50 wallets under 100.
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 100_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+        { metric: 'api_call', quantity: 50_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(50);
+      invoiceUpdate.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        periodStart,
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        planVersionId: freeWithRates.id,
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(invoiceUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'inv-open-may' },
+          data: expect.objectContaining({
+            // Fee identity stays Free; never rewritten to Starter.
+            planVersionId: freeWithRates.id,
+            status: 'finalized',
+            monthlyFeeMicros: 0n,
+            includedOutboundMicros: starterWithRates.includedOutboundMicros,
+            includedApiCalls: starterWithRates.includedApiCalls,
+            includedWallets: starterWithRates.includedWallets,
+            outboundOverageMicros: 0n,
+            apiOverageMicros: 0n,
+            walletOverageMicros: 0n,
+            totalMicros: 0n,
+            snapshotJson: expect.objectContaining({
+              planVersionId: freeWithRates.id,
+              pricingMode: 'hybrid_period',
+              feePlanVersionId: freeWithRates.id,
+              usagePlanVersionId: starterWithRates.id,
+              plan: expect.objectContaining({
+                code: 'free',
+                name: 'Free',
+                monthlyFeeMicros: '0',
+                includedOutboundMicros: '250000',
+                includedApiCalls: '100000',
+                includedWallets: 100,
+              }),
+              amounts: expect.objectContaining({
+                monthlyFeeMicros: '0',
+                totalMicros: '0',
+              }),
+            }),
+          }),
+        }),
+      );
+      expect(result.status).toBe('finalized');
+    });
+
+    it('BILL-009: finalize Free→Growth applies Growth API overage rate without full monthly fee', async () => {
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      const GROWTH_VERSION = {
+        ...STARTER_VERSION,
+        id: 'plan-growth-1',
+        code: 'growth',
+        name: 'Growth',
+        monthlyFeeMicros: 199_000_000n,
+        includedOutboundMicros: 1_000_000_000_000n,
+        includedApiCalls: 1_000_000n,
+        includedWallets: 1_000,
+        apiOverageRateMicros: 1_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      const freeWithRates = {
+        ...FREE_VERSION,
+        apiOverageRateMicros: 2_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(freeWithRates);
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: freeWithRates.id,
+        status: 'open',
+      });
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-growth',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: GROWTH_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: GROWTH_VERSION,
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === GROWTH_VERSION.id) return GROWTH_VERSION;
+        if (where?.id === freeWithRates.id) return freeWithRates;
+        return null;
+      });
+      // 1_100_000 calls → 100_000 over Growth included @ $0.001 = $100; fee stays $0.
+      usageEventFindMany.mockResolvedValue([
+        { metric: 'api_call', quantity: 1_100_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceUpdate.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        periodStart,
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 100_000_000n,
+        planVersionId: freeWithRates.id,
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+      });
+
+      await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(invoiceUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: freeWithRates.id,
+            monthlyFeeMicros: 0n,
+            apiOverageMicros: 100_000_000n,
+            totalMicros: 100_000_000n,
+            includedApiCalls: 1_000_000n,
+            snapshotJson: expect.objectContaining({
+              pricingMode: 'hybrid_period',
+              feePlanVersionId: freeWithRates.id,
+              usagePlanVersionId: GROWTH_VERSION.id,
+              planVersionId: freeWithRates.id,
+            }),
+          }),
+        }),
+      );
+      const lineData = lineCreateMany.mock.calls[0][0] as {
+        data: Array<{ lineType: string; amountMicros: bigint; unitAmountMicros?: bigint }>;
+      };
+      expect(lineData.data.map((l) => l.lineType)).toEqual(
+        expect.arrayContaining(['monthly_fee', 'api_overage']),
+      );
+      const feeLine = lineData.data.find((l) => l.lineType === 'monthly_fee');
+      const apiLine = lineData.data.find((l) => l.lineType === 'api_overage');
+      expect(feeLine?.amountMicros).toBe(0n);
+      expect(apiLine?.amountMicros).toBe(100_000_000n);
+      expect(apiLine?.unitAmountMicros).toBe(1_000n);
+    });
+
+    it('BILL-009: finalize without upgrade keeps single-plan pricing unchanged', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+        expiresAt: null,
+        source: 'default',
+      });
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 600_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(0);
+      invoiceCreate.mockResolvedValue({
+        id: 'inv-1',
+        billingAccountId: ACCOUNT.id,
+        periodStart: new Date('2026-05-01T00:00:00.000Z'),
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 53_750_000n,
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+      });
+
+      await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(invoiceCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: FREE_VERSION.id,
+            monthlyFeeMicros: 0n,
+            totalMicros: 53_750_000n,
+            includedOutboundMicros: FREE_VERSION.includedOutboundMicros,
+            snapshotJson: expect.objectContaining({
+              pricingMode: 'single_plan',
+              feePlanVersionId: FREE_VERSION.id,
+              usagePlanVersionId: FREE_VERSION.id,
+              planVersionId: FREE_VERSION.id,
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('BILL-009: Starter→Growth keeps Starter fixed fee; target wallet/outbound overage', async () => {
+      // Paid Starter→Growth mid-month: fee anchor = Starter $49 (not $0, not Growth $199).
+      // Growth wallet rate $0.02 differs from Starter $0.01; outbound exceeds Growth included.
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      const starterFee = {
+        ...STARTER_VERSION,
+        id: 'plan-starter-fee',
+        monthlyFeeMicros: 49_000_000n,
+        includedOutboundMicros: 250_000_000_000n, // $250K
+        includedApiCalls: 100_000n,
+        includedWallets: 100,
+        apiOverageRateMicros: 1_500n,
+        walletOverageRateMicros: 10_000n, // $0.01 / wallet
+      };
+      const growthUsage = {
+        ...STARTER_VERSION,
+        id: 'plan-growth-usage',
+        code: 'growth',
+        name: 'Growth',
+        monthlyFeeMicros: 199_000_000n,
+        includedOutboundMicros: 1_000_000_000_000n, // $1M
+        includedApiCalls: 1_000_000n,
+        includedWallets: 1_000,
+        apiOverageRateMicros: 1_000n,
+        walletOverageRateMicros: 20_000n, // $0.02 / wallet (≠ Starter)
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(starterFee);
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: starterFee.id,
+        status: 'open',
+      });
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-growth',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: growthUsage.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: growthUsage,
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === starterFee.id) return starterFee;
+        if (where?.id === growthUsage.id) return growthUsage;
+        return null;
+      });
+      // $1.6M outbound → $600K billable after Growth $1M included:
+      //   $500K @ 100ppm = $50; $100K @ 75ppm = $7.5 → $57.5 outbound overage
+      // 1_050 wallets → 50 over Growth 1000 included @ $0.02 = $1 wallet overage
+      usageEventFindMany.mockResolvedValue([
+        {
+          metric: 'outbound_volume',
+          volumeUsdMicros: 1_600_000_000_000n,
+          quantity: 1n,
+          status: 'posted',
+          entryType: 'usage',
+        },
+      ]);
+      walletCount.mockResolvedValue(1_050);
+      const expectedOutboundOverage = 57_500_000n;
+      const expectedWalletOverage = 1_000_000n; // 50 * 20_000
+      const expectedTotal = 49_000_000n + expectedOutboundOverage + expectedWalletOverage;
+      invoiceUpdate.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        periodStart,
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: expectedTotal,
+        planVersionId: starterFee.id,
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+      });
+
+      await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(invoiceUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: starterFee.id,
+            monthlyFeeMicros: 49_000_000n, // Starter fee — not 0, not Growth $199
+            includedOutboundMicros: growthUsage.includedOutboundMicros,
+            includedWallets: 1_000,
+            outboundOverageMicros: expectedOutboundOverage,
+            walletOverageMicros: expectedWalletOverage,
+            totalMicros: expectedTotal,
+            snapshotJson: expect.objectContaining({
+              pricingMode: 'hybrid_period',
+              feePlanVersionId: starterFee.id,
+              usagePlanVersionId: growthUsage.id,
+              planVersionId: starterFee.id,
+              plan: expect.objectContaining({
+                code: 'starter',
+                name: 'Starter',
+                monthlyFeeMicros: '49',
+                includedOutboundMicros: '1000000',
+                includedWallets: 1_000,
+                walletOverageRateMicros: '0.02',
+              }),
+              amounts: expect.objectContaining({
+                monthlyFeeMicros: '49',
+                outboundOverageMicros: '57.5',
+                walletOverageMicros: '1',
+                totalMicros: '107.5',
+              }),
+              tiers: expect.arrayContaining([
+                expect.objectContaining({
+                  ratePpm: 100,
+                  volumeMicros: '500000',
+                  feeMicros: '50',
+                }),
+                expect.objectContaining({
+                  ratePpm: 75,
+                  volumeMicros: '100000',
+                  feeMicros: '7.5',
+                }),
+              ]),
+            }),
+          }),
+        }),
+      );
+      const lineData = lineCreateMany.mock.calls[0][0] as {
+        data: Array<{
+          lineType: string;
+          amountMicros: bigint;
+          unitAmountMicros?: bigint;
+          unitRatePpm?: number;
+        }>;
+      };
+      const feeLine = lineData.data.find((l) => l.lineType === 'monthly_fee');
+      const walletLine = lineData.data.find((l) => l.lineType === 'wallet_overage');
+      const outboundLines = lineData.data.filter((l) => l.lineType === 'outbound_tier');
+      expect(feeLine?.amountMicros).toBe(49_000_000n);
+      expect(walletLine?.amountMicros).toBe(expectedWalletOverage);
+      expect(walletLine?.unitAmountMicros).toBe(20_000n);
+      expect(outboundLines.map((l) => l.amountMicros).reduce((a, b) => a + b, 0n)).toBe(
+        expectedOutboundOverage,
+      );
+    });
+
+    it('BILL-009: historical upgraded month uses that month target even if assignment later expired', async () => {
+      // Clock = 2026-08. May had mid-month Free→Starter upgrade (Starter expired end of May).
+      // Current entitlement is Free again. Requested historical May must still use May's Starter.
+      const mayStart = new Date('2026-05-01T00:00:00.000Z');
+      const starterMay = {
+        ...STARTER_VERSION,
+        id: 'plan-starter-may',
+        apiOverageRateMicros: 1_500n,
+        walletOverageRateMicros: 10_000n,
+      };
+      const freeAnchor = {
+        ...FREE_VERSION,
+        apiOverageRateMicros: 2_000n,
+        walletOverageRateMicros: 10_000n,
+      };
+      const mayStarterAssignment = {
+        id: 'assign-starter-may',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: starterMay.id,
+        periodStart: mayStart,
+        expiresAt: new Date('2026-06-01T00:00:00.000Z'), // expired before "now"
+        source: 'upgrade_payment',
+        planVersion: starterMay,
+      };
+      const currentFreeAssignment = {
+        id: 'assign-free-aug',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: freeAnchor.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: null,
+        source: 'default',
+        planVersion: freeAnchor,
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(freeAnchor);
+      assignmentFindMany.mockImplementation(async (args: any) => {
+        const lte = args?.where?.periodStart?.lte as Date | undefined;
+        if (!lte) return [currentFreeAssignment];
+        // Entitlement at May: Starter still valid (expiresAt > May 1).
+        if (lte.getTime() < new Date('2026-06-01T00:00:00.000Z').getTime()) {
+          return [mayStarterAssignment];
+        }
+        return [currentFreeAssignment];
+      });
+      assignmentFindFirst.mockResolvedValue(currentFreeAssignment);
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-usage-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart: mayStart,
+        planVersionId: freeAnchor.id,
+        status: 'open',
+      });
+      planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
+        if (where?.id === freeAnchor.id) return freeAnchor;
+        if (where?.id === starterMay.id) return starterMay;
+        return null;
+      });
+      // 50K API under Starter 100K included → $0 overage; Free would charge heavily.
+      usageEventFindMany.mockResolvedValue([
+        { metric: 'api_call', quantity: 50_000n, status: 'posted', entryType: 'usage' },
+      ]);
+      walletCount.mockResolvedValue(0);
+
+      // Summary path (historical requested month).
+      const summary = await service.getSummary('user-1', '2026-05');
+      expect(summary.planId).toBe('free');
+      expect(summary.estimatedBaseCost).toBe('0');
+      expect(summary.apiCallsFreeAllowance).toBe('100000');
+      expect(summary.estimatedOverageCost).toBe('0');
+      expect(summary.estimatedTotal).toBe('0');
+
+      // Finalize path for the same historical month.
+      invoiceUpdate.mockResolvedValue({
+        id: 'inv-usage-may',
+        billingAccountId: ACCOUNT.id,
+        periodStart: mayStart,
+        status: 'finalized',
+        currency: 'USD',
+        totalMicros: 0n,
+        planVersionId: freeAnchor.id,
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+      });
+      await service.finalizeInvoice('user-1', '2026-05');
+      expect(invoiceUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planVersionId: freeAnchor.id,
+            monthlyFeeMicros: 0n,
+            includedApiCalls: 100_000n,
+            apiOverageMicros: 0n,
+            totalMicros: 0n,
+            snapshotJson: expect.objectContaining({
+              pricingMode: 'hybrid_period',
+              feePlanVersionId: freeAnchor.id,
+              usagePlanVersionId: starterMay.id,
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('BILL-009: re-finalize of already-finalized invoice does not re-resolve entitlement or rewrite', async () => {
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      const frozenSnapshot = {
+        version: 1,
+        period: '2026-05',
+        planVersionId: FREE_VERSION.id,
+        pricingMode: 'hybrid_period',
+        feePlanVersionId: FREE_VERSION.id,
+        usagePlanVersionId: STARTER_VERSION.id,
+        plan: { code: 'free', name: 'Free' },
+        amounts: { monthlyFeeMicros: '0', totalMicros: '0' },
+      };
+      const finalizedInvoice = {
+        id: 'inv-final-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: FREE_VERSION.id,
+        status: 'finalized' as const,
+        currency: 'USD',
+        totalMicros: 0n,
+        snapshotJson: frozenSnapshot,
+        snapshotHash: 'a'.repeat(64),
+        createdAt: new Date('2026-06-02T00:00:00.000Z'),
+        finalizedAt: new Date('2026-06-02T00:00:00.000Z'),
+      };
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      // Both pre-check and any locked re-check return finalized (immutable).
+      invoiceFindFirst.mockResolvedValue(finalizedInvoice);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-growth-now',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+
+      const result = await service.finalizeInvoice('user-1', '2026-05');
+
+      expect(result.id).toBe('inv-final-may');
+      expect(result.status).toBe('finalized');
+      // Early return: no lock work, no entitlement re-resolve, no rewrite.
+      expect(transaction).not.toHaveBeenCalled();
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(lineCreateMany).not.toHaveBeenCalled();
+      expect(lineDeleteMany).not.toHaveBeenCalled();
+      expect(assignmentFindMany).not.toHaveBeenCalled();
+      expect(usageEventFindMany).not.toHaveBeenCalled();
+    });
+
+    it('BILL-009: finalize fails closed on incomplete upgrade_payment assignment', async () => {
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindFirst.mockResolvedValue(null);
+      assignmentFindUnique.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+      planChangeFindFirst.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-starter',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: STARTER_VERSION.id,
+        periodStart,
+        expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+        source: 'upgrade_payment',
+        planVersion: STARTER_VERSION,
+      });
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+    });
+
+    it('BILL-009: finalize fails closed when open invoice plan version is missing', async () => {
+      const periodStart = new Date('2026-05-01T00:00:00.000Z');
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindFirst.mockResolvedValue({
+        id: 'inv-open-may',
+        billingAccountId: ACCOUNT.id,
+        purpose: 'usage_period',
+        periodStart,
+        planVersionId: 'missing-plan-version',
+        status: 'open',
+      });
+      planVersionFindUnique.mockResolvedValue(null);
+      assignmentFindFirst.mockResolvedValue({
+        id: 'assign-1',
+        billingAccountId: ACCOUNT.id,
+        planVersionId: FREE_VERSION.id,
+        planVersion: FREE_VERSION,
+      });
+
+      await expect(service.finalizeInvoice('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(invoiceUpdate).not.toHaveBeenCalled();
     });
   });
 
