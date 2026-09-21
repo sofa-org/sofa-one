@@ -32,6 +32,7 @@ import { SessionKeyPolicyService } from '../session-key/session-key-policy.servi
 import { BillingDebtService } from '../billing/billing-debt.service';
 import {
   isDeferredDestinationPolicyDenial,
+  type UnprovenAssetOutflowDenialInput,
   WithdrawalDestinationPolicyService,
 } from '../withdrawal-destination/withdrawal-destination-policy.service';
 import {
@@ -48,7 +49,19 @@ import {
   extractDirectTransferIntents,
   uniqueDirectTransferDestinations,
   type DirectTransferIntent,
+  type DirectTransferNotProven,
 } from './direct-transfer-intents';
+
+class DeferredUnprovenAssetOutflowDenial extends Error {
+  readonly name = 'DeferredUnprovenAssetOutflowDenial';
+
+  constructor(
+    readonly httpException: ForbiddenException,
+    readonly audit: UnprovenAssetOutflowDenialInput,
+  ) {
+    super('deferred_unproven_asset_outflow_denial');
+  }
+}
 
 /** Exact outer-gate proof binding carried into the create transaction (no raw evidence). */
 type BoundAssetFlowVerification = {
@@ -98,6 +111,13 @@ type DestinationGateContext = {
   userId: string;
   destinations: string[];
   intents: DirectTransferIntent[];
+  /**
+   * BILL-016 conservative: every interaction is a proven direct-egress intent.
+   * When destination protection is on, false → fail closed (no create/broadcast).
+   * Never treat intents.length === 0 as safe.
+   */
+  fullyProvenDirectEgress: boolean;
+  notProven: DirectTransferNotProven[];
   chainId: number;
   walletId?: string;
   apiKeyId?: string;
@@ -246,7 +266,8 @@ export class TransactionsService {
       executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress!;
 
     // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
-    // Self-transfers (recipient === execution owner) are excluded by the parser.
+    // Completeness is per-interaction: notProven entries are never dropped.
+    // Self-transfers / non-owner transferFrom / empty / unknown are not proven.
     const destinationExtract = extractDirectTransferIntents(
       dto.interactions,
       assetFlowOwnerAddress,
@@ -254,21 +275,38 @@ export class TransactionsService {
     if (!destinationExtract.ok) {
       throw new BadRequestException(destinationExtract.message);
     }
-    const destinationGate: DestinationGateContext | null =
-      destinationExtract.intents.length > 0
-        ? {
-            userId,
-            destinations: uniqueDirectTransferDestinations(destinationExtract.intents),
-            intents: destinationExtract.intents,
-            chainId,
-            walletId: wallet.id,
-            apiKeyId: apiKeyRecord.id,
-            apiKeyPrefix: apiKeyRecord.keyPrefix,
-            executionMode,
-          }
-        : null;
+    const destinations = uniqueDirectTransferDestinations(destinationExtract.intents);
+    const destinationGate: DestinationGateContext = {
+      userId,
+      destinations,
+      intents: destinationExtract.intents,
+      fullyProvenDirectEgress: destinationExtract.fullyProvenDirectEgress,
+      notProven: destinationExtract.notProven,
+      chainId,
+      walletId: wallet.id,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      executionMode,
+    };
 
-    if (destinationGate) {
+    // Destination protection (requireAddressAllowlist) only tightens the generic
+    // send path. When enabled: unproven asset outflow fails closed before create.
+    // When disabled: preserve legacy product semantics (only gate proven destinations).
+    const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
+    if (destinationProtectionEnabled) {
+      if (!destinationGate.fullyProvenDirectEgress) {
+        await this.throwUnprovenAssetOutflowBlocked(destinationGate);
+      }
+      this.assertDirectEgressReauthorized(apiKeyRecord);
+      await this.destinationPolicy.assertDestinationsAllowed(userId, destinationGate.destinations, {
+        actorType: 'api_key',
+        chainId,
+        walletId: wallet.id,
+        apiKeyId: apiKeyRecord.id,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        executionMode,
+      });
+    } else if (destinationGate.destinations.length > 0) {
       this.assertDirectEgressReauthorized(apiKeyRecord);
       await this.destinationPolicy.assertDestinationsAllowed(userId, destinationGate.destinations, {
         actorType: 'api_key',
@@ -773,7 +811,7 @@ export class TransactionsService {
       walletAddress: string;
       details: Record<string, unknown>;
       billingGate?: BillingAssetFlowGateContext;
-      destinationGate?: DestinationGateContext | null;
+      destinationGate?: DestinationGateContext;
     },
   ) {
     // Interactive transaction: inner idempotency + destination lock/recheck +
@@ -796,27 +834,51 @@ export class TransactionsService {
           return { tx: existingInTx, created: false };
         }
 
-        // BILL-016: user-scoped destination lock + live API-key reauth + destination
-        // re-assert before insert. Never trust the HTTP-auth snapshot alone.
-        // Lock first so allowlist mutations cannot race acceptance. No RPC here.
-        if (params.destinationGate && params.destinationGate.destinations.length > 0) {
+        // BILL-016: user-scoped destination lock + live protection/reauth +
+        // destination re-assert before insert. Never trust the HTTP-auth snapshot
+        // alone. Lock first so allowlist/protection mutations cannot race
+        // acceptance. No RPC here. Unproven batches re-check protection under
+        // lock so enablement after outer preflight cannot slip through.
+        if (params.destinationGate) {
+          const gate = params.destinationGate;
           await this.destinationPolicy.acquireUserDestinationLock(userId, txClient);
-          await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
-          // deferAudit: never write security_events under ApiKey FOR UPDATE
-          // (FK key-share would deadlock). Caller records after rollback.
-          await this.destinationPolicy.assertDestinationsAllowed(
-            userId,
-            params.destinationGate.destinations,
-            {
-              actorType: 'api_key',
-              chainId: params.destinationGate.chainId,
-              walletId: params.destinationGate.walletId,
-              apiKeyId: params.destinationGate.apiKeyId,
-              apiKeyPrefix: params.destinationGate.apiKeyPrefix,
-              executionMode: params.destinationGate.executionMode,
-            },
-            { prisma: txClient, deferAudit: true },
-          );
+          const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
+          if (protectionOn) {
+            if (!gate.fullyProvenDirectEgress) {
+              await this.throwUnprovenAssetOutflowBlocked(gate, { deferAudit: true });
+            }
+            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+            // deferAudit: never write security_events under ApiKey FOR UPDATE
+            // (FK key-share would deadlock). Caller records after rollback.
+            await this.destinationPolicy.assertDestinationsAllowed(
+              userId,
+              gate.destinations,
+              {
+                actorType: 'api_key',
+                chainId: gate.chainId,
+                walletId: gate.walletId,
+                apiKeyId: gate.apiKeyId,
+                apiKeyPrefix: gate.apiKeyPrefix,
+                executionMode: gate.executionMode,
+              },
+              { prisma: txClient, deferAudit: true },
+            );
+          } else if (gate.destinations.length > 0) {
+            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+            await this.destinationPolicy.assertDestinationsAllowed(
+              userId,
+              gate.destinations,
+              {
+                actorType: 'api_key',
+                chainId: gate.chainId,
+                walletId: gate.walletId,
+                apiKeyId: gate.apiKeyId,
+                apiKeyPrefix: gate.apiKeyPrefix,
+                executionMode: gate.executionMode,
+              },
+              { prisma: txClient, deferAudit: true },
+            );
+          }
         }
 
         if (params.billingGate) {
@@ -856,6 +918,10 @@ export class TransactionsService {
       });
     } catch (error: any) {
       // After TX rollback: locks released — safe to audit deferred destination denials.
+      if (error instanceof DeferredUnprovenAssetOutflowDenial) {
+        await this.destinationPolicy.recordUnprovenAssetOutflowDenial(error.audit);
+        throw error.httpException;
+      }
       if (isDeferredDestinationPolicyDenial(error)) {
         await this.destinationPolicy.recordDeferredDenial(error);
         throw error.httpException;
@@ -871,6 +937,85 @@ export class TransactionsService {
       if (!existing) throw error;
       return { tx: existing, created: false };
     }
+  }
+
+  /**
+   * BILL-016: whether the user's withdrawal destination allowlist is enforced.
+   * Missing policy or requireAddressAllowlist !== true → protection off (legacy
+   * product semantics). DB failures fail closed (503) — never assume off.
+   */
+  private async isDestinationProtectionEnabled(
+    userId: string,
+    db: PrismaService | Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    try {
+      const policy = await db.withdrawalPolicy.findUnique({
+        where: { userId },
+        select: { requireAddressAllowlist: true },
+      });
+      return policy?.requireAddressAllowlist === true;
+    } catch (err) {
+      this.logger.error(
+        {
+          message: 'Destination protection policy lookup failed',
+          userId,
+        },
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        message: 'Withdrawal destination policy is temporarily unavailable',
+      });
+    }
+  }
+
+  /**
+   * BILL-016 conservative: destination protection is on and the batch is not
+   * fully proven direct egress. No Transaction row, no broadcast. Safe metadata
+   * only (counts + reasons) — never calldata.
+   */
+  private async throwUnprovenAssetOutflowBlocked(
+    gate: DestinationGateContext,
+    options: { deferAudit?: boolean } = {},
+  ): Promise<never> {
+    const reasonCounts: Record<string, number> = {};
+    for (const entry of gate.notProven) {
+      reasonCounts[entry.reason] = (reasonCounts[entry.reason] ?? 0) + 1;
+    }
+    this.logger.warn({
+      message: 'Transaction send blocked: unproven asset outflow under destination protection',
+      userId: gate.userId,
+      chainId: gate.chainId,
+      apiKeyPrefix: gate.apiKeyPrefix,
+      executionMode: gate.executionMode,
+      interactionCount: gate.intents.length + gate.notProven.length,
+      provenIntentCount: gate.intents.length,
+      notProvenCount: gate.notProven.length,
+      notProvenReasons: reasonCounts,
+    });
+    const httpException = new ForbiddenException({
+      code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+      message:
+        'Unproven asset outflow is not allowed while destination protection is enabled. Use a dedicated withdraw/payment path, or send only direct ERC-20 transfers to allowlisted destinations.',
+    });
+    const audit: UnprovenAssetOutflowDenialInput = {
+      actorType: 'api_key',
+      userId: gate.userId,
+      apiKeyId: gate.apiKeyId,
+      walletId: gate.walletId,
+      chainId: gate.chainId,
+      executionMode: gate.executionMode,
+      interactionCount: gate.intents.length + gate.notProven.length,
+      provenIntentCount: gate.intents.length,
+      notProvenCount: gate.notProven.length,
+      notProvenReasons: reasonCounts,
+      apiKeyPrefix: gate.apiKeyPrefix,
+    };
+    if (options.deferAudit) {
+      throw new DeferredUnprovenAssetOutflowDenial(httpException, audit);
+    }
+    await this.destinationPolicy.recordUnprovenAssetOutflowDenial(audit);
+    throw httpException;
   }
 
   /**

@@ -279,4 +279,111 @@ describe('WithdrawalDestinationPolicyService', () => {
     await service.acquireUserDestinationLock(USER, tx as never);
     expect(executeRaw).toHaveBeenCalled();
   });
+
+  describe('recordUnprovenAssetOutflowDenial', () => {
+    it('records a high/denied SecurityEvent with safe aggregate metadata only', async () => {
+      // Intentional extra sensitive keys — must never reach SecurityEvent payload.
+      const leakyInput = {
+        actorType: 'api_key' as const,
+        userId: USER,
+        apiKeyId: 'k1',
+        apiKeyPrefix: 'sk_ab',
+        chainId: 84532,
+        executionMode: 'session_key',
+        interactionCount: 3,
+        provenIntentCount: 1,
+        notProvenCount: 2,
+        notProvenReasons: { unknown_selector: 1, empty_data: 1 },
+        calldata: '0xa9059cbbdeadbeef',
+        receipt: { status: '0x1', logs: [] },
+        rpcUrl: 'https://secret.example/rpc',
+      };
+      await service.recordUnprovenAssetOutflowDenial(leakyInput);
+
+      expect(record).toHaveBeenCalledTimes(1);
+      const payload = record.mock.calls[0][0] as Record<string, unknown>;
+      expect(payload).toEqual(
+        expect.objectContaining({
+          actorType: 'api_key',
+          userId: USER,
+          apiKeyId: 'k1',
+          eventType: 'transaction.unproven_asset_outflow_blocked',
+          riskLevel: 'high',
+          result: 'denied',
+          reason: 'Unproven asset outflow blocked under destination protection',
+          metadata: expect.objectContaining({
+            code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+            chainId: 84532,
+            executionMode: 'session_key',
+            apiKeyPrefix: 'sk_ab',
+            interactionCount: 3,
+            provenIntentCount: 1,
+            notProvenCount: 2,
+            notProvenReasons: { unknown_selector: 1, empty_data: 1 },
+          }),
+        }),
+      );
+
+      const meta = payload.metadata as Record<string, unknown>;
+      expect(meta).not.toHaveProperty('calldata');
+      expect(meta).not.toHaveProperty('receipt');
+      expect(meta).not.toHaveProperty('rpcUrl');
+      expect(JSON.stringify(payload)).not.toMatch(/0xa9059cbb|secret\.example/i);
+    });
+
+    it('omits API-key fields for user actorType', async () => {
+      await service.recordUnprovenAssetOutflowDenial({
+        actorType: 'user',
+        userId: USER,
+        walletId: 'w1',
+        apiKeyId: 'should-not-appear',
+        apiKeyPrefix: 'sk_nope',
+        executionMode: 'session_key',
+        chainId: 84532,
+        notProvenCount: 1,
+      });
+
+      const payload = record.mock.calls[0][0] as Record<string, unknown>;
+      expect(payload.actorType).toBe('user');
+      expect(payload.apiKeyId).toBeUndefined();
+      expect(payload.walletId).toBe('w1');
+      const meta = payload.metadata as Record<string, unknown>;
+      expect(meta).not.toHaveProperty('apiKeyPrefix');
+      expect(meta).not.toHaveProperty('executionMode');
+      expect(meta).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+          chainId: 84532,
+          notProvenCount: 1,
+        }),
+      );
+    });
+
+    it('swallows securityEvents.record failures (best-effort)', async () => {
+      record.mockRejectedValue(new Error('audit down'));
+      await expect(
+        service.recordUnprovenAssetOutflowDenial({
+          userId: USER,
+          notProvenCount: 1,
+        }),
+      ).resolves.toBeUndefined();
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+
+    it('sanitizes non-finite reason counts and drops empty/oversized keys', async () => {
+      await service.recordUnprovenAssetOutflowDenial({
+        userId: USER,
+        notProvenReasons: {
+          ok_reason: 2,
+          bad_nan: Number.NaN,
+          bad_inf: Number.POSITIVE_INFINITY,
+          '': 1,
+          ['x'.repeat(65)]: 1,
+        },
+      });
+
+      const meta = record.mock.calls[0][0].metadata as Record<string, unknown>;
+      expect(meta.notProvenReasons).toEqual({ ok_reason: 2 });
+    });
+  });
 });

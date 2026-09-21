@@ -54,6 +54,25 @@ export type DestinationDenialAuditPayload = {
 };
 
 /**
+ * Safe aggregate fields for unproven-asset-outflow denial audits.
+ * Callers must never pass calldata, receipts, RPC/provider details, or secrets.
+ */
+export type UnprovenAssetOutflowDenialInput = {
+  actorType?: DestinationPolicyActorType;
+  userId: string;
+  apiKeyId?: string;
+  walletId?: string;
+  chainId?: number;
+  executionMode?: string;
+  interactionCount?: number;
+  provenIntentCount?: number;
+  notProvenCount?: number;
+  /** Aggregated not-proven reason → count (no raw interaction data). */
+  notProvenReasons?: Readonly<Record<string, number>>;
+  apiKeyPrefix?: string;
+};
+
+/**
  * Thrown instead of Forbidden/503 when `deferAudit: true`. Carries the stable
  * HTTP exception plus sanitized audit context for post-rollback recording.
  */
@@ -253,6 +272,83 @@ export class WithdrawalDestinationPolicyService {
         errorName: err instanceof Error ? err.name : 'unknown',
       });
     }
+  }
+
+  /**
+   * Best-effort SecurityEvent when destination protection blocks a send because
+   * the batch is not fully proven direct egress. Safe for TransactionsService
+   * to call after (or before) throwing the HTTP denial — audit failures never
+   * throw and must not mask the original rejection.
+   *
+   * Metadata is allowlisted aggregate fields only (code, counts, chainId, etc.).
+   * Never pass calldata, receipts, provider/RPC details, or secrets.
+   */
+  async recordUnprovenAssetOutflowDenial(
+    input: UnprovenAssetOutflowDenialInput,
+  ): Promise<void> {
+    const actorType: DestinationPolicyActorType =
+      input.actorType === 'user' ? 'user' : 'api_key';
+
+    const metadata: Prisma.InputJsonObject = {
+      code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+      ...(typeof input.chainId === 'number' && Number.isFinite(input.chainId)
+        ? { chainId: input.chainId }
+        : {}),
+      ...(typeof input.interactionCount === 'number' && Number.isFinite(input.interactionCount)
+        ? { interactionCount: input.interactionCount }
+        : {}),
+      ...(typeof input.provenIntentCount === 'number' && Number.isFinite(input.provenIntentCount)
+        ? { provenIntentCount: input.provenIntentCount }
+        : {}),
+      ...(typeof input.notProvenCount === 'number' && Number.isFinite(input.notProvenCount)
+        ? { notProvenCount: input.notProvenCount }
+        : {}),
+      ...(input.notProvenReasons
+        ? { notProvenReasons: this.sanitizeReasonCounts(input.notProvenReasons) }
+        : {}),
+      ...(actorType === 'api_key' && typeof input.apiKeyPrefix === 'string'
+        ? { apiKeyPrefix: input.apiKeyPrefix }
+        : {}),
+      ...(actorType === 'api_key' && typeof input.executionMode === 'string'
+        ? { executionMode: input.executionMode }
+        : {}),
+    };
+
+    try {
+      await this.securityEvents?.record({
+        actorType,
+        userId: input.userId,
+        apiKeyId:
+          actorType === 'api_key' && typeof input.apiKeyId === 'string'
+            ? input.apiKeyId
+            : undefined,
+        walletId: typeof input.walletId === 'string' ? input.walletId : undefined,
+        eventType: 'transaction.unproven_asset_outflow_blocked',
+        riskLevel: 'high',
+        result: 'denied',
+        reason: 'Unproven asset outflow blocked under destination protection',
+        metadata,
+      });
+    } catch (err) {
+      this.logger.warn({
+        message: 'Unproven asset outflow denial audit failed',
+        userId: input.userId,
+        errorName: err instanceof Error ? err.name : 'unknown',
+      });
+    }
+  }
+
+  /** Keep only finite numeric reason → count pairs (no free-form payloads). */
+  private sanitizeReasonCounts(
+    reasons: Readonly<Record<string, number>>,
+  ): Prisma.InputJsonObject {
+    const out: Record<string, number> = {};
+    for (const [key, value] of Object.entries(reasons)) {
+      if (typeof key !== 'string' || key.length === 0 || key.length > 64) continue;
+      if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+      out[key] = value;
+    }
+    return out;
   }
 
   private normalizeDestination(address: string): string {

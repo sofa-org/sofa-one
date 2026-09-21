@@ -149,6 +149,7 @@ describe('TransactionsService', () => {
     acquireUserDestinationLock: jest.fn().mockResolvedValue(undefined),
     assertDestinationsAllowed: jest.fn().mockResolvedValue(undefined),
     recordDeferredDenial: jest.fn().mockResolvedValue(undefined),
+    recordUnprovenAssetOutflowDenial: jest.fn().mockResolvedValue(undefined),
   };
 
   /** Interactive-tx findFirst — distinct from root so P2002 recovery can be asserted. */
@@ -160,6 +161,8 @@ describe('TransactionsService', () => {
   const prisma = {
     userWallet: { findUnique: jest.fn() },
     apiKey: { findUnique: jest.fn() },
+    // BILL-016: destination protection = requireAddressAllowlist === true.
+    withdrawalPolicy: { findUnique: jest.fn() },
     transaction: {
       create: jest.fn(),
       update: jest.fn(),
@@ -301,11 +304,14 @@ describe('TransactionsService', () => {
         direct_egress_policy_accepted_at: new Date('2026-01-01T00:00:00.000Z'),
       },
     ]);
+    // Default: destination protection OFF (legacy product semantics).
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue(null);
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         $executeRaw: jest.fn().mockResolvedValue(undefined),
         $queryRaw: txApiKeyLockRows,
         apiKey: { findUnique: jest.fn() },
+        withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
         transaction: {
           findFirst: txFindFirst,
           create: prisma.transaction.create,
@@ -317,6 +323,7 @@ describe('TransactionsService', () => {
     destinationPolicy.acquireUserDestinationLock.mockResolvedValue(undefined);
     destinationPolicy.assertDestinationsAllowed.mockResolvedValue(undefined);
     destinationPolicy.recordDeferredDenial.mockResolvedValue(undefined);
+    destinationPolicy.recordUnprovenAssetOutflowDenial.mockResolvedValue(undefined);
     openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
     openfort.waitForUserOperationReceipt.mockResolvedValue({
       success: true,
@@ -1238,6 +1245,218 @@ describe('TransactionsService', () => {
       response: { code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED },
     });
     expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  // ── BILL-016 conservative destination protection ───────────────────────────
+
+  function enableDestinationProtection() {
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue({
+      requireAddressAllowlist: true,
+    });
+  }
+
+  it('protection ON: blocks finite approval with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-approve-1',
+    };
+
+    await expect(service.send('user-1', approveDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(destinationPolicy.recordUnprovenAssetOutflowDenial).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        chainId: 8453,
+        executionMode: 'session_key',
+        interactionCount: 1,
+        provenIntentCount: 0,
+        notProvenCount: 1,
+        notProvenReasons: { unknown_selector: 1 },
+      }),
+    );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks unknown selector with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: '0xdeadbeef', value: '0' }],
+      idempotencyKey: 'prot-unknown-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks empty calldata contract call with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const emptyDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: '0x', value: '0' }],
+      idempotencyKey: 'prot-empty-1',
+    };
+
+    await expect(service.send('user-1', emptyDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks router/multicall-shaped unknown execute selector', async () => {
+    enableDestinationProtection();
+    // multicall(bytes[])-like selector 0xac9650d8 is not a proven direct transfer.
+    const multicallDto = {
+      ...dto,
+      interactions: [
+        {
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xac9650d8' + '0'.repeat(128),
+          value: '0',
+        },
+      ],
+      idempotencyKey: 'prot-multicall-1',
+    };
+
+    await expect(service.send('user-1', multicallDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks direct transfer + unknown mixed batch (no partial allow)', async () => {
+    enableDestinationProtection();
+    const mixedDto = {
+      ...dto,
+      interactions: [
+        { to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' },
+        { to: TOKEN, data: '0xdeadbeef', value: '0' },
+      ],
+      idempotencyKey: 'prot-mixed-1',
+    };
+
+    await expect(service.send('user-1', mixedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    // Must not destination-gate only the proven half and then broadcast the rest.
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks unproven self-transfer and non-owner transferFrom', async () => {
+    enableDestinationProtection();
+    const selfDto = {
+      ...dto,
+      interactions: [
+        { to: TOKEN, data: erc20TransferData(wallet.walletAddress), value: '0' },
+      ],
+      idempotencyKey: 'prot-self-1',
+    };
+    await expect(service.send('user-1', selfDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+
+    const foreignFrom = '0x4444444444444444444444444444444444444444';
+    const tfData = encodeFunctionData({
+      abi: [
+        {
+          type: 'function',
+          name: 'transferFrom',
+          inputs: [
+            { name: 'from', type: 'address' },
+            { name: 'to', type: 'address' },
+            { name: 'amount', type: 'uint256' },
+          ],
+          outputs: [{ type: 'bool' }],
+          stateMutability: 'nonpayable',
+        },
+      ],
+      functionName: 'transferFrom',
+      args: [foreignFrom as Hex, EXTERNAL as Hex, 1n],
+    });
+    const nonOwnerDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: tfData, value: '0' }],
+      idempotencyKey: 'prot-nonowner-tf-1',
+    };
+    await expect(service.send('user-1', nonOwnerDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection OFF: preserves empty calldata / approval behavior (no unproven block)', async () => {
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue({
+      requireAddressAllowlist: false,
+    });
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-off-approve-1',
+    };
+
+    await service.send('user-1', approveDto as any, apiKeyContext);
+
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('protection ON: allows fully proven direct transfer through destination gate (regression)', async () => {
+    enableDestinationProtection();
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'prot-on-transfer-ok-1',
+    };
+
+    await service.send('user-1', externalDto as any, apiKeyContext);
+
+    expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('protection ON: unproven denial creates no Transaction even if outer race-enabled', async () => {
+    // Outer sees protection off; inner (under lock) sees protection on → fail closed.
+    prisma.withdrawalPolicy.findUnique
+      .mockResolvedValueOnce(null) // outer
+      .mockResolvedValueOnce({ requireAddressAllowlist: true }); // inner
+
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-race-inner-1',
+    };
+
+    await expect(service.send('user-1', approveDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(destinationPolicy.acquireUserDestinationLock).toHaveBeenCalled();
+    expect(destinationPolicy.recordUnprovenAssetOutflowDenial).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        chainId: 8453,
+        notProvenCount: 1,
+        notProvenReasons: { unknown_selector: 1 },
+      }),
+    );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });

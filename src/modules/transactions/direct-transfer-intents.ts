@@ -2,23 +2,33 @@
  * Strict extraction of direct ERC-20-shaped transfer destinations from a send
  * interaction batch. Used only for API-key destination/cooldown policy (BILL-016).
  *
- * In scope:
- *   - transfer(address,uint256)  selector 0xa9059cbb
+ * In scope (proven direct egress):
+ *   - transfer(address,uint256)  selector 0xa9059cbb → non-self recipient
  *   - transferFrom(address,address,uint256) selector 0x23b872dd when `from`
- *     equals the server-side execution owner (conservative: NFT-shared selector
- *     still treated as a destination intent; we never claim ERC-20 authenticity)
+ *     equals the server-side execution owner and recipient is non-self
+ *     (conservative: NFT-shared selector still treated as a destination intent;
+ *     we never claim ERC-20 authenticity)
  *
- * Out of scope (no intent emitted): approvals, routers, multicalls, unknown
- * selectors, transferFrom where from ≠ execution owner, self-transfers.
+ * Not proven (no intent; BILL-016 conservative fail-closed when destination
+ * protection is enabled — never treat intents.length === 0 as safe):
+ *   - empty / missing calldata, incomplete or unknown selectors
+ *   - self-transfer, non-owner-sourced transferFrom
+ *   - approvals, routers, multicalls, arbitrary execute (unknown selector)
  *
  * Known selectors with wrong length/padding/trailing bytes → stable malformed
  * error (HTTP 400 at the call site). Native non-zero value remains rejected by
- * TransactionPolicyService; empty/native-only interactions produce no intents.
+ * TransactionPolicyService.
+ *
+ * This is not a generic calldata decoder and not an asset-flow classifier.
  */
 import { getAddress, isAddress } from 'viem';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 
 export const ERC20_TRANSFER_SELECTOR = '0xa9059cbb';
 export const ERC20_TRANSFER_FROM_SELECTOR = '0x23b872dd';
+
+/** Stable code for fail-closed unproven batch under destination protection. */
+export const UNPROVEN_ASSET_OUTFLOW_BLOCKED = API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED;
 
 /** 0x + 4-byte selector + two 32-byte words. */
 const TRANSFER_HEX_LEN = 138;
@@ -35,10 +45,35 @@ export type DirectTransferIntent = {
   contract: string;
 };
 
+/**
+ * Why an interaction is not a proven direct-egress intent. Used when destination
+ * protection is enabled to fail closed (not for product allow-lists).
+ */
+export type DirectTransferNotProvenReason =
+  | 'empty_calldata'
+  | 'unknown_selector'
+  | 'incomplete_selector'
+  | 'self_transfer'
+  | 'non_owner_transfer_from'
+  | 'invalid_target'
+  | 'non_hex_calldata';
+
+export type DirectTransferNotProven = {
+  interactionIndex: number;
+  reason: DirectTransferNotProvenReason;
+};
+
 export type DirectTransferExtractOk = {
   ok: true;
   /** Non-self direct transfer destinations (execution owner excluded). */
   intents: DirectTransferIntent[];
+  /**
+   * True only when the batch is non-empty and every interaction is a proven
+   * direct-egress intent. `intents.length === 0` is never treated as safe.
+   */
+  fullyProvenDirectEgress: boolean;
+  /** Per-interaction reasons for interactions that did not yield an intent. */
+  notProven: DirectTransferNotProven[];
 };
 
 export type DirectTransferExtractErr = {
@@ -59,6 +94,8 @@ type InteractionLike = {
 /**
  * Parse every interaction. Returns all non-self direct-transfer intents, or a
  * stable malformed error for known selectors that fail strict layout checks.
+ * Completeness: every interaction is either a proven intent, a notProven entry,
+ * or a hard malformed error — never silently dropped when protection is on.
  */
 export function extractDirectTransferIntents(
   interactions: ReadonlyArray<InteractionLike>,
@@ -75,6 +112,7 @@ export function extractDirectTransferIntents(
   }
 
   const intents: DirectTransferIntent[] = [];
+  const notProven: DirectTransferNotProven[] = [];
 
   for (let i = 0; i < interactions.length; i++) {
     const interaction = interactions[i]!;
@@ -84,10 +122,18 @@ export function extractDirectTransferIntents(
     }
     if (parsed.intent) {
       intents.push(parsed.intent);
+    } else {
+      notProven.push({
+        interactionIndex: i,
+        reason: parsed.notProvenReason,
+      });
     }
   }
 
-  return { ok: true, intents };
+  const fullyProvenDirectEgress =
+    interactions.length > 0 && notProven.length === 0 && intents.length === interactions.length;
+
+  return { ok: true, intents, fullyProvenDirectEgress, notProven };
 }
 
 /**
@@ -110,7 +156,10 @@ function parseOneInteraction(
   interaction: InteractionLike,
   index: number,
   owner: string,
-): { ok: true; intent: DirectTransferIntent | null } | DirectTransferExtractErr {
+):
+  | { ok: true; intent: DirectTransferIntent; notProvenReason?: undefined }
+  | { ok: true; intent: null; notProvenReason: DirectTransferNotProvenReason }
+  | DirectTransferExtractErr {
   const dataRaw = interaction.data ?? '0x';
   if (typeof dataRaw !== 'string') {
     return malformed(index, 'Interaction calldata must be a hex string');
@@ -120,16 +169,16 @@ function parseOneInteraction(
   // use lowercase hex so length/padding rules are case-insensitive.
   const trimmed = dataRaw.trim();
   if (trimmed === '' || trimmed === '0x' || trimmed === '0X') {
-    return { ok: true, intent: null };
+    return { ok: true, intent: null, notProvenReason: 'empty_calldata' };
   }
   if (!trimmed.startsWith('0x') && !trimmed.startsWith('0X')) {
-    // Not hex-prefixed calldata — out of scope for destination intents.
-    return { ok: true, intent: null };
+    // Not hex-prefixed calldata — not a proven direct transfer.
+    return { ok: true, intent: null, notProvenReason: 'non_hex_calldata' };
   }
 
-  // Incomplete selector (0x + fewer than 8 hex chars) is out of scope, not malformed.
+  // Incomplete selector (0x + fewer than 8 hex chars) is not a known transfer.
   if (trimmed.length < 10) {
-    return { ok: true, intent: null };
+    return { ok: true, intent: null, notProvenReason: 'incomplete_selector' };
   }
 
   const selector = trimmed.slice(0, 10).toLowerCase();
@@ -144,8 +193,8 @@ function parseOneInteraction(
     return malformed(index, `Interaction ${index + 1}: transfer target address is invalid`);
   }
   if (!contract) {
-    // Unknown selector + unusable to: out of scope (DTO usually rejects earlier).
-    return { ok: true, intent: null };
+    // Unknown selector + unusable to: not proven (DTO usually rejects earlier).
+    return { ok: true, intent: null, notProvenReason: 'invalid_target' };
   }
 
   if (isKnownTransfer) {
@@ -167,8 +216,8 @@ function parseOneInteraction(
     return parseTransferFrom(data, index, owner, contract);
   }
 
-  // Unknown / incomplete-as-unknown selectors: no destination intent.
-  return { ok: true, intent: null };
+  // Unknown selectors (approve, router, multicall, execute, …): not proven.
+  return { ok: true, intent: null, notProvenReason: 'unknown_selector' };
 }
 
 function parseTransfer(
@@ -176,7 +225,10 @@ function parseTransfer(
   index: number,
   owner: string,
   contract: string,
-): { ok: true; intent: DirectTransferIntent | null } | DirectTransferExtractErr {
+):
+  | { ok: true; intent: DirectTransferIntent; notProvenReason?: undefined }
+  | { ok: true; intent: null; notProvenReason: DirectTransferNotProvenReason }
+  | DirectTransferExtractErr {
   if (data.length !== TRANSFER_HEX_LEN) {
     return malformed(
       index,
@@ -198,9 +250,9 @@ function parseTransfer(
     return malformed(index, `Interaction ${index + 1}: transfer recipient address is invalid`);
   }
 
-  // Self-transfer: no destination policy.
+  // Self-transfer: not proven egress (cannot prove safe under destination policy).
   if (recipient === owner) {
-    return { ok: true, intent: null };
+    return { ok: true, intent: null, notProvenReason: 'self_transfer' };
   }
 
   return {
@@ -219,7 +271,10 @@ function parseTransferFrom(
   index: number,
   owner: string,
   contract: string,
-): { ok: true; intent: DirectTransferIntent | null } | DirectTransferExtractErr {
+):
+  | { ok: true; intent: DirectTransferIntent; notProvenReason?: undefined }
+  | { ok: true; intent: null; notProvenReason: DirectTransferNotProvenReason }
+  | DirectTransferExtractErr {
   if (data.length !== TRANSFER_FROM_HEX_LEN) {
     return malformed(
       index,
@@ -250,11 +305,11 @@ function parseTransferFrom(
   // Only execution-owner-sourced transferFrom is treated as direct egress.
   // (Conservative for NFT-shared selector: still policy the recipient.)
   if (from !== owner) {
-    return { ok: true, intent: null };
+    return { ok: true, intent: null, notProvenReason: 'non_owner_transfer_from' };
   }
 
   if (recipient === owner) {
-    return { ok: true, intent: null };
+    return { ok: true, intent: null, notProvenReason: 'self_transfer' };
   }
 
   return {

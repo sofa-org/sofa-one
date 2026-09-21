@@ -45,6 +45,14 @@ describe('resolveApiErrorCode', () => {
     ['UserOperation rejected by bundler', API_ERROR_CODES.USER_OPERATION_REJECTED],
     ['Backend EOA transaction failed', API_ERROR_CODES.BACKEND_TRANSACTION_FAILED],
     ['Wallet service unavailable', API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE],
+    [
+      'Unproven asset outflow is not allowed while destination protection is enabled. Use a dedicated withdraw/payment path, or send only direct ERC-20 transfers to allowlisted destinations.',
+      API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+    ],
+    [
+      'Transaction send blocked: unproven asset outflow under destination protection',
+      API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+    ],
   ])('maps "%s" to %s', (message, expectedCode) => {
     expect(resolveApiErrorCode(HttpStatus.BAD_REQUEST, message)).toBe(expectedCode);
   });

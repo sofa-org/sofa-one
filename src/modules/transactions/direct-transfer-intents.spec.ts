@@ -35,6 +35,8 @@ describe('extractDirectTransferIntents', () => {
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.fullyProvenDirectEgress).toBe(true);
+    expect(result.notProven).toEqual([]);
     expect(result.intents).toHaveLength(1);
     expect(result.intents[0]).toMatchObject({
       kind: 'erc20_transfer',
@@ -48,7 +50,11 @@ describe('extractDirectTransferIntents', () => {
       [{ to: TOKEN, data: transferData(OWNER), value: '0' }],
       OWNER,
     );
-    expect(result).toEqual({ ok: true, intents: [] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.intents).toEqual([]);
+    expect(result.fullyProvenDirectEgress).toBe(false);
+    expect(result.notProven).toEqual([{ interactionIndex: 0, reason: 'self_transfer' }]);
   });
 
   it('extracts transferFrom only when from === execution owner', () => {
@@ -66,7 +72,13 @@ describe('extractDirectTransferIntents', () => {
       [{ to: TOKEN, data: transferFromData(OTHER, EXTERNAL), value: '0' }],
       OWNER,
     );
-    expect(foreign).toEqual({ ok: true, intents: [] });
+    expect(foreign.ok).toBe(true);
+    if (!foreign.ok) return;
+    expect(foreign.intents).toEqual([]);
+    expect(foreign.fullyProvenDirectEgress).toBe(false);
+    expect(foreign.notProven).toEqual([
+      { interactionIndex: 0, reason: 'non_owner_transfer_from' },
+    ]);
   });
 
   it('rejects known-selector transfer with wrong length (trailing data)', () => {
@@ -91,24 +103,70 @@ describe('extractDirectTransferIntents', () => {
     expect(result.message).toMatch(/invalid word encoding/i);
   });
 
-  it('ignores empty calldata and unknown selectors', () => {
-    expect(extractDirectTransferIntents([{ to: TOKEN, data: '0x', value: '0' }], OWNER)).toEqual({
-      ok: true,
-      intents: [],
-    });
+  it('classifies empty calldata and unknown selectors as not proven (never safe)', () => {
+    const empty = extractDirectTransferIntents([{ to: TOKEN, data: '0x', value: '0' }], OWNER);
+    expect(empty.ok).toBe(true);
+    if (!empty.ok) return;
+    expect(empty.intents).toEqual([]);
+    expect(empty.fullyProvenDirectEgress).toBe(false);
+    expect(empty.notProven).toEqual([{ interactionIndex: 0, reason: 'empty_calldata' }]);
 
-    expect(
-      extractDirectTransferIntents(
-        [{ to: TOKEN, data: '0x095ea7b3' + padAddress(EXTERNAL) + padUint(0n), value: '0' }],
-        OWNER,
-      ),
-    ).toEqual({ ok: true, intents: [] });
+    const approve = extractDirectTransferIntents(
+      [{ to: TOKEN, data: '0x095ea7b3' + padAddress(EXTERNAL) + padUint(1n), value: '0' }],
+      OWNER,
+    );
+    expect(approve.ok).toBe(true);
+    if (!approve.ok) return;
+    expect(approve.intents).toEqual([]);
+    expect(approve.fullyProvenDirectEgress).toBe(false);
+    expect(approve.notProven).toEqual([{ interactionIndex: 0, reason: 'unknown_selector' }]);
 
-    // Incomplete selector is out of scope (not a full known transfer selector).
-    expect(extractDirectTransferIntents([{ to: TOKEN, data: '0xa9059c' }], OWNER)).toEqual({
-      ok: true,
-      intents: [],
-    });
+    // Incomplete selector is not a full known transfer selector.
+    const incomplete = extractDirectTransferIntents([{ to: TOKEN, data: '0xa9059c' }], OWNER);
+    expect(incomplete.ok).toBe(true);
+    if (!incomplete.ok) return;
+    expect(incomplete.intents).toEqual([]);
+    expect(incomplete.fullyProvenDirectEgress).toBe(false);
+    expect(incomplete.notProven).toEqual([{ interactionIndex: 0, reason: 'incomplete_selector' }]);
+  });
+
+  it('marks a pure external transfer batch as fully proven direct egress', () => {
+    const result = extractDirectTransferIntents(
+      [
+        { to: TOKEN, data: transferData(EXTERNAL), value: '0' },
+        { to: TOKEN, data: transferFromData(OWNER, OTHER), value: '0' },
+      ],
+      OWNER,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.fullyProvenDirectEgress).toBe(true);
+    expect(result.notProven).toEqual([]);
+    expect(result.intents).toHaveLength(2);
+  });
+
+  it('mixed proven transfer + unknown selector is not fully proven', () => {
+    const result = extractDirectTransferIntents(
+      [
+        { to: TOKEN, data: transferData(EXTERNAL), value: '0' },
+        { to: TOKEN, data: '0xdeadbeef', value: '0' },
+      ],
+      OWNER,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.fullyProvenDirectEgress).toBe(false);
+    expect(result.intents).toHaveLength(1);
+    expect(result.notProven).toEqual([{ interactionIndex: 1, reason: 'unknown_selector' }]);
+  });
+
+  it('empty interaction list is not fully proven (intents.length === 0 is never safe)', () => {
+    const result = extractDirectTransferIntents([], OWNER);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.intents).toEqual([]);
+    expect(result.fullyProvenDirectEgress).toBe(false);
+    expect(result.notProven).toEqual([]);
   });
 
   it('rejects known transfer selector with non-hex body', () => {
@@ -202,6 +260,7 @@ describe('extractDirectTransferIntents', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.intents.map((i) => i.recipient)).toEqual([getAddress(EXTERNAL).toLowerCase()]);
+    expect(result.fullyProvenDirectEgress).toBe(false);
   });
 
   it('uniqueDirectTransferDestinations de-dupes while preserving order', () => {
