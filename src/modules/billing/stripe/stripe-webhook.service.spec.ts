@@ -132,6 +132,7 @@ describe('StripeWebhookService', () => {
   let service: StripeWebhookService;
 
   const webhookEventCreate = jest.fn();
+  const webhookEventCreateMany = jest.fn();
   const webhookEventUpdate = jest.fn();
   const webhookEventUpdateMany = jest.fn();
   const webhookEventFindUnique = jest.fn();
@@ -178,6 +179,10 @@ describe('StripeWebhookService', () => {
         return Promise.resolve({ count: 1 });
       },
     );
+    webhookEventCreateMany.mockImplementation((args: { data: unknown[] }) => {
+      for (const data of args.data) webhookEventCreate({ data });
+      return Promise.resolve({ count: args.data.length });
+    });
     attemptUpdateMany.mockImplementation(
       (args: { data?: Record<string, unknown>; where: unknown }) => {
         if (args.data?.stripePaymentIntentId || args.data?.stripeCheckoutSessionId) {
@@ -207,6 +212,7 @@ describe('StripeWebhookService', () => {
           useValue: {
             stripeWebhookEvent: {
               create: webhookEventCreate,
+              createMany: webhookEventCreateMany,
               update: webhookEventUpdate,
               updateMany: webhookEventUpdateMany,
               findUnique: webhookEventFindUnique,
@@ -265,6 +271,7 @@ describe('StripeWebhookService', () => {
     const tx = {
       stripeWebhookEvent: {
         create: webhookEventCreate,
+        createMany: webhookEventCreateMany,
         update: webhookEventUpdate,
         updateMany: webhookEventUpdateMany,
         findUnique: webhookEventFindUnique,
@@ -1346,10 +1353,9 @@ describe('StripeWebhookService', () => {
 
     it('re-processes a deferred event once the local renewal invoice appears', async () => {
       // First delivery deferred the event (no local match). The worker retries
-      // by re-fetching; the event id already exists as `deferred` (P2002), and
+      // by re-fetching; the event id already exists as `deferred`, and
       // the now-existing local attempt is found and processed.
       constructEventAsync.mockResolvedValue(event('invoice.paid', renewalInvoice(), 'evt_renewal'));
-      webhookEventCreate.mockRejectedValueOnce(p2002());
       webhookEventFindUnique.mockResolvedValue({ status: 'deferred', retryCount: 2 });
       attemptFindFirst.mockResolvedValue(
         attemptRow({
@@ -1362,9 +1368,7 @@ describe('StripeWebhookService', () => {
 
       await service.handleWebhook(Buffer.from('{}'), 't=1,v1=sig');
 
-      // An unmatched mirror is a pure-preflight failure and remains deferred;
-      // no local attempt or settlement mutation is permitted.
-      expect(webhookEventUpdate).toHaveBeenCalled();
+      expect(webhookEventCreateMany).not.toHaveBeenCalled();
       expect(attemptUpdate).not.toHaveBeenCalled();
     });
 
@@ -2129,6 +2133,45 @@ describe('StripeWebhookService', () => {
             stripeSubscriptionPeriodEnd: new Date(1_787_356_800 * 1000),
           }),
         });
+        expect(webhookEventUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+          where: expect.objectContaining({ status: 'processed' }),
+          data: expect.objectContaining({ processedAt: expect.any(Date) }),
+        }));
+        expect(webhookEventUpdateMany.mock.calls.some(([args]) => args.data?.status === 'deferred')).toBe(false);
+      });
+
+      it('completes an existing deferred lifecycle row under its lease and clears retry ownership', async () => {
+        const retryLeaseExpiresAt = new Date(Date.now() + 60_000);
+        const lifecycleEvent = event('customer.subscription.updated', {
+          id: 'sub_123',
+          status: 'active',
+          current_period_start: 1_784_764_800,
+          current_period_end: 1_787_356_800,
+          customer: 'cus_123',
+        }, 'evt_sub_deferred');
+        webhookEventFindUnique.mockResolvedValue({
+          status: 'deferred', retryOwnerId: 'worker-1', retryLeaseExpiresAt,
+          retryCount: 1, nextRetryAt: new Date(),
+        });
+        attemptFindFirst.mockResolvedValue(null);
+        accountFindUnique.mockResolvedValue({
+          id: 'acct-1', userId: 'user-1', stripeCustomerId: 'cus_123',
+          stripeSubscriptionId: 'sub_123', stripeSubscriptionStatus: 'active',
+          stripeSubscriptionUpdatedAt: null, stripeSubscriptionEventId: null,
+        });
+
+        await expect(service.processEvent(lifecycleEvent, { ownerId: 'worker-1' })).resolves.toBe('processed');
+
+        expect(webhookEventCreateMany).not.toHaveBeenCalled();
+        expect(webhookEventUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+          where: expect.objectContaining({
+            stripeEventId: 'evt_sub_deferred', status: 'deferred', retryOwnerId: 'worker-1',
+            retryLeaseExpiresAt: expect.objectContaining({ gt: expect.any(Date) }),
+          }),
+          data: expect.objectContaining({
+            status: 'processed', nextRetryAt: null, retryOwnerId: null, retryLeaseExpiresAt: null,
+          }),
+        }));
       });
     });
 

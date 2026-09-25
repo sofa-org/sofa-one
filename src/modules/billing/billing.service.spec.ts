@@ -135,6 +135,8 @@ describe('BillingService', () => {
 
   const accountFindUnique = jest.fn();
   const accountCreate = jest.fn();
+  const autoIntentFindMany = jest.fn();
+  const syncIntentFindMany = jest.fn();
   const planVersionFindFirst = jest.fn();
   const planVersionFindUnique = jest.fn();
   const planVersionFindMany = jest.fn();
@@ -187,6 +189,8 @@ describe('BillingService', () => {
           provide: PrismaService,
           useValue: {
             billingAccount: { findUnique: accountFindUnique, create: accountCreate },
+            billingAutoSubscriptionIntent: { findFirst: jest.fn().mockResolvedValue(null), findMany: autoIntentFindMany },
+            billingSubscriptionSyncIntent: { findMany: syncIntentFindMany },
             billingPlanVersion: {
               findFirst: planVersionFindFirst,
               findUnique: planVersionFindUnique,
@@ -256,6 +260,8 @@ describe('BillingService', () => {
     // Defaults for the Phase 1E fail-closed risk checks: no quarantined usage
     // and no risky reconciliation runs unless a test overrides them.
     usageEventFindFirst.mockResolvedValue(null);
+    autoIntentFindMany.mockResolvedValue([]);
+    syncIntentFindMany.mockResolvedValue([]);
     reconciliationRunFindMany.mockResolvedValue([]);
     // No unresolved outbound transaction work (the no-run barrier passes).
     transactionCount.mockResolvedValue(0);
@@ -361,6 +367,102 @@ describe('BillingService', () => {
   });
 
   describe('getPlans', () => {
+    it('fails closed for an active mirror without a complete subscription binding', async () => {
+      accountFindUnique.mockResolvedValue({
+        stripeSubscriptionStatus: 'active', stripeSubscriptionId: null, stripeCustomerId: 'cus-private',
+        stripeSubscriptionPeriodEnd: new Date('2026-09-01T00:00:00.000Z'), currency: 'USD',
+      });
+      const dto = await service['getRenewalDto'](ACCOUNT.id);
+      expect(dto).toEqual({ status: 'needs_attention', subscriptionStatus: 'unknown', paymentMethod: 'unknown', nextChargeAt: null, amount: null, currency: null });
+      expect(Object.keys(dto).sort()).toEqual(['amount', 'currency', 'nextChargeAt', 'paymentMethod', 'status', 'subscriptionStatus'].sort());
+    });
+
+    it.each([null, new Date('2026-08-01T00:00:00.000Z')])(
+      'fails closed for an active bound mirror with missing or past period end (%s)',
+      async (periodEnd) => {
+        accountFindUnique.mockResolvedValue({
+          stripeSubscriptionId: 'sub-private',
+          stripeCustomerId: 'cus-private',
+          stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodEnd: periodEnd,
+          activeSubscriptionPlanVersionId: 'plan-private',
+          currency: 'USD',
+        });
+
+        const dto = await service['getRenewalDto'](ACCOUNT.id);
+
+        expect(dto).toEqual({
+          status: 'needs_attention',
+          subscriptionStatus: 'unknown',
+          paymentMethod: 'unknown',
+          nextChargeAt: null,
+          amount: null,
+          currency: null,
+        });
+        expect(syncIntentFindMany).not.toHaveBeenCalled();
+        expect(planVersionFindUnique).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not expose dates or amounts for an unresolved first-subscription review', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-owner' });
+      autoIntentFindMany.mockResolvedValue([{ status: 'needs_review', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: 'cus-owner', stripeSubscriptionId: null }]);
+      const dto = await service['getRenewalDto'](ACCOUNT.id);
+      expect(dto).toEqual({ status: 'needs_attention', subscriptionStatus: 'unknown', paymentMethod: 'card', nextChargeAt: null, amount: null, currency: null });
+    });
+
+    it('projects a valid future pending first-subscription intent as safe card USD', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-owner' });
+      autoIntentFindMany.mockResolvedValue([{ status: 'pending', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: 'cus-owner', stripeSubscriptionId: null }]);
+      const dto = await service['getRenewalDto'](ACCOUNT.id);
+      expect(dto).toEqual({ status: 'pending', subscriptionStatus: 'pending', paymentMethod: 'card', nextChargeAt: '2026-09-01T00:00:00.000Z', amount: '49.00', currency: 'USD' });
+    });
+
+    it('treats a completed first intent without account mirror binding as needs_attention', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-owner' });
+      autoIntentFindMany.mockResolvedValue([{ status: 'completed', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: 'cus-owner', stripeSubscriptionId: 'sub-completed' }]);
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null });
+    });
+
+    it('does not treat synced history with a missing effective start as enabled via fallback', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      syncIntentFindMany.mockResolvedValueOnce([{ revision: 1, effectivePeriodStart: null, kind: 'update_item' }]);
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null });
+    });
+
+    it.each(['in_flight', 'needs_review'])('prioritizes %s over a newer pending revision', async (unresolvedStatus) => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      syncIntentFindMany
+        .mockResolvedValueOnce([{ revision: 3, effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), kind: 'update_item' }])
+        .mockResolvedValueOnce([{ revision: 5, status: 'pending' }, { revision: 4, status: unresolvedStatus }]);
+      const dto = await service['getRenewalDto'](ACCOUNT.id);
+      expect(dto).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'active', nextChargeAt: null, amount: null });
+      expect(JSON.stringify(dto)).not.toMatch(/sub-1|cus-1/);
+    });
+
+    it('allows a higher-revision valid synced fact to supersede null-effective history', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      syncIntentFindMany.mockResolvedValueOnce([
+        { revision: 3, effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), kind: 'cancel_at_period_end' },
+        { revision: 2, effectivePeriodStart: null, kind: 'update_item' },
+      ]).mockResolvedValueOnce([]);
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'disabled', subscriptionStatus: 'active', nextChargeAt: null, amount: null });
+    });
+
+    it('fails closed when an auto-subscription intent customer cannot be matched to the account', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-account' });
+      autoIntentFindMany.mockResolvedValue([{ status: 'pending', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: 'cus-other', stripeSubscriptionId: null }]);
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null });
+    });
+
+    it('fails closed when the auto-subscription intent or account lacks customer ownership evidence', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: null });
+      autoIntentFindMany.mockResolvedValue([{ status: 'pending', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: null, stripeSubscriptionId: null }]);
+      const dto = await service['getRenewalDto'](ACCOUNT.id);
+      expect(dto).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null, currency: null });
+      expect(JSON.stringify(dto)).not.toMatch(/stripe|cus-|sub-/i);
+    });
+
     it('creates the account, plan catalog, and default Free assignment on first access', async () => {
       accountFindUnique.mockResolvedValue(null);
       accountCreate.mockResolvedValue(ACCOUNT);
@@ -6109,6 +6211,7 @@ describe('BillingService', () => {
             status: 'finalized',
             planVersionId: FREE_VERSION.id,
             billingAccountId: ACCOUNT.id,
+            paidAt: expect.any(Date),
           }),
         }),
       );

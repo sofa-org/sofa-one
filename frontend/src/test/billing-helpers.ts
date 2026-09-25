@@ -55,6 +55,14 @@ export function makePaidInvoice(id = 'inv_1'): BillingInvoice {
 export function makePlans(): BillingPlanResponse {
   return {
     currentPlanId: 'plan_starter',
+    renewal: {
+      status: 'disabled',
+      subscriptionStatus: 'none',
+      paymentMethod: 'none',
+      nextChargeAt: null,
+      amount: null,
+      currency: null,
+    },
     plans: [
       {
         id: 'plan_starter',

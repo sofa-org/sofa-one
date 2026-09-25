@@ -357,27 +357,29 @@ export class StripeWebhookService {
 
       // True when THIS transaction inserted the webhook row; false when the row
       // already existed as deferred. All later status writes remain guarded.
-      try {
-        await tx.stripeWebhookEvent.create({
-          data: {
+      if (existingEvent) {
+        // Re-use an already deferred event row. In particular, do not attempt
+        // another INSERT and catch P2002 inside this interactive transaction:
+        // PostgreSQL marks the transaction aborted after the unique violation.
+        createdFresh = false;
+      } else {
+        // INSERT .. ON CONFLICT DO NOTHING keeps a concurrent duplicate from
+        // aborting the transaction, allowing the winner's row to be inspected.
+        const inserted = await tx.stripeWebhookEvent.createMany({
+          data: [{
             stripeEventId: event.id,
             type: event.type,
             status: 'processed',
             objectId: extractObjectId(event),
-          },
+          }],
+          skipDuplicates: true,
         });
-      } catch (err) {
-        if (isUniqueConstraintError(err)) {
+        if (inserted.count !== 1) {
           const existing = await tx.stripeWebhookEvent.findUnique({
             where: { stripeEventId: event.id },
           });
-          // A deferred event is re-processed by the worker once its local
-          // renewal invoice exists; processed/ignored/needs_review events are
-          // already applied and are idempotent no-ops.
           if (existing?.status !== 'deferred') return 'processed';
           createdFresh = false;
-        } else {
-          throw err;
         }
       }
 
@@ -479,6 +481,35 @@ export class StripeWebhookService {
           // Only this processor's own owned transition counts as a review
           // failure; a concurrent CAS miss is benign (already completed).
           return reviewed.count === 1 ? 'needs_review' : 'processed';
+        }
+        if (mirrorResult === 'ok' && !attempt) {
+          // A successfully mirrored subscription lifecycle event is complete
+          // without a payment attempt. Do not route it into invoice-renewal
+          // deferral; retain the status/lease CAS used by every replay path.
+          if (createdFresh) {
+            const processed = await tx.stripeWebhookEvent.updateMany({
+              where: { stripeEventId: event.id, status: 'processed' },
+              data: { processedAt: new Date() },
+            });
+            if (processed.count !== 1) return 'processed';
+          } else {
+            const processed = await tx.stripeWebhookEvent.updateMany({
+              where: {
+                stripeEventId: event.id,
+                status: 'deferred',
+                ...(lease ? { retryOwnerId: lease.ownerId, retryLeaseExpiresAt: { gt: new Date() } } : {}),
+              },
+              data: {
+                status: 'processed',
+                processedAt: new Date(),
+                nextRetryAt: null,
+                retryOwnerId: null,
+                retryLeaseExpiresAt: null,
+              },
+            });
+            if (processed.count !== 1) return 'processed';
+          }
+          return 'processed';
         }
       }
 

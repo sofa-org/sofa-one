@@ -51,12 +51,27 @@ export interface BillingPlanDto {
 export interface GetPlansResult {
   currentPlanId: string;
   plans: BillingPlanDto[];
+  renewal: BillingRenewalDto;
   /** Future scheduled plan (next assignment after the current UTC month), if any. */
   scheduledPlan?: {
     planCode: string;
     planName: string;
     effectivePeriod: string;
   };
+}
+
+export type BillingRenewalStatus = 'enabled' | 'pending' | 'disabled' | 'needs_attention';
+export type BillingSubscriptionStatus =
+  | 'active' | 'pending' | 'incomplete' | 'past_due' | 'unpaid'
+  | 'canceled' | 'none' | 'unknown';
+export type BillingPaymentMethod = 'card' | 'none' | 'unknown';
+export interface BillingRenewalDto {
+  status: BillingRenewalStatus;
+  subscriptionStatus: BillingSubscriptionStatus;
+  paymentMethod: BillingPaymentMethod;
+  nextChargeAt: string | null;
+  amount: string | null;
+  currency: string | null;
 }
 
 export interface BillingTierBreakdownDto {
@@ -304,6 +319,21 @@ type UsageEventRow = Prisma.BillingUsageEventGetPayload<Record<string, never>>;
 /** A token contract address is exactly 20 bytes (40 hex chars) after 0x. */
 const TOKEN_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 
+function safeCurrency(value: string | null | undefined): string | null {
+  return value === 'USD' || value === 'usd' ? 'USD' : null;
+}
+
+function centsToDecimal(cents: number): string | null {
+  if (!Number.isSafeInteger(cents) || cents <= 0) return null;
+  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
+}
+
+function validFutureDate(value: unknown, now: Date): string | null {
+  return value instanceof Date && Number.isFinite(value.getTime()) && value.getTime() > now.getTime()
+    ? value.toISOString()
+    : null;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -414,6 +444,7 @@ export class BillingService {
     const currentAssignment = await this.ensureDefaultAssignment(account.id);
     const currentPlan = currentAssignment.planVersion;
     validatePlanVersion(currentPlan);
+    const renewal = await this.getRenewalDto(account.id);
 
     const futureAssignment = await this.prisma.billingPlanAssignment.findFirst({
       where: { billingAccountId: account.id, periodStart: { gt: currentMonthStart } },
@@ -494,8 +525,108 @@ export class BillingService {
     return {
       currentPlanId: currentPlan.code,
       plans,
+      renewal,
       ...(scheduledPlan ? { scheduledPlan } : {}),
     };
+  }
+
+  private async getRenewalDto(billingAccountId: string): Promise<BillingRenewalDto> {
+    const empty = (status: BillingRenewalStatus, subscriptionStatus: BillingSubscriptionStatus, paymentMethod: BillingPaymentMethod = 'none'): BillingRenewalDto => ({
+      status, subscriptionStatus, paymentMethod, nextChargeAt: null, amount: null, currency: null,
+    });
+    const account = await this.prisma.billingAccount.findUnique({
+      where: { id: billingAccountId },
+      select: {
+        stripeSubscriptionId: true,
+        stripeCustomerId: true,
+        stripeSubscriptionStatus: true,
+        stripeSubscriptionPeriodStart: true,
+        stripeSubscriptionPeriodEnd: true,
+        activeSubscriptionPlanVersionId: true,
+        currency: true,
+      },
+    });
+    if (!account) return empty('needs_attention', 'unknown', 'unknown');
+    const status = account?.stripeSubscriptionStatus?.toLowerCase();
+    const normalized: BillingSubscriptionStatus = status === 'trialing' || status === 'active'
+      ? 'active'
+      : status === 'incomplete' || status === 'past_due' || status === 'unpaid' || status === 'canceled'
+        ? status
+        : status ? 'unknown' : 'none';
+    const hasBinding = Boolean(account.stripeSubscriptionId && account.stripeCustomerId);
+    const now = new Date();
+    if (account.stripeSubscriptionId && !hasBinding) return empty('needs_attention', 'unknown', 'unknown');
+    if (normalized === 'active') {
+      if (!hasBinding || !account.stripeSubscriptionStatus) return empty('needs_attention', 'unknown', 'unknown');
+      const periodEnd = validFutureDate(account.stripeSubscriptionPeriodEnd, now);
+      if (!periodEnd) return empty('needs_attention', 'unknown', 'unknown');
+      const monthStart = periodEnd ? new Date(`${periodEnd.slice(0, 7)}-01T00:00:00.000Z`) : null;
+      const history = await this.prisma.billingSubscriptionSyncIntent.findMany({
+        where: { billingAccountId, stripeSubscriptionId: account.stripeSubscriptionId!, stripeCustomerId: account.stripeCustomerId!, status: 'synced' },
+        orderBy: { revision: 'desc' },
+        select: { kind: true, revision: true, targetPlanVersionId: true, targetUnitAmountCents: true, targetCurrency: true, effectivePeriodStart: true, stripeSubscriptionId: true, stripeCustomerId: true },
+      });
+      const applicable = history.find((row) => row.effectivePeriodStart instanceof Date && Number.isFinite(row.effectivePeriodStart.getTime()) && row.effectivePeriodStart <= (monthStart ?? now));
+      const unresolvedHistory = history.some((row) =>
+        (!(row.effectivePeriodStart instanceof Date) || !Number.isFinite(row.effectivePeriodStart.getTime())) &&
+        (!applicable || row.revision > applicable.revision),
+      );
+      if (unresolvedHistory) {
+        return empty('needs_attention', 'unknown', 'unknown');
+      }
+      const conflicts = await this.prisma.billingSubscriptionSyncIntent.findMany({
+        where: { billingAccountId, stripeSubscriptionId: account.stripeSubscriptionId!, stripeCustomerId: account.stripeCustomerId!, status: { in: ['pending', 'in_flight', 'needs_review'] } },
+        orderBy: { revision: 'desc' }, select: { revision: true, status: true },
+      });
+      const relevantConflicts = conflicts.filter((row) => !applicable || row.revision > applicable.revision);
+      if (relevantConflicts.length) {
+        const attentionConflict = relevantConflicts.find((row) => row.status === 'in_flight' || row.status === 'needs_review');
+        return empty(attentionConflict ? 'needs_attention' : 'pending', 'active', 'card');
+      }
+      if (applicable?.kind === 'cancel_at_period_end') return empty('disabled', 'active', 'card');
+      let cents: number | null = null;
+      let currency: string | null = null;
+      if (applicable?.kind === 'update_item') {
+        cents = applicable.targetUnitAmountCents;
+        currency = safeCurrency(applicable.targetCurrency);
+        const target = applicable.targetPlanVersionId ? await this.prisma.billingPlanVersion.findUnique({ where: { id: applicable.targetPlanVersionId }, select: { monthlyFeeMicros: true } }) : null;
+        if (!target || target.monthlyFeeMicros == null || target.monthlyFeeMicros <= 0n || target.monthlyFeeMicros % 10_000n !== 0n || Number(target.monthlyFeeMicros / 10_000n) !== cents) return empty('needs_attention', 'unknown', 'unknown');
+      } else {
+        const plan = account.activeSubscriptionPlanVersionId ? await this.prisma.billingPlanVersion.findUnique({ where: { id: account.activeSubscriptionPlanVersionId }, select: { monthlyFeeMicros: true } }) : null;
+        if (!plan || plan.monthlyFeeMicros == null || plan.monthlyFeeMicros <= 0n || plan.monthlyFeeMicros % 10_000n !== 0n || plan.monthlyFeeMicros / 10_000n > BigInt(Number.MAX_SAFE_INTEGER)) return empty('needs_attention', 'unknown', 'unknown');
+        cents = Number(plan.monthlyFeeMicros / 10_000n);
+        currency = safeCurrency(account.currency);
+      }
+      const amount = cents == null ? null : centsToDecimal(cents);
+      const safeCcy = safeCurrency(currency);
+      return { status: 'enabled', subscriptionStatus: 'active', paymentMethod: 'card', nextChargeAt: periodEnd, amount: amount && safeCcy ? amount : null, currency: amount && safeCcy ? safeCcy : null };
+    }
+    if (normalized === 'canceled' && hasBinding) {
+      const conflicts = await this.prisma.billingSubscriptionSyncIntent.findMany({ where: { billingAccountId, stripeSubscriptionId: account.stripeSubscriptionId!, stripeCustomerId: account.stripeCustomerId!, status: { in: ['pending', 'in_flight', 'needs_review'] } }, orderBy: { revision: 'desc' }, select: { revision: true, status: true } });
+      return conflicts.length ? empty('needs_attention', 'unknown', 'unknown') : empty('disabled', 'canceled');
+    }
+    if (normalized === 'past_due' || normalized === 'unpaid' || normalized === 'incomplete' || normalized === 'unknown') return empty('needs_attention', normalized, hasBinding ? 'card' : 'unknown');
+    if (hasBinding) return empty('needs_attention', 'unknown', 'unknown');
+
+    const intents = await this.prisma.billingAutoSubscriptionIntent.findMany({
+      where: { billingAccountId }, orderBy: { createdAt: 'desc' },
+      select: { status: true, effectivePeriodStart: true, unitAmountCents: true, currency: true, createdAt: true, stripeCustomerId: true, stripeSubscriptionId: true },
+    });
+    const intent = intents.find((row) => row.status !== 'superseded');
+    if (!intent) return empty('disabled', 'none');
+    if (!account.stripeCustomerId || intent.stripeCustomerId !== account.stripeCustomerId ||
+      (intent.stripeSubscriptionId != null && intent.stripeSubscriptionId !== account.stripeSubscriptionId)) {
+      return empty('needs_attention', 'unknown', 'unknown');
+    }
+    if (intent.status === 'pending' || intent.status === 'in_flight') {
+      if (intent.status === 'in_flight') return empty('needs_attention', 'unknown', 'card');
+      const date = validFutureDate(intent.effectivePeriodStart, now);
+      const amount = centsToDecimal(intent.unitAmountCents);
+      const currency = safeCurrency(intent.currency);
+      return { status: 'pending', subscriptionStatus: 'pending', paymentMethod: 'card', nextChargeAt: date && amount && currency ? date : null, amount: date && amount && currency ? amount : null, currency: date && amount && currency ? currency : null };
+    }
+    if (intent.status === 'needs_review' || intent.status === 'failed' || intent.status === 'completed') return empty('needs_attention', 'unknown', 'card');
+    return empty('disabled', 'none');
   }
 
   /**
@@ -1794,6 +1925,9 @@ export class BillingService {
                 apiOverageMicros: totals.apiOverageMicros,
                 walletOverageMicros: totals.walletOverageMicros,
                 totalMicros: totals.totalMicros,
+                // A zero-value finalized invoice is settled without a payment
+                // rail attempt; paidAt is the existing no-payment-required marker.
+                paidAt: totals.totalMicros === 0n ? new Date() : null,
                 snapshotJson: snapshot as Prisma.InputJsonValue,
                 snapshotHash,
                 finalizedAt: new Date(),
@@ -1840,6 +1974,7 @@ export class BillingService {
               apiOverageMicros: totals.apiOverageMicros,
               walletOverageMicros: totals.walletOverageMicros,
               totalMicros: totals.totalMicros,
+              paidAt: totals.totalMicros === 0n ? new Date() : null,
               snapshotJson: snapshot as Prisma.InputJsonValue,
               snapshotHash,
               finalizedAt: new Date(),
@@ -2006,6 +2141,9 @@ export class BillingService {
           apiOverageMicros: totals.apiOverageMicros,
           walletOverageMicros: totals.walletOverageMicros,
           totalMicros: totals.totalMicros,
+          // Keep the create-only finalization path aligned with production:
+          // zero-value invoices are settled without a payment rail attempt.
+          paidAt: totals.totalMicros === 0n ? new Date() : null,
           snapshotJson: snapshot as Prisma.InputJsonValue,
           snapshotHash,
           finalizedAt: new Date(),

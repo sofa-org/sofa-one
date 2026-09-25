@@ -36,6 +36,7 @@ import {
   type BillingInvoice,
   type BillingPlan,
   type BillingPlanResponse,
+  type BillingRenewalDto,
   type BillingSummary,
   type BillingTierBreakdown,
   type InvoicePaymentAttemptStatus,
@@ -154,6 +155,24 @@ function formatEffectiveDate(iso: string): string {
     day: 'numeric',
     timeZone: 'UTC',
   });
+}
+
+function renewalStatusLabel(status: BillingRenewalDto['status'] | undefined): string {
+  switch (status) {
+    case 'enabled': return 'On';
+    case 'disabled': return 'Off';
+    case 'pending': return 'Pending';
+    case 'needs_attention': return 'Needs attention';
+    default: return 'Not available';
+  }
+}
+
+function subscriptionStatusLabel(
+  status: BillingRenewalDto['subscriptionStatus'] | undefined,
+): string {
+  if (!status || status === 'unknown') return 'Not available';
+  if (status === 'none') return 'No subscription';
+  return status.replace(/_/g, ' ').replace(/^./, (char: string) => char.toUpperCase());
 }
 
 /** Relative intent for button labels only — server decides outcome and amounts. */
@@ -1835,6 +1854,46 @@ export default function BillingPage() {
                 <span className="block text-xs font-normal text-brand-muted">base / period</span>
               </p>
             </div>
+
+            {(() => {
+              // Renewal details remain optional so older or partial responses render neutrally.
+              const renewal = plans.renewal;
+              const renewalLabel = renewalStatusLabel(renewal?.status);
+              const isNoRenewal = renewal?.status === 'disabled';
+              return (
+                <section
+                  aria-label="Automatic renewal"
+                  className="rounded-xl border border-brand-border bg-white p-4 shadow-sm sm:p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-bg">
+                      <RotateCcw className="h-5 w-5 text-brand-accent" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-brand-text">Automatic renewal</h3>
+                        <span className="rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-text">
+                          {renewalLabel}
+                        </span>
+                      </div>
+                      {isNoRenewal && (
+                        <p className="mt-1 text-sm text-brand-muted">
+                          {currentPlan.basePrice === '0.00' || renewal?.subscriptionStatus === 'none'
+                            ? 'This plan does not renew automatically.'
+                            : 'Automatic renewal is off for this plan.'}
+                        </p>
+                      )}
+                      <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                        <div><dt className="text-xs text-brand-muted">Subscription</dt><dd className="mt-1 font-medium text-brand-text">{subscriptionStatusLabel(renewal?.subscriptionStatus)}</dd></div>
+                        <div><dt className="text-xs text-brand-muted">Payment method</dt><dd className="mt-1 font-medium text-brand-text">{renewal?.paymentMethod === 'card' ? 'Card' : renewal?.paymentMethod === 'none' ? 'None' : 'Not available'}</dd></div>
+                        {renewal?.nextChargeAt && <div><dt className="text-xs text-brand-muted">Next charge</dt><dd className="mt-1 font-medium text-brand-text">{formatEffectiveDate(renewal.nextChargeAt)}</dd></div>}
+                        {renewal?.amount && <div><dt className="text-xs text-brand-muted">Amount</dt><dd className="mt-1 font-medium text-brand-text">{formatAmount(renewal.amount, renewal.currency ?? undefined)}</dd></div>}
+                      </dl>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
 
             {plans.scheduledPlan && (
               <div

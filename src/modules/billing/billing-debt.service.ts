@@ -56,11 +56,14 @@ export class BillingDebtService {
         paidAt: null,
         purpose: 'usage_period',
       },
-      select: { id: true },
+      // Prisma cannot compare two BigInt fields in a standard where clause.
+      select: { id: true, totalMicros: true, allocatedMicros: true },
       orderBy: { periodStart: 'asc' },
     });
 
-    const invoiceIds = invoices.map((row) => row.id);
+    const invoiceIds = invoices
+      .filter((row) => row.totalMicros - row.allocatedMicros > 0n)
+      .map((row) => row.id);
     return {
       hasDebt: invoiceIds.length > 0,
       invoiceIds,

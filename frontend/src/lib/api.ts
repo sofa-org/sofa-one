@@ -375,12 +375,27 @@ export interface BillingPlan {
 export interface BillingPlanResponse {
   currentPlanId: string;
   plans: BillingPlan[];
+  renewal?: BillingRenewalDto;
   /** Future plan scheduled to take effect at the next UTC month. */
   scheduledPlan?: {
     planCode: string;
     planName: string;
     effectivePeriod: string;
   };
+}
+
+export type BillingRenewalStatus = 'enabled' | 'pending' | 'disabled' | 'needs_attention';
+export type BillingSubscriptionStatus =
+  | 'active' | 'pending' | 'incomplete' | 'past_due' | 'unpaid'
+  | 'canceled' | 'none' | 'unknown';
+export type BillingPaymentMethod = 'card' | 'none' | 'unknown';
+export interface BillingRenewalDto {
+  status: BillingRenewalStatus;
+  subscriptionStatus: BillingSubscriptionStatus;
+  paymentMethod: BillingPaymentMethod;
+  nextChargeAt: string | null;
+  amount: string | null;
+  currency: string | null;
 }
 
 export interface AssignBillingPlanRequest {

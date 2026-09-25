@@ -59,14 +59,17 @@ describe('BillingDebtService', () => {
         paidAt: null,
         purpose: 'usage_period',
       },
-      select: { id: true },
+      select: { id: true, totalMicros: true, allocatedMicros: true },
       orderBy: { periodStart: 'asc' },
     });
   });
 
   it('returns debt with invoice ids for finalized unpaid invoices', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    invoiceFindMany.mockResolvedValue([{ id: 'inv-a' }, { id: 'inv-b' }]);
+    invoiceFindMany.mockResolvedValue([
+      { id: 'inv-a', totalMicros: 5n, allocatedMicros: 0n },
+      { id: 'inv-b', totalMicros: 10n, allocatedMicros: 3n },
+    ]);
 
     const result = await service.getDebt('user-1');
 
@@ -74,6 +77,16 @@ describe('BillingDebtService', () => {
       hasDebt: true,
       invoiceIds: ['inv-a', 'inv-b'],
     });
+  });
+
+  it('does not count zero-balance invoices, including zero total and fully allocated', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    invoiceFindMany.mockResolvedValue([
+      { id: 'inv-zero', totalMicros: 0n, allocatedMicros: 0n },
+      { id: 'inv-covered', totalMicros: 9n, allocatedMicros: 9n },
+    ]);
+
+    await expect(service.getDebt('user-1')).resolves.toEqual({ hasDebt: false, invoiceIds: [] });
   });
 
   it('scopes the account lookup to the requested userId (no cross-user)', async () => {
@@ -101,10 +114,7 @@ describe('BillingDebtService', () => {
       paidAt: null,
       purpose: 'usage_period',
     });
-    // No amount fields selected — avoid BigInt JSON surface.
-    expect(arg.select).toEqual({ id: true });
-    expect(arg.select).not.toHaveProperty('totalMicros');
-    expect(arg.select).not.toHaveProperty('allocatedMicros');
+    expect(arg.select).toEqual({ id: true, totalMicros: true, allocatedMicros: true });
   });
 
   it('excludes plan_charge upgrade invoices from ordinary usage debt gates', async () => {
@@ -118,7 +128,7 @@ describe('BillingDebtService', () => {
 
   it('hasDebt mirrors getDebt.hasDebt', async () => {
     accountFindUnique.mockResolvedValue(ACCOUNT);
-    invoiceFindMany.mockResolvedValue([{ id: 'inv-1' }]);
+    invoiceFindMany.mockResolvedValue([{ id: 'inv-1', totalMicros: 1n, allocatedMicros: 0n }]);
 
     await expect(service.hasDebt('user-1')).resolves.toBe(true);
 
@@ -128,7 +138,7 @@ describe('BillingDebtService', () => {
 
   it('accepts an interactive transaction client instead of PrismaService', async () => {
     const txAccountFind = jest.fn().mockResolvedValue(ACCOUNT);
-    const txInvoiceFind = jest.fn().mockResolvedValue([{ id: 'inv-tx' }]);
+    const txInvoiceFind = jest.fn().mockResolvedValue([{ id: 'inv-tx', totalMicros: 1n, allocatedMicros: 0n }]);
     const tx = {
       billingAccount: { findUnique: txAccountFind },
       billingInvoice: { findMany: txInvoiceFind },

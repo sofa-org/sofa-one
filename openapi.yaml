@@ -15,6 +15,12 @@ info:
 
     API Key 在 Dashboard 中显式创建，原文只返回一次，格式为 `sk_` + 64 位十六进制字符。不要在浏览器代码中暴露 API Key。
 
+    ## User-Agent 安全上下文
+
+    `User-Agent` 是可选且可伪造的请求信号，不是身份认证；curl、SDK 或部署变更都可能改变它，也不要依赖其保密。服务可能记录/保存 User-Agent，用于安全审计和异常检测，并将其与此前上下文逐字比较。高风险 API key 权限/风险判定下，单次 User-Agent 或 IP context change 可能触发告警或冻结 key。建议客户端稳定设置 User-Agent，并将变更视为安全事件；这不是所有端点的必填 header。
+
+    如果 key 被冻结，请勿在日志、工单或消息中泄露 key。通过 Dashboard 创建新 key，更新后端 secret 后撤销旧 key；按 Dashboard/支持流程完成恢复。若 key 疑似泄露，应立即轮换。
+
     Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info` 和 `POST /v1/wallets/withdraw`。这些端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
     ## 支持的链
@@ -59,7 +65,8 @@ info:
 
     # 3. 查询交易状态
     curl https://api.example.com/v1/transactions/b2c3d4e5-f6a7-8901-bcde-f12345678901 \
-      -H "X-API-Key: sk_your_key_here"
+      -H "X-API-Key: sk_your_key_here" \
+      -H "User-Agent: my-service/1.0"
     ```
 
   contact:
@@ -352,7 +359,7 @@ components:
       name: X-API-Key
       description: |
         API Key，格式：`sk_<64位十六进制字符>`。  
-        在 Dashboard API Keys 页面创建，原文只返回一次。
+        在 Dashboard API Keys 页面创建，原文只返回一次。公开 API 使用 `X-API-Key`。可选 `User-Agent` 可能被记录/保存用于安全审计和异常检测，并与此前上下文逐字比较；它可伪造且不是身份认证。高风险 key 权限/风险判定下，单次 UA/IP context change 可能触发告警或冻结。稳定设置并审慎处理变更，但不要依赖 UA 保密，也不要把它视为必填项。冻结后通过 Dashboard 创建新 key、更新后端 secret、撤销旧 key，并按现有流程恢复；切勿泄露 key。
 
   schemas:
     # ──────────── Signing ────────────

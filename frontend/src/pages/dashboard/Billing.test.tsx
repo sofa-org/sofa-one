@@ -1455,6 +1455,120 @@ describe('Billing — plan change', () => {
   });
 });
 
+describe('Billing — read-only renewal status', () => {
+  it('shows enabled renewal details, next charge date, and amount', async () => {
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      renewal: {
+        status: 'enabled',
+        subscriptionStatus: 'active',
+        paymentMethod: 'card',
+        nextChargeAt: '2026-10-01T00:00:00.000Z',
+        amount: '49.00',
+        currency: 'USD',
+      },
+    });
+    renderBilling();
+
+    const card = await screen.findByRole('region', { name: 'Automatic renewal' });
+    expect(card).toHaveTextContent('On');
+    expect(card).toHaveTextContent('Active');
+    expect(card).toHaveTextContent('Card');
+    expect(card).toHaveTextContent(/2026年10月1日|October 1, 2026/);
+    expect(card).toHaveTextContent('USD 49.00');
+  });
+
+  it('shows pending without suggesting renewal is on or off', async () => {
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      renewal: {
+        status: 'pending',
+        subscriptionStatus: 'pending',
+        paymentMethod: 'unknown',
+        nextChargeAt: null,
+        amount: null,
+        currency: null,
+      },
+    });
+    renderBilling();
+
+    const card = await screen.findByRole('region', { name: 'Automatic renewal' });
+    expect(card).toHaveTextContent('Pending');
+    expect(card).toHaveTextContent('Not available');
+    expect(card).not.toHaveTextContent('On');
+    expect(card).not.toHaveTextContent('Off');
+  });
+
+  it('shows needs-attention without suggesting renewal is on or off', async () => {
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      renewal: {
+        status: 'needs_attention',
+        subscriptionStatus: 'past_due',
+        paymentMethod: 'unknown',
+        nextChargeAt: null,
+        amount: null,
+        currency: null,
+      },
+    });
+    renderBilling();
+
+    const card = await screen.findByRole('region', { name: 'Automatic renewal' });
+    expect(card).toHaveTextContent('Needs attention');
+    expect(card).toHaveTextContent('Past due');
+    expect(card).toHaveTextContent('Not available');
+    expect(card).not.toHaveTextContent('On');
+    expect(card).not.toHaveTextContent('Off');
+  });
+
+  it('explains that a disabled free plan does not renew automatically', async () => {
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      currentPlanId: 'free',
+      plans: [
+        {
+          id: 'free',
+          name: 'Free',
+          description: 'Free plan',
+          basePrice: '0.00',
+          currency: 'USD',
+          billingPeriod: 'Monthly',
+          features: [],
+        },
+      ],
+      renewal: {
+        status: 'disabled',
+        subscriptionStatus: 'none',
+        paymentMethod: 'none',
+        nextChargeAt: null,
+        amount: null,
+        currency: null,
+      },
+    });
+    renderBilling();
+
+    const card = await screen.findByRole('region', { name: 'Automatic renewal' });
+    expect(card).toHaveTextContent('Off');
+    expect(card).toHaveTextContent('This plan does not renew automatically.');
+    expect(card).toHaveTextContent('No subscription');
+  });
+
+  it('keeps missing renewal information neutral', async () => {
+    vi.mocked(getBillingPlansAuth).mockResolvedValue({
+      ...makePlans(),
+      renewal: undefined,
+    });
+    renderBilling();
+
+    const card = await screen.findByRole('region', { name: 'Automatic renewal' });
+    expect(card).toHaveTextContent('Not available');
+    expect(card).not.toHaveTextContent('On');
+    expect(card).not.toHaveTextContent('Off');
+    expect(card).not.toHaveTextContent('Next charge');
+    expect(card).not.toHaveTextContent('Amount');
+  });
+});
+
 describe('Billing — plan deep-link selection and scroll', () => {
   let scrollIntoViewMock: ReturnType<typeof vi.fn>;
   let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
