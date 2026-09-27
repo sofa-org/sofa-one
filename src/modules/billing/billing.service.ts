@@ -562,8 +562,9 @@ export class BillingService {
     if (normalized === 'active') {
       if (!hasBinding || !account.stripeSubscriptionStatus) return empty('needs_attention', 'unknown', 'unknown');
       const periodEnd = validFutureDate(account.stripeSubscriptionPeriodEnd, now);
-      if (!periodEnd) return empty('needs_attention', 'unknown', 'unknown');
-      const monthStart = periodEnd ? new Date(`${periodEnd.slice(0, 7)}-01T00:00:00.000Z`) : null;
+      const periodStart = account.stripeSubscriptionPeriodStart;
+      if (!periodEnd || !(periodStart instanceof Date) || !Number.isFinite(periodStart.getTime()) || periodStart.getTime() >= account.stripeSubscriptionPeriodEnd!.getTime()) return empty('needs_attention', 'unknown', 'unknown');
+      const monthStart = new Date(`${periodEnd.slice(0, 7)}-01T00:00:00.000Z`);
       const history = await this.prisma.billingSubscriptionSyncIntent.findMany({
         where: { billingAccountId, stripeSubscriptionId: account.stripeSubscriptionId!, stripeCustomerId: account.stripeCustomerId!, status: 'synced' },
         orderBy: { revision: 'desc' },
@@ -602,8 +603,10 @@ export class BillingService {
       }
       const amount = cents == null ? null : centsToDecimal(cents);
       const safeCcy = safeCurrency(currency);
-      return { status: 'enabled', subscriptionStatus: 'active', paymentMethod: 'card', nextChargeAt: periodEnd, amount: amount && safeCcy ? amount : null, currency: amount && safeCcy ? safeCcy : null };
+      if (!amount || !safeCcy) return empty('needs_attention', 'unknown', 'unknown');
+      return { status: 'enabled', subscriptionStatus: 'active', paymentMethod: 'card', nextChargeAt: periodEnd, amount, currency: safeCcy };
     }
+    if (normalized === 'canceled' && !hasBinding) return empty('needs_attention', 'unknown', 'unknown');
     if (normalized === 'canceled' && hasBinding) {
       const conflicts = await this.prisma.billingSubscriptionSyncIntent.findMany({ where: { billingAccountId, stripeSubscriptionId: account.stripeSubscriptionId!, stripeCustomerId: account.stripeCustomerId!, status: { in: ['pending', 'in_flight', 'needs_review'] } }, orderBy: { revision: 'desc' }, select: { revision: true, status: true } });
       return conflicts.length ? empty('needs_attention', 'unknown', 'unknown') : empty('disabled', 'canceled');
@@ -612,8 +615,8 @@ export class BillingService {
     if (hasBinding) return empty('needs_attention', 'unknown', 'unknown');
 
     const intents = await this.prisma.billingAutoSubscriptionIntent.findMany({
-      where: { billingAccountId }, orderBy: { createdAt: 'desc' },
-      select: { status: true, effectivePeriodStart: true, unitAmountCents: true, currency: true, createdAt: true, stripeCustomerId: true, stripeSubscriptionId: true },
+      where: { billingAccountId }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, status: true, effectivePeriodStart: true, unitAmountCents: true, currency: true, createdAt: true, stripeCustomerId: true, stripeSubscriptionId: true },
     });
     const intent = intents.find((row) => row.status !== 'superseded');
     if (!intent) return empty('disabled', 'none');

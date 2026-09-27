@@ -392,6 +392,7 @@ describe('BillingService', () => {
           stripeSubscriptionId: 'sub-private',
           stripeCustomerId: 'cus-private',
           stripeSubscriptionStatus: 'active',
+          stripeSubscriptionPeriodStart: new Date('2026-08-20T00:00:00.000Z'),
           stripeSubscriptionPeriodEnd: periodEnd,
           activeSubscriptionPlanVersionId: 'plan-private',
           currency: 'USD',
@@ -419,6 +420,25 @@ describe('BillingService', () => {
       expect(dto).toEqual({ status: 'needs_attention', subscriptionStatus: 'unknown', paymentMethod: 'card', nextChargeAt: null, amount: null, currency: null });
     });
 
+    it.each([null, new Date('invalid'), new Date('2026-09-20T00:00:00Z')])('fails closed for invalid or contradictory active period start (%s)', async (periodStart) => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: 'active', stripeSubscriptionId: 'sub-private', stripeCustomerId: 'cus-private', stripeSubscriptionPeriodStart: periodStart, stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-private', currency: 'USD' });
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', nextChargeAt: null, amount: null, currency: null });
+      expect(syncIntentFindMany).not.toHaveBeenCalled();
+    });
+
+    it('does not project canceled unbound mirrors through auto-intents', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: 'canceled', stripeSubscriptionId: null, stripeCustomerId: null });
+      expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null });
+      expect(autoIntentFindMany).not.toHaveBeenCalled();
+    });
+
+    it('orders auto-intents deterministically by createdAt and id', async () => {
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-owner' });
+      autoIntentFindMany.mockResolvedValue([]);
+      await service['getRenewalDto'](ACCOUNT.id);
+      expect(autoIntentFindMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], select: expect.objectContaining({ id: true }) }));
+    });
+
     it('projects a valid future pending first-subscription intent as safe card USD', async () => {
       accountFindUnique.mockResolvedValue({ stripeSubscriptionStatus: null, stripeSubscriptionId: null, stripeCustomerId: 'cus-owner' });
       autoIntentFindMany.mockResolvedValue([{ status: 'pending', effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), unitAmountCents: 4900, currency: 'usd', stripeCustomerId: 'cus-owner', stripeSubscriptionId: null }]);
@@ -433,13 +453,13 @@ describe('BillingService', () => {
     });
 
     it('does not treat synced history with a missing effective start as enabled via fallback', async () => {
-      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodStart: new Date('2026-08-20T00:00:00Z'), stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
       syncIntentFindMany.mockResolvedValueOnce([{ revision: 1, effectivePeriodStart: null, kind: 'update_item' }]);
       expect(await service['getRenewalDto'](ACCOUNT.id)).toMatchObject({ status: 'needs_attention', subscriptionStatus: 'unknown', nextChargeAt: null, amount: null });
     });
 
     it.each(['in_flight', 'needs_review'])('prioritizes %s over a newer pending revision', async (unresolvedStatus) => {
-      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodStart: new Date('2026-08-20T00:00:00Z'), stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
       syncIntentFindMany
         .mockResolvedValueOnce([{ revision: 3, effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), kind: 'update_item' }])
         .mockResolvedValueOnce([{ revision: 5, status: 'pending' }, { revision: 4, status: unresolvedStatus }]);
@@ -449,7 +469,7 @@ describe('BillingService', () => {
     });
 
     it('allows a higher-revision valid synced fact to supersede null-effective history', async () => {
-      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
+      accountFindUnique.mockResolvedValue({ stripeSubscriptionId: 'sub-1', stripeCustomerId: 'cus-1', stripeSubscriptionStatus: 'active', stripeSubscriptionPeriodStart: new Date('2026-08-20T00:00:00Z'), stripeSubscriptionPeriodEnd: new Date('2026-09-20T00:00:00Z'), activeSubscriptionPlanVersionId: 'plan-1', currency: 'USD' });
       syncIntentFindMany.mockResolvedValueOnce([
         { revision: 3, effectivePeriodStart: new Date('2026-09-01T00:00:00Z'), kind: 'cancel_at_period_end' },
         { revision: 2, effectivePeriodStart: null, kind: 'update_item' },
@@ -512,6 +532,8 @@ describe('BillingService', () => {
       );
       expect(assignmentCreate).toHaveBeenCalledTimes(1);
       expect(result.currentPlanId).toBe('free');
+      expect(result.renewal).toEqual({ status: 'needs_attention', subscriptionStatus: 'unknown', paymentMethod: 'unknown', nextChargeAt: null, amount: null, currency: null });
+      expect(Object.keys(result.renewal).sort()).toEqual(['amount', 'currency', 'nextChargeAt', 'paymentMethod', 'status', 'subscriptionStatus'].sort());
       expect(result.plans).toHaveLength(2);
       expect(result.plans[0]).toMatchObject({
         id: 'free',
