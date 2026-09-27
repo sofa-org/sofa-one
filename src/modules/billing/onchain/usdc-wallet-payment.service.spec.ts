@@ -82,7 +82,7 @@ describe('UsdcWalletPaymentService', () => {
       findUniqueOrThrow: jest.fn(),
       updateMany: jest.fn(),
     },
-    userWallet: { findUnique: jest.fn() },
+    userWallet: { findMany: jest.fn() },
     user: { findUnique: jest.fn() },
     walletChainAuthorization: { findFirst: jest.fn() },
     withdrawalPolicy: { findUnique: jest.fn() },
@@ -139,7 +139,7 @@ describe('UsdcWalletPaymentService', () => {
     prisma.billingAccount.findUnique.mockResolvedValue({ id: 'ba-1', userId: USER });
     prisma.billingInvoice.findFirst.mockResolvedValue(baseInvoice());
     prisma.billingPaymentAttempt.findFirst.mockResolvedValue(baseAttempt());
-    prisma.userWallet.findUnique.mockResolvedValue({
+    prisma.userWallet.findMany.mockResolvedValue([{
       id: 'w1',
       status: 'active',
       frozenAt: null,
@@ -147,7 +147,7 @@ describe('UsdcWalletPaymentService', () => {
       agentOpenfortAccountId: 'agent-1',
       agentKeyHash: '0x' + 'ab'.repeat(32),
       agentWalletAddress: '0x3333333333333333333333333333333333333333',
-    });
+    }]);
     prisma.user.findUnique.mockResolvedValue({ frozenAt: null });
     prisma.walletChainAuthorization.findFirst.mockResolvedValue({
       status: 'registered',
@@ -270,7 +270,7 @@ describe('UsdcWalletPaymentService', () => {
   });
 
   it('B4: rejects frozen UserWallet.frozenAt before provider', async () => {
-    prisma.userWallet.findUnique.mockResolvedValue({
+    prisma.userWallet.findMany.mockResolvedValue([{
       id: 'w1',
       status: 'active',
       frozenAt: new Date(),
@@ -278,7 +278,7 @@ describe('UsdcWalletPaymentService', () => {
       agentOpenfortAccountId: 'agent-1',
       agentKeyHash: '0x' + 'ab'.repeat(32),
       agentWalletAddress: '0x3333333333333333333333333333333333333333',
-    });
+    }]);
     await expect(service.payFromWallet(USER, INVOICE, ATTEMPT)).rejects.toMatchObject({
       response: expect.objectContaining({ code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE }),
     });
@@ -286,7 +286,7 @@ describe('UsdcWalletPaymentService', () => {
   });
 
   it('rejects frozen/missing payer wallet before provider', async () => {
-    prisma.userWallet.findUnique.mockResolvedValue(null);
+    prisma.userWallet.findMany.mockResolvedValue([]);
     await expect(service.payFromWallet(USER, INVOICE, ATTEMPT)).rejects.toMatchObject({
       response: expect.objectContaining({ code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE }),
     });
@@ -357,7 +357,7 @@ describe('UsdcWalletPaymentService', () => {
         billingInvoice: {
           findUniqueOrThrow: jest.fn().mockResolvedValue(invoice),
         },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -469,7 +469,7 @@ describe('UsdcWalletPaymentService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -543,7 +543,7 @@ describe('UsdcWalletPaymentService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -609,7 +609,7 @@ describe('UsdcWalletPaymentService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -674,7 +674,7 @@ describe('UsdcWalletPaymentService', () => {
           }),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -731,7 +731,7 @@ describe('UsdcWalletPaymentService', () => {
           updateMany: jest.fn(),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -969,7 +969,7 @@ describe('UsdcWalletPaymentService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
-        userWallet: { findUnique: prisma.userWallet.findUnique },
+        userWallet: { findMany: prisma.userWallet.findMany },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
           findFirst: prisma.walletChainAuthorization.findFirst,
@@ -1100,7 +1100,7 @@ describe('UsdcWalletPaymentService', () => {
         },
         billingInvoice: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseInvoice()) },
         userWallet: {
-          findUnique: jest.fn().mockResolvedValue(matchingWallet),
+          findMany: jest.fn().mockResolvedValue([matchingWallet]),
         },
         user: { findUnique: prisma.user.findUnique },
         walletChainAuthorization: {
@@ -1116,8 +1116,8 @@ describe('UsdcWalletPaymentService', () => {
       afterReserve = true;
       return out;
     });
-    prisma.userWallet.findUnique.mockImplementation(async () =>
-      afterReserve ? mutatedWallet : matchingWallet,
+    prisma.userWallet.findMany.mockImplementation(async () =>
+      afterReserve ? [mutatedWallet] : [matchingWallet],
     );
     prisma.billingPaymentAttempt.updateMany.mockResolvedValue({ count: 1 });
     prisma.transaction.updateMany.mockResolvedValue({ count: 1 });
@@ -1125,6 +1125,7 @@ describe('UsdcWalletPaymentService', () => {
     await expect(service.payFromWallet(USER, INVOICE, ATTEMPT)).rejects.toMatchObject({
       response: expect.objectContaining({ code: API_ERROR_CODES.USDC_INVALID_ATTEMPT }),
     });
+    expect(prisma.userWallet.findMany).toHaveBeenCalledWith({ where: { userId: USER } });
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
     expect(prisma.billingPaymentAttempt.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({

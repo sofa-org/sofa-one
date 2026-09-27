@@ -197,7 +197,7 @@ describe('UsdcPaymentService', () => {
   const attemptCreate = jest.fn();
   const attemptUpdate = jest.fn();
   const attemptUpdateMany = jest.fn();
-  const walletFindUnique = jest.fn();
+  const walletFindMany = jest.fn();
   const transactionFindUnique = jest.fn();
   const txQueryRaw = jest.fn();
   const txAttemptUpdate = jest.fn();
@@ -259,7 +259,7 @@ describe('UsdcPaymentService', () => {
       update: attemptUpdate,
       updateMany: attemptUpdateMany,
     },
-    userWallet: { findUnique: walletFindUnique },
+    userWallet: { findMany: walletFindMany },
     transaction: { findUnique: transactionFindUnique },
     withdrawalPolicy: { findUnique: withdrawalPolicyFindUnique },
     withdrawalAddress: { findUnique: withdrawalAddressFindUnique },
@@ -378,12 +378,13 @@ describe('UsdcPaymentService', () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice()); // soft preflight finalized
       attemptFindFirst.mockResolvedValue(null);
-      walletFindUnique.mockResolvedValue({
+      walletFindMany.mockResolvedValue([{
+        id: 'wallet-1',
         userId: 'user-1',
         walletAddress: PAYER,
         status: 'active',
         frozenAt: null,
-      });
+      }]);
       // Locked fresh read sees upgrade-cancel void.
       txInvoiceFindUnique.mockResolvedValue(invoice({ status: 'void' }));
 
@@ -417,12 +418,13 @@ describe('UsdcPaymentService', () => {
     beforeEach(() => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      walletFindUnique.mockResolvedValue({
+      walletFindMany.mockResolvedValue([{
+        id: 'wallet-1',
         userId: 'user-1',
         walletAddress: PAYER,
         status: 'active',
         frozenAt: null,
-      });
+      }]);
       attemptFindFirst.mockResolvedValue(null);
       attemptCreate.mockResolvedValue(usdcAttempt());
     });
@@ -534,6 +536,53 @@ describe('UsdcPaymentService', () => {
       );
     });
 
+    it('requires explicit selection when multiple active wallets are eligible', async () => {
+      walletFindMany.mockResolvedValue([
+        { id: 'wallet-1', walletAddress: PAYER, status: 'active', frozenAt: null },
+        { id: 'wallet-2', walletAddress: TREASURY_8453, status: 'active', frozenAt: null },
+      ]);
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
+      expect(attemptCreate).not.toHaveBeenCalled();
+    });
+
+    it('selects the explicitly owned wallet and snapshots its address', async () => {
+      walletFindMany.mockResolvedValue([
+        { id: 'wallet-1', walletAddress: PAYER, status: 'active', frozenAt: null },
+        { id: 'wallet-2', walletAddress: TREASURY_8453, status: 'active', frozenAt: null },
+      ]);
+      await service.quote('user-1', 'inv-1', 8453, 'wallet-2');
+      expect(walletFindMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ userId: 'user-1', status: 'active', frozenAt: null }),
+      }));
+      expect(attemptCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ expectedPayerAddress: TREASURY_8453 }),
+      }));
+    });
+
+    it('rejects unowned, inactive, and frozen selected wallet IDs', async () => {
+      walletFindMany.mockResolvedValue([
+        { id: 'wallet-1', walletAddress: PAYER, status: 'active', frozenAt: null },
+      ]);
+      await expect(service.quote('user-1', 'inv-1', 8453, 'wallet-other')).rejects.toThrow(ConflictException);
+      walletFindMany.mockResolvedValue([]); // inactive/frozen rows are excluded by the eligibility predicate
+      await expect(service.quote('user-1', 'inv-1', 8453, 'wallet-frozen')).rejects.toThrow(ConflictException);
+    });
+
+    it('reuses an active attempt only for the same selected payer address', async () => {
+      mockQuoteActiveAttempt(usdcAttempt({ expectedPayerAddress: PAYER }));
+      await service.quote('user-1', 'inv-1', 8453, 'wallet-1');
+      mockQuoteActiveAttempt(usdcAttempt({ expectedPayerAddress: TREASURY_8453 }));
+      await expect(service.quote('user-1', 'inv-1', 8453, 'wallet-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('fails closed when eligible payer addresses are ambiguous', async () => {
+      walletFindMany.mockResolvedValue([
+        { id: 'wallet-1', walletAddress: PAYER.toLowerCase(), status: 'active', frozenAt: null },
+        { id: 'wallet-2', walletAddress: PAYER.toUpperCase().replace('0X', '0x'), status: 'active', frozenAt: null },
+      ]);
+      await expect(service.quote('user-1', 'inv-1', 8453, 'wallet-1')).rejects.toThrow(ConflictException);
+    });
+
     it('defaults to the configured default chain when no selector is given', async () => {
       await service.quote('user-1', 'inv-1');
 
@@ -548,18 +597,13 @@ describe('UsdcPaymentService', () => {
     });
 
     it('rejects when the user has no active wallet', async () => {
-      walletFindUnique.mockResolvedValue(null);
+      walletFindMany.mockResolvedValue([]);
 
       await expect(service.quote('user-1', 'inv-1')).rejects.toThrow(ConflictException);
     });
 
     it('rejects a frozen wallet as the payer', async () => {
-      walletFindUnique.mockResolvedValue({
-        userId: 'user-1',
-        walletAddress: PAYER,
-        status: 'active',
-        frozenAt: new Date(),
-      });
+      walletFindMany.mockResolvedValue([]);
 
       await expect(service.quote('user-1', 'inv-1')).rejects.toThrow(ConflictException);
     });
@@ -580,12 +624,12 @@ describe('UsdcPaymentService', () => {
   describe('quote/claim — renewal remainder (after a fixed-fee allocation)', () => {
     beforeEach(() => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
-      walletFindUnique.mockResolvedValue({
+      walletFindMany.mockResolvedValue([{
         userId: 'user-1',
         walletAddress: PAYER,
         status: 'active',
         frozenAt: null,
-      });
+      }]);
       attemptFindFirst.mockResolvedValue(null);
       attemptCreate.mockResolvedValue(usdcAttempt());
     });
@@ -741,12 +785,12 @@ describe('UsdcPaymentService', () => {
     beforeEach(() => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
-      walletFindUnique.mockResolvedValue({
+      walletFindMany.mockResolvedValue([{
         userId: 'user-1',
         walletAddress: PAYER,
         status: 'active',
         frozenAt: null,
-      });
+      }]);
     });
 
     it('reuses an existing compatible pending attempt idempotently', async () => {
@@ -782,6 +826,25 @@ describe('UsdcPaymentService', () => {
       expect(result.paymentAttemptId).toBe('att-fresh');
     });
 
+    it('allows an expired evidence-free quote to be replaced by a different selected payer', async () => {
+      walletFindMany.mockResolvedValue([
+        { userId: 'user-1', walletAddress: PAYER, status: 'active', frozenAt: null },
+        { id: 'wallet-2', userId: 'user-1', walletAddress: TREASURY_8453, status: 'active', frozenAt: null },
+      ]);
+      mockQuoteActiveAttempt(usdcAttempt({ quoteExpiresAt: new Date(Date.now() - 1000) }));
+      attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-fresh', expectedPayerAddress: TREASURY_8453 }));
+
+      const result = await service.quote('user-1', 'inv-1', 8453, 'wallet-2');
+
+      expect(result.paymentAttemptId).toBe('att-fresh');
+      expect(attemptUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'att-usdc', ...releasablePendingWhere },
+      }));
+      expect(attemptCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ expectedPayerAddress: TREASURY_8453 }),
+      }));
+    });
+
     it('releases a pending attempt with an incomplete snapshot and quotes fresh', async () => {
       mockQuoteActiveAttempt(usdcAttempt({ providerIdentity: null }));
       attemptCreate.mockResolvedValue(usdcAttempt({ id: 'att-fresh' }));
@@ -813,6 +876,55 @@ describe('UsdcPaymentService', () => {
       expect(attemptUpdateMany).not.toHaveBeenCalled();
       expect(attemptCreate).not.toHaveBeenCalled();
       expect(result.paymentAttemptId).toBe('att-usdc');
+    });
+
+    it('does not reuse an active reserved attempt for a different payer after the reserved lookup misses', async () => {
+      const reserved = usdcAttempt({
+        walletPaymentReserved: true,
+        walletPaymentTransactionId: 'tx-bound',
+        expectedPayerAddress: PAYER,
+      });
+      walletFindMany.mockResolvedValue([
+        { id: 'wallet-a', userId: 'user-1', walletAddress: PAYER, status: 'active', frozenAt: null },
+        { id: 'wallet-b', userId: 'user-1', walletAddress: TREASURY_8453, status: 'active', frozenAt: null },
+      ]);
+      let reservedLookup = true;
+      attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+        if (args.where?.walletPaymentReserved === true) {
+          if (reservedLookup) {
+            reservedLookup = false;
+            return Promise.resolve(null);
+          }
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(reserved);
+      });
+
+      await expect(service.quote('user-1', 'inv-1', 8453, 'wallet-b')).rejects.toThrow(
+        ConflictException,
+      );
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdate).not.toHaveBeenCalled();
+      expect(settleInvoice).not.toHaveBeenCalled();
+
+      // The bound payer can still reuse the exact same reservation.
+      reservedLookup = true;
+      attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+        if (args.where?.walletPaymentReserved === true) {
+          if (reservedLookup) {
+            reservedLookup = false;
+            return Promise.resolve(null);
+          }
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(reserved);
+      });
+      const result = await service.quote('user-1', 'inv-1', 8453, 'wallet-a');
+      expect(result.paymentAttemptId).toBe('att-usdc');
+      expect(attemptCreate).not.toHaveBeenCalled();
+      expect(attemptUpdateMany).not.toHaveBeenCalled();
+      expect(attemptUpdate).not.toHaveBeenCalled();
     });
 
     it('reuses the attempt when a concurrent claim changed it before the release CAS', async () => {
@@ -878,6 +990,21 @@ describe('UsdcPaymentService', () => {
       const result = await service.quote('user-1', 'inv-1', 8453);
 
       expect(result.paymentAttemptId).toBe('att-winner');
+    });
+
+    it('rejects a different-payer concurrent winner', async () => {
+      const prepareInsertRace = (payer: string) => {
+        let calls = 0;
+        attemptFindFirst.mockImplementation((args: { where?: Record<string, unknown> } = {}) => {
+          if (args.where?.walletPaymentReserved === true) return Promise.resolve(null);
+          calls += 1;
+          return Promise.resolve(calls === 1 ? null : usdcAttempt({ id: 'att-winner', expectedPayerAddress: payer }));
+        });
+        attemptCreate.mockRejectedValueOnce(p2002());
+      };
+
+      prepareInsertRace(TREASURY_8453);
+      await expect(service.quote('user-1', 'inv-1', 8453)).rejects.toThrow(ConflictException);
     });
 
     it('never returns a concurrent winner on another chain from a release-CAS failure', async () => {
@@ -3003,12 +3130,12 @@ describe('UsdcPaymentService', () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       invoiceFindFirst.mockResolvedValue(invoice());
       attemptFindUnique.mockResolvedValue(usdcAttempt());
-      walletFindUnique.mockResolvedValue({
+      walletFindMany.mockResolvedValue([{
         userId: 'user-1',
         walletAddress: PAYER,
         status: 'active',
         frozenAt: null,
-      });
+      }]);
     });
 
     it('maps a non-finalized invoice quote to USDC_INVOICE_NOT_PAYABLE', async () => {
@@ -3106,7 +3233,7 @@ describe('UsdcPaymentService', () => {
     });
 
     it('maps a missing active wallet quote to USDC_WALLET_NOT_ACTIVE', async () => {
-      walletFindUnique.mockResolvedValue(null);
+      walletFindMany.mockResolvedValue([]);
 
       const err = await captureError(() => service.quote('user-1', 'inv-1', 8453));
 

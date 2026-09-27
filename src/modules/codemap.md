@@ -20,10 +20,11 @@ The container is organized around three concerns:
 | `api-key/` | Dashboard-only API-key lifecycle (create/list/revoke/rotate), Argon2id hashing, permissions, spend limits, allowlists, dual audit | [View Map](api-key/codemap.md) |
 | `api-key/dto/` | Validated create-API-key request shape + permission/spend-limit sub-objects | [View Map](api-key/dto/codemap.md) |
 | `wallet/` | Wallet queries, API-key signing (EIP-191/712), withdrawal-address allowlist, USDC withdrawal policy + Calibur user-op submission, freeze enforcement | [View Map](wallet/codemap.md) |
+| `wallet-provisioning-recovery/` | Operator-only CLI support for binding an already-created provider account to a matching provisioning intent; no HTTP route or create retry/reset | [View Map](wallet-provisioning-recovery/codemap.md) |
 | `wallet/dto/` | Validated sign/withdraw/withdrawal-address/signing-request DTOs + amount bounds | [View Map](wallet/dto/codemap.md) |
 | `transactions/` | Public send/status API + dashboard history; policy + simulation preflight, idempotency, Openfort submission, safe response shaping | [View Map](transactions/codemap.md) |
 | `transactions/dto/` | Send-transaction + list-transactions validation DTOs and shared interaction constants | [View Map](transactions/dto/codemap.md) |
-| `billing/` | Plan catalog, usage metering, quota enforcement, invoice finalization, Stripe + native USDC payment rails, reconciliation | [View Map](billing/codemap.md) |
+| `billing/` | Plan catalog, usage metering, quota enforcement, invoice list/detail/payment-status, Stripe + native USDC checkout and pay-from-wallet, reconciliation | [View Map](billing/codemap.md) |
 | `billing/dto/` | Validated bodies for the five dashboard billing routes (including subscription checkout) | [View Map](billing/dto/codemap.md) |
 | `billing/stripe/` | Stripe Checkout rail: client provider, payment service, signature-verified webhook | [View Map](billing/stripe/codemap.md) |
 | `billing/onchain/` | Native USDC invoice payment rail: quote/claim + strict receipt verification | [View Map](billing/onchain/codemap.md) |
@@ -62,8 +63,11 @@ The container is organized around three concerns:
 ### Withdrawal (dashboard-only, step-up)
 `POST /v1/wallets/withdraw` → `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard` → wallet frozen/active/chain checks → `WithdrawalPolicyService` (single/daily limits, address allowlist + cooldown, high-value telemetry) → `RiskEvaluationService` → idempotency + on-chain balance pre-check → row-locked daily-limit check → create `Transaction` → `OpenfortService.sendUserOperation` (Calibur agent user op).
 
+### Dashboard reads
+`GET /v1/wallets/signing-requests` and `GET /v1/wallets/signing-requests/:id` provide ownership-scoped signing-request list and detail; dashboard transaction history uses `GET /v1/transactions` and `GET /v1/transactions/:id/detail`. Billing dashboard routes include `GET /v1/billing/invoices/:id`, `GET /v1/billing/invoices/:id/payment-status`, and `POST /v1/billing/usdc/pay-from-wallet` (plus `GET /v1/billing/usdc/payment-status`). These routes remain IAM + `FrontendOnlyGuard` protected.
+
 ### Billing (dashboard-only + public webhook)
-API-key requests meter via `ApiKeyAuthGuard.recordApiCallUsage` → `billing.assertAndRecordApiCall` (429 on quota). Wallet activation checks `BillingEntitlementService.assertWalletActivationAllowed`. Outbound transfers are receipt-confirmed by `BillingReconciliationService`. Invoices finalize after period end + 24h grace; payment via Stripe Checkout (signature-verified webhook) or native USDC (quote/claim with strict receipt verification); both settle through the shared first-rail-wins `InvoiceSettlementService.settleInvoice`.
+API-key requests meter via `ApiKeyAuthGuard.recordApiCallUsage` → `billing.assertAndRecordApiCall` (429 on quota). Wallet reservation and activation quota/peak tracking use `BillingWalletLifecycleService` under the billing-account row lock. Outbound transfers are receipt-confirmed by `BillingReconciliationService`. Invoices finalize after period end + 24h grace; payment via Stripe Checkout (signature-verified webhook) or native USDC (quote/claim with strict receipt verification); both settle through the shared first-rail-wins `InvoiceSettlementService.settleInvoice`.
 
 ### Security telemetry fanout
 `SecurityEventService.record()` is the single write path for `security_events`: risk-scored by `SecurityRiskService`, fanned out to dashboard `SecurityNotification` rows, and optionally exported to a redacted SIEM webhook. `RiskEvaluationService.evaluateRisk()` runs before high-risk operations and enforces block/freeze/step-up actions.

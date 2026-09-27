@@ -50,6 +50,16 @@ export class BillingEntitlementService {
     return this.resolveEntitlements(userId, start, this.prisma);
   }
 
+  /** Transaction-bound entitlement read; callers must hold the wallet account row lock first. */
+  async getEntitlementsInTransaction(
+    userId: string,
+    tx: Prisma.TransactionClient,
+    period?: string,
+  ): Promise<EntitlementsResult> {
+    const { start } = parsePeriod(period);
+    return this.resolveEntitlements(userId, start, tx);
+  }
+
   /**
    * Resolves the plan in effect at `start` for the user's BillingAccount using
    * valid (non-expired) paid/scheduled assignments only. Pending upgrades never
@@ -137,18 +147,16 @@ export class BillingEntitlementService {
       );
     }
 
-    const existing = await tx.userWallet.findUnique({ where: { userId } });
+    const existing = await tx.userWallet.findFirst({ where: { userId } });
     const alreadyActive = Boolean(
-      existing &&
-      existing.status === 'active' &&
-      existing.walletAddress !== null &&
-      existing.frozenAt === null,
+      existing && existing.status === 'active' && existing.walletAddress !== null && existing.frozenAt === null,
     );
     if (alreadyActive) return;
 
     const activeCount = await tx.userWallet.count({
       where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
     });
+
     if (activeCount >= includedWallets) {
       throw new BillingQuotaExceededException(
         'active_wallets',

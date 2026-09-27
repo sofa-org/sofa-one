@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   ForbiddenException,
   Logger,
@@ -191,31 +192,51 @@ export class TransactionsService {
       dailySpendLimit: apiKeyRecord.dailySpendLimit,
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
-    // Evaluate multi-factor risk before proceeding
+    const wallets = await this.prisma.userWallet.findMany({
+      where: dto.walletId ? { id: dto.walletId, userId } : { userId },
+      include: {
+        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
+      },
+    });
+    if (dto.walletId && wallets.length === 0) throw new NotFoundException('Wallet not found');
+    const wallet = dto.walletId
+      ? wallets[0]
+      : (() => {
+          const eligible = wallets.filter(
+            (candidate) =>
+              candidate.status === 'active' &&
+              Boolean(candidate.walletAddress) &&
+              !candidate.frozenAt,
+          );
+          if (eligible.length === 0) {
+            // Preserve the readiness/freeze error for a user's sole wallet.
+            if (wallets.length === 1 && (wallets[0].status !== 'active' || wallets[0].frozenAt)) {
+              return wallets[0];
+            }
+            throw new NotFoundException('Wallet not found');
+          }
+          if (eligible.length > 1) {
+            throw new ConflictException('walletId is required when multiple active wallets exist');
+          }
+          return eligible[0];
+        })();
+
+    this.assertWalletNotFrozen(wallet);
+    this.assertWalletReady(wallet);
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
       userId,
       apiKeyId: apiKeyRecord.id,
-      walletId: undefined,
+      walletId: wallet.id,
       operationType: 'transaction_send',
     });
     if (riskAssessment && riskAssessment.action !== 'allow') {
       await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
         userId,
         apiKeyId: apiKeyRecord.id,
-        walletId: undefined,
+        walletId: wallet.id,
         operationType: 'transaction_send',
       });
     }
-    const wallet = await this.prisma.userWallet.findUnique({
-      where: { userId },
-      include: {
-        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
-      },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-
-    this.assertWalletNotFrozen(wallet);
-    this.assertWalletReady(wallet);
     const accountAddress = wallet.walletAddress!;
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
@@ -241,18 +262,26 @@ export class TransactionsService {
       executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
 
     const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
-    const requestHash = hashRequest({
+    const legacyRequestHash = hashRequest({
       operationType: 'send',
       chainId,
       executionMode,
       ...(sponsorship ? { sponsorship } : {}),
       interactions: dto.interactions,
     });
+    const requestHash = hashRequest({
+      operationType: 'send', chainId, walletId: wallet.id, walletAddress: wallet.walletAddress,
+      executionMode, ...(sponsorship ? { sponsorship } : {}), interactions: dto.interactions,
+    });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
       operationType: 'send',
       chainId,
       idempotencyKey: dto.idempotencyKey!,
       requestHash,
+      legacyRequestHash,
+      walletId: wallet.id,
+      walletAddress: transactionWalletAddress,
+      executionMode,
     });
     if (existingTransaction) {
       // Idempotent hit: no destination re-check, no Openfort, no broadcast.
@@ -348,9 +377,13 @@ export class TransactionsService {
       idempotencyKey: dto.idempotencyKey!,
       chainId,
       requestHash,
+      legacyRequestHash,
+      walletId: wallet.id,
       walletAddress: transactionWalletAddress,
+      executionMode,
       details: {
         type: 'send',
+        walletId: wallet.id,
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
         executionMode,
         ...(sponsorship ? { sponsorship } : {}),
@@ -808,7 +841,10 @@ export class TransactionsService {
       idempotencyKey: string;
       chainId: number;
       requestHash: string;
+      legacyRequestHash: string;
+      walletId: string;
       walletAddress: string;
+      executionMode: ExecutionMode;
       details: Record<string, unknown>;
       billingGate?: BillingAssetFlowGateContext;
       destinationGate?: DestinationGateContext;
@@ -827,6 +863,10 @@ export class TransactionsService {
             chainId: params.chainId,
             idempotencyKey: params.idempotencyKey,
             requestHash: params.requestHash,
+            legacyRequestHash: params.legacyRequestHash,
+            walletId: params.walletId,
+            walletAddress: params.walletAddress,
+            executionMode: params.executionMode,
           },
           txClient,
         );
@@ -933,6 +973,10 @@ export class TransactionsService {
         chainId: params.chainId,
         idempotencyKey: params.idempotencyKey,
         requestHash: params.requestHash,
+        legacyRequestHash: params.legacyRequestHash,
+        walletId: params.walletId,
+        walletAddress: params.walletAddress,
+        executionMode: params.executionMode,
       });
       if (!existing) throw error;
       return { tx: existing, created: false };
@@ -1102,7 +1146,7 @@ export class TransactionsService {
 
   private async findExistingTransactionRequest(
     userId: string,
-    params: { operationType: string; chainId: number; idempotencyKey: string; requestHash: string },
+    params: { operationType: string; chainId: number; idempotencyKey: string; requestHash: string; legacyRequestHash?: string; walletId?: string; walletAddress?: string; executionMode?: ExecutionMode },
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     const existing = await prisma.transaction.findFirst({
@@ -1115,7 +1159,27 @@ export class TransactionsService {
     });
 
     if (!existing) return null;
-    if (existing.requestHash && existing.requestHash !== params.requestHash) {
+    const details = existing.details && typeof existing.details === 'object' && !Array.isArray(existing.details)
+      ? existing.details as Record<string, unknown>
+      : {};
+    const identityMatches =
+      existing.authMethod === 'api_key' &&
+      (!params.walletId || details.walletId === params.walletId || existing.walletAddress === params.walletAddress) &&
+      (!params.walletAddress || existing.walletAddress?.toLowerCase() === params.walletAddress.toLowerCase()) &&
+      (!params.executionMode || details.executionMode === params.executionMode);
+    const hashMatches = existing.requestHash === params.requestHash ||
+      (Boolean(params.legacyRequestHash) && existing.requestHash === params.legacyRequestHash);
+    // A nullable column is not proof of request equivalence. Some persisted
+    // rows retain the original fingerprint in details; accept only that proof.
+    const persistedRequestHash =
+      typeof details.requestHash === 'string'
+        ? details.requestHash
+        : typeof details.legacyRequestHash === 'string'
+          ? details.legacyRequestHash
+          : null;
+    const nullHashMatches = existing.requestHash == null && Boolean(persistedRequestHash) &&
+      (persistedRequestHash === params.requestHash || persistedRequestHash === params.legacyRequestHash);
+    if (!identityMatches || (!hashMatches && !nullHashMatches)) {
       throw new BadRequestException('Idempotency key was already used for a different request');
     }
 

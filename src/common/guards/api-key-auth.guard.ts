@@ -2,6 +2,8 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   Optional,
@@ -15,6 +17,8 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingService } from '../../modules/billing/billing.service';
 import { BillingQuotaExceededException } from '../../modules/billing/billing-quota.exception';
+import { BillingDebtService } from '../../modules/billing/billing-debt.service';
+import { API_ERROR_CODES } from '../errors/api-error-codes';
 import { SecurityEventService } from '../../modules/security-events/security-event.service';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -63,6 +67,7 @@ export class ApiKeyAuthGuard implements CanActivate {
     private readonly securityEvents: SecurityEventService,
     private readonly ipAllowlist: IpAllowlistService,
     @Optional() private readonly billing?: BillingService,
+    @Optional() private readonly billingDebt?: BillingDebtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -191,9 +196,35 @@ export class ApiKeyAuthGuard implements CanActivate {
     // API key, calldata, or keys. A missing/unavailable BillingService or a
     // failed write surfaces as a controlled HTTP 503 rather than silently
     // undercounting usage.
-    await this.recordApiCallUsage(request, keyRecord);
+    const matureDebt = await this.hasMatureBillingDebt(keyRecord);
+    if (matureDebt && !this.isReadOnlyTransactionStatusRequest(request)) {
+      throw new HttpException({
+        code: API_ERROR_CODES.BILLING_PAYMENT_REQUIRED,
+        message: 'API operations are blocked until outstanding usage invoices are settled',
+      }, HttpStatus.PAYMENT_REQUIRED);
+    }
+    if (!matureDebt) await this.recordApiCallUsage(request, keyRecord);
 
     return true;
+  }
+
+  private isReadOnlyTransactionStatusRequest(request: any): boolean {
+    return request.method === 'GET' && request.route?.path === '/v1/transactions/:id';
+  }
+
+  private async hasMatureBillingDebt(keyRecord: ApiKeyAuthRecord): Promise<boolean> {
+    const userId = keyRecord.user?.id ?? keyRecord.userId ?? null;
+    if (!this.billingDebt || !userId) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
+    try {
+      return await this.billingDebt.hasEnforceableApiDebt(userId);
+    } catch (error) {
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+        message: 'Billing debt check is temporarily unavailable',
+      });
+    }
   }
 
   private async recordApiCallUsage(request: any, keyRecord: ApiKeyAuthRecord): Promise<void> {

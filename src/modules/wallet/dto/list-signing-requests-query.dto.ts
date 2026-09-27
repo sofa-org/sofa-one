@@ -1,7 +1,10 @@
-import { IsOptional, IsString, IsIn, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsInt, Min, Max, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListSigningRequestsQueryDto {
+  @IsOptional()
+  @IsUUID()
+  walletId?: string;
   @IsOptional()
   @IsString()
   @IsIn(['message', 'typed_data'])

@@ -974,6 +974,33 @@ export class BillingReconciliationService {
     const details = (tx.details ?? {}) as Record<string, unknown>;
     const isBackendEoa = details.execution === 'backend_eoa' || details.executionMode === 'eoa';
 
+    // Transaction.walletAddress is an immutable execution identity, not a hint
+    // to look up the user's current/default wallet. Resolve it against wallets
+    // owned by this user; never let an unrelated wallet contribute log senders.
+    const ownedWallets = await this.prisma.userWallet.findMany({
+      // Resolve against the user's wallet snapshot; an agent address may be
+      // the transaction identity for either execution mode, not walletAddress.
+      where: { userId },
+      select: { walletAddress: true, agentWalletAddress: true },
+    });
+    const matchingWallets = ownedWallets.filter((wallet) =>
+      isBackendEoa
+        ? wallet.agentWalletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase()
+        : wallet.walletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase() ||
+          wallet.agentWalletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase(),
+    );
+    if (
+      !tx.walletAddress ||
+      matchingWallets.length !== 1 ||
+      !matchingWallets[0]?.walletAddress
+    ) {
+      // Missing or ambiguous ownership cannot safely produce a usage event.
+      // Leave the transaction unresolved for operator review; do not infer a
+      // replacement from another wallet belonging to the same user.
+      summary.conflicts++;
+      return;
+    }
+
     // EOA sends must originate from the transaction's wallet address. A sender
     // mismatch is quarantined (zero volume) and never marks the tx confirmed.
     if (isBackendEoa && receipt.from.toLowerCase() !== tx.walletAddress.toLowerCase()) {
@@ -1009,9 +1036,9 @@ export class BillingReconciliationService {
       return; // never meter, never mark confirmed
     }
 
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    const walletAddresses = new Set<string>();
-    if (wallet?.walletAddress) walletAddresses.add(wallet.walletAddress.toLowerCase());
+    const walletAddresses = new Set<string>([matchingWallets[0].walletAddress.toLowerCase()]);
+    // Session-key transactions can persist the agent address as execution
+    // identity while transfer logs are emitted by the user's embedded wallet.
     walletAddresses.add(tx.walletAddress.toLowerCase());
 
     const isNativeWithdrawal =

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Logger,
   NotFoundException,
@@ -114,6 +115,8 @@ describe('WalletService.withdraw()', () => {
 
   // Prisma mock handles
   const mockFindUnique = jest.fn();
+  const mockWalletFindMany = jest.fn();
+  const mockWalletFindFirst = jest.fn();
   const mockFindFirst = jest.fn();
   /** Interactive-tx findFirst — distinct from root so P2002 recovery can be asserted. */
   const mockTxFindFirst = jest.fn();
@@ -138,6 +141,11 @@ describe('WalletService.withdraw()', () => {
 
     // Default: wallet exists, sufficient balance, no duplicate tx, no billing debt
     mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockWalletFindMany.mockImplementation(async () => {
+      const wallet = await mockFindUnique();
+      return wallet ? [wallet] : [];
+    });
+    mockWalletFindFirst.mockImplementation(async () => mockFindUnique());
     mockFindFirst.mockResolvedValue(null);
     mockTxFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
@@ -178,7 +186,7 @@ describe('WalletService.withdraw()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
+            userWallet: { findUnique: mockFindUnique, findMany: mockWalletFindMany, findFirst: mockWalletFindFirst },
             transaction: {
               findFirst: mockFindFirst,
               create: mockCreate,
@@ -227,7 +235,7 @@ describe('WalletService.withdraw()', () => {
   // ── 1. Wallet not found ──────────────────────────────────────────────────────
 
   it('throws NotFoundException when wallet not found', async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockWalletFindMany.mockResolvedValue([]);
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(NotFoundException);
   });
@@ -279,6 +287,8 @@ describe('WalletService.withdraw()', () => {
       id: 'tx-existing',
       txHash: '0xhash-existing',
       status: 'pending',
+      walletAddress: WALLET.walletAddress,
+      requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }),
     });
 
     const result = await service.withdraw('user-1', VALID_DTO);
@@ -294,7 +304,7 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
-    mockFindFirst.mockResolvedValue({ id: 'tx-existing', txHash: null, status: 'submitting' });
+    mockFindFirst.mockResolvedValue({ id: 'tx-existing', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }) });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
@@ -312,7 +322,7 @@ describe('WalletService.withdraw()', () => {
     // Outer root miss → inner tx miss → P2002 aborts interactive tx → root re-read hits existing.
     mockFindFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting' });
+       .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }) });
     mockTxFindFirst.mockResolvedValue(null);
     mockCreate.mockRejectedValue({ code: 'P2002' });
 
@@ -336,6 +346,7 @@ describe('WalletService.withdraw()', () => {
       id: 'tx-existing',
       txHash: null,
       status: 'submitting',
+      walletAddress: WALLET.walletAddress,
       requestHash: 'different-request',
     });
     mockTxFindFirst.mockResolvedValue(null);
@@ -361,6 +372,7 @@ describe('WalletService.withdraw()', () => {
       id: 'tx-existing',
       txHash: '0xhash-existing',
       status: 'pending',
+      walletAddress: WALLET.walletAddress,
       requestHash: 'different-request',
     });
 
@@ -368,6 +380,44 @@ describe('WalletService.withdraw()', () => {
 
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('reuses a pre-wallet-bound null-hash row only with matching legacy fingerprint evidence', async () => {
+    const chain = getSupportedChain(VALID_DTO.chainId);
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: chain.usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-tx', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: null, details: { requestHash: legacyFingerprint } });
+    await expect(service.withdraw('user-1', VALID_DTO)).resolves.toMatchObject({ transactionId: 'legacy-tx' });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('reuses a matching pre-upgrade non-null legacy fingerprint for the same wallet without resubmitting', async () => {
+    const chain = getSupportedChain(VALID_DTO.chainId);
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: chain.usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-hash-tx', txHash: '0xlegacy', status: 'pending', walletAddress: WALLET.walletAddress, requestHash: legacyFingerprint });
+    await expect(service.withdraw('user-1', VALID_DTO)).resolves.toMatchObject({ transactionId: 'legacy-hash-tx' });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects a different request against a pre-upgrade fingerprint', async () => {
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: '999', token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-hash-tx', txHash: null, status: 'pending', walletAddress: WALLET.walletAddress, requestHash: legacyFingerprint });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects null-hash legacy rows without matching fingerprint proof', async () => {
+    mockFindFirst.mockResolvedValue({ id: 'legacy-tx', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: null, details: {} });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('never reuses an idempotency row belonging to another wallet', async () => {
+    mockFindFirst.mockResolvedValue({ id: 'other-wallet-tx', txHash: null, status: 'submitting', walletAddress: '0x9999999999999999999999999999999999999999', requestHash: null, details: {} });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -650,10 +700,13 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('returns existing idempotent withdrawal without checking billing debt', async () => {
+    const contractAddress = getSupportedChain(VALID_DTO.chainId).usdcAddress;
     mockFindFirst.mockResolvedValue({
       id: 'tx-existing',
       txHash: '0xhash-existing',
       status: 'pending',
+      walletAddress: WALLET.walletAddress,
+      requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress }),
     });
     mockGetDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
 
@@ -710,11 +763,16 @@ describe('WalletService.sign()', () => {
   let service: WalletService;
 
   const mockFindUnique = jest.fn();
+  const mockWalletFindMany = jest.fn();
+  const mockWalletFindFirst = jest.fn();
   const mockSignData = jest.fn();
   const mockVerifyAgentKeyRegistration = jest.fn();
   const mockAssertSessionKeyAllowed = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
+  const mockSigningRequestFindMany = jest.fn();
+  const mockSigningRequestCount = jest.fn();
+  const mockSigningRequestFindFirst = jest.fn();
   const mockAssertEoaExecutionAllowed = jest.fn();
   const mockWithdrawalPolicyFindUnique = jest.fn();
   const mockTxWithdrawalPolicyFindUnique = jest.fn();
@@ -729,11 +787,19 @@ describe('WalletService.sign()', () => {
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockWalletFindMany.mockImplementation(async () => {
+      const wallet = await mockFindUnique();
+      return wallet ? [wallet] : [];
+    });
+    mockWalletFindFirst.mockImplementation(async () => mockFindUnique());
     mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
     mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
+    mockSigningRequestFindMany.mockResolvedValue([]);
+    mockSigningRequestCount.mockResolvedValue(0);
+    mockSigningRequestFindFirst.mockResolvedValue(null);
     mockAssertEoaExecutionAllowed.mockResolvedValue(undefined);
     // BILL-016 default: destination protection OFF (legacy SigningPolicy path).
     mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
@@ -753,8 +819,8 @@ describe('WalletService.sign()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
-            signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate },
+            userWallet: { findMany: mockWalletFindMany, findFirst: mockWalletFindFirst },
+            signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate, findMany: mockSigningRequestFindMany, count: mockSigningRequestCount, findFirst: mockSigningRequestFindFirst },
             withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique },
             $transaction: mockTransaction,
           },
@@ -799,9 +865,60 @@ describe('WalletService.sign()', () => {
     service = module.get<WalletService>(WalletService);
   });
 
+  it('scopes selected-wallet history to both embedded and agent addresses', async () => {
+    const second = { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444', agentWalletAddress: '0x5555555555555555555555555555555555555555' };
+    mockWalletFindMany.mockResolvedValue([WALLET, second]);
+    mockSigningRequestFindMany.mockResolvedValue([]);
+    await service.listSigningRequests('user-1', { walletId: second.id } as any);
+    expect(mockSigningRequestFindMany.mock.calls.at(-1)?.[0].where.walletAddress).toEqual({ in: [second.walletAddress, second.agentWalletAddress] });
+  });
+
+  it('returns empty pending-wallet history and not-found detail without Prisma null-address lookup', async () => {
+    const pending = { ...WALLET, id: 'pending-wallet', walletAddress: null, agentWalletAddress: null };
+    mockWalletFindMany.mockResolvedValue([pending]);
+    await expect(service.listSigningRequests('user-1', { walletId: pending.id } as any)).resolves.toMatchObject({ items: [], total: 0 });
+    expect(mockSigningRequestFindMany).not.toHaveBeenCalled();
+    await expect(service.getSigningRequestDetail('user-1', 'sr-1', pending.id)).rejects.toThrow(NotFoundException);
+    expect(mockSigningRequestFindFirst).not.toHaveBeenCalled();
+  });
+
   afterEach(() => {
     loggerErrorSpy.mockRestore();
     loggerWarnSpy.mockRestore();
+  });
+
+  it('conflicts when walletId is omitted and multiple active owner wallets exist', async () => {
+    mockWalletFindMany.mockResolvedValue([
+      { ...WALLET },
+      { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
+    ]);
+    await expect(service.sign('user-1', { type: 'message', message: 'hello', chainId: 84532 } as any, API_KEY_CONTEXT))
+      .rejects.toBeInstanceOf(ConflictException);
+    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects a forged wallet ID not present in the authenticated owner wallet set', async () => {
+    mockWalletFindMany.mockResolvedValue([{ ...WALLET }]);
+    await expect(service.sign('user-1', {
+      type: 'message', message: 'hello', chainId: 84532, walletId: 'wallet-for-another-user',
+    } as any, API_KEY_CONTEXT)).rejects.toThrow(NotFoundException);
+    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('uses the selected owned wallet account when signing', async () => {
+    const selected = { ...WALLET, id: 'wallet-2', agentOpenfortAccountId: 'agent-acc-2' };
+    mockWalletFindMany.mockResolvedValue([{ ...WALLET }, selected]);
+    mockWalletFindFirst.mockResolvedValue(selected);
+    await service.sign('user-1', {
+      type: 'message', message: 'hello', chainId: 84532, walletId: selected.id,
+    } as any, API_KEY_CONTEXT);
+    expect(mockWalletFindFirst).toHaveBeenCalledWith({
+      where: { id: selected.id, userId: 'user-1' },
+      include: { chainAuthorizations: { where: { chainId: BigInt(84532) } } },
+    });
+    expect(mockSignData).toHaveBeenCalledWith('agent-acc-2', expect.any(String));
   });
 
   it('uses EIP-191 hash for message signing', async () => {
@@ -1140,8 +1257,8 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockFindUnique).toHaveBeenCalledWith({
-      where: { userId: 'user-1' },
+    expect(mockWalletFindFirst).toHaveBeenCalledWith({
+      where: { id: WALLET.id, userId: 'user-1' },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(84532) } },
       },
@@ -1228,7 +1345,7 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockFindUnique).toHaveBeenCalledTimes(1);
+    expect(mockWalletFindFirst).toHaveBeenCalledTimes(1);
     expect(mockSigningRequestCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         type: 'typed_data',
@@ -1323,7 +1440,7 @@ describe('WalletService.sign()', () => {
   });
 
   it('throws NotFoundException when wallet not found', async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockWalletFindMany.mockResolvedValue([]);
 
     await expect(
       service.sign(
@@ -1654,7 +1771,7 @@ describe('WalletService.getBalances()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
+            userWallet: { findUnique: mockFindUnique, findMany: jest.fn(async () => { const wallet = await mockFindUnique(); return wallet ? [wallet] : []; }), findFirst: jest.fn(() => mockFindUnique()) },
           },
         },
         {
@@ -1743,7 +1860,7 @@ describe('WalletService.getDepositInfo()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
+            userWallet: { findUnique: mockFindUnique, findMany: jest.fn(async () => { const wallet = await mockFindUnique(); return wallet ? [wallet] : []; }), findFirst: jest.fn(() => mockFindUnique()) },
           },
         },
         {

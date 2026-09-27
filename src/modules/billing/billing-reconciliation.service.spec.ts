@@ -95,6 +95,7 @@ describe('BillingReconciliationService', () => {
   const txFindMany = jest.fn();
   const txCount = jest.fn();
   const walletFindUnique = jest.fn();
+  const walletFindMany = jest.fn();
   const txUpdateMany = jest.fn();
   const txUpdate = jest.fn();
   const getReceipt = jest.fn();
@@ -137,7 +138,7 @@ describe('BillingReconciliationService', () => {
               updateMany: txUpdateMany,
               update: txUpdate,
             },
-            userWallet: { findUnique: walletFindUnique },
+            userWallet: { findUnique: walletFindUnique, findMany: walletFindMany },
             $transaction: async (work: (db: unknown) => Promise<unknown>) =>
               work({
                 billingReconciliationRun: { updateMany: runUpdateMany },
@@ -167,6 +168,7 @@ describe('BillingReconciliationService', () => {
     runUpdateMany.mockResolvedValue({ count: 1 });
     txCount.mockResolvedValue(0);
     walletFindUnique.mockResolvedValue({ walletAddress: WALLET });
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
     recordSuccessfulOutbound.mockResolvedValue({ outcome: 'inserted' });
     txUpdateMany.mockResolvedValue({ count: 1 });
     txUpdate.mockResolvedValue({ id: 'tx-1' });
@@ -561,6 +563,34 @@ describe('BillingReconciliationService', () => {
     );
   });
 
+  it('meters session-key transfers from either the embedded wallet or its agent sender', async () => {
+    mockCandidates([txRow({ walletAddress: AGENT })]);
+    getReceipt.mockResolvedValue({
+      status: 'success',
+      receipt: successReceipt([
+        transferLog({ topics: [TRANSFER_TOPIC0, paddedAddress(AGENT), paddedAddress(OTHER)] }),
+      ]),
+    });
+
+    await service.reconcile('user-1', { limit: 50, targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
+
+    expect(recordSuccessfulOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceKey: 'tx:tx-1:log:0', status: 'posted' }),
+    );
+  });
+
+  it('counts an unowned or mismatched transaction wallet as a conflict without metering', async () => {
+    mockCandidates([txRow({ walletAddress: OTHER })]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
+
+    const result = await service.reconcile('user-1', { limit: 50, targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
+
+    expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
+    expectNoTransactionStateMutation();
+    expect(result).toMatchObject({ conflicts: 1, posted: 0, updated: 0 });
+  });
+
   it('does not bill an outer bundle when the typed inner UserOperation failed', async () => {
     mockCandidates([txRow({ userOpHash: '0x' + 'a'.repeat(64), userOpSuccess: false })]);
     getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
@@ -617,6 +647,7 @@ describe('BillingReconciliationService', () => {
   });
 
   it('posts a backend_eoa send when receipt.from matches the wallet', async () => {
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,
@@ -645,6 +676,7 @@ describe('BillingReconciliationService', () => {
   });
 
   it('quarantines a backend_eoa send whose receipt.from does not match the wallet', async () => {
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,

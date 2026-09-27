@@ -18,6 +18,8 @@ describe('resolveApiErrorCode', () => {
     ['Missing authentication credentials', API_ERROR_CODES.AUTHENTICATION_REQUIRED],
     ['IP address not allowed', API_ERROR_CODES.IP_NOT_ALLOWED],
     ['Wallet not found', API_ERROR_CODES.WALLET_NOT_FOUND],
+    ['walletId is required when multiple active wallets exist', API_ERROR_CODES.WALLET_SELECTION_REQUIRED],
+    ['walletId is required when multiple wallets are available', API_ERROR_CODES.WALLET_SELECTION_REQUIRED],
     ['Transaction not found', API_ERROR_CODES.TRANSACTION_NOT_FOUND],
     ['Chain 1 is not supported', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
     ['USDC billing is not supported on chain 1', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],

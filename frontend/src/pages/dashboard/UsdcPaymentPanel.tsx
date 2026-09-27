@@ -536,9 +536,17 @@ interface UsdcPaymentPanelProps {
   invoice: BillingInvoice;
   getToken: () => Promise<string | null>;
   onChange: () => Promise<boolean> | boolean;
+  wallets?: Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>;
+  walletChoicesError?: string | null;
 }
 
-export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPanelProps) {
+export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], walletChoicesError }: UsdcPaymentPanelProps) {
+  const [payerWalletId, setPayerWalletId] = useState(() => wallets.length === 1 ? wallets[0].id : '');
+  const payerChoices = wallets.filter((wallet) => wallet.walletAddress && wallet.status === 'active');
+  const payerChoiceSignature = payerChoices.map((wallet) => wallet.id).join(',');
+  useEffect(() => { if (payerChoices.length === 1) setPayerWalletId(payerChoices[0].id); else if (!payerChoices.some((wallet) => wallet.id === payerWalletId)) setPayerWalletId(''); }, [payerChoiceSignature, payerWalletId]);
+  const payerSelectionRef = useRef({ id: payerWalletId, signature: payerChoiceSignature, error: walletChoicesError });
+  payerSelectionRef.current = { id: payerWalletId, signature: payerChoiceSignature, error: walletChoicesError };
   const [selectedChainId, setSelectedChainId] = useState<number>(84532);
   const [quote, setQuote] = useState<UsdcQuoteResponse | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -860,8 +868,13 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
    * review / active rails stay authoritative after refresh (BILL-018).
    */
   const fetchQuote = useCallback(
-    async (signal?: AbortSignal) => {
+    async (signal?: AbortSignal, requestedPayerId?: string) => {
       const requestId = (quoteRequestIdRef.current += 1);
+      const payerSnapshot = payerSelectionRef.current;
+      const payerId = requestedPayerId ?? payerSnapshot.id ?? (payerChoices.length === 1 ? payerChoices[0].id : '');
+      const choicesSnapshot = payerChoiceSignature;
+      if (payerSnapshot.error) { setQuoteError('Wallet choices could not be loaded. Refresh billing before requesting a quote.'); return; }
+      if (payerChoices.length > 1 && !payerId) { setQuoteError('Choose the wallet that will pay this invoice before requesting a quote.'); return; }
       stopStatusPolling();
 
       const priorRecovery = paymentRecoveryRef.current;
@@ -941,9 +954,10 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
           return;
         }
 
-        const data = await createUsdcQuoteAuth(getToken, invoice.id, selectedChainId, signal);
+        const data = await createUsdcQuoteAuth(getToken, invoice.id, selectedChainId, signal, payerId || undefined);
         if (signal?.aborted) return;
         if (requestId !== quoteRequestIdRef.current) return; // stale response
+        if (payerSelectionRef.current.signature !== choicesSnapshot || payerSelectionRef.current.id !== payerSnapshot.id) return;
         setQuote(data);
         setSelectedChainId(data.chainId);
         setQuoteError(null);
@@ -1010,6 +1024,10 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
       loadInvoicePaymentStatus,
       onChange,
       selectedChainId,
+      payerChoiceSignature,
+      payerChoices,
+      payerWalletId,
+      walletChoicesError,
       startStatusPolling,
       stopStatusPolling,
     ],
@@ -1736,6 +1754,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange }: UsdcPaymentPan
 
       {!reviewBlocked && !invoicePaid && (
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
+          {payerChoices.length > 1 && <div className="flex-1 space-y-1.5"><label htmlFor={`usdc-payer-${invoice.id}`} className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Paying wallet</label><select id={`usdc-payer-${invoice.id}`} value={payerWalletId} onChange={(event) => setPayerWalletId(event.target.value)} disabled={Boolean(quote) || controlsLocked} className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm"><option value="">Choose a wallet…</option>{payerChoices.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.walletAddress}{wallet.isDefault ? ' · default' : ''}</option>)}</select></div>}
           <div className="flex-1 space-y-1.5">
             <label
               htmlFor={`usdc-network-${invoice.id}`}

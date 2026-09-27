@@ -9,6 +9,7 @@ import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { BillingReconciliationService } from './billing-reconciliation.service';
 import { BillingEntitlementService } from './billing-entitlement.service';
+import { BillingWalletLifecycleService } from './billing-wallet-lifecycle.service';
 import { BillingDebtService } from './billing-debt.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
 import { InvoiceSettlementService } from './invoice-settlement.service';
@@ -49,6 +50,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     BillingService,
     BillingReconciliationService,
     BillingEntitlementService,
+    BillingWalletLifecycleService,
     BillingDebtService,
     BillingPlanChangeService,
     InvoiceSettlementService,
@@ -68,6 +70,7 @@ import { USDC_RECEIPT_PROVIDER } from './onchain/usdc.constants';
     BillingService,
     BillingReconciliationService,
     BillingEntitlementService,
+    BillingWalletLifecycleService,
     BillingDebtService,
     BillingPlanChangeService,
     InvoiceSettlementService,

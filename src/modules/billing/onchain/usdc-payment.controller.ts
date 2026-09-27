@@ -36,7 +36,7 @@ export class UsdcPaymentController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: UsdcQuoteDto,
   ) {
-    return this.usdcPaymentService.quote(userId, id, body.chainId);
+    return this.usdcPaymentService.quote(userId, id, body.chainId, body.walletId);
   }
 
   /**

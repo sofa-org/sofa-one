@@ -2,7 +2,7 @@
 
 ## Responsibility
 Wallet operations for the SOFA ONE dashboard and public API:
-- Read-only wallet queries: deposit info, native/stablecoin balances, signing-request history.
+- Read-only wallet queries: deposit info, native/stablecoin balances, signing-request history, with owner-scoped wallet selection.
 - API-key signing of EIP-191 messages and EIP-712 typed data via the TEE-managed backend agent signer (no transaction broadcast).
 - Withdrawal-address allowlist management and withdrawal policy enforcement (single/daily limits, step-up, address allowlist + cooldown).
 - Withdrawal submission as a Calibur agent user operation through Openfort, with idempotency and on-chain balance pre-checks.
@@ -22,8 +22,8 @@ Wallet operations for the SOFA ONE dashboard and public API:
 ## Flow
 
 ### Wallet queries (dashboard-only)
-- `GET /v1/wallets/deposit-info` → load `UserWallet`, reject frozen (`assertWalletNotFrozen`) and non-active wallets, return `walletAddress`, chain metadata, and supported tokens (USDC/USDT/native per chain config).
-- `GET /v1/wallets/balances?chainId=` → same frozen/active guards, then parallel viem reads: native `getBalance` (`formatEther`) and ERC-20 `balanceOf` for configured stablecoins (`formatUnits(raw, 6)`). Per-token failures degrade to `{ formatted: null, error: 'fetch failed' }` rather than failing the whole request.
+- `GET /v1/wallets/deposit-info` → optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists (multiple require explicit selection, no arbitrary default). Load `UserWallet`, reject frozen (`assertWalletNotFrozen`) and non-active wallets, return `walletAddress`, chain metadata, and supported tokens (USDC/USDT/native per chain config).
+- `GET /v1/wallets/balances?chainId=&walletId=` → optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists. Apply the same frozen/active guards, then parallel viem reads: native `getBalance` (`formatEther`) and ERC-20 `balanceOf` for configured stablecoins (`formatUnits(raw, 6)`). Per-token failures degrade to `{ formatted: null, error: 'fetch failed' }` rather than failing the whole request.
 - `GET /v1/wallets/signing-requests` and `GET /v1/wallets/signing-requests/:id` → ownership-scoped (`userId`) `SigningRequest` list (filters: type/status/chainId; pagination) and detail. Never returns the digest or request hash.
 
 ### Signing (API-key only)

@@ -39,7 +39,7 @@ describe('UsdcPaymentController', () => {
 
     const result = await controller.quote('user-1', 'inv-1', { chainId: 8453 } as any);
 
-    expect(usdcPaymentService.quote).toHaveBeenCalledWith('user-1', 'inv-1', 8453);
+    expect(usdcPaymentService.quote).toHaveBeenCalledWith('user-1', 'inv-1', 8453, undefined);
     expect(result).toEqual({ paymentAttemptId: 'att-1' });
   });
 
@@ -48,7 +48,7 @@ describe('UsdcPaymentController', () => {
 
     await controller.quote('user-1', 'inv-1', {} as any);
 
-    expect(usdcPaymentService.quote).toHaveBeenCalledWith('user-1', 'inv-1', undefined);
+    expect(usdcPaymentService.quote).toHaveBeenCalledWith('user-1', 'inv-1', undefined, undefined);
   });
 
   it('delegates claim to the service with the minimal body', async () => {

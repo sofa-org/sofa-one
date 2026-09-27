@@ -186,7 +186,7 @@ describe('billing-calculator', () => {
       expect(totals.totalMicros).toBe(649_000_000n);
     });
 
-    it('charges wallet overage when over the allowance and a rate is set', () => {
+    it('never bills wallet overage even when usage exceeds the allowance and a rate is set', () => {
       const totals = calculateInvoiceTotals({
         plan: PLANS.scale, // 5,000 included wallets
         grossOutboundMicros: 0n,
@@ -194,9 +194,8 @@ describe('billing-calculator', () => {
         walletOverageRateMicros: 5_000n, // $0.005 per wallet/month
       });
 
-      // 20 over-limit wallets * $0.005 = $0.10
-      expect(totals.walletOverageMicros).toBe(100_000n);
-      expect(totals.totalMicros).toBe(799_100_000n);
+      expect(totals.walletOverageMicros).toBe(0n);
+      expect(totals.totalMicros).toBe(799_000_000n);
     });
 
     it('treats Enterprise custom nulls as zero base fee and zero allowance', () => {
@@ -223,7 +222,7 @@ describe('billing-calculator', () => {
   });
 
   describe('API hard-limit and overage rate defaults (P0)', () => {
-    it('ships a Free API default of $0.002 and wallet $0.01/wallet/month', () => {
+    it('ships a Free API default of $0.002 and retains the legacy wallet rate constant', () => {
       expect(DEFAULT_API_OVERAGE_RATE_MICROS).toBe(2_000n);
       expect(DEFAULT_WALLET_OVERAGE_RATE_MICROS).toBe(10_000n);
     });
@@ -260,15 +259,14 @@ describe('billing-calculator', () => {
       expect(totals.apiOverageMicros).toBe(0n);
     });
 
-    it('keeps the wallet overage boundary unchanged ($0.01/wallet/month)', () => {
+    it('keeps wallet overage at zero above and at the included-wallet allowance', () => {
       const oneOver = calculateInvoiceTotals({
         plan: PLANS.free, // 10 included wallets
         grossOutboundMicros: 0n,
         activeWallets: 11, // exactly 1 over
         walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
       });
-      // 1 over-limit wallet * $0.01 = $0.01
-      expect(oneOver.walletOverageMicros).toBe(10_000n);
+      expect(oneOver.walletOverageMicros).toBe(0n);
 
       const atLimit = calculateInvoiceTotals({
         plan: PLANS.free,
@@ -277,6 +275,22 @@ describe('billing-calculator', () => {
         walletOverageRateMicros: DEFAULT_WALLET_OVERAGE_RATE_MICROS,
       });
       expect(atLimit.walletOverageMicros).toBe(0n);
+    });
+
+    it('keeps legacy above-allowance wallet counts free and rejects negative wallet rates', () => {
+      expect(() => calculateInvoiceTotals({
+        plan: PLANS.free,
+        grossOutboundMicros: 0n,
+        activeWallets: 100,
+        walletOverageRateMicros: -1n,
+      })).toThrow(RangeError);
+      const totals = calculateInvoiceTotals({
+        plan: PLANS.free,
+        grossOutboundMicros: 0n,
+        activeWallets: 100,
+        walletOverageRateMicros: 10_000n,
+      });
+      expect(totals.walletOverageMicros).toBe(0n);
     });
 
     it('keeps huge API over-limit traffic at an exact BigInt zero (no float, no charge)', () => {

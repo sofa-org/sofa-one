@@ -30,6 +30,7 @@ formatting, throttling, request correlation) globally.
 | `core/` | Infrastructure layer: `database/` (Prisma global module) and `openfort/` (Openfort SDK + viem/ERC-4337 facade). |
 | `modules/` | Feature modules: auth, api-key, wallet, transactions, health, step-up, mfa, security-events, security-notifications, billing, eoa-execution, session-key. |
 | `types/` | Global ambient Express type augmentation (`express.d.ts`) for request-scoped fields. |
+| `scripts/recover-wallet-provisioning.ts` | Operator-only recovery utility for binding an existing provider account to its provisioning intent; outside NestJS and not an HTTP endpoint. |
 
 ## System Entry Points
 

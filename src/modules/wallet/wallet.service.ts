@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -131,18 +132,32 @@ export class WalletService {
     return client;
   }
 
+  private async selectWallet(userId: string, walletId?: string) {
+    const wallets = await this.prisma.userWallet.findMany({ where: { userId } });
+    if (wallets.length === 0) throw new NotFoundException('Wallet not found');
+    if (walletId) {
+      const wallet = wallets.find((candidate) => candidate.id === walletId);
+      if (!wallet) throw new NotFoundException('Wallet not found');
+      return wallet;
+    }
+    if (wallets.length === 1) return wallets[0];
+    const eligible = wallets.filter((wallet) => wallet.status === 'active' && wallet.walletAddress && !wallet.frozenAt);
+    if (eligible.length !== 1) throw new ConflictException('walletId is required when multiple wallets are available');
+    return eligible[0];
+  }
+
   /** Return the user's EOA address and supported deposit tokens. */
-  async getDepositInfo(userId: string, chainId: number) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
+  async getDepositInfo(userId: string, chainId: number, walletId?: string) {
+    const wallet = await this.selectWallet(userId, walletId);
     this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
+    const walletAddress = wallet.walletAddress;
     const supportedChain = getSupportedChain(chainId);
 
     return {
-      walletAddress: wallet.walletAddress,
+      walletAddress,
       chainId,
       chainName: supportedChain.name,
       status: wallet.status,
@@ -245,32 +260,29 @@ export class WalletService {
     }
 
     // Evaluate multi-factor risk before proceeding
+    const selectedWallet = await this.selectWallet(userId, params.walletId);
+    const wallet = await this.prisma.userWallet.findFirst({
+      where: { id: selectedWallet.id, userId },
+      include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } },
+    });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
+    if (wallet.status !== 'active' || !wallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
       userId,
       apiKeyId: apiKeyRecord.id,
-      walletId: undefined,
+      walletId: wallet.id,
       operationType: 'signing',
     });
     if (riskAssessment && riskAssessment.action !== 'allow') {
       await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
         userId,
         apiKeyId: apiKeyRecord.id,
-        walletId: undefined,
+        walletId: wallet.id,
         operationType: 'signing',
       });
     }
 
-    const wallet = await this.prisma.userWallet.findUnique({
-      where: { userId },
-      include: {
-        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
-      },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-    this.assertWalletNotFrozen(wallet);
-    if (wallet.status !== 'active' || !wallet.walletAddress) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet);
       this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
@@ -424,9 +436,14 @@ export class WalletService {
   }
 
   /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
-  async getSigningRequestDetail(userId: string, signingRequestId: string) {
+  async getSigningRequestDetail(userId: string, signingRequestId: string, walletId?: string) {
+    const wallet = walletId ? await this.selectWallet(userId, walletId) : undefined;
+    if (walletId && !wallet?.walletAddress && !wallet?.agentWalletAddress) {
+      throw new NotFoundException('Signing request not found');
+    }
+    const addresses = wallet ? [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x) : [];
     const sr = await this.prisma.signingRequest.findFirst({
-      where: { id: signingRequestId, userId },
+      where: { id: signingRequestId, userId, ...(wallet ? { walletAddress: { in: addresses } } : {}) },
     });
     if (!sr) throw new NotFoundException('Signing request not found');
 
@@ -451,6 +468,12 @@ export class WalletService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = { userId };
+    if (query.walletId) {
+      const wallet = await this.selectWallet(userId, query.walletId);
+      const addresses = [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x);
+      if (addresses.length === 0) return { items: [], total: 0, page, limit };
+      where.walletAddress = { in: addresses };
+    }
 
     if (query.type) {
       where.type = query.type;
@@ -723,9 +746,8 @@ export class WalletService {
   }
 
   /** Return native token and stablecoin balances for the user's wallet on the requested chain. */
-  async getBalances(userId: string, chainId: number) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
+  async getBalances(userId: string, chainId: number, walletId?: string) {
+    const wallet = await this.selectWallet(userId, walletId);
     this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
@@ -800,8 +822,9 @@ export class WalletService {
   async withdraw(userId: string, params: WithdrawDto, options?: { stepUpVerified?: boolean }) {
     const chainId = params.chainId;
     const supportedChain = getSupportedChain(chainId);
-    const wallet = await this.prisma.userWallet.findUnique({
-      where: { userId },
+    const selected = await this.selectWallet(userId, params.walletId);
+    const wallet = await this.prisma.userWallet.findFirst({
+      where: { userId, id: selected.id },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(chainId) } },
       },
@@ -860,6 +883,7 @@ export class WalletService {
 
     const requestHash = hashRequest({
       operationType: 'withdraw',
+      walletId: wallet.id,
       chainId,
       to: params.to,
       amount: params.amount,
@@ -871,6 +895,8 @@ export class WalletService {
       idempotencyKey: params.idempotencyKey!,
       chainId,
       requestHash,
+      walletAddress,
+      legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
     });
     if (existingWithdrawal) {
       return this.toWithdrawalResponse(existingWithdrawal);
@@ -924,6 +950,8 @@ export class WalletService {
             idempotencyKey: params.idempotencyKey!,
             chainId,
             requestHash,
+            walletAddress,
+            legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
           },
           txClient,
         );
@@ -1006,6 +1034,8 @@ export class WalletService {
         idempotencyKey: params.idempotencyKey!,
         chainId,
         requestHash,
+        walletAddress,
+        legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
       });
       if (!existing) throw error;
       tx = existing;
@@ -1265,7 +1295,7 @@ export class WalletService {
 
   private async findExistingWithdrawal(
     userId: string,
-    params: { idempotencyKey: string; chainId: number; requestHash: string },
+    params: { idempotencyKey: string; chainId: number; requestHash: string; walletAddress: string; legacyFingerprint: string },
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     const existing = await prisma.transaction.findFirst({
@@ -1278,7 +1308,20 @@ export class WalletService {
     });
 
     if (!existing) return null;
-    if (existing.requestHash && existing.requestHash !== params.requestHash) {
+    if (existing.walletAddress?.toLowerCase() !== params.walletAddress.toLowerCase()) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+    const legacyDetails = existing.details && typeof existing.details === 'object' ? existing.details as Record<string, unknown> : {};
+    const legacyEquivalent = existing.requestHash == null &&
+      legacyDetails.requestHash === params.legacyFingerprint;
+    if (
+      existing.requestHash != null &&
+      existing.requestHash !== params.requestHash &&
+      existing.requestHash !== params.legacyFingerprint
+    ) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+    if (existing.requestHash == null && !legacyEquivalent) {
       throw new BadRequestException('Idempotency key was already used for a different request');
     }
 

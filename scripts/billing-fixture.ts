@@ -43,6 +43,7 @@ const ENV_ENABLED = 'BILLING_FIXTURE_ENABLED';
 const ENV_DB_URL = 'BILLING_FIXTURE_DATABASE_URL';
 const ENV_MANIFEST_KEY = 'BILLING_FIXTURE_MANIFEST_KEY';
 const ENV_DISPOSABLE = 'BILLING_FIXTURE_DISPOSABLE_DB';
+const BILLING_E2E_RUNNER_TOKEN = 'runner-v1';
 
 const MANIFEST_ROOT_KEYS = new Set([
   'schema',
@@ -77,6 +78,7 @@ const MANIFEST_PERIOD_KEYS = new Set([
   'usageSourceKeys',
   'apiCallCount',
   'mode',
+  'syntheticWalletUsageId',
 ]);
 
 type Command = 'seed' | 'verify' | 'cleanup';
@@ -115,6 +117,8 @@ interface ManifestPeriod {
   usageSourceKeys: string[];
   apiCallCount: number;
   mode: PeriodMode;
+  /** Present only for manifests that created their own synthetic peak row. */
+  syntheticWalletUsageId?: string;
 }
 
 interface FixtureManifest {
@@ -246,6 +250,13 @@ function publicErrorMessage(err: unknown): string {
   const name = (err as { name?: string })?.name;
   if (name === 'ConflictException') return 'billing_conflict';
   if (name === 'BadRequestException') return 'billing_bad_request';
+  if (name === 'PrismaClientValidationError') {
+    const message = (err as { message?: string })?.message ?? '';
+    const issue = message.match(/(?:Unknown argument|Argument|Unknown field)\s+[`']([A-Za-z0-9_]+)[`']/);
+    return issue ? `prisma_validation_${issue[1]}` : 'prisma_validation_error';
+  }
+  if (typeof code === 'string' && /^[A-Z0-9_]{1,32}$/.test(code)) return `database_error_${code}`;
+  if (typeof name === 'string' && /^[A-Za-z0-9_]{1,48}$/.test(name)) return `internal_error_${name}`;
   return 'operation_failed';
 }
 
@@ -379,6 +390,65 @@ function requireDbReadGates(): string {
 
 function requireDisposable(): void {
   if (process.env[ENV_DISPOSABLE] !== 'true') safetyFail('disposable_db_required');
+}
+
+function requireRunnerIsolatedTarget(): void {
+  // Match the established billing E2E runner identity contract. An operator
+  // boolean alone is not proof that historical evidence is safe to fabricate.
+  const env = process.env;
+  if (
+    env.BILLING_E2E_PROVISIONED !== BILLING_E2E_RUNNER_TOKEN ||
+    env.BILLING_E2E_DISPOSABLE_DB !== 'true' ||
+    !env.BILLING_E2E_RUN_ID ||
+    !env.BILLING_E2E_EXPECTED_DATABASE ||
+    !env.BILLING_E2E_EXPECTED_USER ||
+    !env.BILLING_E2E_EXPECTED_OWNER ||
+    !env.BILLING_E2E_APPLICATION_NAME ||
+    !env.BILLING_E2E_DATABASE_URL
+  ) safetyFail('runner_isolated_database_required');
+  if (env[ENV_DB_URL]?.trim() !== env.BILLING_E2E_DATABASE_URL.trim()) {
+    safetyFail('runner_fixture_database_mismatch');
+  }
+}
+
+async function assertRunnerDatabaseIdentity(prisma: PrismaServiceType): Promise<void> {
+  requireRunnerIsolatedTarget();
+  const { assertBillingE2eDatabaseIdentity, BILLING_E2E_IDENTITY_SQL } =
+    require('../test/billing-e2e-database') as {
+      assertBillingE2eDatabaseIdentity: (target: any, query: () => Promise<unknown>) => Promise<unknown>;
+      BILLING_E2E_IDENTITY_SQL: string;
+    };
+  const env = process.env;
+  await assertBillingE2eDatabaseIdentity({
+    url: env.BILLING_E2E_DATABASE_URL!,
+    databaseName: env.BILLING_E2E_EXPECTED_DATABASE!,
+    runId: env.BILLING_E2E_RUN_ID!,
+    expectedUser: env.BILLING_E2E_EXPECTED_USER!,
+    expectedOwner: env.BILLING_E2E_EXPECTED_OWNER!,
+    applicationName: env.BILLING_E2E_APPLICATION_NAME!,
+  }, () => prisma.$queryRawUnsafe(BILLING_E2E_IDENTITY_SQL));
+}
+
+async function assertSyntheticWalletUsage(
+  tx: Tx,
+  id: string | undefined,
+  accountId: string,
+  period: string,
+): Promise<void> {
+  const start = exactMonthBounds(period).start;
+  const rows = await tx.billingWalletUsagePeriod.findMany({
+    where: { billingAccountId: accountId, periodStart: start },
+  });
+  if (!id) {
+    // Legacy manifests never prove ownership. Preserve their verification
+    // contract without claiming/deleting any historical evidence.
+    if (rows.length !== 1) opFail('wallet_usage_legacy_count');
+    return;
+  }
+  if (rows.length !== 1 || rows[0].id !== id || rows[0].peakWalletCount !== 0 ||
+      rows[0].observedAt?.getTime() !== fixtureOccurredAt(period).getTime()) {
+    opFail('wallet_usage_fixture_ownership');
+  }
 }
 
 // ── Period / keys / fingerprint ──────────────────────────────────────────────
@@ -648,6 +718,14 @@ function parseAndValidateManifest(raw: unknown, key: string): FixtureManifest {
     // created mode: invoice ownership implies assignment may or may not be owned
     // but invoice-owned without created is invalid
     if (invoiceOwnedByFixture && mode !== 'created') safetyFail('manifest_owned_mode');
+    const syntheticWalletUsageId = d.syntheticWalletUsageId;
+    if (syntheticWalletUsageId !== undefined &&
+        (typeof syntheticWalletUsageId !== 'string' || !UUID_RE.test(syntheticWalletUsageId))) {
+      safetyFail('manifest_wallet_usage_id');
+    }
+    if (syntheticWalletUsageId !== undefined && mode !== 'created') {
+      safetyFail('manifest_wallet_usage_ownership');
+    }
 
     if (!Array.isArray(d.usageSourceKeys) || d.usageSourceKeys.length !== apiCallCount) {
       safetyFail('manifest_usage_keys');
@@ -676,6 +754,7 @@ function parseAndValidateManifest(raw: unknown, key: string): FixtureManifest {
       usageSourceKeys,
       apiCallCount,
       mode: mode as PeriodMode,
+      ...(syntheticWalletUsageId === undefined ? {} : { syntheticWalletUsageId }),
     });
   }
 
@@ -1281,9 +1360,9 @@ async function assertInvoiceSnapshot(
   if (plan.apiOverageRateMicros !== microsToDecimalUsd(exp.planTerms.apiOverageRateMicros)) {
     opFail('invoice_snapshot_plan_api_rate');
   }
-  if (plan.walletOverageRateMicros !== microsToDecimalUsd(exp.planTerms.walletOverageRateMicros)) {
-    opFail('invoice_snapshot_plan_wallet_rate');
-  }
+  // Catalog terms are immutable input; the invoice snapshot records the
+  // applied policy. Wallet overage is disabled for finalized invoices.
+  if (plan.walletOverageRateMicros !== '0') opFail('invoice_snapshot_plan_wallet_rate');
 
   const usage = asSnapNested(snap.usage, 'usage');
   if (usage.apiCalls !== String(exp.apiCalls)) opFail('invoice_snapshot_api_calls');
@@ -1372,6 +1451,7 @@ async function cmdSeed(args: CliArgs): Promise<void> {
   };
 
   try {
+    await assertRunnerDatabaseIdentity(prisma);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) opFail('user_not_found');
 
@@ -1541,10 +1621,8 @@ async function assertPriorBaseline(
   if (inv.billingAccountId !== accountId || inv.billingAccountId !== prior.billingAccountId) {
     opFail('prior_invoice_account');
   }
-  const byPeriod = await tx.billingInvoice.findUnique({
-    where: {
-      billingAccountId_periodStart: { billingAccountId: accountId, periodStart: bounds.start },
-    },
+  const byPeriod = await tx.billingInvoice.findFirst({
+    where: { billingAccountId: accountId, periodStart: bounds.start, purpose: 'usage_period' },
   });
   if (!byPeriod || byPeriod.id !== d.invoiceId) opFail('prior_invoice_id_drift');
 
@@ -1578,6 +1656,7 @@ async function assertPriorBaseline(
     planVersionId: d.planVersionId,
     expectedKeys: d.usageSourceKeys,
   });
+  await assertSyntheticWalletUsage(tx, d.syntheticWalletUsageId, accountId, d.period);
 }
 
 async function seedPeriodAtomic(args: {
@@ -1609,13 +1688,8 @@ async function seedPeriodAtomic(args: {
   const meta = fixtureUsageMetadata(fixtureId);
 
   return withPeriodTx(prisma, accountId, period.start, async (tx) => {
-    const existingInv = await tx.billingInvoice.findUnique({
-      where: {
-        billingAccountId_periodStart: {
-          billingAccountId: accountId,
-          periodStart: period.start,
-        },
-      },
+    const existingInv = await tx.billingInvoice.findFirst({
+      where: { billingAccountId: accountId, periodStart: period.start, purpose: 'usage_period' },
       include: { lines: true, paymentAttempts: true },
     });
 
@@ -1764,6 +1838,27 @@ async function seedPeriodAtomic(args: {
       expectedKeys: usageKeys,
     });
 
+    // Historical fixture periods are isolated synthetic periods. Finalization
+    // requires explicit peak evidence; never import today's wallet count or
+    // adopt/overwrite a row whose ownership this fixture cannot prove.
+    const existingWalletUsage = await tx.billingWalletUsagePeriod.findUnique({
+      where: {
+        billingAccountId_periodStart: {
+          billingAccountId: accountId,
+          periodStart: period.start,
+        },
+      },
+    });
+    if (existingWalletUsage) opFail('blank_foreign_wallet_usage');
+    const walletUsage = await tx.billingWalletUsagePeriod.create({
+      data: {
+        billingAccountId: accountId,
+        periodStart: period.start,
+        peakWalletCount: 0,
+        observedAt: midMonth,
+      },
+    });
+
     // Create-only finalize — no catalog bootstrap; refuses if invoice appears.
     const { invoice, created } = await billing.createFinalizedInvoiceOnlyInTx(tx, {
       userId,
@@ -1804,6 +1899,7 @@ async function seedPeriodAtomic(args: {
       usageSourceKeys: usageKeys,
       apiCallCount: apiCalls,
       mode: 'created' as const,
+      syntheticWalletUsageId: walletUsage.id,
     };
   });
 }
@@ -1895,6 +1991,7 @@ async function cmdCleanup(args: CliArgs): Promise<void> {
   };
 
   try {
+    await assertRunnerDatabaseIdentity(prisma);
     const report = await prisma.$transaction(
       async (tx) => {
         const deleted = { usage: 0, invoices: 0, assignments: 0, absent: 0, skipped: 0 };
@@ -1938,13 +2035,8 @@ async function cmdCleanup(args: CliArgs): Promise<void> {
           }
           if (!d.assignmentOwnedByFixture) opFail('cleanup_assignment_not_owned');
 
-          const current = await tx.billingInvoice.findUnique({
-            where: {
-              billingAccountId_periodStart: {
-                billingAccountId: account.id,
-                periodStart: bounds.start,
-              },
-            },
+          const current = await tx.billingInvoice.findFirst({
+            where: { billingAccountId: account.id, periodStart: bounds.start, purpose: 'usage_period' },
             include: { lines: true, paymentAttempts: true },
           });
 
@@ -1997,6 +2089,10 @@ async function cmdCleanup(args: CliArgs): Promise<void> {
               assignmentAnywhere: !!asgAnywhere,
             });
             if (decision === 'absent_ok') {
+              if (d.syntheticWalletUsageId) {
+                await assertSyntheticWalletUsage(tx, d.syntheticWalletUsageId, account.id, d.period);
+                await tx.billingWalletUsagePeriod.delete({ where: { id: d.syntheticWalletUsageId } });
+              }
               deleted.absent += 1;
               continue;
             }
@@ -2043,6 +2139,9 @@ async function cmdCleanup(args: CliArgs): Promise<void> {
             planVersionId: d.planVersionId,
             expectedKeys: d.usageSourceKeys,
           });
+          if (d.syntheticWalletUsageId) {
+            await assertSyntheticWalletUsage(tx, d.syntheticWalletUsageId, account.id, d.period);
+          }
 
           if (!asg) opFail('cleanup_assignment_missing');
           if (asg.billingAccountId !== account.id) opFail('cleanup_assignment_account');
@@ -2054,6 +2153,12 @@ async function cmdCleanup(args: CliArgs): Promise<void> {
           await tx.billingInvoiceLine.deleteMany({ where: { invoiceId: inv.id } });
           await tx.billingInvoice.delete({ where: { id: inv.id } });
           deleted.invoices += 1;
+
+          // Wallet usage has an account FK and no invoice FK; delete only the
+          // exact signed-manifest-owned row, after invoice/line removal.
+          if (d.syntheticWalletUsageId) {
+            await tx.billingWalletUsagePeriod.delete({ where: { id: d.syntheticWalletUsageId } });
+          }
 
           for (let n = 1; n <= d.apiCallCount; n++) {
             const sk = d.usageSourceKeys[n - 1];

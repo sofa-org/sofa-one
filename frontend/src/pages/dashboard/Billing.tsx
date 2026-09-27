@@ -477,6 +477,8 @@ function MetricCard({
 
 export default function BillingPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
+  const [walletChoices, setWalletChoices] = useState<Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>>([]);
+  const [walletChoicesError, setWalletChoicesError] = useState<string | null>(null);
   const getToken = useCallback(async () => {
     const token = await getAccessToken();
     if (!token) {
@@ -484,6 +486,7 @@ export default function BillingPage() {
     }
     return token;
   }, [getAccessToken]);
+  useEffect(() => { let live = true; void import('@/lib/api').then(({ getMe }) => getMe(getToken)).then((session) => { if (live) { setWalletChoices(session.wallets ?? [session.wallet]); setWalletChoicesError(null); } }).catch((error: unknown) => { if (live) setWalletChoicesError(getApiErrorMessage(error)); }); return () => { live = false; }; }, [getToken]);
 
   const [period, setPeriod] = useState<string>(getCurrentUtcMonth);
 
@@ -2060,6 +2063,8 @@ export default function BillingPage() {
                     <UsdcPaymentPanel
                       invoice={pendingUpgradeInvoice}
                       getToken={getToken}
+                      wallets={walletChoices}
+                      walletChoicesError={walletChoicesError}
                       onChange={async () => {
                         const ok = await refreshInvoicesSilently();
                         if (ok) {
@@ -2286,9 +2291,13 @@ export default function BillingPage() {
                 />
                 <MetricCard
                   icon={Wallet}
-                  label="Active wallets"
+                  label={summary.walletUsageMetric === 'monthly_peak'
+                    ? 'Monthly peak active wallets'
+                    : summary.walletUsageMetric === 'legacy_instantaneous'
+                      ? 'Active wallets (instantaneous count)'
+                      : 'Active wallets (metric unavailable)'}
                   value={formatCount(summary.activeWallets)}
-                  subtext={`${formatCount(summary.activeWalletsFreeAllowance)} included`}
+                  subtext={`${formatCount(summary.activeWalletsFreeAllowance)} included${summary.walletUsageMetric === 'monthly_peak' ? ' · highest concurrent count this month' : summary.walletUsageMetric === 'legacy_instantaneous' ? ' · point-in-time count; not a monthly peak' : ' · counting method not reported'}`}
                   tone={
                     BigInt(summary.activeWallets || '0') >
                     BigInt(summary.activeWalletsFreeAllowance || '0')
@@ -2697,6 +2706,8 @@ export default function BillingPage() {
                             <UsdcPaymentPanel
                               invoice={invoice}
                               getToken={getToken}
+                              wallets={walletChoices}
+                              walletChoicesError={walletChoicesError}
                               onChange={refreshInvoicesSilently}
                             />
                           </td>

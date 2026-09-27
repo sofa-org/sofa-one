@@ -7,6 +7,7 @@ export const API_ERROR_CODES = {
   API_KEY_REQUIRED: 'API_KEY_REQUIRED',
   IP_NOT_ALLOWED: 'IP_NOT_ALLOWED',
   WALLET_NOT_FOUND: 'WALLET_NOT_FOUND',
+  WALLET_SELECTION_REQUIRED: 'WALLET_SELECTION_REQUIRED',
   TRANSACTION_NOT_FOUND: 'TRANSACTION_NOT_FOUND',
   CHAIN_NOT_SUPPORTED: 'CHAIN_NOT_SUPPORTED',
   IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT',
@@ -31,6 +32,7 @@ export const API_ERROR_CODES = {
   BILLING_OUTBOUND_BLOCKED: 'BILLING_OUTBOUND_BLOCKED',
   BILLING_ASSET_FLOW_UNVERIFIABLE: 'BILLING_ASSET_FLOW_UNVERIFIABLE',
   BILLING_DEBT_CHECK_UNAVAILABLE: 'BILLING_DEBT_CHECK_UNAVAILABLE',
+  BILLING_PAYMENT_REQUIRED: 'BILLING_PAYMENT_REQUIRED',
   /** API key has not acknowledged destination-policy binding for direct egress. */
   API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED: 'API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED',
   WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED: 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED',
@@ -67,6 +69,9 @@ export function resolveApiErrorCode(statusCode: number, message: string | string
   if (normalized.includes('missing authentication')) return API_ERROR_CODES.AUTHENTICATION_REQUIRED;
   if (normalized.includes('ip address not allowed')) return API_ERROR_CODES.IP_NOT_ALLOWED;
   if (normalized.includes('wallet not found')) return API_ERROR_CODES.WALLET_NOT_FOUND;
+  if (normalized.includes('walletid is required when multiple')) {
+    return API_ERROR_CODES.WALLET_SELECTION_REQUIRED;
+  }
   if (normalized.includes('transaction not found')) return API_ERROR_CODES.TRANSACTION_NOT_FOUND;
   if (
     normalized.includes('is not supported') &&

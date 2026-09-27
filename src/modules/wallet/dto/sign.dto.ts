@@ -8,6 +8,7 @@ import {
   ValidateIf,
   ValidateBy,
   type ValidationOptions,
+  IsUUID,
 } from 'class-validator';
 
 export type SignMessage = string | { raw: `0x${string}` };
@@ -39,6 +40,9 @@ function IsSignMessage(validationOptions?: ValidationOptions) {
 }
 
 export class SignDto {
+  @IsOptional()
+  @IsUUID()
+  walletId?: string;
   /** Which backend wallet authority signs: session key (default) or the user's EOA backend wallet. */
   @IsOptional()
   @IsIn(['session_key', 'eoa'], {

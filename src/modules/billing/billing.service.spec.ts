@@ -12,6 +12,7 @@ import { InvoiceSettlementService } from './invoice-settlement.service';
 import { BillingPlanChangeService } from './billing-plan-change.service';
 import { calculateInvoiceTotals, PLANS } from './billing-calculator';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { BillingWalletLifecycleService } from './billing-wallet-lifecycle.service';
 
 const p2002 = () =>
   new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -157,6 +158,8 @@ describe('BillingService', () => {
   const transactionCount = jest.fn();
   const transactionUpdateMany = jest.fn();
   const walletCount = jest.fn();
+  const walletUsageFindUnique = jest.fn();
+  const prepareWalletUsage = jest.fn();
   const invoiceFindUnique = jest.fn();
   const invoiceFindFirst = jest.fn();
   const invoiceFindMany = jest.fn();
@@ -221,6 +224,7 @@ describe('BillingService', () => {
               updateMany: transactionUpdateMany,
             },
             userWallet: { count: walletCount },
+            billingWalletUsagePeriod: { findUnique: walletUsageFindUnique },
             billingInvoice: {
               findUnique: invoiceFindUnique,
               findUniqueOrThrow: jest.fn(async (args: unknown) => {
@@ -244,6 +248,7 @@ describe('BillingService', () => {
           },
         },
         { provide: InvoiceSettlementService, useValue: { settleInvoice } },
+        { provide: BillingWalletLifecycleService, useValue: { prepareWalletUsageThroughCurrentMonth: prepareWalletUsage } },
         {
           provide: BillingPlanChangeService,
           useValue: { requestPlanChange, cancelScheduledPlanChange, cancelPendingUpgrade },
@@ -265,6 +270,8 @@ describe('BillingService', () => {
     reconciliationRunFindMany.mockResolvedValue([]);
     // No unresolved outbound transaction work (the no-run barrier passes).
     transactionCount.mockResolvedValue(0);
+    prepareWalletUsage.mockResolvedValue(undefined);
+    walletUsageFindUnique.mockResolvedValue({ peakWalletCount: 0 });
     transactionUpdateMany.mockResolvedValue({ count: 1 });
     // usage_period invoice lookups now use findFirst (purpose filter) instead of
     // the removed compound unique. Default findFirst to the same mock chain as
@@ -336,6 +343,7 @@ describe('BillingService', () => {
         updateMany: transactionUpdateMany,
       },
       userWallet: { count: walletCount },
+      billingWalletUsagePeriod: { findUnique: walletUsageFindUnique },
       billingInvoice: {
         findUnique: invoiceFindUnique,
         findUniqueOrThrow: jest.fn(async (args: unknown) => {
@@ -2716,6 +2724,80 @@ describe('BillingService', () => {
   });
 
   describe('getSummary', () => {
+    it('projects legacy finalized summary from persisted charges and labels its count instantaneous', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({ planVersion: FREE_VERSION });
+      invoiceFindUnique.mockResolvedValue({
+        status: 'finalized', currency: 'USD', snapshotJson: {
+          plan: { code: 'starter', name: 'Starter' }, usage: { activeWallets: 4 },
+          tiers: [{ upperBoundMicros: '12', ratePpm: 37, volumeMicros: '7', feeMicros: '0.000259' }],
+        },
+        grossOutboundMicros: 12_000_000n, includedOutboundMicros: 5_000_000n, outboundOverageMicros: 2_000_000n,
+        apiCalls: 17n, includedApiCalls: 10n, includedWallets: 2, activeWallets: 4,
+        monthlyFeeMicros: 49_000_000n, apiOverageMicros: 3_000_000n, walletOverageMicros: 1_000_000n,
+        totalMicros: 55_000_000n,
+      });
+      const result = await service.getSummary('user-1', '2026-05');
+      expect(result).toMatchObject({
+        planId: 'starter', planName: 'Starter', outboundVolume: '12', outboundFreeAllowance: '5',
+        outboundOverage: '2', apiCalls: '17', activeWallets: '4',
+        walletUsageMetric: 'legacy_instantaneous', estimatedBaseCost: '49',
+        estimatedOverageCost: '6', estimatedTotal: '55',
+        overageRate: '0.0037%', tierBreakdown: [{ tier: 'Tier 1', from: '0', to: '12', quantity: '7', rate: '0.0037%', cost: '0.000259' }],
+      });
+      expect(prepareWalletUsage).not.toHaveBeenCalled();
+      expect(walletUsageFindUnique).not.toHaveBeenCalled();
+    });
+
+    it('conflicts on finalized historical invoices without wallet snapshot evidence', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      invoiceFindUnique.mockResolvedValue({ status: 'finalized', snapshotJson: { plan: { code: 'free', name: 'Free' }, usage: {}, tiers: [] } });
+      await expect(service.getSummary('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(prepareWalletUsage).not.toHaveBeenCalled();
+    });
+
+    it('allows an explicitly empty historical tier array without substituting current tier rates', () => {
+      const invoice = {
+        snapshotJson: { plan: { code: 'free', name: 'Free' }, tiers: [] },
+        includedOutboundMicros: 0n, includedApiCalls: 0n, includedWallets: 0, activeWallets: 0,
+        grossOutboundMicros: 0n, outboundOverageMicros: 0n, apiCalls: 0n, monthlyFeeMicros: 0n,
+        apiOverageMicros: 0n, walletOverageMicros: 0n, totalMicros: 0n, currency: 'USD',
+      };
+      const summary = service['projectFinalizedSummary'](invoice as never, '2026-05');
+      expect(summary.overageRate).toBe('0');
+      expect(summary.tierBreakdown).toEqual([]);
+    });
+
+    it('fails closed when a historical snapshot has no tier evidence', () => {
+      const invoice = {
+        snapshotJson: { plan: { code: 'free', name: 'Free' } },
+        includedOutboundMicros: 0n, includedApiCalls: 0n, includedWallets: 0, activeWallets: 0,
+        grossOutboundMicros: 0n, outboundOverageMicros: 0n, apiCalls: 0n, monthlyFeeMicros: 0n,
+        apiOverageMicros: 0n, walletOverageMicros: 0n, totalMicros: 0n, currency: 'USD',
+      };
+      expect(() => service['projectFinalizedSummary'](invoice as never, '2026-05')).toThrow(ConflictException);
+    });
+
+    it('fails closed when the requested month has no wallet peak evidence', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      walletUsageFindUnique.mockResolvedValue(null);
+      await expect(service.getSummary('user-1', '2026-05')).rejects.toThrow(ConflictException);
+      expect(walletCount).not.toHaveBeenCalled();
+    });
+
+    it('accepts an explicit zero peak baseline as known zero usage', async () => {
+      accountFindUnique.mockResolvedValue(ACCOUNT);
+      planVersionFindFirst.mockResolvedValue(FREE_VERSION);
+      assignmentFindFirst.mockResolvedValue({ planVersion: FREE_VERSION });
+      walletUsageFindUnique.mockResolvedValue({ peakWalletCount: 0 });
+      usageEventFindMany.mockResolvedValue([]);
+      const result = await service.getSummary('user-1', '2026-05');
+      expect(result.activeWallets).toBe('0');
+    });
+
     it('aggregates usage and filters active wallets', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       planVersionFindFirst.mockResolvedValue(FREE_VERSION); // catalog already initialized
@@ -2736,18 +2818,11 @@ describe('BillingService', () => {
         { metric: 'api_call', quantity: 5n, status: 'posted', entryType: 'usage' },
       ]);
       walletCount.mockResolvedValue(3);
+      walletUsageFindUnique.mockResolvedValue({ peakWalletCount: 3 });
 
       const result = await service.getSummary('user-1', '2026-05');
 
-      // active wallet filter
-      expect(walletCount).toHaveBeenCalledWith({
-        where: {
-          userId: 'user-1',
-          status: 'active',
-          walletAddress: { not: null },
-          frozenAt: null,
-        },
-      });
+      expect(walletCount).not.toHaveBeenCalled();
 
       // $600K gross - $50K free = $550K billable:
       //   $500K @ 100 ppm = $50, $50K @ 75 ppm = $3.75 -> $53.75
@@ -3160,6 +3235,11 @@ describe('BillingService', () => {
         periodStart: historicalStart,
         planVersionId: FREE_VERSION.id,
         status: 'finalized',
+        snapshotJson: { plan: { code: 'free', name: 'Free' }, usage: { activeWallets: 0 }, tiers: [] },
+        currency: 'USD', grossOutboundMicros: 0n, includedOutboundMicros: FREE_VERSION.includedOutboundMicros,
+        outboundOverageMicros: 0n, apiCalls: 0n, includedApiCalls: FREE_VERSION.includedApiCalls,
+        includedWallets: FREE_VERSION.includedWallets, activeWallets: 0, monthlyFeeMicros: 0n,
+        apiOverageMicros: 0n, walletOverageMicros: 0n, totalMicros: 0n,
       });
       planVersionFindUnique.mockImplementation(async ({ where }: { where: { id?: string } }) => {
         if (where?.id === FREE_VERSION.id) return FREE_VERSION;
@@ -3748,6 +3828,7 @@ describe('BillingService', () => {
       expect(invoiceCreate).not.toHaveBeenCalled();
       expect(invoiceUpdate).not.toHaveBeenCalled();
       expect(transaction).not.toHaveBeenCalled();
+      expect(prepareWalletUsage).not.toHaveBeenCalled();
     });
 
     it('omits sensitive hashes, receipts, provider and Stripe details from the DTO', async () => {
@@ -3868,6 +3949,7 @@ describe('BillingService', () => {
         },
       ]);
       walletCount.mockResolvedValue(0);
+      walletUsageFindUnique.mockResolvedValue({ peakWalletCount: 7 });
 
       const createdInvoice = {
         id: 'inv-1',
@@ -3894,8 +3976,11 @@ describe('BillingService', () => {
               planVersionId: FREE_VERSION.id,
               pricingMode: 'single_plan',
               feePlanVersionId: FREE_VERSION.id,
-              usagePlanVersionId: FREE_VERSION.id,
-              plan: expect.objectContaining({
+               usagePlanVersionId: FREE_VERSION.id,
+               walletUsageMetric: 'monthly_peak',
+               walletOveragePolicy: 'zero_hard_cap',
+               usage: expect.objectContaining({ activeWallets: 7 }),
+               plan: expect.objectContaining({
                 code: FREE_VERSION.code,
                 name: FREE_VERSION.name,
                 version: FREE_VERSION.version,
@@ -4118,12 +4203,16 @@ describe('BillingService', () => {
         status: 'finalized',
         currency: 'USD',
         totalMicros: 55_000_000n,
+        snapshotJson: { walletUsageMetric: 'legacy_instantaneous', usage: { activeWallets: 3 } },
+        snapshotHash: 'immutable-existing-hash',
         createdAt: new Date('2026-06-01T00:00:00.000Z'),
       });
 
       const result = await service.finalizeInvoice('user-1', '2026-05');
 
       expect(invoiceCreate).not.toHaveBeenCalled();
+      expect(invoiceUpdate).not.toHaveBeenCalled();
+      expect(prepareWalletUsage).not.toHaveBeenCalled();
       expect(transaction).not.toHaveBeenCalled();
       expect(result.id).toBe('inv-1');
     });
@@ -5742,7 +5831,7 @@ describe('BillingService', () => {
       );
     });
 
-    it('BILL-009: Starter→Growth keeps Starter fixed fee; target wallet/outbound overage', async () => {
+    it('BILL-009: Starter→Growth keeps Starter fixed fee; target outbound overage and zero wallet charge', async () => {
       // Paid Starter→Growth mid-month: fee anchor = Starter $49 (not $0, not Growth $199).
       // Growth wallet rate $0.02 differs from Starter $0.01; outbound exceeds Growth included.
       const periodStart = new Date('2026-05-01T00:00:00.000Z');
@@ -5794,7 +5883,7 @@ describe('BillingService', () => {
       });
       // $1.6M outbound → $600K billable after Growth $1M included:
       //   $500K @ 100ppm = $50; $100K @ 75ppm = $7.5 → $57.5 outbound overage
-      // 1_050 wallets → 50 over Growth 1000 included @ $0.02 = $1 wallet overage
+      // Wallet peak remains truthful, but hard-cap policy never bills overage.
       usageEventFindMany.mockResolvedValue([
         {
           metric: 'outbound_volume',
@@ -5805,8 +5894,9 @@ describe('BillingService', () => {
         },
       ]);
       walletCount.mockResolvedValue(1_050);
+      walletUsageFindUnique.mockResolvedValue({ peakWalletCount: 1_050 });
       const expectedOutboundOverage = 57_500_000n;
-      const expectedWalletOverage = 1_000_000n; // 50 * 20_000
+      const expectedWalletOverage = 0n;
       const expectedTotal = 49_000_000n + expectedOutboundOverage + expectedWalletOverage;
       invoiceUpdate.mockResolvedValue({
         id: 'inv-open-may',
@@ -5842,13 +5932,13 @@ describe('BillingService', () => {
                 monthlyFeeMicros: '49',
                 includedOutboundMicros: '1000000',
                 includedWallets: 1_000,
-                walletOverageRateMicros: '0.02',
+                walletOverageRateMicros: '0',
               }),
               amounts: expect.objectContaining({
                 monthlyFeeMicros: '49',
                 outboundOverageMicros: '57.5',
-                walletOverageMicros: '1',
-                totalMicros: '107.5',
+                walletOverageMicros: '0',
+                totalMicros: '106.5',
               }),
               tiers: expect.arrayContaining([
                 expect.objectContaining({
@@ -5878,8 +5968,7 @@ describe('BillingService', () => {
       const walletLine = lineData.data.find((l) => l.lineType === 'wallet_overage');
       const outboundLines = lineData.data.filter((l) => l.lineType === 'outbound_tier');
       expect(feeLine?.amountMicros).toBe(49_000_000n);
-      expect(walletLine?.amountMicros).toBe(expectedWalletOverage);
-      expect(walletLine?.unitAmountMicros).toBe(20_000n);
+      expect(walletLine).toBeUndefined();
       expect(outboundLines.map((l) => l.amountMicros).reduce((a, b) => a + b, 0n)).toBe(
         expectedOutboundOverage,
       );

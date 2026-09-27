@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `schema.prisma` defines the PostgreSQL data model (25 models, 8 enums) for Openfort IAM users, TEE-managed wallets, API-key security, transaction/signing audit, security telemetry, withdrawal controls, MFA/step-up, and commercial billing (usage ledger, invoices, Stripe + USDC payment rails). `migrations/` holds the versioned SQL history that evolves the schema without data loss. The generated Prisma Client is the only data-access path used by the NestJS backend; private keys are never stored — only Openfort account IDs, wallet addresses, and hashed credentials.
+The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `schema.prisma` defines the PostgreSQL data model (32 models, 16 enums) for Openfort IAM users, TEE-managed wallets, API-key security, transaction/signing audit, security telemetry, withdrawal controls, MFA/step-up, and commercial billing (including wallet usage and payment recovery state). `migrations/` holds the versioned SQL history that evolves the schema without data loss. The generated Prisma Client is the data-access path used by the NestJS backend; private keys are never stored — only Openfort account IDs, wallet addresses, and hashed credentials.
 
 ## Design / Patterns
 
@@ -20,8 +20,9 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 
 ### Identity & Wallet
 
-- **User** (`users`): Openfort IAM identity — `socialProvider`/`socialId` (unique), optional `email`, freeze state. 1:1 with `UserWallet`, `WithdrawalPolicy`, `UserMfaTotpCredential`, `BillingAccount`; 1:N with API keys, events, transactions, signing requests, security events/notifications, step-up challenges, known IPs.
-- **UserWallet** (`user_wallets`): 1:1 per user. `openfortAccountId` (stable Openfort FK, unique), `walletAddress` (unique), `status`, agent wallet fields (`agentOpenfortAccountId`, `agentWalletAddress`, `agentKeyHash` — Calibur session key), freeze state. `openfortAccountId` must never be replaced by wallet address or orphaned.
+- **User** (`users`): Openfort IAM identity — `socialProvider`/`socialId` (unique), optional `email`, freeze state. 1:N with `UserWallet` (at most one partial-indexed default), plus 1:1 `WithdrawalPolicy`, `UserMfaTotpCredential`, `BillingAccount`; existing wallet rows remain intact during multi-wallet rollout.
+- **UserWallet** (`user_wallets`): N:1 per user. `openfortAccountId` (stable Openfort FK, unique), `walletAddress` (unique), `isDefault`, `status`, agent wallet fields (`agentOpenfortAccountId`, `agentWalletAddress`, `agentKeyHash` — Calibur session key), freeze state. `openfortAccountId` must never be replaced by wallet address or orphaned.
+- **WalletProvisioningIntent** (`wallet_provisioning_intents`): one durable intent per wallet; pending/dispatched/uncertain/provisioned/completed lifecycle, single dispatch token, known provider agent identifiers and audited resolution metadata. Contains no private keys; uncertain creates require fail-closed human/provider recovery.
 - **WalletChainAuthorization** (`wallet_chain_authorizations`): composite PK `(walletId, chainId)`; per-chain agent registration status, `registrationTxHash`, `expiresAt`; cascade-deletes with wallet.
 
 ### API Keys & Audit
@@ -45,6 +46,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 ### Billing
 
 - **BillingAccount** (`billing_accounts`): 1:1 per user — `currency` (default USD), optional unique `stripeCustomerId`, the Stripe subscription mirror (unique `stripeSubscriptionId`, `stripeSubscriptionStatus`, `stripeSubscriptionPeriodStart`/`stripeSubscriptionPeriodEnd`, event-order fields `stripeSubscriptionUpdatedAt` + `stripeSubscriptionEventId`, and `activeSubscriptionPlanVersionId`), and nullable `billingBackfillCursor` — the normalized UTC month start of the furthest historical open-invoice backfill month scanned by `BillingWorkerService` (deterministic round-robin cursor; NULL means start from the oldest missing month).
+- **BillingWalletUsagePeriod** (`billing_wallet_usage_periods`): unique account + UTC-month evidence row with nonnegative peak eligible wallet count and observation time. Rollout seeds only the current period from actual active, addressed, unfrozen wallets; earlier periods remain unknown rather than fabricated. `BillingAccount.eligibleWalletCount` and `walletCountObservedAt` support idle-period rollover.
 - **BillingPlanVersion** (`billing_plan_versions`): versioned plan catalog — unique `(code, version)`, monthly fee/included quotas (BigInt micros), overage rates, `effectiveFrom`.
 - **BillingPlanTier** (`billing_plan_tiers`): volume-tiered pricing — `lowerBoundMicros`/`upperBoundMicros`/`ratePpm`; unique `(planVersionId, lowerBoundMicros)`; cascade-deletes with plan.
 - **BillingPlanAssignment** (`billing_plan_assignments`): plan in effect per account per `periodStart`; unique `(billingAccountId, periodStart)`.
@@ -57,14 +59,15 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 
 ## Constraints
 
-- **Uniqueness**: `users.socialId`; `user_wallets.userId`/`openfortAccountId`/`walletAddress`/`agentOpenfortAccountId`/`agentWalletAddress`; active API-key names per user (partial unique on `lower(name)`); `transactions (userId, operationType, chainId, idempotencyKey)`; `withdrawal_addresses (userId, address)`; `user_known_ips (userId, ip)`; `billing_accounts.userId`/`stripeCustomerId`; `billing_plan_versions (code, version)`; `billing_plan_tiers (planVersionId, lowerBoundMicros)`; `billing_plan_assignments (billingAccountId, periodStart)`; `billing_usage_events.sourceKey` + partial `(billingAccountId, receiptRef, receiptLogIndex)`; `billing_invoices (billingAccountId, periodStart)`; `billing_invoices.settlementAttemptId`; `billing_payment_attempts` Stripe IDs + `(chainId, tokenAddress, txHash, logIndex)`; `stripe_webhook_events.stripeEventId`.
+- **Uniqueness**: `users.socialId`; `user_wallets.openfortAccountId`/`walletAddress`/agent identifiers and partial one-default-per-user (userId itself is nonunique); one provisioning intent per wallet; one billing wallet usage row per account/period; existing API-key, transaction, billing and payment constraints remain.
+- **Wallet address case safety**: migration-only unique expression index `user_wallets_wallet_address_lower_key` enforces case-insensitive uniqueness across all non-null wallet addresses. Prisma has no schema representation for this partial expression index; the migration is authoritative. Existing case-fold collisions make migration fail with PostgreSQL's duplicate-key diagnostic; rows/addresses are never silently merged or rewritten.
 - **DB CHECK constraints** (migration-applied): transaction/signing-request state machines (`transactions.status` includes `needs_review` since `20260829070000_allow_reconciliation_review_status`), `api_key_events.action`, outbound-usage transaction association, lowercase `tx_hash`.
 - **Delete semantics**: audit/child rows use `SetNull` (ApiKeyEvent, SecurityEvent, SigningRequest, usage-event FKs) or `Cascade` (notifications, withdrawal policy/addresses, step-up, MFA, invoice lines, payment attempts); core ownership FKs (User→UserWallet/ApiKey/Transaction/SigningRequest, BillingAccount) use `Restrict` to prevent orphaned records.
 - **Indexes**: prefix lookup (`api_keys.keyPrefix`), ownership/history (`userId, createdAt`), status/risk queries, receipt/reversal/adjustment lookups, pending-payment lookups.
 
 ## Flow
 
-1. **Auth / provisioning**: Openfort IAM login → `AuthService` find-or-create `User` → create pending `UserWallet` (nullable `openfortAccountId`/`walletAddress` until provisioning completes) → agent registration writes `WalletChainAuthorization` per chain and records known IPs.
+1. **Auth / provisioning**: Openfort IAM login → `AuthService` find-or-create `User` → create pending `UserWallet` (nullable `openfortAccountId`/`walletAddress` until provisioning completes). Embedded-wallet authorization reserves capacity and a durable `WalletProvisioningIntent` under the billing-account lock; TEE creation is dispatched once outside the transaction. Dispatched/uncertain intents are not automatically retried. An operator-only recovery procedure may bind an independently verified, already-created provider account; it has no HTTP route and cannot create or retry accounts. Agent registration writes `WalletChainAuthorization` per chain and login tracks known IPs.
 2. **API-key issuance**: `ApiKeyService` generates key material, stores only `apiKeyHash` + `keyPrefix` + permissions/allowlists/spend limits in `ApiKey`, appends `ApiKeyEvent` audit rows in the same transaction; enforces max 10 active keys and unique active names.
 3. **Request auth**: `ApiKeyAuthGuard`/`EitherAuthGuard` query `ApiKey` by prefix candidates, Argon2-verify each, reject frozen users/keys, enforce IP allowlists, update `lastUsedAt`/`lastUsedIp`/`lastUsedUserAgent`, and write `SecurityEvent` rows for suspicious context changes (freezing high-risk keys via `updateMany`).
 4. **Signing / transactions**: `WalletService`/`TransactionsService` load `UserWallet` (reject frozen), enforce policy (TransactionPolicyService, signing policy, EOA isolation), write `SigningRequest`/`Transaction` rows with attribution snapshots, submit to Openfort, then update status/hash/failure metadata. Idempotency is enforced by the unique `(userId, operationType, chainId, idempotencyKey)` index.
@@ -127,6 +130,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 - **20260829200000_deterministic_stripe_subscription_order**: `billing_accounts.stripe_subscription_event_id` — deterministic total order tie-breaker for equal-second Stripe events.
 - **20260830000000_add_billing_transaction_membership_and_checkout_recovery**: `transactions.billing_period_start` (backfilled to UTC submission month for legacy rows)/`billing_last_attempted_at`/`user_op_hash` (unique)/`user_op_success`; `billing_payment_attempts` checkout-retry lease columns (`checkout_retry_count`/`checkout_next_retry_at`/`checkout_retry_owner_id`/`checkout_retry_lease_expires_at`).
 - **20260908000000_add_billing_backfill_cursor**: additive `billing_accounts.billing_backfill_cursor` (TIMESTAMPTZ, nullable) — durable round-robin cursor for the worker's historical open-invoice backfill so selection advances past permanently-failing periods without starvation.
+- **20260926200000_multi_wallet_provisioning**: drop the legacy user-wallet ownership unique INDEX; mark existing wallets default without changing wallet IDs/provider identities; add partial unique default index, durable provisioning intents, account eligible-wallet count, and current UTC-period peak baseline. Historical periods remain unseeded/unknown.
 
 ## Integration Points
 

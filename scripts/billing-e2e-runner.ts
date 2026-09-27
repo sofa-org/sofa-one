@@ -18,6 +18,13 @@
  * Usage:
  *   npm run test:e2e:billing
  *   npm run test:e2e:billing -- --gate-only   # no-DB negative tests only
+ *   npm run test:e2e:billing -- --wallet-lifecycle-only # disposable DB, migrations, lifecycle suite only
+ *   npm run test:e2e:billing -- --recovery-only # disposable DB, migrations, recovery race suite only
+ *   npm run test:e2e:billing -- --auth-provisioning-only # disposable DB, migrations, auth provisioning suite only
+ *   npm run test:e2e:billing -- --multi-wallet-execution-only # disposable DB, multi-wallet execution suite only
+ *   npm run test:e2e:billing -- --multi-wallet-quote-only # disposable DB, USDC payer quote race suite only
+ *   npm run test:e2e:billing -- --wallet-peak-only # disposable DB, monthly wallet peak billing suite only
+ *   npm run test:e2e:billing -- --fixture-wallet-peak-only # disposable DB, signed billing fixture lifecycle
  */
 import { randomBytes } from 'crypto';
 import { spawn } from 'child_process';
@@ -307,6 +314,13 @@ function redactErrorMessage(err: unknown): string {
 
 async function main(): Promise<number> {
   const gateOnly = process.argv.includes('--gate-only');
+  const walletLifecycleOnly = process.argv.includes('--wallet-lifecycle-only');
+  const recoveryOnly = process.argv.includes('--recovery-only');
+  const authProvisioningOnly = process.argv.includes('--auth-provisioning-only');
+  const multiWalletExecutionOnly = process.argv.includes('--multi-wallet-execution-only');
+  const multiWalletQuoteOnly = process.argv.includes('--multi-wallet-quote-only');
+  const walletPeakOnly = process.argv.includes('--wallet-peak-only');
+  const fixtureWalletPeakOnly = process.argv.includes('--fixture-wallet-peak-only');
 
   // Always run no-DB gate tests first (no admin URL required; no provisioned resources).
   const gateEnv: NodeJS.ProcessEnv = {
@@ -388,6 +402,33 @@ async function main(): Promise<number> {
       });
     });
 
+    const billingSuites = fixtureWalletPeakOnly
+      ? ['test/billing-fixture-wallet-peak.pg.e2e-spec.ts']
+      : walletPeakOnly
+      ? ['test/billing-wallet-peak.pg.e2e-spec.ts']
+      : multiWalletQuoteOnly
+      ? ['test/multi-wallet-usdc-quote.pg.e2e-spec.ts']
+      : multiWalletExecutionOnly
+      ? ['test/multi-wallet-execution.pg.e2e-spec.ts']
+      : authProvisioningOnly
+      ? ['test/auth-provisioning.pg.e2e-spec.ts']
+      : recoveryOnly
+      ? ['test/wallet-provisioning-recovery.pg.e2e-spec.ts']
+      : walletLifecycleOnly
+      ? ['test/billing-wallet-lifecycle.pg.e2e-spec.ts']
+      : [
+          'test/billing-http.e2e-spec.ts',
+          'test/claim-concurrency.e2e-spec.ts',
+          'test/settlement-concurrency.e2e-spec.ts',
+          // BILL-016 Phase 2A: API-key direct-egress destination/cooldown runtime evidence
+          'test/api-key-direct-egress.e2e-spec.ts',
+          'test/api-key-direct-egress-concurrency.e2e-spec.ts',
+          // BILL-016 Phase 2B: quote-bound wallet-payment runtime evidence
+          'test/usdc-wallet-payment.e2e-spec.ts',
+          // Phase 3: payment/reconciliation integrity (cross-rail, cleanup lease, worker health)
+          'test/phase3-billing.e2e-spec.ts',
+          'test/billing-wallet-lifecycle.pg.e2e-spec.ts',
+        ];
     const jestCode = await runCommand(
       process.platform === 'win32' ? 'npx.cmd' : 'npx',
       [
@@ -395,16 +436,7 @@ async function main(): Promise<number> {
         '--config',
         './test/jest-e2e.json',
         '--runInBand',
-        'test/billing-http.e2e-spec.ts',
-        'test/claim-concurrency.e2e-spec.ts',
-        'test/settlement-concurrency.e2e-spec.ts',
-        // BILL-016 Phase 2A: API-key direct-egress destination/cooldown runtime evidence
-        'test/api-key-direct-egress.e2e-spec.ts',
-        'test/api-key-direct-egress-concurrency.e2e-spec.ts',
-        // BILL-016 Phase 2B: quote-bound wallet-payment runtime evidence
-        'test/usdc-wallet-payment.e2e-spec.ts',
-        // Phase 3: payment/reconciliation integrity (cross-rail, cleanup lease, worker health)
-        'test/phase3-billing.e2e-spec.ts',
+        ...billingSuites,
       ],
       childEnv,
     );

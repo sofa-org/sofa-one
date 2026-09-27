@@ -159,6 +159,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   let dbIdentityVerified = false;
 
   let userId: string;
+  let walletId: string;
   let invoiceId: string;
   let planChargeInvoiceId: string;
   let attemptId: string;
@@ -236,6 +237,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     iamSessions.clear();
     const seeded = await seedFixtures();
     userId = seeded.userId;
+    walletId = seeded.walletId;
     invoiceId = seeded.invoiceId;
     planChargeInvoiceId = seeded.planChargeInvoiceId;
     attemptId = seeded.attemptId;
@@ -361,7 +363,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
   it('rejects when wallet is frozen', async () => {
     await prisma!.userWallet.update({
-      where: { userId },
+      where: { id: walletId },
       data: { frozenAt: new Date(), frozenReason: 'e2e' },
     });
     const res = await payFromWallet(iamToken, invoiceId, {
@@ -729,6 +731,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
     return {
       userId: user.id,
+      walletId: wallet.id,
       invoiceId: usageInv.id,
       planChargeInvoiceId: planInv.id,
       attemptId: att,

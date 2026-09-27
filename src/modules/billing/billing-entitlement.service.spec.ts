@@ -36,14 +36,14 @@ describe('BillingEntitlementService', () => {
 
   const accountFindUnique = jest.fn();
   const assignmentFindMany = jest.fn();
-  const walletFindUnique = jest.fn();
+  const walletFindFirst = jest.fn();
   const walletCount = jest.fn();
 
   const buildTx = () =>
     ({
       billingAccount: { findUnique: accountFindUnique },
       billingPlanAssignment: { findMany: assignmentFindMany },
-      userWallet: { findUnique: walletFindUnique, count: walletCount },
+      userWallet: { findFirst: walletFindFirst, count: walletCount },
     }) as any;
 
   beforeEach(async () => {
@@ -57,7 +57,7 @@ describe('BillingEntitlementService', () => {
           useValue: {
             billingAccount: { findUnique: accountFindUnique },
             billingPlanAssignment: { findMany: assignmentFindMany },
-            userWallet: { findUnique: walletFindUnique, count: walletCount },
+            userWallet: { findFirst: walletFindFirst, count: walletCount },
           },
         },
       ],
@@ -284,7 +284,7 @@ describe('BillingEntitlementService', () => {
     it('allows activation when the active count is below the limit (limit-1)', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       assignmentFindMany.mockResolvedValue(starterAssignment());
-      walletFindUnique.mockResolvedValue(null);
+      walletFindFirst.mockResolvedValue(null);
       walletCount.mockResolvedValue(99);
 
       await expect(
@@ -298,7 +298,7 @@ describe('BillingEntitlementService', () => {
     it('rejects activation with a 429 quota exception when the active count is at the limit', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       assignmentFindMany.mockResolvedValue(starterAssignment());
-      walletFindUnique.mockResolvedValue(null);
+      walletFindFirst.mockResolvedValue(null);
       walletCount.mockResolvedValue(100);
 
       await expect(
@@ -317,7 +317,7 @@ describe('BillingEntitlementService', () => {
     it('excludes pending/frozen/empty-address wallets from the active count', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       assignmentFindMany.mockResolvedValue(starterAssignment());
-      walletFindUnique.mockResolvedValue({
+      walletFindFirst.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
         status: 'pending_embedded_wallet',
@@ -337,7 +337,7 @@ describe('BillingEntitlementService', () => {
     it('treats a frozen wallet as not active so activation is gated', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       assignmentFindMany.mockResolvedValue(starterAssignment());
-      walletFindUnique.mockResolvedValue({
+      walletFindFirst.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
         status: 'active',
@@ -355,7 +355,7 @@ describe('BillingEntitlementService', () => {
     it('idempotently allows re-authorization of an existing active wallet even at the limit', async () => {
       accountFindUnique.mockResolvedValue(ACCOUNT);
       assignmentFindMany.mockResolvedValue(starterAssignment());
-      walletFindUnique.mockResolvedValue({
+      walletFindFirst.mockResolvedValue({
         id: 'wallet-1',
         userId: 'user-1',
         status: 'active',
@@ -382,7 +382,7 @@ describe('BillingEntitlementService', () => {
           planVersion: ENTERPRISE_VERSION,
         },
       ]);
-      walletFindUnique.mockResolvedValue(null);
+      walletFindFirst.mockResolvedValue(null);
 
       await expect(
         service.assertWalletActivationAllowed('user-1', buildTx(), '2026-09'),

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional } from 'class-validator';
+import { IsInt, IsOptional, IsUUID } from 'class-validator';
 
 /**
  * USDC quote request. `chainId` is an optional verified selector only: the
@@ -11,4 +11,8 @@ export class UsdcQuoteDto {
   @IsOptional()
   @IsInt()
   chainId?: number;
+
+  @IsOptional()
+  @IsUUID()
+  walletId?: string;
 }

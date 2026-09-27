@@ -1306,7 +1306,20 @@ export class UsdcWalletPaymentService {
     attempt: PaymentAttemptRow,
     db: Tx | PrismaService = this.prisma,
   ) {
-    const wallet = await db.userWallet.findUnique({ where: { userId } });
+    // Resolve by both owner and the immutable quote payer snapshot. A user's
+    // current/default wallet may have changed since quote creation.
+    const wallets = await db.userWallet.findMany({ where: { userId } });
+    const payer = attempt.expectedPayerAddress?.toLowerCase();
+    const payerMatches = payer
+      ? wallets.filter((candidate) => candidate.walletAddress?.toLowerCase() === payer)
+      : [];
+    const wallet = payerMatches.length === 1 ? payerMatches[0] : undefined;
+    if (wallets.length > 0 && (!payer || payerMatches.length !== 1)) {
+      throw new ConflictException({
+        code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,
+        message: 'Payer wallet no longer matches quote snapshot',
+      });
+    }
     // B4: UserWallet.frozenAt is authoritative for wallet freeze (not only User).
     if (
       !wallet ||
@@ -1331,7 +1344,6 @@ export class UsdcWalletPaymentService {
     if (user?.frozenAt) {
       throw new ForbiddenException('User is frozen');
     }
-    const payer = attempt.expectedPayerAddress?.toLowerCase();
     if (!payer || wallet.walletAddress.toLowerCase() !== payer) {
       throw new ConflictException({
         code: API_ERROR_CODES.USDC_INVALID_ATTEMPT,

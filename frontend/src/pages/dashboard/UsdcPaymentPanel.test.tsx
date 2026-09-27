@@ -35,6 +35,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
     getUsdcPaymentStatusAuth: vi.fn(),
     getInvoicePaymentStatusAuth: vi.fn(),
   };
+
 });
 
 vi.mock('./step-up', () => ({
@@ -51,6 +52,8 @@ function renderPanel(
   over: Partial<{
     invoice: BillingInvoice;
     onChange: () => Promise<boolean> | boolean;
+    wallets: Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>;
+    walletChoicesError: string | null;
   }> = {},
 ) {
   const getToken = vi.fn().mockResolvedValue('test-token');
@@ -58,7 +61,7 @@ function renderPanel(
   const invoice = over.invoice ?? makePayableInvoice('inv_1');
 
   const view = render(
-    <UsdcPaymentPanel invoice={invoice} getToken={getToken} onChange={onChange} />,
+    <UsdcPaymentPanel invoice={invoice} getToken={getToken} onChange={onChange} wallets={over.wallets ?? []} walletChoicesError={over.walletChoicesError} />,
   );
 
   return { view, onChange, invoice, getToken };
@@ -855,5 +858,32 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
       cancelReason: 'user_requested',
     });
     expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
+  });
+  it('requires an explicit payer and binds the quote to the chosen wallet', async () => {
+    const wallets = [
+      { id: 'wallet-a', walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'active' },
+      { id: 'wallet-b', walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'active' },
+    ];
+    vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
+    renderPanel({ wallets });
+    await screen.findByRole('button', { name: /Get quote/i });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+    expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Paying wallet'), { target: { value: 'wallet-a' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+    await waitFor(() => expect(createUsdcQuoteAuth).toHaveBeenCalledWith(expect.any(Function), 'inv_1', 84532, undefined, 'wallet-a'));
+  });
+
+  it('does not display an A quote after payer choices arrive and change to B in flight', async () => {
+    let resolveQuote!: (value: ReturnType<typeof makeQuote>) => void;
+    vi.mocked(createUsdcQuoteAuth).mockReturnValue(new Promise((resolve) => { resolveQuote = resolve; }));
+    const initial = renderPanel();
+    await screen.findByRole('button', { name: /Get quote/i });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+    initial.view.rerender(<UsdcPaymentPanel invoice={initial.invoice} getToken={initial.getToken} onChange={initial.onChange} wallets={[{ id: 'wallet-a', walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'active' }, { id: 'wallet-b', walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'active' }]} />);
+    fireEvent.change(await screen.findByLabelText('Paying wallet'), { target: { value: 'wallet-b' } });
+    resolveQuote(makeQuote());
+    await waitFor(() => expect(screen.queryByText('12.50')).not.toBeInTheDocument());
+    expect(screen.getByLabelText('Paying wallet')).toHaveValue('wallet-b');
   });
 });

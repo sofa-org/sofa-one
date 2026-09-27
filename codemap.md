@@ -60,6 +60,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/billing/onchain/` | Native USDC quote/claim flow and strict receipt verification | [View Map](src/modules/billing/onchain/codemap.md) |
 | `src/modules/billing/onchain/dto/` | Validated USDC quote and claim request DTOs | [View Map](src/modules/billing/onchain/dto/codemap.md) |
 | `src/modules/wallet/` | Wallet operations: deposit info, message/typed-data signing, USDC withdrawal | [View Map](src/modules/wallet/codemap.md) |
+| `src/modules/wallet-provisioning-recovery/` | Operator-only support for binding an already-created provider account to its matching provisioning intent; no HTTP route or automatic create retry/reset | [View Map](src/modules/wallet-provisioning-recovery/codemap.md) |
 | `src/modules/wallet/dto/` | Input DTOs for signing and withdrawal requests with Ethereum address validation | [View Map](src/modules/wallet/dto/codemap.md) |
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
@@ -89,7 +90,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 
 #### `prisma/` Flow
 - User authenticates via Openfort IAM → `User` row is created or reused.
-- Wallet provisioning creates `UserWallet` tied 1:1 to `User` with `openfortAccountId`, `walletAddress`, `chainId`, and `status`.
+- Wallet provisioning creates one of a user's `UserWallet` rows with `openfortAccountId`, `walletAddress`, `chainId`, and `status`; `User.wallets` is one-to-many and a persisted default supports compatibility projection only.
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, IP allowlist, and optional freeze state in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
 - Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, rule-based risk scoring, request context, safe metadata, optional dashboard notifications, and optional redacted SIEM webhook export.
 - User-facing dashboard alerts are stored in `SecurityNotification` when selected security events require user attention.
@@ -125,6 +126,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `.env.example` and runtime env files | Backend configuration template; secrets and local values are not part of the codemap |
 | `test/` and `src/**/*.spec.ts` | E2E/unit tests; excluded from generated codemap analysis, but validate the mapped production code |
 | `README.md`, `API.md`, `ARCHITECTURE.md`, `PRICING.md`, `SECURITY.md`, `DATABASE.md`, `DEPLOYMENT.md`, `RUNBOOK.md`, `REQUIREMENTS.md`, `docs/` | Product, API, architecture, pricing, security, operations, and design documentation |
+| `src/modules/wallet-provisioning-recovery/README.md` | Operator procedure and safety requirements for binding a known existing provider account; not an API capability |
 
 The generated hierarchy is tracked by `.slim/codemap.json`. This root file is the master
 entry point; each linked child map records the implementation-specific responsibility,
@@ -169,9 +171,11 @@ Dashboard → GET /v1/security-notifications (Openfort IAM + FrontendOnly)
 
 Dashboard → `/v1/billing/*` (Openfort IAM + FrontendOnly)
   → Billing summary/invoice endpoints expose plan, usage, invoice, and payment state
-  → API-key guards meter API calls; auth wallet activation enforces active-wallet quota
+  → API-key guards meter API calls; `BillingWalletLifecycleService` serializes wallet reservations and activation quota/peak accounting
   → BillingReconciliationService matches receipt-confirmed outbound usage to transactions
-  → BillingService computes BigInt microdollar invoice lines and can finalize after the period/grace window
+  → BillingService prepares wallet evidence in a separate account-row-locked transaction, then computes/finalizes from the persisted UTC-period concurrent-eligible-wallet peak; missing historical evidence fails closed
+  → Wallet activation is subject to a hard included-wallet cap; wallet overage is always zero and no wallet overage line is added
+  → Finalized invoice snapshots remain immutable
   → Stripe Checkout or native USDC quote/claim creates payment evidence; InvoiceSettlementService performs atomic first-rail-wins settlement
   → BillingWorkerService (registered in `BillingModule` via `ScheduleModule.forRoot()`, 5-minute `@Interval`) also drives receipt-reconciliation drain, invoice finalization catch-up, recurring-period materialization, USDC claim recovery, deferred Stripe renewal retry, and pending-checkout recovery — but only when `BILLING_WORKER_ENABLED=true` (default safely off). It runs inside the long-running API/worker instance, not a separate process binary
 

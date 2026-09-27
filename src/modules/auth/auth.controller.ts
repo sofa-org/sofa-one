@@ -19,7 +19,7 @@ export class AuthController {
   /**
    * POST /auth/session
    * Requires: Authorization: Bearer <openfort_iam_access_token>
-   * Returns: { userId, wallet }
+   * Returns: { userId, wallet, wallets }
    */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('session')
@@ -84,7 +84,7 @@ export class AuthController {
     @Req() req: any,
     @Body() body: AgentRegistrationTransactionDto,
   ) {
-    return this.authService.markAgentRegistrationTransaction(req.openfortUserId, body.chainId, body.txHash);
+    return this.authService.markAgentRegistrationTransaction(req.openfortUserId, body.chainId, body.txHash, body.walletId);
   }
 
   /**
@@ -97,7 +97,7 @@ export class AuthController {
     @Req() req: any,
     @Body() body: AgentRegistrationResultDto,
   ) {
-    return this.authService.markAgentRegistrationResult(req.openfortUserId, body.chainId, body.status, body.txHash);
+    return this.authService.markAgentRegistrationResult(req.openfortUserId, body.chainId, body.status, body.txHash, body.walletId);
   }
 
   /**

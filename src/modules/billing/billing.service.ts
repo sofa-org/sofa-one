@@ -35,6 +35,7 @@ import {
   validAssignmentWhere,
 } from './billing-plan-change.service';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
+import { BillingWalletLifecycleService } from './billing-wallet-lifecycle.service';
 
 // ── JSON-safe DTO shapes (no BigInt leaks) ────────────────────────────────────
 
@@ -93,6 +94,7 @@ export interface BillingSummaryDto {
   apiCalls: string;
   apiCallsFreeAllowance: string;
   activeWallets: string;
+  walletUsageMetric: 'monthly_peak' | 'legacy_instantaneous' | 'unknown';
   activeWalletsFreeAllowance: string;
   estimatedBaseCost: string;
   estimatedOverageCost: string;
@@ -340,6 +342,7 @@ function validFutureDate(value: unknown, now: Date): string | null {
 export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly walletLifecycle: BillingWalletLifecycleService,
     @Optional() private readonly invoiceSettlement?: InvoiceSettlementService,
     @Optional() private readonly planChangeService?: BillingPlanChangeService,
     @Optional() private readonly subscriptionSync?: StripeSubscriptionSyncService,
@@ -923,7 +926,7 @@ export class BillingService {
       activeWallets: 0,
       apiCallsTotal: 0,
       apiOverageRateMicros: planVersion.apiOverageRateMicros,
-      walletOverageRateMicros: planVersion.walletOverageRateMicros,
+      walletOverageRateMicros: 0n,
     });
   }
 
@@ -939,9 +942,11 @@ export class BillingService {
       period: formatUtcMonth(start),
       planVersion,
       plan,
+      walletOverageRateMicros: 0n,
       outboundVolume: 0n,
       apiCalls: 0,
       activeWallets: 0,
+      walletUsageMetric: 'estimate_zero',
       totals,
     });
     const snapshotHash = createHash('sha256').update(canonicalBillingJson(snapshot)).digest('hex');
@@ -1595,23 +1600,28 @@ export class BillingService {
     await this.ensurePlanVersions();
     await this.ensureDefaultAssignment(account.id);
     const { period: periodStr, start } = parsePeriod(period);
+    const summaryInvoice = await findUsagePeriodInvoice(this.prisma, account.id, start);
+    if (summaryInvoice && summaryInvoice.status !== 'open') {
+      return this.projectFinalizedSummary(summaryInvoice, periodStr);
+    }
+    await this.walletLifecycle.prepareWalletUsageThroughCurrentMonth(userId);
+    const walletUsage = await this.prisma.billingWalletUsagePeriod.findUnique({
+      where: { billingAccountId_periodStart: { billingAccountId: account.id, periodStart: start } },
+      select: { peakWalletCount: true },
+    });
+    if (!walletUsage || !Number.isSafeInteger(walletUsage.peakWalletCount) || walletUsage.peakWalletCount < 0) {
+      throw new ConflictException('Wallet usage evidence is unavailable for this billing period');
+    }
+    const activeWallets = walletUsage.peakWalletCount;
 
     // Fee/identity anchor vs live entitlement (usage allowances + overage rates).
     const feePlanVersion = await this.resolveUsagePlanVersion(account.id, start);
     const usagePlanVersion = await this.resolvePlanVersion(account.id, start);
     const hybrid = this.buildHybridPeriodPricing(feePlanVersion, usagePlanVersion);
 
-    const [usageEvents, activeWallets] = await Promise.all([
-      this.prisma.billingUsageEvent.findMany({
-        where: {
-          billingAccountId: account.id,
-          periodStart: start,
-        },
-      }),
-      this.prisma.userWallet.count({
-        where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
-      }),
-    ]);
+    const usageEvents = await this.prisma.billingUsageEvent.findMany({
+      where: { billingAccountId: account.id, periodStart: start },
+    });
 
     let outboundVolume = 0n;
     let apiCalls = 0n;
@@ -1643,7 +1653,7 @@ export class BillingService {
       activeWallets,
       apiCallsTotal: toSafeCount(apiCalls),
       apiOverageRateMicros: hybrid.apiOverageRateMicros,
-      walletOverageRateMicros: hybrid.walletOverageRateMicros,
+      walletOverageRateMicros: 0n,
     });
 
     return {
@@ -1659,6 +1669,7 @@ export class BillingService {
       apiCalls: String(apiCalls),
       apiCallsFreeAllowance: String(hybrid.calculatorPlan.includedApiCallsPerMonth ?? 0),
       activeWallets: String(activeWallets),
+      walletUsageMetric: 'monthly_peak',
       activeWalletsFreeAllowance: String(hybrid.calculatorPlan.includedWallets ?? 0),
       estimatedBaseCost: microsToDecimalUsd(totals.monthlyFeeMicros),
       estimatedOverageCost: microsToDecimalUsd(
@@ -1669,6 +1680,46 @@ export class BillingService {
       overageRate: ppmToPercentString(STANDARD_OUTBOUND_TIERS[0].ratePpm),
       overageUnit: 'outbound_volume',
       tierBreakdown: this.toTierBreakdown(totals.outboundTiers),
+    };
+  }
+
+  /** Projects a closed invoice without re-pricing its immutable history. */
+  private projectFinalizedSummary(invoice: Prisma.BillingInvoiceGetPayload<Record<string, never>>, period: string): BillingSummaryDto {
+    const snapshot = invoice.snapshotJson;
+    const plan = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)
+      ? (snapshot as Record<string, unknown>).plan
+      : null;
+    if (!plan || typeof plan !== 'object' || Array.isArray(plan)) {
+      throw new ConflictException('Finalized invoice snapshot is incomplete');
+    }
+    const planRecord = plan as Record<string, unknown>;
+    if (typeof planRecord.code !== 'string' || typeof planRecord.name !== 'string' ||
+      invoice.includedOutboundMicros === null || invoice.includedApiCalls === null ||
+      invoice.includedWallets === null || invoice.activeWallets === null ||
+      !Number.isSafeInteger(invoice.activeWallets) || invoice.activeWallets < 0) {
+      throw new ConflictException('Finalized invoice snapshot is incomplete');
+    }
+    const usageMetric = snapshotWalletUsageMetric(snapshot);
+    const tiers = snapshotTierBreakdown(snapshot);
+    return {
+      period,
+      planId: planRecord.code,
+      planName: planRecord.name,
+      outboundVolume: microsToDecimalUsd(invoice.grossOutboundMicros),
+      outboundFreeAllowance: microsToDecimalUsd(invoice.includedOutboundMicros),
+      outboundOverage: microsToDecimalUsd(invoice.outboundOverageMicros),
+      apiCalls: String(invoice.apiCalls),
+      apiCallsFreeAllowance: String(invoice.includedApiCalls),
+      activeWallets: String(invoice.activeWallets),
+      walletUsageMetric: usageMetric,
+      activeWalletsFreeAllowance: String(invoice.includedWallets),
+      estimatedBaseCost: microsToDecimalUsd(invoice.monthlyFeeMicros),
+      estimatedOverageCost: microsToDecimalUsd(invoice.outboundOverageMicros + invoice.apiOverageMicros + invoice.walletOverageMicros),
+      estimatedTotal: microsToDecimalUsd(invoice.totalMicros),
+      currency: invoice.currency,
+      overageRate: tiers.length > 0 ? tiers[0].rate : '0',
+      overageUnit: 'outbound_volume',
+      tierBreakdown: tiers,
     };
   }
 
@@ -1800,14 +1851,14 @@ export class BillingService {
     // by a self-service plan change) proceeds to finalization.
     const existing = await findUsagePeriodInvoice(this.prisma, account.id, start);
     if (existing && existing.status !== 'open') return this.toInvoiceDto(existing);
-
     // Close/grace boundary: future/current unended periods and the 24h grace
     // window after UTC period end cannot be finalized.
     this.assertFinalizablePeriod(end);
+    await this.walletLifecycle.prepareWalletUsageThroughCurrentMonth(userId);
 
     // The entire serialized finalization — re-check inside the lock, plan
     // resolution, Enterprise null-term check, risk checks, [start,end) usage
-    // aggregation, active-wallet count, calculator snapshot, invoice create,
+    // aggregation, persisted monthly wallet peak, calculator snapshot, invoice create,
     // and invoice-line create — runs inside one Serializable advisory-locked
     // transaction. A serialization conflict retries with a fresh transaction
     // (no partial invoice/line state). Business ConflictExceptions and unique
@@ -1838,17 +1889,15 @@ export class BillingService {
         // blocks auto-finalize, evaluated inside the locked transaction.
         await this.assertNoUnresolvedBillingRisk(tx, billingAccountId, start, end, userId);
 
-        const [usageEvents, activeWallets] = await Promise.all([
-          tx.billingUsageEvent.findMany({
-            where: {
-              billingAccountId,
-              periodStart: start,
-            },
-          }),
-          tx.userWallet.count({
-            where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
-          }),
-        ]);
+        const walletUsage = await tx.billingWalletUsagePeriod.findUnique({
+          where: { billingAccountId_periodStart: { billingAccountId, periodStart: start } },
+          select: { peakWalletCount: true },
+        });
+        if (!walletUsage || !Number.isSafeInteger(walletUsage.peakWalletCount) || walletUsage.peakWalletCount < 0) {
+          throw new ConflictException('Wallet usage evidence is unavailable for this billing period');
+        }
+        const activeWallets = walletUsage.peakWalletCount;
+        const usageEvents = await tx.billingUsageEvent.findMany({ where: { billingAccountId, periodStart: start } });
 
         let outboundVolume = 0n;
         let apiCalls = 0n;
@@ -1882,7 +1931,7 @@ export class BillingService {
           activeWallets,
           apiCallsTotal: apiCallsSafe,
           apiOverageRateMicros: hybrid.apiOverageRateMicros,
-          walletOverageRateMicros: hybrid.walletOverageRateMicros,
+          walletOverageRateMicros: 0n,
         });
 
         const snapshot = this.buildSnapshot({
@@ -1891,7 +1940,7 @@ export class BillingService {
           usagePlanVersion: hybrid.usagePlanVersion,
           plan,
           apiOverageRateMicros: hybrid.apiOverageRateMicros,
-          walletOverageRateMicros: hybrid.walletOverageRateMicros,
+          walletOverageRateMicros: 0n,
           outboundVolume,
           apiCalls: apiCallsSafe,
           activeWallets,
@@ -1942,7 +1991,7 @@ export class BillingService {
               activeWallets,
               totals,
               apiOverageRateMicros: hybrid.apiOverageRateMicros,
-              walletOverageRateMicros: hybrid.walletOverageRateMicros,
+              walletOverageRateMicros: 0n,
             });
             if (lines.length > 0) {
               await tx.billingInvoiceLine.createMany({ data: lines });
@@ -1988,7 +2037,7 @@ export class BillingService {
             activeWallets,
             totals,
             apiOverageRateMicros: hybrid.apiOverageRateMicros,
-            walletOverageRateMicros: hybrid.walletOverageRateMicros,
+            walletOverageRateMicros: 0n,
           });
           if (lines.length > 0) {
             await tx.billingInvoiceLine.createMany({ data: lines });
@@ -2071,14 +2120,15 @@ export class BillingService {
     this.assertPlanFinalizable(planVersion);
     await this.assertNoUnresolvedBillingRisk(tx, billingAccountId, periodStart, periodEnd, userId);
 
-    const [usageEvents, activeWallets] = await Promise.all([
-      tx.billingUsageEvent.findMany({
-        where: { billingAccountId, periodStart },
-      }),
-      tx.userWallet.count({
-        where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
-      }),
-    ]);
+    const walletUsage = await tx.billingWalletUsagePeriod.findUnique({
+      where: { billingAccountId_periodStart: { billingAccountId, periodStart } },
+      select: { peakWalletCount: true },
+    });
+    if (!walletUsage || !Number.isSafeInteger(walletUsage.peakWalletCount) || walletUsage.peakWalletCount < 0) {
+      throw new ConflictException('Wallet usage evidence is unavailable for this billing period');
+    }
+    const activeWallets = walletUsage.peakWalletCount;
+    const usageEvents = await tx.billingUsageEvent.findMany({ where: { billingAccountId, periodStart } });
 
     let outboundVolume = 0n;
     let apiCalls = 0n;
@@ -2104,13 +2154,14 @@ export class BillingService {
       activeWallets,
       apiCallsTotal: apiCallsSafe,
       apiOverageRateMicros: planVersion.apiOverageRateMicros,
-      walletOverageRateMicros: planVersion.walletOverageRateMicros,
+      walletOverageRateMicros: 0n,
     });
 
     const snapshot = this.buildSnapshot({
       period: periodStr,
       planVersion,
       plan,
+      walletOverageRateMicros: 0n,
       outboundVolume,
       apiCalls: apiCallsSafe,
       activeWallets,
@@ -2156,6 +2207,7 @@ export class BillingService {
         apiCalls: apiCallsSafe,
         activeWallets,
         totals,
+        walletOverageRateMicros: 0n,
       });
       if (lines.length > 0) {
         await tx.billingInvoiceLine.createMany({ data: lines });
@@ -2986,6 +3038,7 @@ export class BillingService {
     outboundVolume: bigint;
     apiCalls: number;
     activeWallets: number;
+    walletUsageMetric?: 'monthly_peak' | 'estimate_zero';
     totals: ReturnType<typeof calculateInvoiceTotals>;
   }): Record<string, unknown> {
     const { period, planVersion, plan, outboundVolume, apiCalls, activeWallets, totals } = args;
@@ -3029,6 +3082,8 @@ export class BillingService {
         apiCalls: String(apiCalls),
         activeWallets,
       },
+      walletUsageMetric: args.walletUsageMetric ?? 'monthly_peak',
+      walletOveragePolicy: 'zero_hard_cap',
       amounts: {
         monthlyFeeMicros: microsToDecimalUsd(totals.monthlyFeeMicros),
         billableOutboundMicros: microsToDecimalUsd(totals.billableOutboundMicros),
@@ -3086,6 +3141,68 @@ export class BillingService {
 
 function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+}
+
+function snapshotWalletUsageMetric(snapshot: unknown): BillingSummaryDto['walletUsageMetric'] {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return 'unknown';
+  const metric = (snapshot as Record<string, unknown>).walletUsageMetric;
+  if (metric === 'monthly_peak') return 'monthly_peak';
+  if (metric === 'estimate_zero') return 'unknown';
+  if (metric === undefined) return 'legacy_instantaneous';
+  return 'unknown';
+}
+
+function snapshotTierBreakdown(snapshot: unknown): BillingTierBreakdownDto[] {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    throw new ConflictException('Finalized invoice tier snapshot is incomplete');
+  }
+  const tiers = (snapshot as Record<string, unknown>).tiers;
+  if (!Array.isArray(tiers)) {
+    throw new ConflictException('Finalized invoice tier snapshot is incomplete');
+  }
+  let previousBoundMicros = 0n;
+  let previousWasInfinite = false;
+  return tiers.map((candidate, index) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+      throw new ConflictException('Finalized invoice tier snapshot is invalid');
+    }
+    const tier = candidate as Record<string, unknown>;
+    const upperBound = tier.upperBoundMicros;
+    const quantity = tier.volumeMicros;
+    const cost = tier.feeMicros;
+    if ((upperBound !== null && (typeof upperBound !== 'string' || !isSnapshotMoney(upperBound))) ||
+      !Number.isSafeInteger(tier.ratePpm) || (tier.ratePpm as number) < 0 ||
+      typeof quantity !== 'string' || !isSnapshotMoney(quantity) ||
+      typeof cost !== 'string' || !isSnapshotMoney(cost)) {
+      throw new ConflictException('Finalized invoice tier snapshot is invalid');
+    }
+    if (previousWasInfinite) throw new ConflictException('Finalized invoice tier snapshot is invalid');
+    const upperBoundMicros = upperBound === null ? null : snapshotMoneyToMicros(upperBound);
+    if (upperBoundMicros !== null && upperBoundMicros <= previousBoundMicros) {
+      throw new ConflictException('Finalized invoice tier snapshot is invalid');
+    }
+    const to = upperBoundMicros === null ? '∞' : microsToDecimalUsd(upperBoundMicros);
+    const row: BillingTierBreakdownDto = {
+      tier: `Tier ${index + 1}`,
+      from: microsToDecimalUsd(previousBoundMicros),
+      to,
+      quantity,
+      rate: ppmToPercentString(tier.ratePpm as number),
+      cost,
+    };
+    if (upperBoundMicros !== null) previousBoundMicros = upperBoundMicros;
+    else previousWasInfinite = true;
+    return row;
+  });
+}
+
+function isSnapshotMoney(value: string): boolean {
+  return /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/.test(value);
+}
+
+function snapshotMoneyToMicros(value: string): bigint {
+  const [whole, fractional = ''] = value.split('.');
+  return BigInt(whole) * 1_000_000n + BigInt(fractional.padEnd(6, '0'));
 }
 
 /**

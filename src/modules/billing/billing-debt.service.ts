@@ -81,4 +81,25 @@ export class BillingDebtService {
     const snapshot = await this.getDebt(userId, db);
     return snapshot.hasDebt;
   }
+
+  /** API-key operations are blocked only after the fixed post-finalization grace. */
+  async hasEnforceableApiDebt(
+    userId: string,
+    now = new Date(),
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    const account = await db.billingAccount.findUnique({ where: { userId }, select: { id: true } });
+    if (!account) return false;
+    const invoices = await db.billingInvoice.findMany({
+      where: {
+        billingAccountId: account.id,
+        status: 'finalized',
+        paidAt: null,
+        purpose: 'usage_period',
+        finalizedAt: { lte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+      },
+      select: { totalMicros: true, allocatedMicros: true },
+    });
+    return invoices.some((invoice) => invoice.totalMicros - invoice.allocatedMicros > 0n);
+  }
 }

@@ -18,7 +18,8 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 | `billing-calculator.ts`             | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`.                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `billing-catalog.ts`                | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values.                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `billing-pricing.ts`                | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results.                                                                                                                                                                                                                                                                                                                                                                                            |
-| `billing-entitlement.service.ts`    | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and the transaction-aware `assertWalletActivationAllowed` hard-quota seam.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `billing-entitlement.service.ts`    | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and legacy transaction-aware activation guard.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `billing-wallet-lifecycle.service.ts` | Account-row serialized wallet reservation/activation quota and monthly peak/carry evidence; provider work is outside transactions. |
 | `billing-worker.service.ts`         | Gated 5-minute `@Interval` worker (`BILLING_WORKER_ENABLED`, default off; exposes no route): drains receipt reconciliation per account/period, runs invoice finalization catch-up, materializes due recurring periods, resumes pending/confirming USDC claims, retries deferred Stripe renewal events, and recovers interrupted pending checkouts. Reuses the existing evidence-backed services. Maintains a non-sensitive `BillingWorkerHeartbeat` lifecycle row (`starting`→`running`→`healthy`/`failed`) for health readiness. |
 | `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers.                                                                                                                                                                                                                                                                                                                        |
 | `invoice-settlement.service.ts`     | Shared atomic invoice-allocation boundary (`settleInvoice`): row-locked, coverage-first, invoice-paid-last; used by both Stripe and USDC rails and the renewal fixed-fee catch-up.                                                                                                                                                                                                                                                                                                                                                |
@@ -64,6 +65,14 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   `roundHalfUp(baseUnitAmount * unitPriceMicros / 10^decimals)`), and a
   `periodStart` equal to the receipt block timestamp's UTC month. A finalized
   invoice is a period-close barrier: late evidence is rejected, never appended.
+- **Wallet usage evidence.** The account's `BillingWalletUsagePeriod` records a monotonic
+  peak of concurrently eligible active wallets per UTC month. Before summary/finalization,
+  a standalone ReadCommitted transaction locks the billing-account row to initialize
+  the current zero baseline and carry observed counts across idle months. Only after it
+  commits does the caller enter the separate Serializable billing-period advisory-lock
+  transaction; these locks are never nested. Missing/malformed historical evidence is
+  unknown and fails closed, never reconstructed from today's wallets. Activation has a
+  hard included-wallet cap; wallet overage is always zero, including legacy rates/counts.
 - **Invoice lifecycle.** `open` (zero-usage estimate created by a plan change)
   → `finalized` (immutable, after period end + 24h grace, with SHA-256
   `snapshotHash` over a JSON snapshot) → `paid` (set only by the settlement
@@ -183,10 +192,22 @@ API-key request → ApiKeyAuthGuard.recordApiCallUsage
   → else insert posted/usage/api_request event (atomic, no double count)
 
 Wallet activation → AuthService (preflight + in-transaction)
-  → billingEntitlements.assertWalletActivationAllowed(userId, tx)
-  → resolve entitlements; Enterprise null includedWallets → ConflictException
-  → already-active wallet is idempotent; else count active wallets and reject
-    with 429 when count ≥ includedWallets (same transaction snapshot)
+  → withWalletAccountLock(userId, work) ensures account before transaction;
+    first transaction statement locks account at ReadCommitted
+  → assertWalletReservationAllowed(tx,userId,walletId,now) runs before inserting
+    wallet/intent; counts distinct eligible wallets + pending/dispatched/uncertain/
+    provisioned reservations; Enterprise null fails closed
+  → initializeWalletCount(tx,accountId,userId,now) under lock even for
+    already-active reauthorization; this only seeds an unobserved baseline from
+    actual eligible wallets and does not perform activation/quota checks
+  → update wallet eligible, then recordWalletActivation(tx,accountId,userId,now)
+    only for an ineligible→eligible transition (already-eligible reauthorization
+    skips it); rechecks quota, carries PREVIOUS eligible count across idle UTC
+    months, then records actual count/monotonic current-month peak
+  → wallet usage preparation for summary/finalization runs in its own committed
+    account-row-locked ReadCommitted transaction, then invoice work uses a separate
+    Serializable billing-period lock; never nest these locks in either order
+  → rollback leaves wallet and peaks unchanged
 
 Outbound transfer (receipt-confirmed) → BillingReconciliationService
   → billing.recordSuccessfulOutbound({ ...receipt evidence })
@@ -201,9 +222,13 @@ Outbound transfer (receipt-confirmed) → BillingReconciliationService
 GET /v1/billing/summary?period=YYYY-MM
   → ensureAccount/planVersions/defaultAssignment; resolve fee anchor
     (`resolveUsagePlanVersion`) and period entitlement (`resolvePlanVersion`)
+  → prepare wallet evidence separately under account-row lock; read persisted
+    period peak (never current-wallet count); an existing finalized invoice's peak
+    snapshot remains authoritative and immutable
   → hybrid pricing: fixed monthly fee + identity from fee anchor; included
     allowances and API/wallet/outbound overage rates from period entitlement
-  → aggregate usage (posted outbound + usage api_call) and active-wallet count
+  → aggregate usage (posted outbound + usage api_call) and peak concurrent eligible
+    wallet count for the UTC period; missing historical evidence conflicts/fails closed
   → calculateInvoiceTotals → decimal-string BillingSummaryDto + tier breakdown
 
 GET /v1/billing/invoices, GET /v1/billing/invoices/:id
@@ -382,17 +407,21 @@ BILLING_WORKER_ENABLED)
   and `ScheduleModule.forRoot()` (for the gated `BillingWorkerService`), and is
   imported by `AppModule`, `AuthModule`, `WalletModule`, and `TransactionsModule`.
   It exports `BillingService`, `BillingReconciliationService`,
-  `BillingEntitlementService`, `InvoiceSettlementService`, and
+  `BillingEntitlementService`, `BillingWalletLifecycleService`, `InvoiceSettlementService`, and
   `StripePaymentService`; `UsdcPaymentService`, `BillingWorkerService`, and the
   webhook/controller services stay module-internal.
 - **Consumers outside the module.**
   - `src/common/guards/api-key-auth.guard.ts` calls
     `billing.assertAndRecordApiCall` on every authenticated API-key request
     (metering failure → 503; genuine quota → 429).
-  - `src/modules/auth/auth.service.ts` calls
-    `billingEntitlements.assertWalletActivationAllowed` (preflight + inside the
-    activation transaction) so an exhausted wallet quota never orphans a TEE
-    agent wallet.
+  - `src/modules/auth/auth.service.ts` uses
+    `BillingWalletLifecycleService.withWalletAccountLock(userId, work)` for
+    reservation, dispatch fencing, and activation. It calls
+    `assertWalletReservationAllowed(tx, userId, walletId, now)` before creating
+    wallet/intent reservations, then calls
+    `recordWalletActivation(tx, accountId, userId, now)` after an ineligible to
+    eligible wallet update in the same transaction. Provider calls remain
+    outside the callback; when both apply, the account lock precedes the period lock.
 - **External dependencies.**
   - `OpenfortService.getTransactionReceipt` (sanitized receipts) in
     `billing-reconciliation.service.ts`.

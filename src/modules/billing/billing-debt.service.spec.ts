@@ -9,6 +9,7 @@ describe('BillingDebtService', () => {
 
   const accountFindUnique = jest.fn();
   const invoiceFindMany = jest.fn();
+  let invoiceRows: any[];
 
   const buildClient = () =>
     ({
@@ -18,6 +19,16 @@ describe('BillingDebtService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    invoiceRows = [];
+    invoiceFindMany.mockImplementation(({ where }) =>
+      invoiceRows.filter((row) =>
+        row.billingAccountId === where.billingAccountId &&
+        row.status === where.status &&
+        row.paidAt === where.paidAt &&
+        row.purpose === where.purpose &&
+        (!where.finalizedAt || row.finalizedAt <= where.finalizedAt.lte),
+      ).map(({ id, totalMicros, allocatedMicros }) => ({ id, totalMicros, allocatedMicros })),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -134,6 +145,27 @@ describe('BillingDebtService', () => {
 
     invoiceFindMany.mockResolvedValue([]);
     await expect(service.hasDebt('user-1')).resolves.toBe(false);
+  });
+
+  it('uses a fixed seven-day finalizedAt grace for API debt enforcement', async () => {
+    accountFindUnique.mockResolvedValue(ACCOUNT);
+    const now = new Date('2026-09-26T12:00:00.000Z');
+    invoiceRows = [
+      { id: 'just-before', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: null, purpose: 'usage_period', finalizedAt: new Date('2026-09-19T12:00:00.001Z'), totalMicros: 1n, allocatedMicros: 0n },
+      { id: 'exactly-seven-days', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: null, purpose: 'usage_period', finalizedAt: new Date('2026-09-19T12:00:00.000Z'), totalMicros: 10n, allocatedMicros: 3n },
+      { id: 'paid', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: new Date(), purpose: 'usage_period', finalizedAt: new Date('2026-09-01T00:00:00Z'), totalMicros: 1n, allocatedMicros: 0n },
+      { id: 'upgrade', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: null, purpose: 'plan_charge', finalizedAt: new Date('2026-09-01T00:00:00Z'), totalMicros: 1n, allocatedMicros: 0n },
+      { id: 'fully-allocated', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: null, purpose: 'usage_period', finalizedAt: new Date('2026-09-01T00:00:00Z'), totalMicros: 1n, allocatedMicros: 1n },
+      { id: 'zero', billingAccountId: ACCOUNT.id, status: 'finalized', paidAt: null, purpose: 'usage_period', finalizedAt: new Date('2026-09-01T00:00:00Z'), totalMicros: 0n, allocatedMicros: 0n },
+    ];
+
+    await expect(service.hasEnforceableApiDebt('user-1', now)).resolves.toBe(true);
+    invoiceRows[1].allocatedMicros = 10n;
+    await expect(service.hasEnforceableApiDebt('user-1', now)).resolves.toBe(false);
+    expect(invoiceFindMany.mock.calls[0][0].where.finalizedAt).toEqual({
+      lte: new Date('2026-09-19T12:00:00.000Z'),
+    });
+    expect(invoiceFindMany.mock.calls[0][0].where.purpose).toBe('usage_period');
   });
 
   it('accepts an interactive transaction client instead of PrismaService', async () => {

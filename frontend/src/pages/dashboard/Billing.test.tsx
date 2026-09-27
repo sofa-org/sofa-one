@@ -709,6 +709,24 @@ describe('Billing — estimated cost overage note', () => {
   });
 });
 
+describe('Billing — wallet usage provenance', () => {
+  it('does not describe a finalized legacy instantaneous count as a monthly peak', async () => {
+    vi.mocked(getBillingSummaryAuth).mockResolvedValue({
+      ...makeSummary(),
+      walletUsageMetric: 'legacy_instantaneous',
+      activeWallets: '3',
+    });
+
+    renderBilling();
+
+    expect(await screen.findByText('Active wallets (instantaneous count)')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText(/point-in-time count; not a monthly peak/i)).toBeInTheDocument();
+    expect(screen.queryByText('Monthly peak active wallets')).not.toBeInTheDocument();
+    expect(screen.queryByText(/highest concurrent count this month/i)).not.toBeInTheDocument();
+  });
+});
+
 describe('Billing — invoice payment actions and user-visible errors', () => {
   let locationStub: { href: string };
   beforeEach(() => {

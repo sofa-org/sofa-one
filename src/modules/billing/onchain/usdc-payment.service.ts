@@ -477,7 +477,12 @@ export class UsdcPaymentService {
    * another chain), and a non-expired different-chain active attempt is a
    * conflict. Confirming attempts are always reused — never released.
    */
-  async quote(userId: string, invoiceId: string, chainId?: number): Promise<UsdcQuoteResult> {
+  async quote(
+    userId: string,
+    invoiceId: string,
+    chainId?: number,
+    walletId?: string,
+  ): Promise<UsdcQuoteResult> {
     this.assertEnabled();
     const invoice = await this.loadOwnedInvoice(userId, invoiceId);
     this.assertInvoiceEligible(invoice);
@@ -488,7 +493,8 @@ export class UsdcPaymentService {
     const chain = this.resolveChain(chainId);
     const tokenAddress = this.canonicalToken(chain);
     const treasuryAddress = this.treasury(chain);
-    const expectedPayerAddress = await this.expectedPayer(userId);
+    const selectedWallet = await this.expectedPayer(userId, walletId);
+    const expectedPayerAddress = selectedWallet.walletAddress!;
     const requiredConfirmations = this.requiredConfirmations();
     const quoteExpiresAt = this.quoteExpiry();
 
@@ -503,6 +509,7 @@ export class UsdcPaymentService {
       orderBy: { createdAt: 'desc' },
     });
     if (walletReservedAttempt) {
+      this.assertPayerSelection(walletReservedAttempt, selectedWallet.walletAddress!);
       if (walletReservedAttempt.chainId !== BigInt(chain)) {
         throw new ConflictException({
           code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
@@ -527,6 +534,7 @@ export class UsdcPaymentService {
             message: 'An active USDC payment already exists for this invoice on another chain',
           });
         }
+        this.assertPayerSelection(existing, selectedWallet.walletAddress!);
         // Confirming transfers already left the chain — still re-check invoice
         // under lock so a voided plan_charge is never surfaced as payable.
         const freshConfirming = await this.revalidateInvoicePayableUnderLock(invoice);
@@ -545,6 +553,7 @@ export class UsdcPaymentService {
       const walletReserved =
         (existing as { walletPaymentReserved?: boolean }).walletPaymentReserved === true;
       if (walletReserved) {
+        this.assertPayerSelection(existing, selectedWallet.walletAddress!);
         if (existing.chainId !== BigInt(chain)) {
           throw new ConflictException({
             code: API_ERROR_CODES.USDC_PAYMENT_IN_PROGRESS,
@@ -596,6 +605,7 @@ export class UsdcPaymentService {
                 message: 'An active USDC payment already exists for this invoice on another chain',
               });
             }
+            this.assertPayerSelection(current, selectedWallet.walletAddress!);
             const freshReuse = await this.revalidateInvoicePayableUnderLock(invoice);
             return this.toQuoteResult(freshReuse, current);
           }
@@ -606,6 +616,7 @@ export class UsdcPaymentService {
           message: 'An active USDC payment already exists for this invoice on another chain',
         });
       } else {
+        this.assertPayerSelection(existing, selectedWallet.walletAddress!);
         const freshPending = await this.revalidateInvoicePayableUnderLock(invoice);
         return this.toQuoteResult(freshPending, existing);
       }
@@ -657,6 +668,7 @@ export class UsdcPaymentService {
           winner.status === 'confirming' ||
           (winner.quoteExpiresAt !== null && winner.quoteExpiresAt.getTime() > Date.now());
         if (winnerActive) {
+          this.assertPayerSelection(winner, selectedWallet.walletAddress!);
           const freshWinner = await this.revalidateInvoicePayableUnderLock(invoice);
           return this.toQuoteResult(freshWinner, winner);
         }
@@ -2507,16 +2519,42 @@ export class UsdcPaymentService {
     return address;
   }
 
-  /** The payer is always the invoice owner's SOFA/Openfort user wallet. */
-  private async expectedPayer(userId: string): Promise<string> {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet?.walletAddress || wallet.status !== 'active' || wallet.frozenAt) {
+  /** Resolve explicit owned wallet, or require exactly one eligible active wallet. */
+  private async expectedPayer(userId: string, walletId?: string) {
+    const wallets = await this.prisma.userWallet.findMany({
+      where: { userId, status: 'active', frozenAt: null, walletAddress: { not: null } },
+      orderBy: { id: 'asc' },
+    });
+    const addresses = new Set<string>();
+    for (const wallet of wallets) {
+      const normalized = wallet.walletAddress?.toLowerCase();
+      if (!normalized || addresses.has(normalized)) {
+        throw new ConflictException('Ambiguous payer wallet configuration');
+      }
+      addresses.add(normalized);
+    }
+    const wallet = walletId
+      ? wallets.find((candidate) => candidate.id === walletId)
+      : wallets.length === 1
+        ? wallets[0]
+        : null;
+    if (!wallet?.walletAddress) {
       throw new ConflictException({
         code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE,
-        message: 'No active user wallet is available for USDC payment',
+        message: walletId
+          ? 'Selected wallet is not an active wallet owned by this user'
+          : wallets.length > 1
+            ? 'Select a payer wallet to continue'
+            : 'No active user wallet is available for USDC payment',
       });
     }
-    return wallet.walletAddress;
+    return wallet;
+  }
+
+  private assertPayerSelection(attempt: PaymentAttemptRow, walletId: string): void {
+    if (attempt.expectedPayerAddress?.toLowerCase() !== walletId.toLowerCase()) {
+      throw new ConflictException('An active payment attempt is bound to a different payer wallet');
+    }
   }
 
   private requiredConfirmations(): number {

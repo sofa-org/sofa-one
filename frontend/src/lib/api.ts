@@ -29,6 +29,10 @@ export interface ApiErrorBody {
 }
 
 export interface WalletInfo {
+  id: string;
+  openfortAccountId?: string;
+  isDefault?: boolean;
+  provisioningStatus?: string | null;
   walletAddress: string | null;
   status: string;
   agentWalletAddress?: string | null;
@@ -41,9 +45,23 @@ export interface WalletInfo {
   }>;
 }
 
+export async function getDepositInfoAuth(
+  getToken: () => Promise<string | null>,
+  chainId: number,
+  walletId?: string,
+  signal?: AbortSignal,
+) {
+  const response = await authFetch<unknown>('/v1/wallets/deposit-info', getToken, {
+    method: 'POST', body: JSON.stringify({ chainId, ...(walletId ? { walletId } : {}) }), signal,
+  });
+  return response;
+}
+
 export interface AuthSessionResponse {
   userId: string;
   wallet: WalletInfo;
+  /** Older servers may omit this; `wallet` remains the legacy default. */
+  wallets?: WalletInfo[];
   apiKey?: string;
 }
 
@@ -125,11 +143,13 @@ export interface AgentRegistrationResultRequest {
   chainId: number;
   txHash: string;
   status: 'registered' | 'registration_failed';
+  walletId?: string;
 }
 
 export interface AgentRegistrationTransactionRequest {
   chainId: number;
   txHash: string;
+  walletId?: string;
 }
 
 export interface TransactionInteraction {
@@ -458,6 +478,8 @@ export interface BillingSummary {
   apiCalls: string;
   apiCallsFreeAllowance: string;
   activeWallets: string;
+  /** Server provenance for activeWallets; absent on older summary responses. */
+  walletUsageMetric?: 'monthly_peak' | 'legacy_instantaneous' | 'unknown' | (string & Record<never, never>);
   activeWalletsFreeAllowance: string;
   estimatedBaseCost: string;
   estimatedOverageCost: string;
@@ -952,19 +974,22 @@ export async function withdrawAuth(
   token: WithdrawalToken,
   chainId = DEFAULT_CHAIN_ID,
   stepUpToken?: string,
+  walletId?: string,
 ) {
   return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
     method: 'POST',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-    body: JSON.stringify({ chainId, to, amount, token, idempotencyKey: crypto.randomUUID() }),
+    body: JSON.stringify({ chainId, to, amount, token, walletId, idempotencyKey: crypto.randomUUID() }),
   });
 }
 
 export async function listWithdrawalAddressesAuth(
   getToken: () => Promise<string | null>,
   signal?: AbortSignal,
+  walletId?: string,
 ) {
-  return authFetch<ListWithdrawalAddressesResponse>('/v1/wallets/withdrawal-addresses', getToken, {
+  const query = walletId ? `?walletId=${encodeURIComponent(walletId)}` : '';
+  return authFetch<ListWithdrawalAddressesResponse>(`/v1/wallets/withdrawal-addresses${query}`, getToken, {
     signal,
   });
 }
@@ -996,8 +1021,11 @@ export async function getBalancesAuth(
   getToken: () => Promise<string | null>,
   chainId = DEFAULT_CHAIN_ID,
   signal?: AbortSignal,
+  walletId?: string,
 ) {
-  return authFetch<BalancesResponse>(`/v1/wallets/balances?chainId=${chainId}`, getToken, {
+  const query = new URLSearchParams({ chainId: String(chainId) });
+  if (walletId) query.set('walletId', walletId);
+  return authFetch<BalancesResponse>(`/v1/wallets/balances?${query}`, getToken, {
     signal,
   });
 }
@@ -1296,9 +1324,11 @@ export async function createUsdcQuoteAuth(
   invoiceId: string,
   chainId?: number,
   signal?: AbortSignal,
+  walletId?: string,
 ) {
-  const body: { chainId?: number } = {};
+  const body: { chainId?: number; walletId?: string } = {};
   if (chainId !== undefined) body.chainId = chainId;
+  if (walletId) body.walletId = walletId;
   return authFetch<UsdcQuoteResponse>(`/v1/billing/invoices/${invoiceId}/usdc/quote`, getToken, {
     method: 'POST',
     body: JSON.stringify(body),

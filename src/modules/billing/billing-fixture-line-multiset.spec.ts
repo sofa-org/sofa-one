@@ -7,21 +7,16 @@ import { buildInvoiceLineSpecs, planVersionToConfig, validatePlanVersion } from 
 import { calculateInvoiceTotals, PLANS } from './billing-calculator';
 
 describe('billing-fixture-line-multiset', () => {
-  /** At least two distinct legal lines: monthly fee + wallet overage. */
+  /** At least two distinct legal lines: monthly fee + outbound overage. */
   function twoLineExpected() {
-    const plan = {
-      ...PLANS.starter,
-      // Force wallet overage: include 0 wallets so 2 active → overage line.
-      includedWallets: 0,
-    };
+    const plan = PLANS.starter;
     const totals = calculateInvoiceTotals({
       plan,
-      grossOutboundMicros: 0n,
+      grossOutboundMicros: 600_000_000_000_000n,
       activeWallets: 2,
       apiCallsTotal: 0,
-      walletOverageRateMicros: 10_000n,
     });
-    expect(totals.walletOverageMicros).toBeGreaterThan(0n);
+    expect(totals.outboundOverageMicros).toBeGreaterThan(0n);
     const lines = buildInvoiceLineSpecs({
       planVersionName: plan.name,
       plan,
@@ -33,7 +28,7 @@ describe('billing-fixture-line-multiset', () => {
     });
     expect(lines.length).toBeGreaterThanOrEqual(2);
     expect(lines.some((l) => l.lineType === 'monthly_fee')).toBe(true);
-    expect(lines.some((l) => l.lineType === 'wallet_overage')).toBe(true);
+    expect(lines.some((l) => l.lineType === 'outbound_tier')).toBe(true);
     return lines;
   }
 
@@ -137,8 +132,8 @@ describe('billing-fixture-line-multiset', () => {
   });
 });
 
-describe('planVersionToConfig uses pinned DB terms for overage lines', () => {
-  it('builds wallet overage from drifted DB wallet quota not static PLANS', () => {
+describe('planVersionToConfig uses pinned DB terms for allowances', () => {
+  it('preserves drifted wallet allowance but never builds a wallet overage line', () => {
     const staticIncluded = PLANS.starter.includedWallets!;
     const row = {
       id: 'pv-drift-w',
@@ -169,7 +164,7 @@ describe('planVersionToConfig uses pinned DB terms for overage lines', () => {
       apiCallsTotal: 0,
       walletOverageRateMicros: 10_000n,
     });
-    expect(totals.walletOverageMicros).toBe(30_000n);
+    expect(totals.walletOverageMicros).toBe(0n);
 
     const lines = buildInvoiceLineSpecs({
       planVersionName: 'Starter',
@@ -181,8 +176,6 @@ describe('planVersionToConfig uses pinned DB terms for overage lines', () => {
       walletOverageRateMicros: 10_000n,
     });
     const walletLine = lines.find((l) => l.lineType === 'wallet_overage');
-    expect(walletLine).toBeDefined();
-    expect(walletLine!.quantity).toBe(3n);
-    expect(walletLine!.amountMicros).toBe(30_000n);
+    expect(walletLine).toBeUndefined();
   });
 });

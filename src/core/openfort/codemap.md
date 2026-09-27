@@ -49,7 +49,7 @@
 ## Flow
 1. **构造**：读取 env 配置初始化 Openfort 客户端与超时。
 2. **钱包创建**：`createBackendWallet` → `client.accounts.evm.backend.create()`；`createAgentWallet` 追加 `computeSecp256k1KeyHash`。
-3. **会话/归属校验**：`verifyIamSession` → `iam.getSession`；`authorizeEmbeddedAddress` → `accounts.list` 按规范化地址匹配。
+3. **会话/归属校验**：`verifyIamSession` → `iam.getSession`；`authorizeEmbeddedAddress` → `accounts.list` 以 limit/skip 遍历稳定 total 的完整 IAM 账户集合，在分页/总量/时限边界异常时 fail closed；仅返回匹配账户的服务端非空 ID。
 4. **代理密钥校验**：`verifyAgentKeyRegistration` → 建 viem client → `hasCaliburDelegation` → `isCaliburKeyRegistered` → `getCaliburKeySettings` + `getAgentKeyUsabilityFailure`。
 5. **UserOperation 提交**（`sendUserOperation`）：
    - 取后端账户 → `toAccount` 包装签名器 → `createCaliburSessionAccount`。

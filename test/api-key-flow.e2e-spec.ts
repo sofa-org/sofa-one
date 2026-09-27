@@ -15,6 +15,7 @@ import { API_KEY_PREFIX_LENGTH } from '../src/common/api-key/api-key-prefix';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
 import { TransactionSimulationService } from '../src/modules/transactions/transaction-simulation.service';
+import { BillingDebtService } from '../src/modules/billing/billing-debt.service';
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
@@ -44,6 +45,11 @@ const mockOpenfortService = {
   }),
   sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
+};
+
+const mockBillingDebtService = {
+  hasEnforceableApiDebt: jest.fn().mockResolvedValue(false),
+  getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }),
 };
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
@@ -87,6 +93,8 @@ describe('API-key public security flow (e2e)', () => {
       .useValue({
         assertSimulatable: jest.fn().mockResolvedValue(undefined),
       })
+      .overrideProvider(BillingDebtService)
+      .useValue(mockBillingDebtService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -102,6 +110,7 @@ describe('API-key public security flow (e2e)', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockBillingDebtService.hasEnforceableApiDebt.mockResolvedValue(false);
     await cleanDatabase();
 
     const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key');
@@ -158,6 +167,58 @@ describe('API-key public security flow (e2e)', () => {
   });
 
   describe('public API-key endpoints', () => {
+    it('allows unmetered status reads under mature debt, but blocks signing and sending without metering', async () => {
+      mockBillingDebtService.hasEnforceableApiDebt.mockResolvedValue(true);
+      const sendUsageBefore = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+
+      const created = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'mature-debt-status-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xdeadbeef', value: '0' }],
+        })
+        .expect(402);
+      expect(created.body.code).toBe('BILLING_PAYMENT_REQUIRED');
+
+      // Seed a safely-shaped owned send row to exercise the real controller route.
+      const tx = await prisma.transaction.create({
+        data: {
+          userId: testUserId,
+          apiKeyId: testKeyId,
+          operationType: 'send',
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'mature-debt-status-seed',
+          requestHash: 'mature-debt-status-hash',
+          authMethod: 'api_key',
+          status: 'confirmed',
+          txHash: TEST_TX_HASH,
+          walletAddress: TEST_WALLET_ADDRESS,
+        },
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/transactions/${tx.id}`)
+        .set('X-API-Key', testApiKey)
+        .expect(200);
+      const afterRead = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+      expect(afterRead).toBe(sendUsageBefore);
+
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'mature debt' })
+        .expect(402);
+      const afterDenials = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+      expect(afterDenials).toBe(afterRead);
+    });
+
     it('POST /v1/wallets/sign signs a message and writes non-plaintext audit', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/wallets/sign')

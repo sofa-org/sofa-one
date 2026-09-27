@@ -161,6 +161,7 @@ describe('OpenfortService', () => {
           address: '0x2222222222222222222222222222222222222222',
         },
       ],
+      total: 1,
     });
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
@@ -174,7 +175,38 @@ describe('OpenfortService', () => {
         '0x1111111111111111111111111111111111111111',
       ),
     ).rejects.toThrow(ForbiddenException);
-    expect(accountsList).toHaveBeenCalledWith({ user: 'ofu_123' });
+    expect(accountsList).toHaveBeenCalledWith({ user: 'ofu_123', limit: 100, skip: 0 });
+  });
+
+  it('finds owned embedded addresses on later pages and ignores client account ids', async () => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    accountsList.mockResolvedValueOnce({ data: Array.from({ length: 100 }, (_, i) => ({ id: `acc_${i}`, address: '0x2222222222222222222222222222222222222222' })), total: 101 })
+      .mockResolvedValueOnce({ data: [{ id: 'server-account', address: '0x1111111111111111111111111111111111111111' }], total: 101 });
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .resolves.toMatchObject({ accountId: 'server-account' });
+    expect(accountsList).toHaveBeenNthCalledWith(2, { user: 'ofu_123', limit: 100, skip: 100 });
+  });
+
+  it.each([
+    ['missing matching account id', { data: [{ address: '0x1111111111111111111111111111111111111111' }], total: 1 }],
+    ['malformed page', { data: 'not-an-array', total: 1 }],
+    ['truncated page', { data: [], total: 1 }],
+  ])('fails closed for %s', async (_label, response) => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    accountsList.mockResolvedValue(response);
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .rejects.toThrow(BadGatewayException);
+  });
+
+  it('fails closed when pagination repeats entries', async () => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    const page = Array.from({ length: 100 }, (_, i) => ({ id: `acc_${i}`, address: '0x2222222222222222222222222222222222222222' }));
+    accountsList.mockResolvedValueOnce({ data: page, total: 101 }).mockResolvedValueOnce({ data: page, total: 101 });
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .rejects.toThrow(BadGatewayException);
   });
 
   it('reports pending agent registration when 7702 delegation is not active yet', async () => {

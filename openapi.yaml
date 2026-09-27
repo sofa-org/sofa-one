@@ -21,7 +21,7 @@ info:
 
     如果 key 被冻结，请勿在日志、工单或消息中泄露 key。通过 Dashboard 创建新 key，更新后端 secret 后撤销旧 key；按 Dashboard/支持流程完成恢复。若 key 疑似泄露，应立即轮换。
 
-    Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info` 和 `POST /v1/wallets/withdraw`。这些端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
+    Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
     ## 支持的链
 
@@ -111,6 +111,8 @@ paths:
         当用户启用提现地址保护（`WithdrawalPolicy.requireAddressAllowlist=true`）时，本端点对所有 `message`/`typed_data` 与 `session_key`/`eoa` 组合 fail-closed 拒绝（`SIGNING_BLOCKED_BY_DESTINATION_PROTECTION`）。
         空 allowlist、已放行合约、冷却中地址或 reauth 状态均不能绕过。策略查询失败返回 503。
         启用保护前已受理并进入 Openfort 的签名不在撤销范围内。
+
+        `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
       operationId: signData
       requestBody:
         required: true
@@ -159,6 +161,19 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: 未传 `walletId` 且用户有多个 active wallet，无法确定要使用的钱包
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 409
+                code: WALLET_SELECTION_REQUIRED
+                message: "Specify walletId when multiple active wallets exist"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/wallets/sign"
         '400':
           $ref: '#/components/responses/ValidationError'
         '403':
@@ -208,6 +223,8 @@ paths:
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
         必填 `chainId` 指定执行链；`session_key` 还要求该链必须已在开发者钱包中完成 API access authorization。必填 `idempotencyKey` 用于防止重复提交。
 
+        `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
+
         欠费期资产流向规则（用户存在未结清账单：`BillingInvoice.status=finalized` 且 `paidAt=null`）：
         - 静态分类为明确外部转移（`external_transfer`）的请求直接拒绝（`BILLING_OUTBOUND_BLOCKED`）。
         - 协议品牌本身不是白名单：不能仅因目标是 Aave/Uniswap 等合约地址或 selector 而放行；所有放行均基于 calldata/selector/ABI 静态可证，且目标地址与参数必须与链级 registry 严格匹配。
@@ -250,6 +267,19 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: 未传 `walletId` 且用户有多个 active wallet，无法确定要使用的钱包
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 409
+                code: WALLET_SELECTION_REQUIRED
+                message: "Specify walletId when multiple active wallets exist"
+                requestId: "req_..."
+                timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/transactions/send"
         '400':
           description: 请求参数错误或幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
           content:
@@ -367,6 +397,10 @@ components:
       type: object
       required: [type]
       properties:
+        walletId:
+          type: string
+          format: uuid
+          description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
         type:
           type: string
           enum: [message, typed_data]
@@ -460,6 +494,10 @@ components:
       type: object
       required: [chainId, interactions, idempotencyKey]
       properties:
+        walletId:
+          type: string
+          format: uuid
+          description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
         chainId:
           type: integer
           minimum: 1
@@ -590,6 +628,7 @@ components:
             - BILLING_DEBT_CHECK_UNAVAILABLE
             - RAW_HASH_SIGNING_DISABLED
             - WALLET_NOT_ACTIVE
+            - WALLET_SELECTION_REQUIRED
             - INTERNAL_ERROR
             - BAD_REQUEST
             - NOT_FOUND

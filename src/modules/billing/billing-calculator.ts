@@ -236,7 +236,8 @@ export function calculateOutboundOverage(
 
 /**
  * Totals a monthly invoice: plan monthly fee + outbound overage + API overage
- * + wallet overage. All amounts are bigints in microdollars and the outbound
+ * + wallet overage (always zero; included-wallet limits are enforced at
+ * activation). All amounts are bigints in microdollars and the outbound
  * tier breakdown is included.
  *
  * API overage is linear:
@@ -264,11 +265,12 @@ export function calculateInvoiceTotals(input: InvoiceTotalsInput): InvoiceTotals
     input.plan.includedApiCallsPerMonth ?? 0,
     apiOverageRateMicros,
   );
-  const walletOverageMicros = computeUsageOverage(
-    input.activeWallets ?? 0,
-    input.plan.includedWallets ?? 0,
-    input.walletOverageRateMicros ?? DEFAULT_WALLET_OVERAGE_RATE_MICROS,
-  );
+  // The included-wallet allowance is a hard activation cap. Active wallet
+  // counts remain metered for truthful peak reporting, but are never billed,
+  // including for legacy accounts above their plan allowance. Validate the
+  // supplied rate for malformed/negative input even though it is inert.
+  assertNonNegative(input.walletOverageRateMicros ?? DEFAULT_WALLET_OVERAGE_RATE_MICROS, 'usage overage rate');
+  const walletOverageMicros = 0n;
 
   const totalMicros =
     monthlyFeeMicros + breakdown.totalFeeMicros + apiOverageMicros + walletOverageMicros;

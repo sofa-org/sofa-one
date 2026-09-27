@@ -108,23 +108,47 @@ export class OpenfortService {
       const { openfortUserId } = await this.verifyIamSession(accessToken);
 
       const normalizedAddress = getAddress(walletAddress);
-      const accountsResult = (await this.withTimeout(
-        (this.client as any).accounts.list({ user: openfortUserId }),
-        'listOpenfortUserAccounts',
-      )) as
-        | { data?: Array<{ id?: string; address?: string }> }
-        | Array<{ id?: string; address?: string }>;
-      const accounts = Array.isArray(accountsResult) ? accountsResult : (accountsResult.data ?? []);
-      const account = accounts.find((candidate) => {
-        if (!candidate.address) return false;
-        try {
-          return getAddress(candidate.address) === normalizedAddress;
-        } catch {
-          return false;
+      const pageSize = 100;
+      const maxAccounts = 2000;
+      const deadline = Date.now() + this.timeoutMs;
+      const accounts: Array<{ id?: string; address?: string }> = [];
+      const seenEntries = new Set<string>();
+      let total: number | undefined;
+      for (let skip = 0; ; skip += pageSize) {
+        if (Date.now() >= deadline || skip >= maxAccounts) {
+          throw new Error('Openfort account pagination exceeded safety bounds');
         }
+        const result = (await this.withTimeout(
+          (this.client as any).accounts.list({ user: openfortUserId, limit: pageSize, skip }),
+          'listOpenfortUserAccounts',
+        )) as { data?: unknown; total?: unknown };
+        if (!result || !Array.isArray(result.data) || !Number.isSafeInteger(result.total) || (result.total as number) < 0) {
+          throw new Error('Malformed Openfort account page');
+        }
+        if (total !== undefined && total !== result.total) throw new Error('Openfort account total changed during pagination');
+        total = result.total as number;
+        if (total > maxAccounts || result.data.length > pageSize || (result.data.length === 0 && skip < total)) {
+          throw new Error('Incomplete Openfort account pagination');
+        }
+        for (const entry of result.data as Array<{ id?: string; address?: string }>) {
+          if (!entry || typeof entry.id !== 'string' || !entry.id || seenEntries.has(entry.id)) {
+            throw new Error('Repeated or malformed Openfort account page');
+          }
+          seenEntries.add(entry.id);
+        }
+        accounts.push(...(result.data as Array<{ id?: string; address?: string }>));
+        if (accounts.length >= total) break;
+        if (result.data.length === 0) throw new Error('Openfort account pagination did not advance');
+      }
+      if (accounts.length !== total) throw new Error('Openfort account pagination was truncated');
+      const account = accounts.find((candidate) => {
+        if (typeof candidate?.address !== 'string') return false;
+        try { return getAddress(candidate.address) === normalizedAddress; } catch { return false; }
       });
 
-      if (!account) throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
+      if (!account || typeof account.id !== 'string' || account.id.trim().length === 0) {
+        throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
+      }
       return { openfortUserId, accountId: account.id, address: normalizedAddress };
     } catch (error: any) {
       if (error instanceof ForbiddenException) throw error;
