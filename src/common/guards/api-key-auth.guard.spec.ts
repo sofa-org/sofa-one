@@ -1,7 +1,13 @@
-import { ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { ApiKeyAuthGuard } from './api-key-auth.guard';
+import { BillingQuotaExceededException } from '../../modules/billing/billing-quota.exception';
 import { API_KEY_PREFIX_LENGTH } from '../api-key/api-key-prefix';
 
 jest.mock('argon2', () => ({
@@ -27,7 +33,7 @@ describe('ApiKeyAuthGuard', () => {
   const legacyPrefix = rawKey.substring(0, 11);
   let loggerWarnSpy: jest.SpyInstance;
 
-  function createGuard(keyRecords: any[]) {
+  function createGuard(keyRecords: any[], billing?: any, billingDebt?: any) {
     const prisma = {
       apiKey: {
         findMany: jest.fn().mockResolvedValue(keyRecords),
@@ -42,20 +48,29 @@ describe('ApiKeyAuthGuard', () => {
       record: jest.fn().mockResolvedValue({ id: 'security-event-1' }),
     };
     const ipAllowlist = {
-      assertIpAllowed: jest.fn().mockImplementation(async (_clientIp: string, allowedIps: string[]) => {
-        if (allowedIps.length > 0) {
-          throw new ForbiddenException('IP address not allowed for this API key');
-        }
-      }),
+      assertIpAllowed: jest
+        .fn()
+        .mockImplementation(async (_clientIp: string, allowedIps: string[]) => {
+          if (allowedIps.length > 0) {
+            throw new ForbiddenException('IP address not allowed for this API key');
+          }
+        }),
     };
+    const billingMock =
+      billing ??
+      ({
+        assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined),
+      } as any);
     const guard = new ApiKeyAuthGuard(
       { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
       prisma as any,
       securityEvents as any,
       ipAllowlist as any,
+      billingMock,
+      billingDebt ?? { hasEnforceableApiDebt: jest.fn().mockResolvedValue(false) },
     );
 
-    return { guard, prisma, securityEvents, ipAllowlist };
+    return { guard, prisma, securityEvents, ipAllowlist, billing: billingMock };
   }
 
   beforeEach(() => {
@@ -171,10 +186,7 @@ describe('ApiKeyAuthGuard', () => {
 
     await expect(
       guard.canActivate(
-        contextWithHeaders(
-          { 'x-api-key': rawKey, 'user-agent': 'sofa-agent/1.0' },
-          '203.0.113.10',
-        ),
+        contextWithHeaders({ 'x-api-key': rawKey, 'user-agent': 'sofa-agent/1.0' }, '203.0.113.10'),
       ),
     ).resolves.toBe(true);
 
@@ -279,10 +291,7 @@ describe('ApiKeyAuthGuard', () => {
 
     await expect(
       guard.canActivate(
-        contextWithHeaders(
-          { 'x-api-key': rawKey, 'user-agent': 'sofa-agent/2.0' },
-          '203.0.113.11',
-        ),
+        contextWithHeaders({ 'x-api-key': rawKey, 'user-agent': 'sofa-agent/2.0' }, '203.0.113.11'),
       ),
     ).resolves.toBe(true);
 
@@ -370,5 +379,355 @@ describe('ApiKeyAuthGuard', () => {
         reason: 'high_risk_context_changed',
       }),
     );
+  });
+
+  it('records a single metered API call on successful authentication', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord]);
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey, 'x-request-id': 'client-request-id-123' },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).resolves.toBe(true);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+    const call = billing.assertAndRecordApiCall.mock.calls[0][0];
+    expect(call.userId).toBe('user-1');
+    expect(call.sourceKey).toMatch(/^api:[0-9a-f-]{36}$/);
+    expect(call.requestId).toMatch(/^api:[0-9a-f-]{36}$/);
+    expect(call.endpoint).toBe('/v1/wallets/sign');
+    expect(call.metadata).toEqual({
+      method: 'POST',
+      route: '/v1/wallets/sign',
+      apiKeyId: 'key-1',
+    });
+  });
+
+  it('blocks mature usage debt before recording API usage', async () => {
+    const keyRecord = {
+      id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [],
+      lastUsedAt: new Date(), user: { id: 'user-1' },
+    };
+    const billing = { assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined) };
+    const debt = { hasEnforceableApiDebt: jest.fn().mockResolvedValue(true) };
+    const { guard } = createGuard([keyRecord], billing, debt);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+    const request: any = {
+      method: 'POST', url: '/v1/transactions/send', route: { path: '/v1/transactions/send' },
+      headers: { 'x-api-key': rawKey }, ip: '203.0.113.10',
+    };
+
+    await expect(guard.canActivate({
+      getHandler: jest.fn(), getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).rejects.toMatchObject({ status: 402, response: { code: 'BILLING_PAYMENT_REQUIRED' } });
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
+  });
+
+  it('allows and meters transaction status reads despite mature usage debt', async () => {
+    const keyRecord = {
+      id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [],
+      lastUsedAt: new Date(), user: { id: 'user-1' },
+    };
+    const billing = { assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined) };
+    const debt = { hasEnforceableApiDebt: jest.fn().mockResolvedValue(true) };
+    const { guard } = createGuard([keyRecord], billing, debt);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+    const request: any = {
+      method: 'GET', url: '/v1/transactions/tx-1', route: { path: '/v1/transactions/:id' },
+      headers: { 'x-api-key': rawKey }, ip: '203.0.113.10',
+    };
+
+    await expect(guard.canActivate({
+      getHandler: jest.fn(), getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).resolves.toBe(true);
+
+    expect(debt.hasEnforceableApiDebt).toHaveBeenCalledWith('user-1');
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with a coded 503 when the debt lookup fails', async () => {
+    const { guard } = createGuard(
+      [{ id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [], user: { id: 'user-1' } }],
+      undefined,
+      { hasEnforceableApiDebt: jest.fn().mockRejectedValue(new Error('database unavailable')) },
+    );
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+    const request: any = {
+      method: 'POST', route: { path: '/v1/transactions/send' },
+      headers: { 'x-api-key': rawKey }, ip: '127.0.0.1',
+    };
+    await expect(guard.canActivate({
+      getHandler: jest.fn(), getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).rejects.toMatchObject({
+      status: 503,
+      response: expect.objectContaining({ code: 'BILLING_DEBT_CHECK_UNAVAILABLE' }),
+    });
+  });
+
+  it.each([
+    ['POST', '/v1/wallets/sign'],
+    ['POST', '/v1/transactions/send'],
+  ])('denies billable %s %s under mature debt without metering', async (method, route) => {
+    const keyRecord = {
+      id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [],
+      lastUsedAt: new Date(), user: { id: 'user-1' },
+    };
+    const billing = { assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined) };
+    const debt = { hasEnforceableApiDebt: jest.fn().mockResolvedValue(true) };
+    const { guard } = createGuard([keyRecord], billing, debt);
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+    const request: any = {
+      method, url: route, route: { path: route.replace('/v1', '') },
+      headers: { 'x-api-key': rawKey }, ip: '203.0.113.10',
+    };
+
+    await expect(guard.canActivate({
+      getHandler: jest.fn(), getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).rejects.toMatchObject({ status: 402, response: { code: 'BILLING_PAYMENT_REQUIRED' } });
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
+  });
+
+  it('never uses the client x-request-id for sourceKey or requestId', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord]);
+    const request: any = {
+      method: 'GET',
+      url: '/v1/transactions/tx-1',
+      route: { path: '/v1/transactions/:id' },
+      headers: { 'x-api-key': rawKey, 'x-request-id': 'client-request-id-123' },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).resolves.toBe(true);
+
+    const call = billing.assertAndRecordApiCall.mock.calls[0][0];
+    expect(call.sourceKey).not.toBe('client-request-id-123');
+    expect(call.requestId).not.toBe('client-request-id-123');
+    expect(call.sourceKey).not.toContain('client-request-id-123');
+    expect(call.requestId).not.toContain('client-request-id-123');
+  });
+
+  it('waits for billing persistence before authenticating a successful request', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    let resolveBilling!: () => void;
+    const billingGate = new Promise<void>((resolve) => {
+      resolveBilling = resolve;
+    });
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest.fn().mockImplementation(() => billingGate),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    let resolved = false;
+    const pending = guard
+      .canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any)
+      .then((value) => {
+        resolved = true;
+        return value;
+      });
+
+    // Give the guard a chance to run; it must not resolve until billing persists.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+
+    resolveBilling();
+    await expect(pending).resolves.toBe(true);
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call billing when authentication fails', async () => {
+    const { guard, billing } = createGuard([
+      { id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [], user: { id: 'user-1' } },
+    ]);
+    jest.mocked(argon2.verify).mockResolvedValue(false as never);
+
+    await expect(guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }))).rejects.toThrow(
+      UnauthorizedException,
+    );
+
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and does not authenticate when metering rejects', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest.fn().mockRejectedValue(new Error('metering down')),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(ServiceUnavailableException);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 503 when no billing service is injected', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const prisma = {
+      apiKey: {
+        findMany: jest.fn().mockResolvedValue([keyRecord]),
+        update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      securityEvent: { count: jest.fn().mockResolvedValue(0) },
+    };
+    const securityEvents = { record: jest.fn().mockResolvedValue({ id: 'security-event-1' }) };
+    const ipAllowlist = {
+      assertIpAllowed: jest.fn().mockResolvedValue(undefined),
+    };
+    // Construct without a billing dependency (mirrors @Optional() resolution).
+    const guard = new ApiKeyAuthGuard(
+      { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector,
+      prisma as any,
+      securityEvents as any,
+      ipAllowlist as any,
+    );
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate(contextWithHeaders({ 'x-api-key': rawKey }, '203.0.113.10')),
+    ).rejects.toThrow(ServiceUnavailableException);
+
+    expect(prisma.apiKey.update).toHaveBeenCalled();
+  });
+
+  it('rethrows a quota-exceeded exception as 429 and does not authenticate', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest
+        .fn()
+        .mockRejectedValue(new BillingQuotaExceededException('api_call', 10_000, '2026-08', 3600)),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(BillingQuotaExceededException);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not authenticate when the atomic metering write fails', async () => {
+    const keyRecord = {
+      id: 'key-1',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      lastUsedAt: new Date('2026-05-27T00:00:00.000Z'),
+      user: { id: 'user-1' },
+    };
+    const { guard, billing } = createGuard([keyRecord], {
+      assertAndRecordApiCall: jest.fn().mockRejectedValue(new Error('db down')),
+    });
+    const request: any = {
+      method: 'POST',
+      url: '/v1/wallets/sign',
+      route: { path: '/v1/wallets/sign' },
+      headers: { 'x-api-key': rawKey },
+      ip: '203.0.113.10',
+    };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(
+      guard.canActivate({
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any),
+    ).rejects.toThrow(ServiceUnavailableException);
+
+    expect(billing.assertAndRecordApiCall).toHaveBeenCalledTimes(1);
   });
 });

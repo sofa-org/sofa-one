@@ -63,27 +63,27 @@ Outbound volume 指客户通过 SOFA ONE 钱包和 API 发起的出站资产转�
 
 ## 3. 推荐公开套餐
 
-| Plan | 月费 | 免费 outbound volume/月 | 钱包额度 | API 调用/月 | 团队成员 | 适合客户 |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Free | $0 | $50K | 10 | 10K | 1 | 开发者、测试项目、早期验证 |
-| Starter | $49 | $250K | 100 | 100K | 3 | 小型应用、早期生产环境 |
-| Growth | $199 | $1M | 1,000 | 1M | 5 | 有真实用户和交易量的应用 |
-| Scale | $799 | $5M | 5,000 | 5M | 10 | 成长期钱包、Agent 平台、协议团队 |
-| Business | $1,999 | $25M | 25,000 | 25M | 25 | 高交易量平台、B2B 基础设施客户 |
-| Enterprise | 定制 | 定制 | 定制 | 定制 | 定制 | 交易所、大型钱包、金融级客户 |
+| Plan       |   月费 | 免费 outbound volume/月 | 钱包额度 | API 调用/月 | 团队成员 | 适合客户                         |
+| ---------- | -----: | ----------------------: | -------: | ----------: | -------: | -------------------------------- |
+| Free       |     $0 |                    $50K |       10 |         10K |        1 | 开发者、测试项目、早期验证       |
+| Starter    |    $49 |                   $250K |      100 |        100K |        3 | 小型应用、早期生产环境           |
+| Growth     |   $199 |                     $1M |    1,000 |          1M |        5 | 有真实用户和交易量的应用         |
+| Scale      |   $799 |                     $5M |    5,000 |          5M |       10 | 成长期钱包、Agent 平台、协议团队 |
+| Business   | $1,999 |                    $25M |   25,000 |         25M |       25 | 高交易量平台、B2B 基础设施客户   |
+| Enterprise |   定制 |                    定制 |     定制 |        定制 |     定制 | 交易所、大型钱包、金融级客户     |
 
 ## 4. Outbound Volume 阶梯费率
 
 超过套餐免费 outbound volume 后，按以下边际阶梯收取费用：
 
-| 可计费 outbound volume 区间/月 | 边际费率 | 说明 |
-| ---: | ---: | --- |
-| $0 – $500K | 0.0100% | 初始超额费率，约 1 bp |
-| $500K – $2M | 0.0075% | 早期增长客户 |
-| $2M – $10M | 0.0050% | 规模化客户 |
-| $10M – $50M | 0.0025% | 高交易量客户 |
-| $50M – $200M | 0.0015% | 大型平台客户 |
-| $200M+ | 0.0010% 起 | Enterprise 定制 |
+| 可计费 outbound volume 区间/月 |   边际费率 | 说明                  |
+| -----------------------------: | ---------: | --------------------- |
+|                     $0 – $500K |    0.0100% | 初始超额费率，约 1 bp |
+|                    $500K – $2M |    0.0075% | 早期增长客户          |
+|                     $2M – $10M |    0.0050% | 规模化客户            |
+|                    $10M – $50M |    0.0025% | 高交易量客户          |
+|                   $50M – $200M |    0.0015% | 大型平台客户          |
+|                         $200M+ | 0.0010% 起 | Enterprise 定制       |
 
 > 注：这里的阶梯针对“可计费 outbound volume”，即扣除套餐免费 outbound volume 后的部分。
 
@@ -260,15 +260,35 @@ $50M – $65M，即 $15M × 0.0015% = $225
 
 Outbound volume 是主收费维度，资源超额费用应主要用于防止滥用和覆盖基础设施成本。
 
-| 项目 | 建议超额费用 |
-| --- | ---: |
-| 钱包数量 | $0.005 – $0.02/钱包/月 |
-| API 调用 | $0.0005 – $0.002/次 |
-| 团队成员 | $10 – $30/席/月 |
-| 自定义链支持 | 一次性 $5K – $25K，或 Enterprise 定制 |
-| 专属 SLA / 支持 | $1K+/月，或 Enterprise 定制 |
+| 项目            |                                                                      建议超额费用 |
+| --------------- | --------------------------------------------------------------------------------: |
+| 钱包数量        |                                                            $0.005 – $0.02/钱包/月 |
+| API 调用        | 超出套餐免费额度后按套餐单价继续计费（见下表）；请求会继续成功并记入账单 |
+| 团队成员        |                                                                   $10 – $30/席/月 |
+| 自定义链支持    |                                             一次性 $5K – $25K，或 Enterprise 定制 |
+| 专属 SLA / 支持 |                                                       $1K+/月，或 Enterprise 定制 |
 
-签名或交易提交建议默认并入 API 调用和 outbound volume，不单独叠加收费，避免账单过于复杂。
+### 7.1 API 调用超额单价（按套餐）
+
+超出当月免费 API 调用额度后，**请求不会因账单额度被拒绝**；超额调用继续成功，并按套餐单价计入月账单。独立的基础设施限流（rate limit / 滥用防护）仍可能返回 HTTP 429，与账单超额无关。
+
+| Plan       | 超额单价/次 |
+| ---------- | ----------: |
+| Free       |     $0.0020 |
+| Starter    |     $0.0015 |
+| Growth     |     $0.0010 |
+| Scale      |    $0.00075 |
+| Business   |     $0.0005 |
+| Enterprise |        定制 |
+
+```text
+可计费 API 调用 = max(月 API 调用总数 - 套餐免费 API 调用额度, 0)
+API 超额费用 = 可计费 API 调用 × 套餐超额单价
+```
+
+钱包数量超额仍按活跃钱包硬性额度与超额单价处理；达到钱包额度后新建/激活可被拒绝（HTTP 429）。
+
+签名或交易提交计入 API 调用额度，涉及资产转出的部分计入 outbound volume，不单独叠加签名或交易费用，避免账单过于复杂。
 
 ## 8. Enterprise 定价
 
@@ -286,14 +306,14 @@ Enterprise 不建议公开固定价格，只展示“Contact Sales”。可按�
 
 官网可用更简化的表述：
 
-| Plan | Monthly | Free Outbound Volume | Overage Fee | Best For |
-| --- | ---: | ---: | ---: | --- |
-| Free | $0 | $50K/mo | 0.01%, decreasing by scale | Build and test |
-| Starter | $49 | $250K/mo | 0.01%, decreasing by scale | Early production |
-| Growth | $199 | $1M/mo | 0.01%, decreasing by scale | Growing apps |
-| Scale | $799 | $5M/mo | 0.01%, decreasing by scale | Scaled platforms |
-| Business | $1,999 | $25M/mo | 0.01%, decreasing by scale | High-volume teams |
-| Enterprise | Custom | Custom | From 0.001% | Large institutions |
+| Plan       | Monthly | Free Outbound Volume |                Overage Fee | Best For           |
+| ---------- | ------: | -------------------: | -------------------------: | ------------------ |
+| Free       |      $0 |              $50K/mo | 0.01%, decreasing by scale | Build and test     |
+| Starter    |     $49 |             $250K/mo | 0.01%, decreasing by scale | Early production   |
+| Growth     |    $199 |               $1M/mo | 0.01%, decreasing by scale | Growing apps       |
+| Scale      |    $799 |               $5M/mo | 0.01%, decreasing by scale | Scaled platforms   |
+| Business   |  $1,999 |              $25M/mo | 0.01%, decreasing by scale | High-volume teams  |
+| Enterprise |  Custom |               Custom |                From 0.001% | Large institutions |
 
 一句话说明：
 

@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -23,6 +25,7 @@ import {
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain, type SupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
@@ -31,10 +34,43 @@ import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.d
 import type { WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
+import { isDeferredDestinationPolicyDenial } from '../withdrawal-destination/withdrawal-destination-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
+import { SecurityEventService } from '../security-events/security-event.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { BillingDebtService } from '../billing/billing-debt.service';
+
+/** Fixed public reason for BILL-016 sign blocks (no payload fields). */
+const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
+  'API-key signing is not allowed while destination protection is enabled';
+
+type SigningDestinationProtectionAudit = {
+  userId: string;
+  apiKeyId?: string;
+  apiKeyPrefix?: string;
+  walletId?: string;
+  chainId: number;
+  type: string;
+  executionMode: ExecutionMode;
+};
+
+/**
+ * Thrown inside the interactive create TX so advisory lock is released before
+ * SecurityEvent write. Caller audits once after rollback, then rethrows HTTP.
+ */
+class DeferredSigningDestinationProtectionDenial extends Error {
+  readonly httpException: ForbiddenException;
+  readonly audit: SigningDestinationProtectionAudit;
+
+  constructor(httpException: ForbiddenException, audit: SigningDestinationProtectionAudit) {
+    super('DeferredSigningDestinationProtectionDenial');
+    this.name = 'DeferredSigningDestinationProtectionDenial';
+    this.httpException = httpException;
+    this.audit = audit;
+  }
+}
 
 const ERC20_BALANCE_ABI = [
   {
@@ -67,6 +103,7 @@ export class WalletService {
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
     private readonly withdrawalPolicy: WithdrawalPolicyService,
+    private readonly billingDebt: BillingDebtService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -77,6 +114,13 @@ export class WalletService {
     private readonly riskEvaluation?: RiskEvaluationService,
     @Optional()
     private readonly sessionKeyPolicy?: SessionKeyPolicyService,
+    /**
+     * Audit only for destination-protection sign denials. Optional so missing
+     * wiring never blocks the 403/503 fail-closed path; never used to gate the
+     * protection check itself.
+     */
+    @Optional()
+    private readonly securityEvents?: SecurityEventService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -88,18 +132,32 @@ export class WalletService {
     return client;
   }
 
+  private async selectWallet(userId: string, walletId?: string) {
+    const wallets = await this.prisma.userWallet.findMany({ where: { userId } });
+    if (wallets.length === 0) throw new NotFoundException('Wallet not found');
+    if (walletId) {
+      const wallet = wallets.find((candidate) => candidate.id === walletId);
+      if (!wallet) throw new NotFoundException('Wallet not found');
+      return wallet;
+    }
+    if (wallets.length === 1) return wallets[0];
+    const eligible = wallets.filter((wallet) => wallet.status === 'active' && wallet.walletAddress && !wallet.frozenAt);
+    if (eligible.length !== 1) throw new ConflictException('walletId is required when multiple wallets are available');
+    return eligible[0];
+  }
+
   /** Return the user's EOA address and supported deposit tokens. */
-  async getDepositInfo(userId: string, chainId: number) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
+  async getDepositInfo(userId: string, chainId: number, walletId?: string) {
+    const wallet = await this.selectWallet(userId, walletId);
     this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
+    const walletAddress = wallet.walletAddress;
     const supportedChain = getSupportedChain(chainId);
 
     return {
-      walletAddress: wallet.walletAddress,
+      walletAddress,
       chainId,
       chainName: supportedChain.name,
       status: wallet.status,
@@ -147,6 +205,23 @@ export class WalletService {
       allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
     };
 
+    // BILL-016 root preflight: after API-key permission, before EOA / SigningPolicy /
+    // risk / session-key / Openfort. requireAddressAllowlist === true → fail closed
+    // for all message/typed_data × session_key/eoa. Empty allowlist / allowlisted
+    // contracts / cooldown / reauth cannot bypass. Query failures → 503.
+    // Does not revoke signatures already accepted before protection was enabled.
+    const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
+    if (destinationProtectionEnabled) {
+      await this.throwSigningBlockedByDestinationProtection({
+        userId,
+        apiKeyId: apiKeyRecord.id,
+        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        chainId,
+        type: params.type,
+        executionMode,
+      });
+    }
+
     if (executionMode === 'eoa') {
       this.assertPermission(
         apiKeyRecord.canUseEoaExecution,
@@ -185,32 +260,29 @@ export class WalletService {
     }
 
     // Evaluate multi-factor risk before proceeding
+    const selectedWallet = await this.selectWallet(userId, params.walletId);
+    const wallet = await this.prisma.userWallet.findFirst({
+      where: { id: selectedWallet.id, userId },
+      include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } },
+    });
+    if (!wallet) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(wallet);
+    if (wallet.status !== 'active' || !wallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
       userId,
       apiKeyId: apiKeyRecord.id,
-      walletId: undefined,
+      walletId: wallet.id,
       operationType: 'signing',
     });
     if (riskAssessment && riskAssessment.action !== 'allow') {
       await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
         userId,
         apiKeyId: apiKeyRecord.id,
-        walletId: undefined,
+        walletId: wallet.id,
         operationType: 'signing',
       });
     }
 
-    const wallet = await this.prisma.userWallet.findUnique({
-      where: { userId },
-      include: {
-        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
-      },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-    this.assertWalletNotFrozen(wallet);
-    if (wallet.status !== 'active' || !wallet.walletAddress) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet);
       this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
@@ -247,27 +319,61 @@ export class WalletService {
       }
     }
 
-    const signingRequest = await this.prisma.signingRequest.create({
-      data: {
-        userId,
-        apiKeyId: apiKeyRecord?.id,
-        authMethod: 'api_key',
-        apiKeyPrefix: apiKeyRecord?.keyPrefix,
-        apiKeyName: apiKeyRecord?.name,
-        type: params.type,
-        chainId: chainId === undefined ? undefined : BigInt(chainId),
-        walletAddress: signingWalletAddress,
-        requestHash: hashRequest({
-          type: params.type,
-          chainId,
-          digest: data,
-          executionMode,
-          ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
-        }),
-        digest: data,
-        status: 'submitting',
-      },
-    });
+    // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
+    // policy mutations. Final requireAddressAllowlist read + SigningRequest.create
+    // share one interactive TX (READ COMMITTED). Openfort/RPC stay outside lock/TX.
+    // Race: entry false → final true rejects with zero create/signData (mutation
+    // committed first wins). Sign already accepted before enablement is out of scope.
+    const signingBlockedAudit: SigningDestinationProtectionAudit = {
+      userId,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      walletId: wallet.id,
+      chainId,
+      type: params.type,
+      executionMode,
+    };
+    let signingRequest: { id: string };
+    try {
+      signingRequest = await this.prisma.$transaction(async (txClient) => {
+        await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
+        if (protectionOn) {
+          throw new DeferredSigningDestinationProtectionDenial(
+            this.buildSigningBlockedException(),
+            signingBlockedAudit,
+          );
+        }
+        return txClient.signingRequest.create({
+          data: {
+            userId,
+            apiKeyId: apiKeyRecord?.id,
+            authMethod: 'api_key',
+            apiKeyPrefix: apiKeyRecord?.keyPrefix,
+            apiKeyName: apiKeyRecord?.name,
+            type: params.type,
+            chainId: BigInt(chainId),
+            walletAddress: signingWalletAddress,
+            requestHash: hashRequest({
+              type: params.type,
+              chainId,
+              digest: data,
+              executionMode,
+              ...(typedDataSummary ? { typedData: typedDataSummary } : {}),
+            }),
+            digest: data,
+            status: 'submitting',
+          },
+        });
+      });
+    } catch (error) {
+      // After TX rollback: destination advisory released — safe to audit once.
+      if (error instanceof DeferredSigningDestinationProtectionDenial) {
+        await this.recordSigningBlockedByDestinationProtection(error.audit);
+        throw error.httpException;
+      }
+      throw error;
+    }
 
     this.logger.log(
       this.logContext({
@@ -330,9 +436,14 @@ export class WalletService {
   }
 
   /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
-  async getSigningRequestDetail(userId: string, signingRequestId: string) {
+  async getSigningRequestDetail(userId: string, signingRequestId: string, walletId?: string) {
+    const wallet = walletId ? await this.selectWallet(userId, walletId) : undefined;
+    if (walletId && !wallet?.walletAddress && !wallet?.agentWalletAddress) {
+      throw new NotFoundException('Signing request not found');
+    }
+    const addresses = wallet ? [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x) : [];
     const sr = await this.prisma.signingRequest.findFirst({
-      where: { id: signingRequestId, userId },
+      where: { id: signingRequestId, userId, ...(wallet ? { walletAddress: { in: addresses } } : {}) },
     });
     if (!sr) throw new NotFoundException('Signing request not found');
 
@@ -357,6 +468,12 @@ export class WalletService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = { userId };
+    if (query.walletId) {
+      const wallet = await this.selectWallet(userId, query.walletId);
+      const addresses = [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x);
+      if (addresses.length === 0) return { items: [], total: 0, page, limit };
+      where.walletAddress = { in: addresses };
+    }
 
     if (query.type) {
       where.type = query.type;
@@ -403,6 +520,123 @@ export class WalletService {
   private assertPermission(allowed: boolean | undefined, message: string): void {
     if (allowed !== true) {
       throw new ForbiddenException(message);
+    }
+  }
+
+  /**
+   * BILL-016: whether the user's withdrawal destination allowlist is enforced.
+   * Missing policy or requireAddressAllowlist !== true → protection off (legacy
+   * SigningPolicy path). DB failures fail closed (503) — never assume off.
+   */
+  private async isDestinationProtectionEnabled(
+    userId: string,
+    db: PrismaService | Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    try {
+      const policy = await db.withdrawalPolicy.findUnique({
+        where: { userId },
+        select: { requireAddressAllowlist: true },
+      });
+      return policy?.requireAddressAllowlist === true;
+    } catch (err) {
+      this.logger.error(
+        {
+          message: 'Destination protection policy lookup failed',
+          userId,
+        },
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        message: 'Withdrawal destination policy is temporarily unavailable',
+      });
+    }
+  }
+
+  private buildSigningBlockedException(): ForbiddenException {
+    return new ForbiddenException({
+      code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+      message: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+    });
+  }
+
+  /**
+   * Preflight denial: audit once (best-effort), then 403. Never logs message,
+   * typedData, domain, primaryType, calldata, digest, requestHash, or signature.
+   */
+  private async throwSigningBlockedByDestinationProtection(
+    audit: SigningDestinationProtectionAudit,
+  ): Promise<never> {
+    this.logger.warn(
+      this.logContext({
+        message: 'Signing blocked by destination protection',
+        userId: audit.userId,
+        chainId: audit.chainId,
+        type: audit.type,
+        executionMode: audit.executionMode,
+        apiKeyPrefix: audit.apiKeyPrefix,
+        code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+      }),
+    );
+    await this.recordSigningBlockedByDestinationProtection(audit);
+    throw this.buildSigningBlockedException();
+  }
+
+  /**
+   * Best-effort `signing.policy_denied` audit. Failures never change 403/503.
+   * Metadata is safe fields only (code, fixed reason, type, chainId, executionMode,
+   * apiKeyPrefix, walletId) — no payload/digest/signature.
+   */
+  private async recordSigningBlockedByDestinationProtection(
+    audit: SigningDestinationProtectionAudit,
+  ): Promise<void> {
+    if (!this.securityEvents) {
+      this.logger.warn(
+        this.logContext({
+          message: 'Signing blocked by destination protection (no security event service)',
+          userId: audit.userId,
+          chainId: audit.chainId,
+          type: audit.type,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix,
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+      );
+      return;
+    }
+
+    try {
+      await this.securityEvents.record({
+        actorType: 'api_key',
+        eventType: 'signing.policy_denied',
+        userId: audit.userId,
+        apiKeyId: audit.apiKeyId ?? null,
+        walletId: audit.walletId ?? null,
+        result: 'denied',
+        reason: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+        metadata: {
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          reason: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON,
+          type: audit.type,
+          chainId: audit.chainId,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix ?? null,
+          walletId: audit.walletId ?? null,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        this.logContext({
+          message: 'Failed to record destination-protection signing denial',
+          userId: audit.userId,
+          chainId: audit.chainId,
+          type: audit.type,
+          executionMode: audit.executionMode,
+          apiKeyPrefix: audit.apiKeyPrefix,
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 
@@ -512,9 +746,8 @@ export class WalletService {
   }
 
   /** Return native token and stablecoin balances for the user's wallet on the requested chain. */
-  async getBalances(userId: string, chainId: number) {
-    const wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
-    if (!wallet) throw new NotFoundException('Wallet not found');
+  async getBalances(userId: string, chainId: number, walletId?: string) {
+    const wallet = await this.selectWallet(userId, walletId);
     this.assertWalletNotFrozen(wallet);
     if (wallet.status !== 'active' || !wallet.walletAddress) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
@@ -525,8 +758,12 @@ export class WalletService {
     const supportedChain = getSupportedChain(chainId);
     const publicClient = this.getPublicClient(chainId);
     const stablecoins = [
-      ...(supportedChain.usdcAddress ? [{ token: 'USDC', address: supportedChain.usdcAddress }] : []),
-      ...(supportedChain.usdtAddress ? [{ token: 'USDT', address: supportedChain.usdtAddress }] : []),
+      ...(supportedChain.usdcAddress
+        ? [{ token: 'USDC', address: supportedChain.usdcAddress }]
+        : []),
+      ...(supportedChain.usdtAddress
+        ? [{ token: 'USDT', address: supportedChain.usdtAddress }]
+        : []),
     ];
 
     type BalanceEntry =
@@ -585,8 +822,9 @@ export class WalletService {
   async withdraw(userId: string, params: WithdrawDto, options?: { stepUpVerified?: boolean }) {
     const chainId = params.chainId;
     const supportedChain = getSupportedChain(chainId);
-    const wallet = await this.prisma.userWallet.findUnique({
-      where: { userId },
+    const selected = await this.selectWallet(userId, params.walletId);
+    const wallet = await this.prisma.userWallet.findFirst({
+      where: { userId, id: selected.id },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(chainId) } },
       },
@@ -645,6 +883,7 @@ export class WalletService {
 
     const requestHash = hashRequest({
       operationType: 'withdraw',
+      walletId: wallet.id,
       chainId,
       to: params.to,
       amount: params.amount,
@@ -656,10 +895,20 @@ export class WalletService {
       idempotencyKey: params.idempotencyKey!,
       chainId,
       requestHash,
+      walletAddress,
+      legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
     });
     if (existingWithdrawal) {
       return this.toWithdrawalResponse(existingWithdrawal);
     }
+
+    // Explicit external withdraw: block new submissions while billing debt is open.
+    // Idempotent hits above bypass this gate so retries of already-accepted withdraws still return.
+    await this.assertNoBillingDebtForOutbound(userId, {
+      chainId,
+      walletId: wallet.id,
+      operation: 'withdraw',
+    });
 
     // Guard: verify on-chain balance is sufficient before submitting intent
     {
@@ -688,59 +937,123 @@ export class WalletService {
       }
     }
 
-    const { tx, created } = await this.prisma.$transaction(async (txClient) => {
-      const existing = await this.findExistingWithdrawal(
-        userId,
-        {
-          idempotencyKey: params.idempotencyKey!,
-          chainId,
-          requestHash,
-        },
-        txClient,
-      );
-      if (existing) {
-        return { tx: existing, created: false };
-      }
-
-      await this.withdrawalPolicy.assertDailyLimitWithUserLock(
-        userId,
-        params,
-        {
-          chainId,
-          walletId: wallet.id,
-          walletAddress,
-        },
-        txClient,
-      );
-
-      return this.createPendingWithdrawalOrReturnExisting(
-        userId,
-        {
-          idempotencyKey: params.idempotencyKey!,
-          chainId,
-          requestHash,
-          walletAddress,
-          details: {
-            type: 'withdraw',
-            execution: 'calibur_agent_user_operation',
-            to: params.to,
-            amount: params.amount,
-            token: params.token,
-            contractAddress: tokenAddress,
-            agentWalletAddress: wallet.agentWalletAddress,
-            agentKeyHash: wallet.agentKeyHash,
-            idempotencyKey: params.idempotencyKey,
+    // Interactive transaction: inner idempotency + debt recheck + daily limit + create.
+    // On unique-key race (P2002) the interactive tx aborts — recover outside with root
+    // PrismaService after rollback (never re-query on the failed txClient).
+    let tx: any;
+    let created: boolean;
+    try {
+      ({ tx, created } = await this.prisma.$transaction(async (txClient) => {
+        const existing = await this.findExistingWithdrawal(
+          userId,
+          {
+            idempotencyKey: params.idempotencyKey!,
+            chainId,
             requestHash,
+            walletAddress,
+            legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
           },
-        },
-        txClient,
-      );
-    });
+          txClient,
+        );
+        if (existing) {
+          return { tx: existing, created: false };
+        }
+
+        // Re-check debt under the same tx snapshot before destination lock / create.
+        await this.assertNoBillingDebtForOutbound(
+          userId,
+          {
+            chainId,
+            walletId: wallet.id,
+            operation: 'withdraw',
+          },
+          txClient,
+        );
+
+        // BILL-016 order (no RPC/Openfort under lock):
+        // 1) user destination advisory lock
+        // 2) final allowlist/cooldown on params.to (fail closed)
+        // 3) daily-limit policy row FOR UPDATE
+        // 4) create pending withdrawal
+        await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        await this.withdrawalPolicy.assertDestinationAllowedInTx(
+          userId,
+          params.to,
+          {
+            chainId,
+            walletId: wallet.id,
+            walletAddress,
+          },
+          txClient,
+        );
+
+        await this.withdrawalPolicy.assertDailyLimitWithUserLock(
+          userId,
+          params,
+          {
+            chainId,
+            walletId: wallet.id,
+            walletAddress,
+          },
+          txClient,
+        );
+
+        return this.createPendingWithdrawal(
+          userId,
+          {
+            idempotencyKey: params.idempotencyKey!,
+            chainId,
+            requestHash,
+            walletAddress,
+            details: {
+              type: 'withdraw',
+              execution: 'calibur_agent_user_operation',
+              executionMode: 'session_key',
+              to: params.to,
+              amount: params.amount,
+              token: params.token,
+              contractAddress: tokenAddress,
+              agentWalletAddress: wallet.agentWalletAddress,
+              agentKeyHash: wallet.agentKeyHash,
+              idempotencyKey: params.idempotencyKey,
+              requestHash,
+            },
+          },
+          txClient,
+        );
+      }));
+    } catch (error: any) {
+      // After TX rollback: destination advisory released — safe to audit once.
+      if (isDeferredDestinationPolicyDenial(error)) {
+        await this.withdrawalPolicy.recordDeferredDestinationDenial(error);
+        throw error.httpException;
+      }
+      if (error?.code !== 'P2002') throw error;
+
+      const existing = await this.findExistingWithdrawal(userId, {
+        idempotencyKey: params.idempotencyKey!,
+        chainId,
+        requestHash,
+        walletAddress,
+        legacyFingerprint: hashRequest({ operationType: 'withdraw', chainId, to: params.to, amount: params.amount, token: params.token, contractAddress: tokenAddress }),
+      });
+      if (!existing) throw error;
+      tx = existing;
+      created = false;
+    }
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
       return this.toWithdrawalResponse(tx);
     }
 
+    let observedUserOpHash: string | null =
+      (tx as any).userOpHash ??
+      (tx.details &&
+      typeof tx.details === 'object' &&
+      !Array.isArray(tx.details) &&
+      typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
+        ? ((tx.details as Record<string, unknown>).userOpHash as string)
+        : null);
     try {
       const interaction = isNativeWithdrawal
         ? {
@@ -768,25 +1081,83 @@ export class WalletService {
             value: '0',
           };
 
-      const submission = await this.openfort.sendUserOperation({
+      const submitted = await this.openfort.submitUserOperation({
         chainId,
         agentAccountId: wallet.agentOpenfortAccountId,
         accountAddress: wallet.walletAddress,
         keyHash: wallet.agentKeyHash,
         interactions: [interaction],
+        onUserOperationHash: async (userOpHash) => {
+          observedUserOpHash = userOpHash;
+          await this.prisma.transaction.updateMany({
+            where: this.withdrawalCasWhere(
+              tx,
+              userId,
+              chainId,
+              params.idempotencyKey!,
+              requestHash,
+              {
+                billingReconciledAt: null,
+                userOpHash: null,
+                status: { in: ['submitting', 'unknown', 'pending'] },
+              },
+            ),
+            data: { userOpHash, status: 'pending', completedAt: null },
+          });
+        },
       });
 
-      const updated = await this.prisma.transaction.update({
-        where: { id: tx.id },
+      // Persist the UserOperation identity before waiting so a provider timeout
+      // remains recoverable and cannot trigger a duplicate submission.
+      observedUserOpHash = submitted.userOpHash;
+      await this.prisma.transaction.updateMany({
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'unknown', 'pending'] },
+          userOpHash: null,
+          billingReconciledAt: null,
+        }),
         data: {
-          txHash: submission.transactionHash,
+          userOpHash: submitted.userOpHash,
           status: 'pending',
+          completedAt: null,
           details: {
             ...((tx.details as Record<string, unknown>) ?? {}),
-            userOpHash: submission.userOpHash,
+            userOpHash: submitted.userOpHash,
           } as any,
         },
       });
+      const receipt = await this.openfort.waitForUserOperationReceipt({
+        chainId,
+        userOpHash: submitted.userOpHash,
+      });
+
+      const finalData = {
+        ...(receipt.transactionHash ? { txHash: receipt.transactionHash } : {}),
+        userOpSuccess:
+          receipt.success === false
+            ? false
+            : receipt.success === true && receipt.transactionHash
+              ? true
+              : null,
+        status: receipt.success === false || !receipt.transactionHash ? 'unknown' : 'pending',
+        completedAt: null,
+        details: {
+          ...((tx.details as Record<string, unknown>) ?? {}),
+          userOpHash: submitted.userOpHash,
+          userOperationSuccess: receipt.success,
+        } as any,
+      };
+      const finalWrite = await this.prisma.transaction.updateMany({
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          userOpHash: submitted.userOpHash,
+          userOpSuccess: null,
+          billingReconciledAt: null,
+        }),
+        data: finalData,
+      });
+      if (finalWrite.count !== 1) return this.toWithdrawalResponse(tx);
+      const updated = { ...tx, ...finalData } as any;
 
       return {
         transactionId: updated.id,
@@ -794,12 +1165,40 @@ export class WalletService {
         status: updated.status,
       };
     } catch (error) {
-      await this.prisma.transaction.update({
-        where: { id: tx.id },
-        data: { status: 'unknown' },
+      await this.prisma.transaction.updateMany({
+        where: this.withdrawalCasWhere(tx, userId, chainId, params.idempotencyKey!, requestHash, {
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          userOpSuccess: null,
+          billingReconciledAt: null,
+          ...(observedUserOpHash
+            ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] }
+            : {}),
+        }),
+        data: observedUserOpHash
+          ? { userOpHash: observedUserOpHash, status: 'unknown', completedAt: null }
+          : { status: 'unknown', completedAt: null },
       });
       throw error;
     }
+  }
+
+  private withdrawalCasWhere(
+    tx: any,
+    userId: string,
+    chainId: number,
+    idempotencyKey: string,
+    requestHash: string,
+    extra: Record<string, unknown>,
+  ) {
+    return {
+      id: tx.id,
+      userId,
+      operationType: 'withdraw',
+      chainId: BigInt(chainId),
+      idempotencyKey,
+      requestHash,
+      ...extra,
+    };
   }
 
   private async assertWithdrawalPolicy(
@@ -816,7 +1215,53 @@ export class WalletService {
     await this.withdrawalPolicy.assertWithdrawalAllowed(context.userId, params, context, options);
   }
 
-  private async createPendingWithdrawalOrReturnExisting(
+  /**
+   * Fail-closed billing gate for explicit external withdrawals.
+   * DB/query failures map to 503 — never fail-open as "no debt".
+   */
+  private async assertNoBillingDebtForOutbound(
+    userId: string,
+    context: { chainId: number; walletId?: string; operation: 'withdraw' },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    let snapshot: { hasDebt: boolean; invoiceIds: string[] };
+    try {
+      snapshot = await this.billingDebt.getDebt(userId, db);
+    } catch (error) {
+      this.logger.error({
+        message: 'Billing debt check unavailable',
+        userId,
+        walletId: context.walletId,
+        chainId: context.chainId,
+        operation: context.operation,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+        message: 'Billing debt check is temporarily unavailable',
+      });
+    }
+
+    if (!snapshot.hasDebt) {
+      return;
+    }
+
+    this.logger.warn({
+      message: 'Outbound withdrawal blocked by billing debt',
+      userId,
+      walletId: context.walletId,
+      chainId: context.chainId,
+      operation: context.operation,
+      invoiceCount: snapshot.invoiceIds.length,
+    });
+    throw new ForbiddenException({
+      code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      message: 'Withdrawals are blocked until outstanding invoices are settled',
+    });
+  }
+
+  /** Create a pending withdrawal row. Callers own P2002 recovery after tx rollback. */
+  private async createPendingWithdrawal(
     userId: string,
     params: {
       idempotencyKey: string;
@@ -827,40 +1272,30 @@ export class WalletService {
     },
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
-    try {
-      const tx = await prisma.transaction.create({
-        data: {
-          userId,
-          status: 'submitting',
-          chainId: BigInt(params.chainId),
-          walletAddress: params.walletAddress,
-          operationType: 'withdraw',
-          idempotencyKey: params.idempotencyKey,
-          requestHash: params.requestHash,
-          details: params.details as any,
-        },
-      });
-      return { tx, created: true };
-    } catch (error: any) {
-      if (error?.code !== 'P2002') throw error;
-
-      const existing = await this.findExistingWithdrawal(
+    const createdAt = new Date();
+    const billingPeriodStart = new Date(
+      Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1),
+    );
+    const tx = await prisma.transaction.create({
+      data: {
         userId,
-        {
-          idempotencyKey: params.idempotencyKey,
-          chainId: params.chainId,
-          requestHash: params.requestHash,
-        },
-        prisma,
-      );
-      if (!existing) throw error;
-      return { tx: existing, created: false };
-    }
+        status: 'submitting',
+        chainId: BigInt(params.chainId),
+        walletAddress: params.walletAddress,
+        operationType: 'withdraw',
+        idempotencyKey: params.idempotencyKey,
+        requestHash: params.requestHash,
+        createdAt,
+        billingPeriodStart,
+        details: params.details as any,
+      },
+    });
+    return { tx, created: true as const };
   }
 
   private async findExistingWithdrawal(
     userId: string,
-    params: { idempotencyKey: string; chainId: number; requestHash: string },
+    params: { idempotencyKey: string; chainId: number; requestHash: string; walletAddress: string; legacyFingerprint: string },
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
   ) {
     const existing = await prisma.transaction.findFirst({
@@ -873,7 +1308,20 @@ export class WalletService {
     });
 
     if (!existing) return null;
-    if (existing.requestHash && existing.requestHash !== params.requestHash) {
+    if (existing.walletAddress?.toLowerCase() !== params.walletAddress.toLowerCase()) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+    const legacyDetails = existing.details && typeof existing.details === 'object' ? existing.details as Record<string, unknown> : {};
+    const legacyEquivalent = existing.requestHash == null &&
+      legacyDetails.requestHash === params.legacyFingerprint;
+    if (
+      existing.requestHash != null &&
+      existing.requestHash !== params.requestHash &&
+      existing.requestHash !== params.legacyFingerprint
+    ) {
+      throw new BadRequestException('Idempotency key was already used for a different request');
+    }
+    if (existing.requestHash == null && !legacyEquivalent) {
       throw new BadRequestException('Idempotency key was already used for a different request');
     }
 

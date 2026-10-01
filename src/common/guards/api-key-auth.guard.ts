@@ -2,14 +2,23 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
+  Optional,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../core/database/prisma.service';
+import { BillingService } from '../../modules/billing/billing.service';
+import { BillingQuotaExceededException } from '../../modules/billing/billing-quota.exception';
+import { BillingDebtService } from '../../modules/billing/billing-debt.service';
+import { API_ERROR_CODES } from '../errors/api-error-codes';
 import { SecurityEventService } from '../../modules/security-events/security-event.service';
 import { getApiKeyLookupPrefixes } from '../api-key/api-key-prefix';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -34,7 +43,11 @@ type ApiKeyAuthRecord = {
   allowedFunctionSelectors?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
-  user?: { id?: string | null; frozenAt?: Date | string | null; frozenReason?: string | null } | null;
+  user?: {
+    id?: string | null;
+    frozenAt?: Date | string | null;
+    frozenReason?: string | null;
+  } | null;
 };
 
 /**
@@ -53,6 +66,8 @@ export class ApiKeyAuthGuard implements CanActivate {
     private readonly prisma: PrismaService,
     private readonly securityEvents: SecurityEventService,
     private readonly ipAllowlist: IpAllowlistService,
+    @Optional() private readonly billing?: BillingService,
+    @Optional() private readonly billingDebt?: BillingDebtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -174,10 +189,84 @@ export class ApiKeyAuthGuard implements CanActivate {
       })
       .catch((err) => this.logger.warn('lastUsedAt update failed', err));
 
+    // Meter the authenticated API call. This is a durable accounting event and
+    // must persist successfully before the public handler is allowed to run.
+    // sourceKey/requestId are server-generated (never a client X-Request-Id);
+    // metadata carries only safe fields (method/route/apiKeyId) — never the raw
+    // API key, calldata, or keys. A missing/unavailable BillingService or a
+    // failed write surfaces as a controlled HTTP 503 rather than silently
+    // undercounting usage.
+    const matureDebt = await this.hasMatureBillingDebt(keyRecord);
+    if (matureDebt && !this.isReadOnlyTransactionStatusRequest(request)) {
+      throw new HttpException({
+        code: API_ERROR_CODES.BILLING_PAYMENT_REQUIRED,
+        message: 'API operations are blocked until outstanding usage invoices are settled',
+      }, HttpStatus.PAYMENT_REQUIRED);
+    }
+    if (!matureDebt) await this.recordApiCallUsage(request, keyRecord);
+
     return true;
   }
 
-  private getUserAgent(request: { headers: Record<string, string | string[] | undefined> }): string | null {
+  private isReadOnlyTransactionStatusRequest(request: any): boolean {
+    return request.method === 'GET' && request.route?.path === '/v1/transactions/:id';
+  }
+
+  private async hasMatureBillingDebt(keyRecord: ApiKeyAuthRecord): Promise<boolean> {
+    const userId = keyRecord.user?.id ?? keyRecord.userId ?? null;
+    if (!this.billingDebt || !userId) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
+    try {
+      return await this.billingDebt.hasEnforceableApiDebt(userId);
+    } catch (error) {
+      throw new ServiceUnavailableException({
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+        message: 'Billing debt check is temporarily unavailable',
+      });
+    }
+  }
+
+  private async recordApiCallUsage(request: any, keyRecord: ApiKeyAuthRecord): Promise<void> {
+    if (!this.billing) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
+    const userId = keyRecord.user?.id ?? keyRecord.userId ?? null;
+    if (!userId) {
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
+
+    const method = typeof request.method === 'string' ? request.method : undefined;
+    const route = request.route?.path ?? request.url;
+
+    try {
+      await this.billing.assertAndRecordApiCall({
+        userId,
+        sourceKey: `api:${randomUUID()}`,
+        requestId: `api:${randomUUID()}`,
+        endpoint: route,
+        metadata: {
+          method,
+          route,
+          apiKeyId: keyRecord.id,
+        },
+      });
+    } catch (err) {
+      // A genuine quota rejection surfaces as HTTP 429 and is never converted
+      // to 503. Its Retry-After value (if any) comes from the server-computed
+      // quota exception / period end — never from the client.
+      if (err instanceof BillingQuotaExceededException) {
+        throw err;
+      }
+      // Never leak the raw error, API key, or request headers into the response
+      // or logs. A metering failure must not let the handler run un-metered.
+      throw new ServiceUnavailableException('Billing service unavailable');
+    }
+  }
+
+  private getUserAgent(request: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | null {
     const value = request.headers['user-agent'];
     const userAgent = Array.isArray(value) ? value[0] : value;
     if (!userAgent) return null;
@@ -223,9 +312,13 @@ export class ApiKeyAuthGuard implements CanActivate {
     currentIp: string,
     currentUserAgent: string | null,
   ) {
-    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const ipChanged = Boolean(
+      keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp,
+    );
     const userAgentChanged = Boolean(
-      keyRecord.lastUsedUserAgent && currentUserAgent && keyRecord.lastUsedUserAgent !== currentUserAgent,
+      keyRecord.lastUsedUserAgent &&
+      currentUserAgent &&
+      keyRecord.lastUsedUserAgent !== currentUserAgent,
     );
 
     if (!ipChanged && !userAgentChanged) return;
@@ -256,7 +349,9 @@ export class ApiKeyAuthGuard implements CanActivate {
     this.logApiKeyUsageAnomaly(keyRecord, currentIp, currentUserAgent);
 
     const highRiskKey = this.hasHighRiskPermission(keyRecord);
-    const repeatedSuspiciousUse = highRiskKey ? false : await this.hasRecentSuspiciousUse(keyRecord.id);
+    const repeatedSuspiciousUse = highRiskKey
+      ? false
+      : await this.hasRecentSuspiciousUse(keyRecord.id);
     const shouldFreeze = highRiskKey || repeatedSuspiciousUse;
     const reason = highRiskKey ? 'high_risk_context_changed' : 'repeated_context_changed';
 
@@ -271,7 +366,7 @@ export class ApiKeyAuthGuard implements CanActivate {
         userAgentChanged: anomaly.userAgentChanged,
         previousIp: keyRecord.lastUsedIp ?? null,
         currentIp: currentIp || null,
-        previousUserAgent: anomaly.userAgentChanged ? keyRecord.lastUsedUserAgent ?? null : null,
+        previousUserAgent: anomaly.userAgentChanged ? (keyRecord.lastUsedUserAgent ?? null) : null,
         highRiskKey,
         repeatedSuspiciousUse,
       },
@@ -288,11 +383,13 @@ export class ApiKeyAuthGuard implements CanActivate {
     currentIp: string,
     currentUserAgent: string | null,
   ) {
-    const ipChanged = Boolean(keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp);
+    const ipChanged = Boolean(
+      keyRecord.lastUsedIp && currentIp && keyRecord.lastUsedIp !== currentIp,
+    );
     const userAgentChanged = Boolean(
       keyRecord.lastUsedUserAgent &&
-        currentUserAgent &&
-        keyRecord.lastUsedUserAgent !== currentUserAgent,
+      currentUserAgent &&
+      keyRecord.lastUsedUserAgent !== currentUserAgent,
     );
 
     return { ipChanged, userAgentChanged, contextChanged: ipChanged || userAgentChanged };

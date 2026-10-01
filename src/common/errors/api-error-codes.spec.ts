@@ -18,8 +18,14 @@ describe('resolveApiErrorCode', () => {
     ['Missing authentication credentials', API_ERROR_CODES.AUTHENTICATION_REQUIRED],
     ['IP address not allowed', API_ERROR_CODES.IP_NOT_ALLOWED],
     ['Wallet not found', API_ERROR_CODES.WALLET_NOT_FOUND],
+    ['walletId is required when multiple active wallets exist', API_ERROR_CODES.WALLET_SELECTION_REQUIRED],
+    ['walletId is required when multiple wallets are available', API_ERROR_CODES.WALLET_SELECTION_REQUIRED],
     ['Transaction not found', API_ERROR_CODES.TRANSACTION_NOT_FOUND],
     ['Chain 1 is not supported', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC billing is not supported on chain 1', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC is not supported on chain 1', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDC is not supported on Base', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
+    ['USDT is not supported on Arbitrum', API_ERROR_CODES.CHAIN_NOT_SUPPORTED],
     ['Idempotency key conflicts with prior request', API_ERROR_CODES.IDEMPOTENCY_CONFLICT],
     ['Hash signing is not allowed', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
     ['Type must be message', API_ERROR_CODES.RAW_HASH_SIGNING_DISABLED],
@@ -41,9 +47,36 @@ describe('resolveApiErrorCode', () => {
     ['UserOperation rejected by bundler', API_ERROR_CODES.USER_OPERATION_REJECTED],
     ['Backend EOA transaction failed', API_ERROR_CODES.BACKEND_TRANSACTION_FAILED],
     ['Wallet service unavailable', API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE],
+    [
+      'Unproven asset outflow is not allowed while destination protection is enabled. Use a dedicated withdraw/payment path, or send only direct ERC-20 transfers to allowlisted destinations.',
+      API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+    ],
+    [
+      'Transaction send blocked: unproven asset outflow under destination protection',
+      API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+    ],
+    [
+      'API-key signing is not allowed while destination protection is enabled',
+      API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    ],
+    [
+      'Signing blocked by destination protection',
+      API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    ],
   ])('maps "%s" to %s', (message, expectedCode) => {
     expect(resolveApiErrorCode(HttpStatus.BAD_REQUEST, message)).toBe(expectedCode);
   });
+
+  it.each([
+    ['Plan code is not supported: legacy-plan', HttpStatus.CONFLICT],
+    ['Plan code is not supported: enterprise', HttpStatus.CONFLICT],
+    ['Agent key hook is not supported', HttpStatus.BAD_REQUEST],
+  ])(
+    'does not map non-chain unsupported message "%s" to CHAIN_NOT_SUPPORTED; falls back to BAD_REQUEST',
+    (message, statusCode) => {
+      expect(resolveApiErrorCode(statusCode, message)).toBe(API_ERROR_CODES.BAD_REQUEST);
+    },
+  );
 
   it.each([
     [HttpStatus.UNAUTHORIZED, API_ERROR_CODES.UNAUTHORIZED],

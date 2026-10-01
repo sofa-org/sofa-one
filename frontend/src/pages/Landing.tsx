@@ -47,6 +47,12 @@ export default function LandingPage() {
             SIGN IN WITH EMAIL OTP
           </Link>
           <Link
+            to="/pricing"
+            className="rounded-full border border-brand-border bg-white/70 px-8 py-3.5 text-sm font-medium tracking-widest text-brand-text transition-colors hover:border-brand-text hover:bg-white"
+          >
+            VIEW PRICING
+          </Link>
+          <Link
             to="/dashboard/docs"
             className="rounded-full border border-brand-border bg-white/70 px-8 py-3.5 text-sm font-medium tracking-widest text-brand-text transition-colors hover:border-brand-text hover:bg-white"
           >

@@ -53,9 +53,9 @@ describe('WalletController', () => {
     it('delegates to walletService.getBalances with numeric chainId', async () => {
       walletService.getBalances.mockResolvedValue({ eth: '1.0', usdc: '100.0' });
 
-      const result = await controller.getBalances('user-1', '84532');
+      const result = await controller.getBalances('user-1', { chainId: 84532 });
 
-      expect(walletService.getBalances).toHaveBeenCalledWith('user-1', 84532);
+      expect(walletService.getBalances).toHaveBeenCalledWith('user-1', 84532, undefined);
       expect(result).toEqual({ eth: '1.0', usdc: '100.0' });
     });
 
@@ -71,9 +71,9 @@ describe('WalletController', () => {
     it('delegates to walletService.getDepositInfo with numeric chainId', async () => {
       walletService.getDepositInfo.mockResolvedValue({ address: '0xabc', chainId: 84532 });
 
-      const result = await controller.getDepositInfo('user-1', 84532);
+      const result = await controller.getDepositInfo('user-1', { chainId: 84532 });
 
-      expect(walletService.getDepositInfo).toHaveBeenCalledWith('user-1', 84532);
+      expect(walletService.getDepositInfo).toHaveBeenCalledWith('user-1', 84532, undefined);
       expect(result).toEqual({ address: '0xabc', chainId: 84532 });
     });
 

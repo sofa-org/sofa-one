@@ -12,6 +12,7 @@ import {
   MaxLength,
   ValidateNested,
   IsIn,
+  IsUUID,
 } from 'class-validator';
 
 export type ExecutionMode = 'session_key' | 'eoa';
@@ -44,6 +45,11 @@ export class InteractionDto {
 }
 
 export class SendTransactionDto {
+  /** Optional owned wallet selector for multi-wallet accounts. */
+  @IsOptional()
+  @IsUUID()
+  walletId?: string;
+
   /** Which backend wallet authority executes: session key (default) or the user's EOA backend wallet. */
   @IsOptional()
   @IsIn(['session_key', 'eoa'], {

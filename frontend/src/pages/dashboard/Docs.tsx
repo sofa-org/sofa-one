@@ -146,10 +146,12 @@ export default function APIDocsPage() {
   const apiBaseUrlMode = getApiBaseUrlModeLabel();
   const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
-  -H "X-API-Key: sk_your_key_here"`;
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "User-Agent: my-service/1.0"`;
   const signExample = `curl -X POST ${apiBaseUrl}/v1/wallets/sign \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
+  -H "User-Agent: my-service/1.0" \\
   -d '{
     "type": "message",
     "chainId": 84532,
@@ -159,6 +161,7 @@ export default function APIDocsPage() {
   const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions/send \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
+  -H "User-Agent: my-service/1.0" \\
   -d '{
     "chainId": 84532,
     "executionMode": "session_key",
@@ -171,7 +174,8 @@ export default function APIDocsPage() {
     "idempotencyKey": "order-123"
   }'`;
   const statusExample = `curl ${apiBaseUrl}/v1/transactions/550e8400-e29b-41d4-a716-446655440000 \\
-  -H "X-API-Key: sk_your_key_here"`;
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "User-Agent: my-service/1.0"`;
 
   return (
     <DashboardPage
@@ -211,7 +215,7 @@ export default function APIDocsPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
               <p className="mt-2 text-sm leading-6 text-brand-muted">
-                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Create keys from this dashboard and keep them on your backend only. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
+                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. POST JSON requests also use <code>Content-Type: application/json</code>. Optional <code>User-Agent</code> is a spoofable signal, not authentication; it may be recorded/saved for security audit and anomaly detection and compared exactly with prior context. curl/SDK/deployment changes can change it. Keep it stable and treat changes as security events, but never rely on its secrecy. Under high-risk key permission/risk checks, a single UA/IP context change may alert or freeze a key. If frozen, never disclose the key: create a replacement in Dashboard, update your backend secret, revoke the old key, and follow the existing recovery process. UA is not required on every endpoint. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
               </p>
             </div>
             <CopyButton text={apiKeyHeader} className="w-fit shrink-0" />

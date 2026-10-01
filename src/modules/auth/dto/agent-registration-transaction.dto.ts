@@ -1,6 +1,10 @@
-import { IsInt, Matches, Min } from 'class-validator';
+import { IsInt, IsOptional, IsUUID, Matches, Min } from 'class-validator';
 
 export class AgentRegistrationTransactionDto {
+  @IsUUID()
+  @IsOptional()
+  walletId?: string;
+
   @IsInt()
   @Min(1)
   chainId: number;

@@ -14,6 +14,7 @@ import { SignDto } from './dto/sign.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
 import { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
+import { WalletBalancesQueryDto, WalletDepositInfoDto } from './dto/wallet-query.dto';
 
 @Controller('v1/wallets')
 export class WalletController {
@@ -23,16 +24,16 @@ export class WalletController {
   @Get('balances')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
-  async getBalances(@CurrentUser('id') userId: string, @Query('chainId') chainId: string) {
-    return this.walletService.getBalances(userId, Number(chainId));
+  async getBalances(@CurrentUser('id') userId: string, @Query() query: WalletBalancesQueryDto) {
+    return this.walletService.getBalances(userId, query.chainId, query.walletId);
   }
 
   /** POST /v1/wallets/deposit-info — frontend only: get wallet address for deposits. */
   @Post('deposit-info')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
-  async getDepositInfo(@CurrentUser('id') userId: string, @Body('chainId') chainId: number) {
-    return this.walletService.getDepositInfo(userId, Number(chainId));
+  async getDepositInfo(@CurrentUser('id') userId: string, @Body() dto: WalletDepositInfoDto) {
+    return this.walletService.getDepositInfo(userId, dto.chainId, dto.walletId);
   }
 
   /** GET /v1/wallets/signing-requests — frontend only: list signing request history. */

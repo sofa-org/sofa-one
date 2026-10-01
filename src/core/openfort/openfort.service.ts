@@ -13,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getCode, getTransactionReceipt } from 'viem/actions';
+import { getBlock, getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
@@ -108,23 +108,47 @@ export class OpenfortService {
       const { openfortUserId } = await this.verifyIamSession(accessToken);
 
       const normalizedAddress = getAddress(walletAddress);
-      const accountsResult = (await this.withTimeout(
-        (this.client as any).accounts.list({ user: openfortUserId }),
-        'listOpenfortUserAccounts',
-      )) as
-        | { data?: Array<{ id?: string; address?: string }> }
-        | Array<{ id?: string; address?: string }>;
-      const accounts = Array.isArray(accountsResult) ? accountsResult : (accountsResult.data ?? []);
-      const account = accounts.find((candidate) => {
-        if (!candidate.address) return false;
-        try {
-          return getAddress(candidate.address) === normalizedAddress;
-        } catch {
-          return false;
+      const pageSize = 100;
+      const maxAccounts = 2000;
+      const deadline = Date.now() + this.timeoutMs;
+      const accounts: Array<{ id?: string; address?: string }> = [];
+      const seenEntries = new Set<string>();
+      let total: number | undefined;
+      for (let skip = 0; ; skip += pageSize) {
+        if (Date.now() >= deadline || skip >= maxAccounts) {
+          throw new Error('Openfort account pagination exceeded safety bounds');
         }
+        const result = (await this.withTimeout(
+          (this.client as any).accounts.list({ user: openfortUserId, limit: pageSize, skip }),
+          'listOpenfortUserAccounts',
+        )) as { data?: unknown; total?: unknown };
+        if (!result || !Array.isArray(result.data) || !Number.isSafeInteger(result.total) || (result.total as number) < 0) {
+          throw new Error('Malformed Openfort account page');
+        }
+        if (total !== undefined && total !== result.total) throw new Error('Openfort account total changed during pagination');
+        total = result.total as number;
+        if (total > maxAccounts || result.data.length > pageSize || (result.data.length === 0 && skip < total)) {
+          throw new Error('Incomplete Openfort account pagination');
+        }
+        for (const entry of result.data as Array<{ id?: string; address?: string }>) {
+          if (!entry || typeof entry.id !== 'string' || !entry.id || seenEntries.has(entry.id)) {
+            throw new Error('Repeated or malformed Openfort account page');
+          }
+          seenEntries.add(entry.id);
+        }
+        accounts.push(...(result.data as Array<{ id?: string; address?: string }>));
+        if (accounts.length >= total) break;
+        if (result.data.length === 0) throw new Error('Openfort account pagination did not advance');
+      }
+      if (accounts.length !== total) throw new Error('Openfort account pagination was truncated');
+      const account = accounts.find((candidate) => {
+        if (typeof candidate?.address !== 'string') return false;
+        try { return getAddress(candidate.address) === normalizedAddress; } catch { return false; }
       });
 
-      if (!account) throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
+      if (!account || typeof account.id !== 'string' || account.id.trim().length === 0) {
+        throw new ForbiddenException('Embedded EOA is not owned by Openfort user');
+      }
       return { openfortUserId, accountId: account.id, address: normalizedAddress };
     } catch (error: any) {
       if (error instanceof ForbiddenException) throw error;
@@ -195,15 +219,87 @@ export class OpenfortService {
     }
   }
 
+  /**
+   * Safe, sanitized transaction-receipt view for billing reconciliation.
+   *
+   * Returns a discriminated result so callers can distinguish a confirmed
+   * success/revert from a retryable not-found or transient RPC/block failure.
+   * Only the fields needed for evidence-backed metering are exposed: status,
+   * transactionHash, from/to, block number/hash/timestamp, gas metadata, and
+   * logs (address/topics/data/logIndex/removed). It never returns calldata,
+   * private keys, API keys, or the raw provider/client object.
+   *
+   * A missing receipt, malformed/missing logs, or a failed receipt/block
+   * lookup returns a retryable result (never a fabricated success). A legal
+   * empty `logs: []` array still yields a normal success/reverted view.
+   */
+  async getTransactionReceipt(chainId: number, txHash: string): Promise<TransactionReceiptResult> {
+    try {
+      const { chain } = getSupportedChain(chainId);
+      const client = createClient({ chain, transport: http() });
+      const receipt = await getTransactionReceipt(client, { hash: txHash as Hex });
+      if (!receipt) return { status: 'not_found' };
+
+      if (!Array.isArray(receipt.logs)) {
+        return { status: 'error', message: 'receipt logs missing or malformed' };
+      }
+
+      let blockTimestamp: bigint;
+      try {
+        const block = await getBlock(client, { blockNumber: receipt.blockNumber });
+        blockTimestamp = block.timestamp;
+      } catch (error: any) {
+        this.logOpenfortError('getTransactionReceipt', error, {
+          chainId,
+          txHash,
+          phase: 'block',
+        });
+        return { status: 'error', message: 'block lookup failed' };
+      }
+
+      const status: 'success' | 'reverted' = receipt.status === 'success' ? 'success' : 'reverted';
+
+      const sanitized: SanitizedReceipt = {
+        status,
+        transactionHash: receipt.transactionHash,
+        from: receipt.from,
+        to: receipt.to ?? null,
+        blockNumber: receipt.blockNumber,
+        blockHash: receipt.blockHash,
+        blockTimestamp,
+        gasUsed: receipt.gasUsed,
+        effectiveGasPrice: receipt.effectiveGasPrice ?? null,
+        logs: receipt.logs.map((log) => ({
+          address: log.address,
+          topics: log.topics,
+          data: log.data,
+          logIndex: log.logIndex,
+          removed: log.removed,
+        })),
+      };
+
+      return { status, receipt: sanitized };
+    } catch (error: any) {
+      const message = String(error?.message ?? '');
+      if (message.includes('Transaction receipt not found') || message.includes('not found')) {
+        return { status: 'not_found' };
+      }
+      this.logOpenfortError('getTransactionReceipt', error, { chainId, txHash });
+      return { status: 'error', message: 'receipt lookup failed' };
+    }
+  }
+
   /** Execute calls from the user's Calibur account with the registered backend agent key. */
-  async sendUserOperation(params: {
+  async submitUserOperation(params: {
     agentAccountId: string;
     accountAddress: string;
     chainId: number;
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
     sponsorship?: 'required' | 'none';
-  }): Promise<{ userOpHash: string; transactionHash: string | null }> {
+    /** Called exactly once when the bundler returns its operation identity. */
+    onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
+  }): Promise<{ userOpHash: string }> {
     try {
       const { chain } = getSupportedChain(params.chainId);
       const usesPimlico = isMonadChain(params.chainId);
@@ -253,14 +349,11 @@ export class OpenfortService {
         sponsorshipMode,
         chainId: params.chainId,
         gasPrice,
+        onUserOperationHash: params.onUserOperationHash,
       });
-      const receipt = (await submission.bundlerClient.waitForUserOperationReceipt({
-        hash: submission.hash as Hex,
-      })) as any;
-      return {
-        userOpHash: submission.hash,
-        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
-      };
+      const userOpHash = this.sanitizeUserOperationHash(submission.hash);
+      if (!userOpHash) throw new Error('Bundler returned an invalid UserOperation hash');
+      return { userOpHash };
     } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
@@ -274,6 +367,45 @@ export class OpenfortService {
       });
       throw this.createOpenfortApiException('sendUserOperation', error);
     }
+  }
+
+  async waitForUserOperationReceipt(params: {
+    chainId: number;
+    userOpHash: string;
+  }): Promise<{ success: boolean | null; transactionHash: string | null }> {
+    try {
+      const { chain } = getSupportedChain(params.chainId);
+      const publishableKey = this.configService.get<string>('openfort.publishableKey');
+      const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
+      const bundlerClient = createBundlerClient({
+        chain,
+        transport: http(
+          rpc.url,
+          rpc.authorizationHeader ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } } : undefined,
+        ),
+      });
+      const receipt = (await this.withTimeout(
+        bundlerClient.waitForUserOperationReceipt({ hash: params.userOpHash as Hex }),
+        'waitForUserOperationReceipt',
+      )) as any;
+      return {
+        success: typeof receipt.success === 'boolean' ? receipt.success : null,
+        transactionHash: receipt.receipt?.transactionHash ?? receipt.transactionHash ?? null,
+      };
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logOpenfortError('waitForUserOperationReceipt', error, { chainId: params.chainId });
+      throw this.createOpenfortApiException('waitForUserOperationReceipt', error);
+    }
+  }
+
+  /** Compatibility wrapper; new callers must persist the hash before waiting. */
+  async sendUserOperation(params: Parameters<OpenfortService['submitUserOperation']>[0]): Promise<{
+    userOpHash: string; transactionHash: string | null; userOperationSuccess: boolean | null;
+  }> {
+    const submitted = await this.submitUserOperation(params);
+    const receipt = await this.waitForUserOperationReceipt({ chainId: params.chainId, userOpHash: submitted.userOpHash });
+    return { ...submitted, transactionHash: receipt.transactionHash, userOperationSuccess: receipt.success };
   }
 
   private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
@@ -316,7 +448,29 @@ export class OpenfortService {
     sponsorshipMode: 'required' | 'none';
     chainId: number;
     gasPrice: UserOperationGasPrice;
+    onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
   }): Promise<{ hash: string; bundlerClient: any }> {
+    const submit = (promise: Promise<string>) => {
+      // Keep the handler attached to the original provider promise. Promise.race
+      // alone would leave a late provider rejection unhandled after a timeout.
+      const observed = promise.then(async (hash) => {
+        const sanitizedHash = this.sanitizeUserOperationHash(hash);
+        if (sanitizedHash && params.onUserOperationHash) {
+          try {
+            await params.onUserOperationHash(sanitizedHash);
+          } catch {
+            // The request may already have timed out; the transaction remains
+            // uncertain and reconciliation can still process an existing hash.
+            this.logger.warn(this.logContext({ message: 'Unable to persist late UserOperation identity' }));
+          }
+        }
+        // The SDK's typed return remains the compatibility result. Only the
+        // callback crosses the persistence boundary and therefore receives the
+        // strict sanitized value above.
+        return hash;
+      });
+      return this.withTimeout(observed, 'submitUserOperation');
+    };
     const calls = params.interactions.map((interaction) => ({
       to: getAddress(interaction.to),
       data: interaction.data as Hex,
@@ -331,27 +485,31 @@ export class OpenfortService {
         maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
       });
       return {
-        hash: await bundlerClient.sendUserOperation({
+        hash: await submit(bundlerClient.sendUserOperation({
           account: params.account,
           calls,
           ...gasLimits,
           maxFeePerGas: params.gasPrice.maxFeePerGas,
           maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-        } as any),
+        } as any)),
         bundlerClient,
       };
     }
 
     const bundlerClient = this.createBundlerClient({ ...params, includePaymaster: true });
     return {
-      hash: await bundlerClient.sendUserOperation({
+      hash: await submit(bundlerClient.sendUserOperation({
         account: params.account,
         calls,
         maxFeePerGas: params.gasPrice.maxFeePerGas,
         maxPriorityFeePerGas: params.gasPrice.maxPriorityFeePerGas,
-      } as any),
+      } as any)),
       bundlerClient,
     };
+  }
+
+  private sanitizeUserOperationHash(value: unknown): string | null {
+    return typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value) ? value.toLowerCase() : null;
   }
 
   private async estimateUserOperationFees(params: {
@@ -722,3 +880,37 @@ type UserOperationGasPriceLike = {
   maxFeePerGas?: bigint | number | string;
   maxPriorityFeePerGas?: bigint | number | string;
 };
+
+/** A single sanitized receipt log (no calldata, no raw provider objects). */
+export interface SanitizedReceiptLog {
+  address: string;
+  topics: string[];
+  data: string;
+  logIndex: number;
+  removed: boolean;
+}
+
+/** Sanitized, evidence-safe view of an on-chain transaction receipt. */
+export interface SanitizedReceipt {
+  status: 'success' | 'reverted';
+  transactionHash: string;
+  from: string;
+  to: string | null;
+  blockNumber: bigint;
+  blockHash: string;
+  blockTimestamp: bigint;
+  gasUsed: bigint;
+  effectiveGasPrice: bigint | null;
+  logs: SanitizedReceiptLog[];
+}
+
+/**
+ * Discriminated result of a receipt lookup. `not_found` and `error` are
+ * retryable (the transaction should stay pending); `success`/`reverted` are
+ * final and carry the sanitized receipt.
+ */
+export type TransactionReceiptResult =
+  | { status: 'success'; receipt: SanitizedReceipt }
+  | { status: 'reverted'; receipt: SanitizedReceipt }
+  | { status: 'not_found' }
+  | { status: 'error'; message: string };

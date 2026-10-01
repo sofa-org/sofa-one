@@ -13,6 +13,7 @@ const mockHasCaliburDelegation = jest.fn();
 const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
 const mockGetTransactionReceipt = jest.fn();
+const mockGetBlock = jest.fn();
 const mockGetCode = jest.fn();
 const originalFetch = globalThis.fetch;
 const mockFetch = jest.fn();
@@ -51,6 +52,7 @@ jest.mock('viem/actions', () => ({
   ...jest.requireActual('viem/actions'),
   getCode: mockGetCode,
   getTransactionReceipt: mockGetTransactionReceipt,
+  getBlock: mockGetBlock,
 }));
 
 import { OpenfortService } from './openfort.service';
@@ -159,6 +161,7 @@ describe('OpenfortService', () => {
           address: '0x2222222222222222222222222222222222222222',
         },
       ],
+      total: 1,
     });
     const configService = {
       getOrThrow: jest.fn(() => 'secret'),
@@ -172,7 +175,38 @@ describe('OpenfortService', () => {
         '0x1111111111111111111111111111111111111111',
       ),
     ).rejects.toThrow(ForbiddenException);
-    expect(accountsList).toHaveBeenCalledWith({ user: 'ofu_123' });
+    expect(accountsList).toHaveBeenCalledWith({ user: 'ofu_123', limit: 100, skip: 0 });
+  });
+
+  it('finds owned embedded addresses on later pages and ignores client account ids', async () => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    accountsList.mockResolvedValueOnce({ data: Array.from({ length: 100 }, (_, i) => ({ id: `acc_${i}`, address: '0x2222222222222222222222222222222222222222' })), total: 101 })
+      .mockResolvedValueOnce({ data: [{ id: 'server-account', address: '0x1111111111111111111111111111111111111111' }], total: 101 });
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .resolves.toMatchObject({ accountId: 'server-account' });
+    expect(accountsList).toHaveBeenNthCalledWith(2, { user: 'ofu_123', limit: 100, skip: 100 });
+  });
+
+  it.each([
+    ['missing matching account id', { data: [{ address: '0x1111111111111111111111111111111111111111' }], total: 1 }],
+    ['malformed page', { data: 'not-an-array', total: 1 }],
+    ['truncated page', { data: [], total: 1 }],
+  ])('fails closed for %s', async (_label, response) => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    accountsList.mockResolvedValue(response);
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .rejects.toThrow(BadGatewayException);
+  });
+
+  it('fails closed when pagination repeats entries', async () => {
+    iamGetSession.mockResolvedValue({ user: { id: 'ofu_123' } });
+    const page = Array.from({ length: 100 }, (_, i) => ({ id: `acc_${i}`, address: '0x2222222222222222222222222222222222222222' }));
+    accountsList.mockResolvedValueOnce({ data: page, total: 101 }).mockResolvedValueOnce({ data: page, total: 101 });
+    const service = new OpenfortService({ getOrThrow: () => 'secret', get: () => 1000 } as any);
+    await expect(service.authorizeEmbeddedAddress('token', '0x1111111111111111111111111111111111111111'))
+      .rejects.toThrow(BadGatewayException);
   });
 
   it('reports pending agent registration when 7702 delegation is not active yet', async () => {
@@ -242,13 +276,64 @@ describe('OpenfortService', () => {
     expect(sponsoredClient.sendUserOperation.mock.calls[0][0].maxFeePerGas.toString()).toBe(
       '200000000000',
     );
-    expect(
-      sponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString(),
-    ).toBe('178000000000');
+    expect(sponsoredClient.sendUserOperation.mock.calls[0][0].maxPriorityFeePerGas.toString()).toBe(
+      '178000000000',
+    );
     expect(service.createBundlerClient).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ includePaymaster: true }),
     );
+  });
+
+  it('times out the actual final UserOperation submission without retrying', async () => {
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+    const service = new OpenfortService(configService as any) as any;
+    const sendUserOperation = jest.fn().mockReturnValue(new Promise(() => undefined));
+    const client = { sendUserOperation };
+    jest.spyOn(service, 'createBundlerClient').mockReturnValue(client);
+
+    const promise = service.sendUserOperationWithSponsorship({
+      account: {},
+      chain: {},
+      client: {},
+      transport: {},
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
+      sponsorshipMode: 'required',
+      chainId: 137,
+      gasPrice: { maxFeePerGas: 200_000_000_000n, maxPriorityFeePerGas: 178_000_000_000n },
+    });
+    jest.advanceTimersByTime(25);
+
+    await expect(promise).rejects.toThrow('submitUserOperation timed out');
+    expect(sendUserOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists a late provider hash once, without turning a timeout into a retry', async () => {
+    const configService = { getOrThrow: jest.fn(() => 'secret'), get: jest.fn(() => 25) };
+    const service = new OpenfortService(configService as any) as any;
+    let resolveSubmission!: (hash: string) => void;
+    const sendUserOperation = jest.fn().mockReturnValue(
+      new Promise<string>((resolve) => { resolveSubmission = resolve; }),
+    );
+    jest.spyOn(service, 'createBundlerClient').mockReturnValue({ sendUserOperation });
+    const onHash = jest.fn().mockResolvedValue(undefined);
+    const promise = service.sendUserOperationWithSponsorship({
+      account: {}, chain: {}, client: {}, transport: {},
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
+      sponsorshipMode: 'required', chainId: 137,
+      gasPrice: { maxFeePerGas: 1n, maxPriorityFeePerGas: 1n }, onUserOperationHash: onHash,
+    });
+
+    jest.advanceTimersByTime(25);
+    await expect(promise).rejects.toThrow('submitUserOperation timed out');
+    resolveSubmission(`0x${'a'.repeat(64)}`);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onHash).toHaveBeenCalledWith(`0x${'a'.repeat(64)}`);
+    expect(sendUserOperation).toHaveBeenCalledTimes(1);
   });
 
   it('skips paymaster when sponsorship is none', async () => {
@@ -381,6 +466,155 @@ describe('OpenfortService', () => {
     ).rejects.toThrow(BadGatewayException);
 
     loggerErrorSpy.mockRestore();
+  });
+
+  describe('getTransactionReceipt', () => {
+    const TX_HASH = '0x1111111111111111111111111111111111111111111111111111111111111111';
+    const receipt = {
+      status: 'success',
+      transactionHash: TX_HASH,
+      from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      to: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      blockNumber: 12345n,
+      blockHash: '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      gasUsed: 21000n,
+      effectiveGasPrice: 1000000000n,
+      logs: [
+        {
+          address: '0xdddddddddddddddddddddddddddddddddddddddd',
+          topics: ['0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'],
+          data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          logIndex: 0,
+          removed: false,
+        },
+      ],
+    };
+
+    const configService = {
+      getOrThrow: jest.fn(() => 'secret'),
+      get: jest.fn(() => 25),
+    };
+
+    it('returns a sanitized success receipt with block timestamp and logs', async () => {
+      mockGetTransactionReceipt.mockResolvedValue(receipt);
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result.status).toBe('success');
+      if (result.status !== 'success') return;
+      expect(result.receipt.transactionHash).toBe(TX_HASH);
+      expect(result.receipt.blockTimestamp).toBe(1_700_000_000n);
+      expect(result.receipt.blockNumber).toBe(12345n);
+      expect(result.receipt.logs).toHaveLength(1);
+      expect(result.receipt.logs[0]).toEqual({
+        address: '0xdddddddddddddddddddddddddddddddddddddddd',
+        topics: ['0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'],
+        data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        logIndex: 0,
+        removed: false,
+      });
+      // never leaks calldata or raw provider objects
+      expect(result.receipt).not.toHaveProperty('input');
+      expect(result.receipt).not.toHaveProperty('client');
+      expect(result.receipt).not.toHaveProperty('transport');
+    });
+
+    it('returns reverted for a reverted receipt', async () => {
+      mockGetTransactionReceipt.mockResolvedValue({ ...receipt, status: 'reverted' });
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result.status).toBe('reverted');
+    });
+
+    it('returns a retryable error when the provider returns null logs', async () => {
+      mockGetTransactionReceipt.mockResolvedValue({ ...receipt, logs: null });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result).toEqual({
+        status: 'error',
+        message: 'receipt logs missing or malformed',
+      });
+      expect(mockGetBlock).not.toHaveBeenCalled();
+    });
+
+    it('returns a retryable error when the provider returns undefined logs', async () => {
+      mockGetTransactionReceipt.mockResolvedValue({ ...receipt, logs: undefined });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result).toEqual({
+        status: 'error',
+        message: 'receipt logs missing or malformed',
+      });
+      expect(mockGetBlock).not.toHaveBeenCalled();
+    });
+
+    it('returns a retryable error when the provider returns non-array logs', async () => {
+      mockGetTransactionReceipt.mockResolvedValue({ ...receipt, logs: '0xdeadbeef' });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result).toEqual({
+        status: 'error',
+        message: 'receipt logs missing or malformed',
+      });
+      expect(mockGetBlock).not.toHaveBeenCalled();
+    });
+
+    it('treats a legal empty logs array as a valid receipt', async () => {
+      mockGetTransactionReceipt.mockResolvedValue({ ...receipt, logs: [] });
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result.status).toBe('success');
+      if (result.status !== 'success') return;
+      expect(result.receipt.logs).toEqual([]);
+      expect(result.receipt.transactionHash).toBe(TX_HASH);
+      expect(result.receipt.blockTimestamp).toBe(1_700_000_000n);
+    });
+
+    it('returns not_found when the receipt is not mined yet', async () => {
+      mockGetTransactionReceipt.mockRejectedValue(new Error('Transaction receipt not found'));
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result).toEqual({ status: 'not_found' });
+    });
+
+    it('returns a retryable error when the block lookup fails', async () => {
+      const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+      mockGetTransactionReceipt.mockResolvedValue(receipt);
+      mockGetBlock.mockRejectedValue(new Error('RPC connection failed'));
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result.status).toBe('error');
+      loggerErrorSpy.mockRestore();
+    });
+
+    it('returns a retryable error on transient RPC failures', async () => {
+      const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+      mockGetTransactionReceipt.mockRejectedValue(new Error('RPC connection failed'));
+
+      const service = new OpenfortService(configService as any);
+      const result = await service.getTransactionReceipt(84532, TX_HASH);
+
+      expect(result.status).toBe('error');
+      loggerErrorSpy.mockRestore();
+    });
   });
 
   it('maps UserOperation gas price failures to a specific API error', () => {

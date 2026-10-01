@@ -28,4 +28,5 @@ coverage/
 !codemap.md
 /.agent-shell/
 .slim/
+.slim/deepwork/
 examples/

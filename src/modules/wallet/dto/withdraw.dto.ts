@@ -9,6 +9,8 @@ import {
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
+  IsOptional,
+  IsUUID,
 } from 'class-validator';
 
 export type WithdrawalToken = 'USDC' | 'USDT' | 'NATIVE';
@@ -62,6 +64,9 @@ function IsWithdrawalAmount(validationOptions?: ValidationOptions) {
 }
 
 export class WithdrawDto {
+  @IsOptional()
+  @IsUUID()
+  walletId?: string;
   /** Chain to withdraw from. Required so users explicitly choose the source chain. */
   @IsInt()
   @Min(1)

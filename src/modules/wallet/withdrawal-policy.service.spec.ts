@@ -28,8 +28,29 @@ describe('WithdrawalPolicyService', () => {
   const mockWithdrawalAddressDeleteMany = jest.fn();
   const mockTransactionFindMany = jest.fn();
   const mockQueryRaw = jest.fn();
+  const mockTransaction = jest.fn();
+  const mockAcquireUserDestinationLock = jest.fn();
+  const mockAssertDestinationsAllowed = jest.fn();
+  const mockRecordDeferredDenial = jest.fn();
   const securityEvents = { record: jest.fn() };
   let loggerWarnSpy: jest.SpyInstance;
+
+  const prismaClient = {
+    withdrawalPolicy: {
+      findUnique: mockWithdrawalPolicyFindUnique,
+      upsert: mockWithdrawalPolicyUpsert,
+    },
+    withdrawalAddress: {
+      findUnique: mockWithdrawalAddressFindUnique,
+      findMany: mockWithdrawalAddressFindMany,
+      create: mockWithdrawalAddressCreate,
+      deleteMany: mockWithdrawalAddressDeleteMany,
+    },
+    transaction: { findMany: mockTransactionFindMany },
+    $queryRaw: mockQueryRaw,
+    $executeRaw: jest.fn(),
+    $transaction: mockTransaction,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -51,22 +72,20 @@ describe('WithdrawalPolicyService', () => {
     mockWithdrawalAddressDeleteMany.mockResolvedValue({ count: 1 });
     mockTransactionFindMany.mockResolvedValue([]);
     mockQueryRaw.mockResolvedValue([]);
+    mockAcquireUserDestinationLock.mockResolvedValue(undefined);
+    mockAssertDestinationsAllowed.mockResolvedValue(undefined);
+    mockRecordDeferredDenial.mockResolvedValue(undefined);
+    mockTransaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback(prismaClient),
+    );
 
     service = new WithdrawalPolicyService(
+      prismaClient as unknown as PrismaService,
       {
-        withdrawalPolicy: {
-          findUnique: mockWithdrawalPolicyFindUnique,
-          upsert: mockWithdrawalPolicyUpsert,
-        },
-        withdrawalAddress: {
-          findUnique: mockWithdrawalAddressFindUnique,
-          findMany: mockWithdrawalAddressFindMany,
-          create: mockWithdrawalAddressCreate,
-          deleteMany: mockWithdrawalAddressDeleteMany,
-        },
-        transaction: { findMany: mockTransactionFindMany },
-        $queryRaw: mockQueryRaw,
-      } as unknown as PrismaService,
+        acquireUserDestinationLock: mockAcquireUserDestinationLock,
+        assertDestinationsAllowed: mockAssertDestinationsAllowed,
+        recordDeferredDenial: mockRecordDeferredDenial,
+      } as never,
       securityEvents as never,
     );
   });
@@ -132,10 +151,12 @@ describe('WithdrawalPolicyService', () => {
       newAddressCooldownHours: 24,
       requireStepUp: true,
     });
-    mockTransactionFindMany.mockResolvedValue([
-      { details: { amount: '1250000' } },
-      { details: { amount: '250000' } },
-    ]);
+    mockTransactionFindMany
+      .mockResolvedValueOnce([
+        { id: 't1', details: { amount: '1250000' } },
+        { id: 't2', details: { amount: '250000' } },
+      ])
+      .mockResolvedValueOnce([]); // unresolved prior-day
 
     await expect(
       service.assertWithdrawalAllowed('user-1', VALID_DTO, {
@@ -148,12 +169,46 @@ describe('WithdrawalPolicyService', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           userId: 'user-1',
-          operationType: 'withdraw',
+          operationType: { in: ['withdraw', 'billing_payment'] },
           chainId: BigInt(VALID_DTO.chainId),
           status: { in: ['submitting', 'pending', 'confirmed', 'unknown'] },
           details: { path: ['token'], equals: 'USDC' },
         }),
-        select: { details: true },
+        select: { id: true, details: true },
+      }),
+    );
+  });
+
+  it('counts unresolved prior-day billing_payment reservations toward daily limit', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({
+      id: 'policy-1',
+      singleWithdrawalLimit: '10000000',
+      dailyWithdrawalLimit: '2000000',
+      requireAddressAllowlist: false,
+      newAddressCooldownHours: 24,
+      requireStepUp: true,
+    });
+    mockTransactionFindMany
+      .mockResolvedValueOnce([]) // today empty
+      .mockResolvedValueOnce([
+        // yesterday's unknown wallet-pay still counts
+        { id: 'old-bp', details: { amount: '1800000', token: 'USDC' } },
+      ]);
+
+    await expect(
+      service.assertWithdrawalAllowed(
+        'user-1',
+        { ...VALID_DTO, amount: '300000' },
+        { chainId: VALID_DTO.chainId, stepUpVerified: true },
+      ),
+    ).rejects.toThrow('Withdrawal amount exceeds daily withdrawal limit');
+
+    expect(mockTransactionFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: { in: ['submitting', 'pending', 'unknown'] },
+          createdAt: expect.objectContaining({ lt: expect.any(Date) }),
+        }),
       }),
     );
   });
@@ -175,9 +230,11 @@ describe('WithdrawalPolicyService', () => {
       newAddressCooldownHours: 24,
       requireStepUp: true,
     });
-    mockTransactionFindMany.mockResolvedValue([
-      { details: { amount: '500000000000000000', token: 'NATIVE' } },
-    ]);
+    mockTransactionFindMany
+      .mockResolvedValueOnce([
+        { id: 'n1', details: { amount: '500000000000000000', token: 'NATIVE' } },
+      ])
+      .mockResolvedValueOnce([]);
 
     await expect(
       service.assertWithdrawalAllowed('user-1', VALID_NATIVE_DTO, {
@@ -204,7 +261,9 @@ describe('WithdrawalPolicyService', () => {
       newAddressCooldownHours: 24,
       requireStepUp: true,
     });
-    mockTransactionFindMany.mockResolvedValue([{ details: { amount: '500000' } }]);
+    mockTransactionFindMany
+      .mockResolvedValueOnce([{ id: 't1', details: { amount: '500000' } }])
+      .mockResolvedValueOnce([]);
 
     await expect(
       service.assertDailyLimitWithUserLock(
@@ -222,7 +281,10 @@ describe('WithdrawalPolicyService', () => {
     expect(mockQueryRaw).toHaveBeenCalledTimes(1);
     expect(mockTransactionFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ userId: 'user-1', operationType: 'withdraw' }),
+        where: expect.objectContaining({
+          userId: 'user-1',
+          operationType: { in: ['withdraw', 'billing_payment'] },
+        }),
       }),
     );
     expect(mockQueryRaw.mock.invocationCallOrder[0]).toBeLessThan(
@@ -379,6 +441,7 @@ describe('WithdrawalPolicyService', () => {
       label: ' Treasury ',
     });
 
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', prismaClient);
     expect(mockWithdrawalPolicyUpsert).toHaveBeenCalledWith({
       where: { userId: 'user-1' },
       update: { requireAddressAllowlist: true },
@@ -426,6 +489,7 @@ describe('WithdrawalPolicyService', () => {
       success: true,
     });
 
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', prismaClient);
     expect(mockWithdrawalAddressDeleteMany).toHaveBeenCalledWith({
       where: { id: 'addr-1', userId: 'user-1' },
     });
@@ -447,6 +511,49 @@ describe('WithdrawalPolicyService', () => {
     await expect(service.removeWithdrawalAddress('user-1', 'addr-1')).rejects.toThrow(
       'Withdrawal address not found',
     );
+  });
+
+  it('assertDestinationAllowedInTx forwards user actor with deferAudit under TX client', async () => {
+    await service.assertDestinationAllowedInTx(
+      'user-1',
+      VALID_DTO.to,
+      { chainId: 84532, walletId: 'wallet-1', walletAddress: '0xabc' },
+      prismaClient as never,
+    );
+
+    expect(mockAssertDestinationsAllowed).toHaveBeenCalledWith(
+      'user-1',
+      [VALID_DTO.to],
+      {
+        actorType: 'user',
+        chainId: 84532,
+        walletId: 'wallet-1',
+      },
+      { prisma: prismaClient, deferAudit: true },
+    );
+    const ctx = mockAssertDestinationsAllowed.mock.calls[0][2] as Record<string, unknown>;
+    expect(ctx).not.toHaveProperty('apiKeyId');
+    expect(ctx).not.toHaveProperty('apiKeyPrefix');
+  });
+
+  it('recordDeferredDestinationDenial forwards DeferredDestinationPolicyDenial only', async () => {
+    const { DeferredDestinationPolicyDenial } =
+      await import('../withdrawal-destination/withdrawal-destination-policy.service');
+    const denial = new DeferredDestinationPolicyDenial(
+      new (await import('@nestjs/common')).ForbiddenException('x'),
+      {
+        actorType: 'user',
+        userId: 'user-1',
+        reason: 'Withdrawal address is not allowlisted',
+        metadata: { code: 'WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED' },
+      },
+    );
+    await service.recordDeferredDestinationDenial(denial);
+    expect(mockRecordDeferredDenial).toHaveBeenCalledWith(denial);
+
+    mockRecordDeferredDenial.mockClear();
+    await service.recordDeferredDestinationDenial(new Error('other'));
+    expect(mockRecordDeferredDenial).not.toHaveBeenCalled();
   });
 
   it('rejects withdrawals when requireStepUp is true and step-up was not verified', async () => {

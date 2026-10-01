@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
@@ -120,9 +126,16 @@ export class ApiKeyService {
   /** Revoke a single API key owned by the user. */
   async revokeApiKey(keyId: string, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      const existing = await tx.apiKey.findFirst({
-        where: { id: keyId, userId },
-      });
+      // BILL-016: FOR UPDATE serializes with direct-egress send acceptance which
+      // locks the same api_keys row before reading live reauth/revoke state.
+      const locked = await tx.$queryRaw<
+        Array<{ id: string; key_prefix: string | null; name: string | null; revoked: boolean }>
+      >`
+        SELECT "id", "key_prefix", "name", "revoked"
+        FROM "api_keys"
+        WHERE "id" = ${keyId}::uuid AND "user_id" = ${userId}::uuid
+        FOR UPDATE`;
+      const existing = locked[0];
       if (!existing) {
         throw new NotFoundException('API key not found');
       }
@@ -136,7 +149,7 @@ export class ApiKeyService {
       });
 
       await this.audit(tx, userId, existing.id, 'api_key.revoked', {
-        keyPrefix: existing.keyPrefix,
+        keyPrefix: existing.key_prefix,
         keyName: existing.name,
       });
 
@@ -253,6 +266,7 @@ export class ApiKeyService {
         allowedFunctionSelectors: true,
         dailySpendLimit: true,
         monthlySpendLimit: true,
+        directEgressPolicyAcceptedAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -275,7 +289,111 @@ export class ApiKeyService {
       allowedFunctionSelectors: key.allowedFunctionSelectors,
       dailySpendLimit: key.dailySpendLimit,
       monthlySpendLimit: key.monthlySpendLimit,
+      directEgressPolicyAcceptedAt: key.directEgressPolicyAcceptedAt,
     }));
+  }
+
+  /**
+   * BILL-016: acknowledge destination-policy binding for API-key direct egress.
+   * IAM + FrontendOnly + StepUp (controller). Idempotent CAS: already-accepted
+   * keys return success without rewriting. Never auto-set on create/rotate.
+   */
+  async authorizeDirectEgress(keyId: string, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // Same row FOR UPDATE as send acceptance / revoke so state transitions serialize.
+      type LockedKey = {
+        id: string;
+        key_prefix: string | null;
+        name: string | null;
+        revoked: boolean;
+        frozen_at: Date | null;
+        expires_at: Date | null;
+        can_send_transaction: boolean;
+        direct_egress_policy_accepted_at: Date | null;
+      };
+      const locked = await tx.$queryRaw<LockedKey[]>`
+        SELECT
+          "id",
+          "key_prefix",
+          "name",
+          "revoked",
+          "frozen_at",
+          "expires_at",
+          "can_send_transaction",
+          "direct_egress_policy_accepted_at"
+        FROM "api_keys"
+        WHERE "id" = ${keyId}::uuid AND "user_id" = ${userId}::uuid
+        FOR UPDATE`;
+      const existing = locked[0];
+      if (!existing) {
+        throw new NotFoundException('API key not found');
+      }
+      if (existing.revoked) {
+        throw new ForbiddenException('API key is revoked');
+      }
+      if (existing.frozen_at) {
+        throw new ForbiddenException('API key is frozen');
+      }
+      if (existing.expires_at && existing.expires_at.getTime() <= Date.now()) {
+        throw new ForbiddenException('API key is expired');
+      }
+      if (!existing.can_send_transaction) {
+        throw new ForbiddenException({
+          code: API_ERROR_CODES.BAD_REQUEST,
+          message: 'API key is not allowed to send transactions',
+        });
+      }
+
+      if (existing.direct_egress_policy_accepted_at) {
+        return {
+          id: existing.id,
+          directEgressPolicyAcceptedAt: existing.direct_egress_policy_accepted_at,
+          outcome: 'unchanged' as const,
+        };
+      }
+
+      const acceptedAt = new Date();
+      const result = await tx.apiKey.updateMany({
+        where: {
+          id: keyId,
+          userId,
+          revoked: false,
+          frozenAt: null,
+          canSendTransaction: true,
+          directEgressPolicyAcceptedAt: null,
+        },
+        data: { directEgressPolicyAcceptedAt: acceptedAt },
+      });
+
+      if (result.count === 0) {
+        const again = await tx.$queryRaw<Array<{ direct_egress_policy_accepted_at: Date | null }>>`
+          SELECT "direct_egress_policy_accepted_at"
+          FROM "api_keys"
+          WHERE "id" = ${keyId}::uuid AND "user_id" = ${userId}::uuid`;
+        if (again[0]?.direct_egress_policy_accepted_at) {
+          return {
+            id: existing.id,
+            directEgressPolicyAcceptedAt: again[0].direct_egress_policy_accepted_at,
+            outcome: 'unchanged' as const,
+          };
+        }
+        throw new ForbiddenException('API key cannot authorize direct egress in its current state');
+      }
+
+      await this.audit(tx, userId, existing.id, 'api_key.direct_egress_authorized', {
+        keyPrefix: existing.key_prefix,
+        keyName: existing.name,
+        metadata: {
+          directEgressPolicyAcceptedAt: acceptedAt.toISOString(),
+        },
+      });
+
+      return {
+        id: existing.id,
+        directEgressPolicyAcceptedAt: acceptedAt,
+        outcome: 'authorized' as const,
+      };
+    });
   }
 
   private normalizeCreateOptions(options: ApiKeyCreateOptions) {
@@ -346,12 +464,10 @@ export class ApiKeyService {
   private toPermissions(key: Partial<ApiKeyPermissions>): ApiKeyPermissions {
     return {
       canSign: key.canSign ?? DEFAULT_API_KEY_PERMISSIONS.canSign,
-      canSendTransaction:
-        key.canSendTransaction ?? DEFAULT_API_KEY_PERMISSIONS.canSendTransaction,
+      canSendTransaction: key.canSendTransaction ?? DEFAULT_API_KEY_PERMISSIONS.canSendTransaction,
       canReadTransactionStatus:
         key.canReadTransactionStatus ?? DEFAULT_API_KEY_PERMISSIONS.canReadTransactionStatus,
-      canUseEoaExecution:
-        key.canUseEoaExecution ?? DEFAULT_API_KEY_PERMISSIONS.canUseEoaExecution,
+      canUseEoaExecution: key.canUseEoaExecution ?? DEFAULT_API_KEY_PERMISSIONS.canUseEoaExecution,
     };
   }
 
@@ -392,9 +508,7 @@ export class ApiKeyService {
     permissions: ApiKeyPermissions,
     allowedIps: string[],
   ) {
-    const hasHighRiskPermission = HIGH_RISK_PERMISSIONS.some(
-      (perm) => permissions[perm] === true,
-    );
+    const hasHighRiskPermission = HIGH_RISK_PERMISSIONS.some((perm) => permissions[perm] === true);
     if (hasHighRiskPermission && allowedIps.length === 0) {
       throw new BadRequestException(
         'IP allowlist is required when requesting high-risk permissions (canSign, canSendTransaction, canUseEoaExecution)',

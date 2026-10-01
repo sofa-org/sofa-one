@@ -40,6 +40,110 @@ jobs:
       - name: Build backend
         run: npm run build
 
+  backend-billing-e2e:
+    name: Backend billing E2E
+    runs-on: ubuntu-latest
+
+    # Gate 1: job-local Postgres maintenance DB only. The billing E2E runner
+    # creates a fresh per-run database + role, migrates it, runs gate + live
+    # suites (billing-http, claim-concurrency, settlement-concurrency), then
+    # drops DB/role. No static shared test DATABASE_URL is accepted.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      # Admin provisioning URL only (maintenance DB). The runner never forwards
+      # this to child Jest; suites receive a generated target URL + metadata.
+      BILLING_E2E_ADMIN_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      REDIS_URL: redis://localhost:6379
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      # Readiness against the admin/maintenance URL only. Identity mismatch
+      # (wrong current_database) fails immediately rather than retrying.
+      - name: Wait for PostgreSQL admin readiness
+        run: |
+          node -e '
+            const { Client } = require("pg");
+            const deadline = Date.now() + 60000;
+            const url = process.env.BILLING_E2E_ADMIN_DATABASE_URL;
+            (async () => {
+              while (Date.now() < deadline) {
+                const client = new Client({ connectionString: url });
+                try {
+                  await client.connect();
+                  const { rows } = await client.query(
+                    "SELECT current_database() AS name, current_user::text AS usr"
+                  );
+                  if (rows[0]?.name !== "postgres") {
+                    throw Object.assign(
+                      new Error("admin identity mismatch: expected maintenance database postgres"),
+                      { fatal: true }
+                    );
+                  }
+                  if (!rows[0]?.usr) {
+                    throw Object.assign(new Error("admin identity mismatch: empty current_user"), {
+                      fatal: true,
+                    });
+                  }
+                  await client.end();
+                  console.log("PostgreSQL admin ready (maintenance db postgres)");
+                  return;
+                } catch (err) {
+                  await client.end().catch(() => {});
+                  if (err && err.fatal) {
+                    console.error(err.message);
+                    process.exit(1);
+                  }
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                }
+              }
+              throw new Error("PostgreSQL admin did not become ready within 60 seconds");
+            })().catch((error) => { console.error(error.message); process.exit(1); });
+          '
+
+      # Provisions fresh DB+role, migrate deploy, gate tests, billing-http +
+      # concurrency suites; drops DB WITH FORCE + role in finally.
+      - name: Run billing E2E (runner-owned)
+        run: npm run test:e2e:billing
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -69,6 +173,11 @@ jobs:
 
       - name: Lint frontend
         run: npm run lint
+
+      # P1 release-test wiring: frontend unit tests run via Vitest
+      # ("test": "vitest run") with jsdom + React Testing Library.
+      - name: Test frontend
+        run: npm test
 
       - name: Build frontend
         run: npm run build

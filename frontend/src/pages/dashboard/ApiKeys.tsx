@@ -12,6 +12,14 @@ import {
   refreshApiKey as refreshApiKeyApi,
   getApiErrorMessage,
   getApiBaseUrlForDisplay,
+  formatApiKeyFrozenReason,
+  getApiKeyLifecycleBadgeClass,
+  getApiKeyLifecycleLabel,
+  getApiKeyLifecycleSortRank,
+  getApiKeyLifecycleStatus,
+  isApiKeyLifecycleActive,
+  matchesApiKeyLifecycleFilter,
+  type ApiKeyLifecycleStatus,
   type ApiKeyRecord,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
@@ -23,16 +31,24 @@ const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const KEY_STATUS_FILTER_STORAGE_KEY = 'sofa-one.apiKeys.statusFilter';
 
-type KeyStatusFilter = 'all' | 'active' | 'revoked';
+type KeyStatusFilter = 'all' | ApiKeyLifecycleStatus;
 
 const KEY_STATUS_FILTERS: Array<{ value: KeyStatusFilter; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'Active' },
+  { value: 'frozen', label: 'Frozen' },
+  { value: 'expired', label: 'Expired' },
   { value: 'revoked', label: 'Revoked' },
 ];
 
 function isKeyStatusFilter(value: string | null): value is KeyStatusFilter {
-  return value === 'all' || value === 'active' || value === 'revoked';
+  return (
+    value === 'all' ||
+    value === 'active' ||
+    value === 'frozen' ||
+    value === 'expired' ||
+    value === 'revoked'
+  );
 }
 
 function getStoredKeyStatusFilter(): KeyStatusFilter {
@@ -171,25 +187,35 @@ export default function ApiKeysPage() {
     }]
   }'`;
   const sortedKeys = [...keys].sort((a, b) => {
-    if (a.revoked !== b.revoked) return Number(a.revoked) - Number(b.revoked);
+    const statusA = getApiKeyLifecycleStatus(a);
+    const statusB = getApiKeyLifecycleStatus(b);
+    const rankDiff = getApiKeyLifecycleSortRank(statusA) - getApiKeyLifecycleSortRank(statusB);
+    if (rankDiff !== 0) return rankDiff;
 
-    if (!a.revoked && !b.revoked) {
+    if (statusA === 'active' && statusB === 'active') {
       const expirySort = getKeyExpirySortTime(a) - getKeyExpirySortTime(b);
       if (expirySort !== 0) return expirySort;
 
       return getLastUsedSortTime(b) - getLastUsedSortTime(a);
     }
 
+    if (statusA === 'frozen' && statusB === 'frozen') {
+      const frozenA = a.frozenAt ? new Date(a.frozenAt).getTime() : 0;
+      const frozenB = b.frozenAt ? new Date(b.frozenAt).getTime() : 0;
+      if (frozenA !== frozenB) return frozenB - frozenA;
+    }
+
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-  const visibleKeys = sortedKeys.filter((key) => {
-    if (keyStatusFilter === 'active') return !key.revoked;
-    if (keyStatusFilter === 'revoked') return key.revoked;
-    return true;
-  });
-  const activeKeyCount = keys.filter((key) => !key.revoked).length;
-  const revokedKeyCount = keys.length - activeKeyCount;
-  const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - activeKeyCount, 0);
+  const visibleKeys = sortedKeys.filter((key) => matchesApiKeyLifecycleFilter(key, keyStatusFilter));
+  // Usable keys only (revoked > frozen > expired > active). Matches Active filter/label.
+  const activeKeyCount = keys.filter((key) => isApiKeyLifecycleActive(key)).length;
+  const frozenKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'frozen').length;
+  const expiredKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'expired').length;
+  const revokedKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'revoked').length;
+  // Backend create/rotate/revoke-all still treat non-revoked rows as occupying the 10-key cap.
+  const occupiedKeySlots = keys.filter((key) => !key.revoked).length;
+  const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - occupiedKeySlots, 0);
   const hasReachedKeyLimit = remainingKeySlots === 0;
   const selectedKeyStatusFilter = KEY_STATUS_FILTERS.find((filter) => filter.value === keyStatusFilter);
 
@@ -233,7 +259,7 @@ export default function ApiKeysPage() {
 
   async function handleCreate() {
     if (hasReachedKeyLimit) {
-      setActionError('Revoke an active API key before creating another one.');
+      setActionError('Revoke a non-revoked API key before creating another one.');
       return;
     }
 
@@ -321,7 +347,7 @@ export default function ApiKeysPage() {
   async function handleRefresh() {
     if (
       !confirm(
-        `Rotate ${activeKeyCount} active API key${activeKeyCount === 1 ? '' : 's'}? This revokes every active key, creates one replacement, and shows the new raw key only once.`,
+        `Rotate ${occupiedKeySlots} non-revoked API key${occupiedKeySlots === 1 ? '' : 's'}? This revokes every non-revoked key (including frozen or expired), creates one replacement, and shows the new raw key only once. Frozen keys cannot be restored — save the new key securely.`,
       )
     ) {
       return;
@@ -341,10 +367,10 @@ export default function ApiKeysPage() {
   }
 
   async function handleRevokeAll() {
-    if (activeKeyCount === 0) return;
+    if (occupiedKeySlots === 0) return;
     if (
       !confirm(
-        `Emergency revoke ${activeKeyCount} active API key${activeKeyCount === 1 ? '' : 's'}? This immediately stops all backend integrations and does not create a replacement.`,
+        `Emergency revoke ${occupiedKeySlots} non-revoked API key${occupiedKeySlots === 1 ? '' : 's'}? This immediately stops all backend integrations (including frozen keys) and does not create a replacement.`,
       )
     ) {
       return;
@@ -432,11 +458,14 @@ export default function ApiKeysPage() {
             'Checking active API key capacity…'
           ) : (
             <>
-              <span className="font-semibold text-brand-text">{activeKeyCount}</span> of{' '}
-              <span className="font-semibold text-brand-text">{MAX_ACTIVE_API_KEYS}</span> active keys used.{' '}
+              <span className="font-semibold text-brand-text">{occupiedKeySlots}</span> of{' '}
+              <span className="font-semibold text-brand-text">{MAX_ACTIVE_API_KEYS}</span> key slots used
+              (non-revoked, including frozen or expired).{' '}
+              <span className="font-semibold text-brand-text">{activeKeyCount}</span> currently{' '}
+              {activeKeyCount === 1 ? 'is' : 'are'} Active and usable.{' '}
               {hasReachedKeyLimit
-                ? 'Revoke an active key before creating another one.'
-                : `${remainingKeySlots} active ${remainingKeySlots === 1 ? 'slot remains' : 'slots remain'}.`}
+                ? 'Revoke a non-revoked key before creating another one.'
+                : `${remainingKeySlots} ${remainingKeySlots === 1 ? 'slot remains' : 'slots remain'}.`}
             </>
           )}
         </div>
@@ -592,26 +621,27 @@ export default function ApiKeysPage() {
             <div>
               <h2 className="text-xl font-bold font-serif text-brand-text">Your Keys</h2>
               <p className="mt-1 text-xs text-brand-muted">
-                Active keys are ordered by soonest expiry, then most recent use, so lifecycle risks stay visible.
+                Status priority is revoked → frozen → expired → active. Active keys sort by soonest expiry, then
+                most recent use; frozen keys surface freeze time and secure recovery guidance.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 type="button"
                 onClick={handleRevokeAll}
-                disabled={loading || actionLoading || activeKeyCount === 0}
+                disabled={loading || actionLoading || occupiedKeySlots === 0}
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Revoke all
               </button>
-              <div className="inline-flex rounded-full border border-brand-border bg-brand-bg p-1">
+              <div className="inline-flex max-w-full flex-wrap rounded-full border border-brand-border bg-brand-bg p-1">
                 {KEY_STATUS_FILTERS.map((filter) => (
                   <button
                     key={filter.value}
                     type="button"
                     onClick={() => setKeyStatusFilter(filter.value)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors sm:px-3 ${
                       keyStatusFilter === filter.value
                         ? 'bg-white text-brand-text shadow-sm'
                         : 'text-brand-muted hover:text-brand-text'
@@ -631,8 +661,12 @@ export default function ApiKeysPage() {
           </div>
           {!loading && keys.length > 0 && (
             <div className="mt-4 flex flex-col gap-3 text-xs text-brand-muted sm:flex-row sm:items-center sm:justify-between">
-              <p>
-                Showing {visibleKeys.length} of {keys.length} keys · {activeKeyCount} active · {revokedKeyCount} revoked
+              <p className="leading-5">
+                Showing {visibleKeys.length} of {keys.length} keys · {activeKeyCount} active
+                {frozenKeyCount > 0 ? ` · ${frozenKeyCount} frozen` : ''}
+                {expiredKeyCount > 0 ? ` · ${expiredKeyCount} expired` : ''}
+                {' · '}
+                {revokedKeyCount} revoked
               </p>
               {keyStatusFilter !== 'all' && (
                 <div className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-border bg-brand-bg px-3 py-1 font-semibold text-brand-text">
@@ -707,7 +741,7 @@ export default function ApiKeysPage() {
         ) : (
           <div className="divide-y divide-brand-border">
             <div
-              className="hidden grid-cols-[minmax(128px,0.9fr)_80px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] items-center gap-3 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted xl:grid xl:px-7"
+              className="hidden grid-cols-[minmax(128px,0.9fr)_88px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] items-center gap-3 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-brand-muted xl:grid xl:px-7"
             >
               <span>Key</span>
               <span>Status</span>
@@ -719,109 +753,140 @@ export default function ApiKeysPage() {
               <span className="sr-only">Actions</span>
             </div>
             {visibleKeys.map((key) => {
+              const lifecycleStatus = getApiKeyLifecycleStatus(key);
+              const statusLabel = getApiKeyLifecycleLabel(lifecycleStatus);
               const lastUsed = getRelativeDateSummary(key.lastUsedAt, 'Never');
               const created = getRelativeDateSummary(key.createdAt, 'Unknown');
               const expiry = getKeyExpirySummary(key.expiresAt);
+              const frozenAtSummary = key.frozenAt
+                ? getRelativeDateSummary(key.frozenAt, 'Unknown')
+                : null;
+              const frozenReasonLabel =
+                lifecycleStatus === 'frozen' ? formatApiKeyFrozenReason(key.frozenReason) : null;
               const allowedContracts = key.allowedContracts ?? [];
               const allowedFunctionSelectors = key.allowedFunctionSelectors ?? [];
+              const canRevoke = lifecycleStatus !== 'revoked';
 
               return (
                 <div
                   key={key.id}
-                  className="grid min-w-0 gap-3 px-5 py-4 transition-colors hover:bg-brand-surface sm:grid-cols-2 sm:gap-x-4 xl:grid-cols-[minmax(128px,0.9fr)_80px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] xl:items-center xl:gap-3 xl:px-7"
+                  className={`min-w-0 transition-colors hover:bg-brand-surface ${
+                    lifecycleStatus === 'frozen' ? 'bg-amber-50/40' : ''
+                  }`}
                 >
-                  <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text sm:col-span-2 xl:col-span-1">
-                    <span className="min-w-0 truncate">{key.displayPrefix}</span>
-                    <CopyButton
-                      text={key.displayPrefix}
-                      className="h-7 w-7 shrink-0 border-brand-border/80 bg-white text-brand-muted hover:text-brand-accent"
-                    />
-                  </span>
-                  <span className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${key.revoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                    {key.revoked ? 'Revoked' : 'Active'}
-                  </span>
-                  <span className="min-w-0 truncate text-sm text-brand-muted">
-                    <span className="font-semibold text-brand-text xl:hidden">Name: </span>
-                    {key.name || '—'}
-                  </span>
-                  <span className="flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[11px] font-semibold text-brand-muted sm:col-span-2 xl:col-span-1">
-                    <span className="shrink-0 font-semibold text-brand-text xl:hidden">Permissions: </span>
-                    {key.permissions.canReadTransactionStatus && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">status</span>}
-                    {key.permissions.canSign && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
-                    {key.permissions.canSendTransaction && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">send</span>}
-                    {key.permissions.canUseEoaExecution && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
-                    {!key.permissions.canReadTransactionStatus &&
-                      !key.permissions.canSign &&
-                      !key.permissions.canSendTransaction &&
-                      !key.permissions.canUseEoaExecution && <span className="shrink-0">none</span>}
-                    {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
-                      <>
-                      {allowedContracts.length > 0 && (
-                        <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
-                          {allowedContracts.length} contract{allowedContracts.length > 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {allowedFunctionSelectors.length > 0 && (
-                        <span className="shrink-0 rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
-                          {allowedFunctionSelectors.length} selector{allowedFunctionSelectors.length > 1 ? 's' : ''}
-                        </span>
-                      )}
-                      </>
-                    )}
-                    {(key.dailySpendLimit || key.monthlySpendLimit) && (
-                      <>
-                      {key.dailySpendLimit && (
-                        <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
-                          Daily: {BigInt(key.dailySpendLimit) >= 1_000_000_000_000_000_000n
-                            ? `${(Number(BigInt(key.dailySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
-                            : `${Number(key.dailySpendLimit).toLocaleString()} wei`}
-                        </span>
-                      )}
-                      {key.monthlySpendLimit && (
-                        <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
-                          Monthly: {BigInt(key.monthlySpendLimit) >= 1_000_000_000_000_000_000n
-                            ? `${(Number(BigInt(key.monthlySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
-                            : `${Number(key.monthlySpendLimit).toLocaleString()} wei`}
-                        </span>
-                      )}
-                      </>
-                    )}
-                  </span>
-                  <span className={`text-xs ${lastUsed.tone}`}>
-                    <span className="font-semibold text-brand-text xl:hidden">Last used: </span>
-                    <span className="font-semibold">{lastUsed.label}</span>
-                    {lastUsed.detail && <span className="block text-[11px] opacity-80">{lastUsed.detail}</span>}
-                    {key.lastUsedIp && (
-                      <span className="block truncate text-[11px] opacity-80" title={key.lastUsedIp}>
-                        IP: {key.lastUsedIp}
-                      </span>
-                    )}
-                    {key.lastUsedUserAgent && (
-                      <span className="block truncate text-[11px] opacity-80" title={key.lastUsedUserAgent}>
-                        UA: {truncateUsageValue(key.lastUsedUserAgent)}
-                      </span>
-                    )}
-                  </span>
-                  <span className={`text-xs ${expiry.tone}`}>
-                    <span className="font-semibold text-brand-text xl:hidden">Expires: </span>
-                    <span className="font-semibold">{expiry.label}</span>
-                    <span className="block text-[11px] opacity-80">{expiry.detail}</span>
-                  </span>
-                  <span className={`text-xs ${created.tone}`}>
-                    <span className="font-semibold text-brand-text xl:hidden">Created: </span>
-                    <span className="font-semibold">{created.label}</span>
-                    {created.detail && <span className="block text-[11px] opacity-80">{created.detail}</span>}
-                  </span>
-                  {!key.revoked ? (
-                    <button
-                      onClick={() => handleRevoke(key)}
-                      disabled={actionLoading}
-                      className="w-fit rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 xl:justify-self-end"
+                  <div className="grid min-w-0 gap-3 px-5 py-4 sm:grid-cols-2 sm:gap-x-4 xl:grid-cols-[minmax(128px,0.9fr)_88px_minmax(96px,0.7fr)_minmax(300px,2.4fr)_minmax(78px,0.55fr)_minmax(88px,0.6fr)_minmax(78px,0.55fr)_36px] xl:items-center xl:gap-3 xl:px-7">
+                    <span className="flex min-w-0 items-center gap-2 font-mono text-sm text-brand-text sm:col-span-2 xl:col-span-1">
+                      <span className="min-w-0 truncate">{key.displayPrefix}</span>
+                      <CopyButton
+                        text={key.displayPrefix}
+                        className="h-7 w-7 shrink-0 border-brand-border/80 bg-white text-brand-muted hover:text-brand-accent"
+                      />
+                    </span>
+                    <span
+                      className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${getApiKeyLifecycleBadgeClass(lifecycleStatus)}`}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  ) : (
-                    <span className="hidden h-7 w-7 xl:block" />
+                      {statusLabel}
+                    </span>
+                    <span className="min-w-0 truncate text-sm text-brand-muted">
+                      <span className="font-semibold text-brand-text xl:hidden">Name: </span>
+                      {key.name || '—'}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[11px] font-semibold text-brand-muted sm:col-span-2 xl:col-span-1">
+                      <span className="shrink-0 font-semibold text-brand-text xl:hidden">Permissions: </span>
+                      {key.permissions.canReadTransactionStatus && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">status</span>}
+                      {key.permissions.canSign && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
+                      {key.permissions.canSendTransaction && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">send</span>}
+                      {key.permissions.canUseEoaExecution && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
+                      {!key.permissions.canReadTransactionStatus &&
+                        !key.permissions.canSign &&
+                        !key.permissions.canSendTransaction &&
+                        !key.permissions.canUseEoaExecution && <span className="shrink-0">none</span>}
+                      {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
+                        <>
+                        {allowedContracts.length > 0 && (
+                          <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
+                            {allowedContracts.length} contract{allowedContracts.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {allowedFunctionSelectors.length > 0 && (
+                          <span className="shrink-0 rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
+                            {allowedFunctionSelectors.length} selector{allowedFunctionSelectors.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        </>
+                      )}
+                      {(key.dailySpendLimit || key.monthlySpendLimit) && (
+                        <>
+                        {key.dailySpendLimit && (
+                          <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                            Daily: {BigInt(key.dailySpendLimit) >= 1_000_000_000_000_000_000n
+                              ? `${(Number(BigInt(key.dailySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
+                              : `${Number(key.dailySpendLimit).toLocaleString()} wei`}
+                          </span>
+                        )}
+                        {key.monthlySpendLimit && (
+                          <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                            Monthly: {BigInt(key.monthlySpendLimit) >= 1_000_000_000_000_000_000n
+                              ? `${(Number(BigInt(key.monthlySpendLimit) / 1_000_000_000_000_000_000n)).toLocaleString()} ETH`
+                              : `${Number(key.monthlySpendLimit).toLocaleString()} wei`}
+                          </span>
+                        )}
+                        </>
+                      )}
+                    </span>
+                    <span className={`text-xs ${lastUsed.tone}`}>
+                      <span className="font-semibold text-brand-text xl:hidden">Last used: </span>
+                      <span className="font-semibold">{lastUsed.label}</span>
+                      {lastUsed.detail && <span className="block text-[11px] opacity-80">{lastUsed.detail}</span>}
+                      {key.lastUsedIp && (
+                        <span className="block truncate text-[11px] opacity-80" title={key.lastUsedIp}>
+                          IP: {key.lastUsedIp}
+                        </span>
+                      )}
+                      {key.lastUsedUserAgent && (
+                        <span className="block truncate text-[11px] opacity-80" title={key.lastUsedUserAgent}>
+                          UA: {truncateUsageValue(key.lastUsedUserAgent)}
+                        </span>
+                      )}
+                    </span>
+                    <span className={`text-xs ${expiry.tone}`}>
+                      <span className="font-semibold text-brand-text xl:hidden">Expires: </span>
+                      <span className="font-semibold">{expiry.label}</span>
+                      <span className="block text-[11px] opacity-80">{expiry.detail}</span>
+                    </span>
+                    <span className={`text-xs ${created.tone}`}>
+                      <span className="font-semibold text-brand-text xl:hidden">Created: </span>
+                      <span className="font-semibold">{created.label}</span>
+                      {created.detail && <span className="block text-[11px] opacity-80">{created.detail}</span>}
+                    </span>
+                    {canRevoke ? (
+                      <button
+                        onClick={() => handleRevoke(key)}
+                        disabled={actionLoading}
+                        aria-label={`Revoke API key ${key.name || key.displayPrefix}`}
+                        className="w-fit rounded-full border border-red-200 bg-red-50 p-1.5 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 xl:justify-self-end"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <span className="hidden h-7 w-7 xl:block" />
+                    )}
+                  </div>
+                  {lifecycleStatus === 'frozen' && (
+                    <div className="mx-5 mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 sm:mx-5 xl:mx-7">
+                      <p className="font-semibold text-amber-950">
+                        Frozen
+                        {frozenAtSummary
+                          ? ` · ${frozenAtSummary.label}${frozenAtSummary.detail ? ` (${frozenAtSummary.detail})` : ''}`
+                          : ''}
+                      </p>
+                      <p className="mt-1">{frozenReasonLabel}</p>
+                      <p className="mt-2 text-amber-800">
+                        This key cannot call the API and cannot be unfrozen in place. After MFA step-up, create a new
+                        key or use Advanced key rotation, then update your backend secret store. Never reuse a frozen
+                        raw key.
+                      </p>
+                    </div>
                   )}
                 </div>
               );
@@ -854,10 +919,12 @@ export default function ApiKeysPage() {
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl space-y-2 text-sm text-red-800">
             <p>
-              Rotate all keys only if you believe existing keys were exposed. This revokes every active key and creates one replacement.
+              Rotate all keys only if you believe existing keys were exposed or frozen. This revokes every non-revoked
+              key (including frozen or expired) and creates one replacement. Frozen keys cannot be restored.
             </p>
             <p>
-              The replacement raw key is shown once. Copy it into your backend secret store before deploying, then remove the old keys from every environment.
+              The replacement raw key is shown once. Copy it into your backend secret store before deploying, then
+              remove the old keys from every environment.
             </p>
           </div>
           <button

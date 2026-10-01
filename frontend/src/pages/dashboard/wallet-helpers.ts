@@ -18,6 +18,12 @@ export type WithdrawSuccess = {
   chainId: number;
 };
 
+/** Withdraw form error; `billingBlocked` is set only for BILLING_OUTBOUND_BLOCKED. */
+export type WithdrawError = {
+  message: string;
+  billingBlocked?: boolean;
+};
+
 export const AUTHORIZE_EMBEDDED_WALLET_RETRIES = 5;
 export const AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS = 1_000;
 export const AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS = 60_000;

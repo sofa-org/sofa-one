@@ -1,26 +1,113 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { encodeFunctionData, getAddress, type Hex } from 'viem';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
 
+const mockVerifyTransactionAssetFlow = jest.fn();
+
+jest.mock('./transaction-asset-flow.verifier', () => {
+  const actual = jest.requireActual<typeof import('./transaction-asset-flow.verifier')>(
+    './transaction-asset-flow.verifier',
+  );
+  return {
+    ...actual,
+    verifyTransactionAssetFlow: (...args: unknown[]) => mockVerifyTransactionAssetFlow(...args),
+  };
+});
+
 import { TransactionsService } from './transactions.service';
 import { TransactionPolicyService } from './transaction-policy.service';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
+import {
+  computeAssetFlowPlanDigest,
+  verifyTransactionAssetFlow as realVerifyTransactionAssetFlow,
+} from './transaction-asset-flow.verifier';
+import { AssetFlowSimulationUnavailableError } from './transaction-simulation.service';
+import { hashRequest } from '../../common/utils/request-hash';
+
+function erc20TransferData(to: string, amount: bigint = 1n): string {
+  return encodeFunctionData({
+    abi: [
+      {
+        type: 'function',
+        name: 'transfer',
+        inputs: [
+          { name: 'to', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+        outputs: [{ type: 'bool' }],
+        stateMutability: 'nonpayable',
+      },
+    ],
+    functionName: 'transfer',
+    args: [to as Hex, amount],
+  });
+}
+
+function erc20ApproveData(spender: string, amount: bigint = 1n): string {
+  return encodeFunctionData({
+    abi: [
+      {
+        type: 'function',
+        name: 'approve',
+        inputs: [
+          { name: 'spender', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+        outputs: [{ type: 'bool' }],
+        stateMutability: 'nonpayable',
+      },
+    ],
+    functionName: 'approve',
+    args: [spender as Hex, amount],
+  });
+}
+
+const TOKEN = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+const EXTERNAL = '0x1111111111111111111111111111111111111111';
+/** Official Aave V3 Pool on Base (chainId 8453) — retained-protocol registry target. */
+const AAVE_POOL_8453 = '0xa238dd80c259a72e81d7e4664a9801593f98d1c5';
+
+function aaveSupplyData(onBehalfOf: string, amount: bigint = 1n): string {
+  return encodeFunctionData({
+    abi: [
+      {
+        type: 'function',
+        name: 'supply',
+        inputs: [
+          { name: 'asset', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+          { name: 'onBehalfOf', type: 'address' },
+          { name: 'referralCode', type: 'uint16' },
+        ],
+        outputs: [],
+        stateMutability: 'nonpayable',
+      },
+    ],
+    functionName: 'supply',
+    args: [TOKEN as Hex, amount, onBehalfOf as Hex, 0],
+  });
+}
 
 describe('TransactionsService', () => {
   const apiKeyPrefix = 'sk_1234567890abcdef12345678';
+  // Checksum-valid addresses so asset-flow classification can normalize owner.
   const wallet = {
     id: 'wallet-1',
     openfortAccountId: 'acc-1',
-    walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
+    walletAddress: '0xabCDEF1234567890ABcDEF1234567890aBCDeF12',
     agentOpenfortAccountId: 'agent-acc-1',
     agentWalletAddress: '0x2222222222222222222222222222222222222222',
     agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
@@ -43,6 +130,17 @@ describe('TransactionsService', () => {
     idempotencyKey: 'idem-1',
   };
 
+  const existingRequestFingerprint = hashRequest({
+    operationType: 'send', chainId: dto.chainId, walletId: wallet.id,
+    walletAddress: wallet.walletAddress, executionMode: 'session_key', sponsorship: 'none',
+    interactions: dto.interactions,
+  });
+  const existingSendIdentity = {
+    authMethod: 'api_key',
+    walletAddress: wallet.walletAddress,
+    details: { walletId: wallet.id, executionMode: 'session_key', requestHash: existingRequestFingerprint },
+  };
+
   const apiKeyContext = {
     id: 'api-key-1',
     keyPrefix: apiKeyPrefix,
@@ -56,37 +154,150 @@ describe('TransactionsService', () => {
     allowedFunctionSelectors: undefined,
     dailySpendLimit: undefined,
     monthlySpendLimit: undefined,
+    // BILL-016: unit fixtures assume destination-policy reauth already completed.
+    directEgressPolicyAcceptedAt: new Date('2026-01-01T00:00:00.000Z'),
   };
 
+  const destinationPolicy = {
+    acquireUserDestinationLock: jest.fn().mockResolvedValue(undefined),
+    assertDestinationsAllowed: jest.fn().mockResolvedValue(undefined),
+    recordDeferredDenial: jest.fn().mockResolvedValue(undefined),
+    recordUnprovenAssetOutflowDenial: jest.fn().mockResolvedValue(undefined),
+  };
+
+  /** Interactive-tx findFirst — distinct from root so P2002 recovery can be asserted. */
+  const txFindFirst = jest.fn();
+
+  /** FOR UPDATE key-row result used inside create TX (BILL-016). */
+  const txApiKeyLockRows = jest.fn();
+
   const prisma = {
-    userWallet: { findUnique: jest.fn() },
+    userWallet: { findUnique: jest.fn(), findMany: jest.fn() },
+    apiKey: { findUnique: jest.fn() },
+    // BILL-016: destination protection = requireAddressAllowlist === true.
+    withdrawalPolicy: { findUnique: jest.fn() },
     transaction: {
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn().mockImplementation(async ({ data }: any) => {
+        prisma.transaction.update({ where: { id: 'tx-1' }, data });
+        return { count: 1 };
+      }),
       findFirst: jest.fn(),
       findMany: jest.fn(),
     },
+    $transaction: jest.fn(),
   } as any;
 
   const openfort = {
     verifyAgentKeyRegistration: jest.fn(),
-    sendUserOperation: jest.fn(),
+    submitUserOperation: jest.fn(),
+    waitForUserOperationReceipt: jest.fn(),
     sendBackendTransaction: jest.fn(),
+    getTransactionReceipt: jest.fn(),
   } as any;
+  // Keep legacy assertions pointed at the split submission seam.
+  openfort.sendUserOperation = openfort.submitUserOperation;
 
   const eoaExecutionPolicy = { assertAllowed: jest.fn() } as any;
-  const transactionSimulation = { assertSimulatable: jest.fn() } as any;
+  const transactionSimulation = {
+    assertSimulatable: jest.fn(),
+    simulateAssetFlowEvidence: jest.fn(),
+  } as any;
   const transactionPolicy = new TransactionPolicyService(prisma, undefined as any);
   const mockAssertSessionKeyAllowed = jest.fn();
+  const billingDebt = { getDebt: jest.fn() } as any;
+  const SIM_RPC = 'https://rpc.example.test/base';
+  const config = {
+    get: jest.fn((key: string) => {
+      if (key === 'simulation.rpcUrls.8453') return SIM_RPC;
+      return undefined;
+    }),
+  } as any;
 
   let service: TransactionsService;
   let loggerWarnSpy: jest.SpyInstance;
+
+  function buildPlanDigest(
+    interactions: ReadonlyArray<{ to: string; data: string; value?: string }>,
+    ownerAddress: string,
+    executionMode: 'session_key' | 'eoa' = 'session_key',
+    chainId = 8453,
+  ) {
+    return computeAssetFlowPlanDigest({
+      ownerAddress,
+      chainId,
+      executionMode,
+      interactions,
+    })!;
+  }
+
+  function mockProductionEvidence(plan: {
+    interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+    ownerAddress: string;
+    executionMode?: 'session_key' | 'eoa';
+    chainId?: number;
+  }) {
+    const executionMode = plan.executionMode ?? 'session_key';
+    const chainId = plan.chainId ?? 8453;
+    const planDigest = buildPlanDigest(
+      plan.interactions,
+      plan.ownerAddress,
+      executionMode,
+      chainId,
+    );
+    return {
+      simulationMode: 'eth_simulateV1_non_atomic' as const,
+      binding: {
+        ownerAddress: getAddress(plan.ownerAddress),
+        chainId,
+        executionMode,
+        planDigest,
+        schemaVersion: 'asset-flow-evidence.v1',
+        ruleVersion: 'asset-flow-rules.v1',
+        baseBlock: { number: null, hash: null },
+        simulatedBlock: { number: 1n, hash: `0x${'ab'.repeat(32)}` },
+      },
+      coverage: {
+        assetObservation: { completeness: 'incomplete' as const },
+        internalCalls: { completeness: 'unknown' as const, observed: false },
+        permissions: { completeness: 'unknown' as const },
+      },
+      results: plan.interactions.map(() => ({ status: 'success' as const })),
+      assetChanges: [],
+      relations: [],
+      logs: { completeness: 'unknown' as const },
+    };
+  }
+
+  function mockVerifiedVerdict(_plan: {
+    interactions: ReadonlyArray<{ to: string; data: string; value?: string }>;
+    ownerAddress: string;
+    executionMode?: 'session_key' | 'eoa';
+    chainId?: number;
+  }) {
+    void _plan;
+    return {
+      status: 'verified' as const,
+      rule: 'test_verified',
+      reason: 'synthetic verified for unit test',
+      simulationMode: 'calibur_atomic' as const,
+      block: { number: 1n, hash: `0x${'ab'.repeat(32)}` },
+    };
+  }
 
   beforeEach(() => {
     jest.clearAllMocks();
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
+    prisma.userWallet.findMany.mockImplementation(async ({ where }: any) => {
+      if (where?.userId && where.userId !== 'user-1') return [];
+      if (where?.id && where.id !== wallet.id) return [];
+      const candidate = await prisma.userWallet.findUnique({ where });
+      return candidate ? [candidate] : [];
+    });
     prisma.transaction.findFirst.mockResolvedValue(null);
+    txFindFirst.mockResolvedValue(null);
     prisma.transaction.create.mockResolvedValue({
       id: 'tx-1',
       status: 'submitting',
@@ -97,19 +308,74 @@ describe('TransactionsService', () => {
       status: 'confirmed',
       txHash: '0xhash',
     });
-    openfort.sendUserOperation.mockResolvedValue({
-      userOpHash: '0xuserop',
+    // Re-bind after tests that override CAS behavior (e.g. late completion race).
+    prisma.transaction.updateMany.mockImplementation(async ({ data }: any) => {
+      prisma.transaction.update({ where: { id: 'tx-1' }, data });
+      return { count: 1 };
+    });
+    txApiKeyLockRows.mockResolvedValue([
+      {
+        user_id: 'user-1',
+        revoked: false,
+        frozen_at: null,
+        expires_at: null,
+        can_send_transaction: true,
+        direct_egress_policy_accepted_at: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+    // Default: destination protection OFF (legacy product semantics).
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue(null);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        $executeRaw: jest.fn().mockResolvedValue(undefined),
+        $queryRaw: txApiKeyLockRows,
+        apiKey: { findUnique: jest.fn() },
+        withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
+        transaction: {
+          findFirst: txFindFirst,
+          create: prisma.transaction.create,
+          update: prisma.transaction.update,
+          updateMany: prisma.transaction.updateMany,
+        },
+      }),
+    );
+    destinationPolicy.acquireUserDestinationLock.mockResolvedValue(undefined);
+    destinationPolicy.assertDestinationsAllowed.mockResolvedValue(undefined);
+    destinationPolicy.recordDeferredDenial.mockResolvedValue(undefined);
+    destinationPolicy.recordUnprovenAssetOutflowDenial.mockResolvedValue(undefined);
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({
+      success: true,
       transactionHash: '0xhash',
     });
     openfort.sendBackendTransaction.mockResolvedValue({ transactionHash: '0xhash' });
+    openfort.getTransactionReceipt.mockResolvedValue({ status: 'success' });
     openfort.verifyAgentKeyRegistration.mockResolvedValue({ registered: true });
     mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     eoaExecutionPolicy.assertAllowed.mockResolvedValue(undefined);
     transactionSimulation.assertSimulatable.mockResolvedValue(undefined);
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: dto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    // Default: real verifier (production evidence never verifies).
+    mockVerifyTransactionAssetFlow.mockImplementation((input: any) =>
+      realVerifyTransactionAssetFlow(input),
+    );
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: false, invoiceIds: [] });
+    config.get.mockImplementation((key: string) => {
+      if (key === 'simulation.rpcUrls.8453') return SIM_RPC;
+      return undefined;
+    });
     service = new TransactionsService(
       prisma,
       openfort,
       transactionPolicy,
+      billingDebt,
+      config,
+      destinationPolicy as any,
       eoaExecutionPolicy,
       transactionSimulation,
       undefined, // riskEvaluation
@@ -123,6 +389,12 @@ describe('TransactionsService', () => {
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
     await service.send('user-1', dto as any, apiKeyContext);
+
+    expect(prisma.transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userOpSuccess: true }),
+      }),
+    );
 
     expect(mockAssertSessionKeyAllowed).toHaveBeenCalledWith({
       userId: 'user-1',
@@ -180,6 +452,76 @@ describe('TransactionsService', () => {
         sponsorship: 'none',
       }),
     );
+  });
+
+  it('rejects a forged wallet ID owned by another user', async () => {
+    await expect(
+      service.send('user-1', { ...dto, walletId: 'wallet-other' } as any, apiKeyContext),
+    ).rejects.toThrow(NotFoundException);
+    expect(prisma.userWallet.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'wallet-other', userId: 'user-1' } }),
+    );
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('requires walletId when multiple active owned wallets exist', async () => {
+    prisma.userWallet.findMany.mockResolvedValueOnce([
+      wallet,
+      { ...wallet, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
+    ]);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      ConflictException,
+    );
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('ignores frozen and addressless wallets when implicitly selecting an eligible wallet', async () => {
+    const frozen = { ...wallet, id: 'frozen-wallet', frozenAt: new Date() };
+    const addressless = { ...wallet, id: 'addressless-wallet', walletAddress: null };
+    prisma.userWallet.findMany.mockResolvedValue([frozen, addressless, wallet] as any);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toBeDefined();
+    expect(prisma.userWallet.findMany).toHaveBeenCalled();
+  });
+
+  it.each([
+    { status: 'inactive', frozenAt: null },
+    { status: 'active', frozenAt: new Date() },
+  ])('preserves readiness/freeze errors for the lone wallet %#', async (walletState) => {
+    prisma.userWallet.findMany.mockResolvedValue([{ ...wallet, ...walletState }] as any);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('does not fall back to another wallet when selected wallet lacks chain authorization', async () => {
+    prisma.userWallet.findMany.mockResolvedValue([
+      { ...wallet, chainAuthorizations: [] },
+      { ...wallet, id: 'alternate', walletAddress: '0x4444444444444444444444444444444444444444' },
+    ] as any);
+    await expect(service.send('user-1', { ...dto, walletId: wallet.id } as any, apiKeyContext))
+      .rejects.toThrow('API access is not authorized for this chain');
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects same idempotency key reused with a different selected wallet', async () => {
+    const second = {
+      ...wallet,
+      id: 'wallet-2',
+      walletAddress: '0x4444444444444444444444444444444444444444',
+    };
+    prisma.userWallet.findMany.mockResolvedValueOnce([second]);
+    prisma.transaction.findFirst.mockResolvedValueOnce({
+      id: 'tx-existing',
+      status: 'pending',
+      txHash: null,
+      requestHash: 'hash-for-wallet-1',
+    });
+    await expect(
+      service.send('user-1', { ...dto, walletId: second.id } as any, apiKeyContext),
+    ).rejects.toThrow('Idempotency key was already used for a different request');
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('does not use paymaster sponsorship by default for session_key UserOps', async () => {
@@ -259,9 +601,9 @@ describe('TransactionsService', () => {
   });
 
   it('rejects eoa execution when the API key lacks eoa permission', async () => {
-    await expect(service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext)).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(
+      service.send('user-1', { ...dto, executionMode: 'eoa' } as any, apiKeyContext),
+    ).rejects.toThrow(ForbiddenException);
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(eoaExecutionPolicy.assertAllowed).not.toHaveBeenCalled();
@@ -556,7 +898,9 @@ describe('TransactionsService', () => {
 
   it('rejects failed transaction simulation before idempotency persistence or Openfort send', async () => {
     transactionSimulation.assertSimulatable.mockRejectedValueOnce(
-      new BadRequestException('Transaction simulation failed. Check target contract calldata and permissions.'),
+      new BadRequestException(
+        'Transaction simulation failed. Check target contract calldata and permissions.',
+      ),
     );
 
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
@@ -604,6 +948,7 @@ describe('TransactionsService', () => {
 
   it('returns existing transaction on idempotency collision without resending', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity,
       id: 'tx-existing',
       status: 'pending',
       txHash: null,
@@ -620,8 +965,55 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
+  it('accepts a pre-upgrade request fingerprint only for the same persisted wallet identity', async () => {
+    const legacyHash = hashRequest({
+      operationType: 'send', chainId: dto.chainId, executionMode: 'session_key',
+      sponsorship: 'none', interactions: dto.interactions,
+    });
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-existing', status: 'pending', txHash: null,
+      requestHash: legacyHash,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toMatchObject({
+      transactionId: 'tx-existing', status: 'pending',
+    });
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, walletAddress: '0x4444444444444444444444444444444444444444',
+      id: 'tx-other-wallet', status: 'pending', txHash: null, requestHash: legacyHash,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+  });
+
+  it('fails closed for null-hash rows without a persisted fingerprint and checks fingerprints when present', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, details: { walletId: wallet.id, executionMode: 'session_key' },
+      id: 'tx-existing', status: 'pending', txHash: null, requestHash: null,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-existing', status: 'pending', txHash: null, requestHash: null,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toMatchObject({
+      transactionId: 'tx-existing',
+    });
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity,
+      details: { ...existingSendIdentity.details, requestHash: 'fingerprint-for-different-request' },
+      id: 'tx-existing', status: 'pending', txHash: null, requestHash: null,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, walletAddress: '0x4444444444444444444444444444444444444444',
+      id: 'tx-other-wallet', status: 'pending', txHash: null, requestHash: null,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+  });
+
   it('returns an in-progress transaction on idempotency collision without resending', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity,
       id: 'tx-existing',
       status: 'submitting',
       txHash: null,
@@ -640,6 +1032,7 @@ describe('TransactionsService', () => {
 
   it('returns an existing transaction before Openfort send', async () => {
     prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity,
       id: 'tx-existing',
       status: 'pending',
       txHash: null,
@@ -656,12 +1049,15 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('returns the existing transaction after a concurrent idempotency insert race', async () => {
+  it('returns the existing transaction after a concurrent idempotency insert race via root prisma', async () => {
+    // Outer root miss → inner tx miss → P2002 aborts interactive tx → root re-read hits existing.
     prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      ...existingSendIdentity,
       id: 'tx-existing',
       status: 'submitting',
       txHash: null,
     });
+    txFindFirst.mockResolvedValue(null);
     prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
 
     const result = await service.send('user-1', dto as any, apiKeyContext);
@@ -671,6 +1067,58 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'submitting',
     });
+    expect(txFindFirst).toHaveBeenCalledTimes(1);
+    // Recovery must use root prisma findFirst (outer + post-P2002), not the aborted txClient.
+    expect(prisma.transaction.findFirst).toHaveBeenCalledTimes(2);
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('uses a persisted fingerprint for nullable-hash rows found inside the transaction', async () => {
+    prisma.transaction.findFirst.mockResolvedValue(null);
+    txFindFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-existing', status: 'pending', txHash: null, requestHash: null,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toMatchObject({
+      transactionId: 'tx-existing', status: 'pending',
+    });
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+
+    txFindFirst.mockResolvedValue({
+      ...existingSendIdentity,
+      details: { ...existingSendIdentity.details, requestHash: 'different-request-proof' },
+      id: 'tx-existing', status: 'pending', txHash: null, requestHash: null,
+    });
+    prisma.transaction.findFirst.mockResolvedValue(null);
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
+    prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      ...existingSendIdentity,
+      id: 'tx-existing',
+      status: 'submitting',
+      txHash: null,
+      requestHash: 'different-request',
+    });
+    txFindFirst.mockResolvedValue(null);
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(prisma.transaction.findFirst).toHaveBeenCalledTimes(2);
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rethrows P2002 when no existing transaction is found after rollback', async () => {
+    prisma.transaction.findFirst.mockResolvedValue(null);
+    txFindFirst.mockResolvedValue(null);
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      code: 'P2002',
+    });
+    expect(prisma.transaction.findFirst).toHaveBeenCalledTimes(2);
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -685,6 +1133,7 @@ describe('TransactionsService', () => {
     'returns existing $status transaction on idempotency collision without resending',
     async ({ status, txHash, expectedHash }) => {
       prisma.transaction.findFirst.mockResolvedValue({
+        ...existingSendIdentity,
         id: 'tx-existing',
         status,
         txHash,
@@ -735,7 +1184,11 @@ describe('TransactionsService', () => {
   });
 
   it('stores pending status when transaction hash is not available yet', async () => {
-    openfort.sendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: null });
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({
+      success: null,
+      transactionHash: null,
+    });
     prisma.transaction.update.mockResolvedValue({
       id: 'tx-1',
       status: 'pending',
@@ -747,13 +1200,74 @@ describe('TransactionsService', () => {
       transactionHash: null,
       status: 'pending',
     });
-    expect(prisma.transaction.update).toHaveBeenCalledWith({
-      where: { id: 'tx-1' },
-      data: expect.objectContaining({
-        txHash: null,
-        status: 'pending',
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'pending' }),
       }),
+    );
+  });
+
+  it('does not confirm a reverted UserOperation inside a successful bundle receipt', async () => {
+    openfort.submitUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    openfort.waitForUserOperationReceipt.mockResolvedValue({
+      success: false,
+      transactionHash: '0xbundle',
     });
+    openfort.getTransactionReceipt.mockResolvedValue({ status: 'success' });
+    prisma.transaction.update.mockResolvedValue({
+      id: 'tx-1',
+      status: 'unknown',
+      txHash: '0xbundle',
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1',
+      transactionHash: '0xbundle',
+      status: 'unknown',
+    });
+    expect(prisma.transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'unknown',
+          txHash: '0xbundle',
+          userOpSuccess: false,
+          details: expect.objectContaining({ userOperationSuccess: false }),
+        }),
+      }),
+    );
+    const completionWrite = prisma.transaction.updateMany.mock.calls.find(
+      (call: any[]) => call[0].data.userOpSuccess === false,
+    );
+    expect(completionWrite?.[0].where).toEqual(
+      expect.objectContaining({ userOpSuccess: null, billingReconciledAt: null }),
+    );
+  });
+
+  it('does not overwrite reconciler-written typed success during a late completion race', async () => {
+    prisma.transaction.updateMany.mockImplementation(async ({ data }: any) => {
+      if (data.userOpSuccess !== undefined) return { count: 0 };
+      prisma.transaction.update({ where: { id: 'tx-1' }, data });
+      return { count: 1 };
+    });
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toEqual({
+      transactionId: 'tx-1',
+      transactionHash: null,
+      status: 'submitting',
+    });
+
+    const completionWrite = prisma.transaction.updateMany.mock.calls.find(
+      (call: any[]) => call[0].data.userOpSuccess !== undefined,
+    );
+    expect(completionWrite?.[0].where).toEqual(
+      expect.objectContaining({
+        userOpSuccess: null,
+        billingReconciledAt: null,
+      }),
+    );
+    expect(prisma.transaction.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userOpSuccess: true }) }),
+    );
   });
 
   it('returns a safe status response for an owned transaction', async () => {
@@ -850,5 +1364,1021 @@ describe('TransactionsService', () => {
     await expect(service.getStatus('user-1', 'tx-other', apiKeyContext)).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  // ── Billing debt + asset-flow gate (Phase 2 evidence) ──────────────────────
+
+  it('requires direct-egress reauthorization before a new external transfer', async () => {
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'reauth-external-1',
+    };
+
+    await expect(
+      service.send('user-1', externalDto as any, {
+        ...apiKeyContext,
+        directEgressPolicyAcceptedAt: null,
+      }),
+    ).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED },
+    });
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('enforces destination allowlist on external transfer before create/Openfort', async () => {
+    destinationPolicy.assertDestinationsAllowed.mockRejectedValue(
+      new ForbiddenException({
+        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        message: 'Withdrawal address is not allowlisted',
+      }),
+    );
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'dest-deny-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED },
+    });
+    expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  // ── BILL-016 conservative destination protection ───────────────────────────
+
+  function enableDestinationProtection() {
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue({
+      requireAddressAllowlist: true,
+    });
+  }
+
+  it('protection ON: blocks finite approval with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-approve-1',
+    };
+
+    await expect(service.send('user-1', approveDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(destinationPolicy.recordUnprovenAssetOutflowDenial).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        chainId: 8453,
+        executionMode: 'session_key',
+        interactionCount: 1,
+        provenIntentCount: 0,
+        notProvenCount: 1,
+        notProvenReasons: { unknown_selector: 1 },
+      }),
+    );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks unknown selector with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: '0xdeadbeef', value: '0' }],
+      idempotencyKey: 'prot-unknown-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks empty calldata contract call with no Transaction/broadcast', async () => {
+    enableDestinationProtection();
+    const emptyDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: '0x', value: '0' }],
+      idempotencyKey: 'prot-empty-1',
+    };
+
+    await expect(service.send('user-1', emptyDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks router/multicall-shaped unknown execute selector', async () => {
+    enableDestinationProtection();
+    // multicall(bytes[])-like selector 0xac9650d8 is not a proven direct transfer.
+    const multicallDto = {
+      ...dto,
+      interactions: [
+        {
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xac9650d8' + '0'.repeat(128),
+          value: '0',
+        },
+      ],
+      idempotencyKey: 'prot-multicall-1',
+    };
+
+    await expect(service.send('user-1', multicallDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks direct transfer + unknown mixed batch (no partial allow)', async () => {
+    enableDestinationProtection();
+    const mixedDto = {
+      ...dto,
+      interactions: [
+        { to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' },
+        { to: TOKEN, data: '0xdeadbeef', value: '0' },
+      ],
+      idempotencyKey: 'prot-mixed-1',
+    };
+
+    await expect(service.send('user-1', mixedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    // Must not destination-gate only the proven half and then broadcast the rest.
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection ON: blocks unproven self-transfer and non-owner transferFrom', async () => {
+    enableDestinationProtection();
+    const selfDto = {
+      ...dto,
+      interactions: [
+        { to: TOKEN, data: erc20TransferData(wallet.walletAddress), value: '0' },
+      ],
+      idempotencyKey: 'prot-self-1',
+    };
+    await expect(service.send('user-1', selfDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+
+    const foreignFrom = '0x4444444444444444444444444444444444444444';
+    const tfData = encodeFunctionData({
+      abi: [
+        {
+          type: 'function',
+          name: 'transferFrom',
+          inputs: [
+            { name: 'from', type: 'address' },
+            { name: 'to', type: 'address' },
+            { name: 'amount', type: 'uint256' },
+          ],
+          outputs: [{ type: 'bool' }],
+          stateMutability: 'nonpayable',
+        },
+      ],
+      functionName: 'transferFrom',
+      args: [foreignFrom as Hex, EXTERNAL as Hex, 1n],
+    });
+    const nonOwnerDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: tfData, value: '0' }],
+      idempotencyKey: 'prot-nonowner-tf-1',
+    };
+    await expect(service.send('user-1', nonOwnerDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('protection OFF: preserves empty calldata / approval behavior (no unproven block)', async () => {
+    prisma.withdrawalPolicy.findUnique.mockResolvedValue({
+      requireAddressAllowlist: false,
+    });
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-off-approve-1',
+    };
+
+    await service.send('user-1', approveDto as any, apiKeyContext);
+
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('protection ON: allows fully proven direct transfer through destination gate (regression)', async () => {
+    enableDestinationProtection();
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'prot-on-transfer-ok-1',
+    };
+
+    await service.send('user-1', externalDto as any, apiKeyContext);
+
+    expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('protection ON: unproven denial creates no Transaction even if outer race-enabled', async () => {
+    // Outer sees protection off; inner (under lock) sees protection on → fail closed.
+    prisma.withdrawalPolicy.findUnique
+      .mockResolvedValueOnce(null) // outer
+      .mockResolvedValueOnce({ requireAddressAllowlist: true }); // inner
+
+    const approveDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'prot-race-inner-1',
+    };
+
+    await expect(service.send('user-1', approveDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+    });
+    expect(destinationPolicy.acquireUserDestinationLock).toHaveBeenCalled();
+    expect(destinationPolicy.recordUnprovenAssetOutflowDenial).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        chainId: 8453,
+        notProvenCount: 1,
+        notProvenReasons: { unknown_selector: 1 },
+      }),
+    );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('outer preflight pass + inner deferred deny: records audit once after TX, stable 403, no create/provider', async () => {
+    const { DeferredDestinationPolicyDenial } =
+      await import('../withdrawal-destination/withdrawal-destination-policy.service');
+    const httpEx = new ForbiddenException({
+      code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+      message: 'Withdrawal address is not allowlisted',
+    });
+    const deferred = new DeferredDestinationPolicyDenial(httpEx, {
+      actorType: 'api_key',
+      userId: 'user-1',
+      apiKeyId: 'api-key-1',
+      reason: 'Withdrawal address is not allowlisted',
+      metadata: {
+        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        apiKeyPrefix,
+      },
+    });
+    // Outer preflight succeeds; inner create TX defers deny (allowlist raced away).
+    destinationPolicy.assertDestinationsAllowed
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(deferred);
+
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'dest-deferred-inner-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED },
+    });
+
+    expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledTimes(2);
+    expect(destinationPolicy.recordDeferredDenial).toHaveBeenCalledTimes(1);
+    expect(destinationPolicy.recordDeferredDenial).toHaveBeenCalledWith(deferred);
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('re-reads API key reauth state inside create TX and blocks create when revoked', async () => {
+    txApiKeyLockRows.mockResolvedValue([
+      {
+        user_id: 'user-1',
+        revoked: true,
+        frozen_at: null,
+        expires_at: null,
+        can_send_transaction: true,
+        direct_egress_policy_accepted_at: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'in-tx-reauth-revoked-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED },
+    });
+    expect(txApiKeyLockRows).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('re-reads API key reauth state inside create TX and blocks when acceptance cleared', async () => {
+    txApiKeyLockRows.mockResolvedValue([
+      {
+        user_id: 'user-1',
+        revoked: false,
+        frozen_at: null,
+        expires_at: null,
+        can_send_transaction: true,
+        direct_egress_policy_accepted_at: null,
+      },
+    ]);
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'in-tx-reauth-cleared-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.API_KEY_DIRECT_EGRESS_REAUTH_REQUIRED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('blocks debt + external_transfer without evidence simulation/create/Openfort', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'debt-external-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED },
+    });
+
+    expect(billingDebt.getDebt).toHaveBeenCalled();
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(mockVerifyTransactionAssetFlow).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('debt + unknown with missing simulation.rpcUrls fails closed as UNVERIFIABLE (no public http fallback)', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    config.get.mockImplementation(() => undefined);
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-missing-rpc-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(mockVerifyTransactionAssetFlow).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Transaction send blocked by billing debt asset-flow gate',
+        reason: 'missing_simulation_rpc',
+        chainId: 8453,
+      }),
+    );
+  });
+
+  it('debt path rejects non-https simulation.rpcUrls at resolve time', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    config.get.mockImplementation((key: string) => {
+      if (key === 'simulation.rpcUrls.8453') return 'http://insecure.example.invalid';
+      return undefined;
+    });
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-http-rpc-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+  });
+
+  it('debt + unknown runs evidence simulation+verifier and rejects production unknown', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-unknown-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: unknownDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rpcUrl: SIM_RPC,
+        ownerAddress: wallet.walletAddress,
+        chainId: 8453,
+        executionMode: 'session_key',
+        interactions: unknownDto.interactions,
+      }),
+    );
+    expect(mockVerifyTransactionAssetFlow).toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('debt + retained runs evidence path and rejects production non-atomic unknown', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const retainedDto = {
+      ...dto,
+      interactions: [
+        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+      ],
+      idempotencyKey: 'debt-retained-prod-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: retainedDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalled();
+    expect(mockVerifyTransactionAssetFlow).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('allows debt path only with synthetic verified proof bound to exact plan', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const retainedDto = {
+      ...dto,
+      interactions: [
+        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+      ],
+      idempotencyKey: 'debt-retained-verified-1',
+    };
+    const evidence = mockProductionEvidence({
+      interactions: retainedDto.interactions,
+      ownerAddress: wallet.walletAddress,
+    });
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(evidence);
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions: retainedDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    const result = await service.send('user-1', retainedDto as any, apiKeyContext);
+
+    expect(result).toEqual({
+      transactionId: 'tx-1',
+      transactionHash: '0xhash',
+      status: 'confirmed',
+    });
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledTimes(1);
+    expect(mockVerifyTransactionAssetFlow).toHaveBeenCalledTimes(1);
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('fail-closes when simulation RPC is missing under debt', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    config.get.mockReturnValue(undefined);
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-missing-rpc-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('fail-closes when evidence simulation provider fails under debt', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    transactionSimulation.simulateAssetFlowEvidence.mockRejectedValue(
+      new AssetFlowSimulationUnavailableError(),
+    );
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-sim-fail-1',
+    };
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(mockVerifyTransactionAssetFlow).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('fail-closes when verifier reports external_transfer under debt', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const unknownDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 100n), value: '0' }],
+      idempotencyKey: 'debt-verify-external-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: unknownDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue({
+      status: 'external_transfer',
+      rule: 'sim_external',
+      reason: 'outflow',
+      simulationMode: 'calibur_atomic',
+      block: null,
+    });
+
+    await expect(service.send('user-1', unknownDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('preserves no-debt external_transfer without evidence simulation', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: false, invoiceIds: [] });
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'no-debt-external-1',
+    };
+
+    const result = await service.send('user-1', externalDto as any, apiKeyContext);
+
+    expect(result.transactionId).toBe('tx-1');
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(mockVerifyTransactionAssetFlow).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalled();
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('classifies EOA sends with agentWalletAddress as evidence owner', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const retainedToAgent = {
+      ...dto,
+      executionMode: 'eoa' as const,
+      interactions: [
+        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.agentWalletAddress), value: '0' },
+      ],
+      idempotencyKey: 'eoa-retained-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: retainedToAgent.interactions,
+        ownerAddress: wallet.agentWalletAddress,
+        executionMode: 'eoa',
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions: retainedToAgent.interactions,
+        ownerAddress: wallet.agentWalletAddress,
+        executionMode: 'eoa',
+      }),
+    );
+
+    await expect(
+      service.send('user-1', retainedToAgent as any, {
+        ...apiKeyContext,
+        canUseEoaExecution: true,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ transactionId: 'tx-1' }));
+
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerAddress: wallet.agentWalletAddress,
+        executionMode: 'eoa',
+      }),
+    );
+
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const externalFromEoa = {
+      ...dto,
+      executionMode: 'eoa' as const,
+      interactions: [{ to: TOKEN, data: erc20TransferData(wallet.walletAddress), value: '0' }],
+      idempotencyKey: 'eoa-external-1',
+    };
+    await expect(
+      service.send('user-1', externalFromEoa as any, {
+        ...apiKeyContext,
+        canUseEoaExecution: true,
+      }),
+    ).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED },
+    });
+    // Second call is static external — no additional evidence simulation.
+    expect(openfort.sendBackendTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('bypasses classifier/debt/evidence gate on idempotent hit', async () => {
+    const interactions = [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }];
+    const requestHash = hashRequest({
+      operationType: 'send', chainId: dto.chainId, walletId: wallet.id,
+      walletAddress: wallet.walletAddress, executionMode: 'session_key', sponsorship: 'none', interactions,
+    });
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity,
+      details: { ...existingSendIdentity.details, requestHash },
+      id: 'tx-existing',
+      status: 'pending',
+      txHash: null,
+    });
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+
+    const result = await service.send(
+      'user-1',
+      {
+        ...dto,
+        interactions,
+      } as any,
+      apiKeyContext,
+    );
+
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: null,
+      status: 'pending',
+    });
+    expect(billingDebt.getDebt).not.toHaveBeenCalled();
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('inner recheck rejects when outer had no debt but inner finds debt without proof', async () => {
+    billingDebt.getDebt
+      .mockResolvedValueOnce({ hasDebt: false, invoiceIds: [] })
+      .mockResolvedValueOnce({ hasDebt: true, invoiceIds: ['inv-race'] });
+    const externalDto = {
+      ...dto,
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+      idempotencyKey: 'debt-tx-recheck-1',
+    };
+
+    await expect(service.send('user-1', externalDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+
+    expect(billingDebt.getDebt).toHaveBeenCalledTimes(2);
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('inner recheck accepts outer debt with bound verified proof without RPC', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const retainedDto = {
+      ...dto,
+      interactions: [
+        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+      ],
+      idempotencyKey: 'debt-inner-bound-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: retainedDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions: retainedDto.interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).resolves.toEqual(
+      expect.objectContaining({ transactionId: 'tx-1' }),
+    );
+
+    // Outer sim once; inner must not call simulation again.
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledTimes(1);
+    expect(billingDebt.getDebt).toHaveBeenCalledTimes(2);
+    expect(prisma.transaction.create).toHaveBeenCalled();
+  });
+
+  it('inner recheck rejects when bound proof plan digest no longer matches interactions', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-digest-mismatch-1',
+    };
+    // Evidence/digest for a different plan than the request will carry.
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: [{ to: TOKEN, data: erc20ApproveData(EXTERNAL, 1n), value: '0' }],
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue({
+      status: 'verified',
+      rule: 'test_verified',
+      reason: 'synthetic',
+      simulationMode: 'calibur_atomic',
+      block: null,
+    });
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('inner recheck rejects when bound proof owner/mode/chain mismatch', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-owner-mismatch-1',
+    };
+    const wrongOwner = '0x3333333333333333333333333333333333333333';
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions,
+        ownerAddress: wrongOwner,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue({
+      status: 'verified',
+      rule: 'test_verified',
+      reason: 'synthetic',
+      simulationMode: 'calibur_atomic',
+      block: null,
+    });
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects full interaction reorder against bound plan digest', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const a = { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' };
+    const b = { to: TOKEN, data: erc20ApproveData(EXTERNAL, 1n), value: '0' };
+    const orderedDto = {
+      ...dto,
+      interactions: [a, b],
+      idempotencyKey: 'debt-reorder-1',
+    };
+    // Evidence sealed for reverse order.
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions: [b, a],
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue({
+      status: 'verified',
+      rule: 'test_verified',
+      reason: 'synthetic',
+      simulationMode: 'calibur_atomic',
+      block: null,
+    });
+
+    await expect(service.send('user-1', orderedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects mock verified + eth_simulateV1_non_atomic (outer defense-in-depth)', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-non-atomic-verified-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue({
+      status: 'verified',
+      rule: 'spoofed_verified',
+      reason: 'mock non-atomic verified',
+      simulationMode: 'eth_simulateV1_non_atomic',
+      block: null,
+    });
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects evidence with missing binding even when verifier returns calibur_atomic verified', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-missing-binding-1',
+    };
+    const evidence = mockProductionEvidence({
+      interactions,
+      ownerAddress: wallet.walletAddress,
+    });
+    delete (evidence as any).binding;
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(evidence);
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects evidence binding missing planDigest without context fallback', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-missing-digest-field-1',
+    };
+    const evidence = mockProductionEvidence({
+      interactions,
+      ownerAddress: wallet.walletAddress,
+    });
+    (evidence.binding as any).planDigest = '';
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(evidence);
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects evidence binding chainId mismatch without context fallback', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-binding-chain-mismatch-1',
+    };
+    const evidence = mockProductionEvidence({
+      interactions,
+      ownerAddress: wallet.walletAddress,
+    });
+    (evidence.binding as any).chainId = 1;
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(evidence);
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects evidence binding executionMode mismatch without context fallback', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-binding-mode-mismatch-1',
+    };
+    const evidence = mockProductionEvidence({
+      interactions,
+      ownerAddress: wallet.walletAddress,
+      executionMode: 'session_key',
+    });
+    (evidence.binding as any).executionMode = 'eoa';
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(evidence);
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts exact calibur_atomic binding and inner recheck does not RPC', async () => {
+    billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+    const interactions = [
+      { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.walletAddress), value: '0' },
+    ];
+    const retainedDto = {
+      ...dto,
+      interactions,
+      idempotencyKey: 'debt-calibur-exact-1',
+    };
+    transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
+      mockProductionEvidence({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+    mockVerifyTransactionAssetFlow.mockReturnValue(
+      mockVerifiedVerdict({
+        interactions,
+        ownerAddress: wallet.walletAddress,
+      }),
+    );
+
+    await expect(service.send('user-1', retainedDto as any, apiKeyContext)).resolves.toEqual(
+      expect.objectContaining({ transactionId: 'tx-1', status: 'confirmed' }),
+    );
+    expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledTimes(1);
+    expect(billingDebt.getDebt).toHaveBeenCalledTimes(2);
+    expect(prisma.transaction.create).toHaveBeenCalled();
+    expect(openfort.sendUserOperation).toHaveBeenCalled();
+  });
+
+  it('returns 503 when billing debt check fails (fail-closed)', async () => {
+    billingDebt.getDebt.mockRejectedValue(new Error('db unavailable'));
+
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE },
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+
+    expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 });

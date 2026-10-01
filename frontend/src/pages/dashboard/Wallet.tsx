@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccountTypeEnum,
   RecoveryMethod,
@@ -74,7 +74,6 @@ import {
   AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS,
   BALANCE_CHAIN_STORAGE_KEY,
   RAW_KEY_NOTICE_TTL_MS,
-  WithdrawSuccess,
   assertWebCryptoAvailable,
   delay,
   formatAuthorizationExpiry,
@@ -85,7 +84,8 @@ import {
   getStoredChainId,
   parseWithdrawalAmount,
   persistChainId,
-  resolveEmbeddedWallet,
+  type WithdrawError,
+  type WithdrawSuccess,
 } from './wallet-helpers';
 
 export default function WalletPage() {
@@ -99,6 +99,10 @@ export default function WalletPage() {
     return token;
   }, [getAccessToken]);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [wallets, setWallets] = useState<WalletInfo[]>([]);
+  const [selectedWalletId, setSelectedWalletId] = useState('');
+  const walletList = wallets.length ? wallets : (wallet ? [wallet] : []);
+  const selectedWallet = walletList.find((item) => item.id === selectedWalletId) ?? (selectedWalletId ? null : walletList[0] ?? null);
   const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState(() =>
     getStoredChainId(BALANCE_CHAIN_STORAGE_KEY, DEFAULT_CHAIN_ID),
@@ -106,26 +110,26 @@ export default function WalletPage() {
   const [agentChainId, setAgentChainId] = useState(() =>
     getStoredChainId(AGENT_CHAIN_STORAGE_KEY, DEFAULT_CHAIN_ID),
   );
-  const selectedAuthorization = wallet?.chainAuthorizations.find(
+  const selectedAuthorization = selectedWallet?.chainAuthorizations.find(
     (authorization) => authorization.chainId === agentChainId,
   );
   const selectedAuthorizationExpiry = formatAuthorizationExpiry(selectedAuthorization?.expiresAt);
-  const pendingAuthorization = wallet?.chainAuthorizations.find(
+  const pendingAuthorization = selectedWallet?.chainAuthorizations.find(
     (authorization) =>
       authorization.status === 'pending_registration' && authorization.registrationTxHash,
   );
   const hasRegisteredAuthorization =
-    wallet?.chainAuthorizations.some((authorization) => authorization.status === 'registered') ??
+    selectedWallet?.chainAuthorizations.some((authorization) => authorization.status === 'registered') ??
     false;
   const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
-  const walletExplorerUrl = getExplorerAddressUrl(agentChainId, wallet?.walletAddress);
+  const walletExplorerUrl = getExplorerAddressUrl(agentChainId, selectedWallet?.walletAddress);
   const pendingAuthorizationExplorerUrl = getExplorerTransactionUrl(
     agentRegistrationChainId,
     pendingAuthorization?.registrationTxHash,
   );
   const agentGasHelpUrl = getChainGasHelpUrl(agentChainId);
   const authorizedChainIdsText =
-    wallet?.chainAuthorizations.map((authorization) => authorization.chainId).join(', ') ?? '';
+    selectedWallet?.chainAuthorizations.map((authorization) => authorization.chainId).join(', ') ?? '';
   const publicClient = usePublicClient({ chainId: agentRegistrationChainId });
   const { signAuthorization: signOpenfortAuthorization } = use7702Authorization();
   const signerChainId = getOpenfortSignerChainId(agentChainId);
@@ -147,7 +151,7 @@ export default function WalletPage() {
   const [token, setToken] = useState<WithdrawalToken>('USDC');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<WithdrawSuccess | null>(null);
-  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [withdrawError, setWithdrawError] = useState<WithdrawError | null>(null);
   const [withdrawalAllowlist, setWithdrawalAllowlist] =
     useState<ListWithdrawalAddressesResponse | null>(null);
   const [withdrawalAllowlistLoading, setWithdrawalAllowlistLoading] = useState(false);
@@ -160,6 +164,13 @@ export default function WalletPage() {
     : null;
 
   const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [addWalletPassword, setAddWalletPassword] = useState('');
+  const [addWalletPasswordConfirm, setAddWalletPasswordConfirm] = useState('');
+  const [showAddWalletForm, setShowAddWalletForm] = useState(false);
+  const [pendingCreatedAccount, setPendingCreatedAccount] = useState<{ address: Address; accountId: string } | null>(null);
+  const pendingCreatedAccountRef = useRef<{ address: Address; accountId: string } | null>(null);
+  const createInFlightRef = useRef(false);
+  const createOutcomeUnknownRef = useRef(false);
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
   const [agentExpiryLocal, setAgentExpiryLocal] = useState(getDefaultAgentExpiryLocal);
   const [walletSetupLoading, setWalletSetupLoading] = useState(false);
@@ -188,7 +199,7 @@ export default function WalletPage() {
 
       while (shouldContinue()) {
         try {
-          return await markAgentRegistrationResult(getToken, { chainId, txHash, status });
+          return await markAgentRegistrationResult(getToken, { chainId, txHash, status, walletId: selectedWalletId });
         } catch (err: unknown) {
           if (
             status === 'registration_failed' ||
@@ -202,7 +213,7 @@ export default function WalletPage() {
 
       return null;
     },
-    [getToken],
+    [getToken, selectedWalletId],
   );
 
   const checkPendingAgentRegistration = useCallback(
@@ -249,7 +260,11 @@ export default function WalletPage() {
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
         }
-        setWallet(result.wallet);
+        const list = result.wallets?.length ? result.wallets : [result.wallet];
+        setWallets(list);
+        const current = list.find((item) => item.isDefault) ?? result.wallet;
+        setWallet(current);
+        setSelectedWalletId(current.id);
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
         setError(getApiErrorMessage(err));
@@ -275,7 +290,7 @@ export default function WalletPage() {
   }, [apiKeyDisplay]);
 
   useEffect(() => {
-    if (!user || !wallet?.walletAddress) {
+    if (!user || !selectedWallet?.walletAddress) {
       setBalances(null);
       setBalancesError(null);
       return;
@@ -284,7 +299,7 @@ export default function WalletPage() {
     const controller = new AbortController();
     setBalancesLoading(true);
     setBalancesError(null);
-    getBalancesAuth(getToken, selectedChainId, controller.signal)
+    getBalancesAuth(getToken, selectedChainId, controller.signal, selectedWallet.id)
       .then((data) => {
         if (!controller.signal.aborted) {
           setBalances(data.chains);
@@ -301,11 +316,11 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [user, selectedChainId, wallet, getToken, balanceRefreshNonce]);
+  }, [user, selectedChainId, selectedWallet?.id, selectedWallet?.walletAddress, getToken, balanceRefreshNonce]);
 
   const loadWithdrawalAllowlist = useCallback(
     async (signal?: AbortSignal) => {
-      if (!user || !wallet?.walletAddress) {
+      if (!user || !selectedWallet?.walletAddress) {
         setWithdrawalAllowlist(null);
         setWithdrawalAllowlistError(null);
         return;
@@ -314,7 +329,7 @@ export default function WalletPage() {
       setWithdrawalAllowlistLoading(true);
       setWithdrawalAllowlistError(null);
       try {
-        const data = await listWithdrawalAddressesAuth(getToken, signal);
+        const data = await listWithdrawalAddressesAuth(getToken, signal, selectedWallet?.id);
         if (!signal?.aborted) setWithdrawalAllowlist(data);
       } catch (err: unknown) {
         if (!signal?.aborted) setWithdrawalAllowlistError(getApiErrorMessage(err));
@@ -322,7 +337,7 @@ export default function WalletPage() {
         if (!signal?.aborted) setWithdrawalAllowlistLoading(false);
       }
     },
-    [getToken, user, wallet?.walletAddress],
+    [getToken, user, selectedWallet?.walletAddress, selectedWallet?.id],
   );
 
   useEffect(() => {
@@ -365,7 +380,9 @@ export default function WalletPage() {
         );
         if (cancelled) return;
         if (result) {
-          setWallet(result.wallet);
+          const updated = result.wallets?.find((item) => item.id === selectedWalletId) ?? (result.wallet.id === selectedWalletId ? result.wallet : null);
+          if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
+          setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
           setAgentRegistrationCheckStatus('idle');
           return;
         }
@@ -388,6 +405,7 @@ export default function WalletPage() {
     };
   }, [
     user,
+    selectedWalletId,
     publicClient,
     pendingAuthorization?.chainId,
     pendingAuthorization?.registrationTxHash,
@@ -402,7 +420,9 @@ export default function WalletPage() {
     try {
       const result = await checkPendingAgentRegistration(AGENT_REGISTRATION_MANUAL_CHECK_MS);
       if (result) {
-        setWallet(result.wallet);
+        const updated = result.wallets?.find((item) => item.id === selectedWalletId) ?? (result.wallet.id === selectedWalletId ? result.wallet : null);
+        if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
+        setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
         setAgentRegistrationCheckStatus('idle');
         setWalletSetupSuccess('API access authorization confirmed.');
         return;
@@ -427,7 +447,8 @@ export default function WalletPage() {
       const baseUnits = parseWithdrawalAmount(amount, token);
       const chainId = selectedChainId;
       const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
-      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken);
+      if (!selectedWallet?.id) throw new Error('Select the wallet to withdraw from.');
+      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken, selectedWallet.id);
       setWithdrawResult({
         message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
         transactionHash: result.transactionHash,
@@ -436,7 +457,12 @@ export default function WalletPage() {
       setTo('');
       setAmount('');
     } catch (err: unknown) {
-      setWithdrawError(getApiErrorMessage(err));
+      // Only treat the explicit billing block code as unpaid-invoice guidance.
+      // Network/unknown failures keep the generic message with no Billing CTA.
+      setWithdrawError({
+        message: getApiErrorMessage(err),
+        billingBlocked: hasApiErrorCode(err, 'BILLING_OUTBOUND_BLOCKED'),
+      });
     } finally {
       setWithdrawLoading(false);
     }
@@ -489,41 +515,83 @@ export default function WalletPage() {
     }
   }
 
-  async function handleConnectWallet(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleConnectWallet(password: string, createNew: boolean): Promise<boolean> {
+    if (createInFlightRef.current) return false;
+    const knownCreatedAccount = pendingCreatedAccountRef.current ?? pendingCreatedAccount;
+    const creatingNew = createNew || Boolean(knownCreatedAccount);
+    if (createOutcomeUnknownRef.current) {
+      setWalletSetupError('Openfort account creation could not be confirmed. Do not retry account creation; contact support.');
+      return false;
+    }
+    createInFlightRef.current = true;
     setWalletSetupLoading(true);
     setWalletSetupError(null);
     setWalletSetupSuccess(null);
 
     try {
       assertWebCryptoAvailable();
-      if (recoveryPassword.length < 8) {
+      if (password.length < 8) {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
       }
 
+      if (!createNew && selectedWallet?.provisioningStatus && selectedWallet.provisioningStatus !== 'completed') throw new Error('This wallet has a provisioning attempt in progress or under review. Do not retry this wallet; wait for review.');
       let createdAccount: unknown;
       let refreshedAccounts: unknown[] | undefined;
-      if (!embeddedWallet.address) {
-        createdAccount = await embeddedWallet.create({
+      if (creatingNew && !knownCreatedAccount) {
+        try {
+          createdAccount = await embeddedWallet.create({
           chainId: signerChainId,
           accountType: AccountTypeEnum.EOA,
           recoveryMethod: RecoveryMethod.PASSWORD,
-          password: recoveryPassword,
-        });
+          password,
+          });
+        } catch (error) {
+          createOutcomeUnknownRef.current = true;
+          throw new Error(`Openfort could not confirm account creation: ${getApiErrorMessage(error)}. Do not retry account creation; contact support.`);
+        }
+        const providerCreated = createdAccount as { id?: string; accountId?: string; address?: string; accounts?: Array<{ id?: string; address?: string }> } | undefined;
+        const createdAddress = providerCreated?.address ?? providerCreated?.accounts?.[0]?.address;
+        const createdId = providerCreated?.id ?? providerCreated?.accountId ?? providerCreated?.accounts?.[0]?.id;
+        if (!createdAddress || !createdId || !/^0x[0-9a-fA-F]{40}$/.test(createdAddress)) {
+          createOutcomeUnknownRef.current = true;
+          throw new Error('Openfort did not return a complete new account identity. Do not retry account creation; contact support.');
+        }
+        const identity = { address: createdAddress as Address, accountId: createdId };
+        pendingCreatedAccountRef.current = identity;
+        setPendingCreatedAccount(identity);
+      }
+      try {
         refreshedAccounts = await openfort.updateEmbeddedAccounts({ silent: true });
+      } catch (error) {
+        throw new Error(`Openfort could not refresh embedded accounts: ${getApiErrorMessage(error)}. The created account identity is retained; retry to continue without creating another account.`);
       }
 
-      const { address, accountId } = resolveEmbeddedWallet(
-        createdAccount,
-        embeddedWallet,
-        refreshedAccounts,
-      );
-      await embeddedWallet.setActive({
-        address,
-        chainId: signerChainId,
-        recoveryMethod: RecoveryMethod.PASSWORD,
-        password: recoveryPassword,
-      });
+      const refreshedMatch = (refreshedAccounts ?? []).map((value) => value as { id?: string; accountId?: string; address?: string }).filter((item) => item.address);
+      let address: Address;
+      let accountId: string | undefined;
+      if (creatingNew && knownCreatedAccount) {
+        address = knownCreatedAccount.address; accountId = knownCreatedAccount.accountId;
+        const found = refreshedMatch.find((item) => item.address?.toLowerCase() === address.toLowerCase() && (item.id ?? item.accountId) === accountId);
+        if (!found) throw new Error('The newly created account is not yet visible in Openfort. Do not create another wallet; refresh and try connecting again.');
+      } else if (creatingNew) {
+        const created = createdAccount as { id?: string; accountId?: string; address?: string; accounts?: Array<{ id?: string; address?: string }> } | undefined;
+        const createdAddress = created?.address ?? created?.accounts?.[0]?.address;
+        const createdId = created?.id ?? created?.accountId ?? created?.accounts?.[0]?.id;
+        if (!createdAddress || !createdId) throw new Error('Openfort did not return a complete new account identity. Do not create another account; refresh and contact support if it remains unavailable.');
+        const exact = refreshedMatch.find((item) => item.address?.toLowerCase() === createdAddress.toLowerCase() && (item.id ?? item.accountId) === createdId);
+        if (!exact) throw new Error('Openfort could not verify the newly created account. Do not create another account; refresh and contact support if it remains unavailable.');
+        address = exact.address as Address; accountId = exact.id ?? exact.accountId;
+        const identity = { address, accountId: accountId! };
+        pendingCreatedAccountRef.current = identity;
+        setPendingCreatedAccount(identity);
+      } else {
+        const selectedAddress = selectedWallet?.walletAddress ?? embeddedWallet.address;
+        const requested = refreshedMatch.filter((item) => item.address?.toLowerCase() === selectedAddress?.toLowerCase() && (!selectedWallet?.openfortAccountId || (item.id ?? item.accountId) === selectedWallet.openfortAccountId));
+        if (requested.length !== 1) throw new Error('Could not identify the selected existing account in Openfort. No wallet was authorized.');
+        address = requested[0].address as Address; accountId = requested[0].id ?? requested[0].accountId;
+      }
+      if (creatingNew && walletList.some((item) => item.walletAddress?.toLowerCase() === address.toLowerCase())) throw new Error('Openfort returned an account already linked to a SOFA wallet. No duplicate wallet was added.');
+      await embeddedWallet.setActive({ address, chainId: signerChainId, recoveryMethod: RecoveryMethod.PASSWORD, password });
 
       let authorized: AuthSessionResponse;
       for (let attempt = 0; ; attempt += 1) {
@@ -540,13 +608,23 @@ export default function WalletPage() {
         }
       }
 
-      setWallet(authorized.wallet);
+      const list = authorized.wallets?.length ? authorized.wallets : [authorized.wallet];
+      setWallets(list);
+      const created = list.find((item) => item.walletAddress?.toLowerCase() === address.toLowerCase());
+      if (!created) throw new Error('The server did not return the wallet matching this verified Openfort account. Refresh before continuing.');
+      setWallet(created); setSelectedWalletId(created.id);
+      const retainedIdentity = pendingCreatedAccountRef.current;
+      if (creatingNew && retainedIdentity && created.walletAddress?.toLowerCase() === retainedIdentity.address.toLowerCase() && (!accountId || accountId === retainedIdentity.accountId)) { pendingCreatedAccountRef.current = null; setPendingCreatedAccount(null); createOutcomeUnknownRef.current = false; }
       setWalletSetupSuccess(
         'Agent wallet created. Choose a network below, add gas, then authorize API access.',
       );
+      return true;
     } catch (err: unknown) {
       setWalletSetupError(getApiErrorMessage(err));
+      if (creatingNew && /provision|review|uncertain/i.test(getApiErrorMessage(err))) setWalletSetupError(`${getApiErrorMessage(err)} Do not repeat this creation; wait for review.`);
+      return false;
     } finally {
+      createInFlightRef.current = false;
       setWalletSetupLoading(false);
     }
   }
@@ -559,7 +637,7 @@ export default function WalletPage() {
 
     try {
       assertWebCryptoAvailable();
-      if (!wallet?.walletAddress || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
+      if (!selectedWallet?.walletAddress || !selectedWallet.agentWalletAddress || !selectedWallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
       }
       if (pendingAuthorization) {
@@ -578,17 +656,26 @@ export default function WalletPage() {
         throw new Error('Choose an API authorization expiry within 30 days.');
       }
 
-      let activeEmbeddedWallet: { address: Address; accountId?: string };
-      try {
-        activeEmbeddedWallet = resolveEmbeddedWallet(undefined, embeddedWallet);
-      } catch {
-        activeEmbeddedWallet = { address: wallet.walletAddress as Address };
-      }
-
-      let address = activeEmbeddedWallet.address;
-      const walletAddressChanged = wallet.walletAddress.toLowerCase() !== address.toLowerCase();
+      let address = selectedWallet.walletAddress as Address;
+      const accounts = await openfort.updateEmbeddedAccounts({ silent: true });
+      const matching = (accounts ?? []).filter((candidate) => String((candidate as { address?: string }).address ?? '').toLowerCase() === address.toLowerCase()) as Array<{ id?: string; accountId?: string; address: string }>;
+      const selectedAccount = matching.find((candidate) => !selectedWallet.openfortAccountId || (candidate.id ?? candidate.accountId) === selectedWallet.openfortAccountId);
+      if (!selectedAccount || matching.length !== 1) throw new Error('The selected wallet could not be matched to exactly one Openfort account. No authorization was signed.');
+      await embeddedWallet.setActive({ address, chainId: signerChainId, recoveryMethod: RecoveryMethod.PASSWORD, password: recoveryPassword });
+      const verifyActiveAccount = async () => {
+        try {
+          const provider = await openfort.client.embeddedWallet.getEthereumProvider();
+          const accounts = await provider.request({ method: 'eth_accounts' });
+          const first = Array.isArray(accounts) ? accounts[0] : undefined;
+          if (typeof first !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(first) || first.toLowerCase() !== address.toLowerCase()) throw new Error();
+        } catch {
+          throw new Error('Openfort could not confirm the selected wallet is active. No authorization was signed.');
+        }
+      };
+      await verifyActiveAccount();
+      const walletAddressChanged = false;
       let authorization = walletAddressChanged ? undefined : selectedAuthorization;
-      let currentWallet = wallet;
+      let currentWallet: WalletInfo | null = selectedWallet;
       if (
         !authorization ||
         authorization.status === 'registered' ||
@@ -596,11 +683,16 @@ export default function WalletPage() {
       ) {
         const initialized = await authorizeEmbeddedWallet(getToken, {
           embeddedWalletAddress: address,
-          embeddedOpenfortAccountId: activeEmbeddedWallet.accountId,
+          embeddedOpenfortAccountId: selectedAccount.id ?? selectedAccount.accountId,
           chainId: agentChainId,
           agentExpiresAt: agentExpiresAt.toISOString(),
         });
-        currentWallet = initialized.wallet;
+        currentWallet = initialized.wallets?.find((item) => item.id === selectedWallet.id) ?? (initialized.wallet.id === selectedWallet.id ? initialized.wallet : null);
+        if (!currentWallet) throw new Error('The server did not return the selected wallet after authorization. Refresh and retry.');
+        if (currentWallet.walletAddress?.toLowerCase() !== address.toLowerCase()) {
+          throw new Error('The server returned a different wallet identity after authorization. No registration was signed.');
+        }
+        setWallets(initialized.wallets?.length ? initialized.wallets : [initialized.wallet]);
         setWallet(currentWallet);
         address = currentWallet.walletAddress as Address;
         authorization = currentWallet.chainAuthorizations.find(
@@ -611,13 +703,6 @@ export default function WalletPage() {
       if (!authorization?.expiresAt) {
         throw new Error('Missing authorization expiry. Please retry.');
       }
-
-      await embeddedWallet.setActive({
-        address,
-        chainId: signerChainId,
-        recoveryMethod: RecoveryMethod.PASSWORD,
-        password: recoveryPassword,
-      });
 
       if (!publicClient) {
         throw new Error(
@@ -682,11 +767,14 @@ export default function WalletPage() {
       }
       const eip7702Authorization =
         !walletCode || walletCode === '0x'
-          ? await signOpenfortAuthorization({
+          ? await (async () => {
+              await verifyActiveAccount();
+              return signOpenfortAuthorization({
               chainId: agentChainId,
               nonce: await publicClient.getTransactionCount({ address, blockTag: 'pending' }),
               contractAddress: activeCaliburAddress,
-            })
+              });
+            })()
           : undefined;
 
       const owner = toAccount({
@@ -782,8 +870,11 @@ export default function WalletPage() {
       const pending = await markAgentRegistrationTransaction(getToken, {
         chainId: agentChainId,
         txHash,
+        walletId: selectedWallet?.id,
       });
-      setWallet(pending.wallet);
+      const pendingWallet = pending.wallets?.find((item) => item.id === selectedWallet.id) ?? (pending.wallet.id === selectedWallet.id ? pending.wallet : null);
+      if (!pendingWallet) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
+      setWallets(pending.wallets?.length ? pending.wallets : [pending.wallet]); setWallet(pendingWallet);
 
       let result: AuthSessionResponse | null;
       try {
@@ -805,9 +896,11 @@ export default function WalletPage() {
         return;
       }
 
-      setWallet(result.wallet);
+      const updated = result.wallets?.find((item) => item.id === selectedWallet.id) ?? (result.wallet.id === selectedWallet.id ? result.wallet : null);
+      if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
+      setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
       setAgentRegistrationCheckStatus('idle');
-      const confirmedAuthorization = result.wallet.chainAuthorizations.find(
+      const confirmedAuthorization = updated.chainAuthorizations.find(
         (item) => item.chainId === agentChainId,
       );
       if (confirmedAuthorization?.status === 'registered') {
@@ -839,7 +932,7 @@ export default function WalletPage() {
   const authorizeSubmitDisabled = registrationBusy;
   const showAgentRegistrationSpinner =
     walletSetupLoading || agentRegistrationCheckStatus === 'checking';
-  const setupStatus = !wallet?.walletAddress
+  const setupStatus = !selectedWallet?.walletAddress
     ? {
         title: 'Create agent EOA',
         tone: 'amber',
@@ -870,7 +963,7 @@ export default function WalletPage() {
       : setupStatus.tone === 'blue'
         ? 'border-blue-200 bg-blue-50 text-blue-800'
         : 'border-amber-200 bg-amber-50 text-amber-800';
-  const setupPhase = !wallet?.walletAddress ? 1 : hasRegisteredAuthorization ? 3 : 2;
+  const setupPhase = !selectedWallet?.walletAddress ? 1 : hasRegisteredAuthorization ? 3 : 2;
   const setupSteps = [
     {
       number: 1,
@@ -889,7 +982,7 @@ export default function WalletPage() {
   return (
     <DashboardPage
       title="Agent Wallet"
-      description="Create one secure wallet, authorize API access, then use API keys from your backend."
+      description="Manage your secure wallets, authorize API access, then use API keys from your backend."
     >
       {loading ? (
         <WalletLoadingState />
@@ -910,11 +1003,24 @@ export default function WalletPage() {
         </div>
       ) : (
         <>
+          {walletList.length > 1 && (
+            <section className="mb-5 rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand-muted">Your wallets</p><h2 className="mt-1 text-lg font-semibold text-brand-text">Choose a wallet to manage</h2></div>
+                <select aria-label="Selected wallet" value={selectedWallet?.id ?? ''} onChange={(event) => { const chosen = walletList.find((item) => item.id === event.target.value); if (chosen) { setSelectedWalletId(chosen.id); setWallet(chosen); setBalances(null); setBalancesError(null); setWithdrawalAllowlist(null); setWithdrawalAllowlistError(null); setShowWithdraw(false); setWithdrawResult(null); setWithdrawError(null); } }} className="min-w-0 rounded-xl border border-brand-border bg-brand-bg px-3 py-2.5 font-mono text-sm sm:w-[27rem]">
+                  {walletList.map((item, index) => <option key={item.id} value={item.id}>{item.walletAddress ?? `Wallet ${index + 1} · setup needed`}{item.isDefault ? ' · default' : ''}</option>)}
+                </select>
+              </div>
+              <p className="mt-3 text-sm text-brand-muted">Balances and withdrawals below are scoped to this wallet. API access authorization is also set up per wallet.</p>
+            </section>
+          )}
+          {selectedWallet?.provisioningStatus === 'uncertain' && <div role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><strong>This wallet setup needs review.</strong> Openfort may have created this account, but we could not confirm the result. Do not retry this wallet; support must review it first. You may still add a different wallet.</div>}
+          {walletList.length > 1 && <p className="mb-3 text-xs text-brand-muted">{walletList.length} wallets linked to your account.</p>}
           {apiKeyDisplay && (
             <ApiKeyBanner apiKeyDisplay={apiKeyDisplay} onDismiss={() => setApiKeyDisplay(null)} />
           )}
 
-          {wallet && (
+          {wallet && selectedWallet && (
             <DashboardCard className="!p-0">
               <div className="p-7 space-y-6">
                 <SetupStatusBanner
@@ -932,15 +1038,15 @@ export default function WalletPage() {
                   </label>
                   <div className="mt-1 flex items-center gap-3">
                     <p className="break-all font-mono text-sm text-brand-text flex-1">
-                      {wallet.walletAddress ?? 'Create an agent EOA to finish setup'}
+                      {selectedWallet.walletAddress ?? 'Create an agent EOA to finish setup'}
                     </p>
-                    {wallet.walletAddress && (
-                      <CopyButton text={wallet.walletAddress} className="shrink-0" />
+                    {selectedWallet.walletAddress && (
+                      <CopyButton text={selectedWallet.walletAddress} className="shrink-0" />
                     )}
                   </div>
                 </div>
 
-                {wallet.agentWalletAddress && (
+                {selectedWallet.agentWalletAddress && (
                   <div className="rounded-xl border border-brand-border/60 bg-brand-bg/30 p-4 text-sm">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
@@ -948,8 +1054,8 @@ export default function WalletPage() {
                       </span>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
-                          {wallet.chainAuthorizations.length} network
-                          {wallet.chainAuthorizations.length === 1 ? '' : 's'} configured
+                          {selectedWallet.chainAuthorizations.length} network
+                          {selectedWallet.chainAuthorizations.length === 1 ? '' : 's'} configured
                         </span>
                         {authorizedChainIdsText && (
                           <CopyButton
@@ -961,15 +1067,15 @@ export default function WalletPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <code className="min-w-0 flex-1 break-all font-mono text-xs text-brand-text">
-                        {wallet.agentWalletAddress}
+                        {selectedWallet.agentWalletAddress}
                       </code>
-                      <CopyButton text={wallet.agentWalletAddress} className="shrink-0" />
+                      <CopyButton text={selectedWallet.agentWalletAddress} className="shrink-0" />
                     </div>
-                    <AuthorizationBadges authorizations={wallet.chainAuthorizations} />
+                    <AuthorizationBadges authorizations={selectedWallet.chainAuthorizations} />
                   </div>
                 )}
 
-                {!wallet.walletAddress && (
+                {!selectedWallet.walletAddress && (
                   <Step1CreateEoa
                     recoveryPassword={recoveryPassword}
                     showRecoveryPassword={showRecoveryPassword}
@@ -977,13 +1083,15 @@ export default function WalletPage() {
                     setShowRecoveryPassword={setShowRecoveryPassword}
                     walletSetupLoading={walletSetupLoading}
                     walletSetupError={walletSetupError}
-                    onSubmit={handleConnectWallet}
+                    onSubmit={(event) => { event.preventDefault(); void handleConnectWallet(recoveryPassword, !embeddedWallet.address); }}
                   />
                 )}
 
-                {wallet.walletAddress && (
+                {selectedWallet.walletAddress && <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-sm font-semibold text-brand-text">Need a separate wallet?</h3><p className="mt-1 text-sm text-brand-muted">Create a new Openfort account with its own recovery password.</p></div><button type="button" disabled={walletSetupLoading || showAddWalletForm || (selectedWallet.provisioningStatus != null && selectedWallet.provisioningStatus !== 'completed')} onClick={() => { setWalletSetupError(null); setShowAddWalletForm(true); }} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">Add wallet</button></div>{showAddWalletForm && <form onSubmit={(event) => { event.preventDefault(); if (addWalletPassword !== addWalletPasswordConfirm) { setWalletSetupError('Passwords do not match.'); return; } void handleConnectWallet(addWalletPassword, true).then((created) => { if (!created) return; setShowAddWalletForm(false); setAddWalletPassword(''); setAddWalletPasswordConfirm(''); }); }} className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-brand-muted">New wallet recovery password<input type="password" autoComplete="new-password" value={addWalletPassword} onChange={(event) => setAddWalletPassword(event.target.value)} className="mt-1 block w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm" minLength={8} required /></label><label className="text-xs font-semibold text-brand-muted">Confirm password<input type="password" autoComplete="new-password" value={addWalletPasswordConfirm} onChange={(event) => setAddWalletPasswordConfirm(event.target.value)} className="mt-1 block w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm" minLength={8} required /></label><p className="sm:col-span-2 text-xs text-brand-muted">This password unlocks this wallet in Openfort. It is used only in your browser and is never sent to SOFA.</p>{walletSetupError && <p role="alert" className="sm:col-span-2 text-sm text-red-700">{walletSetupError}</p>}<div className="sm:col-span-2 flex gap-2"><button type="submit" disabled={walletSetupLoading} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{walletSetupLoading ? 'Creating securely…' : 'Create new wallet'}</button><button type="button" onClick={() => { setShowAddWalletForm(false); setWalletSetupError(null); }} className="rounded-full border border-brand-border px-4 py-2 text-sm font-semibold text-brand-text">Cancel</button></div></form>}{walletSetupError && !showAddWalletForm && <p role="alert" className="mt-3 text-sm text-red-700">{walletSetupError}</p>}</div>}
+
+                {selectedWallet.walletAddress && (
                   <Step2AuthorizeAccess
-                    walletAddress={wallet.walletAddress}
+                    walletAddress={selectedWallet.walletAddress}
                     agentChainId={agentChainId}
                     setAgentChainId={setAgentChainId}
                     agentChainName={agentChainName}
@@ -1022,7 +1130,7 @@ export default function WalletPage() {
                   selectedChainId={selectedChainId}
                   setSelectedChainId={setSelectedChainId}
                   onRetryBalances={retryBalances}
-                  canWithdraw={Boolean(wallet.walletAddress)}
+                  canWithdraw={Boolean(selectedWallet.walletAddress)}
                   showWithdraw={showWithdraw}
                   onToggleWithdraw={() => setShowWithdraw((v) => !v)}
                 />

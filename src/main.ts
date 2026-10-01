@@ -32,7 +32,7 @@ export function parseTrustProxy(
 
 async function bootstrap() {
   const { AppModule } = await import('./app.module');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   const logger = new Logger('Bootstrap');
 
   app.set('trust proxy', parseTrustProxy(process.env.TRUST_PROXY, process.env.NODE_ENV));
@@ -43,7 +43,16 @@ async function bootstrap() {
       },
     }),
   );
-  app.use(express.json({ limit: '100kb' }));
+  app.use(
+    express.json({
+      limit: '100kb',
+      // Capture the raw JSON body for future Stripe webhook signature
+      // verification without changing parsing behavior or the size limit.
+      verify: (req, _res, buf) => {
+        (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',')

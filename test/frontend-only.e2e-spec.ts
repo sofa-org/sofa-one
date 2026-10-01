@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { getStorageToken } from '@nestjs/throttler';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/core/database/prisma.service';
@@ -13,6 +13,7 @@ process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/agent_wallet';
+process.env.REDIS_URL = '';
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
   OpenfortService: jest.fn().mockImplementation(() => ({})),
@@ -27,12 +28,15 @@ describe('Frontend-only access control (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(APP_GUARD)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
-      .overrideProvider(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
+      .overrideProvider(getStorageToken())
+      .useValue({
+        increment: jest.fn().mockResolvedValue({
+          totalHits: 0,
+          timeToExpire: 0,
+          isBlocked: false,
+          timeToBlockExpire: 0,
+        }),
+      })
       .overrideGuard(OpenfortUserGuard)
       .useValue({
         canActivate: (context: any) => {
@@ -100,10 +104,17 @@ describe('Frontend-only access control (e2e)', () => {
 
   async function cleanDatabase() {
     await prisma.signingRequest.deleteMany();
+    // RESTRICT: payment attempts reference transactions — delete attempts first.
+    await prisma.billingPaymentAttempt.deleteMany().catch(() => undefined);
     await prisma.transaction.deleteMany();
     await prisma.apiKeyEvent.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.userWallet.deleteMany();
+    await prisma.billingInvoiceLine.deleteMany();
+    await prisma.billingUsageEvent.deleteMany();
+    await prisma.billingInvoice.deleteMany();
+    await prisma.billingPlanAssignment.deleteMany();
+    await prisma.billingAccount.deleteMany();
     await prisma.user.deleteMany();
   }
 });

@@ -4,15 +4,18 @@
  * External dependencies mocked: OpenfortService (no real blockchain calls).
  * Real dependencies used: PostgreSQL (docker-compose).
  */
+import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { getStorageToken, ThrottlerGuard } from '@nestjs/throttler';
+import { getStorageToken } from '@nestjs/throttler';
 import * as request from 'supertest';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
 import { API_KEY_PREFIX_LENGTH } from '../src/common/api-key/api-key-prefix';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
+import { TransactionSimulationService } from '../src/modules/transactions/transaction-simulation.service';
+import { BillingDebtService } from '../src/modules/billing/billing-debt.service';
 
 // ── Test env vars (must be set before AppModule compiles) ──────────────
 process.env.NODE_ENV = 'test';
@@ -20,6 +23,9 @@ process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
 process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/agent_wallet';
+// Keep the test process independent of any developer Redis instance. The
+// throttler storage is replaced with an unlimited test double below.
+process.env.REDIS_URL = '';
 
 const TEST_WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
 const TEST_TARGET_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
@@ -41,6 +47,11 @@ const mockOpenfortService = {
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
 
+const mockBillingDebtService = {
+  hasEnforceableApiDebt: jest.fn().mockResolvedValue(false),
+  getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }),
+};
+
 jest.mock('../src/core/openfort/openfort.service', () => ({
   OpenfortService: jest.fn().mockImplementation(() => mockOpenfortService),
 }));
@@ -51,7 +62,6 @@ describe('API-key public security flow (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let apiKeyService: ApiKeyService;
-  let throttlerStorage: { storage?: Map<string, unknown> };
   let testUserId: string;
   let testApiKey: string;
   let testKeyId: string;
@@ -60,13 +70,31 @@ describe('API-key public security flow (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      // Keep route/auth guards active, but disable the global ThrottlerGuard for deterministic E2E.
-      .overrideProvider(APP_GUARD)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
-      .overrideProvider(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
+      // Keep the production throttler guard active, but use an unlimited test
+      // storage so the suite is independent of Redis state and route limits.
+      .overrideProvider(getStorageToken())
+      .useValue({
+        increment: jest.fn().mockResolvedValue({
+          totalHits: 0,
+          timeToExpire: 0,
+          isBlocked: false,
+          timeToBlockExpire: 0,
+        }),
+      })
+      // On-chain session-key verification (Calibur delegation/registration) and
+      // transaction simulation hit a real RPC. The E2E environment has no
+      // deployed test wallet, so stub them out — the same way OpenfortService
+      // is mocked — to keep the test focused on the API-key security contract.
+      .overrideProvider(SessionKeyPolicyService)
+      .useValue({
+        assertSessionKeyAllowed: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider(TransactionSimulationService)
+      .useValue({
+        assertSimulatable: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider(BillingDebtService)
+      .useValue(mockBillingDebtService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -78,12 +106,11 @@ describe('API-key public security flow (e2e)', () => {
 
     prisma = app.get(PrismaService);
     apiKeyService = app.get(ApiKeyService);
-    throttlerStorage = app.get(getStorageToken());
   });
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    throttlerStorage.storage?.clear();
+    mockBillingDebtService.hasEnforceableApiDebt.mockResolvedValue(false);
     await cleanDatabase();
 
     const seeded = await seedUserWithKey('test_social_id_e2e', 'E2E Test Key');
@@ -109,7 +136,20 @@ describe('API-key public security flow (e2e)', () => {
       const res = await request(app.getHttpServer()).get('/health/ready').expect(200);
 
       expect(res.headers['x-request-id']).toEqual(expect.any(String));
-      expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
+      // Includes non-sensitive billing-worker state alongside the DB probe.
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          status: 'ok',
+          timestamp: expect.any(String),
+          checks: expect.objectContaining({
+            database: 'ok',
+            billingWorker: expect.objectContaining({
+              enabled: expect.any(Boolean),
+              status: expect.any(String),
+            }),
+          }),
+        }),
+      );
     });
 
     it('reuses inbound X-Request-Id and includes it in error responses', async () => {
@@ -127,6 +167,58 @@ describe('API-key public security flow (e2e)', () => {
   });
 
   describe('public API-key endpoints', () => {
+    it('allows unmetered status reads under mature debt, but blocks signing and sending without metering', async () => {
+      mockBillingDebtService.hasEnforceableApiDebt.mockResolvedValue(true);
+      const sendUsageBefore = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+
+      const created = await request(app.getHttpServer())
+        .post('/v1/transactions/send')
+        .set('X-API-Key', testApiKey)
+        .send({
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'mature-debt-status-123',
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xdeadbeef', value: '0' }],
+        })
+        .expect(402);
+      expect(created.body.code).toBe('BILLING_PAYMENT_REQUIRED');
+
+      // Seed a safely-shaped owned send row to exercise the real controller route.
+      const tx = await prisma.transaction.create({
+        data: {
+          userId: testUserId,
+          apiKeyId: testKeyId,
+          operationType: 'send',
+          chainId: TEST_CHAIN_ID,
+          idempotencyKey: 'mature-debt-status-seed',
+          requestHash: 'mature-debt-status-hash',
+          authMethod: 'api_key',
+          status: 'confirmed',
+          txHash: TEST_TX_HASH,
+          walletAddress: TEST_WALLET_ADDRESS,
+        },
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/transactions/${tx.id}`)
+        .set('X-API-Key', testApiKey)
+        .expect(200);
+      const afterRead = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+      expect(afterRead).toBe(sendUsageBefore);
+
+      await request(app.getHttpServer())
+        .post('/v1/wallets/sign')
+        .set('X-API-Key', testApiKey)
+        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'mature debt' })
+        .expect(402);
+      const afterDenials = await prisma.billingUsageEvent.count({
+        where: { billingAccount: { userId: testUserId } },
+      });
+      expect(afterDenials).toBe(afterRead);
+    });
+
     it('POST /v1/wallets/sign signs a message and writes non-plaintext audit', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/wallets/sign')
@@ -156,7 +248,10 @@ describe('API-key public security flow (e2e)', () => {
     });
 
     it('POST /v1/transactions/send submits transaction and stores hashes without calldata', async () => {
-      const calldata = '0xa9059cbb000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
+      // Non-egress unknown selector (not a canonical transfer). A truncated
+      // 0xa9059cbb payload is now a malformed direct-transfer 400 (BILL-016);
+      // this suite is not the direct-egress runtime evidence path.
+      const calldata = '0xdeadbeef000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
 
       const res = await request(app.getHttpServer())
         .post('/v1/transactions/send')
@@ -200,7 +295,7 @@ describe('API-key public security flow (e2e)', () => {
       const payload = {
         chainId: TEST_CHAIN_ID,
         idempotencyKey: 'duplicate-order-123',
-        interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef', value: '0' }],
+        interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xdeadbeef', value: '0' }],
       };
 
       const first = await request(app.getHttpServer())
@@ -270,9 +365,7 @@ describe('API-key public security flow (e2e)', () => {
         .post('/v1/wallets/sign')
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
         .expect(401)
-        .expect((res) =>
-          expectApiError(res.body, 401, 'AUTHENTICATION_REQUIRED', '/v1/wallets/sign'),
-        );
+        .expect((res) => expectApiError(res.body, 401, 'UNAUTHORIZED', '/v1/wallets/sign'));
     });
 
     it('does not allow an API key to manage API keys or call frontend-only wallet routes', async () => {
@@ -316,14 +409,10 @@ describe('API-key public security flow (e2e)', () => {
         .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello' })
         .expect(401);
 
-      const expired = await seedUserWithKey(
-        'expired_social_id_e2e',
-        'Expired Key',
-        {
-          openfortAccountId: 'ofa_expired_account_123',
-          walletAddress: '0x2222222222222222222222222222222222222222',
-        },
-      );
+      const expired = await seedUserWithKey('expired_social_id_e2e', 'Expired Key', {
+        openfortAccountId: 'ofa_expired_account_123',
+        walletAddress: '0x2222222222222222222222222222222222222222',
+      });
       await prisma.apiKey.update({
         where: { id: expired.keyId },
         data: { expiresAt: new Date(Date.now() - 60_000) },
@@ -358,7 +447,7 @@ describe('API-key public security flow (e2e)', () => {
         .send({
           chainId: TEST_CHAIN_ID,
           idempotencyKey: 'conflict-123',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xabcdef' }],
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0xdeadbeef' }],
         })
         .expect(201);
 
@@ -368,7 +457,7 @@ describe('API-key public security flow (e2e)', () => {
         .send({
           chainId: TEST_CHAIN_ID,
           idempotencyKey: 'conflict-123',
-          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0x123456' }],
+          interactions: [{ to: TEST_TARGET_ADDRESS, data: '0x12345678' }],
         })
         .expect(400)
         .expect((res) =>
@@ -458,7 +547,8 @@ describe('API-key public security flow (e2e)', () => {
         userId: user.id,
         openfortAccountId: wallet.openfortAccountId,
         walletAddress: wallet.walletAddress,
-        agentOpenfortAccountId: wallet.agentOpenfortAccountId ?? defaultAgentOpenfortAccountId(socialId),
+        agentOpenfortAccountId:
+          wallet.agentOpenfortAccountId ?? defaultAgentOpenfortAccountId(socialId),
         agentWalletAddress: wallet.agentWalletAddress ?? defaultAgentWalletAddress(socialId),
         agentKeyHash: wallet.agentKeyHash ?? defaultAgentKeyHash(socialId),
       },
@@ -472,7 +562,17 @@ describe('API-key public security flow (e2e)', () => {
       },
     });
 
-    const key = await apiKeyService.createApiKey(user.id, { name: keyName });
+    const key = await apiKeyService.createApiKey(user.id, {
+      name: keyName,
+      permissions: {
+        canSign: true,
+        canSendTransaction: true,
+        canReadTransactionStatus: true,
+      },
+      // Supertest uses a loopback address that may be represented as IPv4,
+      // IPv6, or an IPv4-mapped IPv6 address depending on the Node runtime.
+      allowedIps: ['127.0.0.1', '::1', '::ffff:127.0.0.1'],
+    });
     const storedKey = await prisma.apiKey.findFirstOrThrow({
       where: { userId: user.id, name: keyName },
     });
@@ -504,10 +604,17 @@ describe('API-key public security flow (e2e)', () => {
 
   async function cleanDatabase() {
     await prisma.signingRequest.deleteMany();
+    // RESTRICT: payment attempts reference transactions — delete attempts first.
+    await prisma.billingPaymentAttempt.deleteMany().catch(() => undefined);
     await prisma.transaction.deleteMany();
     await prisma.apiKeyEvent.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.userWallet.deleteMany();
+    await prisma.billingInvoiceLine.deleteMany();
+    await prisma.billingUsageEvent.deleteMany();
+    await prisma.billingInvoice.deleteMany();
+    await prisma.billingPlanAssignment.deleteMany();
+    await prisma.billingAccount.deleteMany();
     await prisma.user.deleteMany();
   }
 });

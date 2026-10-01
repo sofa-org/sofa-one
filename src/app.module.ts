@@ -16,6 +16,7 @@ import { StepUpModule } from './modules/step-up/step-up.module';
 import { MfaModule } from './modules/mfa/mfa.module';
 import { SecurityEventModule } from './modules/security-events/security-event.module';
 import { SecurityNotificationModule } from './modules/security-notifications/security-notification.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { RequestContextModule } from './common/request-context/request-context.module';
 
@@ -39,6 +40,7 @@ import { RequestContextModule } from './common/request-context/request-context.m
     MfaModule,
     SecurityEventModule,
     SecurityNotificationModule,
+    BillingModule,
   ],
   providers: [
     RequestIdMiddleware,

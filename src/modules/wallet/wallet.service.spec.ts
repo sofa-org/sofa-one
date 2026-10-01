@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -33,6 +35,7 @@ import { WalletService } from './wallet.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
 import { getSupportedChain } from '../../common/chains/supported-chains';
+import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
@@ -41,6 +44,7 @@ import { SigningPolicyService } from './signing-policy.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { BillingDebtService } from '../billing/billing-debt.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -111,36 +115,60 @@ describe('WalletService.withdraw()', () => {
 
   // Prisma mock handles
   const mockFindUnique = jest.fn();
+  const mockWalletFindMany = jest.fn();
+  const mockWalletFindFirst = jest.fn();
   const mockFindFirst = jest.fn();
+  /** Interactive-tx findFirst — distinct from root so P2002 recovery can be asserted. */
+  const mockTxFindFirst = jest.fn();
   const mockCreate = jest.fn();
   const mockUpdate = jest.fn();
+  const mockUpdateMany = jest.fn();
   const mockAssertWithdrawalAllowed = jest.fn();
   const mockAssertDailyLimitWithUserLock = jest.fn();
   const mockTransaction = jest.fn();
   const mockEvaluateRisk = jest.fn();
   const mockEnforceRiskAction = jest.fn();
+  const mockGetDebt = jest.fn();
 
   // Openfort mock handle
   const mockSendUserOperation = jest.fn();
+  const mockWaitForUserOperationReceipt = jest.fn();
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     jest.clearAllMocks();
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
-    // Default: wallet exists, sufficient balance, no duplicate tx
+    // Default: wallet exists, sufficient balance, no duplicate tx, no billing debt
     mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockWalletFindMany.mockImplementation(async () => {
+      const wallet = await mockFindUnique();
+      return wallet ? [wallet] : [];
+    });
+    mockWalletFindFirst.mockImplementation(async () => mockFindUnique());
     mockFindFirst.mockResolvedValue(null);
+    mockTxFindFirst.mockResolvedValue(null);
     mockReadContract.mockResolvedValue(SUFFICIENT_BALANCE);
     mockGetBalance.mockResolvedValue(BigInt('200000000000000000'));
-    mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop', transactionHash: '0xhash' });
+    mockSendUserOperation.mockResolvedValue({ userOpHash: '0xuserop' });
+    mockWaitForUserOperationReceipt.mockResolvedValue({ success: true, transactionHash: '0xhash' });
     mockCreate.mockResolvedValue({ id: 'tx-1', txHash: null, status: 'submitting' });
     mockUpdate.mockResolvedValue({ id: 'tx-1', txHash: '0xhash', status: 'pending' });
     mockAssertWithdrawalAllowed.mockResolvedValue(undefined);
     mockAssertDailyLimitWithUserLock.mockResolvedValue(undefined);
+    mockGetDebt.mockResolvedValue({ hasDebt: false, invoiceIds: [] });
+    mockUpdateMany.mockImplementation(async ({ data }: any) => {
+      mockUpdate({ where: { id: 'tx-1' }, data });
+      return { count: 1 };
+    });
     mockTransaction.mockImplementation(async (callback) =>
       callback({
-        transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+        transaction: {
+          findFirst: mockTxFindFirst,
+          create: mockCreate,
+          update: mockUpdate,
+          updateMany: mockUpdateMany,
+        },
       }),
     );
     mockEvaluateRisk.mockResolvedValue({
@@ -158,21 +186,37 @@ describe('WalletService.withdraw()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
-            transaction: { findFirst: mockFindFirst, create: mockCreate, update: mockUpdate },
+            userWallet: { findUnique: mockFindUnique, findMany: mockWalletFindMany, findFirst: mockWalletFindFirst },
+            transaction: {
+              findFirst: mockFindFirst,
+              create: mockCreate,
+              update: mockUpdate,
+              updateMany: mockUpdateMany,
+            },
             $transaction: mockTransaction,
           },
         },
         {
           provide: OpenfortService,
-          useValue: { sendUserOperation: mockSendUserOperation, signData: jest.fn() },
+          useValue: {
+            submitUserOperation: mockSendUserOperation,
+            waitForUserOperationReceipt: mockWaitForUserOperationReceipt,
+            sendUserOperation: mockSendUserOperation,
+            signData: jest.fn(),
+          },
         },
         {
           provide: WithdrawalPolicyService,
           useValue: {
             assertWithdrawalAllowed: mockAssertWithdrawalAllowed,
             assertDailyLimitWithUserLock: mockAssertDailyLimitWithUserLock,
+            acquireUserDestinationLock: jest.fn().mockResolvedValue(undefined),
+            assertDestinationAllowedInTx: jest.fn().mockResolvedValue(undefined),
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: mockGetDebt },
         },
         {
           provide: RiskEvaluationService,
@@ -191,7 +235,7 @@ describe('WalletService.withdraw()', () => {
   // ── 1. Wallet not found ──────────────────────────────────────────────────────
 
   it('throws NotFoundException when wallet not found', async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockWalletFindMany.mockResolvedValue([]);
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(NotFoundException);
   });
@@ -243,6 +287,8 @@ describe('WalletService.withdraw()', () => {
       id: 'tx-existing',
       txHash: '0xhash-existing',
       status: 'pending',
+      walletAddress: WALLET.walletAddress,
+      requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }),
     });
 
     const result = await service.withdraw('user-1', VALID_DTO);
@@ -258,7 +304,7 @@ describe('WalletService.withdraw()', () => {
   });
 
   it('returns the in-progress withdrawal when idempotencyKey is already submitting', async () => {
-    mockFindFirst.mockResolvedValue({ id: 'tx-existing', txHash: null, status: 'submitting' });
+    mockFindFirst.mockResolvedValue({ id: 'tx-existing', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }) });
 
     const result = await service.withdraw('user-1', VALID_DTO);
 
@@ -272,10 +318,12 @@ describe('WalletService.withdraw()', () => {
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('returns the existing withdrawal after a concurrent idempotency insert race', async () => {
+  it('returns the existing withdrawal after a concurrent idempotency insert race via root prisma', async () => {
+    // Outer root miss → inner tx miss → P2002 aborts interactive tx → root re-read hits existing.
     mockFindFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting' });
+       .mockResolvedValueOnce({ id: 'tx-existing', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress }) });
+    mockTxFindFirst.mockResolvedValue(null);
     mockCreate.mockRejectedValue({ code: 'P2002' });
 
     const result = await service.withdraw('user-1', VALID_DTO);
@@ -286,6 +334,36 @@ describe('WalletService.withdraw()', () => {
       status: 'submitting',
     });
     expect(mockReadContract).toHaveBeenCalledTimes(1);
+    expect(mockGetDebt).toHaveBeenCalled();
+    expect(mockTxFindFirst).toHaveBeenCalledTimes(1);
+    // Recovery must use root prisma findFirst (2 calls: outer + post-P2002), not txClient.
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
+    mockFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'tx-existing',
+      txHash: null,
+      status: 'submitting',
+      walletAddress: WALLET.walletAddress,
+      requestHash: 'different-request',
+    });
+    mockTxFindFirst.mockResolvedValue(null);
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rethrows P2002 when no existing withdrawal is found after rollback', async () => {
+    mockFindFirst.mockResolvedValue(null);
+    mockTxFindFirst.mockResolvedValue(null);
+    mockCreate.mockRejectedValue({ code: 'P2002' });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({ code: 'P2002' });
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -294,6 +372,7 @@ describe('WalletService.withdraw()', () => {
       id: 'tx-existing',
       txHash: '0xhash-existing',
       status: 'pending',
+      walletAddress: WALLET.walletAddress,
       requestHash: 'different-request',
     });
 
@@ -301,6 +380,44 @@ describe('WalletService.withdraw()', () => {
 
     expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('reuses a pre-wallet-bound null-hash row only with matching legacy fingerprint evidence', async () => {
+    const chain = getSupportedChain(VALID_DTO.chainId);
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: chain.usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-tx', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: null, details: { requestHash: legacyFingerprint } });
+    await expect(service.withdraw('user-1', VALID_DTO)).resolves.toMatchObject({ transactionId: 'legacy-tx' });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('reuses a matching pre-upgrade non-null legacy fingerprint for the same wallet without resubmitting', async () => {
+    const chain = getSupportedChain(VALID_DTO.chainId);
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress: chain.usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-hash-tx', txHash: '0xlegacy', status: 'pending', walletAddress: WALLET.walletAddress, requestHash: legacyFingerprint });
+    await expect(service.withdraw('user-1', VALID_DTO)).resolves.toMatchObject({ transactionId: 'legacy-hash-tx' });
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects a different request against a pre-upgrade fingerprint', async () => {
+    const legacyFingerprint = hashRequest({ operationType: 'withdraw', chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: '999', token: VALID_DTO.token, contractAddress: getSupportedChain(VALID_DTO.chainId).usdcAddress });
+    mockFindFirst.mockResolvedValue({ id: 'legacy-hash-tx', txHash: null, status: 'pending', walletAddress: WALLET.walletAddress, requestHash: legacyFingerprint });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rejects null-hash legacy rows without matching fingerprint proof', async () => {
+    mockFindFirst.mockResolvedValue({ id: 'legacy-tx', txHash: null, status: 'submitting', walletAddress: WALLET.walletAddress, requestHash: null, details: {} });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('never reuses an idempotency row belonging to another wallet', async () => {
+    mockFindFirst.mockResolvedValue({ id: 'other-wallet-tx', txHash: null, status: 'submitting', walletAddress: '0x9999999999999999999999999999999999999999', requestHash: null, details: {} });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(BadRequestException);
+    expect(mockReadContract).not.toHaveBeenCalled();
     expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -512,14 +629,133 @@ describe('WalletService.withdraw()', () => {
     expect(createCall.data.details).toMatchObject({ idempotencyKey: 'unique-key-abc' });
   });
 
+  it('persists typed UserOperation success and safe compatibility details', async () => {
+    await service.withdraw('user-1', VALID_DTO);
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userOpSuccess: true,
+          details: expect.objectContaining({ userOperationSuccess: true }),
+        }),
+      }),
+    );
+  });
+
+  it('persists typed UserOperation failure without marking it billable', async () => {
+    mockWaitForUserOperationReceipt.mockResolvedValue({
+      success: false,
+      transactionHash: '0xbundle',
+    });
+
+    await service.withdraw('user-1', VALID_DTO);
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userOpSuccess: false,
+          details: expect.objectContaining({ userOperationSuccess: false }),
+        }),
+      }),
+    );
+    const completionWrite = mockUpdateMany.mock.calls.find(
+      (call: any[]) => call[0].data.userOpSuccess === false,
+    );
+    expect(completionWrite?.[0].where).toEqual(
+      expect.objectContaining({
+        userOpSuccess: null,
+        billingReconciledAt: null,
+      }),
+    );
+  });
+
   it('marks the pre-created withdrawal failed when Openfort submission fails', async () => {
     mockSendUserOperation.mockRejectedValue(new Error('Openfort down'));
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow('Openfort down');
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: 'tx-1' },
-      data: { status: 'unknown' },
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'unknown' }),
+      }),
+    );
+  });
+
+  // ── Billing debt gate ──────────────────────────────────────────────────────
+
+  it('blocks new withdrawals when billing debt exists before balance/create/Openfort', async () => {
+    mockGetDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      },
     });
+
+    expect(mockGetDebt).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockGetBalance).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+    expect(mockAssertDailyLimitWithUserLock).not.toHaveBeenCalled();
+  });
+
+  it('returns existing idempotent withdrawal without checking billing debt', async () => {
+    const contractAddress = getSupportedChain(VALID_DTO.chainId).usdcAddress;
+    mockFindFirst.mockResolvedValue({
+      id: 'tx-existing',
+      txHash: '0xhash-existing',
+      status: 'pending',
+      walletAddress: WALLET.walletAddress,
+      requestHash: hashRequest({ operationType: 'withdraw', walletId: WALLET.id, chainId: VALID_DTO.chainId, to: VALID_DTO.to, amount: VALID_DTO.amount, token: VALID_DTO.token, contractAddress }),
+    });
+    mockGetDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
+
+    const result = await service.withdraw('user-1', VALID_DTO);
+
+    expect(result).toEqual({
+      transactionId: 'tx-existing',
+      transactionHash: '0xhash-existing',
+      status: 'pending',
+    });
+    expect(mockGetDebt).not.toHaveBeenCalled();
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('re-checks billing debt inside the create transaction after idempotency miss', async () => {
+    mockGetDebt
+      .mockResolvedValueOnce({ hasDebt: false, invoiceIds: [] })
+      .mockResolvedValueOnce({ hasDebt: true, invoiceIds: ['inv-race'] });
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_OUTBOUND_BLOCKED,
+      },
+    });
+
+    expect(mockGetDebt).toHaveBeenCalledTimes(2);
+    expect(mockReadContract).toHaveBeenCalledTimes(1);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockAssertDailyLimitWithUserLock).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when billing debt check fails (fail-closed)', async () => {
+    mockGetDebt.mockRejectedValue(new Error('db unavailable'));
+
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toMatchObject({
+      response: {
+        code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
+      },
+    });
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+
+    expect(mockReadContract).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
   });
 });
 
@@ -527,12 +763,22 @@ describe('WalletService.sign()', () => {
   let service: WalletService;
 
   const mockFindUnique = jest.fn();
+  const mockWalletFindMany = jest.fn();
+  const mockWalletFindFirst = jest.fn();
   const mockSignData = jest.fn();
   const mockVerifyAgentKeyRegistration = jest.fn();
   const mockAssertSessionKeyAllowed = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
+  const mockSigningRequestFindMany = jest.fn();
+  const mockSigningRequestCount = jest.fn();
+  const mockSigningRequestFindFirst = jest.fn();
   const mockAssertEoaExecutionAllowed = jest.fn();
+  const mockWithdrawalPolicyFindUnique = jest.fn();
+  const mockTxWithdrawalPolicyFindUnique = jest.fn();
+  const mockTransaction = jest.fn();
+  const mockAcquireUserDestinationLock = jest.fn();
+  const mockSecurityEventRecord = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -541,12 +787,31 @@ describe('WalletService.sign()', () => {
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     mockFindUnique.mockResolvedValue({ ...WALLET });
+    mockWalletFindMany.mockImplementation(async () => {
+      const wallet = await mockFindUnique();
+      return wallet ? [wallet] : [];
+    });
+    mockWalletFindFirst.mockImplementation(async () => mockFindUnique());
     mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
     mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
+    mockSigningRequestFindMany.mockResolvedValue([]);
+    mockSigningRequestCount.mockResolvedValue(0);
+    mockSigningRequestFindFirst.mockResolvedValue(null);
     mockAssertEoaExecutionAllowed.mockResolvedValue(undefined);
+    // BILL-016 default: destination protection OFF (legacy SigningPolicy path).
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockAcquireUserDestinationLock.mockResolvedValue(undefined);
+    mockSecurityEventRecord.mockResolvedValue({});
+    mockTransaction.mockImplementation(async (callback) =>
+      callback({
+        signingRequest: { create: mockSigningRequestCreate },
+        withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique },
+      }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -554,8 +819,10 @@ describe('WalletService.sign()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
-            signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate },
+            userWallet: { findMany: mockWalletFindMany, findFirst: mockWalletFindFirst },
+            signingRequest: { create: mockSigningRequestCreate, update: mockSigningRequestUpdate, findMany: mockSigningRequestFindMany, count: mockSigningRequestCount, findFirst: mockSigningRequestFindFirst },
+            withdrawalPolicy: { findUnique: mockWithdrawalPolicyFindUnique },
+            $transaction: mockTransaction,
           },
         },
         {
@@ -575,7 +842,7 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: SecurityEventService,
-          useValue: { record: jest.fn().mockResolvedValue({}) },
+          useValue: { record: mockSecurityEventRecord },
         },
         {
           provide: WithdrawalPolicyService,
@@ -584,7 +851,12 @@ describe('WalletService.sign()', () => {
             listWithdrawalAddresses: jest.fn(),
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
+            acquireUserDestinationLock: mockAcquireUserDestinationLock,
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
         SigningPolicyService,
       ],
@@ -593,9 +865,60 @@ describe('WalletService.sign()', () => {
     service = module.get<WalletService>(WalletService);
   });
 
+  it('scopes selected-wallet history to both embedded and agent addresses', async () => {
+    const second = { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444', agentWalletAddress: '0x5555555555555555555555555555555555555555' };
+    mockWalletFindMany.mockResolvedValue([WALLET, second]);
+    mockSigningRequestFindMany.mockResolvedValue([]);
+    await service.listSigningRequests('user-1', { walletId: second.id } as any);
+    expect(mockSigningRequestFindMany.mock.calls.at(-1)?.[0].where.walletAddress).toEqual({ in: [second.walletAddress, second.agentWalletAddress] });
+  });
+
+  it('returns empty pending-wallet history and not-found detail without Prisma null-address lookup', async () => {
+    const pending = { ...WALLET, id: 'pending-wallet', walletAddress: null, agentWalletAddress: null };
+    mockWalletFindMany.mockResolvedValue([pending]);
+    await expect(service.listSigningRequests('user-1', { walletId: pending.id } as any)).resolves.toMatchObject({ items: [], total: 0 });
+    expect(mockSigningRequestFindMany).not.toHaveBeenCalled();
+    await expect(service.getSigningRequestDetail('user-1', 'sr-1', pending.id)).rejects.toThrow(NotFoundException);
+    expect(mockSigningRequestFindFirst).not.toHaveBeenCalled();
+  });
+
   afterEach(() => {
     loggerErrorSpy.mockRestore();
     loggerWarnSpy.mockRestore();
+  });
+
+  it('conflicts when walletId is omitted and multiple active owner wallets exist', async () => {
+    mockWalletFindMany.mockResolvedValue([
+      { ...WALLET },
+      { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
+    ]);
+    await expect(service.sign('user-1', { type: 'message', message: 'hello', chainId: 84532 } as any, API_KEY_CONTEXT))
+      .rejects.toBeInstanceOf(ConflictException);
+    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects a forged wallet ID not present in the authenticated owner wallet set', async () => {
+    mockWalletFindMany.mockResolvedValue([{ ...WALLET }]);
+    await expect(service.sign('user-1', {
+      type: 'message', message: 'hello', chainId: 84532, walletId: 'wallet-for-another-user',
+    } as any, API_KEY_CONTEXT)).rejects.toThrow(NotFoundException);
+    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('uses the selected owned wallet account when signing', async () => {
+    const selected = { ...WALLET, id: 'wallet-2', agentOpenfortAccountId: 'agent-acc-2' };
+    mockWalletFindMany.mockResolvedValue([{ ...WALLET }, selected]);
+    mockWalletFindFirst.mockResolvedValue(selected);
+    await service.sign('user-1', {
+      type: 'message', message: 'hello', chainId: 84532, walletId: selected.id,
+    } as any, API_KEY_CONTEXT);
+    expect(mockWalletFindFirst).toHaveBeenCalledWith({
+      where: { id: selected.id, userId: 'user-1' },
+      include: { chainAuthorizations: { where: { chainId: BigInt(84532) } } },
+    });
+    expect(mockSignData).toHaveBeenCalledWith('agent-acc-2', expect.any(String));
   });
 
   it('uses EIP-191 hash for message signing', async () => {
@@ -934,8 +1257,8 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockFindUnique).toHaveBeenCalledWith({
-      where: { userId: 'user-1' },
+    expect(mockWalletFindFirst).toHaveBeenCalledWith({
+      where: { id: WALLET.id, userId: 'user-1' },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(84532) } },
       },
@@ -1022,7 +1345,7 @@ describe('WalletService.sign()', () => {
       API_KEY_CONTEXT,
     );
 
-    expect(mockFindUnique).toHaveBeenCalledTimes(1);
+    expect(mockWalletFindFirst).toHaveBeenCalledTimes(1);
     expect(mockSigningRequestCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         type: 'typed_data',
@@ -1117,7 +1440,7 @@ describe('WalletService.sign()', () => {
   });
 
   it('throws NotFoundException when wallet not found', async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockWalletFindMany.mockResolvedValue([]);
 
     await expect(
       service.sign(
@@ -1126,6 +1449,308 @@ describe('WalletService.sign()', () => {
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  // ── BILL-016 destination protection on public sign ─────────────────────────
+
+  const expectNoSignSideEffects = () => {
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  };
+
+  const expectSigningBlocked = async (promise: Promise<unknown>) => {
+    await expect(promise).rejects.toBeInstanceOf(ForbiddenException);
+    try {
+      await promise;
+    } catch (err) {
+      expect((err as ForbiddenException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          message: expect.stringMatching(/destination protection/i),
+        }),
+      );
+    }
+    expectNoSignSideEffects();
+  };
+
+  it.each([
+    {
+      name: 'message × session_key',
+      dto: { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 },
+      apiKey: API_KEY_CONTEXT,
+    },
+    {
+      name: 'message × eoa',
+      dto: {
+        type: 'message',
+        message: 'Hello, SOFA ONE!',
+        chainId: 84532,
+        executionMode: 'eoa',
+      },
+      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+    },
+    {
+      name: 'typed_data × session_key',
+      dto: { type: 'typed_data', typedData: createTypedData(84532), chainId: 84532 },
+      apiKey: API_KEY_CONTEXT,
+    },
+    {
+      name: 'typed_data × eoa',
+      dto: {
+        type: 'typed_data',
+        typedData: createTypedData(84532),
+        chainId: 84532,
+        executionMode: 'eoa',
+      },
+      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+    },
+  ])(
+    'blocks all sign types when requireAddressAllowlist=true ($name)',
+    async ({ dto, apiKey }) => {
+      mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+      await expectSigningBlocked(service.sign('user-1', dto as any, apiKey));
+
+      expect(mockAcquireUserDestinationLock).not.toHaveBeenCalled();
+      expect(mockTransaction).not.toHaveBeenCalled();
+      expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
+      expect(mockAssertEoaExecutionAllowed).not.toHaveBeenCalled();
+      expect(mockSecurityEventRecord).toHaveBeenCalledTimes(1);
+      expect(mockSecurityEventRecord).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorType: 'api_key',
+          eventType: 'signing.policy_denied',
+          userId: 'user-1',
+          result: 'denied',
+          metadata: expect.objectContaining({
+            code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+            type: dto.type,
+            chainId: 84532,
+            executionMode: (dto as any).executionMode ?? 'session_key',
+            apiKeyPrefix: API_KEY_PREFIX,
+          }),
+        }),
+      );
+      const auditJson = JSON.stringify(mockSecurityEventRecord.mock.calls[0][0]);
+      expect(auditJson).not.toMatch(/Hello|typedData|domain|primaryType|calldata|digest|requestHash|signature/i);
+    },
+  );
+
+  it('blocks when protection is on even with empty allowlist / no reauth path', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+    expectNoSignSideEffects();
+  });
+
+  it.each([
+    { label: 'null policy', policy: null },
+    { label: 'requireAddressAllowlist false', policy: { requireAddressAllowlist: false } },
+  ])('allows sign when destination protection is off ($label)', async ({ policy }) => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(policy);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(policy);
+
+    const result = await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(result.signature).toBe(WRAPPED_SIGNATURE);
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockSigningRequestCreate).toHaveBeenCalled();
+    expect(mockSignData).toHaveBeenCalled();
+    expect(mockSecurityEventRecord).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+        }),
+      }),
+    );
+  });
+
+  it('preserves SigningPolicy denial when protection is off', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+
+    const typedData = {
+      ...createTypedData(84532),
+      primaryType: 'Permit',
+      types: {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      },
+      message: {
+        owner: WALLET.walletAddress,
+        spender: '0x1111111111111111111111111111111111111111',
+        value: '1',
+        nonce: 0,
+        deadline: 9999999999,
+      },
+    };
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'typed_data', typedData, chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('Permit typed data signing is not allowed');
+
+    expectNoSignSideEffects();
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and no side effects when preflight policy lookup fails', async () => {
+    mockWithdrawalPolicyFindUnique.mockRejectedValue(new Error('db down'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    try {
+      await service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      );
+    } catch (err) {
+      expect((err as ServiceUnavailableException).getResponse()).toEqual(
+        expect.objectContaining({
+          code: API_ERROR_CODES.WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE,
+        }),
+      );
+    }
+
+    expectNoSignSideEffects();
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects false→true race under lock with zero create/signData', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
+    expect(mockTransaction).toHaveBeenCalled();
+    // SigningPolicy may have recorded an allow event before the final gate; denial is once.
+    const blockedAudits = mockSecurityEventRecord.mock.calls.filter(
+      ([payload]) =>
+        payload?.eventType === 'signing.policy_denied' &&
+        payload?.metadata?.code === API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+    );
+    expect(blockedAudits).toHaveLength(1);
+    expect(blockedAudits[0][0]).toEqual(
+      expect.objectContaining({
+        eventType: 'signing.policy_denied',
+        metadata: expect.objectContaining({
+          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
+          walletId: WALLET.id,
+        }),
+      }),
+    );
+  });
+
+  it('returns 503 and no side effects when final policy lookup fails under lock', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockTxWithdrawalPolicyFindUnique.mockRejectedValue(new Error('tx db down'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expectNoSignSideEffects();
+    expect(mockAcquireUserDestinationLock).toHaveBeenCalled();
+  });
+
+  it('returns lock/transaction failure with no create/signData side effects', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
+    mockAcquireUserDestinationLock.mockRejectedValue(new Error('lock failed'));
+
+    await expect(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    ).rejects.toThrow('lock failed');
+
+    expectNoSignSideEffects();
+  });
+
+  it('still returns 403 when destination-protection audit recording fails', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+    mockSecurityEventRecord.mockRejectedValue(new Error('audit down'));
+
+    await expectSigningBlocked(
+      service.sign(
+        'user-1',
+        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        API_KEY_CONTEXT,
+      ),
+    );
+
+    expect(mockSecurityEventRecord).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  it('creates SigningRequest only inside the interactive TX after lock when protection is off', async () => {
+    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
+
+    let createOrder = 0;
+    let lockOrder = 0;
+    let finalCheckOrder = 0;
+    mockAcquireUserDestinationLock.mockImplementation(async () => {
+      lockOrder = ++createOrder;
+    });
+    mockTxWithdrawalPolicyFindUnique.mockImplementation(async () => {
+      finalCheckOrder = ++createOrder;
+      return null;
+    });
+    mockSigningRequestCreate.mockImplementation(async () => {
+      expect(lockOrder).toBeGreaterThan(0);
+      expect(finalCheckOrder).toBeGreaterThan(lockOrder);
+      return { id: 'signing-request-1' };
+    });
+
+    await service.sign(
+      'user-1',
+      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      API_KEY_CONTEXT,
+    );
+
+    expect(mockSignData).toHaveBeenCalled();
+    // Openfort must run after TX (create already completed via $transaction).
+    expect(mockTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSignData.mock.invocationCallOrder[0],
+    );
   });
 });
 
@@ -1146,7 +1771,7 @@ describe('WalletService.getBalances()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
+            userWallet: { findUnique: mockFindUnique, findMany: jest.fn(async () => { const wallet = await mockFindUnique(); return wallet ? [wallet] : []; }), findFirst: jest.fn(() => mockFindUnique()) },
           },
         },
         {
@@ -1161,6 +1786,10 @@ describe('WalletService.getBalances()', () => {
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
       ],
     }).compile();
@@ -1231,7 +1860,7 @@ describe('WalletService.getDepositInfo()', () => {
         {
           provide: PrismaService,
           useValue: {
-            userWallet: { findUnique: mockFindUnique },
+            userWallet: { findUnique: mockFindUnique, findMany: jest.fn(async () => { const wallet = await mockFindUnique(); return wallet ? [wallet] : []; }), findFirst: jest.fn(() => mockFindUnique()) },
           },
         },
         {
@@ -1246,6 +1875,10 @@ describe('WalletService.getDepositInfo()', () => {
             addWithdrawalAddress: jest.fn(),
             removeWithdrawalAddress: jest.fn(),
           },
+        },
+        {
+          provide: BillingDebtService,
+          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
       ],
     }).compile();
