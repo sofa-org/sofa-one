@@ -8,6 +8,7 @@ import { TransactionPolicyService } from './transaction-policy.service';
 import { TransactionSimulationService } from './transaction-simulation.service';
 import { BillingModule } from '../billing/billing.module';
 import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawal-destination.module';
+import { DefiModule } from '../defi/defi.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawa
     SessionKeyModule,
     BillingModule,
     WithdrawalDestinationModule,
+    DefiModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService, TransactionPolicyService, TransactionSimulationService],

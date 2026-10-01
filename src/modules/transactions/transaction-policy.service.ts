@@ -29,8 +29,6 @@ type TransactionPolicyContext = {
   executionMode: ExecutionMode;
   apiKeyId?: string;
   apiKeyPrefix?: string;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
 };
@@ -153,40 +151,6 @@ export class TransactionPolicyService {
 
       const selector = this.getFunctionSelector(interaction.data);
 
-      // Contract allowlist check: if the API key defines allowedContracts, the target must be in the list.
-      if (context.allowedContracts && context.allowedContracts.length > 0) {
-        const target = interaction.to.toLowerCase();
-        if (!context.allowedContracts.some((c) => c.toLowerCase() === target)) {
-          await this.reject(
-            `Interaction ${index + 1} targets a contract not allowed by this API key`,
-            context,
-            {
-              interactionIndex: index,
-              target,
-              allowedContractCount: context.allowedContracts.length,
-            },
-          );
-        }
-      }
-
-      // Function selector allowlist check: if the API key defines allowedFunctionSelectors, the selector must be in the list.
-      if (context.allowedFunctionSelectors && context.allowedFunctionSelectors.length > 0) {
-        if (
-          !selector ||
-          !context.allowedFunctionSelectors.some((s) => s.toLowerCase() === selector)
-        ) {
-          await this.reject(
-            `Interaction ${index + 1} uses a function selector not allowed by this API key`,
-            context,
-            {
-              interactionIndex: index,
-              selector,
-              allowedSelectorCount: context.allowedFunctionSelectors.length,
-            },
-          );
-        }
-      }
-
       if (!selector) continue;
 
       if (BLOCKED_PERMIT_SELECTORS.has(selector)) {
@@ -237,8 +201,6 @@ export class TransactionPolicyService {
         chainId: context.chainId,
         executionMode: context.executionMode,
         apiKeyPrefix: context.apiKeyPrefix ?? null,
-        hasContractAllowlist: Boolean(context.allowedContracts?.length),
-        hasSelectorAllowlist: Boolean(context.allowedFunctionSelectors?.length),
         hasSpendLimit: Boolean(context.dailySpendLimit || context.monthlySpendLimit),
         ...extra,
       },

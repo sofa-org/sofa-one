@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { Prisma } from '@prisma/client';
 import { ApiKeyService } from './api-key.service';
 import { API_KEY_PREFIX_LENGTH } from '../../common/api-key/api-key-prefix';
 
@@ -25,6 +26,7 @@ describe('ApiKeyService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
       updateMany: jest.fn(),
+      update: jest.fn(),
     },
     apiKeyEvent: {
       create: jest.fn(),
@@ -32,12 +34,29 @@ describe('ApiKeyService', () => {
   };
   const securityEvents = {
     record: jest.fn(),
+    exportCommitted: jest.fn(),
   };
-  const createService = () => new ApiKeyService(prisma as any, securityEvents as any);
+  const grants = { normalizeIds: (ids: string[] = []) => [...ids].sort(), assertGrantableInTx: jest.fn() };
+  const policy = { recordDenied: jest.fn() };
+  let transactionOpen = false;
+  const createService = () => new ApiKeyService(prisma as any, securityEvents as any, grants as any, policy as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useRealTimers();
+    transactionOpen = false;
+    prisma.$transaction.mockImplementation(async (callback: (tx: any) => unknown) => {
+      transactionOpen = true;
+      try { return await callback(prisma); } finally { transactionOpen = false; }
+    });
+    securityEvents.record.mockImplementation(async () => {
+      expect(transactionOpen).toBe(true);
+      expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
+      return { id: 'security-event-1', eventType: 'api_key.event' };
+    });
+    securityEvents.exportCommitted.mockImplementation(async () => {
+      expect(transactionOpen).toBe(false);
+    });
     prisma.apiKey.count.mockResolvedValue(0);
     prisma.apiKey.findFirst.mockResolvedValue(null);
     prisma.apiKey.findMany.mockResolvedValue([]);
@@ -52,6 +71,37 @@ describe('ApiKeyService', () => {
     // Default FOR UPDATE lock rows empty unless a test sets them.
     prisma.$queryRaw.mockResolvedValue([]);
     jest.mocked(argon2.hash).mockResolvedValue('argon2-hash' as never);
+  });
+
+  it('replaces grants only for an owned active key and exports audit after transaction success', async () => {
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
+    prisma.apiKey.update.mockResolvedValue({ id: 'key-1', allowedCapabilityIds: ['cap:a:v1'] });
+    const service = createService();
+    await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).resolves.toEqual({ id: 'key-1', allowedCapabilityIds: ['cap:a:v1'] });
+    expect(securityEvents.record).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.grants_updated' }), prisma, { deferExport: true });
+    expect(securityEvents.exportCommitted).toHaveBeenCalledTimes(2);
+    expect(prisma.$transaction.mock.calls[0][1]).toEqual({ isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+  });
+
+  it('does not audit or export a no-op replacement and rejects non-owned keys', async () => {
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: ['cap:a:v1'] }]);
+    const service = createService();
+    await service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1']);
+    expect(securityEvents.record).not.toHaveBeenCalled();
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
+    prisma.$queryRaw.mockResolvedValue([]);
+    await expect(service.replaceCapabilities('not-owned', 'user-1', [])).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects inactive keys and never exports events for a failed grant update', async () => {
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: new Date(), expires_at: null, allowed_capability_ids: [] }]);
+    const service = createService();
+    await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).rejects.toThrow(/not active/i);
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
+    prisma.apiKey.update.mockRejectedValue(new Error('write failed'));
+    await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).rejects.toThrow('write failed');
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
   it('stores a 27-character prefix and audit event for newly generated API keys', async () => {
@@ -69,6 +119,7 @@ describe('ApiKeyService', () => {
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
+      allowedCapabilityIds: [],
     });
     expect(prisma.apiKey.create.mock.calls[0][0].data.keyPrefix).toBe(
       result.rawKey.slice(0, API_KEY_PREFIX_LENGTH),
@@ -108,10 +159,12 @@ describe('ApiKeyService', () => {
           details: expect.objectContaining({
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
+            allowedCapabilityIds: [],
           }),
         }),
       }),
       prisma,
+      { deferExport: true },
     );
   });
 
@@ -279,12 +332,23 @@ describe('ApiKeyService', () => {
         }),
       }),
       prisma,
+      { deferExport: true },
     );
+    expect(securityEvents.exportCommitted).toHaveBeenCalledTimes(1);
 
     prisma.$queryRaw.mockResolvedValue([]);
     await expect(service.revokeApiKey('missing', 'user-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('does not audit or export when the key was already revoked', async () => {
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: true }]);
+    const service = createService();
+    await expect(service.revokeApiKey('key-1', 'user-1')).resolves.toEqual({ count: 0 });
+    expect(prisma.apiKeyEvent.create).not.toHaveBeenCalled();
+    expect(securityEvents.record).not.toHaveBeenCalled();
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
   it('bulk revokes active keys and audits each revoked key', async () => {
@@ -322,6 +386,7 @@ describe('ApiKeyService', () => {
         }),
       }),
       prisma,
+      { deferExport: true },
     );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -344,7 +409,18 @@ describe('ApiKeyService', () => {
         }),
       }),
       prisma,
+      { deferExport: true },
     );
+    expect(securityEvents.exportCommitted).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not export when revoke-all has no active keys', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([]);
+    prisma.apiKey.updateMany.mockResolvedValue({ count: 0 });
+    const service = createService();
+    await expect(service.revokeAllKeys('user-1')).resolves.toEqual({ count: 0 });
+    expect(securityEvents.record).not.toHaveBeenCalled();
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
   it('rejects revoke-all when auditing fails so the transaction can roll back', async () => {
@@ -364,6 +440,7 @@ describe('ApiKeyService', () => {
       data: { revoked: true },
     });
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledTimes(2);
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
   it('rejects revoke-all when security event recording fails so the transaction can roll back', async () => {
@@ -384,7 +461,9 @@ describe('ApiKeyService', () => {
         apiKeyId: 'key-1',
       }),
       prisma,
+      { deferExport: true },
     );
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
   it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
@@ -406,6 +485,7 @@ describe('ApiKeyService', () => {
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
+      allowedCapabilityIds: [],
     });
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
@@ -439,10 +519,12 @@ describe('ApiKeyService', () => {
             revokedKeyCount: 2,
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
+            allowedCapabilityIds: [],
           },
         }),
       }),
       prisma,
+      { deferExport: true },
     );
     expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -461,6 +543,7 @@ describe('ApiKeyService', () => {
             revokedKeyCount: 2,
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
+            allowedCapabilityIds: [],
           },
         }),
       }),
@@ -505,8 +588,7 @@ describe('ApiKeyService', () => {
         canReadTransactionStatus: true,
         canUseEoaExecution: false,
         allowedIps: [],
-        allowedContracts: [],
-        allowedFunctionSelectors: [],
+        allowedCapabilityIds: [],
         dailySpendLimit: null,
         monthlySpendLimit: null,
         directEgressPolicyAcceptedAt: null,
@@ -534,8 +616,7 @@ describe('ApiKeyService', () => {
           canUseEoaExecution: false,
         },
         allowedIps: [],
-        allowedContracts: [],
-        allowedFunctionSelectors: [],
+        allowedCapabilityIds: [],
         dailySpendLimit: null,
         monthlySpendLimit: null,
         directEgressPolicyAcceptedAt: null,
@@ -598,7 +679,9 @@ describe('ApiKeyService', () => {
           eventType: 'api_key.direct_egress_authorized',
         }),
         expect.anything(),
+        { deferExport: true },
       );
+      expect(securityEvents.exportCommitted).toHaveBeenCalledTimes(1);
     });
 
     it('is idempotent when already authorized', async () => {
@@ -614,6 +697,8 @@ describe('ApiKeyService', () => {
         outcome: 'unchanged',
       });
       expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
+      expect(securityEvents.record).not.toHaveBeenCalled();
+      expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
     });
 
     it('rejects revoked, frozen, expired, and non-send keys', async () => {

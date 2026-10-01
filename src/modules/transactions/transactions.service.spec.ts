@@ -36,6 +36,7 @@ import {
 } from './transaction-asset-flow.verifier';
 import { AssetFlowSimulationUnavailableError } from './transaction-simulation.service';
 import { hashRequest } from '../../common/utils/request-hash';
+import { DefiPolicyDenial } from '../defi/defi.types';
 
 function erc20TransferData(to: string, amount: bigint = 1n): string {
   return encodeFunctionData({
@@ -150,8 +151,6 @@ describe('TransactionsService', () => {
     canSendTransaction: true,
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
-    allowedContracts: undefined,
-    allowedFunctionSelectors: undefined,
     dailySpendLimit: undefined,
     monthlySpendLimit: undefined,
     // BILL-016: unit fixtures assume destination-policy reauth already completed.
@@ -207,6 +206,14 @@ describe('TransactionsService', () => {
   const transactionPolicy = new TransactionPolicyService(prisma, undefined as any);
   const mockAssertSessionKeyAllowed = jest.fn();
   const billingDebt = { getDebt: jest.fn() } as any;
+  const defiAuthorization = { context: {}, requiredPermission: 'canSendTransaction', matches: [] } as any;
+  const defiPolicy = {
+    authorizeContractCalls: jest.fn().mockResolvedValue(defiAuthorization),
+    assertStillAuthorized: jest.fn().mockResolvedValue(undefined),
+    recordAllowedInTx: jest.fn().mockResolvedValue({ id: 'event-1' }),
+    recordDenied: jest.fn().mockResolvedValue(undefined),
+  } as any;
+  const securityEvents = { exportCommitted: jest.fn().mockResolvedValue(undefined) } as any;
   const SIM_RPC = 'https://rpc.example.test/base';
   const config = {
     get: jest.fn((key: string) => {
@@ -376,6 +383,8 @@ describe('TransactionsService', () => {
       billingDebt,
       config,
       destinationPolicy as any,
+      defiPolicy,
+      securityEvents,
       eoaExecutionPolicy,
       transactionSimulation,
       undefined, // riskEvaluation
@@ -405,8 +414,6 @@ describe('TransactionsService', () => {
       accountAddress: wallet.walletAddress,
       keyHash: wallet.agentKeyHash,
       operation: 'send_transaction',
-      allowedContracts: apiKeyContext.allowedContracts,
-      allowedFunctionSelectors: apiKeyContext.allowedFunctionSelectors,
       dailySpendLimit: apiKeyContext.dailySpendLimit,
       monthlySpendLimit: apiKeyContext.monthlySpendLimit,
       apiKeyExpiresAt: apiKeyContext.expiresAt,
@@ -452,6 +459,9 @@ describe('TransactionsService', () => {
         sponsorship: 'none',
       }),
     );
+    expect(defiPolicy.assertStillAuthorized).toHaveBeenCalledTimes(1);
+    expect(defiPolicy.recordAllowedInTx).toHaveBeenCalledTimes(1);
+    expect(securityEvents.exportCommitted).toHaveBeenCalledWith({ id: 'event-1' });
   });
 
   it('rejects a forged wallet ID owned by another user', async () => {
@@ -520,6 +530,7 @@ describe('TransactionsService', () => {
     await expect(
       service.send('user-1', { ...dto, walletId: second.id } as any, apiKeyContext),
     ).rejects.toThrow('Idempotency key was already used for a different request');
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
@@ -963,6 +974,71 @@ describe('TransactionsService', () => {
     });
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+  });
+
+  it('denies an unauthorized contract call before destination, billing, simulation, and create', async () => {
+    defiPolicy.authorizeContractCalls.mockRejectedValueOnce(
+      new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_CONTRACT_NOT_ALLOWED' }), { code: 'DEFI_CONTRACT_NOT_ALLOWED' }),
+    );
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: 'DEFI_CONTRACT_NOT_ALLOWED' },
+    });
+    expect(defiPolicy.recordDenied).toHaveBeenCalledTimes(1);
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(billingDebt.getDebt).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rolls back acceptance when final DeFi authorization has gone stale', async () => {
+    defiPolicy.assertStillAuthorized.mockRejectedValueOnce(
+      new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_CAPABILITY_PAUSED' }), { code: 'DEFI_CAPABILITY_PAUSED' }),
+    );
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: 'DEFI_CAPABILITY_PAUSED' },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(defiPolicy.recordDenied).toHaveBeenCalledTimes(1);
+  });
+
+  it('orders direct-egress acceptance as destination lock, DeFi pause/key recheck, then direct-egress key lock', async () => {
+    const lockOrder: string[] = [];
+    destinationPolicy.acquireUserDestinationLock.mockImplementationOnce(async () => {
+      lockOrder.push('destination');
+    });
+    destinationPolicy.assertDestinationsAllowed.mockImplementation(async (...args: any[]) => {
+      if (args[3]?.prisma) lockOrder.push('destination-policy');
+    });
+    defiPolicy.assertStillAuthorized.mockImplementationOnce(async () => {
+      lockOrder.push('defi-pause-share-and-key-update');
+    });
+    txApiKeyLockRows.mockImplementationOnce(async () => {
+      lockOrder.push('direct-egress-key-update');
+      return [{
+        user_id: 'user-1', revoked: false, frozen_at: null, expires_at: null,
+        can_send_transaction: true, direct_egress_policy_accepted_at: new Date(),
+      }];
+    });
+
+    await service.send('user-1', {
+      ...dto,
+      idempotencyKey: 'direct-egress-lock-order',
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+    } as any, apiKeyContext);
+
+    expect(lockOrder).toEqual([
+      'destination',
+      'destination-policy',
+      'defi-pause-share-and-key-update',
+      'direct-egress-key-update',
+    ]);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'ReadCommitted',
+    });
+    expect(prisma.transaction.create).toHaveBeenCalledTimes(1);
   });
 
   it('accepts a pre-upgrade request fingerprint only for the same persisted wallet identity', async () => {

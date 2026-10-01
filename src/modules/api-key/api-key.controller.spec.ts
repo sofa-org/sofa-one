@@ -10,7 +10,7 @@ jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
 
-import { ApiKeyController } from './api-key.controller';
+import { ApiKeyController, DefiCapabilityController } from './api-key.controller';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
@@ -49,8 +49,7 @@ describe('ApiKeyController', () => {
       name: 'My Key',
       expiresAt: undefined,
       allowedIps: undefined,
-      allowedContracts: undefined,
-      allowedFunctionSelectors: undefined,
+      allowedCapabilityIds: undefined,
       spendLimits: undefined,
       permissions: undefined,
     });
@@ -77,16 +76,14 @@ describe('ApiKeyController', () => {
 
     await controller.create('user-1', {
       name: 'Restricted',
-      allowedContracts: ['0x1111111111111111111111111111111111111111'],
-      allowedFunctionSelectors: ['0xa9059cbb'],
+      allowedCapabilityIds: ['cap:test:v1'],
       spendLimits: { daily: '1000', monthly: '5000' },
     } as any);
 
     expect(apiKeyService.createApiKey).toHaveBeenCalledWith(
       'user-1',
       expect.objectContaining({
-        allowedContracts: ['0x1111111111111111111111111111111111111111'],
-        allowedFunctionSelectors: ['0xa9059cbb'],
+        allowedCapabilityIds: ['cap:test:v1'],
         spendLimits: { daily: '1000', monthly: '5000' },
       }),
     );
@@ -127,5 +124,15 @@ describe('ApiKeyController', () => {
       expect.objectContaining({ id: 'key-1', outcome: 'authorized' }),
     );
     expect(apiKeyService.authorizeDirectEgress).toHaveBeenCalledWith('key-1', 'user-1');
+  });
+});
+
+describe('DefiCapabilityController', () => {
+  it('returns the async catalog response envelope directly', async () => {
+    const response = { capabilities: [{ capabilityId: 'cap:test:v1' }] };
+    const catalog = { listMetadata: jest.fn().mockResolvedValue(response) };
+    const controller = new DefiCapabilityController(catalog as any);
+    await expect(controller.list()).resolves.toBe(response);
+    expect(catalog.listMetadata).toHaveBeenCalledTimes(1);
   });
 });

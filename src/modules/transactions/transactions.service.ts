@@ -52,6 +52,8 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
+import { SecurityEventService } from '../security-events/security-event.service';
 
 class DeferredUnprovenAssetOutflowDenial extends Error {
   readonly name = 'DeferredUnprovenAssetOutflowDenial';
@@ -100,8 +102,7 @@ type ApiKeyTransactionContext = {
   canSendTransaction?: boolean;
   canReadTransactionStatus?: boolean;
   canUseEoaExecution?: boolean;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
   /** BILL-016: null/undefined = not authorized for new direct-egress sends. */
@@ -137,6 +138,8 @@ export class TransactionsService {
     private readonly billingDebt: BillingDebtService,
     private readonly config: ConfigService,
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
+    private readonly defiPolicy: DefiPolicyService,
+    private readonly securityEvents: SecurityEventService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -187,8 +190,6 @@ export class TransactionsService {
       executionMode,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
-      allowedContracts: apiKeyRecord.allowedContracts,
-      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
       dailySpendLimit: apiKeyRecord.dailySpendLimit,
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
@@ -249,8 +250,6 @@ export class TransactionsService {
         accountAddress,
         keyHash: wallet.agentKeyHash!,
         operation: 'send_transaction',
-        allowedContracts: apiKeyRecord.allowedContracts,
-        allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
         dailySpendLimit: apiKeyRecord.dailySpendLimit,
         monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
         apiKeyExpiresAt: apiKeyRecord.expiresAt,
@@ -287,6 +286,22 @@ export class TransactionsService {
       // Idempotent hit: no destination re-check, no Openfort, no broadcast.
       this.logExistingTransaction(existingTransaction, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(existingTransaction);
+    }
+
+    const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.agentWalletAddress!;
+    let defiAuthorization: DefiAuthorization;
+    try {
+      defiAuthorization = await this.defiPolicy.authorizeContractCalls(dto.interactions, {
+        userId, apiKeyId: apiKeyRecord.id!, apiKeyPrefix: apiKeyRecord.keyPrefix,
+        walletId: wallet.id, chainId, executionMode, executionOwner,
+        allowedCapabilityIds: apiKeyRecord.allowedCapabilityIds ?? [],
+      });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      throw error;
     }
 
     // Owner for asset-flow classification + destination policy + evidence binding:
@@ -404,6 +419,7 @@ export class TransactionsService {
         verification: boundVerification,
       },
       destinationGate,
+      defiAuthorization,
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
@@ -848,14 +864,16 @@ export class TransactionsService {
       details: Record<string, unknown>;
       billingGate?: BillingAssetFlowGateContext;
       destinationGate?: DestinationGateContext;
+      defiAuthorization?: DefiAuthorization;
     },
   ) {
     // Interactive transaction: inner idempotency + destination lock/recheck +
     // debt recheck (no RPC) + create only.
     // On unique-key race (P2002) the interactive tx aborts — never re-query on the
     // failed txClient. Recover outside with the root PrismaService after rollback.
+    let deferredDefiEvent: unknown;
     try {
-      return await this.prisma.$transaction(async (txClient) => {
+      const result = await this.prisma.$transaction(async (txClient) => {
         const existingInTx = await this.findExistingTransactionRequest(
           userId,
           {
@@ -879,6 +897,7 @@ export class TransactionsService {
         // alone. Lock first so allowlist/protection mutations cannot race
         // acceptance. No RPC here. Unproven batches re-check protection under
         // lock so enablement after outer preflight cannot slip through.
+        let needsDirectEgressKeyState = false;
         if (params.destinationGate) {
           const gate = params.destinationGate;
           await this.destinationPolicy.acquireUserDestinationLock(userId, txClient);
@@ -887,7 +906,7 @@ export class TransactionsService {
             if (!gate.fullyProvenDirectEgress) {
               await this.throwUnprovenAssetOutflowBlocked(gate, { deferAudit: true });
             }
-            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+            needsDirectEgressKeyState = true;
             // deferAudit: never write security_events under ApiKey FOR UPDATE
             // (FK key-share would deadlock). Caller records after rollback.
             await this.destinationPolicy.assertDestinationsAllowed(
@@ -904,7 +923,7 @@ export class TransactionsService {
               { prisma: txClient, deferAudit: true },
             );
           } else if (gate.destinations.length > 0) {
-            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+            needsDirectEgressKeyState = true;
             await this.destinationPolicy.assertDestinationsAllowed(
               userId,
               gate.destinations,
@@ -919,6 +938,18 @@ export class TransactionsService {
               { prisma: txClient, deferAudit: true },
             );
           }
+        }
+
+        if (params.defiAuthorization) {
+          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization);
+          deferredDefiEvent = await this.defiPolicy.recordAllowedInTx(txClient, params.defiAuthorization);
+        }
+
+        // DeFi final authorization takes the pause FOR SHARE lock before the API-key
+        // FOR UPDATE lock. Keep direct-egress key revalidation after it so all send
+        // paths preserve the global destination -> pause -> API-key lock order.
+        if (needsDirectEgressKeyState) {
+          await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
         }
 
         if (params.billingGate) {
@@ -955,8 +986,14 @@ export class TransactionsService {
           },
         });
         return { tx, created: true };
-      });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+      if (deferredDefiEvent) await this.securityEvents.exportCommitted(deferredDefiEvent);
+      return result;
     } catch (error: any) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
       // After TX rollback: locks released — safe to audit deferred destination denials.
       if (error instanceof DeferredUnprovenAssetOutflowDenial) {
         await this.destinationPolicy.recordUnprovenAssetOutflowDenial(error.audit);

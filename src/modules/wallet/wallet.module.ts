@@ -9,6 +9,7 @@ import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
 import { SessionKeyModule } from '../session-key/session-key.module';
 import { BillingModule } from '../billing/billing.module';
 import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawal-destination.module';
+import { DefiModule } from '../defi/defi.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawa
     BillingModule,
     // Shared destination/cooldown leaf + user advisory lock (BILL-016).
     WithdrawalDestinationModule,
+    DefiModule,
   ],
   controllers: [WalletController],
   providers: [WalletService, WithdrawalPolicyService, SigningPolicyService],

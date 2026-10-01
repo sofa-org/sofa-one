@@ -25,9 +25,12 @@
  *   npm run test:e2e:billing -- --multi-wallet-quote-only # disposable DB, USDC payer quote race suite only
  *   npm run test:e2e:billing -- --wallet-peak-only # disposable DB, monthly wallet peak billing suite only
  *   npm run test:e2e:billing -- --fixture-wallet-peak-only # disposable DB, signed billing fixture lifecycle
+ *   npm run test:e2e:billing -- --defi-policy-only # disposable DB, DeFi pause/grant serialization evidence
+ *   npm run test:e2e:billing -- --direct-egress-only # disposable DB, direct-egress HTTP suite only
  */
 import { randomBytes } from 'crypto';
 import { spawn } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as path from 'path';
 import {
   BILLING_E2E_IDENTITY_SQL,
@@ -110,6 +113,34 @@ function sanitizeAdminUrl(raw: string): { url: string; maintenanceDb: string } {
     parsed.pathname = '/postgres';
   }
   return { url: parsed.toString(), maintenanceDb: 'postgres' };
+}
+
+/** Resolve only the known local Compose PG container; never emit its credentials. */
+function localDockerAdminUrl(): string {
+  try {
+    const raw = execFileSync('docker', ['inspect', 'sofa-one-postgres-1'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const inspected = JSON.parse(raw) as Array<{
+      Name?: string; State?: { Running?: boolean }; Config?: { Env?: string[] };
+      NetworkSettings?: { Ports?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null> };
+    }>;
+    const container = inspected[0];
+    const variables = Object.fromEntries((container?.Config?.Env ?? []).map((entry) => {
+      const split = entry.indexOf('='); return [entry.slice(0, split), entry.slice(split + 1)];
+    }));
+    const binding = container?.NetworkSettings?.Ports?.['5432/tcp']?.[0];
+    if (container?.Name !== '/sofa-one-postgres-1' || container.State?.Running !== true || binding?.HostIp !== '127.0.0.1' || !binding.HostPort || !variables.POSTGRES_USER || !variables.POSTGRES_PASSWORD) {
+      runnerFail('local PostgreSQL container identity or loopback binding could not be verified');
+    }
+    const url = new URL('postgresql://localhost/postgres');
+    url.username = variables.POSTGRES_USER;
+    url.password = variables.POSTGRES_PASSWORD;
+    url.hostname = '127.0.0.1';
+    url.port = binding.HostPort;
+    return url.toString();
+  } catch (error) {
+    if (error instanceof BillingE2eRunnerError) throw error;
+    runnerFail('no admin URL supplied and verified local PostgreSQL container credentials are unavailable');
+  }
 }
 
 function buildTargetUrl(args: {
@@ -321,6 +352,8 @@ async function main(): Promise<number> {
   const multiWalletQuoteOnly = process.argv.includes('--multi-wallet-quote-only');
   const walletPeakOnly = process.argv.includes('--wallet-peak-only');
   const fixtureWalletPeakOnly = process.argv.includes('--fixture-wallet-peak-only');
+  const defiPolicyOnly = process.argv.includes('--defi-policy-only');
+  const directEgressOnly = process.argv.includes('--direct-egress-only');
 
   // Always run no-DB gate tests first (no admin URL required; no provisioned resources).
   const gateEnv: NodeJS.ProcessEnv = {
@@ -347,12 +380,7 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  const adminRaw = process.env[ADMIN_URL_ENV]?.trim() ?? '';
-  if (!adminRaw) {
-    runnerFail(
-      `${ADMIN_URL_ENV} is required to provision a disposable billing E2E database (no static target)`,
-    );
-  }
+  const adminRaw = process.env[ADMIN_URL_ENV]?.trim() || localDockerAdminUrl();
 
   const Client = loadPg();
   const { url: adminUrl } = sanitizeAdminUrl(adminRaw);
@@ -402,7 +430,11 @@ async function main(): Promise<number> {
       });
     });
 
-    const billingSuites = fixtureWalletPeakOnly
+    const billingSuites = directEgressOnly
+      ? ['test/api-key-direct-egress.e2e-spec.ts']
+      : defiPolicyOnly
+      ? ['test/defi-policy.pg.e2e-spec.ts']
+      : fixtureWalletPeakOnly
       ? ['test/billing-fixture-wallet-peak.pg.e2e-spec.ts']
       : walletPeakOnly
       ? ['test/billing-wallet-peak.pg.e2e-spec.ts']

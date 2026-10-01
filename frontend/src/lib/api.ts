@@ -195,8 +195,7 @@ export interface ApiKeyRecord {
   lastUsedIp: string | null;
   lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
-  allowedContracts: string[];
-  allowedFunctionSelectors: string[];
+  allowedCapabilityIds: string[];
   dailySpendLimit: string | null;
   monthlySpendLimit: string | null;
 }
@@ -334,10 +333,30 @@ export interface ApiKeySpendLimits {
 export interface CreateApiKeyRequest {
   name: string;
   allowedIps?: string[];
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
   spendLimits?: ApiKeySpendLimits;
   permissions?: Partial<ApiKeyPermissions>;
+}
+
+export interface DefiCapability {
+  capabilityId: string;
+  type: 'contract_call' | 'typed_data_sign';
+  chainId: number;
+  contract: string;
+  functionSignature?: string;
+  label: string;
+  description: string;
+  status: 'active' | 'inactive' | 'paused';
+  policy: { ref: string; version: number };
+}
+
+export interface DefiCapabilitiesResponse {
+  capabilities: DefiCapability[];
+}
+
+export interface UpdateApiKeyCapabilitiesResponse {
+  id: string;
+  allowedCapabilityIds: string[];
 }
 
 export interface StepUpChallengeResponse {
@@ -897,6 +916,23 @@ export async function getTransactionStatusWithApiKey(apiKey: string, transaction
 
 export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
   return authFetch<ApiKeyRecord[]>('/v1/api-keys', getToken);
+}
+
+export async function listDefiCapabilitiesAuth(getToken: () => Promise<string | null>) {
+  return authFetch<DefiCapabilitiesResponse>('/v1/defi-capabilities', getToken);
+}
+
+export async function updateApiKeyCapabilitiesAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  allowedCapabilityIds: string[],
+  stepUpToken: string,
+) {
+  return authFetch<UpdateApiKeyCapabilitiesResponse>(`/v1/api-keys/${id}/capabilities`, getToken, {
+    method: 'PATCH',
+    headers: { 'X-Step-Up-Token': stepUpToken },
+    body: JSON.stringify({ allowedCapabilityIds }),
+  });
 }
 
 export async function createApiKeyAuth(

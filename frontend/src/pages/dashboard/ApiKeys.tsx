@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@openfort/react';
-import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X, ShieldCheck } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
   listApiKeysAuth,
+  listDefiCapabilitiesAuth,
   createApiKeyAuth,
+  updateApiKeyCapabilitiesAuth,
   revokeApiKeyAuth,
   revokeAllApiKeysAuth,
   refreshApiKey as refreshApiKeyApi,
@@ -21,6 +23,7 @@ import {
   matchesApiKeyLifecycleFilter,
   type ApiKeyLifecycleStatus,
   type ApiKeyRecord,
+  type DefiCapability,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
@@ -154,8 +157,14 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
-  const [newKeyAllowedContracts, setNewKeyAllowedContracts] = useState('');
-  const [newKeyAllowedSelectors, setNewKeyAllowedSelectors] = useState('');
+  const [capabilities, setCapabilities] = useState<DefiCapability[]>([]);
+  const [capabilitiesLoading, setCapabilitiesLoading] = useState(true);
+  const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null);
+  const [newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds] = useState<string[]>([]);
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const [editingCapabilityIds, setEditingCapabilityIds] = useState<string[]>([]);
+  const [capabilitySaving, setCapabilitySaving] = useState(false);
+  const [capabilityError, setCapabilityError] = useState<string | null>(null);
   const [newKeyDailySpendLimit, setNewKeyDailySpendLimit] = useState('');
   const [newKeyMonthlySpendLimit, setNewKeyMonthlySpendLimit] = useState('');
   const [newKeyPermissions, setNewKeyPermissions] = useState({
@@ -233,6 +242,19 @@ export default function ApiKeysPage() {
     }
   }, [getToken]);
 
+  const fetchCapabilities = useCallback(async () => {
+    setCapabilitiesLoading(true);
+    setCapabilitiesError(null);
+    try {
+      const result = await listDefiCapabilitiesAuth(getToken);
+      setCapabilities(result.capabilities);
+    } catch (err: unknown) {
+      setCapabilitiesError(getApiErrorMessage(err));
+    } finally {
+      setCapabilitiesLoading(false);
+    }
+  }, [getToken]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated || !user) {
@@ -240,7 +262,8 @@ export default function ApiKeysPage() {
       return;
     }
     fetchKeys();
-  }, [authLoading, fetchKeys, isAuthenticated, user]);
+    fetchCapabilities();
+  }, [authLoading, fetchCapabilities, fetchKeys, isAuthenticated, user]);
 
   useEffect(() => {
     if (!newRawKey) return;
@@ -274,16 +297,6 @@ export default function ApiKeysPage() {
       .map((value) => value.trim())
       .filter(Boolean);
 
-    const allowedContracts = newKeyAllowedContracts
-      .split(/[\s,]+/)
-      .map((value) => value.trim())
-      .filter(Boolean);
-
-    const allowedFunctionSelectors = newKeyAllowedSelectors
-      .split(/[\s,]+/)
-      .map((value) => value.trim())
-      .filter(Boolean);
-
     const spendLimits: { daily?: string; monthly?: string } = {};
     if (newKeyDailySpendLimit.trim()) spendLimits.daily = newKeyDailySpendLimit.trim();
     if (newKeyMonthlySpendLimit.trim()) spendLimits.monthly = newKeyMonthlySpendLimit.trim();
@@ -297,8 +310,7 @@ export default function ApiKeysPage() {
         {
           name: trimmedName,
           ...(allowedIps.length > 0 ? { allowedIps } : {}),
-          ...(allowedContracts.length > 0 ? { allowedContracts } : {}),
-          ...(allowedFunctionSelectors.length > 0 ? { allowedFunctionSelectors } : {}),
+          allowedCapabilityIds: newKeyAllowedCapabilityIds,
           ...(Object.keys(spendLimits).length > 0 ? { spendLimits } : {}),
           permissions: newKeyPermissions,
         },
@@ -308,8 +320,7 @@ export default function ApiKeysPage() {
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
       setNewKeyAllowedIps('');
-      setNewKeyAllowedContracts('');
-      setNewKeyAllowedSelectors('');
+       setNewKeyAllowedCapabilityIds([]);
       setNewKeyDailySpendLimit('');
       setNewKeyMonthlySpendLimit('');
       setNewKeyPermissions({
@@ -388,6 +399,53 @@ export default function ApiKeysPage() {
     } finally {
       setActionLoading(false);
     }
+  }
+
+  async function handleSaveCapabilities(key: ApiKeyRecord) {
+    if (capabilitySaving) return;
+    if (!confirm(`Update capabilities for ${key.name || key.displayPrefix}? An empty grant allows no catalog operations.`)) return;
+    setCapabilitySaving(true);
+    setCapabilityError(null);
+    try {
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
+      const result = await updateApiKeyCapabilitiesAuth(getToken, key.id, editingCapabilityIds, stepUpToken);
+      setKeys((current) => current.map((item) => item.id === result.id
+        ? { ...item, allowedCapabilityIds: result.allowedCapabilityIds }
+        : item));
+      setEditingKeyId(null);
+    } catch (err: unknown) {
+      setCapabilityError(getApiErrorMessage(err));
+    } finally {
+      setCapabilitySaving(false);
+    }
+  }
+
+  function toggleCapability(ids: string[], id: string, setter: (value: string[]) => void) {
+    setter(ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
+  }
+
+  function capabilityChoices(ids: string[], setter: (value: string[]) => void, disabled = false) {
+    if (capabilitiesLoading) return <p className="text-sm text-brand-muted">Loading capability catalog…</p>;
+    if (capabilitiesError) return <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div>;
+    const visibleCapabilities = capabilities.filter((capability) => capability.status === 'active' || ids.includes(capability.capabilityId));
+    const unknownIds = ids.filter((id) => !capabilities.some((capability) => capability.capabilityId === id));
+    return <div className="space-y-2">
+      {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No reviewed capabilities are available yet. New keys will have no catalog access until capabilities are published.</p>}
+      {visibleCapabilities.map((capability) => {
+      const selected = ids.includes(capability.capabilityId);
+      return <label key={capability.capabilityId} className={`flex gap-3 rounded-lg border border-brand-border bg-white p-3 text-sm ${capability.status === 'active' ? 'cursor-pointer hover:border-brand-accent' : 'opacity-70'}`}>
+        <input type="checkbox" checked={selected} disabled={disabled || capability.status !== 'active'} onChange={() => toggleCapability(ids, capability.capabilityId, setter)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
+        <span className="min-w-0"><span className="block font-semibold text-brand-text">{capability.label}<span className="ml-2 text-[10px] font-bold uppercase text-brand-muted">{capability.status}</span></span>
+          <span className="block text-xs leading-5 text-brand-muted">{capability.description} · chain {capability.chainId} · {capability.type === 'contract_call' ? capability.functionSignature || 'Contract call' : 'Typed-data signing'}</span>
+        </span>
+      </label>;
+      })}
+      {unknownIds.map((id) => <label key={id} className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-sm">
+        <input type="checkbox" checked disabled={disabled} onChange={() => toggleCapability(ids, id, setter)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
+        <span className="min-w-0"><span className="block font-semibold text-brand-text">Unavailable capability</span><code className="block break-all text-xs text-brand-muted">{id}</code><button type="button" disabled={disabled} onClick={() => toggleCapability(ids, id, setter)} className="mt-1 text-xs font-semibold text-amber-800 underline disabled:opacity-50">Remove grant</button></span>
+      </label>)}
+      {ids.length > 0 && <button type="button" disabled={disabled} onClick={() => setter([])} className="mt-1 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent disabled:opacity-50">Clear all grants</button>}
+    </div>;
   }
 
   return (
@@ -502,35 +560,9 @@ export default function ApiKeysPage() {
               Leave blank only for local development or rotating IP environments.
             </p>
           </div>
-          <div className="space-y-2 lg:flex-1">
-            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
-              Contract allowlist <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
-            </label>
-            <textarea
-              rows={2}
-              placeholder="0x1234…, 0x5678…"
-              value={newKeyAllowedContracts}
-              onChange={(e) => setNewKeyAllowedContracts(e.target.value)}
-              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
-            />
-            <p className="text-xs leading-5 text-brand-muted">
-              Restrict transactions and signing to these contract addresses. Leave blank to allow all.
-            </p>
-          </div>
-          <div className="space-y-2 lg:flex-1">
-            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
-              Function selectors <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
-            </label>
-            <textarea
-              rows={2}
-              placeholder="0xa9059cbb, 0x095ea7b3"
-              value={newKeyAllowedSelectors}
-              onChange={(e) => setNewKeyAllowedSelectors(e.target.value)}
-              className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
-            />
-            <p className="text-xs leading-5 text-brand-muted">
-              Restrict transactions to these 4-byte function selectors. Leave blank to allow all.
-            </p>
+          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
+            <div><p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Reviewed capabilities</p><p className="mt-1 text-xs leading-5 text-brand-muted">Choose exact catalog operations for this key. No selection means no catalog operations are allowed; it does not mean unrestricted access.</p></div>
+            {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds)}
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
             <div className="space-y-2">
@@ -763,8 +795,7 @@ export default function ApiKeysPage() {
                 : null;
               const frozenReasonLabel =
                 lifecycleStatus === 'frozen' ? formatApiKeyFrozenReason(key.frozenReason) : null;
-              const allowedContracts = key.allowedContracts ?? [];
-              const allowedFunctionSelectors = key.allowedFunctionSelectors ?? [];
+              const allowedCapabilityIds = key.allowedCapabilityIds ?? [];
               const canRevoke = lifecycleStatus !== 'revoked';
 
               return (
@@ -801,20 +832,9 @@ export default function ApiKeysPage() {
                         !key.permissions.canSign &&
                         !key.permissions.canSendTransaction &&
                         !key.permissions.canUseEoaExecution && <span className="shrink-0">none</span>}
-                      {(allowedContracts.length > 0 || allowedFunctionSelectors.length > 0) && (
-                        <>
-                        {allowedContracts.length > 0 && (
-                          <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-blue-700" title={allowedContracts.join(', ')}>
-                            {allowedContracts.length} contract{allowedContracts.length > 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {allowedFunctionSelectors.length > 0 && (
-                          <span className="shrink-0 rounded-full bg-purple-50 px-1.5 py-0.5 text-purple-700" title={allowedFunctionSelectors.join(', ')}>
-                            {allowedFunctionSelectors.length} selector{allowedFunctionSelectors.length > 1 ? 's' : ''}
-                          </span>
-                        )}
-                        </>
-                      )}
+                      <span className={`shrink-0 rounded-full px-1.5 py-0.5 ${allowedCapabilityIds.length ? 'bg-blue-50 text-blue-700' : 'bg-brand-bg text-brand-muted'}`}>
+                        {allowedCapabilityIds.length} {allowedCapabilityIds.length === 1 ? 'capability' : 'capabilities'}
+                      </span>
                       {(key.dailySpendLimit || key.monthlySpendLimit) && (
                         <>
                         {key.dailySpendLimit && (
@@ -872,6 +892,17 @@ export default function ApiKeysPage() {
                       <span className="hidden h-7 w-7 xl:block" />
                     )}
                   </div>
+                  {editingKeyId === key.id && (
+                    <div className="mx-5 mb-4 space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 sm:mx-7">
+                      <p className="text-sm font-semibold text-brand-text">Edit reviewed capabilities</p>
+                      {capabilityError && <p role="alert" className="text-sm text-red-700">{capabilityError}</p>}
+                      {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, capabilitySaving)}
+                      <div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleSaveCapabilities(key)} disabled={capabilitySaving || capabilitiesLoading || Boolean(capabilitiesError)} className="inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{capabilitySaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Save grants</button><button type="button" onClick={() => { setEditingKeyId(null); setCapabilityError(null); }} disabled={capabilitySaving} className="rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text">Cancel</button></div>
+                    </div>
+                  )}
+                  {editingKeyId !== key.id && canRevoke && (
+                    <button type="button" onClick={() => { setEditingKeyId(key.id); setEditingCapabilityIds(allowedCapabilityIds); setCapabilityError(null); }} disabled={actionLoading || capabilitySaving} className="mx-5 mb-4 inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent sm:mx-7"><ShieldCheck className="h-3.5 w-3.5" />Edit capabilities ({allowedCapabilityIds.length})</button>
+                  )}
                   {lifecycleStatus === 'frozen' && (
                     <div className="mx-5 mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 sm:mx-5 xl:mx-7">
                       <p className="font-semibold text-amber-950">

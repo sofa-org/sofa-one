@@ -12,11 +12,10 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidateNested,
+  ValidateIf,
 } from 'class-validator';
 import { isIpOrCidr } from '../../../common/utils/ip-cidr';
 
-const ETHEREUM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
-const FUNCTION_SELECTOR_RE = /^0x[0-9a-fA-F]{8}$/;
 const WEI_AMOUNT_RE = /^\d+$/;
 
 @ValidatorConstraint({ name: 'isIpOrCidr', async: false })
@@ -30,26 +29,14 @@ class IsIpOrCidrConstraint implements ValidatorConstraintInterface {
   }
 }
 
-@ValidatorConstraint({ name: 'isEthereumAddress', async: false })
-class IsEthereumAddressConstraint implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'isCapabilityIdList', async: false })
+class IsCapabilityIdListConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    return typeof value === 'string' && ETHEREUM_ADDRESS_RE.test(value);
+    return Array.isArray(value) && value.length <= 100 && value.every((id) =>
+      typeof id === 'string' && id.length > 0 && id.length <= 160 && id.trim() === id,
+    ) && new Set(value).size === value.length;
   }
-
-  defaultMessage(): string {
-    return 'Each entry must be a valid Ethereum address (0x-prefixed, 40 hex chars)';
-  }
-}
-
-@ValidatorConstraint({ name: 'isFunctionSelector', async: false })
-class IsFunctionSelectorConstraint implements ValidatorConstraintInterface {
-  validate(value: unknown): boolean {
-    return typeof value === 'string' && FUNCTION_SELECTOR_RE.test(value);
-  }
-
-  defaultMessage(): string {
-    return 'Each entry must be a valid 4-byte function selector (0x-prefixed, 8 hex chars, e.g. 0xa9059cbb)';
-  }
+  defaultMessage(): string { return 'allowedCapabilityIds must contain at most 100 unique non-empty IDs of at most 160 characters'; }
 }
 
 @ValidatorConstraint({ name: 'isWeiAmount', async: false })
@@ -110,17 +97,10 @@ export class CreateApiKeyDto {
   @Validate(IsIpOrCidrConstraint, { each: true })
   allowedIps?: string[];
 
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
-  @IsString({ each: true })
-  @Validate(IsEthereumAddressConstraint, { each: true })
-  allowedContracts?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  @Validate(IsFunctionSelectorConstraint, { each: true })
-  allowedFunctionSelectors?: string[];
+  @Validate(IsCapabilityIdListConstraint)
+  allowedCapabilityIds?: string[];
 
   @IsOptional()
   @IsObject()
@@ -133,4 +113,10 @@ export class CreateApiKeyDto {
   @ValidateNested()
   @Type(() => ApiKeyPermissionsDto)
   permissions?: ApiKeyPermissionsDto;
+}
+
+export class PatchApiKeyCapabilitiesDto {
+  @IsArray()
+  @Validate(IsCapabilityIdListConstraint)
+  allowedCapabilityIds!: string[];
 }

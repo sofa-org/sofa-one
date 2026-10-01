@@ -23,6 +23,7 @@ The container is organized around three concerns:
 | `wallet-provisioning-recovery/` | Operator-only CLI support for binding an already-created provider account to a matching provisioning intent; no HTTP route or create retry/reset | [View Map](wallet-provisioning-recovery/codemap.md) |
 | `wallet/dto/` | Validated sign/withdraw/withdrawal-address/signing-request DTOs + amount bounds | [View Map](wallet/dto/codemap.md) |
 | `transactions/` | Public send/status API + dashboard history; policy + simulation preflight, idempotency, Openfort submission, safe response shaping | [View Map](transactions/codemap.md) |
+| `defi/` | Reviewed hierarchical capability catalog, grant validation, persistent pause overlay, generic-send authorization; catalog currently empty | [View Map](defi/codemap.md) |
 | `transactions/dto/` | Send-transaction + list-transactions validation DTOs and shared interaction constants | [View Map](transactions/dto/codemap.md) |
 | `billing/` | Plan catalog, usage metering, quota enforcement, invoice list/detail/payment-status, Stripe + native USDC checkout and pay-from-wallet, reconciliation | [View Map](billing/codemap.md) |
 | `billing/dto/` | Validated bodies for the five dashboard billing routes (including subscription checkout) | [View Map](billing/dto/codemap.md) |
@@ -55,10 +56,10 @@ The container is organized around three concerns:
 `POST /auth/session` → sync Openfort IAM session into `User` + pending wallet (P2002-tolerant) → `POST /auth/embedded-wallet/authorize` verifies the embedded EOA, runs billing quota preflight, ensures/reuses the TEE agent wallet, activates the `UserWallet`, and upserts a `registration_required` chain authorization → `POST /auth/embedded-wallet/registration-transaction` stores the `registerKey` tx hash (`pending_registration`) → `POST /auth/embedded-wallet/registration-result` verifies on-chain (Calibur delegation + key registered) before persisting `registered`. `GET /auth/me` self-heals stale pending registrations.
 
 ### API-key signing (public, API-key only)
-`POST /v1/wallets/sign` → `ApiKeyAuthGuard` resolves key (Argon2 verify, freeze checks) + `ApiKeyPermissionGuard` (`canSign`) → EOA mode gated by `EoaExecutionPolicyService` → `SigningPolicyService` policy checks → `RiskEvaluationService` → wallet/chain-authorization readiness → `SessionKeyPolicyService` on-chain check (session_key) → `OpenfortService.signData` → Calibur ABI wrap → `SigningRequest` audit row → `{ signature, walletAddress, type, executionMode }`.
+`POST /v1/wallets/sign` → `ApiKeyAuthGuard` + `ApiKeyPermissionGuard` (`canSign`) → `DefiPolicyService.authorizeSigning` denies all with `DEFI_FUNCTION_NOT_ALLOWED` before hashing, SigningRequest creation, or Openfort. Typed-data capability remains disabled; dedicated withdrawal and billing-payment paths are independent.
 
 ### Transaction send (public, API-key only)
-`POST /v1/transactions/send` → `ApiKeyAuthGuard` + `ApiKeyPermissionGuard` (`canSendTransaction`) → EOA policy gate (eoa mode) → `TransactionPolicyService.assertAllowed` (calldata/approval/fanout/native-value/allowlist/spend limits) → `RiskEvaluationService` → wallet readiness → `SessionKeyPolicyService` (session_key) → idempotency check → `TransactionSimulationService` per-interaction `eth_call` preflight → create `Transaction` row → `OpenfortService.sendUserOperation`/`sendBackendTransaction` → safe `{ transactionId, transactionHash, status }`.
+`POST /v1/transactions/send` → auth/permission, EOA and generic safety gates, risk/wallet/session-key readiness → outer idempotency lookup (hit returns existing response without replay) → on miss, `DefiPolicyService` checks chain → contract → function/grant → canonical ABI → policy → destination protection → billing and simulation → final create-time recheck under destination → pause SHARE → API-key UPDATE locks at READ COMMITTED → insert/send. DeFi denial precedes simulation, `Transaction` creation and Openfort. Dedicated withdrawals and billing payments are not blanket-gated.
 
 ### Withdrawal (dashboard-only, step-up)
 `POST /v1/wallets/withdraw` → `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard` → wallet frozen/active/chain checks → `WithdrawalPolicyService` (single/daily limits, address allowlist + cooldown, high-value telemetry) → `RiskEvaluationService` → idempotency + on-chain balance pre-check → row-locked daily-limit check → create `Transaction` → `OpenfortService.sendUserOperation` (Calibur agent user op).
@@ -78,6 +79,7 @@ API-key requests meter via `ApiKeyAuthGuard.recordApiCallUsage` → `billing.ass
 - **Shared core services.** All modules depend on `PrismaService` (`src/core/database`) and `OpenfortService` (`src/core/openfort`) for persistence and TEE signing/submission.
 - **Shared guards/decorators** from `src/common`: `OpenfortAuthGuard`, `OpenfortUserGuard`, `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `FrontendOnlyGuard`, `StepUpGuard`, `@CurrentUser`, `@Public`, `@FrontendOnly`, `@RequireStepUp`, `@RequireApiKeyPermission`.
 - **Cross-module dependency direction (policy gates):**
+  - `DefiModule` is a leaf imported by `ApiKeyModule`, `TransactionsModule`, and `WalletModule`; it imports `SecurityEventModule` and uses globally available Prisma.
   - `WalletModule` and `TransactionsModule` import `EoaExecutionModule`, `SessionKeyModule`, `SecurityEventModule`, `StepUpModule`, `BillingModule`.
   - `AuthModule` imports `ApiKeyModule` (rotate), `SecurityEventModule`, `StepUpModule`, `BillingModule`.
   - `ApiKeyModule` imports `StepUpModule` + `SecurityEventModule`.

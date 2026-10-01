@@ -28,7 +28,7 @@ Authenticated, post-sign-in screens for the SOFA ONE agent wallet: wallet provis
 - **Shared layout via nested routes**: `DashboardLayout` renders `<Outlet />`; `App.tsx` mounts it under `/dashboard` wrapped in `AuthProviders → ProtectedRoute → DashboardStepUpGate`. All dashboard pages are `lazy()`-loaded.
 - **Token accessor pattern**: every page builds `getToken = useCallback(async () => getAccessToken()...)` from `useUser()` and passes it to `@/lib/api` helpers; pages bail out when `!isAuthenticated`.
 - **Step-up gating**: guarded mutations (withdraw, allowlist add/remove, API key create/revoke/rotate, USDC pay-from-wallet) call `getDashboardStepUpToken() ?? await requestStepUpToken(getToken)`; the proof token is cached in `sessionStorage` (`step-up-session.ts`) and cleared on sign-out. Payment-status polls do not require step-up.
-- **Controlled forms**: key creation, withdrawal, and allowlist forms lift all field state to the page and pass setters down to presentational components.
+- **Controlled forms**: key creation, capability grants, withdrawal, and allowlist forms lift all field state to the page and pass setters down to presentational components.
 - **Presentational split**: `Wallet.tsx` owns all logic; `Step1CreateEoa`/`Step2AuthorizeAccess`/`BalanceDisplay`/`WithdrawForm` are dumb props-driven components.
 - **Stale-response guards**: request-id refs (`UsdcPaymentPanel`, `Billing.refreshInvoicesSilently`) and `isMountedRef` prevent out-of-order responses from clobbering state.
 - **Local persistence**: chain selection (`sofa-one.wallet.balanceChainId`, `sofa-one.wallet.agentChainId`) and key status filter (`sofa-one.apiKeys.statusFilter`) in `localStorage`; step-up proof in `sessionStorage`.
@@ -54,7 +54,7 @@ Renders desktop sidebar + mobile drawer from `NAV_ITEMS` (Wallet, API Keys, Hist
 
 ### ApiKeys (`/dashboard/api-keys`)
 
-Lists keys (sorted: active by soonest expiry then last-used; revoked by newest), filters by status, enforces the 10-active-key cap. Create sends name, optional IP/contract/selector allowlists, spend limits, and permission checkboxes; shows the raw key once. Revoke (per-key), rotate-all (`refreshApiKey`), and emergency revoke-all are all confirm-gated and step-up gated. Includes a backend-only curl quick start.
+Lists keys (sorted: active by soonest expiry then last-used; revoked by newest), filters by status, enforces the 10-active-key cap. Create sends name, optional IP allowlist, `allowedCapabilityIds`, spend limits, and permission checkboxes; shows the raw key once. Capability selection uses `GET /v1/defi-capabilities`; inactive/paused capabilities cannot be newly granted, while existing grants can be removed. Per-key grant edits call `PATCH /v1/api-keys/:id/capabilities` with step-up and confirmation; empty grants deny catalog operations. Revoke (per-key), rotate-all (`refreshApiKey`), and emergency revoke-all are also confirm-gated and step-up gated. Includes a backend-only curl quick start.
 
 ### Transactions (`/dashboard/transactions`)
 

@@ -23,12 +23,9 @@ module owns the *policy* (should this API-key operation be allowed?).
   try/catch and throws `ServiceUnavailableException` on any error — if the key's on-chain
   status cannot be confirmed, the operation is blocked (prevents use of revoked keys when
   RPC is unavailable).
-- **Defense in depth with drift detection.** Backend API-key restrictions
-  (`allowedContracts`, `allowedFunctionSelectors`, spend limits) are *not* enforced by
-  Calibur on-chain. `detectPolicyDrift` flags each such restriction as
-  `*_not_enforced_on_chain` because a compromised backend API key could bypass them by
-  interacting with the chain directly. Drift is **warned, not denied** — backend-only
-  restrictions are still valid defense-in-depth.
+- **Defense in depth.** Generic transaction contract calls are authorized by the DeFi
+  capability policy before session-key submission. Calibur checks delegation and key
+  usability; it does not substitute for backend capability authorization.
 - **Expiration alignment check.** If the on-chain key expires before the API key, on-chain
   enforcement would stop working before the API key does; this is recorded as
   `session_key.expiration_mismatch` (allowed, but warned).
@@ -42,11 +39,10 @@ module owns the *policy* (should this API-key operation be allowed?).
 
 ## Flow
 
-1. **Caller builds context.** `WalletService.sign` (operation `'sign'`) and
-   `TransactionsService.sendTransaction` (operation `'send_transaction'`) construct a
-   `SessionKeyPolicyContext` from the API-key record (`allowedContracts`,
-   `allowedFunctionSelectors`, spend limits, `expiresAt`) and the wallet
-   (`accountAddress`, `agentKeyHash`), then call `assertSessionKeyAllowed`.
+1. **Caller builds context.** `TransactionsService.sendTransaction` (operation
+   `'send_transaction'`) constructs a `SessionKeyPolicyContext` from the API-key record
+   (`expiresAt`) and wallet (`accountAddress`, `agentKeyHash`). API-key signing is disabled
+   by DeFi policy before this service is reached.
 2. **On-chain key status** (`verifyOnChainKeyStatus`):
    - `getSupportedChain(chainId)` → viem `createPublicClient` (default `http()` transport).
    - `hasCaliburDelegation` — account `code` must equal the EIP-7702 delegation designator
@@ -58,8 +54,8 @@ module owns the *policy* (should this API-key operation be allowed?).
 3. **Deny path.** If not usable, `recordDecision('denied', 'session_key_<reason>')` is
    written and `ForbiddenException` is thrown — the operation never reaches signing or
    submission.
-4. **Allow path.** Expiration mismatch and policy drift are recorded as allowed events
-   with warning metadata, then a final `session_key.allowed` event is recorded.
+ 4. **Allow path.** Expiration mismatch is recorded as an allowed event with warning
+    metadata, then a final `session_key.allowed` event is recorded.
 5. **Revocation.** `generateRevocationCalldata(keyHash)` encodes a Calibur
    `update(keyHash, settings)` call with `expiration: 0`, `isAdmin: false`,
    `hook: ZERO_ADDRESS`. The calldata is returned to the caller (the account owner) who
@@ -71,9 +67,8 @@ module owns the *policy* (should this API-key operation be allowed?).
   `executionMode === 'session_key'`; `eoa` mode uses `EoaExecutionPolicyService` instead.
 - **On-chain truth wins.** A key must be delegated, registered, and usable on-chain
   regardless of backend state; backend-only restrictions cannot *add* on-chain capability.
-- **Backend-only restrictions are advisory.** Contract/selector allowlists and spend
-  limits are enforced by backend policy (defense in depth) but flagged as drift because
-  Calibur does not enforce them on-chain.
+- **Capability policy is authoritative for backend API calls.** Calibur usability
+  checks are independent and do not confer contract-call permission.
 - **Fail-closed, never fail-open.** RPC unavailability blocks the operation.
 - **Telemetry actor is the API key.** All events are recorded with `actorType: 'api_key'`,
   `riskLevel: low` for allowed and `high` for denied, including `operation`, `chainId`,

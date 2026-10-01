@@ -2,6 +2,8 @@ import { AuthService } from './auth.service';
 
 jest.mock('../../core/openfort/openfort.service', () => ({ OpenfortService: class {} }));
 
+const futureAgentExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
 describe('AuthService durable embedded-wallet provisioning', () => {
   const futureAgentExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const wallet = { id: 'w1', userId: 'u1', status: 'pending_embedded_wallet', isDefault: false,

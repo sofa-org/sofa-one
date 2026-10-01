@@ -68,4 +68,17 @@ describe('CreateApiKeyDto', () => {
 
     expect(errors.some((error) => error.property === 'permissions')).toBe(true);
   });
+
+  it('accepts a valid capability grant list and rejects null/invalid grant lists', async () => {
+    expect(await validateDto({ name: 'Valid', allowedCapabilityIds: ['cap:a:v1'] })).toHaveLength(0);
+    for (const allowedCapabilityIds of [null, [''], ['x'.repeat(161)], Array(101).fill('x'), ['x', 'x']]) {
+      const errors = await validateDto({ name: 'Valid', allowedCapabilityIds: allowedCapabilityIds as any });
+      expect(errors.some((error) => error.property === 'allowedCapabilityIds')).toBe(true);
+    }
+  });
+
+  it('does not accept removed legacy grant arrays', async () => {
+    const errors = await validate(plainToInstance(CreateApiKeyDto, { name: 'Valid', allowedContracts: [], allowedFunctionSelectors: [] }), { whitelist: true, forbidNonWhitelisted: true });
+    expect(errors.map((error) => error.property)).toEqual(expect.arrayContaining(['allowedContracts', 'allowedFunctionSelectors']));
+  });
 });

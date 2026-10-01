@@ -62,6 +62,13 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
+- API-key message and typed-data signing are disabled in the DeFi-policy MVP. Do not
+  re-enable signing without an explicitly reviewed signing-capability policy; no legacy
+  unrestricted key path is permitted.
+- Generic API-key transaction sends require active, granted DeFi capability matches for
+  every contract call. Unknown/paused/ungranted capabilities fail closed. Capability/pause
+  state is revalidated in the acceptance transaction; do not make RPC/Openfort/HTTP calls
+  while policy locks are held.
 
 ## 7. Logging rules
 

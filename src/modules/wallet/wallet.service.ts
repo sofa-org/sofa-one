@@ -41,6 +41,7 @@ import { RiskEvaluationService } from '../security-events/risk-evaluation.servic
 import { SecurityEventService } from '../security-events/security-event.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -90,8 +91,7 @@ type ApiKeySigningContext = {
   expiresAt?: Date | string | null;
   canSign?: boolean;
   canUseEoaExecution?: boolean;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
 };
 
 @Injectable()
@@ -104,6 +104,7 @@ export class WalletService {
     private readonly openfort: OpenfortService,
     private readonly withdrawalPolicy: WithdrawalPolicyService,
     private readonly billingDebt: BillingDebtService,
+    private readonly defiPolicy: DefiPolicyService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -186,12 +187,14 @@ export class WalletService {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');
     }
-    this.assertPermission(apiKeyRecord.canSign, 'API key is not allowed to sign messages');
+    const apiKey = apiKeyRecord!;
+    this.assertPermission(apiKey.canSign, 'API key is not allowed to sign messages');
 
-    const chainId = this.resolveSigningChainId(params);
-    if (chainId === undefined) {
+    const resolvedChainId = this.resolveSigningChainId(params);
+    if (resolvedChainId === undefined) {
       throw new BadRequestException('chainId is required for API-key signing');
     }
+    const chainId: number = resolvedChainId;
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(params.executionMode);
     const policyContext = {
@@ -199,10 +202,8 @@ export class WalletService {
       chainId,
       type: params.type,
       executionMode,
-      apiKeyId: apiKeyRecord.id,
-      apiKeyPrefix: apiKeyRecord.keyPrefix,
-      allowedContracts: apiKeyRecord.allowedContracts,
-      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
+      apiKeyId: apiKey.id,
+      apiKeyPrefix: apiKey.keyPrefix,
     };
 
     // BILL-016 root preflight: after API-key permission, before EOA / SigningPolicy /
@@ -214,20 +215,37 @@ export class WalletService {
     if (destinationProtectionEnabled) {
       await this.throwSigningBlockedByDestinationProtection({
         userId,
-        apiKeyId: apiKeyRecord.id,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyId: apiKey.id,
+        apiKeyPrefix: apiKey.keyPrefix,
         chainId,
         type: params.type,
         executionMode,
       });
     }
 
+    const selectedForPolicy = await this.selectWallet(userId, params.walletId);
+    let signingAuthorization: DefiAuthorization | undefined;
+    try {
+      signingAuthorization = this.defiPolicy.authorizeSigning({ type: params.type, typedData: params.typedData }, {
+        userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
+        walletId: selectedForPolicy.id, chainId, executionMode,
+        executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,
+        allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [],
+      });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      throw error;
+    }
+
     if (executionMode === 'eoa') {
       this.assertPermission(
-        apiKeyRecord.canUseEoaExecution,
+        apiKey.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
-      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
+      await this.assertEoaExecutionAllowed(userId, apiKey, {
         operation: 'sign',
         chainId,
         metadata: { type: params.type },
@@ -238,7 +256,7 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyPrefix: apiKey.keyPrefix,
       });
     }
 
@@ -266,44 +284,43 @@ export class WalletService {
       include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } },
     });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    this.assertWalletNotFrozen(wallet);
-    if (wallet.status !== 'active' || !wallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
+    const activeWallet = wallet!;
+    this.assertWalletNotFrozen(activeWallet);
+    if (activeWallet.status !== 'active' || !activeWallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${activeWallet.status})`);
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
       userId,
-      apiKeyId: apiKeyRecord.id,
-      walletId: wallet.id,
+      apiKeyId: apiKey.id,
+      walletId: activeWallet.id,
       operationType: 'signing',
     });
-    if (riskAssessment && riskAssessment.action !== 'allow') {
-      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+    if (riskAssessment && riskAssessment!.action !== 'allow') {
+      await this.riskEvaluation!.enforceRiskAction(riskAssessment!, {
         userId,
-        apiKeyId: apiKeyRecord.id,
-        walletId: wallet.id,
+        apiKeyId: apiKey.id,
+        walletId: activeWallet.id,
         operationType: 'signing',
       });
     }
 
     if (executionMode === 'session_key') {
-      this.assertAgentWalletReady(wallet);
-      this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
+      this.assertAgentWalletReady(activeWallet);
+      this.assertChainAuthorizationReady(activeWallet.chainAuthorizations?.[0]);
       await this.sessionKeyPolicy?.assertSessionKeyAllowed({
         userId,
-        walletId: wallet.id,
-        apiKeyId: apiKeyRecord?.id,
-        apiKeyPrefix: apiKeyRecord?.keyPrefix,
+        walletId: activeWallet.id,
+        apiKeyId: apiKey.id,
+        apiKeyPrefix: apiKey.keyPrefix,
         chainId,
-        accountAddress: wallet.walletAddress,
-        keyHash: wallet.agentKeyHash!,
+        accountAddress: activeWallet.walletAddress!,
+        keyHash: activeWallet.agentKeyHash!,
         operation: 'sign',
-        allowedContracts: apiKeyRecord?.allowedContracts,
-        allowedFunctionSelectors: apiKeyRecord?.allowedFunctionSelectors,
-        apiKeyExpiresAt: apiKeyRecord?.expiresAt,
+        apiKeyExpiresAt: apiKey.expiresAt,
       });
     } else {
-      this.assertBackendWalletReady(wallet);
+      this.assertBackendWalletReady(activeWallet);
     }
     const signingWalletAddress =
-      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress;
+      executionMode === 'eoa' ? activeWallet.agentWalletAddress! : activeWallet.walletAddress!;
 
     let data: string;
     switch (params.type) {
@@ -326,14 +343,15 @@ export class WalletService {
     // committed first wins). Sign already accepted before enablement is out of scope.
     const signingBlockedAudit: SigningDestinationProtectionAudit = {
       userId,
-      apiKeyId: apiKeyRecord.id,
-      apiKeyPrefix: apiKeyRecord.keyPrefix,
-      walletId: wallet.id,
+      apiKeyId: apiKey.id,
+      apiKeyPrefix: apiKey.keyPrefix,
+      walletId: activeWallet.id,
       chainId,
       type: params.type,
       executionMode,
     };
     let signingRequest: { id: string };
+    let deferredSigningEvent: unknown;
     try {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
@@ -344,13 +362,17 @@ export class WalletService {
             signingBlockedAudit,
           );
         }
+        if (signingAuthorization) {
+          await this.defiPolicy.assertStillAuthorized(txClient, signingAuthorization);
+          deferredSigningEvent = await this.defiPolicy.recordAllowedInTx(txClient, signingAuthorization);
+        }
         return txClient.signingRequest.create({
           data: {
             userId,
-            apiKeyId: apiKeyRecord?.id,
+            apiKeyId: apiKey.id,
             authMethod: 'api_key',
-            apiKeyPrefix: apiKeyRecord?.keyPrefix,
-            apiKeyName: apiKeyRecord?.name,
+            apiKeyPrefix: apiKey.keyPrefix,
+            apiKeyName: apiKey.name,
             type: params.type,
             chainId: BigInt(chainId),
             walletAddress: signingWalletAddress,
@@ -366,6 +388,7 @@ export class WalletService {
           },
         });
       });
+      if (deferredSigningEvent) await this.securityEvents?.exportCommitted(deferredSigningEvent);
     } catch (error) {
       // After TX rollback: destination advisory released — safe to audit once.
       if (error instanceof DeferredSigningDestinationProtectionDenial) {
@@ -384,17 +407,17 @@ export class WalletService {
         type: params.type,
         executionMode,
         ...(typedDataSummary ?? {}),
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyPrefix: apiKey.keyPrefix,
       }),
     );
 
     let signature: string;
     try {
-      const accountId = wallet.agentOpenfortAccountId!;
+      const accountId = activeWallet.agentOpenfortAccountId!;
       const rawSignature = await this.openfort.signData(accountId, data);
       signature =
         executionMode === 'session_key'
-          ? this.wrapCaliburSignature(wallet.agentKeyHash!, rawSignature)
+          ? this.wrapCaliburSignature(activeWallet.agentKeyHash!, rawSignature)
           : rawSignature;
     } catch (err) {
       this.logger.error(
@@ -405,7 +428,7 @@ export class WalletService {
           chainId,
           type: params.type,
           executionMode,
-          apiKeyPrefix: apiKeyRecord.keyPrefix,
+          apiKeyPrefix: apiKey.keyPrefix,
         }),
         err instanceof Error ? err.stack : undefined,
       );
@@ -423,7 +446,7 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyPrefix: apiKey.keyPrefix,
       }),
     );
 

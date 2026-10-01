@@ -19,6 +19,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
 - API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit for create/revoke/rotate/first-use/suspicious-use/freeze events.
+- API keys grant DeFi capabilities only through exact `allowedCapabilityIds` (omitted values default to `[]`, which denies all); legacy contract/selector allowlists are removed without backfill. The empty reviewed catalog is fail-closed. DeFi management is dashboard-only: catalog GET and step-up-protected capability PATCH; signing requests are all denied with `DEFI_FUNCTION_NOT_ALLOWED` before hashing.
 - User, API-key, and wallet freeze state is modeled explicitly; frozen users are rejected by dashboard and API-key auth, frozen API keys are rejected by `ApiKeyAuthGuard`, and frozen wallets cannot sign, send, withdraw, expose deposit info, or fetch balances.
 - User-facing security alerts are derived from selected `SecurityEvent` rows into dashboard-only `SecurityNotification` records; an optional SIEM webhook exports every persisted security event as a redacted JSON payload.
 - Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; policy denies, high-value withdrawal requests, and withdrawal-address changes are written to `SecurityEvent`.
@@ -63,6 +64,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/wallet-provisioning-recovery/` | Operator-only support for binding an already-created provider account to its matching provisioning intent; no HTTP route or automatic create retry/reset | [View Map](src/modules/wallet-provisioning-recovery/codemap.md) |
 | `src/modules/wallet/dto/` | Input DTOs for signing and withdrawal requests with Ethereum address validation | [View Map](src/modules/wallet/dto/codemap.md) |
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
+| `src/modules/defi/` | Reviewed hierarchical DeFi capability catalog, exact grants, pause overlay, and send authorization; no active catalog entries | [View Map](src/modules/defi/codemap.md) |
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
 | `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
 | `src/modules/security-notifications/` | Dashboard security notifications generated from user-attributed security events | [View Map](src/modules/security-notifications/codemap.md) |
@@ -139,22 +141,22 @@ Browser → Openfort IAM → POST /auth/session
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
-  → EOA execution requests are denied unless explicitly enabled, short-lived, IP-allowlisted, independently rate-limited, and security-event audited
-  → WalletService hashes message/typedData input as needed; raw hash signing is disabled
-  → SigningRequest audit row records API-key attribution snapshot
-  → OpenfortService.signData signs with TEE-managed backend wallet
-  → Returns { signature, walletAddress, type }
+  → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
+  → DefiPolicyService denies all message/typed-data requests with DEFI_FUNCTION_NOT_ALLOWED before hashing, SigningRequest creation, or Openfort; typed-data signing is not enabled
 
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
-  → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
+  → TransactionPolicyService enforces generic limits independently; DefiPolicyService checks chain → contract → function/grant → canonical ABI → policy
   → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
-  → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction before creating a new idempotency row or submitting to Openfort; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
+  → After outer idempotency miss, DeFi authorization runs before destination protection, billing, simulation, Transaction creation, and Openfort
+  → In the final create transaction, destination → pause SHARE → API-key UPDATE locks recheck live state at READ COMMITTED
+  → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
   → OpenfortService.sendUserOperation/sendBackendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
+
+  Grants are exact `allowedCapabilityIds`; omitted create grants and rotation use `[]`, PATCH replaces the full set, and removal has no backfill. Pause is an overlay that grants cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
 
 Dashboard → POST /v1/wallets/withdraw (Openfort IAM + FrontendOnly + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`

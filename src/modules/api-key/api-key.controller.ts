@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Body, Param, UseGuards, ParseUUIDPipe, Patch } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiKeyService } from './api-key.service';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
@@ -7,7 +7,8 @@ import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { CreateApiKeyDto } from './dto/create-api-key.dto';
+import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './dto/create-api-key.dto';
+import { DefiCatalogService } from '../defi';
 
 @Controller('v1/api-keys')
 @FrontendOnly()
@@ -25,11 +26,18 @@ export class ApiKeyController {
       name: dto.name,
       expiresAt: dto.expiresAt,
       allowedIps: dto.allowedIps,
-      allowedContracts: dto.allowedContracts,
-      allowedFunctionSelectors: dto.allowedFunctionSelectors,
+      allowedCapabilityIds: dto.allowedCapabilityIds,
       spendLimits: dto.spendLimits,
       permissions: dto.permissions,
     });
+  }
+
+  @RequireStepUp()
+  @UseGuards(StepUpGuard)
+  @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
+  @Patch(':id/capabilities')
+  async replaceCapabilities(@CurrentUser('id') userId: string, @Param('id', ParseUUIDPipe) keyId: string, @Body() dto: PatchApiKeyCapabilitiesDto) {
+    return this.apiKeyService.replaceCapabilities(keyId, userId, dto.allowedCapabilityIds);
   }
 
   /** GET /v1/api-keys — list all keys (metadata only). */
@@ -69,4 +77,13 @@ export class ApiKeyController {
     await this.apiKeyService.revokeApiKey(keyId, userId);
     return { success: true };
   }
+}
+
+@Controller('v1/defi-capabilities')
+@FrontendOnly()
+@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+export class DefiCapabilityController {
+  constructor(private readonly defiCatalog: DefiCatalogService) {}
+  @Get()
+  async list() { return await this.defiCatalog.listMetadata(); }
 }

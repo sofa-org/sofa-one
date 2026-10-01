@@ -204,8 +204,7 @@ model ApiKey {
   canReadTransactionStatus     Boolean   @default(true) @map("can_read_transaction_status")
   canUseEoaExecution           Boolean   @default(false) @map("can_use_eoa_execution")
   allowedIps                   String[]  @map("allowed_ips")
-  allowedContracts             String[]  @default([]) @map("allowed_contracts")
-  allowedFunctionSelectors     String[]  @default([]) @map("allowed_function_selectors")
+  allowedCapabilityIds         String[]  @default([]) @map("allowed_capability_ids")
   dailySpendLimit              String?   @map("daily_spend_limit") @db.VarChar(40)
   monthlySpendLimit            String?   @map("monthly_spend_limit") @db.VarChar(40)
   // BILL-016: operator ack that API-key sends honor the user's withdrawal
@@ -275,6 +274,14 @@ model SecurityEvent {
   @@index([eventType, createdAt])
   @@index([riskLevel, createdAt])
   @@map("security_events")
+}
+
+model DefiPolicyState {
+  id             String   @id @default("global") @db.VarChar(16)
+  pausedScopeKeys String[] @default([]) @map("paused_scope_keys")
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("defi_policy_state")
 }
 
 model SecurityNotification {

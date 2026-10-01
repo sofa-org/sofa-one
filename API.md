@@ -28,7 +28,7 @@ Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` 
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/wallets/sign` | Sign a validated message or typed-data request without broadcasting a transaction |
+| `POST` | `/v1/wallets/sign` | Reserved signing route; signing is disabled in the DeFi-policy MVP and requests are denied |
 | `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 
@@ -51,8 +51,14 @@ Do not accept Openfort IAM-only auth on these routes.
 | `GET` | `/v1/api-keys` | List API-key metadata |
 | `POST` | `/v1/api-keys` | Create API key and return raw secret once |
 | `DELETE` | `/v1/api-keys/:id` | Revoke API key |
+| `GET` | `/v1/defi-capabilities` | List reviewed, active DeFi capability metadata |
+| `PATCH` | `/v1/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
+
+Signing remains present in the public spec as a reserved API-key route, but is disabled
+for every key in the DeFi-policy MVP. Valid message and typed-data requests are denied;
+raw-hash signing has no unrestricted legacy path.
 
 ## 4. Error contract
 
@@ -80,6 +86,21 @@ Common public API codes include:
 - `IDEMPOTENCY_CONFLICT`
 - `WALLET_NOT_FOUND`
 - `TRANSACTION_NOT_FOUND`
+- `DEFI_CAPABILITY_NOT_FOUND`
+- `DEFI_CONTRACT_NOT_ALLOWED`
+- `DEFI_FUNCTION_NOT_ALLOWED`
+- `DEFI_CAPABILITY_NOT_GRANTED`
+- `DEFI_CAPABILITY_PAUSED`
+- `DEFI_INVALID_PARAMETERS`
+- `DEFI_POLICY_UNAVAILABLE`
+
+Generic transaction sends are admitted only when every contract call matches an active,
+reviewed DeFi capability granted to the API key. Native-value calls and non-catalogued
+calls are denied. Message and typed-data signing are disabled for all API keys in this
+MVP, including keys created before the capability policy; there is no legacy unrestricted
+signing path. Otherwise valid API-key signing requests are denied with
+`DEFI_FUNCTION_NOT_ALLOWED`; destination protection may deny earlier. Dedicated dashboard
+withdrawal and payment flows remain separate.
 
 ## 5. Public transaction example
 

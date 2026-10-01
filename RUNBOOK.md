@@ -79,6 +79,13 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
 - Confirm the key is not revoked or expired.
 - Check IP allowlist against `request.ip` with trust-proxy configured correctly.
 - Remember raw API keys are shown only once; regenerate if lost.
+- Generic contract-call sends may also fail with `DEFI_*` errors when the call is
+  unlisted, the key lacks a grant, the capability is paused, or policy state is unavailable.
+  Review the capability catalog and key grants in the dashboard; do not retry using an
+  unrestricted legacy key.
+- API-key message/typed-data signing is disabled in the MVP and returns
+  `DEFI_FUNCTION_NOT_ALLOWED` (destination-protection denials can occur earlier).
+  Dedicated dashboard withdrawals/payments are unaffected.
 
 ### Dashboard route fails with frontend-only error
 
