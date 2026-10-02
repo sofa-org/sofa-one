@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(), setActive: vi.fn(), user: { id: 'user-1' }, hookAddress: undefined as string | undefined, providerRequest: vi.fn(async () => ['0x1111111111111111111111111111111111111111']),
   publicClient: undefined as any,
   signAuthorization: vi.fn(), createCaliburAccount: vi.fn(),
+  createBundlerClient: vi.fn(), createPaymasterClient: vi.fn(), sendUserOperation: vi.fn(),
 }));
 
 vi.mock('@openfort/react', () => ({
@@ -25,6 +26,12 @@ vi.mock('wagmi', () => ({ usePublicClient: () => mocks.publicClient }));
 vi.mock('./wallet-helpers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./wallet-helpers')>()),
   delay: vi.fn(async () => undefined),
+  getUserOperationGasPrice: vi.fn(async () => ({ maxFeePerGas: 1n, maxPriorityFeePerGas: 1n })),
+}));
+vi.mock('viem/account-abstraction', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('viem/account-abstraction')>()),
+  createBundlerClient: mocks.createBundlerClient,
+  createPaymasterClient: mocks.createPaymasterClient,
 }));
 vi.mock('@/lib/api', () => ({
   DEFAULT_CHAIN_ID: 84532, getMe: mocks.getMe, syncSession: mocks.syncSession,
@@ -43,7 +50,7 @@ const addressA = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const addressB = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const created = { id: 'wallet-B', walletAddress: address, agentWalletAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
 
-async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, walletCode: Hex = '0x') {
+async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, walletCode: Hex = '0x', clientChainId = chainId) {
   vi.stubEnv('VITE_OPENFORT_FEE_SPONSORSHIP_ID', feeSponsorshipId ?? '');
   window.localStorage.setItem('sofa-one.wallet.agentChainId', String(chainId));
   const agentKeyHash = hashKey({ keyType: KeyType.Secp256k1, publicKey: padHex(addressB as Hex, { size: 32 }) });
@@ -66,7 +73,7 @@ async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, 
   const getBalance = vi.fn(async () => 0n);
   const getTransactionCount = vi.fn(async () => 7);
   mocks.publicClient = {
-    chain: { id: chainId, nativeCurrency: { symbol: chainId === 143 ? 'MON' : 'ETH' } },
+    chain: { id: clientChainId, nativeCurrency: { symbol: chainId === 143 ? 'MON' : 'ETH' } },
     getCode,
     getBalance,
     getTransactionCount,
@@ -93,6 +100,12 @@ describe('WalletPage provisioning identity', () => {
     mocks.authorize.mockResolvedValue({ wallet: created });
     mocks.signAuthorization.mockResolvedValue('0xsigned');
     mocks.createCaliburAccount.mockRejectedValue(new Error('account construction sentinel'));
+    mocks.createPaymasterClient.mockReturnValue({ paymaster: true });
+    mocks.createBundlerClient.mockReturnValue({
+      sendUserOperation: mocks.sendUserOperation,
+      waitForUserOperationReceipt: vi.fn(async () => ({ receipt: { transactionHash: '0xtx' } })),
+    });
+    mocks.sendUserOperation.mockResolvedValue('0xuserop');
   });
 
   it('authorizes the created provider identity even when response has no openfortAccountId', async () => {
@@ -234,8 +247,34 @@ describe('WalletPage provisioning identity', () => {
   it('skips native balance lookup for sponsored non-Monad registration but still checks EOA code', async () => {
     const { getCode, getBalance } = await setupRegistrationRpc(84532, 'policy-1');
     await waitFor(() => expect(getCode).toHaveBeenCalledWith({ address }));
+    await screen.findAllByText('account construction sentinel');
     expect(getBalance).not.toHaveBeenCalled();
     expect(getCode).toHaveBeenCalledWith({ address });
+  });
+
+  it('rejects a mismatched RPC chain before inspecting an existing delegation', async () => {
+    const delegatedCode = CALIBUR_DELEGATION_CODES[0];
+    const { getCode } = await setupRegistrationRpc(137, 'policy-1', delegatedCode, 1);
+    await screen.findAllByText(/does not match requested chain/i);
+    expect(getCode).not.toHaveBeenCalled();
+    expect(mocks.createCaliburAccount).not.toHaveBeenCalled();
+    expect(mocks.signAuthorization).not.toHaveBeenCalled();
+  });
+
+  it('submits sponsored non-Monad registration with policy context and authorization', async () => {
+    vi.stubEnv('VITE_OPENFORT_PUBLISHABLE_KEY', 'publishable-test');
+    mocks.createCaliburAccount.mockResolvedValue({ address });
+    const { getCode, getTransactionCount } = await setupRegistrationRpc(137, 'policy-1');
+    await waitFor(() => expect(mocks.sendUserOperation).toHaveBeenCalledTimes(1));
+    expect(getCode).toHaveBeenCalledWith({ address });
+    expect(getTransactionCount).toHaveBeenCalledWith({ address, blockTag: 'pending' });
+    expect(mocks.signAuthorization).toHaveBeenCalled();
+    expect(mocks.createPaymasterClient).toHaveBeenCalledTimes(1);
+    expect(mocks.createBundlerClient).toHaveBeenCalledWith(expect.objectContaining({ paymaster: { paymaster: true } }));
+    expect(mocks.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      authorization: '0xsigned',
+      paymasterContext: { policyId: 'policy-1' },
+    }));
   });
 
   it('reads zero native balance and rejects an unsponsored registration', async () => {

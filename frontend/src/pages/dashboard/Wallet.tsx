@@ -63,7 +63,7 @@ import { WithdrawForm } from './WithdrawForm';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
 import { isMonadChain } from '@/lib/chains';
-import { createCaliburDeploymentResolver } from '@/lib/calibur-deployment';
+import { resolveCaliburDeployment } from '@/lib/calibur-deployment';
 import {
   AGENT_CHAIN_STORAGE_KEY,
   AGENT_AUTHORIZATION_MAX_TTL_MS,
@@ -88,8 +88,6 @@ import {
   type WithdrawError,
   type WithdrawSuccess,
 } from './wallet-helpers';
-
-const resolveCaliburDeployment = createCaliburDeploymentResolver(CALIBUR_ADDRESSES);
 
 export default function WalletPage() {
   const openfort = useOpenfort();
@@ -714,6 +712,10 @@ export default function WalletPage() {
         throw new Error(
           'Cannot check gas balance for this chain. Please retry after the network is ready.',
         );
+      }
+
+      if (publicClient.chain?.id !== undefined && publicClient.chain.id !== agentChainId) {
+        throw new Error(`Calibur RPC client chain ${publicClient.chain.id} does not match requested chain ${agentChainId}.`);
       }
 
       const walletCode = await publicClient.getCode({ address });
