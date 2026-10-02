@@ -63,6 +63,7 @@ import { WithdrawForm } from './WithdrawForm';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
 import { isMonadChain } from '@/lib/chains';
+import { createCaliburDeploymentResolver } from '@/lib/calibur-deployment';
 import {
   AGENT_CHAIN_STORAGE_KEY,
   AGENT_AUTHORIZATION_MAX_TTL_MS,
@@ -87,6 +88,8 @@ import {
   type WithdrawError,
   type WithdrawSuccess,
 } from './wallet-helpers';
+
+const resolveCaliburDeployment = createCaliburDeploymentResolver(CALIBUR_ADDRESSES);
 
 export default function WalletPage() {
   const openfort = useOpenfort();
@@ -170,6 +173,7 @@ export default function WalletPage() {
   const [pendingCreatedAccount, setPendingCreatedAccount] = useState<{ address: Address; accountId: string } | null>(null);
   const pendingCreatedAccountRef = useRef<{ address: Address; accountId: string } | null>(null);
   const createInFlightRef = useRef(false);
+  const registerAgentInFlightRef = useRef(false);
   const createOutcomeUnknownRef = useRef(false);
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
   const [agentExpiryLocal, setAgentExpiryLocal] = useState(getDefaultAgentExpiryLocal);
@@ -631,6 +635,8 @@ export default function WalletPage() {
 
   async function handleRegisterAgent(e: React.FormEvent) {
     e.preventDefault();
+    if (registerAgentInFlightRef.current) return;
+    registerAgentInFlightRef.current = true;
     setWalletSetupLoading(true);
     setWalletSetupError(null);
     setWalletSetupSuccess(null);
@@ -710,14 +716,7 @@ export default function WalletPage() {
         );
       }
 
-      let activeCaliburAddress: Address | null = null;
-      for (const caliburAddress of CALIBUR_ADDRESSES) {
-        const caliburCode = await publicClient.getCode({ address: caliburAddress });
-        if (caliburCode && caliburCode !== '0x') {
-          activeCaliburAddress = caliburAddress;
-          break;
-        }
-      }
+      const activeCaliburAddress = await resolveCaliburDeployment(agentChainId, publicClient);
       if (!activeCaliburAddress) {
         throw new Error(
           `${agentChainName} is not available for API access yet because Calibur is not deployed on this network.`,
@@ -725,11 +724,14 @@ export default function WalletPage() {
       }
 
       const feeSponsorshipId = import.meta.env.VITE_OPENFORT_FEE_SPONSORSHIP_ID;
-      const nativeBalance = await publicClient.getBalance({ address });
-      if (!feeSponsorshipId && nativeBalance === 0n) {
-        throw new Error(
-          `Your wallet has no ${agentNativeSymbol} for gas. Deposit ${agentNativeSymbol} to ${address} and retry agent registration.`,
-        );
+      const hasFeeSponsorship = Boolean(feeSponsorshipId && !isMonadChain(agentChainId));
+      if (!hasFeeSponsorship) {
+        const nativeBalance = await publicClient.getBalance({ address });
+        if (nativeBalance === 0n) {
+          throw new Error(
+            `Your wallet has no ${agentNativeSymbol} for gas. Deposit ${agentNativeSymbol} to ${address} and retry agent registration.`,
+          );
+        }
       }
 
       const agentKey: CaliburKey = {
@@ -833,7 +835,7 @@ export default function WalletPage() {
           : { fetchOptions: { headers: { Authorization: `Bearer ${openfortPublishableKey}` } } },
       );
       const paymaster =
-        feeSponsorshipId && !usePimlico
+        hasFeeSponsorship
           ? createPaymasterClient({ transport: bundlerRpcTransport })
           : undefined;
       const bundlerClient = createBundlerClient({
@@ -854,7 +856,7 @@ export default function WalletPage() {
         ...(eip7702Authorization ? { authorization: eip7702Authorization } : {}),
         maxFeePerGas: fees.maxFeePerGas,
         maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-        ...(feeSponsorshipId && !usePimlico
+        ...(hasFeeSponsorship
           ? { paymasterContext: { policyId: feeSponsorshipId } }
           : {}),
       } as never);
@@ -912,6 +914,7 @@ export default function WalletPage() {
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
       setWalletSetupLoading(false);
+      registerAgentInFlightRef.current = false;
     }
   }
 

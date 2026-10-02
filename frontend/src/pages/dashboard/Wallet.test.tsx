@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { padHex, type Hex } from 'viem';
+import { CALIBUR_ADDRESSES, hashKey, KeyType } from '@/lib/calibur';
 import WalletPage from './Wallet';
 
 const mocks = vi.hoisted(() => ({
   getAccessToken: vi.fn(async () => 'test-token'),
   getMe: vi.fn(), syncSession: vi.fn(), authorize: vi.fn(), create: vi.fn(),
   update: vi.fn(), setActive: vi.fn(), user: { id: 'user-1' }, hookAddress: undefined as string | undefined, providerRequest: vi.fn(async () => ['0x1111111111111111111111111111111111111111']),
+  publicClient: undefined as any,
 }));
 
 vi.mock('@openfort/react', () => ({
@@ -17,7 +20,7 @@ vi.mock('@openfort/react', () => ({
 vi.mock('@openfort/react/ethereum', () => ({
   useEthereumEmbeddedWallet: () => ({ address: mocks.hookAddress, create: mocks.create, setActive: mocks.setActive, provider: { request: mocks.providerRequest } }),
 }));
-vi.mock('wagmi', () => ({ usePublicClient: () => undefined }));
+vi.mock('wagmi', () => ({ usePublicClient: () => mocks.publicClient }));
 vi.mock('./wallet-helpers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./wallet-helpers')>()),
   delay: vi.fn(async () => undefined),
@@ -35,10 +38,46 @@ const addressA = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const addressB = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const created = { id: 'wallet-B', walletAddress: address, agentWalletAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
 
+async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string) {
+  vi.stubEnv('VITE_OPENFORT_FEE_SPONSORSHIP_ID', feeSponsorshipId ?? '');
+  window.localStorage.setItem('sofa-one.wallet.agentChainId', String(chainId));
+  const agentKeyHash = hashKey({ keyType: KeyType.Secp256k1, publicKey: padHex(addressB as Hex, { size: 32 }) });
+  const authorizedWallet = {
+    ...created,
+    agentWalletAddress: addressB,
+    agentKeyHash,
+    chainAuthorizations: [{ chainId, expiresAt: new Date(Date.now() + 86_400_000).toISOString(), status: 'authorized' }],
+  };
+  mocks.getMe.mockResolvedValue({ wallet: { ...authorizedWallet, chainAuthorizations: [] }, wallets: [{ ...authorizedWallet, chainAuthorizations: [] }] });
+  mocks.update.mockResolvedValue([{ id: 'account-A', address }]);
+  mocks.providerRequest.mockResolvedValue([address]);
+  mocks.setActive.mockResolvedValue(undefined);
+  mocks.authorize.mockResolvedValue({ wallet: authorizedWallet, wallets: [authorizedWallet] });
+  const getCode = vi.fn(async ({ address: queried }: { address: string }) => {
+    if ((CALIBUR_ADDRESSES as readonly string[]).includes(queried)) return '0x1234' as Hex;
+    throw new Error('EOA code check sentinel');
+  });
+  const getBalance = vi.fn(async () => 0n);
+  mocks.publicClient = {
+    chain: { id: chainId, nativeCurrency: { symbol: chainId === 143 ? 'MON' : 'ETH' } },
+    getCode,
+    getBalance,
+  };
+
+  render(<WalletPage />);
+  await screen.findByRole('button', { name: 'Authorize API Access' });
+  fireEvent.change(screen.getByPlaceholderText('Enter the password you created in Step 1'), { target: { value: 'password-123' } });
+  fireEvent.change(document.querySelector('input[type="datetime-local"]')!, { target: { value: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 16) } });
+  fireEvent.click(screen.getByRole('button', { name: 'Authorize API Access' }));
+  return { getCode, getBalance };
+}
+
 describe('WalletPage provisioning identity', () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hookAddress = undefined;
+    mocks.publicClient = undefined;
     mocks.getAccessToken.mockResolvedValue('test-token');
     mocks.getMe.mockResolvedValue({ wallet: { id: 'empty', walletAddress: null, chainAuthorizations: [], isDefault: true } });
     mocks.create.mockResolvedValue({ id: 'account-B', address });
@@ -151,6 +190,58 @@ describe('WalletPage provisioning identity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Authorize API Access' }));
     await screen.findAllByText('Openfort could not confirm the selected wallet is active. No authorization was signed.');
     expect(mocks.authorize).not.toHaveBeenCalled();
+  });
+
+  it('synchronously ignores a duplicate agent registration submit while the first is pending', async () => {
+    const wallet = {
+      ...created,
+      walletAddress: address,
+      openfortAccountId: 'account-A',
+      agentWalletAddress: addressB,
+      agentKeyHash: `0x${'1'.repeat(64)}`,
+      chainAuthorizations: [],
+    };
+    mocks.getMe.mockResolvedValue({ wallet, wallets: [wallet] });
+    mocks.update.mockResolvedValue([{ id: 'account-A', address }]);
+    mocks.providerRequest.mockResolvedValue([address]);
+    mocks.setActive.mockResolvedValue(undefined);
+    let finish!: (error: Error) => void;
+    mocks.authorize.mockReturnValue(new Promise((_resolve, reject) => { finish = reject; }));
+    render(<WalletPage />);
+    await screen.findByRole('button', { name: 'Authorize API Access' });
+    fireEvent.change(screen.getByPlaceholderText('Enter the password you created in Step 1'), { target: { value: 'password-123' } });
+    fireEvent.change(document.querySelector('input[type="datetime-local"]')!, { target: { value: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 16) } });
+    const form = screen.getByRole('button', { name: 'Authorize API Access' }).closest('form')!;
+    fireEvent.submit(form);
+    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledTimes(1));
+    // Dispatch the form event directly: disabled-button prevention cannot mask a missing ref guard.
+    fireEvent.submit(form);
+    expect(mocks.authorize).toHaveBeenCalledTimes(1);
+    finish(new Error('test settled'));
+    await screen.findAllByText('test settled');
+  });
+
+  it('skips native balance lookup for sponsored non-Monad registration but still checks EOA code', async () => {
+    const { getCode, getBalance } = await setupRegistrationRpc(84532, 'policy-1');
+    await screen.findAllByText('EOA code check sentinel');
+    expect(getBalance).not.toHaveBeenCalled();
+    expect(getCode).toHaveBeenCalledWith({ address });
+  });
+
+  it('reads zero native balance and rejects an unsponsored registration', async () => {
+    const { getCode, getBalance } = await setupRegistrationRpc(137);
+    await screen.findAllByText(/has no ETH for gas/i);
+    expect(getBalance).toHaveBeenCalledTimes(1);
+    expect(getCode).toHaveBeenCalled();
+    expect(getCode).not.toHaveBeenCalledWith({ address });
+  });
+
+  it('reads native balance on Monad even when a sponsorship id is configured', async () => {
+    const { getCode, getBalance } = await setupRegistrationRpc(143, 'policy-1');
+    await screen.findAllByText(/has no MON for gas/i);
+    expect(getBalance).toHaveBeenCalledTimes(1);
+    expect(getCode).toHaveBeenCalled();
+    expect(getCode).not.toHaveBeenCalledWith({ address });
   });
 
 });
