@@ -206,12 +206,30 @@ describe('TransactionsService', () => {
   const transactionPolicy = new TransactionPolicyService(prisma, undefined as any);
   const mockAssertSessionKeyAllowed = jest.fn();
   const billingDebt = { getDebt: jest.fn() } as any;
-  const defiAuthorization = { context: {}, requiredPermission: 'canSendTransaction', matches: [] } as any;
+  const defiAuthorization = {
+    context: {}, requiredPermission: 'canSendTransaction', matches: [], interactions: [],
+    batchPlan: { effects: [], fundingTotals: {} }, manifestHash: `0x${'b'.repeat(64)}`,
+    requestCommitment: `0x${'a'.repeat(64)}`, policyIdentityHash: `0x${'c'.repeat(64)}`,
+  } as any;
   const defiPolicy = {
-    authorizeContractCalls: jest.fn().mockResolvedValue(defiAuthorization),
+    authorizeContractCalls: jest.fn(),
     assertStillAuthorized: jest.fn().mockResolvedValue(undefined),
     recordAllowedInTx: jest.fn().mockResolvedValue({ id: 'event-1' }),
     recordDenied: jest.fn().mockResolvedValue(undefined),
+  } as any;
+  const defiEvidence = {
+    verify: jest.fn().mockImplementation(async (authorization: any) => ({
+      requestCommitment: authorization.requestCommitment ?? `0x${'a'.repeat(64)}`,
+      manifestHash: authorization.manifestHash ?? `0x${'b'.repeat(64)}`,
+      chainId: authorization.context?.chainId ?? 8453,
+      executionOwner: authorization.context?.executionOwner ?? wallet.walletAddress,
+      blockNumber: 1n,
+      blockHash: `0x${'c'.repeat(64)}`,
+      observedAtMs: Date.now(),
+      expiresAtMs: Date.now() + 30_000,
+      checksDigest: `0x${'d'.repeat(64)}`,
+    })),
+    assertFresh: jest.fn(),
   } as any;
   const securityEvents = { exportCommitted: jest.fn().mockResolvedValue(undefined) } as any;
   const SIM_RPC = 'https://rpc.example.test/base';
@@ -295,6 +313,11 @@ describe('TransactionsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    defiPolicy.authorizeContractCalls.mockImplementation((interactions: any[], context: any) => ({
+      ...defiAuthorization,
+      context: { ...context, allowedCapabilityIds: [...context.allowedCapabilityIds] },
+      interactions: Object.freeze(interactions.map((interaction) => Object.freeze({ ...interaction }))),
+    }));
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
     prisma.userWallet.findMany.mockImplementation(async ({ where }: any) => {
@@ -384,6 +407,7 @@ describe('TransactionsService', () => {
       config,
       destinationPolicy as any,
       defiPolicy,
+      defiEvidence,
       securityEvents,
       eoaExecutionPolicy,
       transactionSimulation,
@@ -652,6 +676,8 @@ describe('TransactionsService', () => {
 
     expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+    expect(defiEvidence.verify).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -1239,6 +1265,8 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+    expect(defiEvidence.verify).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -1940,6 +1968,7 @@ describe('TransactionsService', () => {
     expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledTimes(1);
     expect(mockVerifyTransactionAssetFlow).toHaveBeenCalledTimes(1);
     expect(transactionSimulation.assertSimulatable).toHaveBeenCalled();
+    expect(defiEvidence.verify).toHaveBeenCalledTimes(1);
     expect(prisma.transaction.create).toHaveBeenCalled();
     expect(openfort.sendUserOperation).toHaveBeenCalled();
   });
@@ -2113,8 +2142,82 @@ describe('TransactionsService', () => {
     expect(billingDebt.getDebt).not.toHaveBeenCalled();
     expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+    expect(defiEvidence.verify).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('submits the authorized immutable interaction snapshot despite caller-side DTO mutation', async () => {
+    const mutableInteractions = [{ ...dto.interactions[0] }];
+    const authorization = {
+      ...defiAuthorization,
+      context: { userId: 'user-1', apiKeyId: apiKeyContext.id, walletId: wallet.id, chainId: 8453, executionMode: 'session_key', executionOwner: wallet.walletAddress, allowedCapabilityIds: [] },
+      interactions: Object.freeze(mutableInteractions.map((item) => Object.freeze({ ...item }))),
+      manifestHash: `0x${'b'.repeat(64)}`,
+      requestCommitment: `0x${'a'.repeat(64)}`,
+      matches: [],
+    };
+    defiPolicy.authorizeContractCalls.mockResolvedValueOnce(authorization);
+    const verify = defiEvidence.verify.getMockImplementation()!;
+    defiEvidence.verify.mockImplementationOnce(async (auth: any) => {
+      const result = await verify(auth);
+      mutableInteractions[0].data = '0xdeadbeef';
+      return result;
+    });
+
+    await service.send('user-1', { ...dto, interactions: mutableInteractions } as any, apiKeyContext);
+
+    expect(openfort.submitUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      interactions: [{ ...dto.interactions[0] }],
+    }));
+  });
+
+  it('marks a committed row failed when evidence expires before provider dispatch', async () => {
+    defiEvidence.assertFresh.mockImplementationOnce(() => {
+      throw new DefiPolicyDenial(
+        new ForbiddenException({ code: 'DEFI_POLICY_UNAVAILABLE' }),
+        { code: 'DEFI_POLICY_UNAVAILABLE' },
+      );
+    });
+    await expect(service.send('user-1', {
+      ...dto,
+      idempotencyKey: 'defi-evidence-expired-before-dispatch',
+    } as any, apiKeyContext)).rejects.toMatchObject({ response: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+
+    expect(prisma.transaction.create).toHaveBeenCalledTimes(1);
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'failed', failureReason: 'Transaction failed' }),
+    }));
+    expect(defiPolicy.recordDenied).toHaveBeenCalledTimes(1);
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+  });
+
+  it('fails terminally and audits when evidence expires during provider preparation before the actual send', async () => {
+    const authorization = {
+      ...defiAuthorization,
+      matches: [{ capabilityId: 'reviewed:test', type: 'function', chainId: 8453, contract: EXTERNAL, functionSignature: 'run()', policy: { ref: 'test', version: 1 } }],
+    };
+    defiPolicy.authorizeContractCalls.mockResolvedValueOnce({
+      ...authorization,
+      context: { userId: 'user-1', apiKeyId: apiKeyContext.id, walletId: wallet.id, chainId: 8453, executionMode: 'session_key', executionOwner: wallet.walletAddress, allowedCapabilityIds: ['reviewed:test'] },
+      interactions: Object.freeze(dto.interactions.map((item: any) => Object.freeze({ ...item }))),
+    });
+    const expiry = new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_INVALID_PARAMETERS' }), { code: 'DEFI_INVALID_PARAMETERS' });
+    defiEvidence.assertFresh.mockImplementationOnce(() => undefined).mockImplementationOnce(() => { throw expiry; });
+    openfort.submitUserOperation.mockImplementationOnce(async (params: any) => {
+      // Simulate account preparation/signing completing after evidence expiry;
+      // this callback executes at the provider's actual-send boundary.
+      params.beforeBroadcast();
+      throw new Error('must not reach provider send');
+    });
+
+    await expect(service.send('user-1', { ...dto, idempotencyKey: 'provider-expiry-terminal' } as any, apiKeyContext))
+      .rejects.toMatchObject({ response: { code: 'DEFI_INVALID_PARAMETERS' } });
+    expect(openfort.submitUserOperation).toHaveBeenCalledTimes(1);
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'failed' }) }));
+    expect(defiPolicy.recordDenied).toHaveBeenCalledWith(expiry);
   });
 
   it('inner recheck rejects when outer had no debt but inner finds debt without proof', async () => {

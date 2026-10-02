@@ -5,7 +5,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 
 ## Files
 - `transactions.controller.ts` — route wiring: guards, throttles, DTO binding, and delegation to the service.
-- `transactions.service.ts` — orchestration of the send pipeline, list/detail/status reads, idempotency, and response shaping.
+- `transactions.service.ts` — orchestration of the send pipeline, list/detail/status reads, idempotency, and response shaping. On a new DeFi request it captures an immutable authorized interaction snapshot, verifies short-lived chain evidence before simulation, rechecks that evidence in the acceptance transaction, and checks freshness again immediately before provider dispatch.
 - `transaction-policy.service.ts` — generic pre-wallet policy: interaction/calldata limits, native value, Permit/approval selectors, and spend limits. Contract/function authorization belongs exclusively to `DefiPolicyService`.
 - `transaction-simulation.service.ts` — per-interaction `eth_call` preflight via a cached viem public client; plus `simulateAssetFlowEvidence` (explicit per-chain HTTPS `rpcUrl`, never default public `http()`).
 - `transaction-asset-flow.policy.ts` — pure static batch asset-flow classifier (Aave/Uniswap/WETH/ERC-4626/revoke-only auth + transfer family).
@@ -79,7 +79,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 13. `createPendingOrReturnExisting`:
       - Interactive `$transaction`: inner idempotency lookup → destination advisory lock and live destination gates → `DefiPolicyService.assertStillAuthorized` (destination, pause `FOR SHARE`, API-key `FOR UPDATE`; live grants, key, catalog identity and pause state; READ COMMITTED) → defer allowed security event to transaction; recheck billing with no RPC → insert. Defi denials are recorded only after rollback; committed allowed events are exported only after commit.
     - On unique-key race **`P2002`**, the interactive transaction aborts; recovery **re-reads the existing row on the root `PrismaService` client** (never the aborted tx client), then returns that row if `requestHash` matches. Deferred destination denials are audited on the root client after rollback.
-14. `submitTransaction` dispatches by mode to `openfort.sendUserOperation` (session_key, with sponsorship) or `openfort.sendBackendTransaction` (eoa).
+14. `submitTransaction` dispatches by mode to `openfort.sendUserOperation` (session_key, with sponsorship) or `openfort.sendBackendTransaction` (eoa). Active DeFi authorizations pass immutable evidence/deadline freshness to viem's actual HTTP `fetchFn` boundary, immediately before each `eth_sendUserOperation`; strict JSON parsing rejects unreadable requests, batch send members each recheck, retries are disabled, and typed denials are recovered through transport causes. Such sends require both the exact proven Calibur runtime and matching EIP-7702 account delegation; generic requests retain legacy Calibur availability behavior.
 15. On success the row is updated to `confirmed` (with `txHash`) or `pending` (with `userOpHash` in `details`); response is `{ transactionId, transactionHash, status }`.
 16. On failure the row is updated to `failed` with a sanitized `failureReason` and the error is rethrown.
 

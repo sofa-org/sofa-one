@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
-import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
+import { createClient, getAddress, http, keccak256, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
 import { getBlock, getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
@@ -29,6 +29,62 @@ import {
   isCaliburKeyRegistered,
   KeyType,
 } from '../../common/calibur/calibur';
+
+/** Keeps a typed policy denial intact across viem's fetch/transport wrappers. */
+class BroadcastGuardFetchError extends Error {
+  constructor(readonly denial: unknown) { super('Broadcast guard denied provider request'); }
+}
+
+export function createGuardedBundlerFetch(
+  fetcher: typeof fetch,
+  guard?: () => void,
+): typeof fetch {
+  return async (input, init) => {
+    if (!guard) return fetcher(input, init);
+    if (!init || typeof init.body !== 'string') throw new Error('Unreadable guarded bundler request');
+    let payload: unknown;
+    try { payload = JSON.parse(init.body); } catch { throw new Error('Malformed guarded bundler request'); }
+    const entries = Array.isArray(payload) ? payload : [payload];
+    if (!entries.length || entries.some((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return true;
+      const rpc = entry as Record<string, unknown>;
+      if (rpc.jsonrpc !== '2.0' || typeof rpc.method !== 'string' || !Array.isArray(rpc.params) ||
+        (typeof rpc.id !== 'string' && !(typeof rpc.id === 'number' && Number.isFinite(rpc.id)))) return true;
+      return !BUNDLER_READ_METHODS.has(rpc.method) && rpc.method !== 'eth_sendUserOperation';
+    })) {
+      throw new Error('Malformed guarded bundler request');
+    }
+    const sends = entries.filter((entry) => (entry as any).method === 'eth_sendUserOperation');
+    try {
+      for (const _ of sends) guard();
+    } catch (error) {
+      throw new BroadcastGuardFetchError(error);
+    }
+    return fetcher(input, init);
+  };
+}
+
+// Closed list from the viem account-abstraction preparation/submission path.
+// Mutations other than eth_sendUserOperation are deliberately unsupported.
+const BUNDLER_READ_METHODS = new Set([
+  'eth_chainId',
+  'eth_supportedEntryPoints',
+  'eth_estimateUserOperationGas',
+  'eth_getUserOperationReceipt',
+  'eth_getUserOperationByHash',
+  'pimlico_getUserOperationGasPrice',
+]);
+
+function findBroadcastGuardDenial(error: unknown): unknown {
+  const visited = new Set<unknown>();
+  let current: any = error;
+  while (current && !visited.has(current)) {
+    visited.add(current);
+    if (current instanceof BroadcastGuardFetchError) return current.denial;
+    current = current.cause;
+  }
+  return null;
+}
 
 @Injectable()
 export class OpenfortService {
@@ -297,6 +353,10 @@ export class OpenfortService {
     keyHash: string;
     interactions: Array<{ to: string; data: string; value?: string }>;
     sponsorship?: 'required' | 'none';
+    /** Trusted internal callback run at the bundler HTTP submission boundary. */
+    beforeBroadcast?: () => void;
+    /** DeFi capability sends require the exact fork-proven Calibur implementation. */
+    requireProvenCalibur?: boolean;
     /** Called exactly once when the bundler returns its operation identity. */
     onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
   }): Promise<{ userOpHash: string }> {
@@ -332,14 +392,16 @@ export class OpenfortService {
       }
       const sponsorshipMode = usesPimlico ? 'none' : (params.sponsorship ?? 'none');
       const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
-      await this.assertCaliburContractAvailable(client, params.chainId);
+      await this.assertCaliburContractAvailable(client, params.chainId, params.requireProvenCalibur === true, getAddress(params.accountAddress));
       const gasPrice = await this.estimateUserOperationFees(rpc);
-      const bundlerTransport = http(
-        rpc.url,
-        rpc.authorizationHeader
-          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
-          : undefined,
-      );
+      const guardedFetch = createGuardedBundlerFetch(fetch, params.beforeBroadcast);
+      const bundlerTransport = http(rpc.url, {
+        retryCount: 0,
+        fetchFn: guardedFetch,
+        fetchOptions: {
+          ...(rpc.authorizationHeader ? { headers: { Authorization: rpc.authorizationHeader } } : {}),
+        },
+      } as any);
       const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
@@ -355,6 +417,8 @@ export class OpenfortService {
       if (!userOpHash) throw new Error('Bundler returned an invalid UserOperation hash');
       return { userOpHash };
     } catch (error: any) {
+      const guardDenial = findBroadcastGuardDenial(error);
+      if (guardDenial) throw guardDenial;
       if (error instanceof HttpException) {
         throw error;
       }
@@ -408,7 +472,21 @@ export class OpenfortService {
     return { ...submitted, transactionHash: receipt.transactionHash, userOperationSuccess: receipt.success };
   }
 
-  private async assertCaliburContractAvailable(client: any, chainId: number): Promise<void> {
+  private async assertCaliburContractAvailable(client: any, chainId: number, requireProven = false, accountAddress?: Address): Promise<void> {
+    if (requireProven) {
+      const provenAddress = '0x000000005c84F8Fd50b21CAC312528A64437030e' as Address;
+      const [code, accountCode] = await Promise.all([
+        getCode(client, { address: provenAddress }),
+        accountAddress ? getCode(client, { address: accountAddress }) : Promise.resolve(undefined),
+      ]);
+      if (!code || code === '0x' || keccak256(code) !== '0xba697585ba58ba66ebd095ab4c7f980ed42ad115b2e3bb9b5b9bdf167bf08b1b') {
+        throw new ServiceUnavailableException('Calibur implementation is not the proven deployment');
+      }
+      if (!accountCode || accountCode.toLowerCase() !== `0xef0100${provenAddress.slice(2).toLowerCase()}`) {
+        throw new ServiceUnavailableException('Session account does not delegate to the proven Calibur implementation');
+      }
+      return;
+    }
     for (const address of CALIBUR_ADDRESSES) {
       const code = await getCode(client, { address });
       if (code && code !== '0x') {

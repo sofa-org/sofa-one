@@ -2,16 +2,19 @@ import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common'
 import { isAddress, toFunctionSelector } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { DefiCatalog, DefiChainPolicy, DefiFunctionPolicy, defiPauseScopeKeysForCapability } from './defi.types';
+import { DEFI_MANIFEST } from './registry/defi-manifest';
+import type { ReviewedManifest } from './registry/defi-manifest.types';
+import { PRODUCTION_DEFI_CATALOG } from './registry/production-registry';
 
 // Product and security review has approved no active deployments.
-export const REVIEWED_CATALOG: DefiCatalog = [];
+export const REVIEWED_CATALOG: DefiCatalog = PRODUCTION_DEFI_CATALOG;
 export const DEFI_CATALOG = Symbol('DEFI_CATALOG');
 
 @Injectable()
 export class DefiCatalogService {
   private readonly catalog: DefiCatalog;
 
-  constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService) {
+  constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService, @Inject(DEFI_MANIFEST) private readonly reviewedManifest: ReviewedManifest) {
     this.catalog = deepFreeze(cloneCatalog(source));
     validateCatalog(this.catalog);
   }
@@ -31,8 +34,12 @@ export class DefiCatalogService {
         chainId: chain.chainId,
         contract: contract.address,
         functionSignature: fn.type === 'contract_call' ? fn.signature : undefined,
-        label: fn.capabilityId,
-        description: 'Reviewed capability',
+         label: fn.label ?? fn.operation ?? fn.protocol ?? fn.capabilityId,
+         description: fn.description ?? fn.inactiveReason ?? fn.capabilityId,
+         protocol: fn.protocol,
+         operation: fn.operation,
+         inactiveReason: fn.inactiveReason,
+         dependencies: fn.dependencies,
         status: active ? (scopeKeys.some((key) => paused.has(key)) ? 'paused' : 'active') : 'inactive',
         policy: fn.policy,
       };
@@ -41,6 +48,8 @@ export class DefiCatalogService {
   }
 
   chains(): readonly DefiChainPolicy[] { return this.catalog; }
+  manifest(): ReviewedManifest { return this.reviewedManifest; }
+  assetCeilings(chainId: number): Readonly<Record<string,bigint>> { return Object.freeze(Object.fromEntries(this.reviewedManifest.assets.filter(a=>a.chainId===chainId).map(a=>[a.address.toLowerCase(),a.maxOperationRaw]))); }
   activeChain(chainId: number): DefiChainPolicy | undefined {
     return this.catalog.find((chain) => chain.chainId === chainId && chain.status === 'active' && chain.contracts.some((contract) => contract.status === 'active' && contract.functions.some((fn) => fn.status === 'active' && fn.type === 'contract_call')));
   }
@@ -69,9 +78,8 @@ function validateCatalog(catalog: DefiCatalog): void {
         capabilities.add(fn.capabilityId);
         if (fn.chainId !== chain.chainId || fn.contract.toLowerCase() !== contract.address.toLowerCase()) throw new Error('Inconsistent DeFi catalog hierarchy');
         if (!validStatus(fn.status) || (fn.type !== 'contract_call' && fn.type !== 'typed_data_sign')) throw new Error('Invalid DeFi function definition');
-        if (fn.status !== 'active') continue;
-        if (chain.status !== 'active' || contract.status !== 'active' || fn.type !== 'contract_call') throw new Error('Invalid active DeFi capability hierarchy');
-        if (!fn.functionName || !fn.signature || typeof fn.validate !== 'function' || fn.validate.constructor.name === 'AsyncFunction') throw new Error('Invalid active DeFi capability validator');
+        if (fn.status === 'active' && (chain.status !== 'active' || contract.status !== 'active' || fn.type !== 'contract_call')) throw new Error('Invalid active DeFi capability hierarchy');
+        if (!fn.functionName || !fn.signature || typeof fn.validate !== 'function' || fn.validate.constructor.name === 'AsyncFunction' || typeof fn.describe !== 'function' || fn.describe.constructor.name === 'AsyncFunction') throw new Error(fn.status === 'active' ? 'Invalid active DeFi capability validator' : 'Invalid inactive DeFi capability validator');
         if (!fn.policy || !fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1) throw new Error('Invalid active DeFi policy identity');
         const abiSig = abiFunctionSignature(fn.abi);
         if (fn.abi.type !== 'function' || fn.abi.name !== fn.functionName || abiSig !== fn.signature || toFunctionSelector(abiSig) !== toFunctionSelector(fn.signature)) throw new Error('Inconsistent fixed DeFi ABI definition');

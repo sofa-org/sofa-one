@@ -17,11 +17,25 @@ export type DefiFunctionPolicy = DefiMatch & {
   signature: string;
   abi: AbiFunction;
   validate(args: readonly unknown[], context: DefiExecutionContext): boolean;
+  describe(args: readonly unknown[], context: DefiExecutionContext, index: number): DefiCallEffect;
+  label?: string;
+  description?: string;
+  protocol?: string;
+  operation?: string;
+  inactiveReason?: string;
+  dependencies?: readonly string[];
+  manifestRefs?: { assets?: readonly string[]; deployments?: readonly string[]; pools?: readonly string[]; priceFeeds?: readonly string[] };
+   approval?: { tokenRef: string; spenderRef?: string; spenderRefs?: readonly string[] };
 };
 export type DefiContractPolicy = { address: string; status: 'active' | 'inactive'; functions: readonly DefiFunctionPolicy[] };
 export type DefiChainPolicy = { chainId: number; status: 'active' | 'inactive'; contracts: readonly DefiContractPolicy[] };
 export type DefiCatalog = readonly DefiChainPolicy[];
-export type DefiAuthorization = { context: DefiExecutionContext; requiredPermission: 'canSendTransaction' | 'canSign'; matches: readonly DefiMatch[] };
+export type DefiApprovalEffect = { kind: 'approval'; index: number; token: string; spender: string; amount: bigint };
+export type DefiActionEffect = { kind: 'action'; index: number; operation: 'swap' | 'supply' | 'repay' | 'withdraw'; deploymentRef: string; token: string; amount: bigint; funding?: { token: string; spender: string; amount: bigint }; swap?: { tokenOut: string; minOut: bigint; deadline: bigint; poolRef: string } };
+export type DefiCallEffect = DefiApprovalEffect | DefiActionEffect;
+export type DefiBatchPlan = { effects: readonly DefiCallEffect[]; fundingTotals: Readonly<Record<string, bigint>> };
+export type DefiEvidence = { requestCommitment: `0x${string}`; manifestHash: `0x${string}`; chainId: number; executionOwner: string; blockNumber: bigint; blockHash: `0x${string}`; observedAtMs: number; expiresAtMs: number; checksDigest: `0x${string}` };
+export type DefiAuthorization = { context: DefiExecutionContext; requiredPermission: 'canSendTransaction' | 'canSign'; matches: readonly DefiMatch[]; interactions: readonly DefiInteraction[]; batchPlan: DefiBatchPlan; manifestHash: `0x${string}`; requestCommitment: `0x${string}`; policyIdentityHash: `0x${string}` };
 export type DefiDeniedAudit = { context?: DefiExecutionContext; code: string; capabilityId?: string; type?: DefiMatch['type']; chainId?: number; contract?: string; functionSignature?: string; functionSelector?: string; policy?: DefiMatch['policy'] };
 export class DefiPolicyDenial extends Error {
   constructor(readonly httpException: HttpException, readonly audit: DefiDeniedAudit) { super('DeFi policy denied'); }

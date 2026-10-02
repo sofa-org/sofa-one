@@ -351,7 +351,6 @@ export class WalletService {
       executionMode,
     };
     let signingRequest: { id: string };
-    let deferredSigningEvent: unknown;
     try {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
@@ -361,10 +360,6 @@ export class WalletService {
             this.buildSigningBlockedException(),
             signingBlockedAudit,
           );
-        }
-        if (signingAuthorization) {
-          await this.defiPolicy.assertStillAuthorized(txClient, signingAuthorization);
-          deferredSigningEvent = await this.defiPolicy.recordAllowedInTx(txClient, signingAuthorization);
         }
         return txClient.signingRequest.create({
           data: {
@@ -388,7 +383,6 @@ export class WalletService {
           },
         });
       });
-      if (deferredSigningEvent) await this.securityEvents?.exportCommitted(deferredSigningEvent);
     } catch (error) {
       // After TX rollback: destination advisory released — safe to audit once.
       if (error instanceof DeferredSigningDestinationProtectionDenial) {

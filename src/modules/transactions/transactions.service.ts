@@ -52,7 +52,8 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
-import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization, type DefiEvidence } from '../defi';
+import { DefiEvidenceService } from '../defi/evidence';
 import { SecurityEventService } from '../security-events/security-event.service';
 
 class DeferredUnprovenAssetOutflowDenial extends Error {
@@ -127,6 +128,18 @@ type DestinationGateContext = {
   executionMode: ExecutionMode;
 };
 
+function sameDefiInteractions(
+  requested: readonly { to: string; data: string; value?: string | number | bigint }[],
+  authorized: readonly { to: string; data: string; value?: string | number | bigint }[],
+): boolean {
+  return requested.length === authorized.length && requested.every((interaction, index) => {
+    const accepted = authorized[index];
+    return !!accepted && interaction.to.toLowerCase() === accepted.to.toLowerCase() &&
+      interaction.data.toLowerCase() === accepted.data.toLowerCase() &&
+      String(interaction.value ?? 0) === String(accepted.value ?? 0);
+  });
+}
+
 @Injectable()
 export class TransactionsService {
   private readonly logger = new Logger(TransactionsService.name);
@@ -139,6 +152,7 @@ export class TransactionsService {
     private readonly config: ConfigService,
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     private readonly defiPolicy: DefiPolicyService,
+    private readonly defiEvidence: DefiEvidenceService,
     private readonly securityEvents: SecurityEventService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
@@ -260,17 +274,18 @@ export class TransactionsService {
     const transactionWalletAddress =
       executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
 
+    const requestInteractions = Object.freeze(dto.interactions.map((interaction) => Object.freeze({ ...interaction })));
     const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
     const legacyRequestHash = hashRequest({
       operationType: 'send',
       chainId,
       executionMode,
       ...(sponsorship ? { sponsorship } : {}),
-      interactions: dto.interactions,
+      interactions: requestInteractions,
     });
     const requestHash = hashRequest({
       operationType: 'send', chainId, walletId: wallet.id, walletAddress: wallet.walletAddress,
-      executionMode, ...(sponsorship ? { sponsorship } : {}), interactions: dto.interactions,
+      executionMode, ...(sponsorship ? { sponsorship } : {}), interactions: requestInteractions,
     });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
       operationType: 'send',
@@ -291,7 +306,7 @@ export class TransactionsService {
     const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.agentWalletAddress!;
     let defiAuthorization: DefiAuthorization;
     try {
-      defiAuthorization = await this.defiPolicy.authorizeContractCalls(dto.interactions, {
+      defiAuthorization = await this.defiPolicy.authorizeContractCalls([...requestInteractions], {
         userId, apiKeyId: apiKeyRecord.id!, apiKeyPrefix: apiKeyRecord.keyPrefix,
         walletId: wallet.id, chainId, executionMode, executionOwner,
         allowedCapabilityIds: apiKeyRecord.allowedCapabilityIds ?? [],
@@ -304,6 +319,16 @@ export class TransactionsService {
       throw error;
     }
 
+    if (!sameDefiInteractions(requestInteractions, defiAuthorization.interactions)) {
+      const denial = new DefiPolicyDenial(
+        new ForbiddenException({ code: 'DEFI_INVALID_PARAMETERS', message: 'DeFi policy denied' }),
+        { context: defiAuthorization.context, code: 'DEFI_INVALID_PARAMETERS' },
+      );
+      try { await this.defiPolicy.recordDenied(denial); } catch { /* audit must not mask stable denial */ }
+      throw denial.httpException;
+    }
+    const authorizedInteractions = [...defiAuthorization.interactions] as SendTransactionDto['interactions'];
+
     // Owner for asset-flow classification + destination policy + evidence binding:
     // session_key executes as the user wallet; eoa executes as the agent backend wallet.
     const assetFlowOwnerAddress =
@@ -313,7 +338,7 @@ export class TransactionsService {
     // Completeness is per-interaction: notProven entries are never dropped.
     // Self-transfers / non-owner transferFrom / empty / unknown are not proven.
     const destinationExtract = extractDirectTransferIntents(
-      dto.interactions,
+      authorizedInteractions,
       assetFlowOwnerAddress,
     );
     if (!destinationExtract.ok) {
@@ -363,7 +388,7 @@ export class TransactionsService {
     }
 
     const assetFlow = classifyTransactionAssetFlow({
-      interactions: dto.interactions,
+      interactions: authorizedInteractions,
       ownerAddress: assetFlowOwnerAddress,
       chainId,
     });
@@ -373,12 +398,23 @@ export class TransactionsService {
       walletId: wallet.id,
       executionMode,
       ownerAddress: assetFlowOwnerAddress,
-      interactions: dto.interactions,
+      interactions: authorizedInteractions,
       assetFlow,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
     });
 
-    await this.assertTransactionSimulatable(userId, dto, apiKeyRecord, {
+    let defiEvidence: DefiEvidence;
+    try {
+      defiEvidence = await this.defiEvidence.verify(defiAuthorization);
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      throw new ServiceUnavailableException('DeFi policy unavailable');
+    }
+
+    await this.assertTransactionSimulatable(userId, { ...dto, interactions: authorizedInteractions }, apiKeyRecord, {
       chainId,
       executionMode,
       from: transactionWalletAddress,
@@ -402,7 +438,7 @@ export class TransactionsService {
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
         executionMode,
         ...(sponsorship ? { sponsorship } : {}),
-        interactionCount: dto.interactions.length,
+        interactionCount: authorizedInteractions.length,
         agentWalletAddress: wallet.agentWalletAddress,
         agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
@@ -413,18 +449,35 @@ export class TransactionsService {
         walletId: wallet.id,
         executionMode,
         ownerAddress: assetFlowOwnerAddress,
-        interactions: dto.interactions,
+        interactions: authorizedInteractions,
         assetFlow,
         apiKeyPrefix: apiKeyRecord.keyPrefix,
         verification: boundVerification,
       },
       destinationGate,
       defiAuthorization,
+      defiEvidence,
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
       this.logExistingTransaction(tx, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(tx);
+    }
+
+    // The acceptance transaction committed before this final expiry check. It
+    // performs no RPC and never refreshes/replays expired evidence.
+    try {
+      this.defiEvidence.assertFresh(defiAuthorization, defiEvidence);
+    } catch (error) {
+      const denial = error instanceof DefiPolicyDenial ? error : new DefiPolicyDenial(
+        new ServiceUnavailableException('DeFi policy unavailable'), { context: defiAuthorization.context, code: 'DEFI_POLICY_UNAVAILABLE' },
+      );
+      await this.prisma.transaction.updateMany({
+        where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, { status: 'submitting', txHash: null }),
+        data: { status: 'failed', failureReason: 'Transaction failed', completedAt: new Date() },
+      });
+      try { await this.defiPolicy.recordDenied(denial); } catch { /* audit must not mask stable denial */ }
+      throw denial.httpException;
     }
 
     let observedUserOpHash =
@@ -435,6 +488,7 @@ export class TransactionsService {
       typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
         ? ((tx.details as Record<string, unknown>).userOpHash as string)
         : null);
+    const broadcastGuardState: { denial: DefiPolicyDenial | null } = { denial: null };
     try {
       this.logger.log(
         this.logContext({
@@ -445,17 +499,27 @@ export class TransactionsService {
           transactionId: tx.id,
           chainId,
           executionMode,
-          interactionCount: dto.interactions.length,
+          interactionCount: authorizedInteractions.length,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
       let submission = await this.submitTransaction(executionMode, {
         accountAddress,
         chainId,
-        interactions: dto.interactions,
+        interactions: [...defiAuthorization.interactions] as SendTransactionDto['interactions'],
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
         sponsorship,
+        requireProvenCalibur: defiAuthorization.matches.length > 0,
+        ...(defiAuthorization.matches.length > 0
+          ? { beforeBroadcast: () => {
+              try { this.defiEvidence.assertFresh(defiAuthorization, defiEvidence); }
+              catch (error) {
+                if (error instanceof DefiPolicyDenial) broadcastGuardState.denial = error;
+                throw error;
+              }
+            } }
+          : {}),
         onUserOperationHash: async (userOpHash) => {
           observedUserOpHash = userOpHash;
           await this.prisma.transaction.updateMany({
@@ -590,6 +654,9 @@ export class TransactionsService {
         status: updated.status,
       };
     } catch (error) {
+      if (broadcastGuardState.denial) {
+        try { await this.defiPolicy.recordDenied(broadcastGuardState.denial); } catch { /* audit cannot mask expired-evidence denial */ }
+      }
       this.logger.error(
         this.logContext({
           message: 'Transaction submission failed',
@@ -625,6 +692,7 @@ export class TransactionsService {
               }),
         },
       });
+      if (broadcastGuardState.denial) throw broadcastGuardState.denial.httpException;
       throw error;
     }
   }
@@ -697,6 +765,8 @@ export class TransactionsService {
       agentOpenfortAccountId: string;
       agentKeyHash: string;
       sponsorship?: SendTransactionDto['sponsorship'];
+      beforeBroadcast?: () => void;
+      requireProvenCalibur?: boolean;
       onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
     },
   ): Promise<{
@@ -719,6 +789,8 @@ export class TransactionsService {
       keyHash: params.agentKeyHash,
       interactions: params.interactions,
       sponsorship: params.sponsorship,
+      beforeBroadcast: params.beforeBroadcast,
+      requireProvenCalibur: params.requireProvenCalibur,
       onUserOperationHash: params.onUserOperationHash,
     });
   }
@@ -865,6 +937,7 @@ export class TransactionsService {
       billingGate?: BillingAssetFlowGateContext;
       destinationGate?: DestinationGateContext;
       defiAuthorization?: DefiAuthorization;
+      defiEvidence?: DefiEvidence;
     },
   ) {
     // Interactive transaction: inner idempotency + destination lock/recheck +
@@ -941,7 +1014,8 @@ export class TransactionsService {
         }
 
         if (params.defiAuthorization) {
-          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization);
+          if (!params.defiEvidence) throw new DefiPolicyDenial(new ServiceUnavailableException('DeFi policy unavailable'), { context: params.defiAuthorization.context, code: 'DEFI_POLICY_UNAVAILABLE' });
+          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization, params.defiEvidence);
           deferredDefiEvent = await this.defiPolicy.recordAllowedInTx(txClient, params.defiAuthorization);
         }
 

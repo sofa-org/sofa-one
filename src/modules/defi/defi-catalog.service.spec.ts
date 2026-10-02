@@ -2,6 +2,7 @@ import { parseAbi } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { DefiCatalogService } from './defi-catalog.service';
 import { DefiChainPolicy, DefiFunctionPolicy } from './defi.types';
+import { buildReviewedManifest } from './registry/defi-manifest';
 
 const contract = '0x0000000000000000000000000000000000000001';
 const abi = parseAbi(['function touch(address owner, uint256 amount)']);
@@ -9,9 +10,10 @@ const fn: DefiFunctionPolicy = {
   capabilityId: 'fixture:touch:v1', type: 'contract_call', chainId: 1, contract,
   functionSignature: 'touch(address,uint256)', signature: 'touch(address,uint256)', functionName: 'touch', abi: abi[0],
   policy: { ref: 'fixture', version: 1 }, status: 'active', validate: () => true,
+  describe: (_args, _context, index) => ({ kind: 'action', index, operation: 'supply', deploymentRef: 'fixture', token: contract, amount: 1n }),
 };
 const makeCatalog = (functions: DefiFunctionPolicy[] = [fn]): DefiChainPolicy[] => [{ chainId: 1, status: 'active', contracts: [{ address: contract, status: 'active', functions }] }];
-const makeService = (catalog: DefiChainPolicy[], state: unknown = { id: 'global', pausedScopeKeys: [] }) => new DefiCatalogService(catalog, { defiPolicyState: { findUnique: jest.fn().mockResolvedValue(state) } } as unknown as PrismaService);
+const makeService = (catalog: DefiChainPolicy[], state: unknown = { id: 'global', pausedScopeKeys: [] }) => new DefiCatalogService(catalog, { defiPolicyState: { findUnique: jest.fn().mockResolvedValue(state) } } as unknown as PrismaService, buildReviewedManifest());
 
 describe('DefiCatalogService', () => {
   it('rejects duplicate capability IDs and per-contract selectors at construction', () => {

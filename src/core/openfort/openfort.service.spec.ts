@@ -55,10 +55,84 @@ jest.mock('viem/actions', () => ({
   getBlock: mockGetBlock,
 }));
 
-import { OpenfortService } from './openfort.service';
+import { OpenfortService, createGuardedBundlerFetch } from './openfort.service';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 
 describe('OpenfortService', () => {
+  describe('guarded bundler fetch boundary', () => {
+    it('blocks the actual UserOperation HTTP request after delayed preparation expires', async () => {
+      const expiresAt = Date.now() + 30_000;
+      const sendFetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: '0x1' }), { headers: { 'content-type': 'application/json' } }));
+      const expired = new Error('evidence expired');
+      const guard = jest.fn(() => {
+        jest.advanceTimersByTime(30_001); // provider preparation/signing elapsed past evidence expiry
+        if (Date.now() >= expiresAt) throw expired;
+      });
+      const { http } = jest.requireActual<typeof import('viem')>('viem');
+      const transport = http('https://bundler.invalid', {
+        retryCount: 0,
+        fetchFn: createGuardedBundlerFetch(sendFetch as any, guard),
+      })({ chain: undefined as any });
+      let caught: any;
+      try { await transport.request({ method: 'eth_sendUserOperation', params: [] } as any); } catch (error) { caught = error; }
+      let cause = caught;
+      while (cause && cause.denial !== expired) cause = cause.cause;
+      expect(cause.denial).toBe(expired);
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(sendFetch).not.toHaveBeenCalled();
+    });
+
+    it('permits read RPCs but guards every send entry in a JSON-RPC batch', async () => {
+      jest.useRealTimers();
+      const underlying = jest.fn().mockResolvedValue(new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: '0x1' }), { headers: { 'content-type': 'application/json' } }));
+      const guard = jest.fn();
+      const guarded = createGuardedBundlerFetch(underlying as any, guard);
+      await guarded('https://bundler.invalid', { method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }) });
+      expect(guard).not.toHaveBeenCalled();
+      await guarded('https://bundler.invalid', { method: 'POST', body: JSON.stringify([
+        { jsonrpc: '2.0', id: 1, method: 'eth_sendUserOperation', params: [] },
+        { jsonrpc: '2.0', id: 2, method: 'eth_sendUserOperation', params: [] },
+      ]) });
+      expect(guard).toHaveBeenCalledTimes(2);
+      expect(underlying).toHaveBeenCalledTimes(2);
+      await guarded('https://bundler.invalid', { method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'eth_estimateUserOperationGas', params: [{ sender: '0x1111111111111111111111111111111111111111' }] }) });
+      expect(underlying).toHaveBeenCalledTimes(3);
+      jest.useFakeTimers();
+    });
+
+    it.each([
+      { jsonrpc: '2.0', id: 1, method: 'eth_sendRawTransaction', params: ['0x1234'] },
+      { jsonrpc: '2.0', id: 1, method: 'eth_sendTransaction', params: [{}] },
+      { jsonrpc: '2.0', id: 1, method: 'bundler_unknownMutation', params: [] },
+    ])('rejects unsupported mutation methods before transport: %j', async (entry) => {
+      const underlying = jest.fn();
+      const guard = jest.fn();
+      const guarded = createGuardedBundlerFetch(underlying as any, guard);
+      await expect(guarded('https://bundler.invalid', { method: 'POST', body: JSON.stringify(entry) })).rejects.toThrow();
+      expect(guard).not.toHaveBeenCalled();
+      expect(underlying).not.toHaveBeenCalled();
+    });
+
+    it('rejects a batch containing a valid send plus an unknown method before any send/fetch', async () => {
+      const underlying = jest.fn();
+      const guard = jest.fn();
+      const guarded = createGuardedBundlerFetch(underlying as any, guard);
+      await expect(guarded('https://bundler.invalid', { method: 'POST', body: JSON.stringify([
+        { jsonrpc: '2.0', id: 1, method: 'eth_sendUserOperation', params: [{}, '0xentrypoint'] },
+        { jsonrpc: '2.0', id: 2, method: 'custom_unknown', params: [] },
+      ]) })).rejects.toThrow();
+      expect(guard).not.toHaveBeenCalled();
+      expect(underlying).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, new Uint8Array([1]), '{bad'])('fails closed on unreadable send-capable request bodies: %p', async (body) => {
+      const underlying = jest.fn();
+      const guarded = createGuardedBundlerFetch(underlying as any, jest.fn());
+      await expect(guarded('https://bundler.invalid', { method: 'POST', body } as any)).rejects.toThrow();
+      expect(underlying).not.toHaveBeenCalled();
+    });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     (globalThis as any).fetch = mockFetch;
@@ -657,6 +731,20 @@ describe('OpenfortService', () => {
       '0x000000005c84F8Fd50b21CAC312528A64437030e',
       '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00',
     ]);
+  });
+
+  it('fails a DeFi send closed on an unproven Calibur runtime without trying the legacy deployment', async () => {
+    const configService = { getOrThrow: jest.fn(() => 'secret'), get: jest.fn(() => 25) };
+    const service = new OpenfortService(configService as any) as any;
+    mockGetCode.mockResolvedValue('0x6000');
+    await expect(service.assertCaliburContractAvailable(
+      {}, 1, true, '0x1111111111111111111111111111111111111111',
+    )).rejects.toThrow('Calibur implementation is not the proven deployment');
+    expect(mockGetCode.mock.calls.map((call) => call[1].address.toLowerCase())).toEqual([
+      '0x000000005c84f8fd50b21cac312528a64437030e',
+      '0x1111111111111111111111111111111111111111',
+    ]);
+    expect(mockGetCode.mock.calls.some((call) => call[1].address.toLowerCase() === '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00')).toBe(false);
   });
 
   it('maps bundler rejections to a specific sanitized API error', () => {
