@@ -716,7 +716,21 @@ export default function WalletPage() {
         );
       }
 
-      const activeCaliburAddress = await resolveCaliburDeployment(agentChainId, publicClient);
+      const walletCode = await publicClient.getCode({ address });
+      const hasWalletCode = Boolean(walletCode && walletCode !== '0x');
+      const delegatedIndex = hasWalletCode
+        ? CALIBUR_DELEGATION_CODES.findIndex(
+            (delegationCode) => walletCode!.toLowerCase() === delegationCode.toLowerCase(),
+          )
+        : -1;
+      if (hasWalletCode && delegatedIndex < 0) {
+        throw new Error(
+          'This wallet is delegated to an unsupported contract. Please contact support.',
+        );
+      }
+      const activeCaliburAddress = hasWalletCode
+        ? CALIBUR_ADDRESSES[delegatedIndex]
+        : await resolveCaliburDeployment(agentChainId, publicClient);
       if (!activeCaliburAddress) {
         throw new Error(
           `${agentChainName} is not available for API access yet because Calibur is not deployed on this network.`,
@@ -755,20 +769,8 @@ export default function WalletPage() {
         ),
       ];
 
-      const walletCode = await publicClient.getCode({ address });
-      if (
-        walletCode &&
-        walletCode !== '0x' &&
-        !CALIBUR_DELEGATION_CODES.some(
-          (delegationCode) => walletCode.toLowerCase() === delegationCode.toLowerCase(),
-        )
-      ) {
-        throw new Error(
-          'This wallet is delegated to an unsupported contract. Please contact support.',
-        );
-      }
       const eip7702Authorization =
-        !walletCode || walletCode === '0x'
+        !hasWalletCode
           ? await (async () => {
               await verifyActiveAccount();
               return signOpenfortAuthorization({

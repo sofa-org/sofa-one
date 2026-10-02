@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { padHex, type Hex } from 'viem';
-import { CALIBUR_ADDRESSES, hashKey, KeyType } from '@/lib/calibur';
+import { CALIBUR_ADDRESSES, CALIBUR_DELEGATION_CODES, hashKey, KeyType } from '@/lib/calibur';
 import WalletPage from './Wallet';
 
 const mocks = vi.hoisted(() => ({
@@ -9,13 +9,14 @@ const mocks = vi.hoisted(() => ({
   getMe: vi.fn(), syncSession: vi.fn(), authorize: vi.fn(), create: vi.fn(),
   update: vi.fn(), setActive: vi.fn(), user: { id: 'user-1' }, hookAddress: undefined as string | undefined, providerRequest: vi.fn(async () => ['0x1111111111111111111111111111111111111111']),
   publicClient: undefined as any,
+  signAuthorization: vi.fn(), createCaliburAccount: vi.fn(),
 }));
 
 vi.mock('@openfort/react', () => ({
   AccountTypeEnum: { EOA: 'EOA' }, RecoveryMethod: { PASSWORD: 'PASSWORD' },
   useUser: () => ({ getAccessToken: mocks.getAccessToken, isAuthenticated: true, isLoading: false, user: mocks.user }),
   useOpenfort: () => ({ updateEmbeddedAccounts: mocks.update, client: { embeddedWallet: { getEthereumProvider: vi.fn(async () => ({ request: mocks.providerRequest })) } } }),
-  use7702Authorization: () => ({ signAuthorization: vi.fn() }),
+  use7702Authorization: () => ({ signAuthorization: mocks.signAuthorization }),
 }));
 vi.mock('@openfort/react/ethereum', () => ({
   useEthereumEmbeddedWallet: () => ({ address: mocks.hookAddress, create: mocks.create, setActive: mocks.setActive, provider: { request: mocks.providerRequest } }),
@@ -32,13 +33,17 @@ vi.mock('@/lib/api', () => ({
   getApiErrorMessage: (e: unknown) => e instanceof Error ? e.message : String(e),
   hasApiErrorCode: () => false,
 }));
+vi.mock('@/lib/calibur', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/calibur')>()),
+  createCaliburAccount: mocks.createCaliburAccount,
+}));
 
 const address = '0x1111111111111111111111111111111111111111';
 const addressA = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const addressB = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 const created = { id: 'wallet-B', walletAddress: address, agentWalletAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
 
-async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string) {
+async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, walletCode: Hex = '0x') {
   vi.stubEnv('VITE_OPENFORT_FEE_SPONSORSHIP_ID', feeSponsorshipId ?? '');
   window.localStorage.setItem('sofa-one.wallet.agentChainId', String(chainId));
   const agentKeyHash = hashKey({ keyType: KeyType.Secp256k1, publicKey: padHex(addressB as Hex, { size: 32 }) });
@@ -54,14 +59,17 @@ async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string) 
   mocks.setActive.mockResolvedValue(undefined);
   mocks.authorize.mockResolvedValue({ wallet: authorizedWallet, wallets: [authorizedWallet] });
   const getCode = vi.fn(async ({ address: queried }: { address: string }) => {
+    if (queried.toLowerCase() === address.toLowerCase()) return walletCode;
     if ((CALIBUR_ADDRESSES as readonly string[]).includes(queried)) return '0x1234' as Hex;
-    throw new Error('EOA code check sentinel');
+    throw new Error('Unexpected Calibur deployment probe');
   });
   const getBalance = vi.fn(async () => 0n);
+  const getTransactionCount = vi.fn(async () => 7);
   mocks.publicClient = {
     chain: { id: chainId, nativeCurrency: { symbol: chainId === 143 ? 'MON' : 'ETH' } },
     getCode,
     getBalance,
+    getTransactionCount,
   };
 
   render(<WalletPage />);
@@ -69,7 +77,7 @@ async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string) 
   fireEvent.change(screen.getByPlaceholderText('Enter the password you created in Step 1'), { target: { value: 'password-123' } });
   fireEvent.change(document.querySelector('input[type="datetime-local"]')!, { target: { value: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 16) } });
   fireEvent.click(screen.getByRole('button', { name: 'Authorize API Access' }));
-  return { getCode, getBalance };
+  return { getCode, getBalance, getTransactionCount };
 }
 
 describe('WalletPage provisioning identity', () => {
@@ -83,6 +91,8 @@ describe('WalletPage provisioning identity', () => {
     mocks.create.mockResolvedValue({ id: 'account-B', address });
     mocks.update.mockResolvedValue([{ id: 'account-B', address }]);
     mocks.authorize.mockResolvedValue({ wallet: created });
+    mocks.signAuthorization.mockResolvedValue('0xsigned');
+    mocks.createCaliburAccount.mockRejectedValue(new Error('account construction sentinel'));
   });
 
   it('authorizes the created provider identity even when response has no openfortAccountId', async () => {
@@ -223,7 +233,7 @@ describe('WalletPage provisioning identity', () => {
 
   it('skips native balance lookup for sponsored non-Monad registration but still checks EOA code', async () => {
     const { getCode, getBalance } = await setupRegistrationRpc(84532, 'policy-1');
-    await screen.findAllByText('EOA code check sentinel');
+    await waitFor(() => expect(getCode).toHaveBeenCalledWith({ address }));
     expect(getBalance).not.toHaveBeenCalled();
     expect(getCode).toHaveBeenCalledWith({ address });
   });
@@ -233,7 +243,7 @@ describe('WalletPage provisioning identity', () => {
     await screen.findAllByText(/has no ETH for gas/i);
     expect(getBalance).toHaveBeenCalledTimes(1);
     expect(getCode).toHaveBeenCalled();
-    expect(getCode).not.toHaveBeenCalledWith({ address });
+    expect(getCode).toHaveBeenCalledWith({ address });
   });
 
   it('reads native balance on Monad even when a sponsorship id is configured', async () => {
@@ -241,7 +251,42 @@ describe('WalletPage provisioning identity', () => {
     await screen.findAllByText(/has no MON for gas/i);
     expect(getBalance).toHaveBeenCalledTimes(1);
     expect(getCode).toHaveBeenCalled();
-    expect(getCode).not.toHaveBeenCalledWith({ address });
+    expect(getCode).toHaveBeenCalledWith({ address });
+  });
+
+  it.each([0, 1])('uses the existing delegated %s Calibur address without deployment scans', async (index) => {
+    const delegatedCode = CALIBUR_DELEGATION_CODES[index].toUpperCase().replace('0X', '0x') as Hex;
+    const { getCode } = await setupRegistrationRpc(137, 'policy-1', delegatedCode);
+    await screen.findAllByText('account construction sentinel');
+    expect(getCode.mock.calls.map(([args]) => args.address)).toEqual([address]);
+    expect(mocks.createCaliburAccount).toHaveBeenCalledWith(expect.objectContaining({
+      authorizationAddress: CALIBUR_ADDRESSES[index],
+    }));
+    expect(mocks.signAuthorization).not.toHaveBeenCalled();
+  });
+
+  it('uses the canonical Polygon address for a new authorization without candidate RPC calls', async () => {
+    const { getCode, getTransactionCount } = await setupRegistrationRpc(137, 'policy-1');
+    await screen.findAllByText('account construction sentinel');
+    expect(getCode.mock.calls.map(([args]) => args.address)).toEqual([address]);
+    expect(getTransactionCount).toHaveBeenCalledWith({ address, blockTag: 'pending' });
+    expect(mocks.signAuthorization).toHaveBeenCalledWith(expect.objectContaining({
+      chainId: 137,
+      nonce: 7,
+      contractAddress: CALIBUR_ADDRESSES[0],
+    }));
+    expect(mocks.createCaliburAccount).toHaveBeenCalledWith(expect.objectContaining({
+      authorizationAddress: CALIBUR_ADDRESSES[0],
+    }));
+  });
+
+  it('rejects unsupported delegation without signing or constructing/sending an account', async () => {
+    const { getCode, getTransactionCount } = await setupRegistrationRpc(137, 'policy-1', '0xef0100' + '12'.repeat(20) as Hex);
+    await screen.findAllByText(/delegated to an unsupported contract/i);
+    expect(getCode.mock.calls.map(([args]) => args.address)).toEqual([address]);
+    expect(getTransactionCount).not.toHaveBeenCalled();
+    expect(mocks.signAuthorization).not.toHaveBeenCalled();
+    expect(mocks.createCaliburAccount).not.toHaveBeenCalled();
   });
 
 });
