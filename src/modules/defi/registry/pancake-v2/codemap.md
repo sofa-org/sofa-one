@@ -1,0 +1,3 @@
+# PancakeSwap V2 registry
+
+`index.ts` builds a source-admitted BNB Chain (56) PancakeSwap V2 router fragment with ten individually grantable direct swap and liquidity functions and fixed official ABI definitions. Native-payable methods are declared accurately; caller-selected assets, path, amounts, recipient, minimums, deadline, and payable value are not financially filtered. No approvals, permit methods, multicall, runtime evidence, or automatic dependencies are included. `index.spec.ts` checks the fixed ABI and authorization through the actual catalog/policy. Source admission records official documentation deployment evidence and the pinned periphery interface; it is not runtime code, execution, liquidity, or suitability proof.

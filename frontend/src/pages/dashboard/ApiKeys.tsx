@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@openfort/react';
-import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X, ShieldCheck, Search } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
@@ -27,12 +27,24 @@ import {
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
+import { SUPPORTED_CHAINS } from '@/lib/chains';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const KEY_STATUS_FILTER_STORAGE_KEY = 'sofa-one.apiKeys.statusFilter';
+const MAX_CAPABILITY_GRANTS = 100;
+
+function capabilityCategory(capability: DefiCapability) {
+  const terms = `${capability.protocol ?? ''} ${capability.operation ?? ''} ${capability.label}`.toLowerCase();
+  if (/approv|permit/.test(terms)) return 'Approvals';
+  if (/swap|exchange|trade|router|pool/.test(terms)) return 'Swaps';
+  if (/lend|borrow|repay|collateral|supply|withdraw/.test(terms)) return 'Lending';
+  if (/stake|unstake|validator|restake/.test(terms)) return 'Staking';
+  if (/vault|deposit|redeem|yield/.test(terms)) return 'Vaults';
+  return capability.protocol || 'Other functions';
+}
 
 const FUNCTION_WARNINGS: Record<string, string> = {
   approve: 'This approval can authorize any spender and any amount, including unlimited approval. Review the spender and amount supplied by your caller.',
@@ -170,6 +182,10 @@ export default function ApiKeysPage() {
   const [editingCapabilityIds, setEditingCapabilityIds] = useState<string[]>([]);
   const [capabilitySaving, setCapabilitySaving] = useState(false);
   const [capabilityError, setCapabilityError] = useState<string | null>(null);
+  const [capabilitySearch, setCapabilitySearch] = useState('');
+  const [capabilityChainFilter, setCapabilityChainFilter] = useState('all');
+  const [capabilityGroupFilter, setCapabilityGroupFilter] = useState('all');
+  const [capabilitySelectedOnly, setCapabilitySelectedOnly] = useState(false);
   const [newKeyDailySpendLimit, setNewKeyDailySpendLimit] = useState('');
   const [newKeyMonthlySpendLimit, setNewKeyMonthlySpendLimit] = useState('');
   const [newKeyPermissions, setNewKeyPermissions] = useState({
@@ -434,12 +450,38 @@ export default function ApiKeysPage() {
     if (capabilitiesError) return <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div>;
     const visibleCapabilities = capabilities.filter((capability) => capability.status === 'active' || ids.includes(capability.capabilityId));
     const unknownIds = ids.filter((id) => !capabilities.some((capability) => capability.capabilityId === id));
-    return <div className="space-y-2">
+    const query = capabilitySearch.trim().toLowerCase();
+    const matches = visibleCapabilities.filter((capability) => {
+      const searchable = [capability.label, capability.description, capability.protocol, capability.operation,
+        capability.functionSignature, capability.contract, capability.capabilityId, String(capability.chainId)]
+        .filter(Boolean).join(' ').toLowerCase();
+      return (!query || searchable.includes(query)) &&
+        (capabilityChainFilter === 'all' || String(capability.chainId) === capabilityChainFilter) &&
+        (capabilityGroupFilter === 'all' || capabilityCategory(capability) === capabilityGroupFilter) &&
+        (!capabilitySelectedOnly || ids.includes(capability.capabilityId));
+    });
+    const groups = [...new Set(visibleCapabilities.map(capabilityCategory))].sort();
+    const chains = [...new Set(visibleCapabilities.map((capability) => capability.chainId))].sort((a, b) => a - b);
+    const visibleCount = matches.length;
+    const selectCapability = (id: string) => {
+      if (ids.includes(id)) setter(ids.filter((value) => value !== id));
+      else if (ids.length < MAX_CAPABILITY_GRANTS) setter([...ids, id]);
+    };
+    const filtered = Boolean(query || capabilityChainFilter !== 'all' || capabilityGroupFilter !== 'all' || capabilitySelectedOnly);
+    return <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+        <label className="relative block"><span className="sr-only">Search functions</span><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" /><input type="search" value={capabilitySearch} onChange={(event) => setCapabilitySearch(event.target.value)} placeholder="Search function, protocol, address or ID" className="w-full rounded-lg border border-brand-border bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent" /></label>
+        <select aria-label="Filter by chain" value={capabilityChainFilter} onChange={(event) => setCapabilityChainFilter(event.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text"><option value="all">All chains</option>{chains.map((chainId) => <option key={chainId} value={chainId}>{SUPPORTED_CHAINS.find((chain) => chain.id === chainId)?.name ?? `Chain ${chainId}`}</option>)}</select>
+        <select aria-label="Filter by protocol or group" value={capabilityGroupFilter} onChange={(event) => setCapabilityGroupFilter(event.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text"><option value="all">All protocols / groups</option>{groups.map((group) => <option key={group} value={group}>{group}</option>)}</select>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-brand-muted"><span>Showing {visibleCount} of {visibleCapabilities.length} available functions · {ids.length} selected</span><div className="flex flex-wrap items-center gap-3"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={capabilitySelectedOnly} onChange={(event) => setCapabilitySelectedOnly(event.target.checked)} className="h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />Selected only</label>{filtered && <button type="button" onClick={() => { setCapabilitySearch(''); setCapabilityChainFilter('all'); setCapabilityGroupFilter('all'); setCapabilitySelectedOnly(false); }} className="font-semibold text-brand-text underline underline-offset-2">Clear filters</button>}</div></div>
+      {ids.length >= MAX_CAPABILITY_GRANTS && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">This selection has reached the 100-grant limit. Remove a grant before adding another.</p>}
       {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No capabilities are available from the catalog right now. New keys will have no catalog access until capabilities are published.</p>}
-      {visibleCapabilities.map((capability) => {
+      {matches.length === 0 && visibleCapabilities.length > 0 && <p className="rounded-lg border border-brand-border bg-white p-4 text-sm text-brand-muted">No functions match these filters.</p>}
+      {matches.map((capability) => {
       const selected = ids.includes(capability.capabilityId);
       return <label key={capability.capabilityId} className={`flex gap-3 rounded-lg border border-brand-border bg-white p-3 text-sm ${capability.status === 'active' ? 'cursor-pointer hover:border-brand-accent' : 'opacity-70'}`}>
-        <input type="checkbox" checked={selected} disabled={disabled || capability.status !== 'active'} onChange={() => toggleCapability(ids, capability.capabilityId, setter)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
+        <input type="checkbox" checked={selected} disabled={disabled || (capability.status !== 'active' && !selected) || (!selected && ids.length >= MAX_CAPABILITY_GRANTS)} onChange={() => selectCapability(capability.capabilityId)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
         <span className="min-w-0"><span className="block font-semibold text-brand-text">{capability.label}<span className="ml-2 text-[10px] font-bold uppercase text-brand-muted">{capability.status}</span></span>
           <span className="block text-xs leading-5 text-brand-muted">{capability.description} · chain {capability.chainId} · {capability.type === 'contract_call' ? capability.functionSignature || 'Contract call' : 'Typed-data signing'}</span>
           {(capability.protocol || capability.operation) && <span className="mt-1 block text-xs text-brand-muted">{[capability.protocol, capability.operation].filter(Boolean).join(' · ')}</span>}
@@ -449,10 +491,10 @@ export default function ApiKeysPage() {
         </span>
       </label>;
       })}
-      {unknownIds.map((id) => <label key={id} className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-sm">
-        <input type="checkbox" checked disabled={disabled} onChange={() => toggleCapability(ids, id, setter)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
+      {unknownIds.map((id) => <div key={id} className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-sm">
+        <input type="checkbox" checked disabled aria-label={`Unavailable grant ${id}`} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
         <span className="min-w-0"><span className="block font-semibold text-brand-text">Unavailable capability</span><code className="block break-all text-xs text-brand-muted">{id}</code><button type="button" disabled={disabled} onClick={() => toggleCapability(ids, id, setter)} className="mt-1 text-xs font-semibold text-amber-800 underline disabled:opacity-50">Remove grant</button></span>
-      </label>)}
+      </div>)}
       {ids.length > 0 && <button type="button" disabled={disabled} onClick={() => setter([])} className="mt-1 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent disabled:opacity-50">Clear all grants</button>}
     </div>;
   }

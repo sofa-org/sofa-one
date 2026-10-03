@@ -5,7 +5,7 @@ Function-level DeFi capability catalog, explicit API-key grants, transaction-cal
 
 ## Files and flow
 - `defi.types.ts`: immutable execution, capability, match, authorization, denial, database and pause types.
-- `registry/defi-manifest.types.ts`, `registry/defi-manifest.ts`: nested-chain registry fragments; reviewed manifests contain only chains, capabilities, and deterministic identity hash. Builders merge, validate fixed ABI/provenance and selector uniqueness, clone, and deep-freeze.
+- `registry/defi-manifest.types.ts`, `registry/defi-manifest.ts`, `registry/production-registry.ts`: nested-chain fragments merge into a reviewed manifest containing only chains, capabilities, and deterministic identity hash. Production assembly preserves the 70-capability baseline and adds 38 definitions (36 actions, 2 approvals), for 108 total (88 actions, 20 explicit approvals). Builders validate fixed ABI/provenance and selector uniqueness, clone, and deep-freeze. Oracle Gate 1 initial attempt 1/3 passed for scoped catalog admission and local authorization; no material finding required re-review.
 - `defi-catalog.service.ts`: injected catalog/manifest identity consistency, immutable copies, pause-aware metadata, and chain/capability lookup.
 - `defi-grant.service.ts`: exact grant ID normalization and transactional active/unpaused grant validation under the global shared pause lock.
 - `defi-policy.service.ts`: chain/contract-local selector lookup, explicit grant and pause checks, canonical ABI decode/re-encode, uint256/payability validation, request commitment, final live-key/catalog/grant/pause checks, and safe audit.
