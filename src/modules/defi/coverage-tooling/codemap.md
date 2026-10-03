@@ -1,0 +1,11 @@
+# DeFi coverage tooling
+
+Offline source normalization and evidence/report calculation, not a runtime policy or market-discovery service.
+
+- `types.ts`: typed normalized snapshot, product/workflow/instance/activity evidence, and report input vocabulary.
+- `baseline-adapter.ts`: maps the pinned market roster, chain classification, 16-seed/35-workflow source file, and reviewed manifest into normalized input plus evidence. It retains every raw roster row as an unresolved conservative proxy unless canonical product/chain/activity evidence supports stronger classification; workflow bindings require exact capability ID, chain, target, signature, and ABI hash.
+- `calculator.ts`: validates normalized input and computes observed/conservative product and workflow completeness, chain/category breakdowns, and compatible activity weighting. Missing attribution, incomplete enumerations, unknown time, and unresolved records stay explicit and block objective establishment; no source is fetched and no transaction policy is affected.
+- `cli-helpers.ts`, `scripts/defi-coverage/cli.ts`, `scripts/defi-coverage/normalize-baseline.ts`: generic normalized-input report/check CLI and deterministic frozen-baseline normalization. The adapter writes normalized, report, and evidence JSON snapshots; `--check` byte-compares recomputed output without writing.
+- `calculator.spec.ts`, `baseline-adapter.spec.ts`, `cli-helpers.spec.ts`: pure synthetic calculator contracts and frozen-source adapter/CLI helper coverage.
+
+The current frozen report retains 8,476 unresolved raw roster proxy rows, 0 positively evidenced canonical active-product rows (not a claim that no active products exist), observed coverage as N/A, and `objectiveEstablished: false`. The raw proxy rows are not verified distinct products. UTC source capture is unknown and scope/product enumeration is incomplete. The normalized report has 57 workflow rows, 50 complete at their mapped evidence scope and 7 unresolved/source-blocked; these are not whole-product completion counts. M1 Oracle Gate 1 passed on attempt 2/3 after R1/R2 closure, with no further review required. Parent integrated build, tests, structural scan, catalog checks and normalized replay passed; local commit is pending parent. Tooling completion does not establish the final market-coverage goal.

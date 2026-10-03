@@ -1,0 +1,3 @@
+# DeFi catalog tooling
+
+Offline tooling for the versioned, source-controlled catalog input and generated production fragment. `catalog-generator.ts` strictly validates nested data, reuses `buildReviewedManifest` for fixed ABI/provenance/identity constraints, preserves the pinned pre-migration fixture, emits deterministic TypeScript, and compares authority/ABI/metadata changes separately. `scripts/defi-catalog/cli.ts` provides generate/check/diff modes. The output is a static type-only imported fragment; this package is not runtime authorization logic and does not change or rebind grants. `catalog-generator.spec.ts` covers input rejection, exact baseline retention, deterministic rendering, and diff categories.
