@@ -31,11 +31,11 @@ import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 import {
   BillingPlanChangeService,
   findUsagePeriodInvoice,
-  isAssignmentEntitlementValid,
-  validAssignmentWhere,
 } from './billing-plan-change.service';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 import { BillingWalletLifecycleService } from './billing-wallet-lifecycle.service';
+import { isAssignmentEntitlementValid, validAssignmentWhere, validatePlanVersion } from './billing-plan-validation';
+export { validatePlanVersion } from './billing-plan-validation';
 
 // ── JSON-safe DTO shapes (no BigInt leaks) ────────────────────────────────────
 
@@ -3478,82 +3478,6 @@ function assertJsonSafe(value: unknown, path: string): void {
 function isOwnPlanCode(code: unknown): code is PlanId {
   if (typeof code !== 'string' || code.length === 0) return false;
   return Object.prototype.hasOwnProperty.call(PLANS, code);
-}
-
-/**
- * Shared plan-boundary validation (Phase 2 Oracle gate). A persisted plan
- * version is only executable when its code is an own property of the static
- * `PLANS` whitelist AND its term shape is computable with strict runtime types:
- * BigInt monetary/quota fields must be bigint and non-negative; Int/rate/counter
- * fields must be safe integers and non-negative; undefined/number/negative/
- * unsafe values are never implicitly coerced. Enterprise must keep the full
- * custom/null contract (all four terms null) and is listable but never
- * executable. Unknown codes, empty/unsupported codes, and malformed rows fail
- * closed with a business ConflictException — never treated as Free, 0, or
- * infinite. Returns the canonical static config for the code (DB values remain
- * the price snapshot used by the calculator).
- */
-export function validatePlanVersion(planVersion: PlanVersion): BillingPlanConfig {
-  const code = planVersion.code;
-  if (!isOwnPlanCode(code)) {
-    throw new ConflictException(`Plan code is not supported: ${String(code)}`);
-  }
-  const config = PLANS[code];
-
-  // Runtime type + computability checks (never implicitly coerce).
-  assertNonNegativeBigint(planVersion.apiOverageRateMicros, 'apiOverageRateMicros', code);
-  assertNonNegativeBigint(planVersion.walletOverageRateMicros, 'walletOverageRateMicros', code);
-  if (
-    typeof planVersion.version !== 'number' ||
-    !Number.isSafeInteger(planVersion.version) ||
-    planVersion.version < 0
-  ) {
-    throw new ConflictException(`Plan terms are invalid: ${code}.version`);
-  }
-
-  const isEnterprise = config.id === 'enterprise';
-  if (isEnterprise) {
-    if (
-      planVersion.monthlyFeeMicros !== null ||
-      planVersion.includedOutboundMicros !== null ||
-      planVersion.includedWallets !== null ||
-      planVersion.includedApiCalls !== null
-    ) {
-      throw new ConflictException('Enterprise plan terms are malformed');
-    }
-  } else {
-    assertNonNegativeBigint(planVersion.monthlyFeeMicros, 'monthlyFeeMicros', code);
-    assertNonNegativeBigint(planVersion.includedOutboundMicros, 'includedOutboundMicros', code);
-    assertNonNegativeSafeInt(planVersion.includedWallets, 'includedWallets', code);
-    assertNonNegativeBigint(planVersion.includedApiCalls, 'includedApiCalls', code);
-    // includedApiCalls is converted to Number at the calculator/DTO boundary;
-    // reject values above Number.MAX_SAFE_INTEGER before any imprecise
-    // conversion (never weaken valid historical finite snapshots).
-    if (planVersion.includedApiCalls > BigInt(Number.MAX_SAFE_INTEGER)) {
-      throw new ConflictException(`Plan terms are invalid: ${code}.includedApiCalls`);
-    }
-  }
-  return config;
-}
-
-function assertNonNegativeBigint(
-  value: unknown,
-  field: string,
-  code: string,
-): asserts value is bigint {
-  if (typeof value !== 'bigint' || value < 0n) {
-    throw new ConflictException(`Plan terms are invalid: ${code}.${field}`);
-  }
-}
-
-function assertNonNegativeSafeInt(
-  value: unknown,
-  field: string,
-  code: string,
-): asserts value is number {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
-    throw new ConflictException(`Plan terms are invalid: ${code}.${field}`);
-  }
 }
 
 /**

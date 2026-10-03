@@ -543,9 +543,13 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       assertNoSecrets(res.body);
     });
 
-    it('accepts an explicit YYYY-MM period and rejects malformed periods', async () => {
-      const ok = await dashboardGet(primary, '/v1/billing/summary?period=2026-01').expect(200);
-      expect(ok.body.period).toBe('2026-01');
+    it('accepts an explicit current YYYY-MM period and rejects malformed periods', async () => {
+      // Summary materializes wallet usage for the current month, but does not
+      // synthesize evidence for arbitrary historical periods; use the current
+      // period already materialized by the suite.
+      const current = currentUtcMonthPeriod();
+      const ok = await dashboardGet(primary, `/v1/billing/summary?period=${current}`).expect(200);
+      expect(ok.body.period).toBe(current);
 
       await dashboardGet(primary, '/v1/billing/summary?period=2026-13').expect(400);
       await dashboardGet(primary, '/v1/billing/summary?period=not-a-period').expect(400);
