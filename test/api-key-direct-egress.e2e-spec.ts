@@ -427,14 +427,13 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
   /**
    * Required Gate 2 same-request evidence:
-   * outer destination preflight passes → assertSimulatable one-shot hook deletes
-   * the allowlisted address on a separate committed Prisma connection →
-   * createPendingOrReturnExisting holds destination advisory + ApiKey FOR UPDATE,
-   * inner assertDestinationsAllowed(deferAudit) denies → TX rolls back →
-   * recordDeferredDenial once → stable 403 (no deadlock/timeout).
+   * outer preflight observes protection off → assertSimulatable one-shot hook
+   * enables protection on a separate committed Prisma connection → the
+   * acceptance transaction rechecks protection under its lock, denies the
+   * unproven batch → TX rolls back → one post-rollback audit.
    * Real leaf/TX/SecurityEvent path; simulation is only the race injection point.
    */
-  it('same-request outer pass → allowlist deleted mid-send → inner deferred deny 403 + one audit', async () => {
+  it('same-request protection off → on with unproven batch → inner deferred deny 403 + one audit', async () => {
     if (!racePrisma) {
       throw new Error('racePrisma not initialized');
     }
@@ -447,38 +446,46 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       where: { userId, eventType: 'transaction.destination_policy_denied' },
     });
 
-    // Confirm allowlist row exists before the single request.
-    await expect(
-      prisma!.withdrawalAddress.count({
-        where: { userId, address: ALLOWLISTED.toLowerCase() },
-      }),
-    ).resolves.toBe(1);
+    const policyBefore = await prisma!.withdrawalPolicy.findUniqueOrThrow({ where: { userId } });
+    expect(policyBefore.requireAddressAllowlist).toBe(true);
+    await prisma!.withdrawalPolicy.update({
+      where: { userId },
+      data: { requireAddressAllowlist: false },
+    });
 
     let hookRan = false;
     afterOuterPreflightHook = async () => {
       hookRan = true;
-      // Separate committed connection — not the Nest interactive TX client.
-      const deleted = await racePrisma!.withdrawalAddress.deleteMany({
-        where: { userId, address: ALLOWLISTED.toLowerCase() },
+      // Separate committed connection — enable destination protection after
+      // outer preflight but before the acceptance transaction rechecks it.
+      await racePrisma!.withdrawalPolicy.update({
+        where: { userId },
+        data: { requireAddressAllowlist: true },
       });
-      if (deleted.count < 1) {
-        throw new Error('race hook: expected to delete allowlisted WithdrawalAddress');
-      }
     };
 
     const started = Date.now();
-    const res = await sendTx(rawKey, {
-      chainId: CHAIN_ID,
-      idempotencyKey,
-      interactions: [{ to: TOKEN, data: transferData(ALLOWLISTED), value: '0' }],
-    }).expect(403);
+    let res: request.Response;
+    try {
+      res = await sendTx(rawKey, {
+        chainId: CHAIN_ID,
+        idempotencyKey,
+        interactions: [{ to: TOKEN, data: unknownCalldata(), value: '0' }],
+      }).expect(403);
+    } finally {
+      afterOuterPreflightHook = null;
+      await prisma!.withdrawalPolicy.update({
+        where: { userId },
+        data: { requireAddressAllowlist: policyBefore.requireAddressAllowlist },
+      });
+    }
     const elapsedMs = Date.now() - started;
 
     expect(hookRan).toBe(true);
     expect(assertSimulatableMock).toHaveBeenCalled();
     // Must complete quickly: deferred audit path, not lock deadlock/timeout.
     expect(elapsedMs).toBeLessThan(15_000);
-    expect(res.body.code).toBe(API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED);
+    expect(res.body.code).toBe(API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED);
     expectNoProviderSubmit();
 
     await expect(
@@ -490,12 +497,10 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       prisma!.transaction.count({ where: { userId, operationType: 'send' } }),
     ).resolves.toBe(sendCountBefore);
 
-    // Exactly one post-rollback deferred denial — no outer event (outer passed).
+    // Exactly one post-rollback denial; outer protection was off, so only the
+    // under-lock recheck can have emitted it.
     const audits = await prisma!.securityEvent.findMany({
-      where: {
-        userId,
-        eventType: 'transaction.destination_policy_denied',
-      },
+      where: { userId, eventType: 'transaction.unproven_asset_outflow_blocked' },
       orderBy: { createdAt: 'asc' },
     });
     expect(audits).toHaveLength(1);
@@ -506,7 +511,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
         apiKeyId: authorizedKeyId,
         riskLevel: 'high',
         result: 'denied',
-        reason: 'Withdrawal address is not allowlisted',
+        reason: 'Unproven asset outflow blocked under destination protection',
       }),
     );
     const meta =
@@ -518,19 +523,27 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     const expectedApiKeyPrefix = rawKey.slice(0, 27);
     expect(meta).toEqual(
       expect.objectContaining({
-        code: API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED,
+        code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
         chainId: CHAIN_ID,
+        interactionCount: 1,
+        provenIntentCount: 0,
+        notProvenCount: 1,
+        notProvenReasons: { unknown_selector: 1 },
         executionMode: 'session_key',
         // Production leaf may include short lookup prefix (sk_ + 24 hex) — not a secret.
         apiKeyPrefix: expectedApiKeyPrefix,
       }),
     );
-    // Safe metadata only — no full destination address; short apiKeyPrefix OK, full raw key never.
+    // Safe metadata only — no calldata, full destination address, or full key.
     expect(meta).not.toHaveProperty('address');
     expect(meta).not.toHaveProperty('to');
+    expect(meta).not.toHaveProperty('data');
+    expect(meta).not.toHaveProperty('calldata');
+    expect(meta).not.toHaveProperty('interactions');
     const metaJson = JSON.stringify(meta);
     expect(metaJson).toContain(expectedApiKeyPrefix);
     expect(metaJson).not.toContain(rawKey);
+    expect(metaJson).not.toContain(unknownCalldata());
     // Prefix is strictly shorter than the full API key material used on the wire.
     expect(expectedApiKeyPrefix.length).toBeLessThan(rawKey.length);
     expect(typeof meta.apiKeyPrefix).toBe('string');
@@ -597,13 +610,15 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
   // ── Self-transfer / scope ─────────────────────────────────────────────────
 
-  it('does not destination-deny self-transfer (recipient === platform wallet owner)', async () => {
-    // Self-transfer is not a destination intent → 201 with mocked provider.
-    const res = await sendTx(rawKey, {
+  it('protection OFF: does not destination-deny self-transfer (recipient === platform wallet owner)', async () => {
+    // Self-transfer is not a destination intent. Exercise the existing generic
+    // send behavior with destination protection disabled for this request;
+    // when protection is enabled, non-proven outflows correctly fail closed.
+    const res = await withDestinationProtection(false, () => sendTx(rawKey, {
       chainId: CHAIN_ID,
       idempotencyKey: `self-${SUITE_ID}`,
       interactions: [{ to: TOKEN, data: transferData(PLATFORM_WALLET), value: '0' }],
-    }).expect(201);
+    }).expect(201));
 
     expectNotDirectEgressDeny(res.body);
     expect(res.body).toEqual(
@@ -633,9 +648,10 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expectNoProviderSubmit();
   });
 
-  it('does not treat foreign-source transferFrom as direct egress (out of scope)', async () => {
-    // foreign from → no destination intent → 201 via mocked provider.
-    const res = await sendTx(rawKey, {
+  it('protection OFF: foreign-source transferFrom is outside the destination gate', async () => {
+    // Foreign from → no destination intent. Preserve legacy generic-send
+    // semantics only with protection off; the protected path fails closed.
+    const res = await withDestinationProtection(false, () => sendTx(rawKey, {
       chainId: CHAIN_ID,
       idempotencyKey: `tf-foreign-${SUITE_ID}`,
       interactions: [
@@ -645,19 +661,21 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
           value: '0',
         },
       ],
-    }).expect(201);
+    }).expect(201));
 
     expectNotDirectEgressDeny(res.body);
     expectSessionKeyProviderCalled();
   });
 
-  it('does not block unknown non-egress selector with reauth/destination gates', async () => {
-    // Unauthorized key + unknown selector must not hit REAUTH (no direct egress) → 201.
-    const res = await sendTx(keyUnauthorized, {
+  it('protection OFF: unauthorized key unknown selector is outside direct-egress reauth', async () => {
+    // Unauthorized key + unknown selector remains outside direct-egress
+    // reauthorization when destination protection is disabled. With protection
+    // enabled, unknown calldata is intentionally blocked as unproven outflow.
+    const res = await withDestinationProtection(false, () => sendTx(keyUnauthorized, {
       chainId: CHAIN_ID,
       idempotencyKey: `unknown-${SUITE_ID}`,
       interactions: [{ to: TOKEN, data: unknownCalldata(), value: '0' }],
-    }).expect(201);
+    }).expect(201));
 
     expectNotDirectEgressDeny(res.body);
     expectSessionKeyProviderCalled();
@@ -665,7 +683,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
   // ── EOA path (execution owner = agent wallet) ─────────────────────────────
 
-  it('EOA: agent wallet is owner (self OK); platform wallet is external deny', async () => {
+  it('EOA: protection OFF self-transfer to agent succeeds; protection ON platform destination denies', async () => {
     // EoaExecutionPolicyService rate-limits per apiKeyId (1 allowed event / window).
     // Use two independent EOA keys on the same user/agent wallet so the second
     // request is not blocked by the first key's allowed-event stamp.
@@ -673,12 +691,12 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     const eoaPlatKey = await seedEoaKey(userId, 'plat');
 
     // To agent (execution owner) → self-transfer, not destination policy.
-    const selfRes = await sendTx(eoaSelfKey.rawKey, {
+    const selfRes = await withDestinationProtection(false, () => sendTx(eoaSelfKey.rawKey, {
       chainId: CHAIN_ID,
       executionMode: 'eoa',
       idempotencyKey: `eoa-self-agent-${SUITE_ID}`,
       interactions: [{ to: TOKEN, data: transferData(AGENT_WALLET), value: '0' }],
-    }).expect(201);
+    }).expect(201));
     expectNotDirectEgressDeny(selfRes.body);
     expect(mockOpenfortService.sendBackendTransaction).toHaveBeenCalled();
     expect(mockOpenfortService.submitUserOperation).not.toHaveBeenCalled();
@@ -720,13 +738,14 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expect(deny.body.code).toBe(API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED);
     expectNoProviderSubmit();
 
-    // Batch: mixed-case known transfer + unknown selector — still deny on external.
+    // Batch: mixed-case known transfers still deny on the unallowlisted external
+    // recipient; keep every interaction proven under the protected-path rules.
     const batch = await sendTx(rawKey, {
       chainId: CHAIN_ID,
       idempotencyKey: `mixed-batch-${SUITE_ID}`,
       interactions: [
         { to: mixed, data: transferData(EXTERNAL), value: '0' },
-        { to: TOKEN.toLowerCase(), data: unknownCalldata(), value: '0' },
+        { to: TOKEN.toLowerCase(), data: transferData(ALLOWLISTED), value: '0' },
       ],
     }).expect(403);
     expect(batch.body.code).toBe(API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED);
@@ -740,6 +759,99 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     }).expect(201);
     expect(ok.body.transactionHash).toBe(TX_HASH);
     expectSessionKeyProviderCalled();
+  });
+
+  const protectedUnprovenCases = [
+    { name: 'session-key self transfer', kind: 'session-self', reason: 'self_transfer' },
+    { name: 'foreign-source transferFrom', kind: 'foreign-transfer-from', reason: 'non_owner_transfer_from' },
+    { name: 'unknown selector with unauthorized API key', kind: 'unauthorized-unknown', reason: 'unknown_selector' },
+    { name: 'EOA self transfer to agent wallet', kind: 'eoa-self', reason: 'self_transfer' },
+    { name: 'proven allowlisted transfer plus unknown selector', kind: 'mixed', reason: 'unknown_selector' },
+  ] as const;
+
+  it.each(protectedUnprovenCases)('protection ON: blocks $name as unproven before transaction/provider', async ({ kind, reason }) => {
+    const idempotencyKey = `protected-unproven-${kind}-${SUITE_ID}`;
+    let apiKey = rawKey;
+    let apiKeyId = authorizedKeyId;
+    let executionMode: 'session_key' | 'eoa' = 'session_key';
+    let interactions: Array<{ to: string; data: string; value: string }>;
+
+    switch (kind) {
+      case 'session-self':
+        interactions = [{ to: TOKEN, data: transferData(PLATFORM_WALLET), value: '0' }];
+        break;
+      case 'foreign-transfer-from':
+        interactions = [{ to: TOKEN, data: transferFromData(FOREIGN_FROM, EXTERNAL), value: '0' }];
+        break;
+      case 'unauthorized-unknown':
+        apiKey = keyUnauthorized;
+        apiKeyId = keyUnauthorizedId;
+        interactions = [{ to: TOKEN, data: unknownCalldata(), value: '0' }];
+        break;
+      case 'eoa-self': {
+        const eoaKey = await seedEoaKey(userId, 'protected-self');
+        apiKey = eoaKey.rawKey;
+        apiKeyId = eoaKey.id;
+        executionMode = 'eoa';
+        interactions = [{ to: TOKEN, data: transferData(AGENT_WALLET), value: '0' }];
+        break;
+      }
+      case 'mixed':
+        interactions = [
+          { to: TOKEN, data: transferData(ALLOWLISTED), value: '0' },
+          { to: TOKEN, data: unknownCalldata(), value: '0' },
+        ];
+        break;
+    }
+
+    await expect(
+      prisma!.withdrawalPolicy.findUniqueOrThrow({ where: { userId } }),
+    ).resolves.toMatchObject({ requireAddressAllowlist: true });
+
+    const res = await sendTx(apiKey, {
+      chainId: CHAIN_ID,
+      executionMode,
+      idempotencyKey,
+      interactions,
+    }).expect(403);
+    expect(res.body.code).toBe(API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED);
+    expectNoProviderSubmit();
+    await expect(
+      prisma!.transaction.count({ where: { userId, operationType: 'send', idempotencyKey } }),
+    ).resolves.toBe(0);
+
+    const audits = await prisma!.securityEvent.findMany({
+      where: { userId, eventType: 'transaction.unproven_asset_outflow_blocked' },
+    });
+    expect(audits).toHaveLength(1);
+    expect(audits[0]).toEqual(expect.objectContaining({
+      actorType: 'api_key',
+      userId,
+      apiKeyId,
+      riskLevel: 'high',
+      result: 'denied',
+      reason: 'Unproven asset outflow blocked under destination protection',
+    }));
+    const metadata = audits[0].metadata as Record<string, unknown>;
+    expect(metadata).toEqual(expect.objectContaining({
+      code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED,
+      chainId: CHAIN_ID,
+      interactionCount: interactions.length,
+      provenIntentCount: kind === 'mixed' ? 1 : 0,
+      notProvenCount: 1,
+      notProvenReasons: { [reason]: 1 },
+      executionMode,
+      apiKeyPrefix: apiKey.slice(0, 27),
+    }));
+    const metadataJson = JSON.stringify(metadata);
+    expect(metadataJson).not.toContain(rawKey);
+    expect(metadataJson).not.toContain(keyUnauthorized);
+    for (const interaction of interactions) {
+      expect(metadataJson).not.toContain(interaction.data);
+    }
+    expect(metadata).not.toHaveProperty('data');
+    expect(metadata).not.toHaveProperty('calldata');
+    expect(metadata).not.toHaveProperty('interactions');
   });
 
   // ── authorize-direct-egress HTTP (IAM + FrontendOnly + StepUp override) ───
@@ -873,6 +985,22 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       keyUnauthorizedId: unauthorized.id,
       iamToken: token,
     };
+  }
+
+  async function withDestinationProtection<T>(enabled: boolean, work: () => Promise<T>): Promise<T> {
+    const policy = await prisma!.withdrawalPolicy.findUniqueOrThrow({ where: { userId } });
+    await prisma!.withdrawalPolicy.update({
+      where: { userId },
+      data: { requireAddressAllowlist: enabled },
+    });
+    try {
+      return await work();
+    } finally {
+      await prisma!.withdrawalPolicy.update({
+        where: { userId },
+        data: { requireAddressAllowlist: policy.requireAddressAllowlist },
+      });
+    }
   }
 
   async function seedEoaKey(uid: string, label = 'eoa') {

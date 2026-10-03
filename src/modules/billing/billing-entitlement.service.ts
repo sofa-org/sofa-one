@@ -3,11 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingQuotaExceededException } from './billing-quota.exception';
 import { formatUtcMonth, parsePeriod } from './billing.utils';
-import { validatePlanVersion } from './billing.service';
-import {
-  isAssignmentEntitlementValid,
-  validAssignmentWhere,
-} from './billing-plan-change.service';
+import { isAssignmentEntitlementValid, validAssignmentWhere, validatePlanVersion } from './billing-plan-validation';
 
 /** JSON-safe entitlements for a user for a UTC month. */
 export interface EntitlementsResult {

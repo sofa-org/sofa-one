@@ -197,7 +197,7 @@ run('auth provisioning PostgreSQL crash windows', () => {
       await bindProvisionedAccount(
         prisma,
         { getAccount: jest.fn().mockResolvedValue({ id: `operator-agent-${user.id}`, address: operatorAddress, chainType: 'EVM', custody: 'Developer' }) },
-        (providerAddress) => `0x${'c'.repeat(64)}`,
+        () => `0x${'c'.repeat(64)}`,
         { walletId: wallet.id, dispatchToken: intent.dispatchToken!, accountId: `operator-agent-${user.id}`, operator: 'test-operator', evidence: 'provider-record-verified' },
       );
       gate.resolve({ id: `normal-agent-${user.id}`, address: `0x${'9'.repeat(40)}`, keyHash: `0x${'d'.repeat(64)}` });

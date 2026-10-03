@@ -76,8 +76,11 @@ async function renderWithQuote() {
   const ctx = renderPanel();
 
   // BILL-018: panel loads invoice status only — user must request a quote.
-  await screen.findByRole('button', { name: /Get quote/i });
-  fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+  const getQuoteButton = await screen.findByRole('button', { name: /Get quote/i });
+  // The control may render while the mount-time invoice-status request is still
+  // pending. The quote action is disabled until that authoritative read finishes.
+  await waitFor(() => expect(getQuoteButton).toBeEnabled());
+  fireEvent.click(getQuoteButton);
 
   // The amount/claim form only renders once a quote is present.
   const txInput = await screen.findByLabelText('Transaction hash');
@@ -466,7 +469,9 @@ describe('UsdcPaymentPanel — fail-closed recovery (B5)', () => {
     );
 
     renderPanel();
-    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
+    const getQuoteButton = await screen.findByRole('button', { name: /Get quote/i });
+    await waitFor(() => expect(getQuoteButton).toBeEnabled());
+    fireEvent.click(getQuoteButton);
 
     expect(await screen.findByText(/Status unconfirmed/i)).toBeInTheDocument();
     expect(screen.getByText(/Payment status could not be confirmed/i)).toBeInTheDocument();

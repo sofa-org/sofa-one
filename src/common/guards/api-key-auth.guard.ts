@@ -219,7 +219,7 @@ export class ApiKeyAuthGuard implements CanActivate {
     }
     try {
       return await this.billingDebt.hasEnforceableApiDebt(userId);
-    } catch (error) {
+    } catch {
       throw new ServiceUnavailableException({
         code: API_ERROR_CODES.BILLING_DEBT_CHECK_UNAVAILABLE,
         message: 'Billing debt check is temporarily unavailable',

@@ -13,6 +13,7 @@ import { calculateUpgradeProrationMicros } from './billing-plan-change.proration
 import { acquireBillingPeriodAdvisoryLock } from './billing-period-lock';
 import { StripeSubscriptionSyncService } from './stripe/stripe-subscription-sync.service';
 import { StripeAutoSubscriptionService } from './stripe/stripe-auto-subscription.service';
+export { isAssignmentEntitlementValid, validAssignmentWhere } from './billing-plan-validation';
 
 type Tx = Prisma.TransactionClient;
 type PlanVersion = Prisma.BillingPlanVersionGetPayload<Record<string, never>>;
@@ -1480,37 +1481,4 @@ export async function findUsagePeriodInvoiceOrThrow(
   const row = await findUsagePeriodInvoice(tx, billingAccountId, periodStart);
   if (!row) throw new NotFoundException('Invoice not found');
   return row;
-}
-
-/**
- * Valid assignment filter at instant `at`.
- * - Non-expired paid windows: expiresAt > at
- * - Open-ended only via expiresAt null (Free default / free downgrade only;
- *   callers must reject paid plans that lack expiresAt after load).
- */
-export function validAssignmentWhere(at: Date): Prisma.BillingPlanAssignmentWhereInput {
-  return {
-    OR: [{ expiresAt: null }, { expiresAt: { gt: at } }],
-  };
-}
-
-/**
- * After loading an assignment+plan, reject paid plans without a bounded
- * expiresAt (legacy indefinite paid rows must not grant access forever).
- */
-export function isAssignmentEntitlementValid(
-  assignment: { expiresAt: Date | null; source: string | null },
-  plan: { monthlyFeeMicros: bigint | null; code: string } | null | undefined,
-  at: Date,
-): boolean {
-  if (!plan) return false;
-  const fee = plan.monthlyFeeMicros ?? 0n;
-  if (assignment.expiresAt != null) {
-    return assignment.expiresAt.getTime() > at.getTime();
-  }
-  // Open-ended (null expiresAt) is only allowed for zero-fee rows. Paid plans
-  // without a bound never grant indefinite access. Zero-fee unknown codes are
-  // still returned so callers can fail closed via validatePlanVersion.
-  if (fee > 0n) return false;
-  return true;
 }

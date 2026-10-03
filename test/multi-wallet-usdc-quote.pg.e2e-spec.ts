@@ -17,7 +17,6 @@ const prisma = target ? new PrismaClient({ adapter: new PrismaPg(applyBillingE2e
 const run = target ? describe : describe.skip;
 const amount = 49_000_000n;
 const treasury = '0x1111111111111111111111111111111111111111';
-const token = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const rpc = 'https://base.example.com/rpc';
 
 async function fixture() {
