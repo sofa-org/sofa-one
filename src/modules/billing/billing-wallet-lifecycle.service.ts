@@ -36,6 +36,7 @@ export class BillingWalletLifecycleService {
    * only after the account lock is acquired.
    */
   async prepareWalletUsageThroughCurrentMonth(userId: string, _now?: Date): Promise<void> {
+    void _now;
     const account = await this.prisma.billingAccount.upsert({ where: { userId }, create: { userId }, update: {}, select: { id: true } });
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM billing_accounts WHERE id = ${account.id}::uuid FOR UPDATE`;

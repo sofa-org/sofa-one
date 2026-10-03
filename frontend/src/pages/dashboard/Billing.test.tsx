@@ -1085,7 +1085,7 @@ describe('Billing — plan change', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
     await screen.findByText('Payment required to upgrade');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Pay with USDC' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Pay with USDC' }));
     expect(screen.getByTestId('usdc-panel-invoice')).toHaveTextContent('inv_upgrade');
   });
 
@@ -1394,7 +1394,7 @@ describe('Billing — plan change', () => {
     expect(screen.getByText(/There was no pending upgrade to cancel/i)).toBeInTheDocument();
     // Unchanged does not clear local pending upgrade UI/session.
     expect(sessionStorage.getItem(PENDING_PLAN_UPGRADE_STORAGE_KEY)).toBeTruthy();
-    expect(screen.getByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Pay to upgrade to Pro/i)).toBeInTheDocument();
 
     confirmSpy.mockRestore();
   });

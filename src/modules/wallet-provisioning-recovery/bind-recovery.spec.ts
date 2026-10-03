@@ -54,7 +54,8 @@ describe('bindProvisionedAccount', () => {
     const { tx, prisma, provider } = make();
     let committed = false;
     prisma.$transaction.mockImplementation(async (fn: any) => {
-      try { await fn(tx); committed = true; } catch (error) { throw error; }
+      await fn(tx);
+      committed = true;
     });
     tx.securityEvent.create.mockRejectedValue(new Error('audit unavailable'));
     await expect(bindProvisionedAccount(prisma, provider, () => 'hash', input)).rejects.toThrow('audit unavailable');
