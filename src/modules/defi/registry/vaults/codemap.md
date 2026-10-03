@@ -1,3 +1,3 @@
 # Vault registry family
 
-`index.ts` defines two official Morpho Vault V2 USDC discovery candidates and exact fixed ABI policies. Standard vault calls remain inactive because execution min-output and complete live identity/audit evidence are unavailable; share caps are deliberately not inferred.
+`index.ts` defines the six exact Morpho Vault V2 `deposit`, `withdraw`, and `redeem` functions for two source-attributed official vault addresses. They are active function-level capabilities; callers control share/asset amounts and receivers, while vault conversion/liquidity/revert semantics remain protocol-native. This is not a general ERC-4626 admission.

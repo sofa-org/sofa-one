@@ -51,7 +51,7 @@ Do not accept Openfort IAM-only auth on these routes.
 | `GET` | `/v1/api-keys` | List API-key metadata |
 | `POST` | `/v1/api-keys` | Create API key and return raw secret once |
 | `DELETE` | `/v1/api-keys/:id` | Revoke API key |
-| `GET` | `/v1/defi-capabilities` | List reviewed, active DeFi capability metadata |
+| `GET` | `/v1/defi-capabilities` | List catalog DeFi capability metadata |
 | `PATCH` | `/v1/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
@@ -94,9 +94,14 @@ Common public API codes include:
 - `DEFI_INVALID_PARAMETERS`
 - `DEFI_POLICY_UNAVAILABLE`
 
-Generic transaction sends are admitted only when every contract call matches an active,
-reviewed DeFi capability granted to the API key. Native-value calls and non-catalogued
-calls are denied. Message and typed-data signing are disabled for all API keys in this
+Generic transaction sends are admitted only when every contract call matches a cataloged
+function capability explicitly granted to the API key; unknown and ungranted calls are
+denied. ABI arguments and payable native value are caller-controlled, subject to the
+contract's behavior and independent generic transaction, destination, billing, simulation,
+and user-configured key-spend policies. ERC-20 `approve` is an independent function grant:
+it permits any spender and any `uint256` amount, including unlimited approval, and is not
+automatically added with an action or automatically cleaned up. Catalog admission does not
+grant a capability. Message and typed-data signing are disabled for all API keys in this
 MVP, including keys created before the capability policy; there is no legacy unrestricted
 signing path. Otherwise valid API-key signing requests are denied with
 `DEFI_FUNCTION_NOT_ALLOWED`; destination protection may deny earlier. Dedicated dashboard

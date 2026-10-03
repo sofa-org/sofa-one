@@ -1,12 +1,9 @@
-import type { DefiCatalog } from '../defi.types';
-import type { DefiFunctionPolicy } from '../defi.types';
-import type { AbiFunction } from 'viem';
+import type { DefiCatalog, DefiFunctionPolicy } from '../defi.types';
 
-export type ReviewedAsset = Readonly<{ ref: string; chainId: number; address: string; symbol: 'USDC' | 'USDT' | 'WETH'; decimals: number; maxOperationRaw: bigint; deploymentRef: string; priceFeedRef?: string }>;
-export type ReviewedIdentityCheck = Readonly<{ getter: string; expected: string; args?: readonly (string|number)[] }>;
-export type ReviewedDeployment = Readonly<{ ref: string; chainId: number; address: string; status?: 'verified'|'candidate'; sourceRef: string; abiHash?: `0x${string}`; abi?: readonly AbiFunction[]; runtimeCodeHash?: `0x${string}`; proxy?: Readonly<{ kind: 'eip1967' | 'beacon' | 'zeppelinos'; implementation: string; implementationCodeHash?: `0x${string}`; beacon?: string }>; identityChecks: readonly ReviewedIdentityCheck[]; verificationRef?: string }>;
-export type ReviewedPriceFeed = Readonly<{ ref: string; chainId: number; asset: string; feed: string; decimals: number; maxAgeSeconds: number; deploymentRef: string; sourceRef: string; sequencerCheckRef?: string }>;
-export type ReviewedPool = Readonly<{ ref: string; chainId: number; deploymentRef: string; assetRefs: readonly string[]; routerRef?: string; poolRef?: string; factoryRef?: string; tokenInRef?: string; tokenOutRef?: string; fee?: number; runtimeCodeHash?: `0x${string}` }>;
-export type ReviewedMarket = Readonly<{ ref: string; chainId: number; deploymentRef: string; assetRefs: readonly string[]; marketRef?: string; collateralAssetRef?: string; debtAssetRef?: string }>;
-export type ReviewedManifest = Readonly<{ assets: readonly ReviewedAsset[]; deployments: readonly ReviewedDeployment[]; priceFeeds: readonly ReviewedPriceFeed[]; pools: readonly ReviewedPool[]; markets: readonly ReviewedMarket[]; capabilities: readonly DefiFunctionPolicy[]; chains: DefiCatalog; activationEvidence: readonly Readonly<{capabilityId:string;executionProofRef:string;sourceIdentityRef:string}>[]; manifestHash: `0x${string}` }>;
-export type DefiRegistryFragment = Readonly<{ chains: DefiCatalog; assets: readonly ReviewedAsset[]; deployments: readonly ReviewedDeployment[]; priceFeeds: readonly ReviewedPriceFeed[]; pools: readonly ReviewedPool[]; markets?: readonly ReviewedMarket[]; activationEvidence: readonly Readonly<{ capabilityId: string; executionProofRef: string; sourceIdentityRef: string }>[] }>;
+export type ReviewedManifest = Readonly<{
+  chains: DefiCatalog;
+  capabilities: readonly DefiFunctionPolicy[];
+  manifestHash: `0x${string}`;
+}>;
+
+export type DefiRegistryFragment = Readonly<{ chains: DefiCatalog }>;

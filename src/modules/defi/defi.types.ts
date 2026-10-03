@@ -1,48 +1,86 @@
 import { HttpException } from '@nestjs/common';
-import type { AbiFunction } from 'viem';
 import type { Prisma } from '@prisma/client';
+import type { AbiFunction } from 'viem';
 
-export type DefiExecutionContext = {
-  userId: string; apiKeyId: string; apiKeyPrefix?: string; walletId: string;
-  chainId: number; executionMode: string; executionOwner: string;
-  allowedCapabilityIds: string[];
-};
-export type DefiMatch = {
-  capabilityId: string; type: 'contract_call' | 'typed_data_sign'; chainId: number;
-  contract: string; functionSignature?: string; policy: { ref: string; version: number };
-  status?: 'active' | 'inactive';
-};
-export type DefiFunctionPolicy = DefiMatch & {
+export type DefiExecutionContext = Readonly<{
+  userId: string;
+  apiKeyId: string;
+  apiKeyPrefix?: string;
+  walletId: string;
+  chainId: number;
+  executionMode: string;
+  executionOwner: string;
+  allowedCapabilityIds: readonly string[];
+}>;
+
+export type DefiProvenance = Readonly<{
+  sourceRef: string;
+  verifiedAt: string;
+  status: 'verified' | 'candidate';
+}>;
+
+/** Function-level authority: identity + fixed ABI + provenance, never runtime validators. */
+export type DefiFunctionPolicy = Readonly<{
+  capabilityId: string;
+  type: 'contract_call' | 'typed_data_sign';
+  chainId: number;
+  contract: string;
   functionName: string;
   signature: string;
   abi: AbiFunction;
-  validate(args: readonly unknown[], context: DefiExecutionContext): boolean;
-  describe(args: readonly unknown[], context: DefiExecutionContext, index: number): DefiCallEffect;
+  abiHash?: `0x${string}`;
+  status: 'active' | 'inactive';
+  provenance: DefiProvenance;
+  policy?: Readonly<{ ref: string; version: number }>;
   label?: string;
   description?: string;
   protocol?: string;
   operation?: string;
+  warnings?: readonly string[];
   inactiveReason?: string;
-  dependencies?: readonly string[];
-  manifestRefs?: { assets?: readonly string[]; deployments?: readonly string[]; pools?: readonly string[]; priceFeeds?: readonly string[] };
-   approval?: { tokenRef: string; spenderRef?: string; spenderRefs?: readonly string[] };
-};
-export type DefiContractPolicy = { address: string; status: 'active' | 'inactive'; functions: readonly DefiFunctionPolicy[] };
-export type DefiChainPolicy = { chainId: number; status: 'active' | 'inactive'; contracts: readonly DefiContractPolicy[] };
+}>;
+
+export type DefiMatch = Readonly<{
+  capabilityId: string;
+  type: 'contract_call' | 'typed_data_sign';
+  chainId: number;
+  contract: string;
+  functionSignature: string;
+  abiHash: `0x${string}`;
+  policy?: Readonly<{ ref: string; version: number }>;
+}>;
+
+export type DefiContractPolicy = Readonly<{ address: string; status: 'active' | 'inactive'; functions: readonly DefiFunctionPolicy[] }>;
+export type DefiChainPolicy = Readonly<{ chainId: number; status: 'active' | 'inactive'; contracts: readonly DefiContractPolicy[] }>;
 export type DefiCatalog = readonly DefiChainPolicy[];
-export type DefiApprovalEffect = { kind: 'approval'; index: number; token: string; spender: string; amount: bigint };
-export type DefiActionEffect = { kind: 'action'; index: number; operation: 'swap' | 'supply' | 'repay' | 'withdraw'; deploymentRef: string; token: string; amount: bigint; funding?: { token: string; spender: string; amount: bigint }; swap?: { tokenOut: string; minOut: bigint; deadline: bigint; poolRef: string } };
-export type DefiCallEffect = DefiApprovalEffect | DefiActionEffect;
-export type DefiBatchPlan = { effects: readonly DefiCallEffect[]; fundingTotals: Readonly<Record<string, bigint>> };
-export type DefiEvidence = { requestCommitment: `0x${string}`; manifestHash: `0x${string}`; chainId: number; executionOwner: string; blockNumber: bigint; blockHash: `0x${string}`; observedAtMs: number; expiresAtMs: number; checksDigest: `0x${string}` };
-export type DefiAuthorization = { context: DefiExecutionContext; requiredPermission: 'canSendTransaction' | 'canSign'; matches: readonly DefiMatch[]; interactions: readonly DefiInteraction[]; batchPlan: DefiBatchPlan; manifestHash: `0x${string}`; requestCommitment: `0x${string}`; policyIdentityHash: `0x${string}` };
-export type DefiDeniedAudit = { context?: DefiExecutionContext; code: string; capabilityId?: string; type?: DefiMatch['type']; chainId?: number; contract?: string; functionSignature?: string; functionSelector?: string; policy?: DefiMatch['policy'] };
+
+export type DefiInteraction = Readonly<{ to: string; data: string; value?: string | number | bigint }>;
+export type DefiAuthorization = Readonly<{
+  context: DefiExecutionContext;
+  requiredPermission: 'canSendTransaction';
+  matches: readonly DefiMatch[];
+  interactions: readonly DefiInteraction[];
+  manifestHash: `0x${string}`;
+  requestCommitment: `0x${string}`;
+}>;
+
+export type DefiDeniedAudit = Readonly<{
+  context?: DefiExecutionContext;
+  code: string;
+  capabilityId?: string;
+  type?: DefiMatch['type'];
+  chainId?: number;
+  contract?: string;
+  functionSignature?: string;
+  functionSelector?: string;
+  abiHash?: `0x${string}`;
+  policy?: DefiMatch['policy'];
+}>;
 export class DefiPolicyDenial extends Error {
   constructor(readonly httpException: HttpException, readonly audit: DefiDeniedAudit) { super('DeFi policy denied'); }
 }
-export type DefiInteraction = { to: string; data: string; value?: string | number | bigint };
-export type DefiDbClient = Prisma.TransactionClient;
 
+export type DefiDbClient = Prisma.TransactionClient;
 export type DefiPauseScope =
   | { kind: 'global' }
   | { kind: 'chain'; chainId: number }
@@ -64,7 +102,7 @@ export function defiPauseScopeKey(scope: DefiPauseScope): string {
   return `capability:${scope.capabilityId}`;
 }
 
-export function defiPauseScopeKeysForCapability(fn: DefiFunctionPolicy): string[] {
+export function defiPauseScopeKeysForCapability(fn: Pick<DefiFunctionPolicy, 'chainId' | 'contract' | 'capabilityId'>): string[] {
   return [
     defiPauseScopeKey({ kind: 'global' }),
     defiPauseScopeKey({ kind: 'chain', chainId: fn.chainId }),

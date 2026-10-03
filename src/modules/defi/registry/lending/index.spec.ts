@@ -1,30 +1,29 @@
 import { buildLendingRegistry, LENDING_CAPABILITIES } from './index';
 
-describe('lending registry', () => {
-  it('exports seven Aave pools and three Compound markets, all inactive', () => {
+describe('lending function catalog', () => {
+  it('contains 28 Aave and 6 Comet active source-verified definitions', () => {
     const fragment = buildLendingRegistry();
-    expect(fragment.markets).toHaveLength(10);
-    expect(fragment.chains.flatMap(c => c.contracts).flatMap(c => c.functions)).toHaveLength(34);
-    expect(fragment.chains.every(c => c.status === 'inactive')).toBe(true);
-    expect(LENDING_CAPABILITIES.every(c => c.status === 'inactive')).toBe(true);
+    expect(fragment.chains).toHaveLength(7);
+    expect(LENDING_CAPABILITIES).toHaveLength(34);
+    expect(LENDING_CAPABILITIES.filter((fn) => fn.protocol === 'Aave V3')).toHaveLength(28);
+    expect(LENDING_CAPABILITIES.filter((fn) => fn.protocol === 'Compound III')).toHaveLength(6);
+    expect(LENDING_CAPABILITIES.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified')).toBe(true);
   });
 
-  it('accepts only owner-bound Aave supply and rejects wrong asset, recipient, referral and sentinel', () => {
-    const fn = LENDING_CAPABILITIES.find(c => c.chainId === 1 && c.functionName === 'supply')!;
-    const context = { userId:'u',apiKeyId:'k',walletId:'w',chainId:1,executionMode:'user_operation',executionOwner:'0x1111111111111111111111111111111111111111',allowedCapabilityIds:[] };
-    expect(fn.validate(['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',1_000_000n,context.executionOwner,0n],context)).toBe(true);
-    expect(fn.validate(['0x0000000000000000000000000000000000000001',1n,context.executionOwner,0n],context)).toBe(false);
-    expect(fn.validate(['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',1n,'0x2222222222222222222222222222222222222222',0n],context)).toBe(false);
-    expect(fn.validate(['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',1n,context.executionOwner,1n],context)).toBe(false);
-    expect(fn.validate(['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',(1n<<256n)-1n,context.executionOwner,0n],context)).toBe(false);
+  it('uses the canonical Aave and Comet signatures, fixed ABIs, and unchanged IDs', () => {
+    const supply = LENDING_CAPABILITIES.find((fn) => fn.chainId === 1 && fn.protocol === 'Aave V3' && fn.functionName === 'supply')!;
+    expect(supply.capabilityId).toBe('aave-v3:1:0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2:supply');
+    expect(supply.signature).toBe('supply(address,uint256,address,uint16)');
+    expect(supply.abi.outputs).toEqual([]);
+    const borrow = LENDING_CAPABILITIES.find((fn) => fn.protocol === 'Aave V3' && fn.functionName === 'borrow')!;
+    expect(borrow.signature).toBe('borrow(address,uint256,uint256,uint16,address)');
+    expect(borrow.abi.outputs).toEqual([]);
+    const cometWithdraw = LENDING_CAPABILITIES.find((fn) => fn.protocol === 'Compound III' && fn.functionName === 'withdraw')!;
+    expect(cometWithdraw.signature).toBe('withdraw(address,uint256)');
+    expect(cometWithdraw.warnings?.join(' ')).toMatch(/may create debt/i);
   });
 
-  it('does not describe borrowing or Compound debt-capable withdraw', () => {
-    const borrow=LENDING_CAPABILITIES.find(c=>c.functionName==='borrow')!;
-    expect(borrow.validate([],{} as never)).toBe(false);
-    expect(()=>borrow.describe([],{} as never,0)).toThrow(/unsupported/i);
-    const withdraw=LENDING_CAPABILITIES.find(c=>c.protocol==='Compound III'&&c.functionName==='withdraw')!;
-    expect(withdraw.status).toBe('inactive');
-    expect(withdraw.inactiveReason).toMatch(/may create debt/i);
+  it('keeps all action arguments user-controlled without embedded financial validators', () => {
+    expect(LENDING_CAPABILITIES.every((fn) => !('validate' in fn) && !('describe' in fn))).toBe(true);
   });
 });

@@ -3,7 +3,6 @@ export * from './defi-catalog.service';
 export * from './defi-grant.service';
 export * from './defi-pause.service';
 export * from './defi-policy.service';
-export * from './defi-batch.policy';
 export * from './registry/defi-manifest.types';
 export * from './registry/defi-manifest';
 export * from './registry/approvals';

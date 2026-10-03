@@ -69,6 +69,15 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
   every contract call. Unknown/paused/ungranted capabilities fail closed. Capability/pause
   state is revalidated in the acceptance transaction; do not make RPC/Openfort/HTTP calls
   while policy locks are held.
+- DeFi grants authorize exact catalog functions, not safe financial outcomes: callers control
+  ABI arguments and payable value. ERC-20 approval is an independent explicit grant allowing
+  any spender and any uint256 amount, including unlimited approval; never auto-grant or
+  automatically clean it up. Catalog admission does not grant authority. Preserve the
+  independent identity, permission, freeze, session/EOA, destination, billing, simulation,
+  idempotency, and user-configured key-spend controls.
+- Existing grant IDs intentionally gain the simplified function-level scope without a schema
+  migration. Owners should review existing grants and revoke/re-grant if the broader
+  authority is not intended.
 
 ## 7. Logging rules
 

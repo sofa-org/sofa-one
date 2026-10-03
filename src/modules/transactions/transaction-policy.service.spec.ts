@@ -23,12 +23,18 @@ describe('TransactionPolicyService', () => {
       findMany: jest.fn().mockResolvedValue([]),
     },
   };
+  const acceptanceTx = {
+    apiKey: { findUnique: jest.fn() },
+    transaction: { findMany: jest.fn() },
+  };
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
     securityEvents.record.mockResolvedValue(undefined);
     prisma.transaction.findMany.mockResolvedValue([]);
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: null, monthlySpendLimit: null });
+    acceptanceTx.transaction.findMany.mockResolvedValue([]);
     service = new TransactionPolicyService(prisma as never, securityEvents as never);
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
@@ -93,13 +99,10 @@ describe('TransactionPolicyService', () => {
     );
   });
 
-  it('rejects native value transfers', async () => {
-    await expect(
-      service.assertAllowed(
-        { ...baseDto, interactions: [{ ...baseDto.interactions[0], value: '1' }] },
-        context,
-      ),
-    ).rejects.toThrow('Native value transfers are not allowed for API key transactions');
+  it('allows native value calls when structural and configured spend limits permit', async () => {
+    await expect(service.assertAllowed(
+      { ...baseDto, interactions: [{ ...baseDto.interactions[0], value: '1' }] }, context,
+    )).resolves.toBeUndefined();
   });
 
   it('rejects calldata that is too short to contain a full selector', async () => {
@@ -173,25 +176,15 @@ describe('TransactionPolicyService', () => {
     },
   );
 
-  it('rejects max-uint ERC20 approvals without logging full calldata', async () => {
+  it('allows unlimited ERC20 approvals without changing safe audit behavior', async () => {
     const calldata =
       '0x095ea7b3' +
       '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
       'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
-    await expect(
-      service.assertAllowed(
-        { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: calldata }] },
-        context,
-      ),
-    ).rejects.toThrow('Infinite token approvals are not allowed');
-
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        reason: 'Infinite token approvals are not allowed',
-        selector: '0x095ea7b3',
-      }),
-    );
+    await expect(service.assertAllowed(
+      { ...baseDto, interactions: [{ ...baseDto.interactions[0], data: calldata }] }, context,
+    )).resolves.toBeUndefined();
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(calldata);
     expect(JSON.stringify(securityEvents.record.mock.calls)).not.toContain(calldata);
   });
@@ -210,153 +203,56 @@ describe('TransactionPolicyService', () => {
     ).rejects.toThrow('NFT operator approvals are not allowed');
   });
 
-  // ── Spend limits ────────────────────────────────────────────────────
-
-  it('allows transactions within daily spend limit', async () => {
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
-    const dto: SendTransactionDto = {
+  it('leaves user budget decisions to the locked acceptance transaction', async () => {
+    await expect(service.assertAllowed({
       ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '500000000000000000' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'Native value transfers are not allowed',
-    );
-  });
-
-  it('rejects transactions exceeding daily spend limit', async () => {
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceed daily spend limit',
-    );
-  });
-
-  it('rejects transactions exceeding monthly spend limit', async () => {
-    const spendContext = { ...context, monthlySpendLimit: '1000000000000000000' }; // 1 ETH
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '2000000000000000000' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceed monthly spend limit',
-    );
-  });
-
-  it('sums values across multiple interactions for spend limit check', async () => {
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' }; // 1 ETH
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [
-        { ...baseDto.interactions[0], value: '600000000000000000' },
-        { ...baseDto.interactions[0], value: '500000000000000000' },
-      ],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceed daily spend limit',
-    );
-  });
-
-  it('skips spend limit check when limits are null/undefined', async () => {
-    const spendContext = { ...context, dailySpendLimit: null, monthlySpendLimit: undefined };
-    await expect(service.assertAllowed(baseDto, spendContext)).resolves.toBeUndefined();
-  });
-
-  // ── Cumulative spend limit tracking ─────────────────────────────────
-
-  it('rejects when cumulative daily spending plus current value exceeds limit', async () => {
-    prisma.transaction.findMany.mockResolvedValue([
-      {
-        details: { interactions: [{ value: '800000000000000000' }] },
-      },
-    ]);
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '300000000000000000' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceed daily spend limit',
-    );
-    expect(prisma.transaction.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ apiKeyId: 'key-1' }),
-      }),
-    );
-  });
-
-  it('allows when cumulative daily spending plus current value is within limit', async () => {
-    prisma.transaction.findMany.mockResolvedValue([
-      {
-        details: { interactions: [{ value: '400000000000000000' }] },
-      },
-    ]);
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '500000000000000000' }],
-    };
-    // 0.4 + 0.5 = 0.9 ETH < 1 ETH daily limit, but native value transfer is rejected
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'Native value transfers are not allowed',
-    );
-  });
-
-  it('rejects when cumulative monthly spending plus current value exceeds limit', async () => {
-    prisma.transaction.findMany.mockResolvedValue([
-      {
-        details: { interactions: [{ value: '900000000000000000' }] },
-      },
-    ]);
-    const spendContext = {
-      ...context,
-      monthlySpendLimit: '1000000000000000000',
-      apiKeyId: 'key-1',
-    };
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '200000000000000000' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).rejects.toThrow(
-      'exceed monthly spend limit',
-    );
-  });
-
-  it('queries past transactions for the correct time period (daily)', async () => {
-    prisma.transaction.findMany.mockResolvedValue([]);
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000', apiKeyId: 'key-1' };
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '0' }],
-    };
-    await expect(service.assertAllowed(dto, spendContext)).resolves.toBeUndefined();
-    const calls = prisma.transaction.findMany.mock.calls;
-    const dailyCall = calls.find(
-      (args: unknown[]) =>
-        (args[0] as Record<string, unknown>)?.where &&
-        (args[0] as { where: Record<string, unknown> }).where.createdAt &&
-        typeof (args[0] as { where: { createdAt: Record<string, unknown> } }).where.createdAt
-          .gte === 'object',
-    );
-    expect(dailyCall).toBeDefined();
-    if (dailyCall) {
-      const where = (dailyCall[0] as { where: Record<string, unknown> }).where;
-      expect(where.apiKeyId).toBe('key-1');
-      expect(where.status).toEqual({ in: ['submitting', 'pending', 'confirmed', 'unknown'] });
-    }
-  });
-
-  it('handles missing apiKeyId gracefully in spend limit check', async () => {
-    const spendContext = { ...context, dailySpendLimit: '1000000000000000000' };
-    const dto: SendTransactionDto = {
-      ...baseDto,
-      interactions: [{ ...baseDto.interactions[0], value: '0' }],
-    };
-    // apiKeyId is undefined, getSpentInPeriod returns 0n immediately without querying
-    await expect(service.assertAllowed(dto, spendContext)).resolves.toBeUndefined();
-    // With no apiKeyId, the cumulative check skips the DB query
+      interactions: [{ ...baseDto.interactions[0], value: '100000000000000000000000000000000000000' }],
+    }, { ...context, dailySpendLimit: '0', apiKeyId: 'key-1' })).resolves.toBeUndefined();
     expect(prisma.transaction.findMany).not.toHaveBeenCalled();
+  });
+
+  const acceptedAt = new Date('2026-10-02T13:45:00.000Z');
+  const checkBudget = (nativeValueWei: string) => service.assertSpendAllowedInTx(acceptanceTx as never, {
+    userId: 'user-1', apiKeyId: 'key-1', nativeValueWei, acceptedAt,
+  });
+
+  it('enforces daily and monthly budgets at exact equality using UTC acceptance time', async () => {
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: '100', monthlySpendLimit: '100' });
+    acceptanceTx.transaction.findMany.mockResolvedValue([{ details: { nativeValueWei: '40' } }]);
+    await expect(checkBudget('60')).resolves.toBeUndefined();
+    expect(acceptanceTx.transaction.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ apiKeyId: 'key-1', status: { in: ['submitting', 'pending', 'confirmed', 'unknown', 'needs_review'] }, createdAt: { gte: new Date('2026-10-02T00:00:00.000Z'), lt: new Date('2026-10-03T00:00:00.000Z') } }),
+    }));
+  });
+
+  it('uses the UTC month boundary and sums aggregate scalar values beyond uint256 safely', async () => {
+    const aboveUint256 = ((1n << 256n) + 5n).toString();
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: null, monthlySpendLimit: (BigInt(aboveUint256) + 10n).toString() });
+    acceptanceTx.transaction.findMany.mockResolvedValue([{ details: { nativeValueWei: aboveUint256 } }]);
+    await expect(checkBudget('10')).resolves.toBeUndefined();
+    expect(acceptanceTx.transaction.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ apiKeyId: 'key-1', createdAt: { gte: new Date('2026-10-01T00:00:00.000Z'), lt: new Date('2026-11-01T00:00:00.000Z') } }),
+    }));
+  });
+
+  it('treats zero as a configured limit, while null remains unlimited', async () => {
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: '0', monthlySpendLimit: null });
+    acceptanceTx.transaction.findMany.mockResolvedValue([]);
+    await expect(checkBudget('0')).resolves.toBeUndefined();
+    await expect(checkBudget('1')).rejects.toThrow('exceed daily spend limit');
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: null, monthlySpendLimit: null });
+    await expect(checkBudget('100000000000000000000')).resolves.toBeUndefined();
+  });
+
+  it('reads the persisted scalar first and falls back to legacy interaction values only when absent', async () => {
+    acceptanceTx.apiKey.findUnique.mockResolvedValue({ userId: 'user-1', dailySpendLimit: '11', monthlySpendLimit: null });
+    acceptanceTx.transaction.findMany.mockResolvedValue([
+      { details: { nativeValueWei: '3', interactions: [{ value: '9' }] } },
+      { details: { interactions: [{ value: '4' }, { value: '3' }] } },
+      { details: { interactions: [{}] } },
+    ]);
+    await expect(checkBudget('1')).resolves.toBeUndefined();
+    acceptanceTx.transaction.findMany.mockResolvedValue([{ details: { nativeValueWei: 'bad', interactions: [] } }]);
+    await expect(checkBudget('0')).rejects.toThrow('API-key spend budget history unavailable');
   });
 });

@@ -1,47 +1,51 @@
 import type { AbiFunction } from 'viem';
-import type { DefiChainPolicy, DefiExecutionContext, DefiFunctionPolicy } from '../defi.types';
-import type { DefiRegistryFragment, ReviewedManifest } from './defi-manifest.types';
+import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
+import type { DefiRegistryFragment } from './defi-manifest.types';
 
-export type ReviewedApproval = Readonly<{ capabilityId:string; chainId:number; tokenRef:string; token:string; spenderRefs:readonly string[]; spenders:readonly string[]; actions:readonly string[]; status:'active'|'inactive' }>;
-const address=(v:unknown):v is string=>typeof v==='string'&&/^0x[0-9a-fA-F]{40}$/.test(v);
-function isFundedPolicy(fn:DefiFunctionPolicy):boolean {
-  if(fn.type!=='contract_call')return false;
-  return (fn.protocol==='Aave V3'&&(fn.functionName==='supply'||fn.functionName==='repay'))
-    ||(fn.protocol==='Compound III'&&fn.functionName==='supply')
-    ||((fn.protocol==='uniswap-v3'||fn.protocol==='pancakeswap-v3')&&fn.functionName==='exactInputSingle'&&fn.signature.startsWith('exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))'))
-    ||(fn.protocol==='Morpho Vault V2'&&fn.functionName==='deposit');
-}
-/** Exact finite ERC-20 approval authorities derived only from the fixed funded-action allowlist. */
-export function buildApprovalRegistry(manifest:ReviewedManifest, eligibleActionIds?:readonly string[]):readonly ReviewedApproval[] {
-  const assets=new Map(manifest.assets.map(a=>[a.ref,a]));const deployments=new Map(manifest.deployments.map(d=>[d.ref,d]));
-  const pools=new Map(manifest.pools.map(p=>[p.ref,p]));
-  const refs=new Map<string,{asset:NonNullable<ReturnType<typeof assets.get>>;spenders:Set<string>;actions:Set<string>}>();
-  for(const fn of manifest.capabilities){if(!isFundedPolicy(fn)||(eligibleActionIds&&!eligibleActionIds.includes(fn.capabilityId)))continue;
-    const spenderRef=(fn.manifestRefs?.deployments??[]).find(ref=>deployments.get(ref)?.chainId===fn.chainId&&deployments.get(ref)?.address.toLowerCase()===fn.contract.toLowerCase());
-    if(!spenderRef)continue;
-    const tokenRefs=fn.protocol==='uniswap-v3'||fn.protocol==='pancakeswap-v3'
-      ?(fn.manifestRefs?.pools??[]).map(ref=>pools.get(ref)?.tokenInRef).filter((ref):ref is string=>!!ref)
-      :(fn.manifestRefs?.assets??[]).filter(ref=>assets.get(ref)?.chainId===fn.chainId);
-    // Lending/vault contracts bind assets in their fixed ABI; the router parser enforces the concrete pair.
-    for(const tokenRef of tokenRefs){const asset=assets.get(tokenRef)!;const key=`${fn.chainId}:${asset.address.toLowerCase()}`;let row=refs.get(key);if(!row){row={asset,spenders:new Set(),actions:new Set()};refs.set(key,row);}row.spenders.add(spenderRef);row.actions.add(fn.capabilityId);}
-  }
-  const result:ReviewedApproval[]= [...refs.values()].map(({asset,spenders,actions})=>{
-    const spenderRefs=[...spenders].sort();const spenderAddresses=spenderRefs.map(ref=>deployments.get(ref)!.address);
-    const active=manifest.capabilities.some(fn=>actions.has(fn.capabilityId)&&fn.status==='active');
-    return Object.freeze({capabilityId:`erc20:${asset.chainId}:${asset.address.toLowerCase()}:approve`,chainId:asset.chainId,tokenRef:asset.ref,token:asset.address,spenderRefs:Object.freeze(spenderRefs),spenders:Object.freeze(spenderAddresses),status:active?'active' as const:'inactive' as const,actions:Object.freeze([...actions].sort())} as ReviewedApproval);
-  }).sort((a,b)=>a.chainId-b.chainId||a.token.toLowerCase().localeCompare(b.token.toLowerCase()));
-  return Object.freeze(result);
-}
-
-export function buildApprovalFragment(manifest:ReviewedManifest, eligibleActionIds?:readonly string[]):DefiRegistryFragment {
- const approvals=buildApprovalRegistry(manifest,eligibleActionIds);const deployments=new Map(manifest.deployments.map(d=>[d.ref,d]));const assets=new Map(manifest.assets.map(a=>[a.ref,a]));
- const policies:DefiFunctionPolicy[]=approvals.map(row=>{const asset=assets.get(row.tokenRef)!;const tokenDeployment=deployments.get(asset.deploymentRef)!;const abi:AbiFunction={type:'function',name:'approve',stateMutability:'nonpayable',inputs:[{name:'spender',type:'address'},{name:'amount',type:'uint256'}],outputs:[{name:'',type:'bool'}]};
-   const validate=(args:readonly unknown[],ctx:DefiExecutionContext)=>args.length===2&&ctx.chainId===row.chainId&&address(args[0])&&row.spenders.some(s=>s.toLowerCase()===String(args[0]).toLowerCase())&&typeof args[1]==='bigint'&&(args[1] as bigint)>=0n&&(args[1] as bigint)<=asset.maxOperationRaw;
-    const actions=manifest.capabilities.filter(candidate=>row.actions.includes(candidate.capabilityId));
-    const refs={assets:[...new Set([asset.ref,...actions.flatMap(candidate=>candidate.manifestRefs?.assets??[])])],deployments:[...new Set([asset.deploymentRef,...row.spenderRefs,...actions.flatMap(candidate=>candidate.manifestRefs?.deployments??[])])],priceFeeds:[...new Set(actions.flatMap(candidate=>candidate.manifestRefs?.priceFeeds??[]))],pools:[...new Set(actions.flatMap(candidate=>candidate.manifestRefs?.pools??[]))]};
-    return {capabilityId:row.capabilityId,type:'contract_call',chainId:row.chainId,contract:row.token,functionName:'approve',signature:'approve(address,uint256)',abi,policy:{ref:'erc20-exact-spender-finite-approval',version:1},status:row.status,protocol:'ERC-20',operation:'approve',label:`Approve reviewed DeFi spender for ${asset.symbol}`,description:'Zero reset or exact finite amount only; batch policy pairs positive approval with its funded action and zero cleanup.',inactiveReason:row.status==='active'?undefined:'Inactive until a matching funded action has accepted source identity and execution proof.',dependencies:[...row.actions],manifestRefs:refs,approval:{tokenRef:asset.ref,spenderRefs:row.spenderRefs},validate,describe:(args,_ctx,index)=>{if(!validate(args,_ctx))throw new Error('Invalid ERC-20 approval');return {kind:'approval',index,token:row.token,spender:String(args[0]),amount:args[1] as bigint};}};
- });
- const chains:DefiChainPolicy[]=[...new Set(policies.map(p=>p.chainId))].sort((a,b)=>a-b).map(chainId=>({chainId,status:'inactive',contracts:[...new Set(policies.filter(p=>p.chainId===chainId).map(p=>p.contract))].map(contract=>({address:contract,status:'inactive',functions:policies.filter(p=>p.chainId===chainId&&p.contract.toLowerCase()===contract.toLowerCase())}))}));
-  const activationEvidence=policies.filter(fn=>fn.status==='active').flatMap(fn=>fn.dependencies!.flatMap(actionId=>manifest.activationEvidence.filter(e=>e.capabilityId===actionId).map(e=>({capabilityId:fn.capabilityId,executionProofRef:e.executionProofRef,sourceIdentityRef:e.sourceIdentityRef}))));
-  return {chains,assets:[],deployments:[],priceFeeds:[],pools:[],activationEvidence};
-}
+type Token = { chainId: number; symbol: string; address: string; sourceRef: string; noReturn?: boolean };
+const aaveSource = 'https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/';
+const cometSource = 'https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/deployments/arbitrum/usdc/configuration.json';
+const tokens: readonly Token[] = [
+  { chainId: 1, symbol: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', sourceRef: `${aaveSource}AaveV3Ethereum.ts` },
+  { chainId: 1, symbol: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', sourceRef: `${aaveSource}AaveV3Ethereum.ts; https://github.com/tethercoin/USDT/blob/master/TetherToken.sol (no-return interface inspected 2026-10-02)`, noReturn: true },
+  { chainId: 1, symbol: 'WETH', address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', sourceRef: `${aaveSource}AaveV3Ethereum.ts` },
+  { chainId: 8453, symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', sourceRef: `${aaveSource}AaveV3Base.ts` },
+  { chainId: 8453, symbol: 'WETH', address: '0x4200000000000000000000000000000000000006', sourceRef: `${aaveSource}AaveV3Base.ts` },
+  { chainId: 42161, symbol: 'USDC.e', address: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', sourceRef: `${aaveSource}AaveV3Arbitrum.ts` },
+  { chainId: 42161, symbol: 'USDT', address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', sourceRef: `${aaveSource}AaveV3Arbitrum.ts` },
+  { chainId: 42161, symbol: 'WETH', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', sourceRef: `${aaveSource}AaveV3Arbitrum.ts` },
+  { chainId: 42161, symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', sourceRef: cometSource },
+  { chainId: 10, symbol: 'USDC', address: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', sourceRef: `${aaveSource}AaveV3Optimism.ts` },
+  { chainId: 10, symbol: 'USDT', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', sourceRef: `${aaveSource}AaveV3Optimism.ts` },
+  { chainId: 10, symbol: 'WETH', address: '0x4200000000000000000000000000000000000006', sourceRef: `${aaveSource}AaveV3Optimism.ts` },
+  { chainId: 137, symbol: 'USDC', address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', sourceRef: `${aaveSource}AaveV3Polygon.ts` },
+  { chainId: 137, symbol: 'WETH', address: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', sourceRef: `${aaveSource}AaveV3Polygon.ts` },
+  { chainId: 56, symbol: 'USDC', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', sourceRef: `${aaveSource}AaveV3BNB.ts` },
+  { chainId: 56, symbol: 'USDT', address: '0x55d398326f99059fF775485246999027B3197955', sourceRef: `${aaveSource}AaveV3BNB.ts` },
+  { chainId: 143, symbol: 'USDC', address: '0x754704Bc059F8C67012fEd69BC8A327a5aafb603', sourceRef: `${aaveSource}AaveV3Monad.ts` },
+  { chainId: 143, symbol: 'WETH', address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242', sourceRef: `${aaveSource}AaveV3Monad.ts` },
+];
+const lower = (value: string) => value.toLowerCase();
+const functions: DefiFunctionPolicy[] = tokens.map((token) => {
+  const abi: AbiFunction = {
+    type: 'function', name: 'approve', stateMutability: 'nonpayable',
+    inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }],
+    outputs: token.noReturn ? [] : [{ name: '', type: 'bool' }],
+  };
+  return {
+    capabilityId: `erc20:${token.chainId}:${lower(token.address)}:approve`,
+    type: 'contract_call', chainId: token.chainId, contract: token.address,
+    functionName: 'approve', signature: 'approve(address,uint256)', abi,
+    status: 'active', provenance: { sourceRef: token.sourceRef, verifiedAt: '2026-10-02', status: 'verified' },
+    protocol: 'ERC-20', operation: 'approve', label: `${token.symbol} approve`,
+    warnings: [
+      'Independent explicit grant: any spender and any uint256 amount (including maximum) are allowed; no action dependency or automatic approval/cleanup.',
+      ...(token.noReturn ? [] : ['Address provenance is verified; this token’s deployed approval return declaration was not individually verified. Standard bool output is interface metadata only. Authorization does not decode return data.']),
+    ],
+  };
+});
+const chains: DefiChainPolicy[] = [...new Set(functions.map((fn) => fn.chainId))].sort((a, b) => a - b).map((chainId) => ({
+  chainId, status: 'active',
+  contracts: functions.filter((fn) => fn.chainId === chainId).map((fn) => ({ address: fn.contract, status: 'active', functions: [fn] })),
+}));
+export function buildApprovalFragment(): DefiRegistryFragment { return { chains }; }

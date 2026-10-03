@@ -76,7 +76,6 @@ run('multi-wallet execution PostgreSQL', () => {
       { assertAllowed: jest.fn() } as never, {} as never, {} as ConfigService,
       { assertDestinationsAllowed: jest.fn() } as never,
       { authorizeContractCalls: jest.fn(), assertStillAuthorized: jest.fn(), recordAllowedInTx: jest.fn(), recordDenied: jest.fn() } as never,
-      { verify: jest.fn(), assertFresh: jest.fn() } as never,
       { exportCommitted: jest.fn() } as never,
     );
     try {

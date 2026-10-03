@@ -1,12 +1,12 @@
 # DeFi research index
 
-These notes record bounded discovery and validation evidence, not protocol endorsements or permission to transact. Deployment registries may be mutable; read each note's snapshot date and limitations. The current capability summary is [the interim capability matrix](../defi-capability-matrix.md). Production assembly has three narrowly active Ethereum USDC/WETH fee-500 definitions; Oracle Gate 1 attempt 3 passed 3/3 for this exact authority set. This does not claim release/deployment or live UserOperation execution. The other 67 definitions are inactive.
+These notes record bounded discovery and validation evidence, not protocol endorsements or permission to transact. Deployment registries may be mutable; read each note's snapshot date and limitations. The current catalog summary is [the capability matrix](../defi-capability-matrix.md); source provenance for the simplified function-level model is [catalog provenance](simple-catalog-provenance.md). The assembled catalog has 70 active definitions (52 actions and 18 separately grantable approvals) on seven mainnets. Oracle Gate 1 attempt 3 passed 3/3 after closing user-configured spend-budget findings. This is not deployment/publishing approval or proof of funded live UserOperation execution; authenticated browser verification has not been performed.
 
 | Note | Scope |
 |---|---|
-| [DEX deployment research](dex.md) | Original Uniswap V3, SwapRouter02 and PancakeSwap V3 candidate deployments and fixed ABI distinctions. |
-| [Lending and market research](lending-vaults.md) | Pinned Aave V3 Pool/assets and Compound III USDC Comet market facts and lending semantics. |
-| [Vault candidates](vaults.md) | Morpho Vault V2 discovery candidates, mutable API provenance and fixed call shapes. |
+| [DEX deployment research](dex.md) | Historical pre-simplification deployment research for Original Uniswap V3, SwapRouter02 and PancakeSwap V3; catalog authority is defined by current source inventory and fixed ABIs. |
+| [Lending and market research](lending-vaults.md) | Historical pre-simplification research for Aave V3 Pool/assets and Compound III USDC Comet. |
+| [Vault candidates](vaults.md) | Historical pre-simplification Morpho Vault V2 discovery notes and call shapes. |
 | [Price-feed research](price-feeds.md) | Chainlink USD-feed/sequencer candidates and exact-input price-bound method. |
 | [Deployment checks](deployment-checks.md) | Recorded read-only deployment/runtime/getter observations and unavailable checks. |
 | [Deployed-source evidence](deployed-source-evidence.md) | Sourcify/source correspondence for selected exact deployments, including Ethereum USDC's ZeppelinOS proxy pattern. |

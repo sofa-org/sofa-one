@@ -41,7 +41,7 @@ import { RiskEvaluationService } from '../security-events/risk-evaluation.servic
 import { SecurityEventService } from '../security-events/security-event.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
-import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
+import { DefiPolicyService, DefiPolicyDenial } from '../defi';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -224,9 +224,8 @@ export class WalletService {
     }
 
     const selectedForPolicy = await this.selectWallet(userId, params.walletId);
-    let signingAuthorization: DefiAuthorization | undefined;
     try {
-      signingAuthorization = this.defiPolicy.authorizeSigning({ type: params.type, typedData: params.typedData }, {
+      this.defiPolicy.authorizeSigning({ type: params.type, typedData: params.typedData }, {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: selectedForPolicy.id, chainId, executionMode,
         executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,

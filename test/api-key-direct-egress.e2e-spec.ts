@@ -23,7 +23,6 @@ import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter
 import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
 import { TransactionSimulationService } from '../src/modules/transactions/transaction-simulation.service';
 import { DefiPolicyService } from '../src/modules/defi/defi-policy.service';
-import { DefiEvidenceService } from '../src/modules/defi/evidence';
 import { BillingWalletLifecycleService } from '../src/modules/billing/billing-wallet-lifecycle.service';
 import { BillingService } from '../src/modules/billing/billing.service';
 import { StepUpGuard } from '../src/common/guards/step-up.guard';
@@ -212,29 +211,12 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
               context: Object.freeze({ ...context, allowedCapabilityIds: Object.freeze([...context.allowedCapabilityIds]) }),
               requiredPermission: 'canSendTransaction', matches: Object.freeze([]),
               interactions: Object.freeze(interactions.map((item) => Object.freeze({ ...item }))),
-              batchPlan: Object.freeze({ effects: Object.freeze([]), fundingTotals: Object.freeze({}) }),
-              manifestHash, requestCommitment, policyIdentityHash: `0x${'b'.repeat(64)}`,
+              manifestHash, requestCommitment,
             };
           }),
           assertStillAuthorized: jest.fn().mockResolvedValue(undefined),
           recordAllowedInTx: jest.fn().mockResolvedValue(null),
           recordDenied: jest.fn().mockResolvedValue(undefined),
-        })
-        .overrideProvider(DefiEvidenceService)
-        .useValue({
-          verify: jest.fn(async (authorization: any) => {
-            const observedAtMs = Date.now();
-            return Object.freeze({
-              requestCommitment: authorization.requestCommitment,
-              manifestHash: authorization.manifestHash,
-              chainId: authorization.context.chainId,
-              executionOwner: authorization.context.executionOwner.toLowerCase(),
-              blockNumber: 1n, blockHash: `0x${'c'.repeat(64)}`,
-              observedAtMs, expiresAtMs: observedAtMs + 30_000,
-              checksDigest: keccak256(stringToHex('direct-egress-e2e-fixture')),
-            });
-          }),
-          assertFresh: jest.fn(),
         })
         // Step-up is required on authorize-direct-egress; this suite evidences
         // endpoint wiring + CAS, not TOTP crypto. Real Openfort IAM is mocked.

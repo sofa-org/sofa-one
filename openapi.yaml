@@ -207,16 +207,14 @@ paths:
 
         `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
 
-        DeFi capability authorization is mandatory for generic contract-call sends: every interaction must match an active catalog capability granted to the API key, and the paused/grant state is rechecked atomically before acceptance. Native-value and unknown calls are denied. Dashboard-only capability management is intentionally omitted from this public API spec.
+        DeFi capability authorization is mandatory for generic contract-call sends: every interaction must match a catalog function capability explicitly granted to the API key, and grant/pause state is rechecked atomically before acceptance. Unknown and ungranted calls are denied. Caller controls ABI arguments and payable native value, subject to protocol behavior and independent generic transaction, destination, billing, simulation, and user-configured key-spend policies. ERC-20 approval is an independent explicit grant permitting any spender and uint256 amount, including unlimited approval; it is not automatically added or cleaned up. Catalog admission does not itself grant authority. Dashboard-only capability management is intentionally omitted from this public API spec.
 
         欠费期资产流向规则（用户存在未结清账单：`BillingInvoice.status=finalized` 且 `paidAt=null`）：
-        - 静态分类为明确外部转移（`external_transfer`）的请求直接拒绝（`BILLING_OUTBOUND_BLOCKED`）。
-        - 协议品牌本身不是白名单：不能仅因目标是 Aave/Uniswap 等合约地址或 selector 而放行；所有放行均基于 calldata/selector/ABI 静态可证，且目标地址与参数必须与链级 registry 严格匹配。
-        - 静态分类器在目标/参数严格匹配时可识别的扩展 retained 场景包括：官方 WETH `deposit()` wrap / `withdraw(uint256)` unwrap；`approve(spender,0)` 与 `setApprovalForAll(operator,false)` 且 spender/operator 属于 trusted-spender 白名单；注册 ERC-4626 vault 上 `deposit`/`mint`/`redeem`/`withdraw` 且 receiver（及 redeem/withdraw 的 owner）等于执行 owner；Aave V3 官方 Pool 上 `setUserUseReserveAsCollateral(..., false)`（仅撤销抵押）。
-        - 其余请求（含静态 `unknown` 或未匹配上述规则）必须在同链、完整有序 interaction plan 上完成资产证据模拟与验证；仅当验证结果为 `verified` 且 `simulationMode=calibur_atomic`（同链同原子执行 plan 的绑定证明）时才允许继续。
-        - 生产 `eth_simulateV1` 非原子模拟、`unknown`、coverage/权限/relation 不完整、RPC 缺失、证据绑定失败或静态规则未匹配一律 fail-closed（`BILLING_ASSET_FLOW_UNVERIFIABLE`）。
-        - 账单债务查询失败时拒绝创建新交易（`BILLING_DEBT_CHECK_UNAVAILABLE`，503）。
-        无欠费时不启用上述证据门槛（仍受既有 policy/simulation 约束）。
+         DeFi function authorization does not guarantee that a call is financially safe or
+         successful. Existing destination-protection and billing-debt policies may still
+         reject otherwise granted DeFi calls; ordinary DeFi is not exempted from those gates.
+         Protocol contract revert semantics are unchanged. Dashboard-only capability routes
+         remain intentionally absent from this public API spec.
       operationId: sendTransaction
       requestBody:
         required: true

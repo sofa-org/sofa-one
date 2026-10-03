@@ -34,6 +34,11 @@ const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const KEY_STATUS_FILTER_STORAGE_KEY = 'sofa-one.apiKeys.statusFilter';
 
+const FUNCTION_WARNINGS: Record<string, string> = {
+  approve: 'This approval can authorize any spender and any amount, including unlimited approval. Review the spender and amount supplied by your caller.',
+  borrow: 'Borrowing can create liquidation risk. Review the amount and terms your caller supplies.',
+};
+
 type KeyStatusFilter = 'all' | ApiKeyLifecycleStatus;
 
 const KEY_STATUS_FILTERS: Array<{ value: KeyStatusFilter; label: string }> = [
@@ -430,13 +435,17 @@ export default function ApiKeysPage() {
     const visibleCapabilities = capabilities.filter((capability) => capability.status === 'active' || ids.includes(capability.capabilityId));
     const unknownIds = ids.filter((id) => !capabilities.some((capability) => capability.capabilityId === id));
     return <div className="space-y-2">
-      {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No reviewed capabilities are available yet. New keys will have no catalog access until capabilities are published.</p>}
+      {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No capabilities are available from the catalog right now. New keys will have no catalog access until capabilities are published.</p>}
       {visibleCapabilities.map((capability) => {
       const selected = ids.includes(capability.capabilityId);
       return <label key={capability.capabilityId} className={`flex gap-3 rounded-lg border border-brand-border bg-white p-3 text-sm ${capability.status === 'active' ? 'cursor-pointer hover:border-brand-accent' : 'opacity-70'}`}>
         <input type="checkbox" checked={selected} disabled={disabled || capability.status !== 'active'} onChange={() => toggleCapability(ids, capability.capabilityId, setter)} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
         <span className="min-w-0"><span className="block font-semibold text-brand-text">{capability.label}<span className="ml-2 text-[10px] font-bold uppercase text-brand-muted">{capability.status}</span></span>
           <span className="block text-xs leading-5 text-brand-muted">{capability.description} · chain {capability.chainId} · {capability.type === 'contract_call' ? capability.functionSignature || 'Contract call' : 'Typed-data signing'}</span>
+          {(capability.protocol || capability.operation) && <span className="mt-1 block text-xs text-brand-muted">{[capability.protocol, capability.operation].filter(Boolean).join(' · ')}</span>}
+          {capability.policy && <span className="block text-[11px] text-brand-muted">Policy reference: {capability.policy.ref} v{capability.policy.version}</span>}
+          {capability.provenance && <span className="block break-all text-[11px] text-brand-muted">Source: {capability.provenance.sourceRef} · {capability.provenance.status}{capability.provenance.verifiedAt ? ` · ${capability.provenance.verifiedAt}` : ''}</span>}
+          {((capability.warnings ?? []).length > 0 || FUNCTION_WARNINGS[capability.operation?.toLowerCase() ?? ''] || FUNCTION_WARNINGS[capability.functionSignature?.split('(')[0] ?? '']) && <span className="mt-2 block rounded-md bg-amber-50 px-2.5 py-2 text-xs leading-5 text-amber-900">{[...(capability.warnings ?? []), FUNCTION_WARNINGS[capability.operation?.toLowerCase() ?? ''] ?? FUNCTION_WARNINGS[capability.functionSignature?.split('(')[0] ?? '']].filter(Boolean).join(' ')}</span>}
         </span>
       </label>;
       })}
@@ -561,7 +570,8 @@ export default function ApiKeysPage() {
             </p>
           </div>
           <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
-            <div><p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Reviewed capabilities</p><p className="mt-1 text-xs leading-5 text-brand-muted">Choose exact catalog operations for this key. No selection means no catalog operations are allowed; it does not mean unrestricted access.</p></div>
+            <div><p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Function permissions</p><p className="mt-1 text-xs leading-5 text-brand-muted">Grant only the exact chain, contract address and function this key needs. Each grant uses a fixed ABI; signing and broad multicall commands are not available here. The catalog may not cover every chain or protocol. No selection means no catalog operations are allowed.</p></div>
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">You choose the authority for this key. A grant does not guarantee safe protocol limits or prices: your caller chooses assets, amounts, recipients, native value, borrow risk, minimum output and deadlines. ERC-20 approval calls can approve any spender, for any amount including unlimited, even when no action grant is selected. Review your caller and each transaction.</div>
             {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds)}
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
@@ -894,7 +904,9 @@ export default function ApiKeysPage() {
                   </div>
                   {editingKeyId === key.id && (
                     <div className="mx-5 mb-4 space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 sm:mx-7">
-                      <p className="text-sm font-semibold text-brand-text">Edit reviewed capabilities</p>
+                       <p className="text-sm font-semibold text-brand-text">Edit function grants</p>
+                        <p className="text-xs leading-5 text-brand-muted">Select the exact functions this key may call. Saving replaces all current grants.</p>
+                        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">Your caller chooses recipients, assets, amounts and native value (only payable functions accept native value), as well as protocol-specific minimum output and deadlines. The platform does not financially validate these choices; review your caller and each transaction.</p>
                       {capabilityError && <p role="alert" className="text-sm text-red-700">{capabilityError}</p>}
                       {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, capabilitySaving)}
                       <div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleSaveCapabilities(key)} disabled={capabilitySaving || capabilitiesLoading || Boolean(capabilitiesError)} className="inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{capabilitySaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Save grants</button><button type="button" onClick={() => { setEditingKeyId(null); setCapabilityError(null); }} disabled={capabilitySaving} className="rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text">Cancel</button></div>

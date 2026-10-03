@@ -348,6 +348,10 @@ export interface DefiCapability {
   description: string;
   status: 'active' | 'inactive' | 'paused';
   policy: { ref: string; version: number };
+  protocol?: string;
+  operation?: string;
+  warnings?: string[];
+  provenance?: { sourceRef: string; verifiedAt: string; status: 'verified' | 'candidate' };
 }
 
 export interface DefiCapabilitiesResponse {

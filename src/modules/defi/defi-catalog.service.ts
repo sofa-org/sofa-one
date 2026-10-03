@@ -1,22 +1,24 @@
 import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { isAddress, toFunctionSelector } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { DefiCatalog, DefiChainPolicy, DefiFunctionPolicy, defiPauseScopeKeysForCapability } from './defi.types';
-import { DEFI_MANIFEST } from './registry/defi-manifest';
+import { DEFI_MANIFEST, buildReviewedManifest, cloneDefiValue, deepFreeze, reviewedManifestHashValid } from './registry/defi-manifest';
 import type { ReviewedManifest } from './registry/defi-manifest.types';
-import { PRODUCTION_DEFI_CATALOG } from './registry/production-registry';
 
-// Product and security review has approved no active deployments.
-export const REVIEWED_CATALOG: DefiCatalog = PRODUCTION_DEFI_CATALOG;
 export const DEFI_CATALOG = Symbol('DEFI_CATALOG');
 
 @Injectable()
 export class DefiCatalogService {
   private readonly catalog: DefiCatalog;
+  private readonly reviewedManifest: ReviewedManifest;
 
-  constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService, @Inject(DEFI_MANIFEST) private readonly reviewedManifest: ReviewedManifest) {
-    this.catalog = deepFreeze(cloneCatalog(source));
-    validateCatalog(this.catalog);
+  constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService, @Inject(DEFI_MANIFEST) manifest: ReviewedManifest) {
+    if (!reviewedManifestHashValid(manifest)) throw new Error('Invalid reviewed DeFi manifest hash');
+    const copiedSource = deepFreeze(cloneDefiValue(source));
+    const sourceManifest = buildReviewedManifest([{ chains: copiedSource }]);
+    const nestedManifest = buildReviewedManifest([{ chains: manifest.chains }]);
+    if (sourceManifest.manifestHash !== manifest.manifestHash || nestedManifest.manifestHash !== manifest.manifestHash) throw new Error('DeFi catalog/manifest identity mismatch');
+    this.catalog = copiedSource;
+    this.reviewedManifest = deepFreeze(cloneDefiValue(manifest));
   }
 
   async listMetadata(): Promise<{ capabilities: Array<Record<string, unknown>> }> {
@@ -34,12 +36,13 @@ export class DefiCatalogService {
         chainId: chain.chainId,
         contract: contract.address,
         functionSignature: fn.type === 'contract_call' ? fn.signature : undefined,
-         label: fn.label ?? fn.operation ?? fn.protocol ?? fn.capabilityId,
-         description: fn.description ?? fn.inactiveReason ?? fn.capabilityId,
-         protocol: fn.protocol,
-         operation: fn.operation,
-         inactiveReason: fn.inactiveReason,
-         dependencies: fn.dependencies,
+        label: fn.label ?? fn.operation ?? fn.protocol ?? fn.capabilityId,
+        description: fn.description ?? fn.inactiveReason ?? fn.capabilityId,
+        protocol: fn.protocol,
+        operation: fn.operation,
+        inactiveReason: fn.inactiveReason,
+        provenance: fn.provenance,
+        warnings: fn.warnings,
         status: active ? (scopeKeys.some((key) => paused.has(key)) ? 'paused' : 'active') : 'inactive',
         policy: fn.policy,
       };
@@ -49,7 +52,6 @@ export class DefiCatalogService {
 
   chains(): readonly DefiChainPolicy[] { return this.catalog; }
   manifest(): ReviewedManifest { return this.reviewedManifest; }
-  assetCeilings(chainId: number): Readonly<Record<string,bigint>> { return Object.freeze(Object.fromEntries(this.reviewedManifest.assets.filter(a=>a.chainId===chainId).map(a=>[a.address.toLowerCase(),a.maxOperationRaw]))); }
   activeChain(chainId: number): DefiChainPolicy | undefined {
     return this.catalog.find((chain) => chain.chainId === chainId && chain.status === 'active' && chain.contracts.some((contract) => contract.status === 'active' && contract.functions.some((fn) => fn.status === 'active' && fn.type === 'contract_call')));
   }
@@ -57,65 +59,5 @@ export class DefiCatalogService {
     for (const chain of this.catalog) for (const contract of chain.contracts) for (const fn of contract.functions) if (fn.capabilityId === id) return fn;
     return undefined;
   }
-}
-
-function validateCatalog(catalog: DefiCatalog): void {
-  const capabilities = new Set<string>();
-  const chainIds = new Set<number>();
-  for (const chain of catalog) {
-    if (!Number.isSafeInteger(chain.chainId) || chain.chainId <= 0 || !validStatus(chain.status)) throw new Error('Invalid DeFi catalog chain');
-    if (chainIds.has(chain.chainId)) throw new Error('Duplicate DeFi catalog chain');
-    chainIds.add(chain.chainId);
-    const addresses = new Set<string>();
-    for (const contract of chain.contracts) {
-      if (!isAddress(contract.address, { strict: false }) || !validStatus(contract.status)) throw new Error('Invalid DeFi catalog contract');
-      const address = contract.address.toLowerCase();
-      if (addresses.has(address)) throw new Error('Duplicate DeFi catalog contract');
-      addresses.add(address);
-      const selectors = new Set<string>();
-      for (const fn of contract.functions) {
-        if (!/^[A-Za-z0-9:._-]{1,160}$/.test(fn.capabilityId) || capabilities.has(fn.capabilityId)) throw new Error('Duplicate or invalid DeFi capability identity');
-        capabilities.add(fn.capabilityId);
-        if (fn.chainId !== chain.chainId || fn.contract.toLowerCase() !== contract.address.toLowerCase()) throw new Error('Inconsistent DeFi catalog hierarchy');
-        if (!validStatus(fn.status) || (fn.type !== 'contract_call' && fn.type !== 'typed_data_sign')) throw new Error('Invalid DeFi function definition');
-        if (fn.status === 'active' && (chain.status !== 'active' || contract.status !== 'active' || fn.type !== 'contract_call')) throw new Error('Invalid active DeFi capability hierarchy');
-        if (!fn.functionName || !fn.signature || typeof fn.validate !== 'function' || fn.validate.constructor.name === 'AsyncFunction' || typeof fn.describe !== 'function' || fn.describe.constructor.name === 'AsyncFunction') throw new Error(fn.status === 'active' ? 'Invalid active DeFi capability validator' : 'Invalid inactive DeFi capability validator');
-        if (!fn.policy || !fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1) throw new Error('Invalid active DeFi policy identity');
-        const abiSig = abiFunctionSignature(fn.abi);
-        if (fn.abi.type !== 'function' || fn.abi.name !== fn.functionName || abiSig !== fn.signature || toFunctionSelector(abiSig) !== toFunctionSelector(fn.signature)) throw new Error('Inconsistent fixed DeFi ABI definition');
-        const selector = toFunctionSelector(fn.signature).toLowerCase();
-        if (selectors.has(selector)) throw new Error('Ambiguous DeFi selector within contract');
-        selectors.add(selector);
-      }
-    }
-  }
-}
-
-function validStatus(status: unknown): status is 'active' | 'inactive' { return status === 'active' || status === 'inactive'; }
-
-function abiFunctionSignature(fn: DefiFunctionPolicy['abi']): string {
-  return `${fn.name}(${fn.inputs.map((input) => canonicalParamType(input)).join(',')})`;
-}
-
-function canonicalParamType(param: { type: string; components?: readonly { type: string; components?: readonly unknown[] }[] }): string {
-  if (!param.type.startsWith('tuple')) return param.type;
-  const suffix = param.type.slice('tuple'.length);
-  return `(${(param.components ?? []).map((item) => canonicalParamType(item as never)).join(',')})${suffix}`;
-}
-
-function cloneCatalog(catalog: DefiCatalog): DefiChainPolicy[] {
-  return catalog.map((chain) => ({ ...chain, contracts: chain.contracts.map((contract) => ({ ...contract, functions: contract.functions.map((fn) => ({ ...fn, abi: cloneValue(fn.abi), policy: { ...fn.policy } })) })) }));
-}
-function cloneValue<T>(value: T): T {
-  if (Array.isArray(value)) return value.map((item) => cloneValue(item)) as T;
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cloneValue(item)])) as T;
-  return value;
-}
-function deepFreeze<T>(value: T): T {
-  if (value && (typeof value === 'object' || typeof value === 'function') && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    Object.values(value).forEach(deepFreeze);
-  }
-  return value;
 }
 function unavailable(): ServiceUnavailableException { return new ServiceUnavailableException({ code: 'DEFI_POLICY_UNAVAILABLE', message: 'DeFi policy is unavailable' }); }

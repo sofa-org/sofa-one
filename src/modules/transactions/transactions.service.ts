@@ -22,6 +22,7 @@ import { RequestContextService } from '../../common/request-context/request-cont
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
+import { TransactionSpendBudgetDenial } from './transaction-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 import {
@@ -52,8 +53,7 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
-import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization, type DefiEvidence } from '../defi';
-import { DefiEvidenceService } from '../defi/evidence';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
 import { SecurityEventService } from '../security-events/security-event.service';
 
 class DeferredUnprovenAssetOutflowDenial extends Error {
@@ -152,7 +152,6 @@ export class TransactionsService {
     private readonly config: ConfigService,
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     private readonly defiPolicy: DefiPolicyService,
-    private readonly defiEvidence: DefiEvidenceService,
     private readonly securityEvents: SecurityEventService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
@@ -328,6 +327,10 @@ export class TransactionsService {
       throw denial.httpException;
     }
     const authorizedInteractions = [...defiAuthorization.interactions] as SendTransactionDto['interactions'];
+    const nativeValueWei = authorizedInteractions.reduce(
+      (sum, interaction) => sum + BigInt(interaction.value ?? '0'),
+      0n,
+    ).toString();
 
     // Owner for asset-flow classification + destination policy + evidence binding:
     // session_key executes as the user wallet; eoa executes as the agent backend wallet.
@@ -403,17 +406,6 @@ export class TransactionsService {
       apiKeyPrefix: apiKeyRecord.keyPrefix,
     });
 
-    let defiEvidence: DefiEvidence;
-    try {
-      defiEvidence = await this.defiEvidence.verify(defiAuthorization);
-    } catch (error) {
-      if (error instanceof DefiPolicyDenial) {
-        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
-        throw error.httpException;
-      }
-      throw new ServiceUnavailableException('DeFi policy unavailable');
-    }
-
     await this.assertTransactionSimulatable(userId, { ...dto, interactions: authorizedInteractions }, apiKeyRecord, {
       chainId,
       executionMode,
@@ -434,6 +426,7 @@ export class TransactionsService {
       executionMode,
       details: {
         type: 'send',
+        nativeValueWei,
         walletId: wallet.id,
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
         executionMode,
@@ -456,28 +449,12 @@ export class TransactionsService {
       },
       destinationGate,
       defiAuthorization,
-      defiEvidence,
+      nativeValueWei,
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
       this.logExistingTransaction(tx, chainId, apiKeyRecord.keyPrefix);
       return this.toSendResponse(tx);
-    }
-
-    // The acceptance transaction committed before this final expiry check. It
-    // performs no RPC and never refreshes/replays expired evidence.
-    try {
-      this.defiEvidence.assertFresh(defiAuthorization, defiEvidence);
-    } catch (error) {
-      const denial = error instanceof DefiPolicyDenial ? error : new DefiPolicyDenial(
-        new ServiceUnavailableException('DeFi policy unavailable'), { context: defiAuthorization.context, code: 'DEFI_POLICY_UNAVAILABLE' },
-      );
-      await this.prisma.transaction.updateMany({
-        where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, { status: 'submitting', txHash: null }),
-        data: { status: 'failed', failureReason: 'Transaction failed', completedAt: new Date() },
-      });
-      try { await this.defiPolicy.recordDenied(denial); } catch { /* audit must not mask stable denial */ }
-      throw denial.httpException;
     }
 
     let observedUserOpHash =
@@ -488,7 +465,6 @@ export class TransactionsService {
       typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
         ? ((tx.details as Record<string, unknown>).userOpHash as string)
         : null);
-    const broadcastGuardState: { denial: DefiPolicyDenial | null } = { denial: null };
     try {
       this.logger.log(
         this.logContext({
@@ -510,16 +486,6 @@ export class TransactionsService {
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
         sponsorship,
-        requireProvenCalibur: defiAuthorization.matches.length > 0,
-        ...(defiAuthorization.matches.length > 0
-          ? { beforeBroadcast: () => {
-              try { this.defiEvidence.assertFresh(defiAuthorization, defiEvidence); }
-              catch (error) {
-                if (error instanceof DefiPolicyDenial) broadcastGuardState.denial = error;
-                throw error;
-              }
-            } }
-          : {}),
         onUserOperationHash: async (userOpHash) => {
           observedUserOpHash = userOpHash;
           await this.prisma.transaction.updateMany({
@@ -654,9 +620,6 @@ export class TransactionsService {
         status: updated.status,
       };
     } catch (error) {
-      if (broadcastGuardState.denial) {
-        try { await this.defiPolicy.recordDenied(broadcastGuardState.denial); } catch { /* audit cannot mask expired-evidence denial */ }
-      }
       this.logger.error(
         this.logContext({
           message: 'Transaction submission failed',
@@ -692,7 +655,6 @@ export class TransactionsService {
               }),
         },
       });
-      if (broadcastGuardState.denial) throw broadcastGuardState.denial.httpException;
       throw error;
     }
   }
@@ -765,8 +727,6 @@ export class TransactionsService {
       agentOpenfortAccountId: string;
       agentKeyHash: string;
       sponsorship?: SendTransactionDto['sponsorship'];
-      beforeBroadcast?: () => void;
-      requireProvenCalibur?: boolean;
       onUserOperationHash?: (userOpHash: string) => void | Promise<void>;
     },
   ): Promise<{
@@ -789,8 +749,6 @@ export class TransactionsService {
       keyHash: params.agentKeyHash,
       interactions: params.interactions,
       sponsorship: params.sponsorship,
-      beforeBroadcast: params.beforeBroadcast,
-      requireProvenCalibur: params.requireProvenCalibur,
       onUserOperationHash: params.onUserOperationHash,
     });
   }
@@ -937,7 +895,7 @@ export class TransactionsService {
       billingGate?: BillingAssetFlowGateContext;
       destinationGate?: DestinationGateContext;
       defiAuthorization?: DefiAuthorization;
-      defiEvidence?: DefiEvidence;
+      nativeValueWei: string;
     },
   ) {
     // Interactive transaction: inner idempotency + destination lock/recheck +
@@ -1014,9 +972,7 @@ export class TransactionsService {
         }
 
         if (params.defiAuthorization) {
-          if (!params.defiEvidence) throw new DefiPolicyDenial(new ServiceUnavailableException('DeFi policy unavailable'), { context: params.defiAuthorization.context, code: 'DEFI_POLICY_UNAVAILABLE' });
-          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization, params.defiEvidence);
-          deferredDefiEvent = await this.defiPolicy.recordAllowedInTx(txClient, params.defiAuthorization);
+          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization);
         }
 
         // DeFi final authorization takes the pause FOR SHARE lock before the API-key
@@ -1024,6 +980,16 @@ export class TransactionsService {
         // paths preserve the global destination -> pause -> API-key lock order.
         if (needsDirectEgressKeyState) {
           await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+        }
+
+        const acceptedAt = new Date();
+        if (params.apiKeyId) {
+          await this.transactionPolicy.assertSpendAllowedInTx(txClient, {
+            userId,
+            apiKeyId: params.apiKeyId,
+            nativeValueWei: params.nativeValueWei,
+            acceptedAt,
+          });
         }
 
         if (params.billingGate) {
@@ -1037,7 +1003,11 @@ export class TransactionsService {
           );
         }
 
-        const createdAt = new Date();
+        if (params.defiAuthorization) {
+          deferredDefiEvent = await this.defiPolicy.recordAllowedInTx(txClient, params.defiAuthorization);
+        }
+
+        const createdAt = acceptedAt;
         const billingPeriodStart = new Date(
           Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1),
         );
@@ -1067,6 +1037,10 @@ export class TransactionsService {
       if (error instanceof DefiPolicyDenial) {
         try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
         throw error.httpException;
+      }
+      if (error instanceof TransactionSpendBudgetDenial) {
+        await this.transactionPolicy.recordSpendBudgetDenial(error);
+        throw error;
       }
       // After TX rollback: locks released — safe to audit deferred destination denials.
       if (error instanceof DeferredUnprovenAssetOutflowDenial) {
