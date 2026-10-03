@@ -3,13 +3,15 @@ import { parseAbiItem, toFunctionSelector } from 'viem';
 import { buildDefiManifestHash, buildReviewedManifest, functionAbiHash } from '../registry/defi-manifest';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment } from '../registry/defi-manifest.types';
+import { executionScopeHash } from '../execution/scope';
+import type { DefiExecutionScope } from '../defi.types';
 
 export const BASELINE_MANIFEST_HASH = '0x43ec3be0b20a32457719d8edb17c8eaa40c93480921d6e7c86e9c2cacdec5897' as const;
 
 const TOP_KEYS = ['schemaVersion', 'chains'];
 const CHAIN_KEYS = ['chainId', 'status', 'contracts'];
 const CONTRACT_KEYS = ['address', 'status', 'functions'];
-const FUNCTION_KEYS = ['capabilityId', 'type', 'chainId', 'contract', 'functionName', 'signature', 'abi', 'abiHash', 'status', 'provenance', 'policy', 'label', 'description', 'protocol', 'operation', 'warnings', 'inactiveReason'];
+const FUNCTION_KEYS = ['capabilityId', 'type', 'chainId', 'contract', 'functionName', 'signature', 'abi', 'abiHash', 'status', 'provenance', 'policy', 'label', 'description', 'protocol', 'operation', 'warnings', 'inactiveReason', 'executionScope'];
 const ABI_KEYS = ['type', 'name', 'stateMutability', 'inputs', 'outputs', 'internalType'];
 const ABI_PARAM_KEYS = ['name', 'type', 'components', 'internalType'];
 const PROVENANCE_KEYS = ['sourceRef', 'verifiedAt', 'status'];
@@ -38,13 +40,15 @@ const FAMILY_ID_VERSIONS: Readonly<Record<string, string>> = Object.freeze({
   'aave-v3': 'v3-aave',
   'compound-iii': 'v3-comet',
   'compound-v2': 'v2-compound',
+  'morpho-blue': 'v1-callback-free',
 });
 const ALLOWED_SOURCE_PATHS = Object.freeze([
   'data/defi-catalog/v2/sources/dex.json',
   'data/defi-catalog/v2/sources/lending-yield.json',
 ]);
+const V3_SOURCE_PATH = 'data/defi-catalog/v3/sources/workflow-extensions.json';
 
-export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; abiHash: string; capabilityId: string }>;
+export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; abiHash: string; capabilityId: string; executionScope?: DefiExecutionScope; executionScopeHash?: string }>;
 export type SourceAdmissionSnapshot = Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly SourceAdmissionBinding[] }>;
 export type SourceAdmissionDocument = Readonly<{ schemaVersion: 1; snapshots: readonly SourceAdmissionSnapshot[] }>;
 
@@ -69,13 +73,17 @@ function assertJsonData(value: unknown, label: string, seen = new Set<object>())
 export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions {
   const mode = args[0];
   if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble') throw new Error('Usage: cli.ts <generate|check|diff|assemble> [--input data/defi-catalog/vN/catalog.json]');
-  if (mode === 'assemble' && args.length !== 1) throw new Error('assemble uses fixed source inputs, admissions, and output and accepts no arguments');
+  if (mode === 'assemble' && args.length > 3) throw new Error('assemble accepts at most one fixed v3 input selector');
   let inputPath = 'data/defi-catalog/v1/catalog.json';
   let inputSeen = false;
   for (let index = 1; index < args.length; index += 1) {
     if (args[index] !== '--input' || inputSeen || !args[index + 1]) throw new Error('Usage: cli.ts <generate|check|diff> [--input data/defi-catalog/vN/catalog.json]');
     inputSeen = true;
     inputPath = args[++index];
+  }
+  if (mode === 'assemble') {
+    if (inputSeen && inputPath !== 'data/defi-catalog/v3/catalog.json') throw new Error('assemble only accepts the fixed v3 source assembly selector');
+    return { mode, inputPath: inputSeen ? 'data/defi-catalog/v3/catalog.json' : 'data/defi-catalog/v2/catalog.json' };
   }
   if (!/^data\/defi-catalog\/v[1-9][0-9]*\/catalog\.json$/.test(inputPath)) throw new Error('Catalog input must be a repository source file at data/defi-catalog/vN/catalog.json');
   return { mode, inputPath };
@@ -170,11 +178,18 @@ function makeSourceFunction(input: SourceFunction, context: { familyId: string; 
   for (const key of ['label', 'description', 'operation']) if (raw[key] !== undefined && typeof raw[key] !== 'string') throw new Error(`Source ABI ${name}.${key} must be a string`);
   if (raw.warnings !== undefined && !Array.isArray(raw.warnings)) throw new Error(`Source ABI ${name}.warnings must be an array`);
   if (mutability === 'payable') warnings.push('Payable ABI: caller-supplied value is not bounded by this catalog entry.');
-  if (context.familyId === 'uniswap-v3-position-manager') warnings.push('Only the five fixed position lifecycle functions are included; NFT permits, approval/operator, transfer, and multicall selectors are excluded.');
+  if (context.familyId === 'uniswap-v3-position-manager') warnings.push('Only the fixed position lifecycle functions and reviewed helper subset are included; NFT permits, approval/operator, transfer, and unreviewed selectors are excluded. Multicall has a separate exact-child execution scope.');
+  if (context.familyId === 'morpho-blue' && ['supply', 'repay', 'supplyCollateral'].includes(name)) warnings.push('This candidate scope permits only empty callback data; it is not a wallet callback handler. Other ABI arguments remain caller controlled.');
   if (/^safeTransferFrom$/.test(name)) warnings.push('ERC-721/ERC-1155 overload and operator semantics require review; this entry does not establish token-standard semantics.');
   if (/^(?:swap|batchSwap|joinPool|exitPool)$/.test(name) && /balancer/i.test(context.familyId)) warnings.push('Balancer Vault calls accept caller-selected pool IDs and userData/callback parameters; the fixed ABI is not a generic wallet-execute call or a validation of those values.');
   if (context.familyId === 'compound-v2') warnings.push('EVM transaction success does not establish the Compound V2 uint error-code return outcome; no return-code interpretation or automatic approval pairing is provided.');
   if (context.familyId === 'compound-v2' && mutability === 'payable' && abi.inputs.length === 0) warnings.push('Native CEther payable lifecycle call; supplied value is not bounded and ABI has no return data.');
+  let executionScope: DefiExecutionScope | undefined;
+  if (input.executionScope !== undefined) {
+    const scope = record(input.executionScope, `Source policy function ${name}.executionScope`);
+    executionScope = scope as unknown as DefiExecutionScope;
+    executionScopeHash(executionScope);
+  }
   return {
     capabilityId, type: 'contract_call', chainId: context.chainId, contract: context.address,
     functionName: name, signature, abi, abiHash: functionAbiHash({ abi }), status: 'inactive',
@@ -183,6 +198,7 @@ function makeSourceFunction(input: SourceFunction, context: { familyId: string; 
     description: typeof raw.description === 'string' ? raw.description : `${context.contractName} ${name} source-qualified fixed ABI.`,
     protocol: context.familyId, operation: typeof raw.operation === 'string' ? raw.operation : slug,
     warnings: [...new Set(warnings)].sort(cmp), inactiveReason: 'Source-qualified candidate; not admitted as active authority.',
+    ...(executionScope ? { executionScope } : {}),
   };
 }
 
@@ -268,7 +284,8 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
   requireKeys(root, ['schemaVersion', 'snapshots'], 'Source admissions');
   if (root.schemaVersion !== 1 || !Array.isArray(root.snapshots)) throw new Error('Unsupported source-admission schema');
   const expectedPaths = [...inputs.map((item) => item.sourcePath)].sort(cmp);
-  if (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index])) throw new Error('Admissions require exactly the allowlisted v2 source snapshots');
+  const isV3 = expectedPaths.length === 1 && expectedPaths[0] === V3_SOURCE_PATH;
+  if (!isV3 && (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index]))) throw new Error('Admissions require exactly the allowlisted v2 source snapshots or fixed v3 workflow source');
   if (root.snapshots.length !== expectedPaths.length) throw new Error('Admissions must bind every complete source snapshot');
   const snapshots = new Map<string, Record<string, unknown>>();
   for (const [index, value] of root.snapshots.entries()) {
@@ -276,7 +293,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     onlyKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     requireKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     const path = requireString(row.sourcePath, 'Source admission sourcePath');
-    if (!ALLOWED_SOURCE_PATHS.includes(path) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
+    if (!(isV3 ? path === V3_SOURCE_PATH : ALLOWED_SOURCE_PATHS.includes(path)) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
     if (typeof row.canonicalSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(row.canonicalSha256)) throw new Error('Source admission has invalid canonical SHA-256');
     if (!Array.isArray(row.bindings)) throw new Error('Source admission bindings must be an array');
     snapshots.set(path, row);
@@ -296,14 +313,37 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     if (bindings.length !== expected.length) throw new Error(`Admission binding count mismatch for ${source.sourcePath}`);
     for (const [index, value] of bindings.entries()) {
       const binding = record(value, `Admission binding[${index}]`);
-      onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId'], 'Admission binding');
+      onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId', ...(isV3 ? ['executionScope', 'executionScopeHash'] : [])], 'Admission binding');
       requireKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId'], 'Admission binding');
       if (typeof binding.familyId !== 'string' || typeof binding.chainId !== 'number' || typeof binding.contract !== 'string' || typeof binding.signature !== 'string' || typeof binding.abiHash !== 'string' || typeof binding.capabilityId !== 'string') throw new Error('Admission binding has invalid field types');
       const normalized = { familyId: binding.familyId, chainId: binding.chainId, contract: binding.contract.toLowerCase(), signature: binding.signature, abiHash: binding.abiHash, capabilityId: binding.capabilityId };
       if (!equal(normalized, expected[index])) throw new Error(`Admission binding does not match source ABI in ${source.sourcePath}: ${normalized.capabilityId}`);
+      if (isV3) {
+        const candidate = source.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => fn.capabilityId === normalized.capabilityId);
+        const candidateScope = candidate?.executionScope;
+        if (candidateScope && (!binding.executionScope || !equal(binding.executionScope, candidateScope))) throw new Error(`Admission execution scope does not match source binding: ${normalized.capabilityId}`);
+        if (binding.executionScope !== undefined) {
+          const rawScope = binding.executionScope;
+          if (!rawScope || typeof rawScope !== 'object' || Array.isArray(rawScope)) throw new Error(`Admission execution scope is malformed: ${normalized.capabilityId}`);
+          const scope = rawScope as DefiExecutionScope;
+          if (typeof binding.executionScopeHash !== 'string' || binding.executionScopeHash !== executionScopeHash(scope)) throw new Error(`Admission execution-scope hash mismatch: ${normalized.capabilityId}`);
+          const expectedScopeIndex = candidate?.protocol === 'uniswap-v3-position-manager' && candidate.signature === 'multicall(bytes[])'
+            ? 0
+            : candidate?.protocol === 'morpho-blue' && candidate.functionName === 'supplyCollateral' ? 3
+              : candidate?.protocol === 'morpho-blue' && ['supply', 'repay'].includes(candidate.functionName) ? 4 : undefined;
+          if (expectedScopeIndex === undefined || scope.kind !== 'empty-callback-data-v1' && scope.kind !== 'same-target-multicall-v1'
+            || (scope.kind === 'empty-callback-data-v1' && scope.bytesArgIndex !== expectedScopeIndex)
+            || (scope.kind === 'same-target-multicall-v1' && (expectedScopeIndex !== 0 || candidate?.signature !== 'multicall(bytes[])'))) {
+            throw new Error(`Admission execution scope is not defined for this function identity: ${normalized.capabilityId}`);
+          }
+        } else if (binding.executionScopeHash !== undefined) throw new Error(`Admission has execution-scope hash without scope: ${normalized.capabilityId}`);
+        const scopeRequired = candidate?.protocol === 'uniswap-v3-position-manager' && candidate.signature === 'multicall(bytes[])'
+          || candidate?.protocol === 'morpho-blue' && ['supply', 'repay', 'supplyCollateral'].includes(candidate.functionName);
+        if (scopeRequired && binding.executionScope === undefined) throw new Error(`Missing mandatory execution scope binding: ${normalized.capabilityId}`);
+      }
       const key = `${source.sourcePath}:${normalized.capabilityId}`;
       if (admitted.has(key)) throw new Error(`Duplicate source admission binding ${key}`);
-      admitted.set(key, normalized);
+      admitted.set(key, { ...normalized, ...(binding.executionScope !== undefined ? { executionScope: binding.executionScope as DefiExecutionScope, executionScopeHash: binding.executionScopeHash as string } : {}) });
     }
   }
   return admitted;
@@ -336,6 +376,7 @@ export function assembleCatalogFromSources(baseline: DefiRegistryFragment, input
             inactiveReason: undefined,
             label: sourceCandidate.functionName,
             description: `${sourceCandidate.protocol} ${sourceCandidate.functionName} admitted from exact source snapshot and ABI binding.`,
+            ...(admitted.executionScope ? { executionScope: admitted.executionScope } : {}),
           } : sourceCandidate;
           const selector = toFunctionSelector(candidate.signature).toLowerCase();
           const collision = prior.find((existing) => toFunctionSelector(existing.signature).toLowerCase() === selector);
@@ -353,7 +394,7 @@ export function assembleCatalogFromSources(baseline: DefiRegistryFragment, input
   }
   const chains: DefiChainPolicy[] = [...result.entries()].sort(([a], [b]) => a - b).map(([chainId, contracts]) => ({ chainId, status: 'active', contracts: [...contracts.entries()].sort(([a], [b]) => cmp(a, b)).map(([address, functions]) => ({ address: functions[0]?.contract ?? address, status: functions.some((fn) => fn.status === 'active') ? 'active' as const : 'inactive' as const, functions: [...functions].sort((a, b) => cmp(a.capabilityId, b.capabilityId)) })) }));
   const assembled = validateCatalogDocument({ schemaVersion: 1, chains });
-  assertBaselinePreserved(assembled, validateBaseline({ schemaVersion: 1, baselineManifestHash: BASELINE_MANIFEST_HASH, chains: baselineValid.chains }));
+  assertBaselinePreserved(assembled, { schemaVersion: 1, baselineManifestHash: BASELINE_MANIFEST_HASH, chains: baselineValid.chains });
   return assembled;
 }
 
@@ -415,6 +456,7 @@ function validateFunction(value: unknown, label: string): void {
   if (fn.type !== 'contract_call' && fn.type !== 'typed_data_sign') throw new Error(`${label}.type is invalid`);
   if (typeof fn.chainId !== 'number' || !Number.isSafeInteger(fn.chainId)) throw new Error(`${label}.chainId must be a safe integer`);
   if (fn.warnings !== undefined && (!Array.isArray(fn.warnings) || fn.warnings.some((item) => typeof item !== 'string'))) throw new Error(`${label}.warnings must be an array of strings`);
+  if (fn.executionScope !== undefined) executionScopeHash(fn.executionScope as DefiExecutionScope);
 }
 
 export function validateCatalogDocument(document: unknown): DefiRegistryFragment {
@@ -514,6 +556,7 @@ export function catalogDiff(before: DefiRegistryFragment, after: DefiRegistryFra
       abi: fn.abi,
       abiHash: fn.abiHash,
       status: fn.status,
+      ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}),
     });
     const { capabilityId: _id, type: _type, chainId: _chainId, contract: _contract, functionName: _name, signature: oldSignature, abi: oldAbi, abiHash: _hash, status: _status, ...oldMetadata } = oldFn;
     const { capabilityId: _newId, type: _newType, chainId: _newChainId, contract: _newContract, functionName: _newName, signature: newSignature, abi: newAbi, abiHash: _newHash, status: _newStatus, ...newMetadata } = newFn;

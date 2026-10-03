@@ -1,4 +1,6 @@
 export * from './defi.types';
+export * from './execution/scope';
+export * from './execution/planner';
 export * from './defi-catalog.service';
 export * from './defi-grant.service';
 export * from './defi-pause.service';

@@ -19,6 +19,11 @@ export type DefiProvenance = Readonly<{
   status: 'verified' | 'candidate';
 }>;
 
+/** Closed, versioned execution languages for explicitly scoped router workflows. */
+export type DefiExecutionScope =
+  | Readonly<{ kind: 'empty-callback-data-v1'; bytesArgIndex: number }>
+  | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>;
+
 /** Function-level authority: identity + fixed ABI + provenance, never runtime validators. */
 export type DefiFunctionPolicy = Readonly<{
   capabilityId: string;
@@ -38,6 +43,7 @@ export type DefiFunctionPolicy = Readonly<{
   operation?: string;
   warnings?: readonly string[];
   inactiveReason?: string;
+  executionScope?: DefiExecutionScope;
 }>;
 
 export type DefiMatch = Readonly<{
@@ -48,7 +54,10 @@ export type DefiMatch = Readonly<{
   functionSignature: string;
   abiHash: `0x${string}`;
   policy?: Readonly<{ ref: string; version: number }>;
+  executionScopeHash?: `0x${string}`;
 }>;
+
+export type DefiExecutionPlanNode = Readonly<{ path: readonly number[]; data: `0x${string}`; match: DefiMatch }>;
 
 export type DefiContractPolicy = Readonly<{ address: string; status: 'active' | 'inactive'; functions: readonly DefiFunctionPolicy[] }>;
 export type DefiChainPolicy = Readonly<{ chainId: number; status: 'active' | 'inactive'; contracts: readonly DefiContractPolicy[] }>;
@@ -62,6 +71,7 @@ export type DefiAuthorization = Readonly<{
   interactions: readonly DefiInteraction[];
   manifestHash: `0x${string}`;
   requestCommitment: `0x${string}`;
+  executionPlan: readonly DefiExecutionPlanNode[];
 }>;
 
 export type DefiDeniedAudit = Readonly<{

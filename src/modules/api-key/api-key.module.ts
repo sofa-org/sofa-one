@@ -5,10 +5,11 @@ import { StepUpModule } from '../step-up/step-up.module';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { DefiModule } from '../defi';
 import { DefiCapabilityController } from './api-key.controller';
+import { DefiCapabilityBundleController } from './api-key.controller';
 
 @Module({
   imports: [StepUpModule, SecurityEventModule, DefiModule],
-  controllers: [ApiKeyController, DefiCapabilityController],
+  controllers: [ApiKeyController, DefiCapabilityController, DefiCapabilityBundleController],
   providers: [ApiKeyService],
   exports: [ApiKeyService],
 })

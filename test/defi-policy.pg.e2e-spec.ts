@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { randomBytes } from 'crypto';
-import { encodeFunctionData, keccak256, stringToHex } from 'viem';
+import { encodeFunctionData, keccak256, parseAbi, stringToHex } from 'viem';
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -21,7 +21,7 @@ import { DefiPauseService } from '../src/modules/defi/defi-pause.service';
 import { DefiGrantService } from '../src/modules/defi/defi-grant.service';
 import { SecurityEventService } from '../src/modules/security-events/security-event.service';
 import { ApiKeyService } from '../src/modules/api-key/api-key.service';
-import { buildReviewedManifest } from '../src/modules/defi/registry/defi-manifest';
+import { buildReviewedManifest, functionAbiHash } from '../src/modules/defi/registry/defi-manifest';
 import type { DefiAuthorization, DefiCatalog } from '../src/modules/defi/defi.types';
 
 const target = applyBillingE2eDatabaseUrl(resolveBillingE2eDatabaseTarget());
@@ -31,6 +31,8 @@ const approvalCapabilityId = `${capabilityId}:approve`;
 const borrowCapabilityId = `${capabilityId}:borrow`;
 const payableCapabilityId = `${capabilityId}:pay`;
 const transferCapabilityId = `${capabilityId}:transfer`;
+const npmWrapperId = `${capabilityId}:npm-wrapper`;
+const npmChildIds = Array.from({ length: 8 }, (_, index) => `${capabilityId}:npm-child:${index}`);
 const address = '0x1111111111111111111111111111111111111111' as const;
 const abi = { type: 'function', name: 'ping', stateMutability: 'nonpayable', inputs: [{ name: 'value', type: 'uint256' }], outputs: [] } as const;
 const abiFunction = (name: string, stateMutability: 'nonpayable' | 'payable', inputs: { name: string; type: string }[]) => ({ type: 'function' as const, name, stateMutability, inputs, outputs: [] as const });
@@ -41,8 +43,25 @@ const fixtureFunctions = [
   { capabilityId: payableCapabilityId, functionName: 'pay', signature: 'pay(uint256)', abi: abiFunction('pay', 'payable', [{ name: 'amount', type: 'uint256' }]) },
   { capabilityId: transferCapabilityId, functionName: 'transfer', signature: 'transfer(address,uint256)', abi: abiFunction('transfer', 'nonpayable', [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }]) },
 ].map((fn) => ({ ...fn, type: 'contract_call' as const, chainId: 8453, contract: address, status: 'active' as const, provenance: { sourceRef: 'runner-owned PG fixture ABI', verifiedAt: '2026-10-02', status: 'verified' as const } }));
-const catalogFixture: DefiCatalog = [{ chainId: 8453, status: 'active', contracts: [{ address, status: 'active', functions: fixtureFunctions }] }];
+const baseCatalogFunctions = [...fixtureFunctions];
+const npmDefinitions = [
+  ['mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))', 'function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline) params) payable'],
+  ['increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))', 'function increaseLiquidity((uint256 tokenId,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+  ['decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))', 'function decreaseLiquidity((uint256 tokenId,uint128 liquidity,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+  ['collect((uint256,address,uint128,uint128))', 'function collect((uint256 tokenId,address recipient,uint128 amount0Max,uint128 amount1Max) params) payable'],
+  ['burn(uint256)', 'function burn(uint256 tokenId) payable'], ['refundETH()', 'function refundETH() payable'],
+  ['unwrapWETH9(uint256,address)', 'function unwrapWETH9(uint256 amountMinimum,address recipient) payable'],
+  ['sweepToken(address,uint256,address)', 'function sweepToken(address token,uint256 amountMinimum,address recipient) payable'],
+] as const;
+const npmFunctions = npmDefinitions.map(([signature, declaration], index) => {
+  const abi = parseAbi([declaration])[0];
+  return { capabilityId: npmChildIds[index], type: 'contract_call' as const, chainId: 8453, contract: address, functionName: abi.name, signature, abi, status: 'active' as const, provenance: { sourceRef: 'runner-owned scoped NPM fixture', verifiedAt: '2026-10-04', status: 'verified' as const } };
+});
+const npmWrapperAbi = parseAbi(['function multicall(bytes[] data) payable returns (bytes[] results)'])[0];
+const npmWrapper = { capabilityId: npmWrapperId, type: 'contract_call' as const, chainId: 8453, contract: address, functionName: 'multicall', signature: 'multicall(bytes[])', abi: npmWrapperAbi, status: 'active' as const, provenance: { sourceRef: 'runner-owned scoped NPM fixture', verifiedAt: '2026-10-04', status: 'verified' as const }, executionScope: { kind: 'same-target-multicall-v1' as const, bytesArrayArgIndex: 0 as const, allowedChildren: npmFunctions.map((fn) => ({ capabilityId: fn.capabilityId, signature: fn.signature, abiHash: functionAbiHash(fn) })) } };
+const catalogFixture: DefiCatalog = [{ chainId: 8453, status: 'active', contracts: [{ address, status: 'active', functions: [...baseCatalogFunctions, npmWrapper, ...npmFunctions] }] }];
 const reviewedManifest = buildReviewedManifest([{ chains: catalogFixture }]);
+let allowedEventExporter: { exportSecurityEvent: jest.Mock };
 
 type PgClient = { connect(): Promise<void>; end(): Promise<void>; query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> };
 type PgClientCtor = new (config: { connectionString: string; application_name?: string }) => PgClient;
@@ -102,8 +121,8 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
     await observer.connect();
     identityVerified = true;
 
-    const exporter = { exportSecurityEvent: jest.fn().mockResolvedValue(undefined) };
-    events = new SecurityEventService(prismaA as never, { getRequestId: () => null } as never, undefined, undefined, exporter as never);
+    allowedEventExporter = { exportSecurityEvent: jest.fn().mockResolvedValue(undefined) };
+    events = new SecurityEventService(prismaA as never, { getRequestId: () => null } as never, undefined, undefined, allowedEventExporter as never);
     const catalog = new DefiCatalogService(catalogFixture, prismaA as never, reviewedManifest);
     policy = new DefiPolicyService(prismaA as never, events, catalog);
     pause = new DefiPauseService(prismaA as never, events);
@@ -188,6 +207,20 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
         },
         defiAuthorization: authorization,
       });
+  }
+
+  async function authorizeNpmWrapper(value = '60'): Promise<DefiAuthorization> {
+    const selected = [npmWrapperId, npmChildIds[0]!, npmChildIds[5]!];
+    await apiKeys.replaceCapabilities(keyId, userId, selected);
+    const mintData = encodeFunctionData({
+      abi: [npmFunctions[0]!.abi], functionName: 'mint',
+      args: [[address, '0x2222222222222222222222222222222222222222', 3000, -887220, 887220, (1n << 255n), (1n << 255n), 0n, 0n, address, 4_000_000_000n]],
+    } as never);
+    const refundData = encodeFunctionData({ abi: [npmFunctions[5]!.abi], functionName: 'refundETH', args: [] });
+    const rootData = encodeFunctionData({ abi: [npmWrapperAbi], functionName: 'multicall', args: [[mintData, refundData]] });
+    return policy.authorizeContractCalls([{ to: address, data: rootData, value }], {
+      userId, apiKeyId: keyId, walletId, chainId: 8453, executionMode: 'session_key', executionOwner: address, allowedCapabilityIds: selected,
+    });
   }
 
   it('acceptance holds pause FOR SHARE and blocks pause UPDATE until commit', async () => {
@@ -377,6 +410,55 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
     expect(await prismaA.transaction.count({ where: { userId, idempotencyKey: 'budget-second-60' } })).toBe(0);
     expect(await prismaA.transaction.count({ where: { userId, idempotencyKey: 'budget-first-60' } })).toBe(1);
     await prismaA.apiKey.update({ where: { id: keyId }, data: { dailySpendLimit: null } });
+  });
+
+  it('accepts the original scoped wrapper once: one 60-wei root reservation, safe root/child audit, and later budget denial', async () => {
+    await clearSpendReservations();
+    await prismaA.apiKey.update({ where: { id: keyId }, data: { dailySpendLimit: '100', monthlySpendLimit: null } });
+    const scoped = await authorizeNpmWrapper('60');
+    expect(scoped.interactions).toHaveLength(1);
+    expect(scoped.executionPlan.map((node) => node.path)).toEqual([[0], [0, 0], [0, 1]]);
+    const startingAllowed = await prismaA.securityEvent.count({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId } });
+    allowedEventExporter.exportSecurityEvent.mockClear();
+    const rootRequestHash = scoped.requestCommitment.slice(2);
+    const accepted = await createAcceptance(scoped, policy, prismaA, rootRequestHash)('scoped-multicall-60');
+    expect(accepted.created).toBe(true);
+    expect(accepted.tx.details).toMatchObject({ nativeValueWei: '60', interactionCount: 1 });
+    expect(accepted.tx.requestHash).toBe(rootRequestHash);
+    const allowed = await prismaA.securityEvent.findFirst({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId }, orderBy: { createdAt: 'desc' } });
+    const serialized = JSON.stringify(allowed?.metadata);
+    expect(serialized).toContain(npmChildIds[0]);
+    expect(serialized).toContain(npmChildIds[5]);
+    expect(serialized).toContain('[0,0]');
+    expect(serialized).toContain('[0,1]');
+    expect(serialized).not.toContain(scoped.interactions[0]!.data);
+    expect(serialized).not.toContain('340282366920938463463374607431768211456');
+    expect(await prismaA.securityEvent.count({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId } })).toBe(startingAllowed + 1);
+    const allowedExports = allowedEventExporter.exportSecurityEvent.mock.calls.filter(([event]) => (event as { eventType?: string })?.eventType === 'defi.capability_allowed').length;
+    expect(allowedExports).toBe(1);
+    const repeated = await createAcceptance(scoped, policy, prismaA, rootRequestHash)('scoped-multicall-60');
+    expect(repeated.created).toBe(false);
+    expect(repeated.tx.id).toBe(accepted.tx.id);
+    expect(await prismaA.transaction.count({ where: { userId, idempotencyKey: 'scoped-multicall-60' } })).toBe(1);
+    expect(allowedEventExporter.exportSecurityEvent.mock.calls.filter(([event]) => (event as { eventType?: string })?.eventType === 'defi.capability_allowed')).toHaveLength(allowedExports);
+    const nextHash = `${rootRequestHash[0] === '0' ? '1' : '0'}${rootRequestHash.slice(1)}`;
+    await expect(createAcceptance(scoped, policy, prismaA, nextHash)('scoped-multicall-next-60')).rejects.toThrow('exceed daily spend limit');
+    expect(await prismaA.transaction.count({ where: { userId, idempotencyKey: 'scoped-multicall-next-60' } })).toBe(0);
+    expect(await prismaA.securityEvent.count({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId } })).toBe(startingAllowed + 1);
+    expect(allowedEventExporter.exportSecurityEvent.mock.calls.filter(([event]) => (event as { eventType?: string })?.eventType === 'defi.capability_allowed')).toHaveLength(allowedExports);
+    await prismaA.apiKey.update({ where: { id: keyId }, data: { dailySpendLimit: null } });
+  });
+
+  it('denies final scoped acceptance after a child grant is revoked without persisting an allowed audit or transaction', async () => {
+    await clearSpendReservations();
+    const scoped = await authorizeNpmWrapper('60');
+    const beforeAllowed = await prismaA.securityEvent.count({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId } });
+    await apiKeys.replaceCapabilities(keyId, userId, [npmWrapperId, npmChildIds[0]!]);
+    allowedEventExporter.exportSecurityEvent.mockClear();
+    await expect(createAcceptance(scoped, policy, prismaA, scoped.requestCommitment.slice(2))('scoped-child-revoked')).rejects.toMatchObject({ response: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    expect(await prismaA.transaction.count({ where: { userId, idempotencyKey: 'scoped-child-revoked' } })).toBe(0);
+    expect(await prismaA.securityEvent.count({ where: { eventType: 'defi.capability_allowed', apiKeyId: keyId } })).toBe(beforeAllowed);
+    expect(allowedEventExporter.exportSecurityEvent.mock.calls.filter(([event]) => (event as { eventType?: string })?.eventType === 'defi.capability_allowed')).toHaveLength(0);
   });
 
   it('counts a committed reservation timestamped after acceptance within both UTC periods, but excludes next-period rows', async () => {

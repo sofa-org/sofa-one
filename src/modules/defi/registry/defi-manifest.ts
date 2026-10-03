@@ -1,6 +1,7 @@
 import { keccak256, stringToHex, toFunctionSelector } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment, ReviewedManifest } from './defi-manifest.types';
+import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from '../execution/scope';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -51,6 +52,7 @@ function functionIdentity(fn: DefiFunctionPolicy) {
     signature: fn.signature,
     abiHash: functionAbiHash(fn),
     status: fn.status,
+    ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}),
   };
 }
 
@@ -71,6 +73,7 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   if (!fn.provenance || typeof fn.provenance.sourceRef !== 'string' || !fn.provenance.sourceRef.trim() || typeof fn.provenance.verifiedAt !== 'string' || !Number.isFinite(Date.parse(fn.provenance.verifiedAt)) || (fn.provenance.status !== 'verified' && fn.provenance.status !== 'candidate')) throw new Error('Invalid DeFi function provenance');
   if (fn.status === 'active' && fn.provenance.status !== 'verified') throw new Error('Active DeFi function requires verified provenance');
   if (fn.policy && (!fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1)) throw new Error('Invalid display policy identity');
+  if (fn.executionScope) executionScopeHash(fn.executionScope);
 }
 
 /** Merges nested family catalogs, validates fixed ABI/provenance identities, and freezes the result. */
@@ -118,6 +121,19 @@ export function buildReviewedManifest(fragments: readonly DefiRegistryFragment[]
   for (const fn of capabilities) {
     if (ids.has(fn.capabilityId)) throw new Error('Duplicate DeFi capability identity');
     ids.add(fn.capabilityId);
+  }
+  const multicallAllowed = new Set(NPM_MULTICALL_CHILD_SIGNATURES);
+  for (const scoped of capabilities.filter((fn) => fn.executionScope)) {
+    if (scoped.executionScope?.kind === 'empty-callback-data-v1' && scoped.abi.inputs[scoped.executionScope.bytesArgIndex]?.type !== 'bytes') throw new Error('Invalid DeFi callback-data scope ABI binding');
+  }
+  for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'same-target-multicall-v1')) {
+    const scope = wrapper.executionScope;
+    if (!scope || scope.kind !== 'same-target-multicall-v1') continue;
+    if (wrapper.signature !== 'multicall(bytes[])' || wrapper.abi.inputs.length !== 1 || wrapper.abi.inputs[0].type !== 'bytes[]' || wrapper.abi.outputs?.length !== 1 || wrapper.abi.outputs[0].type !== 'bytes[]' || wrapper.abi.stateMutability !== 'payable') throw new Error('Invalid DeFi multicall wrapper ABI');
+    for (const child of scope.allowedChildren) {
+      const resolved = capabilities.find((fn) => fn.capabilityId === child.capabilityId);
+      if (!resolved || resolved.status !== 'active' || resolved.chainId !== wrapper.chainId || resolved.contract.toLowerCase() !== wrapper.contract.toLowerCase() || resolved.signature !== child.signature || functionAbiHash(resolved) !== child.abiHash.toLowerCase() || !multicallAllowed.has(resolved.signature) || resolved.executionScope) throw new Error('Invalid DeFi execution-scope child binding');
+    }
   }
   return deepFreeze(cloneDefiValue({ chains, capabilities, manifestHash: buildDefiManifestHash(capabilities) }));
 }

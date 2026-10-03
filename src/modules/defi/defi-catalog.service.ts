@@ -3,6 +3,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { DefiCatalog, DefiChainPolicy, DefiFunctionPolicy, defiPauseScopeKeysForCapability } from './defi.types';
 import { DEFI_MANIFEST, buildReviewedManifest, cloneDefiValue, deepFreeze, reviewedManifestHashValid } from './registry/defi-manifest';
 import type { ReviewedManifest } from './registry/defi-manifest.types';
+import { executionScopeHash } from './execution/scope';
 
 export const DEFI_CATALOG = Symbol('DEFI_CATALOG');
 
@@ -45,6 +46,7 @@ export class DefiCatalogService {
         warnings: fn.warnings,
         status: active ? (scopeKeys.some((key) => paused.has(key)) ? 'paused' : 'active') : 'inactive',
         policy: fn.policy,
+        ...(fn.executionScope ? { executionScope: { kind: fn.executionScope.kind, hash: executionScopeHash(fn.executionScope), ...(fn.executionScope.kind === 'same-target-multicall-v1' ? { allowedChildren: fn.executionScope.allowedChildren.map((child) => ({ ...child })) } : {}) } } : {}),
       };
     })));
     return { capabilities };

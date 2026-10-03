@@ -11,7 +11,7 @@ surfaces:
   `POST /v1/transactions/send`, `GET /v1/transactions/:id` — programmatic, authenticated
   by `X-API-Key`.
 - **Frontend-only dashboard surface** (intentionally omitted from `openapi.yaml`): wallet
-  balances/deposit/withdraw, API-key management, billing, MFA, security notifications,
+  balances/deposit/withdraw, API-key management and DeFi bundle metadata, billing, MFA, security notifications,
   auth/onboarding — authenticated by Openfort IAM bearer token plus origin/referer checks.
 
 The root owns no business logic itself; it composes the layers below (`config`, `common`,
@@ -70,19 +70,7 @@ formatting, throttling, request correlation) globally.
   `EoaExecutionPolicyService`, `SessionKeyPolicyService`) isolate high-risk rules and record
   `SecurityEvent` telemetry; `@Optional()` injection lets optional security/billing services
   degrade gracefully (never fail-open).
-- **DeFi catalog (offline data, unchanged runtime path).** Production loads a generated static
-  catalog of 315 exact functions (292 actions, 23 independent approvals), preserving the
-  202-definition v1 catalog and appending 113 source-qualified functions through explicit
-  SHA-256/ABI admission bindings. Existing API-key grants are not copied or broadened. M1 is
-  committed; parent full build/unit validation and v2 catalog CLI checks passed. Focused R1
-  validation passed (4 suites, 41 tests, 6.377 seconds). M2 Oracle Gate 2 passed on attempt 2/3
-  after resolving R1, with no new material risks. Parent M2 local commit is authorized and
-  upcoming; M3 follows that commit. The reconciled coverage report retains all 8,476
-  rows, 8,472 unresolved proxies, seven unmatched IDs, 3 observed-active DEX identities, 4 mapped
-  canonical identities including Compound V2 identity-only, one additional partial mapping, and
-  144 workflows/59 exact bindings. Compound V2 activity remains unresolved. The M2 coverage report
-  retains unresolved identity/workflow rows and does not establish the 90% objective; see
-  [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md).
+- **DeFi catalog and scoped authorization.** Production loads the generated static v3 catalog: 349 exact functions (326 actions, 23 independent approvals), preserving all 315 M2 definitions and adding 34 source-qualified functions. Thirteen closed scopes cover seven same-target NPM multicall wrappers and six empty-callback Morpho methods. Nine literal version 1.0.0 profiles contain 75 unique IDs and never auto-grant. The IAM/frontend-only `GET /v1/defi-capability-bundles` is omitted from public OpenAPI; key grant mutation retains its existing explicit replacement and step-up. The mandatory final M3 gate remains pending. The current M3 coverage projection is `FALSE`: nine target-scoped function rows are complete and seven are population-incomplete, not nine complete products. Historical M2 market/workflow data remain preserved; 144 workflow rows is an M2 snapshot, not an M3 result. See [`majority-catalog-v3.md`](../docs/defi-research/majority-catalog-v3.md), [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md), and the [capability matrix](../docs/defi-capability-matrix.md).
 - **Unified security telemetry.** `security-events` is the single write path for
   `security_events` rows, with deterministic rule-based risk scoring (`SecurityRiskService`),
   multi-factor risk evaluation + enforcement (`RiskEvaluationService`), dashboard alert

@@ -1,0 +1,267 @@
+import type { DefiCapabilityBundle } from "./types";
+
+export const DEFI_CAPABILITY_BUNDLES = Symbol("DEFI_CAPABILITY_BUNDLES");
+
+/** Reviewed immutable 1.0.0 exact-membership profiles; changes require explicit republication. */
+export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[] = Object.freeze([
+  {
+    "bundleId": "uniswap-v3-positions-1",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:burn",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:collect",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:mint",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:multicall",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:6dfd3fef97e1a0078b3ceda71c1f164fc7f5a31e9f038edc4647971b71caeeda"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-10",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Optimism",
+    "chainIds": [
+      10
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:burn",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:collect",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:mint",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:multicall",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:10:0xc36442b4a4522e871399cd717abdd847ab11fe88:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:a33e7e30e383fae1c610f8f18267cfe73c51463c5d0ea8d5f2c92c67e5123748"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-56",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · BNB Chain",
+    "chainIds": [
+      56
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:burn",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:collect",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:mint",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:multicall",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:56:0x7b8a01b39d58278b5de7e48c8449c9f4f5170613:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:351370b302e9d5332f5f5db0a713b8fe998e0bd2856ec62032e86dcde7acdc46"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-137",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Polygon",
+    "chainIds": [
+      137
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:burn",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:collect",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:mint",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:multicall",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:137:0xc36442b4a4522e871399cd717abdd847ab11fe88:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:388e747f15415b02ec508c4f9477398abf70e84f4c72f199e83da10011051e6a"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-143",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Monad",
+    "chainIds": [
+      143
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:burn",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:collect",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:mint",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:multicall",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:143:0x7197e214c0b767cfb76fb734ab638e2c192f4e53:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:e0127a6edefdfd37a88afd5f6064d6fd2a2582dfdac022d3d6571fe60c9af9cc"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-8453",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:burn",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:collect",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:mint",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:multicall",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:8453:0x03a520b32c04bf3beef7beb72e919cf822ed34f1:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:00a4afe20170c0832cedb9b094ceed93f809f846fb781c551088e35ae55a68f7"
+  },
+  {
+    "bundleId": "uniswap-v3-positions-42161",
+    "version": "1.0.0",
+    "label": "Uniswap V3 positions · Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:burn",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:collect",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:decrease-liquidity",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:increase-liquidity",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:mint",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:multicall",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:refund-eth",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:sweep-token",
+      "uniswap-v3-position-manager:v3-npm:42161:0xc36442b4a4522e871399cd717abdd847ab11fe88:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
+      "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or deployment/funding guarantee.",
+      "No NFT permits, NFT transfers or operator approvals; token funding approvals are selected separately. No protocol-specific financial-argument limits.",
+      "At most eight reviewed child calls fit with one wrapper inside the existing ten-node limit; recursive calls are excluded."
+    ],
+    "fingerprint": "sha256:35096bd6f2c6013381ebc41b910bbe63e36d09afb4313f1743d5a50ad2106a4a"
+  },
+  {
+    "bundleId": "morpho-blue-1",
+    "version": "1.0.0",
+    "label": "Morpho Blue · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "morpho-blue:v1-callback-free:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:repay",
+      "morpho-blue:v1-callback-free:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:supply",
+      "morpho-blue:v1-callback-free:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:supply-collateral",
+      "morpho-blue:v1:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:borrow",
+      "morpho-blue:v1:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:withdraw",
+      "morpho-blue:v1:1:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:withdrawCollateral"
+    ],
+    "warnings": [
+      "The supply, supplyCollateral, and repay members allow only empty callback data; no wallet callback handler is available.",
+      "All other ABI arguments remain caller-controlled; approvals are not included or automatic."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or guarantee of market, asset, funding, or session readiness.",
+      "No financial amount, recipient, asset-selection, or approval-spender limits."
+    ],
+    "fingerprint": "sha256:f19bb3cf0832208c7705726dc2de02ccc9070d632e3064a4b0912f2e91cb1ea9"
+  },
+  {
+    "bundleId": "morpho-blue-8453",
+    "version": "1.0.0",
+    "label": "Morpho Blue · Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "morpho-blue:v1-callback-free:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:repay",
+      "morpho-blue:v1-callback-free:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:supply",
+      "morpho-blue:v1-callback-free:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:supply-collateral",
+      "morpho-blue:v1:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:borrow",
+      "morpho-blue:v1:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:withdraw",
+      "morpho-blue:v1:8453:0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb:withdrawCollateral"
+    ],
+    "warnings": [
+      "The supply, supplyCollateral, and repay members allow only empty callback data; no wallet callback handler is available.",
+      "All other ABI arguments remain caller-controlled; approvals are not included or automatic."
+    ],
+    "limitations": [
+      "Fixed available functions, not a complete workflow or guarantee of market, asset, funding, or session readiness.",
+      "No financial amount, recipient, asset-selection, or approval-spender limits."
+    ],
+    "fingerprint": "sha256:128ad04d15cc0f79c196928e94f6d7ecc9b6f0278378eb946fda521f7bd7ec4b"
+  }
+] as readonly DefiCapabilityBundle[]);

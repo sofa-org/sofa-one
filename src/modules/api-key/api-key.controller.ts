@@ -9,6 +9,7 @@ import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './dto/create-api-key.dto';
 import { DefiCatalogService } from '../defi';
+import { DefiBundleService } from '../defi/bundles/bundle.service';
 
 @Controller('v1/api-keys')
 @FrontendOnly()
@@ -86,4 +87,15 @@ export class DefiCapabilityController {
   constructor(private readonly defiCatalog: DefiCatalogService) {}
   @Get()
   async list() { return await this.defiCatalog.listMetadata(); }
+}
+
+/** Dashboard-only read of reviewed, immutable capability bundle metadata. */
+@Controller('v1/defi-capability-bundles')
+@FrontendOnly()
+@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+export class DefiCapabilityBundleController {
+  constructor(private readonly bundles: DefiBundleService) {}
+
+  @Get()
+  async list() { return await this.bundles.listMetadata(); }
 }

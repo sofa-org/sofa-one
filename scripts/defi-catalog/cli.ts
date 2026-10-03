@@ -8,6 +8,9 @@ const outputPath = resolve(root, 'src/modules/defi/registry/generated/production
 const sourcePaths = ['data/defi-catalog/v2/sources/dex.json', 'data/defi-catalog/v2/sources/lending-yield.json'];
 const admissionsPath = resolve(root, 'data/defi-catalog/v2/admissions.json');
 const assembledCatalogPath = resolve(root, 'data/defi-catalog/v2/catalog.json');
+const v3SourcePath = resolve(root, 'data/defi-catalog/v3/sources/workflow-extensions.json');
+const v3AdmissionsPath = resolve(root, 'data/defi-catalog/v3/admissions.json');
+const v3CatalogPath = resolve(root, 'data/defi-catalog/v3/catalog.json');
 
 function resolveSourceCatalogPath(rootPath: string, inputPath: string): string {
   const repositoryRoot = realpathSync(rootPath);
@@ -49,12 +52,18 @@ function readJson(path: string): unknown {
 try {
   const options = parseCatalogCliArgs(process.argv.slice(2));
   if (options.mode === 'assemble') {
-    if (options.inputPath !== 'data/defi-catalog/v1/catalog.json') throw new Error('assemble does not accept --input; source paths and output are fixed');
+    const isV3 = options.inputPath === 'data/defi-catalog/v3/catalog.json';
     const baseline = validateBaseline(readJson(assertFixedFilePath(baselinePath, 'data/defi-catalog/v1/pre-migration-baseline.json')));
-    const inputs = sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
-    const admissions = readJson(assertFixedFilePath(admissionsPath, 'data/defi-catalog/v2/admissions.json'));
-    const assembled = assembleCatalogFromSources({ chains: baseline.chains }, inputs, admissions);
-    const target = assertFixedFilePath(assembledCatalogPath, 'data/defi-catalog/v2/catalog.json');
+    const basePath = isV3 ? 'data/defi-catalog/v2/catalog.json' : 'data/defi-catalog/v1/catalog.json';
+    const base = validateCatalogDocument(readJson(assertFixedFilePath(resolve(root, basePath), basePath)));
+    const inputs = isV3
+      ? [{ sourcePath: 'data/defi-catalog/v3/sources/workflow-extensions.json', document: readJson(assertFixedFilePath(v3SourcePath, 'data/defi-catalog/v3/sources/workflow-extensions.json')) }]
+      : sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
+    const admissionFile = isV3 ? v3AdmissionsPath : admissionsPath;
+    const admissionRelative = isV3 ? 'data/defi-catalog/v3/admissions.json' : 'data/defi-catalog/v2/admissions.json';
+    const admissions = readJson(assertFixedFilePath(admissionFile, admissionRelative));
+    const assembled = assembleCatalogFromSources({ chains: base.chains }, inputs, admissions);
+    const target = assertFixedFilePath(isV3 ? v3CatalogPath : assembledCatalogPath, isV3 ? 'data/defi-catalog/v3/catalog.json' : 'data/defi-catalog/v2/catalog.json');
     writeFileSync(target, `${JSON.stringify({ schemaVersion: 1, chains: assembled.chains }, null, 2)}\n`, 'utf8');
     process.stdout.write(`Assembled ${assembled.chains.reduce((count, chain) => count + chain.contracts.reduce((sum, contract) => sum + contract.functions.length, 0), 0)} source-qualified definitions.\n`);
   } else {
@@ -62,7 +71,10 @@ try {
   assertFixedOutputPath();
   const current = validateCatalogDocument(readJson(inputPath));
   const baseline = validateBaseline(readJson(baselinePath));
-  const diff = catalogDiff({ chains: baseline.chains }, current);
+  const comparison = options.inputPath === 'data/defi-catalog/v3/catalog.json'
+    ? validateCatalogDocument(readJson(assertFixedFilePath(resolve(root, 'data/defi-catalog/v2/catalog.json'), 'data/defi-catalog/v2/catalog.json')))
+    : { chains: baseline.chains };
+  const diff = catalogDiff(comparison, current);
   if (options.mode === 'diff') {
     process.stdout.write(`${JSON.stringify(diff, null, 2)}\n`);
   } else if (options.mode === 'generate') {

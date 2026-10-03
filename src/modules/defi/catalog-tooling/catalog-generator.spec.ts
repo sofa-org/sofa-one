@@ -36,6 +36,8 @@ describe('DeFi catalog generator', () => {
   it('parses versioned repository inputs and rejects arbitrary paths/options', () => {
     expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v1/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v2/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v2/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v2/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v3/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v3/catalog.json' });
     for (const args of [
       ['generate', '--input', '../catalog.json'],
       ['generate', '--input', 'https://example.invalid/catalog.json'],
@@ -148,6 +150,53 @@ describe('DeFi catalog generator', () => {
     expect(catalogDiff(baseline, assembled)).toMatchObject({ added: expect.arrayContaining(admittedFns.map((fn) => fn.capabilityId)), removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
   });
 
+  it('assembles v3 as an offline 349-function catalog with 34 exact additions and 13 scope bindings', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v2 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v2/catalog.json'), 'utf8')));
+    const sourcePath = 'data/defi-catalog/v3/sources/workflow-extensions.json';
+    const input = { sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) };
+    const admissions = JSON.parse(readFileSync(resolve(root, 'v3/admissions.json'), 'utf8'));
+    const assembled = assembleCatalogFromSources(v2, [input], admissions);
+    const functions = buildReviewedManifest([assembled]).capabilities;
+    const additions = catalogDiff(v2, assembled);
+    expect(functions).toHaveLength(349);
+    expect(additions).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(additions.added).toHaveLength(34);
+    expect(functions.filter((fn) => fn.executionScope)).toHaveLength(13);
+    expect(functions.filter((fn) => fn.protocol === 'uniswap-v3-position-manager' && fn.executionScope?.kind === 'same-target-multicall-v1')).toHaveLength(7);
+    expect(functions.filter((fn) => fn.protocol === 'morpho-blue' && fn.executionScope?.kind === 'empty-callback-data-v1')).toHaveLength(6);
+    expect(functions.filter((fn) => fn.type === 'contract_call' && fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
+    const outputPath = resolve(root, 'v3/catalog.json');
+    const written = validateCatalogDocument(JSON.parse(readFileSync(outputPath, 'utf8')));
+    expect(stableCatalogJson(written)).toBe(stableCatalogJson(assembled));
+    expect(catalogDiff(v2, written)).toEqual(additions);
+  });
+
+  it('fails closed on malformed v3 scope hashes, missing scope, and altered child bindings', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v2 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v2/catalog.json'), 'utf8')));
+    const sourcePath = 'data/defi-catalog/v3/sources/workflow-extensions.json';
+    const input = { sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) };
+    const admission = JSON.parse(readFileSync(resolve(root, 'v3/admissions.json'), 'utf8'));
+    const mutations = [
+      (copy: any) => { const binding = copy.snapshots[0].bindings[0]; binding.chainId = 10; },
+      (copy: any) => { const binding = copy.snapshots[0].bindings[0]; binding.contract = `0x${'0'.repeat(40)}`; },
+      (copy: any) => { const binding = copy.snapshots[0].bindings[0]; binding.signature = 'invented()'; },
+      (copy: any) => { const binding = copy.snapshots[0].bindings[0]; binding.abiHash = `0x${'0'.repeat(64)}`; },
+      (copy: any) => { copy.snapshots[0].bindings[0].unreviewed = true; },
+      (copy: any) => { copy.snapshots[0].bindings.find((binding: any) => binding.signature === 'multicall(bytes[])').executionScope = undefined; },
+      (copy: any) => { copy.snapshots[0].bindings.find((binding: any) => binding.executionScope?.kind === 'same-target-multicall-v1').executionScopeHash = `0x${'0'.repeat(64)}`; },
+      (copy: any) => { delete copy.snapshots[0].bindings.find((binding: any) => binding.executionScope?.kind === 'empty-callback-data-v1').executionScope; },
+      (copy: any) => { copy.snapshots[0].bindings.find((binding: any) => binding.executionScope?.kind === 'same-target-multicall-v1').executionScope.allowedChildren[0].capabilityId = 'unknown:child'; },
+      (copy: any) => { copy.snapshots[0].bindings.find((binding: any) => binding.executionScope?.kind === 'empty-callback-data-v1').executionScope.bytesArgIndex = 99; },
+    ];
+    for (const mutate of mutations) {
+      const copy = JSON.parse(JSON.stringify(admission));
+      mutate(copy);
+      expect(() => assembleCatalogFromSources(v2, [input], copy)).toThrow();
+    }
+  });
+
   it('validates a versioned nested fragment and renders deterministic TypeScript without runtime imports', () => {
     const fragment = validateCatalogDocument(valid);
     expect(stableCatalogJson(fragment)).toBe(stableCatalogJson(validateCatalogDocument(JSON.parse(stableCatalogJson(fragment)))));
@@ -216,5 +265,21 @@ describe('DeFi catalog generator', () => {
       const after = validateCatalogDocument({ schemaVersion: 1, chains: [{ ...before.chains[0], contracts: [{ ...before.chains[0].contracts[0], functions: before.chains[0].contracts[0].functions.map((item) => item.capabilityId === fn.capabilityId ? { ...item, provenance } : item) }] }] });
       expect(catalogDiff(before, after)).toMatchObject({ authorityChanged: [], abiChanged: [], metadataChanged: [fn.capabilityId] });
     }
+  });
+
+  it('classifies finite execution-scope changes as authority changes while preserving scope-free legacy identity', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v2 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v2/catalog.json'), 'utf8')));
+    const v3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v3/catalog.json'), 'utf8')));
+    expect(catalogDiff(v2, v3)).toMatchObject({ authorityChanged: [], added: expect.any(Array) });
+    const wrapper = v3.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => fn.signature === 'multicall(bytes[])')!;
+    const scope = wrapper.executionScope!;
+    const children = scope.kind === 'same-target-multicall-v1' ? scope.allowedChildren.map((child, index) => index === 0 ? { ...child, capabilityId: `${child.capabilityId}:revised` } : child) : [];
+    const changed = { ...wrapper, executionScope: { ...scope, allowedChildren: children } };
+    const one = { chains: [{ chainId: wrapper.chainId, status: 'active' as const, contracts: [{ address: wrapper.contract, status: 'active' as const, functions: [wrapper] }] }] };
+    const two = { chains: [{ chainId: wrapper.chainId, status: 'active' as const, contracts: [{ address: wrapper.contract, status: 'active' as const, functions: [changed] }] }] };
+    expect(catalogDiff(one, two).authorityChanged).toEqual([wrapper.capabilityId]);
+    const scopeFree = v2.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => !fn.executionScope)!;
+    expect(catalogDiff({ chains: [{ chainId: scopeFree.chainId, status: 'active', contracts: [{ address: scopeFree.contract, status: 'active', functions: [scopeFree] }] }] }, { chains: [{ chainId: scopeFree.chainId, status: 'active', contracts: [{ address: scopeFree.contract, status: 'active', functions: [{ ...scopeFree, executionScope: undefined }] }] }] }).authorityChanged).toEqual([]);
   });
 });

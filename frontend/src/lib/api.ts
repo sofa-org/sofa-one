@@ -358,6 +358,26 @@ export interface DefiCapabilitiesResponse {
   capabilities: DefiCapability[];
 }
 
+export interface DefiCapabilityBundle {
+  bundleId: string;
+  version: string;
+  label: string;
+  chainIds: number[];
+  capabilityIds: string[];
+  fingerprint: string;
+  warnings: string[];
+  limitations: string[];
+  available: boolean;
+  unavailableCapabilityIds: string[];
+}
+
+export interface DefiCapabilityBundlesResponse {
+  schemaVersion: 1;
+  maxGrants: number;
+  currentCatalogManifestHash: string;
+  bundles: DefiCapabilityBundle[];
+}
+
 export interface UpdateApiKeyCapabilitiesResponse {
   id: string;
   allowedCapabilityIds: string[];
@@ -924,6 +944,10 @@ export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
 
 export async function listDefiCapabilitiesAuth(getToken: () => Promise<string | null>) {
   return authFetch<DefiCapabilitiesResponse>('/v1/defi-capabilities', getToken);
+}
+
+export async function listDefiCapabilityBundlesAuth(getToken: () => Promise<string | null>) {
+  return authFetch<DefiCapabilityBundlesResponse>('/v1/defi-capability-bundles', getToken);
 }
 
 export async function updateApiKeyCapabilitiesAuth(

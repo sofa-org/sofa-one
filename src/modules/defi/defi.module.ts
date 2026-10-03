@@ -6,6 +6,8 @@ import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from './registry/pr
 import { DefiGrantService } from './defi-grant.service';
 import { DefiPauseService } from './defi-pause.service';
 import { DefiPolicyService } from './defi-policy.service';
+import { DefiBundleService } from './bundles/bundle.service';
+import { DEFI_CAPABILITY_BUNDLES, PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './bundles/production-bundles';
 
-@Module({ imports: [SecurityEventModule], providers: [{ provide: DEFI_MANIFEST, useValue: PRODUCTION_DEFI_MANIFEST }, { provide: DEFI_CATALOG, useValue: PRODUCTION_DEFI_CATALOG }, DefiCatalogService, DefiGrantService, DefiPauseService, DefiPolicyService], exports: [DefiCatalogService, DefiGrantService, DefiPauseService, DefiPolicyService] })
+@Module({ imports: [SecurityEventModule], providers: [{ provide: DEFI_MANIFEST, useValue: PRODUCTION_DEFI_MANIFEST }, { provide: DEFI_CATALOG, useValue: PRODUCTION_DEFI_CATALOG }, { provide: DEFI_CAPABILITY_BUNDLES, useValue: PRODUCTION_DEFI_CAPABILITY_BUNDLES }, DefiCatalogService, DefiGrantService, DefiPauseService, DefiPolicyService, DefiBundleService], exports: [DefiCatalogService, DefiGrantService, DefiPauseService, DefiPolicyService, DefiBundleService] })
 export class DefiModule {}

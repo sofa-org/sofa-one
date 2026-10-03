@@ -10,10 +10,12 @@ jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
 
-import { ApiKeyController, DefiCapabilityController } from './api-key.controller';
+import { ApiKeyController, DefiCapabilityBundleController, DefiCapabilityController } from './api-key.controller';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
+import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
+import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 
 describe('ApiKeyController', () => {
   const apiKeyService = {
@@ -134,5 +136,22 @@ describe('DefiCapabilityController', () => {
     const controller = new DefiCapabilityController(catalog as any);
     await expect(controller.list()).resolves.toBe(response);
     expect(catalog.listMetadata).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DefiCapabilityBundleController', () => {
+  it('serves bundle metadata through the IAM/frontend-only guarded dashboard route', async () => {
+    const response = { schemaVersion: 1, maxGrants: 100, currentCatalogManifestHash: '0xmanifest', bundles: [] };
+    const service = { listMetadata: jest.fn().mockResolvedValue(response) };
+    const controller = new DefiCapabilityBundleController(service as any);
+    await expect(controller.list()).resolves.toBe(response);
+    expect(service.listMetadata).toHaveBeenCalledTimes(1);
+    expect(Reflect.getMetadata(GUARDS_METADATA, DefiCapabilityBundleController)).toEqual([OpenfortUserGuard, FrontendOnlyGuard]);
+    expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, DefiCapabilityBundleController)).toBe(true);
+    const listHandler = DefiCapabilityBundleController.prototype.list;
+    expect(Reflect.getMetadata(PATH_METADATA, DefiCapabilityBundleController)).toBe('v1/defi-capability-bundles');
+    expect(Reflect.getMetadata(PATH_METADATA, listHandler)).toBe('/');
+    expect(Reflect.getMetadata(METHOD_METADATA, listHandler)).toBe(0);
+    expect(Reflect.getMetadata(STEP_UP_KEY, listHandler)).toBeUndefined();
   });
 });

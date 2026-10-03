@@ -3,9 +3,11 @@ import { Prisma } from '@prisma/client';
 import { decodeFunctionData, encodeFunctionData, isAddress, keccak256, stringToHex, toFunctionSelector } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, defiPauseScopeKeysForCapability } from './defi.types';
+import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, defiPauseScopeKeysForCapability } from './defi.types';
 import { DefiCatalogService } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
+import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
+import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -19,14 +21,21 @@ export class DefiPolicyService {
     if (!Array.isArray(interactions) || interactions.length === 0) this.deny('DEFI_INVALID_PARAMETERS', context);
     const snapshotContext = freezeClone({ ...context, executionOwner: context.executionOwner.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() });
     const snapshotInteractions = interactions.map((interaction) => freezeClone(normalizeInteraction(interaction, snapshotContext)));
+    if (snapshotInteractions.length > MAX_DEFI_EXECUTION_NODES || snapshotInteractions.reduce((sum, call) => sum + Math.max(0, (call.data.length - 2) / 2), 0) > 65_536) this.deny('DEFI_INVALID_PARAMETERS', snapshotContext);
     const matches: DefiMatch[] = [];
+    const executionPlan: DefiExecutionPlanNode[] = [];
     for (const interaction of snapshotInteractions) {
       const fn = this.resolveInteraction(interaction, snapshotContext);
-      if (!snapshotContext.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, fn);
-      const pauseState = await this.readPauseState(snapshotContext, fn);
-      if (isPaused(pauseState, fn)) this.deny('DEFI_CAPABILITY_PAUSED', snapshotContext, fn);
-      this.assertCanonicalCall(interaction, fn, snapshotContext);
+      this.assertGrantedAndUnpaused(fn, snapshotContext, await this.readPauseState(snapshotContext, fn));
       matches.push(toMatch(fn));
+      const expanded = this.expandExecution(interaction, fn, snapshotContext, [matches.length - 1], executionPlan.length);
+      for (const node of expanded) {
+        if (!snapshotContext.allowedCapabilityIds.includes(node.match.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, this.catalog.functionForCapability(node.match.capabilityId));
+        const childFn = this.catalog.functionForCapability(node.match.capabilityId)!;
+        const state = await this.readPauseState(snapshotContext, childFn);
+        if (isPaused(state, childFn)) this.deny('DEFI_CAPABILITY_PAUSED', snapshotContext, childFn);
+        executionPlan.push(node);
+      }
     }
     const manifest = this.catalog.manifest();
     if (!reviewedManifestHashValid(manifest)) this.deny('DEFI_POLICY_UNAVAILABLE', snapshotContext);
@@ -37,6 +46,7 @@ export class DefiPolicyService {
       requiredPermission: 'canSendTransaction' as const,
       matches,
       interactions: snapshotInteractions,
+      executionPlan,
       manifestHash: manifest.manifestHash,
       requestCommitment: commitment,
     });
@@ -59,17 +69,25 @@ export class DefiPolicyService {
       ]);
       if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSendTransaction || !Array.isArray(key.allowedCapabilityIds)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       const manifest = this.catalog.manifest();
-      if (authorization.requiredPermission !== 'canSendTransaction' || !reviewedManifestHashValid(manifest) || manifest.manifestHash !== authorization.manifestHash || !Array.isArray(authorization.interactions) || !Array.isArray(authorization.matches) || authorization.interactions.length === 0 || authorization.interactions.length !== authorization.matches.length) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+       if (authorization.requiredPermission !== 'canSendTransaction' || !reviewedManifestHashValid(manifest) || manifest.manifestHash !== authorization.manifestHash || !Array.isArray(authorization.interactions) || !Array.isArray(authorization.matches) || !Array.isArray(authorization.executionPlan) || authorization.interactions.length === 0 || authorization.interactions.length !== authorization.matches.length || authorization.interactions.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (buildDefiRequestCommitment(authorization.interactions, context, authorization.manifestHash) !== authorization.requestCommitment) this.deny('DEFI_POLICY_UNAVAILABLE', context);
-      const liveGrants = new Set<string>(key.allowedCapabilityIds);
-      for (let index = 0; index < authorization.interactions.length; index++) {
+       const liveGrants = new Set<string>(key.allowedCapabilityIds);
+       const recomputedPlan: DefiExecutionPlanNode[] = [];
+       for (let index = 0; index < authorization.interactions.length; index++) {
         const fn = this.resolveInteraction(authorization.interactions[index], context);
         const match = authorization.matches[index];
-        if (!match || !sameMatch(match, toMatch(fn)) || !context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
-        if (!liveGrants.has(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
-        if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
-        this.assertCanonicalCall(authorization.interactions[index], fn, context);
-      }
+         if (!match || !sameMatch(match, toMatch(fn)) || !context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
+         if (!liveGrants.has(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
+         if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
+          const expanded = this.expandExecution(authorization.interactions[index], fn, context, [index], recomputedPlan.length);
+         for (const node of expanded) {
+           const child = this.catalog.functionForCapability(node.match.capabilityId);
+           if (!child || !liveGrants.has(child.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, child);
+           if (isPaused(state, child)) this.deny('DEFI_CAPABILITY_PAUSED', context, child);
+           recomputedPlan.push(node);
+         }
+       }
+       if (!sameExecutionPlan(authorization.executionPlan, recomputedPlan, sameMatch)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
     } catch (error) {
       if (error instanceof DefiPolicyDenial) throw error;
       this.deny('DEFI_POLICY_UNAVAILABLE', context);
@@ -79,7 +97,7 @@ export class DefiPolicyService {
   async recordAllowedInTx(tx: DefiDbClient, authorization: DefiAuthorization) {
     return this.events.record({
       actorType: 'api_key', eventType: 'defi.capability_allowed', userId: authorization.context.userId, apiKeyId: authorization.context.apiKeyId, walletId: authorization.context.walletId, result: 'allowed',
-      metadata: { capabilities: authorization.matches.map((match) => ({ capabilityId: match.capabilityId, abiHash: match.abiHash, policy: match.policy })) } as Prisma.InputJsonValue,
+      metadata: { capabilities: authorization.executionPlan.map((node) => ({ capabilityId: node.match.capabilityId, abiHash: node.match.abiHash, policy: node.match.policy, path: node.path, ...(node.match.executionScopeHash ? { executionScopeHash: node.match.executionScopeHash } : {}) })) } as Prisma.InputJsonValue,
     }, tx, { deferExport: true });
   }
 
@@ -119,18 +137,69 @@ export class DefiPolicyService {
   }
 
   private assertCanonicalCall(interaction: DefiInteraction, fn: DefiFunctionPolicy, context: DefiExecutionContext): void {
-    let args: readonly unknown[];
+    this.assertNativeValue(interaction, fn, context);
+    this.decodeCanonicalArgs(interaction, fn, context);
+  }
+
+  private assertNativeValue(interaction: DefiInteraction, fn: DefiFunctionPolicy, context: DefiExecutionContext): void {
+    const value = parseNativeValue(interaction.value, context, fn);
+    if (fn.abi.stateMutability !== 'payable' && value !== 0n) this.deny('DEFI_INVALID_PARAMETERS', context, fn);
+  }
+
+  private assertGrantedAndUnpaused(fn: DefiFunctionPolicy, context: DefiExecutionContext, state: { pausedScopeKeys: string[] }): void {
+    if (!context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
+    if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
+  }
+
+  /** Expands only the two closed scope languages; never recursively interprets child calldata. */
+  private expandExecution(root: DefiInteraction, rootFn: DefiFunctionPolicy, context: DefiExecutionContext, path: number[], alreadyPlanned: number): DefiExecutionPlanNode[] {
+    const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn) });
+    const scope = rootFn.executionScope;
+    if (!scope) {
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      this.assertCanonicalCall(root, rootFn, context);
+      return [rootNode];
+    }
+    if (scope.kind === 'empty-callback-data-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      const args = this.decodeCanonicalArgs(root, rootFn, context);
+      const index = scope.bytesArgIndex;
+      if (rootFn.abi.inputs[index]?.type !== 'bytes' || args[index] !== '0x') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind !== 'same-target-multicall-v1' || rootFn.signature !== 'multicall(bytes[])' || rootFn.abi.inputs.length !== 1 || rootFn.abi.inputs[0].type !== 'bytes[]' || rootFn.abi.outputs?.length !== 1 || rootFn.abi.outputs[0].type !== 'bytes[]' || rootFn.abi.stateMutability !== 'payable') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+    let count: number;
+    try { count = preflightBytesArray(root.data, scope.bytesArrayArgIndex); }
+    catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+    if (count === 0 || alreadyPlanned + count + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+    this.assertNativeValue(root, rootFn, context);
+    const args = this.decodeCanonicalArgs(root, rootFn, context);
+    const calls = args[scope.bytesArrayArgIndex];
+    if (!Array.isArray(calls) || calls.length !== count) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+    const contract = this.catalog.activeChain(context.chainId)?.contracts.find((entry) => entry.address.toLowerCase() === root.to.toLowerCase());
+    if (!contract) this.deny('DEFI_CONTRACT_NOT_ALLOWED', context, rootFn);
+    const nodes: DefiExecutionPlanNode[] = [rootNode];
+    for (let childIndex = 0; childIndex < calls.length; childIndex++) {
+      const data = calls[childIndex];
+      if (typeof data !== 'string' || !/^0x[0-9a-f]{8}/i.test(data)) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+      const selector = data.slice(0, 10).toLowerCase();
+      const childFn = contract.functions.find((candidate) => candidate.status === 'active' && candidate.type === 'contract_call' && toFunctionSelector(candidate.signature).toLowerCase() === selector);
+      if (!childFn || !NPM_MULTICALL_CHILD_SIGNATURES.includes(childFn.signature) || childFn.executionScope || !scope.allowedChildren.some((child) => child.capabilityId === childFn.capabilityId && child.signature === childFn.signature && child.abiHash.toLowerCase() === functionAbiHash(childFn))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+      const interaction: DefiInteraction = { to: root.to, data, value: root.value };
+      this.assertCanonicalCall(interaction, childFn, context);
+      nodes.push(deepFreeze({ path: [...path, childIndex], data: data.toLowerCase() as `0x${string}`, match: toMatch(childFn) }));
+    }
+    return nodes;
+  }
+
+  private decodeCanonicalArgs(interaction: DefiInteraction, fn: DefiFunctionPolicy, context: DefiExecutionContext): readonly unknown[] {
     try {
       const decoded = decodeFunctionData({ abi: [fn.abi], data: interaction.data as `0x${string}` });
       const canonical = encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: decoded.args } as never);
       if (decoded.functionName !== fn.functionName || canonical.toLowerCase() !== interaction.data.toLowerCase()) this.deny('DEFI_INVALID_PARAMETERS', context, fn);
-      args = decoded.args as readonly unknown[];
-    } catch (error) {
-      if (error instanceof DefiPolicyDenial) throw error;
-      this.deny('DEFI_INVALID_PARAMETERS', context, fn);
-    }
-    const value = parseNativeValue(interaction.value, context, fn);
-    if (fn.abi.stateMutability !== 'payable' && value !== 0n) this.deny('DEFI_INVALID_PARAMETERS', context, fn);
+      return decoded.args as readonly unknown[];
+    } catch (error) { if (error instanceof DefiPolicyDenial) throw error; this.deny('DEFI_INVALID_PARAMETERS', context, fn); }
   }
 
   private async readPauseState(context: DefiExecutionContext, fn: DefiFunctionPolicy) {
@@ -196,11 +265,11 @@ function denyShape(context: DefiExecutionContext): never {
 }
 
 function sameMatch(actual: DefiMatch, expected: DefiMatch): boolean {
-  return actual.capabilityId === expected.capabilityId && actual.type === expected.type && actual.chainId === expected.chainId && actual.contract.toLowerCase() === expected.contract.toLowerCase() && actual.functionSignature === expected.functionSignature && actual.abiHash === expected.abiHash;
+  return actual.capabilityId === expected.capabilityId && actual.type === expected.type && actual.chainId === expected.chainId && actual.contract.toLowerCase() === expected.contract.toLowerCase() && actual.functionSignature === expected.functionSignature && actual.abiHash === expected.abiHash && actual.executionScopeHash === expected.executionScopeHash && JSON.stringify(actual.policy ?? null) === JSON.stringify(expected.policy ?? null);
 }
 
 function toMatch(fn: DefiFunctionPolicy): DefiMatch {
-  return deepFreeze({ capabilityId: fn.capabilityId, type: fn.type, chainId: fn.chainId, contract: fn.contract, functionSignature: fn.signature, abiHash: functionAbiHash(fn), ...(fn.policy ? { policy: cloneValue(fn.policy) } : {}) });
+  return deepFreeze({ capabilityId: fn.capabilityId, type: fn.type, chainId: fn.chainId, contract: fn.contract, functionSignature: fn.signature, abiHash: functionAbiHash(fn), ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}), ...(fn.policy ? { policy: cloneValue(fn.policy) } : {}) });
 }
 
 function freezeClone<T>(value: T): T {

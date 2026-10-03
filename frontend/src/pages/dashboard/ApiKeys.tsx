@@ -7,6 +7,7 @@ import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
   listApiKeysAuth,
   listDefiCapabilitiesAuth,
+  listDefiCapabilityBundlesAuth,
   createApiKeyAuth,
   updateApiKeyCapabilitiesAuth,
   revokeApiKeyAuth,
@@ -24,10 +25,12 @@ import {
   type ApiKeyLifecycleStatus,
   type ApiKeyRecord,
   type DefiCapability,
+  type DefiCapabilityBundle,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
+import { createBundlePreview, getBundlePreviewDiff, validateBundlePreview, type BundlePreviewSnapshot } from './capability-bundle-preview';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
@@ -177,6 +180,12 @@ export default function ApiKeysPage() {
   const [capabilities, setCapabilities] = useState<DefiCapability[]>([]);
   const [capabilitiesLoading, setCapabilitiesLoading] = useState(true);
   const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null);
+  const [bundles, setBundles] = useState<DefiCapabilityBundle[]>([]);
+  const [bundlesLoading, setBundlesLoading] = useState(true);
+  const [bundlesError, setBundlesError] = useState<string | null>(null);
+  const [selectedBundleKey, setSelectedBundleKey] = useState('');
+  const [bundlePreview, setBundlePreview] = useState<BundlePreviewSnapshot | null>(null);
+  const [bundlePreviewError, setBundlePreviewError] = useState<string | null>(null);
   const [newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds] = useState<string[]>([]);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [editingCapabilityIds, setEditingCapabilityIds] = useState<string[]>([]);
@@ -276,6 +285,21 @@ export default function ApiKeysPage() {
     }
   }, [getToken]);
 
+  const fetchBundles = useCallback(async () => {
+    setBundlesLoading(true);
+    setBundlesError(null);
+    try {
+      const response = await listDefiCapabilityBundlesAuth(getToken);
+      if (response.schemaVersion !== 1 || !Number.isSafeInteger(response.maxGrants) || response.maxGrants < 1 || response.maxGrants > MAX_CAPABILITY_GRANTS || !Array.isArray(response.bundles)) throw new Error('The capability bundle response is invalid.');
+      setBundles(response.bundles);
+    } catch (err: unknown) {
+      setBundlesError(getApiErrorMessage(err));
+      setBundles([]);
+    } finally {
+      setBundlesLoading(false);
+    }
+  }, [getToken]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated || !user) {
@@ -284,7 +308,31 @@ export default function ApiKeysPage() {
     }
     fetchKeys();
     fetchCapabilities();
-  }, [authLoading, fetchCapabilities, fetchKeys, isAuthenticated, user]);
+    fetchBundles();
+  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, isAuthenticated, user]);
+
+  function startBundlePreview(mode: 'add' | 'replace', target: string, ids: string[]) {
+    const bundle = bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey);
+    if (!bundle) return;
+    setBundlePreviewError(null);
+    setBundlePreview(createBundlePreview(mode, target, ids, bundle));
+  }
+
+  function applyBundlePreview(target: string, ids: string[], setter: (value: string[]) => void) {
+    if (!bundlePreview) return;
+    const invalidReason = validateBundlePreview(bundlePreview, target, ids, bundles, capabilities, MAX_CAPABILITY_GRANTS);
+    if (invalidReason) { setBundlePreviewError(invalidReason); return; }
+    const bundle = bundles.find((item) => item.bundleId === bundlePreview.bundleId && item.version === bundlePreview.version);
+    const { removed } = getBundlePreviewDiff(bundlePreview);
+    const removedDetails = removed.map((id) => {
+      const capability = capabilities.find((item) => item.capabilityId === id);
+      return `${capability?.label || capability?.functionSignature || 'Unavailable function'} (${id})`;
+    });
+    if (bundlePreview.mode === 'replace' && !confirm(`Replace the full selection with ${bundle?.label ?? bundlePreview.bundleId} v${bundlePreview.version}? This removes ${removed.length} existing grant${removed.length === 1 ? '' : 's'}${removedDetails.length ? `: ${removedDetails.join('; ')}` : ''}. This only changes the form; saving remains a separate step.`)) return;
+    setter([...bundlePreview.ids]);
+    setBundlePreview(null);
+    setBundlePreviewError(null);
+  }
 
   useEffect(() => {
     if (!newRawKey) return;
@@ -300,6 +348,11 @@ export default function ApiKeysPage() {
   useEffect(() => {
     persistKeyStatusFilter(keyStatusFilter);
   }, [keyStatusFilter]);
+
+  useEffect(() => {
+    setBundlePreview(null);
+    setBundlePreviewError(null);
+  }, [editingKeyId]);
 
   async function handleCreate() {
     if (hasReachedKeyLimit) {
@@ -445,7 +498,7 @@ export default function ApiKeysPage() {
     setter(ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
   }
 
-  function capabilityChoices(ids: string[], setter: (value: string[]) => void, disabled = false) {
+  function capabilityChoices(ids: string[], setter: (value: string[]) => void, target: string, disabled = false) {
     if (capabilitiesLoading) return <p className="text-sm text-brand-muted">Loading capability catalog…</p>;
     if (capabilitiesError) return <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div>;
     const visibleCapabilities = capabilities.filter((capability) => capability.status === 'active' || ids.includes(capability.capabilityId));
@@ -469,6 +522,23 @@ export default function ApiKeysPage() {
     };
     const filtered = Boolean(query || capabilityChainFilter !== 'all' || capabilityGroupFilter !== 'all' || capabilitySelectedOnly);
     return <div className="space-y-3">
+      <div className="rounded-lg border border-brand-border bg-white p-3">
+        <p className="text-sm font-semibold text-brand-text">Start with a capability bundle</p>
+        <p className="mt-1 text-xs leading-5 text-brand-muted">Bundles are fixed function selections, not guaranteed workflows or asset/funding support. Review every function before changing this form.</p>
+        {bundlesLoading ? <p className="mt-2 text-xs text-brand-muted">Loading published bundles… Individual function selection is available meanwhile.</p> : bundlesError ? <p className="mt-2 text-xs text-amber-800">Bundles could not be loaded. Individual function selection is still available. <button type="button" onClick={fetchBundles} className="underline">Retry</button></p> : bundles.length === 0 ? <p className="mt-2 text-xs text-brand-muted">No bundles are currently published. You can still choose individual functions.</p> : <div className="mt-3 flex flex-wrap gap-2">
+          <select aria-label="Choose capability bundle" value={selectedBundleKey} onChange={(event) => { setSelectedBundleKey(event.target.value); setBundlePreview(null); setBundlePreviewError(null); }} className="min-w-0 flex-1 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm"><option value="">Choose a bundle</option>{bundles.map((bundle) => <option key={`${bundle.bundleId}@${bundle.version}`} value={`${bundle.bundleId}@${bundle.version}`}>{bundle.label} · v{bundle.version}{bundle.available ? '' : ' · unavailable'}</option>)}</select>
+          <button type="button" disabled={disabled || !selectedBundleKey || !bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey)?.available} onClick={() => startBundlePreview('add', target, ids)} className="rounded-full border border-brand-border px-3 py-2 text-xs font-semibold hover:border-brand-accent disabled:opacity-50">Add to selection</button>
+          <button type="button" disabled={disabled || !selectedBundleKey || !bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey)?.available} onClick={() => startBundlePreview('replace', target, ids)} className="rounded-full border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50">Replace selection</button>
+        </div>}
+        {selectedBundleKey && (() => { const bundle = bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey); if (!bundle) return null; const memberUnavailable = !bundle.capabilityIds.every((id) => capabilities.some((capability) => capability.capabilityId === id && capability.status === 'active')); return <div className="mt-3 rounded-lg bg-brand-bg/70 p-3 text-xs leading-5">
+          <p className="font-semibold text-brand-text">{bundle.label} · v{bundle.version} · {bundle.capabilityIds.length} exact function grants</p><p className="break-all font-mono text-[10px] text-brand-muted">{bundle.fingerprint}</p>
+          <p className="mt-1 text-brand-muted">Chains: {bundle.chainIds.map((chain) => SUPPORTED_CHAINS.find((item) => item.id === chain)?.name ?? `Chain ${chain}`).join(', ')}</p>
+          {(!bundle.available || memberUnavailable) && <p className="mt-2 font-semibold text-red-800">Unavailable: {bundle.unavailableCapabilityIds.join(', ') || 'one or more functions are missing or inactive in the current catalog'}. This bundle cannot be applied.</p>}
+          {[...bundle.warnings, ...bundle.limitations].length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-900">{[...bundle.warnings, ...bundle.limitations].map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>}
+          <details className="mt-2"><summary className="cursor-pointer font-semibold">Inspect all functions ({bundle.capabilityIds.length})</summary><ul className="mt-2 max-h-56 space-y-1 overflow-auto">{bundle.capabilityIds.map((id) => { const cap = capabilities.find((item) => item.capabilityId === id); return <li key={id} className="break-all">{cap ? `${cap.label} · ${cap.functionSignature || 'Contract call'} · ${cap.contract} · ${SUPPORTED_CHAINS.find((item) => item.id === cap.chainId)?.name ?? `Chain ${cap.chainId}`}` : id} <code className="text-[10px] text-brand-muted">{id}</code></li>; })}</ul></details>
+        </div>; })()}
+        {bundlePreview?.target === target && (() => { const bundle = bundles.find((item) => item.bundleId === bundlePreview.bundleId && item.version === bundlePreview.version); const { added, removed, unchanged } = getBundlePreviewDiff(bundlePreview); const invalidReason = validateBundlePreview(bundlePreview, target, ids, bundles, capabilities, MAX_CAPABILITY_GRANTS); const labelFor = (id: string) => { const capability = capabilities.find((item) => item.capabilityId === id); return capability ? `${capability.label || capability.functionSignature || id} · ${id}` : `Unavailable function · ${id}`; }; return <div role="region" aria-label="Bundle selection preview" className="mt-3 rounded-lg border border-brand-accent/40 bg-white p-3 text-xs leading-5"><p className="font-semibold text-brand-text">Preview {bundlePreview.mode === 'add' ? 'add' : 'replacement'} · {bundle?.label} v{bundlePreview.version}</p><p>{added.length} added · {removed.length} removed · {unchanged.length} unchanged · {bundlePreview.ids.length}/{MAX_CAPABILITY_GRANTS} grants</p>{[['Added', added], ['Removed', removed], ['Unchanged', unchanged]].map(([heading, values]) => <details key={heading as string} className="mt-2"><summary className="cursor-pointer font-semibold">{heading as string} ({(values as string[]).length})</summary><ul className="mt-1 max-h-40 space-y-1 overflow-auto">{(values as string[]).map((id) => <li key={id} className="break-all">{labelFor(id)}</li>)}</ul></details>)}{invalidReason && <p role="alert" className="mt-2 font-semibold text-red-800">{invalidReason}</p>}{bundlePreviewError && <p role="alert" className="mt-2 font-semibold text-red-800">{bundlePreviewError}</p>}<div className="mt-2 flex gap-2"><button type="button" disabled={disabled || Boolean(invalidReason)} onClick={() => applyBundlePreview(target, ids, setter)} className="rounded-full bg-brand-text px-3 py-1.5 font-semibold text-white disabled:opacity-50">Apply to form</button><button type="button" onClick={() => { setBundlePreview(null); setBundlePreviewError(null); }} className="rounded-full border border-brand-border px-3 py-1.5">Cancel</button></div></div>; })()}
+      </div>
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
         <label className="relative block"><span className="sr-only">Search functions</span><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" /><input type="search" value={capabilitySearch} onChange={(event) => setCapabilitySearch(event.target.value)} placeholder="Search function, protocol, address or ID" className="w-full rounded-lg border border-brand-border bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent" /></label>
         <select aria-label="Filter by chain" value={capabilityChainFilter} onChange={(event) => setCapabilityChainFilter(event.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text"><option value="all">All chains</option>{chains.map((chainId) => <option key={chainId} value={chainId}>{SUPPORTED_CHAINS.find((chain) => chain.id === chainId)?.name ?? `Chain ${chainId}`}</option>)}</select>
@@ -614,7 +684,7 @@ export default function ApiKeysPage() {
           <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
             <div><p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Function permissions</p><p className="mt-1 text-xs leading-5 text-brand-muted">Grant only the exact chain, contract address and function this key needs. Each grant uses a fixed ABI; signing and broad multicall commands are not available here. The catalog may not cover every chain or protocol. No selection means no catalog operations are allowed.</p></div>
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">You choose the authority for this key. A grant does not guarantee safe protocol limits or prices: your caller chooses assets, amounts, recipients, native value, borrow risk, minimum output and deadlines. ERC-20 approval calls can approve any spender, for any amount including unlimited, even when no action grant is selected. Review your caller and each transaction.</div>
-            {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds)}
+            {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds, 'create')}
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
             <div className="space-y-2">
@@ -950,7 +1020,7 @@ export default function ApiKeysPage() {
                         <p className="text-xs leading-5 text-brand-muted">Select the exact functions this key may call. Saving replaces all current grants.</p>
                         <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">Your caller chooses recipients, assets, amounts and native value (only payable functions accept native value), as well as protocol-specific minimum output and deadlines. The platform does not financially validate these choices; review your caller and each transaction.</p>
                       {capabilityError && <p role="alert" className="text-sm text-red-700">{capabilityError}</p>}
-                      {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, capabilitySaving)}
+                      {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, `key:${key.id}`, capabilitySaving)}
                       <div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleSaveCapabilities(key)} disabled={capabilitySaving || capabilitiesLoading || Boolean(capabilitiesError)} className="inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{capabilitySaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Save grants</button><button type="button" onClick={() => { setEditingKeyId(null); setCapabilityError(null); }} disabled={capabilitySaving} className="rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text">Cancel</button></div>
                     </div>
                   )}
