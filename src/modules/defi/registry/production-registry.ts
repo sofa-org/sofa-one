@@ -8,6 +8,10 @@ import { buildStakingRegistry } from './staking';
 import { buildMorphoBlueRegistry } from './morpho-blue';
 import { buildPancakeV2Registry } from './pancake-v2';
 import { buildStakingExitRegistry } from './staking-exit';
+import { buildSparkLendRegistry } from './spark-lend';
+import { buildVenusRegistry } from './venus';
+import { buildSushiV2Registry } from './sushi-v2';
+import { buildExpansionTokenApprovalRegistry } from './expansion-token-approvals';
 
 export const PRODUCTION_DEFI_MANIFEST = buildReviewedManifest([
   buildDexRegistry(),
@@ -19,6 +23,10 @@ export const PRODUCTION_DEFI_MANIFEST = buildReviewedManifest([
   buildMorphoBlueRegistry(),
   buildPancakeV2Registry(),
   buildApprovalFragment(),
+  buildSparkLendRegistry(),
+  buildVenusRegistry(),
+  buildSushiV2Registry(),
+  buildExpansionTokenApprovalRegistry(),
 ]);
 export const PRODUCTION_DEFI_CATALOG = PRODUCTION_DEFI_MANIFEST.chains;
 export const PRODUCTION_DEFI_APPROVALS = Object.freeze(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) =>
