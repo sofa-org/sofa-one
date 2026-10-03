@@ -3,14 +3,16 @@ import { createHash } from 'node:crypto';
 import { adaptFrozenBaseline, compactJsonPropertyHash } from './baseline-adapter';
 import { computeCoverage } from './calculator';
 import type { CoverageManifestCapability } from './types';
-import { functionAbiHash } from '../registry/defi-manifest';
+import { buildReviewedManifest, functionAbiHash } from '../registry/defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../registry/production-registry';
 
 const market = JSON.parse(readFileSync('data/defi-coverage/market-snapshot.json', 'utf8'));
 const marketText = readFileSync('data/defi-coverage/market-snapshot.json', 'utf8');
 const classification = JSON.parse(readFileSync('data/defi-coverage/discovery-classification.json', 'utf8'));
 const workflows = JSON.parse(readFileSync('data/defi-coverage/workflow-baseline.json', 'utf8'));
-const manifest: CoverageManifestCapability[] = PRODUCTION_DEFI_MANIFEST.capabilities.map((capability) => ({
+const m1Catalog = JSON.parse(readFileSync('data/defi-catalog/v1/catalog.json', 'utf8'));
+const M1_REVIEWED_MANIFEST = buildReviewedManifest([{ chains: m1Catalog.chains }]);
+const manifest: CoverageManifestCapability[] = M1_REVIEWED_MANIFEST.capabilities.map((capability) => ({
   capabilityId: capability.capabilityId,
   status: capability.status,
   type: capability.type,
@@ -27,7 +29,7 @@ function sources(overrides: Partial<{ market: any; classification: any; workflow
     classification: overrides.classification ?? classification,
     workflows: overrides.workflows ?? workflows,
     manifest: overrides.manifest ?? manifest,
-    manifestHash: PRODUCTION_DEFI_MANIFEST.manifestHash,
+    manifestHash: M1_REVIEWED_MANIFEST.manifestHash,
     sourceRosterCanonicalSha256: compactJsonPropertyHash(marketText, 'protocolUniverse'),
     sourceFileDigests: {
       'data/defi-coverage/market-snapshot.json': digest(JSON.stringify(overrides.market ?? market)),
@@ -38,6 +40,12 @@ function sources(overrides: Partial<{ market: any; classification: any; workflow
 }
 
 describe('frozen M1 baseline adapter', () => {
+  it('uses the immutable 202-capability v1 catalog rather than the mutable production catalog', () => {
+    expect(M1_REVIEWED_MANIFEST.capabilities).toHaveLength(202);
+    expect(M1_REVIEWED_MANIFEST.manifestHash).toBe(workflows.snapshot.baselineManifestHash);
+    expect(PRODUCTION_DEFI_MANIFEST.manifestHash).not.toBe(M1_REVIEWED_MANIFEST.manifestHash);
+  });
+
   it('recomputes the frozen roster digest from the stored source array rather than JS-number serialization', () => {
     expect(compactJsonPropertyHash(marketText, 'protocolUniverse')).toBe('7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24');
   });

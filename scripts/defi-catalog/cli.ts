@@ -1,12 +1,45 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { assertBaselinePreserved, catalogDiff, renderGeneratedModule, validateBaseline, validateCatalogDocument } from '../../src/modules/defi/catalog-tooling/catalog-generator';
+import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
+import { assembleCatalogFromSources, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, renderGeneratedModule, validateBaseline, validateCatalogDocument } from '../../src/modules/defi/catalog-tooling/catalog-generator';
 
 const root = process.cwd();
-const inputPath = resolve(root, process.env.DEFI_CATALOG_INPUT ?? 'data/defi-catalog/v1/catalog.json');
 const baselinePath = resolve(root, 'data/defi-catalog/v1/pre-migration-baseline.json');
-const outputPath = resolve(root, process.env.DEFI_CATALOG_OUTPUT ?? 'src/modules/defi/registry/generated/production-catalog.ts');
-const mode = process.argv[2];
+const outputPath = resolve(root, 'src/modules/defi/registry/generated/production-catalog.ts');
+const sourcePaths = ['data/defi-catalog/v2/sources/dex.json', 'data/defi-catalog/v2/sources/lending-yield.json'];
+const admissionsPath = resolve(root, 'data/defi-catalog/v2/admissions.json');
+const assembledCatalogPath = resolve(root, 'data/defi-catalog/v2/catalog.json');
+
+function resolveSourceCatalogPath(rootPath: string, inputPath: string): string {
+  const repositoryRoot = realpathSync(rootPath);
+  const dataRoot = realpathSync(resolve(repositoryRoot, 'data/defi-catalog'));
+  const sourcePath = realpathSync(resolve(repositoryRoot, inputPath));
+  const sourceRelative = relative(dataRoot, sourcePath);
+  const selectedRelative = inputPath.replace(/^data\/defi-catalog\//, '').replaceAll('/', sep);
+  if (sourceRelative !== selectedRelative || sourceRelative.startsWith(`..${sep}`) || sourceRelative === '..' || !/^v[1-9][0-9]*[\\/]catalog\.json$/.test(sourceRelative)) {
+    throw new Error('Catalog input must resolve inside data/defi-catalog/vN/catalog.json');
+  }
+  return sourcePath;
+}
+
+function assertFixedOutputPath(): void {
+  const repositoryRoot = realpathSync(root);
+  const expectedParent = resolve(repositoryRoot, 'src/modules/defi/registry/generated');
+  const actualParent = realpathSync(dirname(outputPath));
+  let outputIsSymlink = false;
+  try { outputIsSymlink = lstatSync(outputPath).isSymbolicLink(); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  if (actualParent !== expectedParent || outputIsSymlink) {
+    throw new Error('Generated output path must be the repository-owned production catalog file');
+  }
+}
+
+function assertFixedFilePath(path: string, relativePath: string): string {
+  const repositoryRoot = realpathSync(root);
+  const expected = resolve(repositoryRoot, relativePath);
+  const actual = realpathSync(path);
+  if (actual !== expected || lstatSync(path).isSymbolicLink()) throw new Error(`Input path must be the fixed repository-owned file ${relativePath}`);
+  return actual;
+}
 
 function readJson(path: string): unknown {
   try { return JSON.parse(readFileSync(path, 'utf8')) as unknown; }
@@ -14,22 +47,34 @@ function readJson(path: string): unknown {
 }
 
 try {
+  const options = parseCatalogCliArgs(process.argv.slice(2));
+  if (options.mode === 'assemble') {
+    if (options.inputPath !== 'data/defi-catalog/v1/catalog.json') throw new Error('assemble does not accept --input; source paths and output are fixed');
+    const baseline = validateBaseline(readJson(assertFixedFilePath(baselinePath, 'data/defi-catalog/v1/pre-migration-baseline.json')));
+    const inputs = sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
+    const admissions = readJson(assertFixedFilePath(admissionsPath, 'data/defi-catalog/v2/admissions.json'));
+    const assembled = assembleCatalogFromSources({ chains: baseline.chains }, inputs, admissions);
+    const target = assertFixedFilePath(assembledCatalogPath, 'data/defi-catalog/v2/catalog.json');
+    writeFileSync(target, `${JSON.stringify({ schemaVersion: 1, chains: assembled.chains }, null, 2)}\n`, 'utf8');
+    process.stdout.write(`Assembled ${assembled.chains.reduce((count, chain) => count + chain.contracts.reduce((sum, contract) => sum + contract.functions.length, 0), 0)} source-qualified definitions.\n`);
+  } else {
+  const inputPath = resolveSourceCatalogPath(root, options.inputPath);
+  assertFixedOutputPath();
   const current = validateCatalogDocument(readJson(inputPath));
   const baseline = validateBaseline(readJson(baselinePath));
   const diff = catalogDiff({ chains: baseline.chains }, current);
-  if (mode === 'diff') {
+  if (options.mode === 'diff') {
     process.stdout.write(`${JSON.stringify(diff, null, 2)}\n`);
-  } else if (mode === 'generate') {
+  } else if (options.mode === 'generate') {
     assertBaselinePreserved(current, baseline);
     writeFileSync(outputPath, renderGeneratedModule(current), 'utf8');
-  } else if (mode === 'check') {
+  } else if (options.mode === 'check') {
     assertBaselinePreserved(current, baseline);
     const expected = renderGeneratedModule(current);
     const actual = readFileSync(outputPath, 'utf8');
-    if (actual !== expected) throw new Error('Generated catalog is stale; run npm run defi:catalog:generate');
+    if (actual !== expected) throw new Error(`Generated catalog is stale; run npm run defi:catalog:generate -- --input ${options.inputPath}`);
     process.stdout.write('Generated DeFi catalog is current.\n');
-  } else {
-    throw new Error('Usage: cli.ts <generate|check|diff>');
+  }
   }
 } catch (error) {
   process.stderr.write(`${(error as Error).message}\n`);

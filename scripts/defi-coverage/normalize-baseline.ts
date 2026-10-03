@@ -3,8 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { adaptFrozenBaseline, compactJsonPropertyHash } from '../../src/modules/defi/coverage-tooling/baseline-adapter';
 import { computeCoverage } from '../../src/modules/defi/coverage-tooling/calculator';
-import { PRODUCTION_DEFI_MANIFEST } from '../../src/modules/defi/registry/production-registry';
-import { functionAbiHash } from '../../src/modules/defi/registry/defi-manifest';
+import { buildReviewedManifest, functionAbiHash } from '../../src/modules/defi/registry/defi-manifest';
 
 const ROOT = process.cwd();
 const PATHS = {
@@ -22,14 +21,17 @@ async function run(): Promise<void> {
   const checkMode = args.includes('--check');
   const sourcePaths = [PATHS.market, PATHS.classification, PATHS.workflows] as const;
   const [marketBytes, classificationBytes, workflowBytes] = await Promise.all(sourcePaths.map((path) => readFile(resolve(ROOT, path))));
+  const m1CatalogBytes = await readFile(resolve(ROOT, 'data/defi-catalog/v1/catalog.json'));
+  const m1Catalog = JSON.parse(m1CatalogBytes.toString('utf8'));
+  const m1Manifest = buildReviewedManifest([{ chains: m1Catalog.chains }]);
   const digests = Object.fromEntries(sourcePaths.map((path, index) => [path, createHash('sha256').update([marketBytes, classificationBytes, workflowBytes][index]).digest('hex')]));
   const projection = adaptFrozenBaseline({
     market: JSON.parse(marketBytes.toString('utf8')),
     classification: JSON.parse(classificationBytes.toString('utf8')),
     workflows: JSON.parse(workflowBytes.toString('utf8')),
-    manifestHash: PRODUCTION_DEFI_MANIFEST.manifestHash,
+    manifestHash: m1Manifest.manifestHash,
     sourceRosterCanonicalSha256: compactJsonPropertyHash(marketBytes.toString('utf8'), 'protocolUniverse'),
-    manifest: PRODUCTION_DEFI_MANIFEST.capabilities.map((capability) => ({
+    manifest: m1Manifest.capabilities.map((capability) => ({
       capabilityId: capability.capabilityId,
       status: capability.status,
       type: capability.type,
@@ -41,7 +43,7 @@ async function run(): Promise<void> {
     })),
     sourceFileDigests: digests,
   });
-  const report = computeCoverage(projection.input, PRODUCTION_DEFI_MANIFEST.capabilities.map((capability) => ({
+  const report = computeCoverage(projection.input, m1Manifest.capabilities.map((capability) => ({
     capabilityId: capability.capabilityId,
     status: capability.status,
     type: capability.type,

@@ -70,6 +70,19 @@ formatting, throttling, request correlation) globally.
   `EoaExecutionPolicyService`, `SessionKeyPolicyService`) isolate high-risk rules and record
   `SecurityEvent` telemetry; `@Optional()` injection lets optional security/billing services
   degrade gracefully (never fail-open).
+- **DeFi catalog (offline data, unchanged runtime path).** Production loads a generated static
+  catalog of 315 exact functions (292 actions, 23 independent approvals), preserving the
+  202-definition v1 catalog and appending 113 source-qualified functions through explicit
+  SHA-256/ABI admission bindings. Existing API-key grants are not copied or broadened. M1 is
+  committed; parent full build/unit validation and v2 catalog CLI checks passed. Focused R1
+  validation passed (4 suites, 41 tests, 6.377 seconds). M2 Oracle Gate 2 passed on attempt 2/3
+  after resolving R1, with no new material risks. Parent M2 local commit is authorized and
+  upcoming; M3 follows that commit. The reconciled coverage report retains all 8,476
+  rows, 8,472 unresolved proxies, seven unmatched IDs, 3 observed-active DEX identities, 4 mapped
+  canonical identities including Compound V2 identity-only, one additional partial mapping, and
+  144 workflows/59 exact bindings. Compound V2 activity remains unresolved. The M2 coverage report
+  retains unresolved identity/workflow rows and does not establish the 90% objective; see
+  [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md).
 - **Unified security telemetry.** `security-events` is the single write path for
   `security_events` rows, with deterministic rule-based risk scoring (`SecurityRiskService`),
   multi-factor risk evaluation + enforcement (`RiskEvaluationService`), dashboard alert
