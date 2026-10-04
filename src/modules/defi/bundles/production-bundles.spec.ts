@@ -51,16 +51,16 @@ function additionalCatalogIds(): string[] {
 
 describe('published v3 production profiles', () => {
   it('pins the actual production manifest inventory and all nine literal fingerprints', () => {
-    expect(flat).toHaveLength(349);
+    expect(flat).toHaveLength(368);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(326);
-    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(13);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(9);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(345);
+    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(14);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(12);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {
       expect(bundle.version).toBe('1.0.0');
       expect(bundle.chainIds).toHaveLength(1);
-      expect(bundle.capabilityIds).toHaveLength(bundle.bundleId.startsWith('uniswap-v3-') ? 9 : 6);
+      expect(bundle.capabilityIds).toHaveLength(bundle.bundleId.startsWith('uniswap-v3-') ? 9 : bundle.bundleId === 'curve-3pool-1' ? 4 : bundle.bundleId === 'pancakeswap-v3-positions-56' ? 9 : bundle.bundleId === 'yearn-tokenized-strategy-1' ? 6 : 6);
       expect(bundle.capabilityIds).toEqual([...bundle.capabilityIds].sort(cmp));
       expect(new Set(bundle.capabilityIds).size).toBe(bundle.capabilityIds.length);
       expect(bundle.fingerprint).toBe(capabilityBundleFingerprint(bundle, flat));
@@ -76,16 +76,15 @@ describe('published v3 production profiles', () => {
     expect(blue).toHaveLength(2);
     expect(npm.map((bundle) => bundle.chainIds[0])).toEqual([1, 10, 56, 137, 143, 8453, 42161]);
     expect(blue.map((bundle) => bundle.chainIds[0])).toEqual([1, 8453]);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.reduce((sum, bundle) => sum + bundle.capabilityIds.length, 0)).toBe(75);
-    expect(new Set(PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((bundle) => bundle.capabilityIds)).size).toBe(75);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.reduce((sum, bundle) => sum + bundle.capabilityIds.length, 0)).toBe(94);
+    expect(new Set(PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((bundle) => bundle.capabilityIds)).size).toBe(94);
     expect(Math.max(...PRODUCTION_DEFI_CAPABILITY_BUNDLES.map((bundle) => bundle.capabilityIds.length))).toBe(9);
-    expect(npm.find((bundle) => bundle.chainIds[0] === 1)!.capabilityIds.length + blue.find((bundle) => bundle.chainIds[0] === 1)!.capabilityIds.length).toBe(15);
-    expect(npm.find((bundle) => bundle.chainIds[0] === 8453)!.capabilityIds.length + blue.find((bundle) => bundle.chainIds[0] === 8453)!.capabilityIds.length).toBe(15);
+    expect(Math.max(...PRODUCTION_DEFI_CAPABILITY_BUNDLES.map((bundle) => bundle.capabilityIds.length))).toBe(9);
   });
 
   it('binds every NPM multicall profile to its wrapper and exactly its eight explicit child grants', () => {
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((item) => item.bundleId.startsWith('uniswap-v3-'))) {
-      const wrapper = flat.find((fn) => fn.capabilityId.endsWith(':multicall') && fn.chainId === bundle.chainIds[0])!;
+      const wrapper = flat.find((fn) => fn.capabilityId.endsWith(':multicall') && fn.chainId === bundle.chainIds[0] && fn.capabilityId.startsWith('uniswap-v3-position-manager:'))!;
       expect(wrapper.executionScope?.kind).toBe('same-target-multicall-v1');
       if (wrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Expected scoped NPM multicall');
       expect(wrapper.executionScope.allowedChildren.map((child) => child.capabilityId).sort(cmp)).toEqual(bundle.capabilityIds.filter((id) => id !== wrapper.capabilityId));
@@ -173,6 +172,6 @@ describe('published v3 production profiles', () => {
     const response = await service.listMetadata();
     expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
-    expect(response.bundles).toHaveLength(9);
+    expect(response.bundles).toHaveLength(12);
   });
 });

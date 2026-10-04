@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildReviewedManifest } from '../registry/defi-manifest';
 import { assembleCatalogFromSources, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument } from './catalog-generator';
+import { functionAbiHash } from '../registry/defi-manifest';
+import { toFunctionSelector } from 'viem';
 import { buildSparkLendRegistry } from '../registry/spark-lend';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
@@ -38,6 +40,9 @@ describe('DeFi catalog generator', () => {
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v2/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v2/catalog.json' });
     expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v2/catalog.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v3/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v3/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v4/catalog.json' });
+    expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v4/catalog.json' });
+    expect(parseCatalogCliArgs(['check', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v4/catalog.json' });
     for (const args of [
       ['generate', '--input', '../catalog.json'],
       ['generate', '--input', 'https://example.invalid/catalog.json'],
@@ -195,6 +200,72 @@ describe('DeFi catalog generator', () => {
       mutate(copy);
       expect(() => assembleCatalogFromSources(v2, [input], copy)).toThrow();
     }
+  });
+
+  it('assigns stable selector-qualified Yearn overload IDs while keeping v4 candidates inactive', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v3/catalog.json'), 'utf8')));
+    const sourcePath = 'data/defi-catalog/v4/sources/yearn.json';
+    const source = JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8'));
+    const input = [{ sourcePath, document: source }];
+    const first = assembleCatalogFromSources(v3, input);
+    const second = assembleCatalogFromSources(v3, [{ sourcePath, document: JSON.parse(JSON.stringify(source)) }]);
+    expect(stableCatalogJson(first)).toBe(stableCatalogJson(second));
+    const metadataOnly: any = JSON.parse(JSON.stringify(source)); metadataOnly.families[0].familyVersion = 'future-source-label'; metadataOnly.sources.forEach((record: any) => { record.retrievedAtUtc = '2026-10-05'; record.evidence = 'refreshed evidence copy'; });
+    const refreshed = assembleCatalogFromSources(v3, [{ sourcePath, document: metadataOnly }]);
+    const yearn = first.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.protocol === 'yearn-tokenized-strategy');
+    const refreshedYearn = refreshed.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.protocol === 'yearn-tokenized-strategy');
+    expect(yearn).toHaveLength(6);
+    expect(refreshedYearn.map((fn) => fn.capabilityId).sort()).toEqual(yearn.map((fn) => fn.capabilityId).sort());
+    expect(yearn.every((fn) => fn.status === 'inactive' && fn.provenance.status === 'candidate')).toBe(true);
+    for (const name of ['withdraw', 'redeem']) {
+      const overloads = yearn.filter((fn) => fn.functionName === name);
+      expect(overloads).toHaveLength(2);
+      expect(overloads[0].capabilityId).not.toBe(overloads[1].capabilityId);
+      expect(overloads[0].capabilityId).toMatch(new RegExp(`:${toFunctionSelector(overloads[0].signature).slice(2)}$`));
+      expect(overloads[1].capabilityId).toMatch(new RegExp(`:${toFunctionSelector(overloads[1].signature).slice(2)}$`));
+    }
+    expect(catalogDiff(v3, first)).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(catalogDiff(v3, first).added).toHaveLength(6);
+  });
+
+  it('admits the exact v4 source group, preserves v3, and binds the Pancake wrapper to exactly eight scoped children', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v3/catalog.json'), 'utf8')));
+    const ordinaryPath = 'data/defi-catalog/v4/sources/ordinary-protocols.json';
+    const yearnPath = 'data/defi-catalog/v4/sources/yearn.json';
+    const inputs = [ordinaryPath, yearnPath].map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) }));
+    const admission = JSON.parse(readFileSync(resolve(root, 'v4/admissions.json'), 'utf8'));
+    const sourceOnly = assembleCatalogFromSources(v3, inputs);
+    const candidates = sourceOnly.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => !v3.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).some((old) => old.capabilityId === fn.capabilityId));
+    expect(candidates).toHaveLength(19);
+    expect(candidates.filter((fn) => fn.protocol === 'curve-3pool-stableswap')).toHaveLength(4);
+    expect(candidates.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager')).toHaveLength(9);
+    expect(candidates.filter((fn) => fn.protocol === 'yearn-tokenized-strategy')).toHaveLength(6);
+    expect(candidates.every((fn) => fn.status === 'inactive' && fn.provenance.status === 'candidate')).toBe(true);
+    const wrapper = candidates.find((fn) => fn.protocol === 'pancakeswap-v3-position-manager' && fn.signature === 'multicall(bytes[])')!;
+    expect(wrapper.executionScope).toBeUndefined();
+    const active = assembleCatalogFromSources(v3, inputs, admission);
+    const all = buildReviewedManifest([active]).capabilities;
+    const admitted = all.filter((fn) => candidates.some((candidate) => candidate.capabilityId === fn.capabilityId));
+    expect(all).toHaveLength(368);
+    expect(admitted).toHaveLength(19);
+    expect(admitted.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified')).toBe(true);
+    expect(admitted.filter((fn) => fn.executionScope)).toHaveLength(1);
+    const scopedWrapper = admitted.find((fn) => fn.signature === 'multicall(bytes[])')!;
+    expect(scopedWrapper.executionScope?.kind).toBe('same-target-multicall-v1');
+    if (scopedWrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Expected Pancake bounded multicall scope');
+    expect(scopedWrapper.executionScope.allowedChildren).toHaveLength(8);
+    expect(scopedWrapper.executionScope.allowedChildren.map((child) => child.capabilityId)).toEqual(admitted.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager' && fn.capabilityId !== scopedWrapper.capabilityId).map((fn) => fn.capabilityId).sort());
+    expect(catalogDiff(v3, active)).toMatchObject({ added: expect.arrayContaining(admitted.map((fn) => fn.capabilityId)), removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(catalogDiff(v3, active).added).toHaveLength(19);
+    const changedHash: any = JSON.parse(JSON.stringify(admission)); changedHash.snapshots[0].canonicalSha256 = '0'.repeat(64);
+    expect(() => assembleCatalogFromSources(v3, inputs, changedHash)).toThrow(/hash does not match admission/);
+    const changedId: any = JSON.parse(JSON.stringify(admission)); changedId.snapshots[1].bindings[0].capabilityId = 'yearn:invented';
+    expect(() => assembleCatalogFromSources(v3, inputs, changedId)).toThrow(/does not match source ABI/);
+    const wrongScope: any = JSON.parse(JSON.stringify(admission)); wrongScope.snapshots[0].bindings.find((binding: any) => binding.signature === 'multicall(bytes[])').executionScope.allowedChildren.pop();
+    expect(() => assembleCatalogFromSources(v3, inputs, wrongScope)).toThrow();
+    expect(() => assembleCatalogFromSources(v3, [inputs[1]], admission)).toThrow(/allowlisted v2 source snapshots/);
   });
 
   it('validates a versioned nested fragment and renders deterministic TypeScript without runtime imports', () => {

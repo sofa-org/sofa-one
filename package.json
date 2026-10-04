@@ -24,10 +24,10 @@
     "prisma:studio": "prisma studio",
     "billing:testnet-smoke": "ts-node --transpile-only scripts/billing-testnet-smoke.ts",
     "billing:fixture": "ts-node --transpile-only scripts/billing-fixture.ts",
-    "defi:catalog:assemble": "ts-node --transpile-only scripts/defi-catalog/cli.ts assemble --input data/defi-catalog/v3/catalog.json",
-    "defi:catalog:generate": "ts-node --transpile-only scripts/defi-catalog/cli.ts generate --input data/defi-catalog/v3/catalog.json",
-    "defi:catalog:check": "ts-node --transpile-only scripts/defi-catalog/cli.ts check --input data/defi-catalog/v3/catalog.json",
-    "defi:catalog:diff": "ts-node --transpile-only scripts/defi-catalog/cli.ts diff --input data/defi-catalog/v3/catalog.json"
+    "defi:catalog:assemble": "ts-node --transpile-only scripts/defi-catalog/cli.ts assemble --input data/defi-catalog/v4/catalog.json",
+    "defi:catalog:generate": "ts-node --transpile-only scripts/defi-catalog/cli.ts generate --input data/defi-catalog/v4/catalog.json",
+    "defi:catalog:check": "ts-node --transpile-only scripts/defi-catalog/cli.ts check --input data/defi-catalog/v4/catalog.json",
+    "defi:catalog:diff": "ts-node --transpile-only scripts/defi-catalog/cli.ts diff --input data/defi-catalog/v4/catalog.json"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

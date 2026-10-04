@@ -263,5 +263,78 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "No financial amount, recipient, asset-selection, or approval-spender limits."
     ],
     "fingerprint": "sha256:128ad04d15cc0f79c196928e94f6d7ecc9b6f0278378eb946fda521f7bd7ec4b"
+  },
+  {
+    "bundleId": "curve-3pool-1",
+    "version": "1.0.0",
+    "label": "Curve 3pool · Ethereum",
+    "chainIds": [1],
+    "capabilityIds": [
+      "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:add-liquidity",
+      "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:exchange",
+      "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:remove-liquidity",
+      "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:remove-liquidity-one-coin"
+    ],
+    "warnings": [
+      "Exact three-coin 3pool target only; callers select coin indices, token amounts, and minimum outputs.",
+      "The existing key spending limits apply; this profile adds no protocol-specific argument bounds."
+    ],
+    "limitations": [
+      "Fixed available functions, not all Curve pools or a complete workflow/deployment guarantee.",
+      "Token approvals remain separate authority and are not included or automatic."
+    ],
+    "fingerprint": "sha256:bf2576abe432391d6f25fd2ed39318be5712b86cb2a5e76f07bfdb49f52b95f5"
+  },
+  {
+    "bundleId": "pancakeswap-v3-positions-56",
+    "version": "1.0.0",
+    "label": "PancakeSwap V3 positions · BNB Chain",
+    "chainIds": [56],
+    "capabilityIds": [
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token",
+      "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9"
+    ],
+    "warnings": [
+      "All nine function grants are separate authority; multicall uses delegatecall and requires its wrapper plus each selected child grant.",
+      "Native value is supplied once to the outer transaction and inherited by selected children; existing key spending limits apply to that outer request.",
+      "Helpers can act on shared residual contract ETH/WETH/token balances; whole-contract balance risk remains."
+    ],
+    "limitations": [
+      "Exact BNB deployment only; not all PancakeSwap deployments or a complete workflow/funding guarantee.",
+      "One-level multicall is limited to its eight fixed children; recursive and unknown calls are excluded.",
+      "No NFT permits, NFT transfers, operator approvals, or automatic token funding approvals."
+    ],
+    "fingerprint": "sha256:40468534c3d0789d056cbc4217d3bfbaf4a445e38fd1b67db3d9794755798b82"
+  },
+  {
+    "bundleId": "yearn-tokenized-strategy-1",
+    "version": "1.0.0",
+    "label": "Yearn TokenizedStrategy 3.0.4 · Ethereum",
+    "chainIds": [1],
+    "capabilityIds": [
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:6e553f65",
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:94bf804d",
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:9f40a7b3",
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:a318c1a4",
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:b460af94",
+      "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:ba087652"
+    ],
+    "warnings": [
+      "Both withdraw and redeem ABI overloads remain separate grants; receiver, owner, and maxLoss values are caller-controlled.",
+      "The USDC approval is independent authority and is not included or automatic.",
+      "The mutable yDaemon indexer's later 200-record page omitted this address; absence from that page does not establish retirement or current membership."
+    ],
+    "limitations": [
+      "One exact TokenizedStrategy instance, not the Yearn deployment population or a complete workflow.",
+      "Version/index evidence does not prove runtime identity, current liquidity, or financial safety."
+    ],
+    "fingerprint": "sha256:47b1aca498c4871b0b026bf5391ab78e4fd4c9210f07513b46ce21f63773f192"
   }
 ] as readonly DefiCapabilityBundle[]);

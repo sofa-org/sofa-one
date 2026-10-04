@@ -41,12 +41,19 @@ const FAMILY_ID_VERSIONS: Readonly<Record<string, string>> = Object.freeze({
   'compound-iii': 'v3-comet',
   'compound-v2': 'v2-compound',
   'morpho-blue': 'v1-callback-free',
+  'curve-3pool-stableswap': 'v1-3pool',
+  'pancakeswap-v3-position-manager': 'v3-npm-bounded',
+  'yearn-tokenized-strategy': 'v3.0.4',
 });
 const ALLOWED_SOURCE_PATHS = Object.freeze([
   'data/defi-catalog/v2/sources/dex.json',
   'data/defi-catalog/v2/sources/lending-yield.json',
 ]);
 const V3_SOURCE_PATH = 'data/defi-catalog/v3/sources/workflow-extensions.json';
+const V4_SOURCE_PATHS = Object.freeze([
+  'data/defi-catalog/v4/sources/ordinary-protocols.json',
+  'data/defi-catalog/v4/sources/yearn.json',
+]);
 
 export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; abiHash: string; capabilityId: string; executionScope?: DefiExecutionScope; executionScopeHash?: string }>;
 export type SourceAdmissionSnapshot = Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly SourceAdmissionBinding[] }>;
@@ -82,8 +89,8 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
     inputPath = args[++index];
   }
   if (mode === 'assemble') {
-    if (inputSeen && inputPath !== 'data/defi-catalog/v3/catalog.json') throw new Error('assemble only accepts the fixed v3 source assembly selector');
-    return { mode, inputPath: inputSeen ? 'data/defi-catalog/v3/catalog.json' : 'data/defi-catalog/v2/catalog.json' };
+    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3 or v4 source assembly selector');
+    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v2/catalog.json' };
   }
   if (!/^data\/defi-catalog\/v[1-9][0-9]*\/catalog\.json$/.test(inputPath)) throw new Error('Catalog input must be a repository source file at data/defi-catalog/vN/catalog.json');
   return { mode, inputPath };
@@ -169,7 +176,7 @@ function makeSourceFunction(input: SourceFunction, context: { familyId: string; 
   const slug = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const stableFamilyVersion = FAMILY_ID_VERSIONS[context.familyId];
   const capabilityId = stableFamilyVersion
-    ? `${context.familyId}:${stableFamilyVersion}:${context.chainId}:${context.address}:${slug}`
+    ? `${context.familyId}:${stableFamilyVersion}:${context.chainId}:${context.address}:${context.familyId === 'yearn-tokenized-strategy' ? selector.slice(2) : slug}`
     : `candidate:${context.familyId}:${context.familyVersion.replace(/[^A-Za-z0-9_-]/g, '-')}:${context.chainId}:${context.address}:${slug}`;
   const candidateStatus = raw.status === undefined || raw.status === 'candidate' || raw.status === 'inactive';
   if (!candidateStatus) throw new Error(`Source ABI ${name} cannot be activated by source assembly`);
@@ -284,8 +291,9 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
   requireKeys(root, ['schemaVersion', 'snapshots'], 'Source admissions');
   if (root.schemaVersion !== 1 || !Array.isArray(root.snapshots)) throw new Error('Unsupported source-admission schema');
   const expectedPaths = [...inputs.map((item) => item.sourcePath)].sort(cmp);
-  const isV3 = expectedPaths.length === 1 && expectedPaths[0] === V3_SOURCE_PATH;
-  if (!isV3 && (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index]))) throw new Error('Admissions require exactly the allowlisted v2 source snapshots or fixed v3 workflow source');
+   const isV3 = expectedPaths.length === 1 && expectedPaths[0] === V3_SOURCE_PATH;
+   const isV4 = expectedPaths.length === V4_SOURCE_PATHS.length && expectedPaths.every((path, index) => path === V4_SOURCE_PATHS[index]);
+   if (!isV3 && !isV4 && (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index]))) throw new Error('Admissions require exactly the allowlisted v2 source snapshots, fixed v3 workflow source, or fixed v4 source group');
   if (root.snapshots.length !== expectedPaths.length) throw new Error('Admissions must bind every complete source snapshot');
   const snapshots = new Map<string, Record<string, unknown>>();
   for (const [index, value] of root.snapshots.entries()) {
@@ -293,7 +301,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     onlyKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     requireKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     const path = requireString(row.sourcePath, 'Source admission sourcePath');
-    if (!(isV3 ? path === V3_SOURCE_PATH : ALLOWED_SOURCE_PATHS.includes(path)) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
+     if (!(isV3 ? path === V3_SOURCE_PATH : isV4 ? V4_SOURCE_PATHS.includes(path) : ALLOWED_SOURCE_PATHS.includes(path)) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
     if (typeof row.canonicalSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(row.canonicalSha256)) throw new Error('Source admission has invalid canonical SHA-256');
     if (!Array.isArray(row.bindings)) throw new Error('Source admission bindings must be an array');
     snapshots.set(path, row);
@@ -313,12 +321,12 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     if (bindings.length !== expected.length) throw new Error(`Admission binding count mismatch for ${source.sourcePath}`);
     for (const [index, value] of bindings.entries()) {
       const binding = record(value, `Admission binding[${index}]`);
-      onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId', ...(isV3 ? ['executionScope', 'executionScopeHash'] : [])], 'Admission binding');
+       onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId', ...(isV3 || isV4 ? ['executionScope', 'executionScopeHash'] : [])], 'Admission binding');
       requireKeys(binding, ['familyId', 'chainId', 'contract', 'signature', 'abiHash', 'capabilityId'], 'Admission binding');
       if (typeof binding.familyId !== 'string' || typeof binding.chainId !== 'number' || typeof binding.contract !== 'string' || typeof binding.signature !== 'string' || typeof binding.abiHash !== 'string' || typeof binding.capabilityId !== 'string') throw new Error('Admission binding has invalid field types');
       const normalized = { familyId: binding.familyId, chainId: binding.chainId, contract: binding.contract.toLowerCase(), signature: binding.signature, abiHash: binding.abiHash, capabilityId: binding.capabilityId };
       if (!equal(normalized, expected[index])) throw new Error(`Admission binding does not match source ABI in ${source.sourcePath}: ${normalized.capabilityId}`);
-      if (isV3) {
+       if (isV3 || isV4) {
         const candidate = source.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => fn.capabilityId === normalized.capabilityId);
         const candidateScope = candidate?.executionScope;
         if (candidateScope && (!binding.executionScope || !equal(binding.executionScope, candidateScope))) throw new Error(`Admission execution scope does not match source binding: ${normalized.capabilityId}`);
@@ -327,7 +335,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
           if (!rawScope || typeof rawScope !== 'object' || Array.isArray(rawScope)) throw new Error(`Admission execution scope is malformed: ${normalized.capabilityId}`);
           const scope = rawScope as DefiExecutionScope;
           if (typeof binding.executionScopeHash !== 'string' || binding.executionScopeHash !== executionScopeHash(scope)) throw new Error(`Admission execution-scope hash mismatch: ${normalized.capabilityId}`);
-          const expectedScopeIndex = candidate?.protocol === 'uniswap-v3-position-manager' && candidate.signature === 'multicall(bytes[])'
+           const expectedScopeIndex = (candidate?.protocol === 'uniswap-v3-position-manager' || candidate?.protocol === 'pancakeswap-v3-position-manager') && candidate.signature === 'multicall(bytes[])'
             ? 0
             : candidate?.protocol === 'morpho-blue' && candidate.functionName === 'supplyCollateral' ? 3
               : candidate?.protocol === 'morpho-blue' && ['supply', 'repay'].includes(candidate.functionName) ? 4 : undefined;
@@ -337,7 +345,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
             throw new Error(`Admission execution scope is not defined for this function identity: ${normalized.capabilityId}`);
           }
         } else if (binding.executionScopeHash !== undefined) throw new Error(`Admission has execution-scope hash without scope: ${normalized.capabilityId}`);
-        const scopeRequired = candidate?.protocol === 'uniswap-v3-position-manager' && candidate.signature === 'multicall(bytes[])'
+         const scopeRequired = (candidate?.protocol === 'uniswap-v3-position-manager' || isV4 && candidate?.protocol === 'pancakeswap-v3-position-manager') && candidate.signature === 'multicall(bytes[])'
           || candidate?.protocol === 'morpho-blue' && ['supply', 'repay', 'supplyCollateral'].includes(candidate.functionName);
         if (scopeRequired && binding.executionScope === undefined) throw new Error(`Missing mandatory execution scope binding: ${normalized.capabilityId}`);
       }
