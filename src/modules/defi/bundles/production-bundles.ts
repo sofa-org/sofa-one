@@ -852,5 +852,678 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
     ],
     "fingerprint": "sha256:04110a6703844a19eb2fffb3b9487268e4bf6ad74abf6d4a7f02654be0476216"
+  },
+
+  // Phase 2: literal source-qualified capability selections; no dynamic family discovery.
+  {
+    "bundleId": "ajna-phase2-1",
+    "version": "1.0.0",
+    "label": "Ajna · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:add-collateral",
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:add-quote-token",
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:draw-debt",
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:remove-collateral",
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:remove-quote-token",
+      "ajna:erc20-v1:1:0x9cdb48fcbd8241bb75887af04d3b1302c410f671:repay-debt"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected target is one sampled pool; its methods do not represent all Ajna pools or market coverage."
+    ],
+    "fingerprint": "sha256:5d0aeb7a2fd1066feb1e4ce449ef3ec1fac87c24c946ea46f1aac8d238abbafd"
+  },
+  {
+    "bundleId": "bancor-phase2-1",
+    "version": "1.0.0",
+    "label": "Bancor V3 · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:cancel-withdrawal",
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:deposit",
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:init-withdrawal",
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:trade-by-source-amount",
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:trade-by-target-amount",
+      "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected fixed network-proxy ABI calls do not establish a complete liquidity, swap, asynchronous withdrawal, or payout workflow."
+    ],
+    "fingerprint": "sha256:e94322bf00aeff07d7fc51be4101cf4985afae6c03a91a948cb0ec93a9c8a24d"
+  },
+  {
+    "bundleId": "ekubo-phase2-1",
+    "version": "1.0.0",
+    "label": "Ekubo · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:collect-fees-a90e113d",
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:collect-fees-f435cd8b",
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:deposit",
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:mint-and-deposit",
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:withdraw-040e3c6c",
+      "ekubo:positions-v3-1-1:1:0x02d9876a21af7545f8632c3af76ec90b5ad4b66d:withdraw-983e882a"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected methods are an Ethereum LP position subset only; swaps, other chains, and a complete LP workflow are not represented."
+    ],
+    "fingerprint": "sha256:7ce77e79b11be19f21e132324c3865e2764f71964a7b9298c5a872c2771ef9cb"
+  },
+  {
+    "bundleId": "enzyme-phase2-1",
+    "version": "1.0.0",
+    "label": "Enzyme · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "enzyme:sulu-v4:1:0x3714e016690ac209ab173a2b4b86aaa1c8f48327:buy-shares",
+      "enzyme:sulu-v4:1:0x3714e016690ac209ab173a2b4b86aaa1c8f48327:redeem-shares-for-specific-assets",
+      "enzyme:sulu-v4:1:0x3714e016690ac209ab173a2b4b86aaa1c8f48327:redeem-shares-in-kind"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected target is a Comptroller interface, not a Vault contract."
+    ],
+    "fingerprint": "sha256:43cc466b6fb394750978bcf3a7d4ee6a2033fe9e81deb2ca63adc4abb292944f"
+  },
+  {
+    "bundleId": "exactly-op-usdc-market-10",
+    "version": "1.0.0",
+    "label": "Exactly · Optimism · USDC market",
+    "chainIds": [
+      10
+    ],
+    "capabilityIds": [
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:borrow",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:borrow-at-maturity",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:deposit",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:deposit-at-maturity",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:mint",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:redeem",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:repay",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:repay-at-maturity",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:withdraw",
+      "exactly:v1:10:0x6926b434cce9b5b7966ae1bfeef6d0a7dcf3a8bb:withdraw-at-maturity"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "Only Auditor market enter/exit calls are selected; no lending-market operations are included."
+    ],
+    "fingerprint": "sha256:aad563b9cd4a5d70cee3cd10e3b91f597856cde78e191ff5522c497e50e5ba6b"
+  },
+  {
+    "bundleId": "exactly-op-weth-market-10",
+    "version": "1.0.0",
+    "label": "Exactly · Optimism · WETH market",
+    "chainIds": [
+      10
+    ],
+    "capabilityIds": [
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:borrow",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:borrow-at-maturity",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:deposit",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:deposit-at-maturity",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:mint",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:redeem",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:repay",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:repay-at-maturity",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:withdraw",
+      "exactly:v1:10:0xc4d4500326981eacd020e20a81b1c479c161c7ef:withdraw-at-maturity"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "Each market profile covers only its named market target; it is not the other Exactly market."
+    ],
+    "fingerprint": "sha256:a03c56c0b31232e1a2c15bb9fb0dddcdb255edd331491bd93812a9ebf9d22a01"
+  },
+  {
+    "bundleId": "exactly-op-auditor-10",
+    "version": "1.0.0",
+    "label": "Exactly · Optimism · Auditor enter/exit controls",
+    "chainIds": [
+      10
+    ],
+    "capabilityIds": [
+      "exactly:v1:10:0xaeb62e6f27bc103702e7bc879ae98bcea56f027e:enter-market",
+      "exactly:v1:10:0xaeb62e6f27bc103702e7bc879ae98bcea56f027e:exit-market"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "Only Auditor market enter/exit calls are selected; no lending-market operations are included."
+    ],
+    "fingerprint": "sha256:93b993557a4c2687a34c2da9f4ddeb59501665a1f446f01899afdf67c401402a"
+  },
+  {
+    "bundleId": "gearbox-phase2-1",
+    "version": "1.0.0",
+    "label": "Gearbox · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "gearbox-pool:versionv3-10:1:0xc155444481854c60e7a29f4150373f479988f32d:deposit",
+      "gearbox-pool:versionv3-10:1:0xc155444481854c60e7a29f4150373f479988f32d:mint",
+      "gearbox-pool:versionv3-10:1:0xc155444481854c60e7a29f4150373f479988f32d:redeem",
+      "gearbox-pool:versionv3-10:1:0xc155444481854c60e7a29f4150373f479988f32d:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:9c5bc1a2e1dcc8a8982fd29df4e8a58fa20d2f52346420ad4df8e00507cf7bb6"
+  },
+  {
+    "bundleId": "hashflow-phase2-1",
+    "version": "1.0.0",
+    "label": "Hashflow · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "hashflow:rfq-v1:1:0x55084ee0fef03f14a305cd24286359a35d735151:trade-rfqm",
+      "hashflow:rfq-v1:1:0x55084ee0fef03f14a305cd24286359a35d735151:trade-rfqt"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "RFQT/RFQM functions accept protocol signed quote payloads; this is not general router or arbitrary execution authority."
+    ],
+    "fingerprint": "sha256:17a229d06add9bef6bc1497bf3500d18034325e5cdfc93bf40d93c2747f71e9e"
+  },
+  {
+    "bundleId": "izumi-phase2-1",
+    "version": "1.0.0",
+    "label": "iZUMi · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "izumi:v1:1:0x19b683a2f45012318d9b2ae1280d68d3ec54d663:add-liquidity",
+      "izumi:v1:1:0x19b683a2f45012318d9b2ae1280d68d3ec54d663:collect",
+      "izumi:v1:1:0x19b683a2f45012318d9b2ae1280d68d3ec54d663:dec-liquidity",
+      "izumi:v1:1:0x19b683a2f45012318d9b2ae1280d68d3ec54d663:mint",
+      "izumi:v1:1:0x2db0afd0045f3518c77ec6591a542e326befd3d7:swap-amount"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:c8ee01eaa713112c7b25d8ccbb30ff2551d25701150203ae7540562597907b51"
+  },
+  {
+    "bundleId": "integral-phase2-1",
+    "version": "1.0.0",
+    "label": "Integral · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "integral:size-relayer-v1:1:0xd17b3c9784510e33cd5b87b490e79253bcd81e2e:buy",
+      "integral:size-relayer-v1:1:0xd17b3c9784510e33cd5b87b490e79253bcd81e2e:sell"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:969b15ac96ff477f1ed8eaa6914d0288c281b90c183f5647230228deed9d5675"
+  },
+  {
+    "bundleId": "lombard-phase2-1",
+    "version": "1.0.0",
+    "label": "Lombard · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "lombard:staked-lbtc-v1:1:0x8236a87084f8b84306f72007f36f2618a5634494:redeem",
+      "lombard:staked-lbtc-v1:1:0x8236a87084f8b84306f72007f36f2618a5634494:redeem-for-btc"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "redeemForBtc requests a Bitcoin-script redemption; redeem maps native LBTC and does not establish ETH/BTC delivery or completed settlement."
+    ],
+    "fingerprint": "sha256:dec17d82fb360df928e4a585f7a6cf380fb363368aa377e79e67976d59f7a2ed"
+  },
+  {
+    "bundleId": "liquity-phase2-1",
+    "version": "1.0.0",
+    "label": "Liquity V2 · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:add-coll",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:adjust-trove",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:close-trove",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:open-trove",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:repay-bold",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:withdraw-bold",
+      "liquity-v2:v2-weth:1:0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65:withdraw-coll",
+      "liquity-v2:v2-weth:1:0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf:claim-all-coll-gains",
+      "liquity-v2:v2-weth:1:0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf:provide-to-s-p",
+      "liquity-v2:v2-weth:1:0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf:withdraw-from-s-p"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:7fe2aa0e8b3bb5b0fa02cbd799044774538126ff29ea9d01f833e5034575e43a"
+  },
+  {
+    "bundleId": "puffer-phase2-1",
+    "version": "1.0.0",
+    "label": "Puffer · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:deposit",
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:deposit-eth",
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:deposit-st-e-t-h",
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:mint",
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:redeem",
+      "puffer:v5-snapshot:1:0xd9a442856c234a39a81a089c06451ebaa4306a72:withdraw",
+      "puffer:v5-snapshot:1:0xdda0483184e75a5579ef9635ed14baccf9d50283:request-withdrawal"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:81162c025bd59daebcbe9f34027a3523971c92dade36189ece149846d4f7f236"
+  },
+  {
+    "bundleId": "swell-phase2-1",
+    "version": "1.0.0",
+    "label": "Swell · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "swell:v1:1:0xf951e335afb289353dc249e82926178eac7ded78:deposit",
+      "swell:v1:1:0xf951e335afb289353dc249e82926178eac7ded78:deposit-with-referral",
+      "swell:v1:1:0xfae103dc9cf190ed75350761e95403b7b8afa6c0:deposit",
+      "swell:v1:1:0xfae103dc9cf190ed75350761e95403b7b8afa6c0:deposit-with-referral"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected Swell methods are deposit-only; withdrawal, settlement, and completion are not represented."
+    ],
+    "fingerprint": "sha256:24bc16fc673f3c3fc0f959ffcedd6eec8da42cb3c74950673b3bd175d24c8957"
+  },
+  {
+    "bundleId": "stakestone-phase2-1",
+    "version": "1.0.0",
+    "label": "StakeStone · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "stakestone:stone-vault-v1:1:0xa62f9c5af106feee069f38de51098d9d81b90572:cancel-withdraw",
+      "stakestone:stone-vault-v1:1:0xa62f9c5af106feee069f38de51098d9d81b90572:deposit",
+      "stakestone:stone-vault-v1:1:0xa62f9c5af106feee069f38de51098d9d81b90572:request-withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected deposit/request/cancel calls do not represent withdrawal settlement or completion."
+    ],
+    "fingerprint": "sha256:aa151f34e6ec2a6b5875e84b84bee086aabb1c51d3db590cd584077207884146"
+  },
+  {
+    "bundleId": "solv-phase2-1",
+    "version": "1.0.0",
+    "label": "Solv · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "solv:router-v2:1:0x3d93b9e8f0886358570646dad9421564c5fe6334:cancel-withdraw-request",
+      "solv:router-v2:1:0x3d93b9e8f0886358570646dad9421564c5fe6334:deposit",
+      "solv:router-v2:1:0x3d93b9e8f0886358570646dad9421564c5fe6334:withdraw-request"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected calls are deposit, withdrawal request, and cancellation only; settlement/payout is not represented."
+    ],
+    "fingerprint": "sha256:e87e453fc60489a5c197edbcf7a6919c421b6442330541c842d4629bef3a21eb"
+  },
+  {
+    "bundleId": "stakedao-phase2-1",
+    "version": "1.0.0",
+    "label": "StakeDAO · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "stakedao:crv-depositor-v1:1:0xc1e3ca8a3921719be0ae3690a0e036feb4f69191:deposit",
+      "stakedao:crv-depositor-v1:1:0xc1e3ca8a3921719be0ae3690a0e036feb4f69191:deposit-all"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected calls are deposit-only; exits and settlement are not represented."
+    ],
+    "fingerprint": "sha256:d2d229370b24f5f431387da3931abcc2afecdac387575b9f8bd28e6a1a9a9cea"
+  },
+  {
+    "bundleId": "eigenlayer-phase2-1",
+    "version": "1.0.0",
+    "label": "EigenLayer · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "eigenlayer:v1-4-1:1:0x39053d51b77dc0d36036fc1fcc8cb819df8ef37a:complete-queued-withdrawal",
+      "eigenlayer:v1-4-1:1:0x39053d51b77dc0d36036fc1fcc8cb819df8ef37a:queue-withdrawals",
+      "eigenlayer:v1-4-1:1:0x858646372cc42e1a627fce94aa7a7033e7cf075a:deposit-into-strategy"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:f2843289dce1912ca0109f6d2220180e245bfdfe85e1100d6945689ac693b6be"
+  },
+  {
+    "bundleId": "symbiotic-phase2-1",
+    "version": "1.0.0",
+    "label": "Symbiotic · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:claim",
+      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:claim-batch",
+      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:deposit",
+      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:redeem",
+      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:32648ba097507a8b69566baa0daae1099250d944c4d790671dcddab8e789a98a"
+  },
+  {
+    "bundleId": "harvest-phase2-1",
+    "version": "1.0.0",
+    "label": "Harvest Finance · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "harvest:v1:1:0xf0358e8c3cd5fa238a29301d0bea3d63a17bedbe:deposit",
+      "harvest:v1:1:0xf0358e8c3cd5fa238a29301d0bea3d63a17bedbe:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:ee7f82d01fc4edca0fee060e14da023134269af25ad83ccebc38cae54b5bfb4e"
+  },
+  {
+    "bundleId": "idle-phase2-1",
+    "version": "1.0.0",
+    "label": "Idle · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "idle:v3-1:1:0x493c57c4763932315a328269e1adad09653b9081:mint-idle-token",
+      "idle:v3-1:1:0x493c57c4763932315a328269e1adad09653b9081:redeem-idle-token"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:3baf03b3481413c50ea91a82fdf4e2924556a3171a909ef7c5681be45a4391a0"
+  },
+  {
+    "bundleId": "origin-phase2-1",
+    "version": "1.0.0",
+    "label": "Origin · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "origin:oeth-v1:1:0x39254033945aa2e4809cc2977e7087bee48bd7ab:claim-withdrawal",
+      "origin:oeth-v1:1:0x39254033945aa2e4809cc2977e7087bee48bd7ab:claim-withdrawals",
+      "origin:oeth-v1:1:0x39254033945aa2e4809cc2977e7087bee48bd7ab:mint",
+      "origin:oeth-v1:1:0x39254033945aa2e4809cc2977e7087bee48bd7ab:request-withdrawal"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:8987840f2cd027d1fb4ab89cf7495ad207d6892bd811fae0012a7366ab2cfb34"
+  },
+  {
+    "bundleId": "sky-phase2-1",
+    "version": "1.0.0",
+    "label": "Sky · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:deposit-6e553f65",
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:deposit-9b8d6d38",
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:mint-216740a0",
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:mint-94bf804d",
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:redeem-ba087652",
+      "sky:susds-v1:1:0xa3931d71877c0e7a3148cb7eb4463524fec27fbd:withdraw-b460af94"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:f218535c40b96965b4a8cae9c48fd39ce3c74ce6e26f8ac79d6d26c378cfe8ce"
+  },
+  {
+    "bundleId": "frax-phase2-1",
+    "version": "1.0.0",
+    "label": "Frax · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "frax:frxeth-v2:1:0x7bc6bad540453360f744666d625fec0ee1320ca3:mint-frx-eth",
+      "frax:frxeth-v2:1:0x7bc6bad540453360f744666d625fec0ee1320ca3:mint-frx-eth-and-give",
+      "frax:frxeth-v2:1:0x7bc6bad540453360f744666d625fec0ee1320ca3:submit-and-deposit",
+      "frax:frxeth-v2:1:0xac3e018457b222d93114458476f3e3416abbe38f:deposit",
+      "frax:frxeth-v2:1:0xac3e018457b222d93114458476f3e3416abbe38f:mint",
+      "frax:frxeth-v2:1:0xac3e018457b222d93114458476f3e3416abbe38f:redeem",
+      "frax:frxeth-v2:1:0xac3e018457b222d93114458476f3e3416abbe38f:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "The selected frxETH/sfrxETH vault exit returns frxETH; it is not an ETH queue or ETH payout workflow."
+    ],
+    "fingerprint": "sha256:8cb1c50e0fbf17d66c55cc9ccf9d7d06e6a88ae9baa365cf16a1e2c37d9659e7"
+  },
+  {
+    "bundleId": "ethena-phase2-1",
+    "version": "1.0.0",
+    "label": "Ethena · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:cooldown-assets",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:cooldown-shares",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:deposit",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:mint",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:redeem",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:unstake",
+      "ethena:staked-usde-v2:1:0x9d39a5de30e57443bff2a8307a4256c8797a3497:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:28b445042403e6c9e8185f1104b597691d394f2b8ccb032ec015d38ca04d4f94"
+  },
+  {
+    "bundleId": "usual-phase2-1",
+    "version": "1.0.0",
+    "label": "Usual · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "usual:susd0-v1:1:0xd861be82dee3223cfbed160791f6550b0704d406:deposit",
+      "usual:susd0-v1:1:0xd861be82dee3223cfbed160791f6550b0704d406:mint",
+      "usual:susd0-v1:1:0xd861be82dee3223cfbed160791f6550b0704d406:redeem",
+      "usual:susd0-v1:1:0xd861be82dee3223cfbed160791f6550b0704d406:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:e5043544a7c62f9e60b5c95dee94492a48938d87e29ae65cbd8c32342f9ea9e1"
+  },
+  {
+    "bundleId": "angle-phase2-1",
+    "version": "1.0.0",
+    "label": "Angle Protocol · selected source-qualified calls",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "angle:ageur-savings-v1:1:0x004626a008b1acdc4c74ab51644093b155e59a23:deposit",
+      "angle:ageur-savings-v1:1:0x004626a008b1acdc4c74ab51644093b155e59a23:mint",
+      "angle:ageur-savings-v1:1:0x004626a008b1acdc4c74ab51644093b155e59a23:redeem",
+      "angle:ageur-savings-v1:1:0x004626a008b1acdc4c74ab51644093b155e59a23:withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim.",
+      "This is a dated agEUR Savings identity snapshot and does not establish current stEUR/EURA identity."
+    ],
+    "fingerprint": "sha256:a3dd8737a98cde21d5e2d20048c7b0114bf1c9225d3dcf19ce0242004cfb5638"
+  },
+  {
+    "bundleId": "lista-phase2-56",
+    "version": "1.0.0",
+    "label": "Lista DAO · selected source-qualified calls",
+    "chainIds": [
+      56
+    ],
+    "capabilityIds": [
+      "lista:stake-manager-v1:56:0x1adb950d8bb3da4be104211d5ab038628e477fe6:claim-withdraw",
+      "lista:stake-manager-v1:56:0x1adb950d8bb3da4be104211d5ab038628e477fe6:deposit",
+      "lista:stake-manager-v1:56:0x1adb950d8bb3da4be104211d5ab038628e477fe6:request-withdraw"
+    ],
+    "warnings": [
+      "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+    ],
+    "limitations": [
+      "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
+    ],
+    "fingerprint": "sha256:7538fb97efdf7707d1e83f5b7a4382570db6c5dfbe66324fb2b36f4bf8eae3f8"
   }
-] as readonly DefiCapabilityBundle[]);
+]);

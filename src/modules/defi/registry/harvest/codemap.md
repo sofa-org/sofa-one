@@ -1,0 +1,3 @@
+# Harvest fUSDC vault fixture
+
+An explicit test-only Catalog/Policy fragment for the pinned Ethereum fUSDC vault's nonpayable `deposit(uint256)` and `withdraw(uint256)` methods. The source candidate remains inactive; `buildHarvestRegistry()` is active only for isolated tests and is not runtime-wired or automatically granted. Pinned vault source describes caller-funded deposit/share mint and share redemption to underlying. This is a single vault snapshot, not a current code/liquidity certificate or full Harvest workflow. See [source review](../../../../../docs/defi-research/expansion55-harvest-v6.md).

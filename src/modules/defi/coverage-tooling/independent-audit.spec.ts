@@ -60,18 +60,32 @@ function loadInputs(): AuditInputs {
 }
 
 describe('independent DeFi coverage audit', () => {
-  it('keeps the immutable v4 audit profile set separate from the current v5 append-only profiles', () => {
+  it('keeps the immutable v4 audit profiles and 587f888 33-profile baseline separate from explicit phase2 profiles', () => {
     const legacyProfiles = loadInputs().currentV4Profiles!;
-    const appendedProfiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12);
+    const appendedProfiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33);
+    const phase2Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33);
     expect(legacyProfiles).toHaveLength(12);
     expect(legacyProfiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(94);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(33);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(62);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toEqual(legacyProfiles);
+    const phase2BaselineBytes = readFileSync('src/modules/defi/bundles/__fixtures__/phase2-baseline-profiles-587f888.json');
+    expect(sha256(phase2BaselineBytes)).toBe('9e6f596c0630b5a0dba45e03541612bc4b3e6915dad8d89db470926f1b512783');
+    const phase2Baseline = JSON.parse(phase2BaselineBytes.toString('utf8')) as { provenance: { gitCommit: string }, profiles: StaticProfile[] };
+    expect(phase2Baseline.provenance.gitCommit).toBe('587f888');
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 33)).toEqual(phase2Baseline.profiles);
     expect(appendedProfiles).toHaveLength(21);
     const addedIds = appendedProfiles.flatMap((profile) => profile.capabilityIds);
     expect(addedIds).toHaveLength(138);
     expect(new Set(addedIds).size).toBe(138);
     expect(Math.max(...appendedProfiles.map((profile) => profile.capabilityIds.length))).toBe(17);
+    expect(phase2Profiles).toHaveLength(29);
+    const phase2Ids = phase2Profiles.flatMap((profile) => profile.capabilityIds);
+    expect(phase2Ids).toHaveLength(134);
+    expect(new Set(phase2Ids).size).toBe(134);
+    expect(Math.max(...phase2Profiles.map((profile) => profile.capabilityIds.length))).toBe(10);
+    const allProfileIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
+    expect(allProfileIds).toHaveLength(366);
+    expect(new Set(allProfileIds).size).toBe(366);
   });
 
   it('recomputes catalog, admission, scopes, activity and exact-profile facts without trusting a coverage report', () => {

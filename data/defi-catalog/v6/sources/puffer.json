@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "puffer",
+      "familyVersion": "listed-impl-v5",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xD9A442856C234a39a81a089C06451EBAa4306a72",
+          "status": "inactive",
+          "contractName": "Puffer Vault V5 proxy",
+          "sourceRefs": [
+            "puffer-eth-deployments",
+            "puffer-vault-impl"
+          ],
+          "abiFunctions": [
+            {
+              "name": "deposit",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-vault-impl"
+            },
+            {
+              "name": "depositETH",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "sourceId": "puffer-vault-impl"
+            },
+            {
+              "name": "depositStETH",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "stETHSharesAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-vault-impl"
+            },
+            {
+              "name": "mint",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-vault-impl"
+            },
+            {
+              "name": "redeem",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-vault-impl"
+            },
+            {
+              "name": "withdraw",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-vault-impl"
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xDdA0483184E75a5579ef9635ED14BacCf9d50283",
+          "status": "inactive",
+          "contractName": "Puffer Withdrawal Manager proxy",
+          "sourceRefs": [
+            "puffer-eth-deployments",
+            "puffer-withdrawal-manager-impl"
+          ],
+          "abiFunctions": [
+            {
+              "name": "requestWithdrawal",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "pufETHAmount",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "recipient",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "sourceId": "puffer-withdrawal-manager-impl"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "puffer-eth-deployments",
+      "url": "https://raw.githubusercontent.com/PufferFinance/Deployments-and-ACL/302c0270f718a7dc20c819419a7dde965e16ce56/docs/deployments/mainnet.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official deployment table lists Ethereum Puffer Vault proxy 0xD9A442856C234a39a81a089C06451EBAa4306a72 with implementation 0x3b2fdfdefe919dbcce0bc5ac426097d5523b8afa and withdrawal manager proxy 0xDdA0483184E75a5579ef9635ED14BacCf9d50283 with implementation 0x98E1d95B4b3A5A082642e17274D67d62691288F1. The published table commit is pinned; linked source table commit fields were not retrieved and are not claimed."
+    },
+    {
+      "sourceId": "puffer-vault-impl",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x3b2fdfdefe919dbcce0bc5ac426097d5523b8afa?fields=abi,sources,metadata",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify exact_match implementation record (verifiedAt 2025-08-21; matchId exact_match), compilation target src/PufferVaultV5.sol:PufferVaultV5. Full selected ABI entries preserved from record; record identifies PufferVaultV5.sol and IPufferVaultV5.sol. Proxy-shell ABI is not method authority."
+    },
+    {
+      "sourceId": "puffer-withdrawal-manager-impl",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x98e1d95b4b3a5a082642e17274d67d62691288f1?fields=abi,sources,metadata",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify exact_match implementation record (verifiedAt 2024-09-26; matchId exact_match), compilation target src/PufferWithdrawalManager.sol:PufferWithdrawalManager. Full selected ABI entry preserved; record identifies PufferWithdrawalManager.sol and IPufferWithdrawalManager.sol. Proxy-shell ABI is not method authority."
+    }
+  ]
+}

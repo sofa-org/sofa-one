@@ -1,6 +1,6 @@
 import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
-import { assembleCatalogFromSources, assembleV5SourceCandidates, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, renderGeneratedModule, validateBaseline, validateCatalogDocument, V5_ASSEMBLY_PLAN_PATH, validateV5AssemblyPlan } from '../../src/modules/defi/catalog-tooling/catalog-generator';
+import { assembleCatalogFromSources, assembleV5SourceCandidates, assembleV6SourceCandidates, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, prepareV6Sources, renderGeneratedModule, validateBaseline, validateCatalogDocument, V5_ASSEMBLY_PLAN_PATH, V6_ASSEMBLY_PLAN_PATH, V6_SOURCE_PATHS, validateV5AssemblyPlan, validateV6AssemblyPlan } from '../../src/modules/defi/catalog-tooling/catalog-generator';
 
 const root = process.cwd();
 const baselinePath = resolve(root, 'data/defi-catalog/v1/pre-migration-baseline.json');
@@ -17,6 +17,18 @@ const v4CatalogPath = resolve(root, 'data/defi-catalog/v4/catalog.json');
 const v5PlanPath = resolve(root, V5_ASSEMBLY_PLAN_PATH);
 const v5AdmissionsPath = resolve(root, 'data/defi-catalog/v5/admissions.json');
 const v5CatalogPath = resolve(root, 'data/defi-catalog/v5/catalog.json');
+const v6PlanPath = resolve(root, V6_ASSEMBLY_PLAN_PATH);
+const v6AdmissionsPath = resolve(root, 'data/defi-catalog/v6/admissions.json');
+const v6CatalogPath = resolve(root, 'data/defi-catalog/v6/catalog.json');
+
+function loadV6Assembly() {
+  const plan = validateV6AssemblyPlan(readJson(assertFixedFilePath(v6PlanPath, V6_ASSEMBLY_PLAN_PATH)));
+  const base = validateCatalogDocument(readJson(assertFixedFilePath(resolve(root, plan.baselinePath), plan.baselinePath)));
+  const inputs = plan.sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
+  const admissions = readJson(assertFixedFilePath(v6AdmissionsPath, 'data/defi-catalog/v6/admissions.json'));
+  const assembled = assembleV6SourceCandidates({ chains: base.chains }, inputs, admissions);
+  return { plan, base, inputs, assembled };
+}
 
 function resolveSourceCatalogPath(rootPath: string, inputPath: string): string {
   const repositoryRoot = realpathSync(rootPath);
@@ -78,8 +90,17 @@ try {
     const beforeIds = new Set(base.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId))));
     const added = candidate.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => !beforeIds.has(fn.capabilityId));
     process.stdout.write(`Prepared ${added.length} inactive v5 source candidates from ${inputs.length} explicit snapshots; no admission or catalog file was written.\n`);
+  } else if (options.mode === 'prepare-v6') {
+    const inputs = V6_SOURCE_PATHS.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
+    const report = prepareV6Sources(inputs);
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } else if (options.mode === 'assemble') {
-    if (options.inputPath === 'data/defi-catalog/v5/catalog.json') {
+    if (options.inputPath === 'data/defi-catalog/v6/catalog.json') {
+      const { inputs, assembled } = loadV6Assembly();
+      const target = assertFixedDataOutputPath(v6CatalogPath, 'data/defi-catalog/v6/catalog.json');
+      writeFileSync(target, `${JSON.stringify({ schemaVersion: 1, chains: assembled.chains }, null, 2)}\n`, 'utf8');
+      process.stdout.write(`Assembled ${assembled.chains.reduce((count, chain) => count + chain.contracts.reduce((sum, contract) => sum + contract.functions.length, 0), 0)} v6 definitions from ${inputs.length} exact admitted source snapshots.\n`);
+    } else if (options.inputPath === 'data/defi-catalog/v5/catalog.json') {
       const plan = validateV5AssemblyPlan(readJson(assertFixedFilePath(v5PlanPath, V5_ASSEMBLY_PLAN_PATH)));
       const base = validateCatalogDocument(readJson(assertFixedFilePath(v4CatalogPath, 'data/defi-catalog/v4/catalog.json')));
       const inputs = plan.sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
@@ -113,9 +134,15 @@ try {
   const inputPath = resolveSourceCatalogPath(root, options.inputPath);
   assertFixedOutputPath();
   const baseline = validateBaseline(readJson(baselinePath));
+  const isV6 = options.inputPath === 'data/defi-catalog/v6/catalog.json';
   const isV5 = options.inputPath === 'data/defi-catalog/v5/catalog.json';
   let current: ReturnType<typeof validateCatalogDocument>;
-  if (isV5) {
+  if (isV6) {
+    const { assembled } = loadV6Assembly();
+    current = validateCatalogDocument({ schemaVersion: 1, chains: assembled.chains });
+    const saved = validateCatalogDocument(readJson(assertFixedFilePath(v6CatalogPath, 'data/defi-catalog/v6/catalog.json')));
+    if (JSON.stringify({ schemaVersion: 1, chains: current.chains }) !== JSON.stringify({ schemaVersion: 1, chains: saved.chains })) throw new Error('V6 catalog does not match the exact source snapshots, identity map, and admissions');
+  } else if (isV5) {
     const plan = validateV5AssemblyPlan(readJson(assertFixedFilePath(v5PlanPath, V5_ASSEMBLY_PLAN_PATH)));
     const base = validateCatalogDocument(readJson(assertFixedFilePath(v4CatalogPath, 'data/defi-catalog/v4/catalog.json')));
     const inputs = plan.sourcePaths.map((relativePath) => ({ sourcePath: relativePath, document: readJson(assertFixedFilePath(resolve(root, relativePath), relativePath)) }));
@@ -124,7 +151,9 @@ try {
     const saved = validateCatalogDocument(readJson(assertFixedFilePath(v5CatalogPath, 'data/defi-catalog/v5/catalog.json')));
     if (JSON.stringify({ schemaVersion: 1, chains: current.chains }) !== JSON.stringify({ schemaVersion: 1, chains: saved.chains })) throw new Error('V5 catalog does not match the current explicit plan, sources, and admissions');
   } else current = validateCatalogDocument(readJson(inputPath));
-  const comparison = isV5
+  const comparison = isV6
+    ? validateCatalogDocument(readJson(assertFixedFilePath(v5CatalogPath, 'data/defi-catalog/v5/catalog.json')))
+    : isV5
     ? validateCatalogDocument(readJson(assertFixedFilePath(v4CatalogPath, 'data/defi-catalog/v4/catalog.json')))
     : options.inputPath === 'data/defi-catalog/v4/catalog.json'
     ? validateCatalogDocument(readJson(assertFixedFilePath(resolve(root, 'data/defi-catalog/v3/catalog.json'), 'data/defi-catalog/v3/catalog.json')))
@@ -139,10 +168,14 @@ try {
     writeFileSync(outputPath, renderGeneratedModule(current), 'utf8');
   } else if (options.mode === 'check') {
     assertBaselinePreserved(current, baseline);
+    if (isV5) {
+      process.stdout.write('V5 catalog is current against its fixed sources and admissions; the production artifact remains on v6.\n');
+    } else {
     const expected = renderGeneratedModule(current);
     const actual = readFileSync(outputPath, 'utf8');
     if (actual !== expected) throw new Error(`Generated catalog is stale; run npm run defi:catalog:generate -- --input ${options.inputPath}`);
     process.stdout.write('Generated DeFi catalog is current.\n');
+    }
   }
   }
 } catch (error) {

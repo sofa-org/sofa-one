@@ -1,0 +1,743 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "exactly",
+      "familyVersion": "protocol@4b5fec78",
+      "contracts": [
+        {
+          "chainId": 10,
+          "address": "0x6926B434CCe9b5b7966aE1BfEef6D0A7DCF3A8bb",
+          "status": "inactive",
+          "contractName": "Exactly OP Market USDC",
+          "sourceRefs": [
+            "exactly-official-addresses",
+            "exactly-market-sol",
+            "exactly-solmate-erc4626-v7"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-solmate-erc4626-v7"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-solmate-erc4626-v7"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "borrowShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "repay",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "actualRepay",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrowShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "depositAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minAssetsRequired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "borrowAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "maxAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assetsOwed",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "withdrawAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minAssetsRequired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assetsDiscounted",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "repayAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "maxAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "actualRepayAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0xc4d4500326981eacD020e20A81b1c479c161c7EF",
+          "status": "inactive",
+          "contractName": "Exactly OP Market WETH",
+          "sourceRefs": [
+            "exactly-official-addresses",
+            "exactly-market-sol",
+            "exactly-solmate-erc4626-v7"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-solmate-erc4626-v7"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-solmate-erc4626-v7"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "borrowShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "repay",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "actualRepay",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrowShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "depositAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minAssetsRequired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "borrowAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "assets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "maxAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assetsOwed",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "withdrawAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minAssetsRequired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assetsDiscounted",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            },
+            {
+              "type": "function",
+              "name": "repayAtMaturity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "maturity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "positionAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "maxAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "borrower",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "actualRepayAssets",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "exactly-market-sol"
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0xaEb62e6F27BC103702E7BC879AE98bceA56f027E",
+          "status": "inactive",
+          "contractName": "Exactly OP Mainnet Auditor",
+          "sourceRefs": [
+            "exactly-official-addresses",
+            "exactly-auditor-sol"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "enterMarket",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "market",
+                  "type": "address",
+                  "internalType": "contract Market"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "exactly-auditor-sol"
+            },
+            {
+              "type": "function",
+              "name": "exitMarket",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "market",
+                  "type": "address",
+                  "internalType": "contract Market"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "exactly-auditor-sol"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "exactly-official-addresses",
+      "url": "https://docs.exact.ly/guides/smart-contract-addresses.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Exactly smart-contract address documentation identifies the two selected OP Mainnet Market deployments and OP Mainnet Auditor. Address documentation is not runtime-bytecode or funded-execution evidence."
+    },
+    {
+      "sourceId": "exactly-market-sol",
+      "url": "https://github.com/Exactly/protocol/blob/4b5fec78f02825d34b15276292fef804607e375e/contracts/Market.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Exactly protocol commit 4b5fec78f02825d34b15276292fef804607e375e contracts/Market.sol declares the selected borrow, repay, and fixed-maturity methods and overrides inherited withdraw/redeem. It imports ERC4626 from solmate/src/mixins/ERC4626.sol. This source declaration is not per-market runtime-code proof."
+    },
+    {
+      "sourceId": "exactly-auditor-sol",
+      "url": "https://github.com/Exactly/protocol/blob/4b5fec78f02825d34b15276292fef804607e375e/contracts/Auditor.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Exactly protocol commit 4b5fec78f02825d34b15276292fef804607e375e contracts/Auditor.sol declares enterMarket(Market) and exitMarket(Market) with no return values."
+    },
+    {
+      "sourceId": "exactly-solmate-erc4626-v7",
+      "url": "https://raw.githubusercontent.com/transmissions11/solmate/v7/src/mixins/ERC4626.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Exactly Market imports Solmate ERC4626. The upstream v7 source URL was fetched and declares deposit(uint256 assets,address receiver) returns(uint256 shares) and mint(uint256 shares,address receiver) returns(uint256 assets). `git ls-remote` did not return a v7 tag object; the tag is recorded as the source reference without claiming an independently resolved commit SHA."
+    }
+  ]
+}

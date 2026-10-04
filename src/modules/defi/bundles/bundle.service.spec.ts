@@ -96,9 +96,10 @@ describe('DefiBundleService', () => {
   });
 
   it('accepts an explicitly empty injectable bundle list without inventing profiles', async () => {
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(33);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(62);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toHaveLength(12);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12)).toHaveLength(21);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)).toHaveLength(21);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33)).toHaveLength(29);
     const service = new DefiBundleService([], catalog([]));
     await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, maxGrants: 100, bundles: [] });
   });

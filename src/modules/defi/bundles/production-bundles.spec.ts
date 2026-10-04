@@ -9,6 +9,7 @@ import { PRODUCTION_DEFI_MANIFEST, PRODUCTION_DEFI_CATALOG } from '../registry/p
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { capabilityBundleFingerprint } from './bundle.service';
 import { DefiBundleService } from './bundle.service';
+import { buildReviewedManifest } from '../registry/defi-manifest';
 
 const OWNER = '0x0000000000000000000000000000000000000001';
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -55,21 +56,45 @@ function first20SourceIds(): string[] {
   return after.filter((id) => !existing.has(id)).sort(cmp);
 }
 
+const phase2Builders = [
+  ['ajna', 'buildAjnaErc20PoolRegistry'], ['bancor-v3', 'buildBancorV3Registry'],
+  ['ekubo', 'buildEkuboRegistry'], ['enzyme', 'buildEnzymeRegistry'], ['exactly', 'buildExactlyRegistry'],
+  ['gearbox-pool', 'buildGearboxPoolRegistry'], ['hashflow', 'buildHashflowRegistry'], ['izumi', 'buildIZumiRegistry'],
+  ['integral', 'buildIntegralSizeRelayerRegistry'], ['lombard', 'buildLombardStakedLbtcRegistry'],
+  ['liquity-v2', 'buildLiquityV2Registry'], ['puffer', 'buildPufferRegistry'], ['swell', 'buildSwellRegistry'],
+  ['stakestone', 'buildStakeStoneRegistry'], ['solv', 'buildSolvRouterV2Registry'],
+  ['stakedao', 'buildStakeDaoCrvDepositorRegistry'], ['eigenlayer', 'buildEigenLayerRegistry'],
+  ['symbiotic', 'buildSymbioticRegistry'], ['harvest', 'buildHarvestRegistry'], ['idle', 'buildIdleRegistry'],
+  ['origin', 'buildOriginOethRegistry'], ['sky', 'buildSkyRegistry'], ['frax', 'buildFraxRegistry'],
+  ['ethena', 'buildEthenaRegistry'], ['usual', 'buildUsualRegistry'], ['angle', 'buildAngleRegistry'],
+  ['lista', 'buildListaRegistry'],
+] as const;
+
+function phase2CandidateManifest() {
+  const fragments = phase2Builders.map(([directory, builder]) => {
+    const module = require(`../registry/${directory}`) as Record<string, () => unknown>;
+    return module[builder]();
+  });
+  return buildReviewedManifest(fragments as never[]);
+}
+
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(506);
+    expect(flat).toHaveLength(640);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(483);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(617);
     expect(flat.filter((fn) => fn.executionScope)).toHaveLength(15);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(33);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(62);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {
       expect(bundle.version).toBe('1.0.0');
       expect(bundle.chainIds).toHaveLength(1);
       if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 12) {
         expect(bundle.capabilityIds).toHaveLength(bundle.bundleId.startsWith('uniswap-v3-') ? 9 : bundle.bundleId === 'curve-3pool-1' ? 4 : bundle.bundleId === 'pancakeswap-v3-positions-56' ? 9 : bundle.bundleId === 'yearn-tokenized-strategy-1' ? 6 : 6);
-      } else {
+      } else if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 33) {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(17);
+      } else {
+        expect(bundle.capabilityIds.length).toBeLessThanOrEqual(10);
       }
       expect(bundle.capabilityIds).toEqual([...bundle.capabilityIds].sort(cmp));
       expect(new Set(bundle.capabilityIds).size).toBe(bundle.capabilityIds.length);
@@ -87,8 +112,8 @@ describe('published production profiles', () => {
     expect(npm.map((bundle) => bundle.chainIds[0])).toEqual([1, 10, 56, 137, 143, 8453, 42161]);
     expect(blue.map((bundle) => bundle.chainIds[0])).toEqual([1, 8453]);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12).flatMap((bundle) => bundle.capabilityIds)).toHaveLength(94);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12)).toHaveLength(21);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12).map(({ bundleId, chainIds, capabilityIds }) => [bundleId, chainIds[0], capabilityIds.length])).toEqual([
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)).toHaveLength(21);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33).map(({ bundleId, chainIds, capabilityIds }) => [bundleId, chainIds[0], capabilityIds.length])).toEqual([
       ['quickswap-137', 137, 10], ['camelot-42161', 42161, 3], ['lfj-42161', 42161, 3],
       ['maverick-8453', 8453, 1], ['maverick-42161', 42161, 1], ['dodo-8453', 8453, 3],
       ['ambient-1', 1, 1], ['fluid-8453', 8453, 17], ['euler-1', 1, 16], ['silo-42161', 42161, 12],
@@ -96,19 +121,19 @@ describe('published production profiles', () => {
       ['ether-fi-1', 1, 7], ['renzo-1', 1, 6], ['kelp-1', 1, 4], ['stakewise-1', 1, 3],
       ['beefy-8453', 8453, 8], ['pendle-1', 1, 6], ['convex-1', 1, 6], ['aura-1', 1, 6],
     ]);
-    const newIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12).flatMap((bundle) => bundle.capabilityIds);
+    const newIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33).flatMap((bundle) => bundle.capabilityIds);
     expect(new Set(newIds).size).toBe(138);
     expect(newIds.sort(cmp)).toEqual(first20SourceIds());
-    expect(Math.max(...PRODUCTION_DEFI_CAPABILITY_BUNDLES.map((bundle) => bundle.capabilityIds.length))).toBe(17);
+    expect(Math.max(...PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 33).map((bundle) => bundle.capabilityIds.length))).toBe(17);
     expect(Math.max(...PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12).map((bundle) => bundle.capabilityIds.length))).toBe(9);
-    expect(new Set(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12).map((bundle) => bundle.chainIds[0]))).toEqual(new Set([1, 137, 8453, 42161]));
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12).filter((bundle) => bundle.bundleId.startsWith('maverick-')).map((bundle) => bundle.chainIds[0])).toEqual([8453, 42161]);
+    expect(new Set(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33).map((bundle) => bundle.chainIds[0]))).toEqual(new Set([1, 137, 8453, 42161]));
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33).filter((bundle) => bundle.bundleId.startsWith('maverick-')).map((bundle) => bundle.chainIds[0])).toEqual([8453, 42161]);
     expect(newIds.every((id) => !id.includes(':approve'))).toBe(true);
-    for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12)) {
+    for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)) {
       expect(bundle.warnings.join(' ')).toMatch(/approvals are separate authority and are not included or automatic/);
       expect(bundle.limitations.join(' ')).toMatch(/not a complete workflow/);
     }
-    const copy = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12).map((bundle) => `${bundle.warnings.join(' ')} ${bundle.limitations.join(' ')}`).join(' ');
+    const copy = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33).map((bundle) => `${bundle.warnings.join(' ')} ${bundle.limitations.join(' ')}`).join(' ');
     expect(copy).toMatch(/no LP entry\/exit workflow/);
     expect(copy).toMatch(/asset0.*asset1.*not verified/i);
     expect(copy).toMatch(/not a curated safety list.*LTV compatibility/i);
@@ -137,6 +162,62 @@ describe('published production profiles', () => {
     expect(legacyFixture.profiles).toHaveLength(12);
     expect(legacyFixture.profiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(94);
     expect(legacyFixture.profiles).toEqual(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12));
+  });
+
+  it('preserves all 33 profiles from immutable baseline 587f888 byte-for-byte', () => {
+    const fixtureBytes = readFileSync(resolve(process.cwd(), 'src/modules/defi/bundles/__fixtures__/phase2-baseline-profiles-587f888.json'));
+    expect(createHash('sha256').update(fixtureBytes).digest('hex')).toBe('9e6f596c0630b5a0dba45e03541612bc4b3e6915dad8d89db470926f1b512783');
+    const fixture = JSON.parse(fixtureBytes.toString('utf8')) as { provenance: { gitCommit: string; sourcePath: string }; profiles: unknown[] };
+    expect(fixture.provenance).toEqual({ gitCommit: '587f888', sourcePath: 'src/modules/defi/bundles/production-bundles.ts' });
+    expect(fixture.profiles).toHaveLength(33);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 33)).toEqual(fixture.profiles);
+  });
+
+  it('pins 29 literal phase2 profiles to all 134 selected active manifest identities and isolated ABI fingerprints', () => {
+    const candidates = phase2CandidateManifest();
+    const candidateIds = candidates.capabilities.map((fn) => fn.capabilityId).sort(cmp);
+    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33);
+    expect(candidates.capabilities).toHaveLength(134);
+    expect(profiles).toHaveLength(29);
+    expect(profiles.map((profile) => profile.version)).toEqual(Array(29).fill('1.0.0'));
+    const memberIds = profiles.flatMap((profile) => profile.capabilityIds);
+    expect(memberIds).toHaveLength(134);
+    expect(new Set(memberIds).size).toBe(134);
+    expect([...memberIds].sort(cmp)).toEqual(candidateIds);
+
+    for (const profile of profiles) {
+      expect(profile.capabilityIds).toEqual([...profile.capabilityIds].sort(cmp));
+      expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, candidates.capabilities));
+      for (const id of profile.capabilityIds) {
+        const candidate = candidates.capabilities.find((fn) => fn.capabilityId === id)!;
+        expect(candidate).toMatchObject({ type: 'contract_call', status: 'active', provenance: { status: 'verified' } });
+        const admitted = flat.find((fn) => fn.capabilityId === id)!;
+        expect(admitted).toMatchObject({ type: 'contract_call', status: 'active', abi: candidate.abi, signature: candidate.signature, chainId: candidate.chainId });
+        expect(admitted.contract.toLowerCase()).toBe(candidate.contract.toLowerCase());
+      }
+      expect(profile.warnings.join(' ')).toMatch(/selected source-qualified ABI calls/);
+      expect(profile.warnings.join(' ')).toMatch(/not included, automatic, or paired/);
+      expect(profile.limitations.join(' ')).toMatch(/not a broad product, market-coverage, or whole-workflow claim/);
+    }
+    expect(profiles.map((profile) => profile.bundleId).filter((id) => id.startsWith('exactly-'))).toEqual([
+      'exactly-op-usdc-market-10', 'exactly-op-weth-market-10', 'exactly-op-auditor-10',
+    ]);
+    const exactly = profiles.filter((profile) => profile.bundleId.startsWith('exactly-'));
+    expect(exactly.map((profile) => profile.capabilityIds.length)).toEqual([10, 10, 2]);
+    expect(exactly[2].label).toContain('Auditor enter/exit controls');
+    expect(exactly[2].limitations).toContain('Only Auditor market enter/exit calls are selected; no lending-market operations are included.');
+    const auditor = candidates.capabilities.filter((fn) => fn.capabilityId.includes(':0xaeb62e6f27bc103702e7bc879ae98bcea56f027e:'));
+    expect(auditor.map((fn) => fn.functionName).sort(cmp)).toEqual(['enterMarket', 'exitMarket']);
+    const sky = profiles.find((profile) => profile.bundleId === 'sky-phase2-1')!;
+    expect(sky.capabilityIds).toHaveLength(6);
+    expect(candidates.capabilities.filter((fn) => fn.capabilityId.startsWith('sky:')).map((fn) => fn.capabilityId).sort(cmp)).toEqual(sky.capabilityIds);
+    const caveats = profiles.map((profile) => `${profile.label} ${profile.warnings.join(' ')} ${profile.limitations.join(' ')}`).join(' ');
+    for (const phrase of [
+      'deposit-only', 'settlement/payout is not represented', 'Ethereum LP position subset',
+      'dated agEUR Savings identity snapshot', 'one sampled pool', 'Bitcoin-script redemption',
+      'frxETH; it is not an ETH queue', 'withdrawal settlement or completion', 'exits and settlement are not represented',
+      'Comptroller interface, not a Vault',
+    ]) expect(caveats).toContain(phrase);
   });
 
   it('binds every NPM multicall profile to its wrapper and exactly its eight explicit child grants', () => {
@@ -220,6 +301,6 @@ describe('published production profiles', () => {
     const response = await service.listMetadata();
     expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
-    expect(response.bundles).toHaveLength(33);
+    expect(response.bundles).toHaveLength(62);
   });
 });

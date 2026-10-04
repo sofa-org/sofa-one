@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "integral",
+      "familyVersion": "size-relayer@91d8803b",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xd17b3c9784510E33cD5B87b490E79253BcD81e2E",
+          "status": "inactive",
+          "contractName": "Integral SIZE Ethereum RelayerProxy",
+          "sourceRefs": [
+            "integral-size-official-docs",
+            "integral-size-mainnet-deployment",
+            "integral-size-relayer-interface",
+            "integral-size-relayer-implementation"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "sell",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "sellParams",
+                  "type": "tuple",
+                  "internalType": "struct ITwapRelayer.SellParams",
+                  "components": [
+                    {
+                      "name": "tokenIn",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "tokenOut",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "amountIn",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountOutMin",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "wrapUnwrap",
+                      "type": "bool",
+                      "internalType": "bool"
+                    },
+                    {
+                      "name": "to",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "submitDeadline",
+                      "type": "uint32",
+                      "internalType": "uint32"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "orderId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "integral-size-relayer-interface"
+            },
+            {
+              "type": "function",
+              "name": "buy",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "buyParams",
+                  "type": "tuple",
+                  "internalType": "struct ITwapRelayer.BuyParams",
+                  "components": [
+                    {
+                      "name": "tokenIn",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "tokenOut",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "amountInMax",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountOut",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "wrapUnwrap",
+                      "type": "bool",
+                      "internalType": "bool"
+                    },
+                    {
+                      "name": "to",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "submitDeadline",
+                      "type": "uint32",
+                      "internalType": "uint32"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "orderId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "integral-size-relayer-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "integral-size-official-docs",
+      "url": "https://docs.integral.link/size/llms-full.txt",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Integral SIZE documentation describes the relayer, TWAP, and Instant Swap product distinctions. It is product documentation, not proof of a specific order settlement, pair liquidity, or one universal delay for all relayer calls."
+    },
+    {
+      "sourceId": "integral-size-mainnet-deployment",
+      "url": "https://github.com/IntegralHQ/Integral-SIZE-Smart-Contracts/blob/91d8803b1732dfe675e25754332f1078945dcc89/deployments.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official deployments.json mainnet.relayerProxy role is 0xd17b3c9784510E33cD5B87b490E79253BcD81e2E. Commit timestamp is 2026-10-02 and was observed 2026-10-04; the file supplies no on-chain deployment block/date or current proxy implementation proof."
+    },
+    {
+      "sourceId": "integral-size-relayer-interface",
+      "url": "https://github.com/IntegralHQ/Integral-SIZE-Smart-Contracts/blob/91d8803b1732dfe675e25754332f1078945dcc89/contracts/interfaces/ITwapRelayer.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned ITwapRelayer.sol declares only the selected payable sell(SellParams) and buy(BuyParams) methods with complete named tuple fields and uint256 orderId outputs for this fixture. Quote methods and other interface methods are excluded."
+    },
+    {
+      "sourceId": "integral-size-relayer-implementation",
+      "url": "https://github.com/IntegralHQ/Integral-SIZE-Smart-Contracts/blob/91d8803b1732dfe675e25754332f1078945dcc89/contracts/TwapRelayer.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned TwapRelayer.sol routes both sell and buy through ITwapDelay(DELAY_ADDRESS).relayerSell and returns the order ID. Protocol-side token/wrapping/value checks and dynamically calculated prepayment apply; a returned order ID is not proof of settlement or guaranteed synchronous output delivery."
+    }
+  ]
+}

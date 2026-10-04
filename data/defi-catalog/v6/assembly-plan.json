@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "baselinePath": "data/defi-catalog/v5/catalog.json",
+  "sourcePaths": [
+    "data/defi-catalog/v6/sources/ajna.json",
+    "data/defi-catalog/v6/sources/angle.json",
+    "data/defi-catalog/v6/sources/bancor.json",
+    "data/defi-catalog/v6/sources/eigenlayer.json",
+    "data/defi-catalog/v6/sources/ekubo.json",
+    "data/defi-catalog/v6/sources/enzyme.json",
+    "data/defi-catalog/v6/sources/ethena.json",
+    "data/defi-catalog/v6/sources/exactly.json",
+    "data/defi-catalog/v6/sources/frax.json",
+    "data/defi-catalog/v6/sources/gearbox.json",
+    "data/defi-catalog/v6/sources/harvest.json",
+    "data/defi-catalog/v6/sources/hashflow.json",
+    "data/defi-catalog/v6/sources/idle.json",
+    "data/defi-catalog/v6/sources/integral.json",
+    "data/defi-catalog/v6/sources/izumi.json",
+    "data/defi-catalog/v6/sources/liquity.json",
+    "data/defi-catalog/v6/sources/lista.json",
+    "data/defi-catalog/v6/sources/lombard.json",
+    "data/defi-catalog/v6/sources/origin.json",
+    "data/defi-catalog/v6/sources/puffer.json",
+    "data/defi-catalog/v6/sources/sky.json",
+    "data/defi-catalog/v6/sources/solv.json",
+    "data/defi-catalog/v6/sources/stakedao.json",
+    "data/defi-catalog/v6/sources/stakestone.json",
+    "data/defi-catalog/v6/sources/swell.json",
+    "data/defi-catalog/v6/sources/symbiotic.json",
+    "data/defi-catalog/v6/sources/usual.json"
+  ]
+}
