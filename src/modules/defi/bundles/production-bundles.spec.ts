@@ -12,6 +12,7 @@ import { DefiBundleService } from './bundle.service';
 import { buildReviewedManifest } from '../registry/defi-manifest';
 import { buildEnsoRegistry } from '../registry/enso';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
+import { SDAI_SAVINGS_CAPABILITIES } from '../registry/sdai-savings';
 
 const OWNER = '0x0000000000000000000000000000000000000001';
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -94,11 +95,11 @@ function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
 
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(669);
+    expect(flat).toHaveLength(673);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(646);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(650);
     expect(flat.filter((fn) => fn.executionScope)).toHaveLength(16);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(68);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {
       expect(bundle.version).toBe('1.0.0');
@@ -178,8 +179,8 @@ describe('published production profiles', () => {
     expect(fixture.profiles).toHaveLength(67);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 67)).toEqual(fixture.profiles);
     const allIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(allIds).toHaveLength(395);
-    expect(new Set(allIds).size).toBe(395);
+    expect(allIds).toHaveLength(399);
+    expect(new Set(allIds).size).toBe(399);
     const enso = PRODUCTION_DEFI_CAPABILITY_BUNDLES[67];
     expect(enso).toMatchObject({ bundleId: 'enso-static-weiroll-root-v1', version: '1.0.0', chainIds: [1], capabilityIds: [ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId] });
     expect(enso.capabilityIds).toEqual([ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId]);
@@ -199,6 +200,41 @@ describe('published production profiles', () => {
     expect(enso.capabilityIds).not.toContain('uniswap-v3-router02:v3:1:0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45:exact-input-single');
     expect(enso.capabilityIds).not.toContain('aave-v3:1:0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2:supply');
     expect(enso.capabilityIds).not.toContain('erc20:1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48:approve');
+  });
+
+  it('preserves the entire accepted v8 profile baseline and appends exactly the four sDAI no-referral calls', () => {
+    const fixtureBytes = readFileSync(resolve(process.cwd(), 'src/modules/defi/bundles/__fixtures__/sdai-baseline-profiles-1f27794.json'));
+    expect(createHash('sha256').update(fixtureBytes).digest('hex')).toBe('46113ba280510d4b3153e13b14ebfbaf713c5ce47ab84fe2ff17631fec7ed943');
+    const fixture = JSON.parse(fixtureBytes.toString('utf8')) as { provenance: { gitCommit: string; sourcePath: string }; profiles: unknown[] };
+    expect(fixture.provenance).toEqual({ gitCommit: '1f27794f65ecaef030d74a15bdd363eeb36c6ec9', sourcePath: 'src/modules/defi/bundles/production-bundles.ts' });
+    expect(fixture.profiles).toHaveLength(68);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 68)).toEqual(fixture.profiles);
+    const members = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
+    expect(members).toHaveLength(399);
+    expect(new Set(members).size).toBe(399);
+
+    const profile = PRODUCTION_DEFI_CAPABILITY_BUNDLES[68];
+    const expectedIds = [
+      'sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit',
+      'sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:mint',
+      'sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:redeem',
+      'sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:withdraw',
+    ];
+    expect(profile).toMatchObject({ bundleId: 'sdai-savings-no-referral-v1', version: '1.0.0', chainIds: [1], capabilityIds: expectedIds });
+    expect(profile.capabilityIds).toEqual(expectedIds);
+    expect(profile.capabilityIds).toEqual(SDAI_SAVINGS_CAPABILITIES.map((fn) => fn.capabilityId).sort(cmp));
+    expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, SDAI_SAVINGS_CAPABILITIES));
+    expect(profile.fingerprint).toBe('sha256:b3bcafb925788872d0f01a236eebd26d1d9d24cd76ba6ac32e533e79f21d2ea4');
+    expect(profile.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
+    expect(profile.warnings.join(' ')).toMatch(/Four dated no-referral SavingsDai operations only/i);
+    expect(profile.warnings.join(' ')).toMatch(/Each function requires its own explicit grant.*DAI approval is separate authority/i);
+    expect(profile.warnings.join(' ')).toMatch(/receiver and owner arguments remain caller-selected/i);
+    expect(profile.limitations.join(' ')).toMatch(/not the later referral-enabled ABI or compiler-generated artifact/i);
+    expect(profile.limitations.join(' ')).toMatch(/not Spark Pool, sUSDS, or agEUR Savings authority/i);
+    expect(profile.limitations.join(' ')).toMatch(/DAI transferFrom, DaiJoin and Pot dependencies/i);
+    expect(profile.limitations.join(' ')).toMatch(/not a complete savings workflow.*current runtime\/code\/proxy\/DSR identity/i);
+    expect(profile.warnings.join(' ')).not.toMatch(/must approve|requires DAI approval/i);
   });
 
   it('preserves all 62 immutable 74bb052 full-metadata profile objects exactly', () => {
@@ -402,6 +438,6 @@ describe('published production profiles', () => {
     const response = await service.listMetadata();
     expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
-      expect(response.bundles).toHaveLength(68);
+    expect(response.bundles).toHaveLength(69);
   });
 });

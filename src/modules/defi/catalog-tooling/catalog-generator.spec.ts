@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync } from 'node:
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildReviewedManifest } from '../registry/defi-manifest';
-import { assembleCatalogFromSources, assembleV6SourceCandidates, assembleV7SourceCandidates, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument, validateV6AssemblyPlan, validateV7AssemblyPlan, V6_SOURCE_PATHS, V7_SOURCE_PATHS } from './catalog-generator';
+import { assembleCatalogFromSources, assembleV6SourceCandidates, assembleV7SourceCandidates, assembleV9SourceCandidates, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, prepareV9Sources, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument, validateV6AssemblyPlan, validateV7AssemblyPlan, validateV9AssemblyPlan, V6_SOURCE_PATHS, V7_SOURCE_PATHS } from './catalog-generator';
 import { functionAbiHash } from '../registry/defi-manifest';
 import type { DefiExecutionScope, DefiFunctionPolicy } from '../defi.types';
 import { toFunctionSelector } from 'viem';
@@ -41,6 +41,7 @@ import { createHash } from 'node:crypto';
 import { assembleV8SourceCandidates, prepareV8Sources, validateV8AssemblyPlan } from './catalog-generator';
 import { V8_ASSEMBLY_PLAN_PATH, V8_BASELINE_RAW_SHA256, V8_ROOT_IDENTITY, V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS } from './v8-identities';
 import { createEnsoStaticWeirollScope } from '../execution/enso-identity';
+import { V9_ASSEMBLY_PLAN_PATH, V9_BASELINE_RAW_SHA256, V9_SOURCE_CANONICAL_SHA256, V9_SOURCE_PATHS } from './v9-identities';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
 
@@ -384,6 +385,50 @@ describe('DeFi catalog generator', () => {
     }
   });
 
+  it('prepares exactly four inactive sDAI candidates and accepts only a bijective scope-free synthetic projection', () => {
+    const bytes = readFileSync(resolve(process.cwd(), 'data/defi-catalog/v8/catalog.json'));
+    const baselineRawSha256 = createHash('sha256').update(bytes).digest('hex');
+    const baseline = validateCatalogDocument(JSON.parse(bytes.toString('utf8')));
+    const planValue = JSON.parse(readFileSync(resolve(process.cwd(), V9_ASSEMBLY_PLAN_PATH), 'utf8'));
+    const plan = validateV9AssemblyPlan(planValue);
+    const inputs = V9_SOURCE_PATHS.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) as unknown }));
+    expect(baselineRawSha256).toBe(V9_BASELINE_RAW_SHA256);
+    expect(prepareV9Sources(inputs)).toMatchObject({ sourceCount: 1, familyCount: 1, targetCount: 1, bindingCount: 4, sourceDigests: [{ canonicalSha256: V9_SOURCE_CANONICAL_SHA256 }] });
+    const inactive = assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256);
+    const diff = catalogDiff(baseline, inactive);
+    expect(diff).toMatchObject({ added: expect.arrayContaining(['sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit']), removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(diff.added).toHaveLength(4);
+    const inactiveFns = buildReviewedManifest([inactive]).capabilities;
+    expect(inactiveFns).toHaveLength(673);
+    expect(inactiveFns.filter((fn) => fn.executionScope)).toHaveLength(16);
+    for (const id of diff.added) {
+      const candidate = inactiveFns.find((fn) => fn.capabilityId === id)!;
+      expect(candidate).toMatchObject({ status: 'inactive', provenance: { status: 'candidate' } });
+      expect(candidate.executionScope).toBeUndefined();
+    }
+    const bindings = prepareV9Sources(inputs).bindings;
+    const admissions = { schemaVersion: 1, snapshots: [{ sourcePath: V9_SOURCE_PATHS[0], canonicalSha256: V9_SOURCE_CANONICAL_SHA256, bindings: bindings.map(({ familyId, chainId, contract, signature, selector, abiHash, capabilityId }) => ({ familyId, chainId, contract, signature, selector, abiHash, capabilityId, executionScope: null, executionScopeHash: null })) }] };
+    const projected = assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, admissions);
+    const projection = buildReviewedManifest([projected]).capabilities;
+    expect(projection).toHaveLength(673);
+    expect(projection.filter((fn) => fn.status === 'active')).toHaveLength(673);
+    expect(projection.filter((fn) => fn.capabilityId.startsWith('sdai-savings:'))).toHaveLength(4);
+    expect(projection.filter((fn) => fn.operation === 'approve')).toHaveLength(23);
+    expect(projection.filter((fn) => fn.operation !== 'approve')).toHaveLength(650);
+    expect(projection.filter((fn) => fn.executionScope)).toHaveLength(16);
+    expect(renderGeneratedModule(projected)).toBe(renderGeneratedModule(assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, admissions)));
+    const fixedAdmissions = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v9/admissions.json'), 'utf8'));
+    const fixedAssembly = assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, fixedAdmissions);
+    const savedV9 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v9/catalog.json'), 'utf8')));
+    expect(stableCatalogJson(fixedAssembly)).toBe(stableCatalogJson(savedV9));
+    expect(renderGeneratedModule(fixedAssembly)).toBe(renderGeneratedModule({ chains: savedV9.chains }));
+    expect(() => validateV9AssemblyPlan({ ...planValue, baselineRawSha256: '0'.repeat(64) })).toThrow();
+    const badAdmission = JSON.parse(JSON.stringify(admissions)); badAdmission.snapshots[0].bindings[0].executionScopeHash = '0x' + '0'.repeat(64);
+    expect(() => assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, badAdmission)).toThrow();
+    expect(() => prepareV9Sources([])).toThrow(/single fixed sDAI source path/);
+    expect(() => assembleV9SourceCandidates({ chains: baseline.chains }, plan, inputs, '0'.repeat(64))).toThrow(/baseline catalog or manifest identity/);
+  });
+
   it('pins the complete pre-migration 202-definition snapshot, hierarchy, and 179/23 action-approval split', () => {
     const dataRoot = resolve(process.cwd(), 'data/defi-catalog/v1');
     const baseline = validateBaseline(JSON.parse(readFileSync(resolve(dataRoot, 'pre-migration-baseline.json'), 'utf8')));
@@ -411,9 +456,12 @@ describe('DeFi catalog generator', () => {
   });
 
   it('parses versioned repository inputs and rejects arbitrary paths/options', () => {
-    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v8/catalog.json' });
+    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v9/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v2/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v2/catalog.json' });
-    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v8/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v9/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v8/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v8/catalog.json' });
+    expect(parseCatalogCliArgs(['prepare-v9'])).toEqual({ mode: 'prepare-v9', inputPath: 'data/defi-catalog/v9/assembly-plan.json' });
+    expect(parseCatalogCliArgs(['prepare-v9', '--input', 'data/defi-catalog/v9/assembly-plan.json'])).toEqual({ mode: 'prepare-v9', inputPath: 'data/defi-catalog/v9/assembly-plan.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v7/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v7/catalog.json' });
     expect(parseCatalogCliArgs(['prepare-v8'])).toEqual({ mode: 'prepare-v8', inputPath: V8_ASSEMBLY_PLAN_PATH });
     expect(parseCatalogCliArgs(['prepare-v8', '--input', V8_ASSEMBLY_PLAN_PATH])).toEqual({ mode: 'prepare-v8', inputPath: V8_ASSEMBLY_PLAN_PATH });

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
-import { assembleCatalogFromSources, assembleV5SourceCandidates, assembleV6SourceCandidates, assembleV7SourceCandidates, assembleV8SourceCandidates, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, prepareV8Sources, renderGeneratedModule, validateBaseline, validateCatalogDocument, V5_ASSEMBLY_PLAN_PATH, V6_ASSEMBLY_PLAN_PATH, V6_SOURCE_PATHS, V7_ASSEMBLY_PLAN_PATH, validateV5AssemblyPlan, validateV6AssemblyPlan, validateV7AssemblyPlan, validateV8AssemblyPlan } from '../../src/modules/defi/catalog-tooling/catalog-generator';
+import { assembleCatalogFromSources, assembleV5SourceCandidates, assembleV6SourceCandidates, assembleV7SourceCandidates, assembleV8SourceCandidates, assembleV9SourceCandidates, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, prepareV8Sources, prepareV9Sources, renderGeneratedModule, validateBaseline, validateCatalogDocument, V5_ASSEMBLY_PLAN_PATH, V6_ASSEMBLY_PLAN_PATH, V6_SOURCE_PATHS, V7_ASSEMBLY_PLAN_PATH, validateV5AssemblyPlan, validateV6AssemblyPlan, validateV7AssemblyPlan, validateV8AssemblyPlan, validateV9AssemblyPlan } from '../../src/modules/defi/catalog-tooling/catalog-generator';
 import { V8_ASSEMBLY_PLAN_PATH, V8_SOURCE_PATHS } from '../../src/modules/defi/catalog-tooling/v8-identities';
+import { V9_ASSEMBLY_PLAN_PATH, V9_SOURCE_PATHS, V9_SOURCE_RAW_SHA256 } from '../../src/modules/defi/catalog-tooling/v9-identities';
 
 const root = process.cwd();
 const baselinePath = resolve(root, 'data/defi-catalog/v1/pre-migration-baseline.json');
@@ -28,6 +29,9 @@ const v7CatalogPath = resolve(root, 'data/defi-catalog/v7/catalog.json');
 const v8PlanPath = resolve(root, V8_ASSEMBLY_PLAN_PATH);
 const v8AdmissionsPath = resolve(root, 'data/defi-catalog/v8/admissions.json');
 const v8CatalogPath = resolve(root, 'data/defi-catalog/v8/catalog.json');
+const v9PlanPath = resolve(root, V9_ASSEMBLY_PLAN_PATH);
+const v9AdmissionsPath = resolve(root, 'data/defi-catalog/v9/admissions.json');
+const v9CatalogPath = resolve(root, 'data/defi-catalog/v9/catalog.json');
 
 function loadV6Assembly() {
   const plan = validateV6AssemblyPlan(readJson(assertFixedFilePath(v6PlanPath, V6_ASSEMBLY_PLAN_PATH)));
@@ -62,6 +66,28 @@ function loadV8Assembly() {
   const prepared = loadV8Preparation();
   const admissions = readJson(assertFixedFilePath(v8AdmissionsPath, 'data/defi-catalog/v8/admissions.json'));
   const assembled = assembleV8SourceCandidates({ chains: prepared.base.chains }, prepared.plan, prepared.inputs, prepared.plan.baselineRawSha256, admissions);
+  return { ...prepared, admissions, assembled };
+}
+
+function loadV9Preparation() {
+  const plan = validateV9AssemblyPlan(readJson(assertFixedFilePath(v9PlanPath, V9_ASSEMBLY_PLAN_PATH)));
+  const baselineBytes = readFileSync(assertFixedFilePath(resolve(root, plan.baselinePath), plan.baselinePath));
+  const baselineRawSha256 = createHash('sha256').update(baselineBytes).digest('hex');
+  const base = validateCatalogDocument(JSON.parse(baselineBytes.toString('utf8')) as unknown);
+  const inputs = V9_SOURCE_PATHS.map((relativePath) => {
+    const sourceBytes = readFileSync(assertFixedFilePath(resolve(root, relativePath), relativePath));
+    if (createHash('sha256').update(sourceBytes).digest('hex') !== V9_SOURCE_RAW_SHA256) throw new Error('V9 raw sDAI source file does not match its frozen byte digest');
+    return { sourcePath: relativePath, document: JSON.parse(sourceBytes.toString('utf8')) as unknown };
+  });
+  const report = prepareV9Sources(inputs);
+  const assembled = assembleV9SourceCandidates({ chains: base.chains }, plan, inputs, baselineRawSha256);
+  return { plan, base, inputs, report, assembled };
+}
+
+function loadV9Assembly() {
+  const prepared = loadV9Preparation();
+  const admissions = readJson(assertFixedFilePath(v9AdmissionsPath, 'data/defi-catalog/v9/admissions.json'));
+  const assembled = assembleV9SourceCandidates({ chains: prepared.base.chains }, prepared.plan, prepared.inputs, prepared.plan.baselineRawSha256, admissions);
   return { ...prepared, admissions, assembled };
 }
 
@@ -149,8 +175,25 @@ try {
       || added[0].executionScope?.kind !== 'enso-static-weiroll-v1' || scopeCount !== 16
       || renderGeneratedModule(assembled).length === 0) throw new Error('V8 preparation did not produce exactly one inactive mandatory-scope Enso candidate over unchanged v7');
     process.stdout.write(`${JSON.stringify({ ...report, candidateStatus: 'inactive', baselineDefinitions: 668, baselineScopes: 15, assembledDefinitions: 669, assembledScopes: 16, candidateCapabilityId: added[0].capabilityId, admissionsApplied: false, admissionsWritten: false, catalogWritten: false, productionModuleWritten: false }, null, 2)}\n`);
+  } else if (options.mode === 'prepare-v9') {
+    const { base, report, assembled } = loadV9Preparation();
+    const diff = catalogDiff(base, assembled);
+    const added = assembled.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => diff.added.includes(fn.capabilityId));
+    const allFunctions = assembled.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+    const scopeCount = allFunctions.filter((fn) => fn.executionScope).length;
+    const approvalCount = allFunctions.filter((fn) => fn.operation === 'approve').length;
+    if (diff.added.length !== 4 || diff.removed.length || diff.authorityChanged.length || diff.abiChanged.length || diff.metadataChanged.length
+      || added.length !== 4 || added.some((fn) => fn.status !== 'inactive' || fn.provenance.status !== 'candidate' || fn.executionScope != null)
+      || scopeCount !== 16 || approvalCount !== 23 || allFunctions.length - approvalCount !== 650
+      || renderGeneratedModule(assembled).length === 0) throw new Error('V9 preparation did not produce exactly four inactive scope-free candidates over unchanged v8');
+    process.stdout.write(`${JSON.stringify({ ...report, candidateStatus: 'inactive', baselineDefinitions: 669, baselineScopes: 16, assembledDefinitions: 673, assembledActions: 650, assembledApprovals: 23, assembledScopes: 16, candidateCapabilityIds: added.map((fn) => fn.capabilityId), admissionsApplied: false, admissionsWritten: false, catalogWritten: false, productionModuleWritten: false }, null, 2)}\n`);
   } else if (options.mode === 'assemble') {
-    if (options.inputPath === 'data/defi-catalog/v8/catalog.json') {
+    if (options.inputPath === 'data/defi-catalog/v9/catalog.json') {
+      const { inputs, assembled } = loadV9Assembly();
+      const target = assertFixedDataOutputPath(v9CatalogPath, 'data/defi-catalog/v9/catalog.json');
+      writeFileSync(target, `${JSON.stringify({ schemaVersion: 1, chains: assembled.chains }, null, 2)}\n`, 'utf8');
+      process.stdout.write(`Assembled 673 v9 definitions from ${inputs.length} exact source snapshot over immutable v8 with four explicit sDAI admissions.\n`);
+    } else if (options.inputPath === 'data/defi-catalog/v8/catalog.json') {
       const { inputs, assembled } = loadV8Assembly();
       const target = assertFixedDataOutputPath(v8CatalogPath, 'data/defi-catalog/v8/catalog.json');
       writeFileSync(target, `${JSON.stringify({ schemaVersion: 1, chains: assembled.chains }, null, 2)}\n`, 'utf8');
@@ -199,12 +242,18 @@ try {
   const inputPath = resolveSourceCatalogPath(root, options.inputPath);
   assertFixedOutputPath();
   const baseline = validateBaseline(readJson(baselinePath));
+  const isV9 = options.inputPath === 'data/defi-catalog/v9/catalog.json';
   const isV8 = options.inputPath === 'data/defi-catalog/v8/catalog.json';
   const isV7 = options.inputPath === 'data/defi-catalog/v7/catalog.json';
   const isV6 = options.inputPath === 'data/defi-catalog/v6/catalog.json';
   const isV5 = options.inputPath === 'data/defi-catalog/v5/catalog.json';
   let current: ReturnType<typeof validateCatalogDocument>;
-  if (isV8) {
+  if (isV9) {
+    const { assembled } = loadV9Assembly();
+    current = validateCatalogDocument({ schemaVersion: 1, chains: assembled.chains });
+    const saved = validateCatalogDocument(readJson(assertFixedFilePath(v9CatalogPath, 'data/defi-catalog/v9/catalog.json')));
+    if (JSON.stringify({ schemaVersion: 1, chains: current.chains }) !== JSON.stringify({ schemaVersion: 1, chains: saved.chains })) throw new Error('V9 catalog does not match the exact fixed sDAI source, admissions, and immutable v8 baseline');
+  } else if (isV8) {
     const { assembled } = loadV8Assembly();
     current = validateCatalogDocument({ schemaVersion: 1, chains: assembled.chains });
     const saved = validateCatalogDocument(readJson(assertFixedFilePath(v8CatalogPath, 'data/defi-catalog/v8/catalog.json')));
@@ -228,7 +277,9 @@ try {
     const saved = validateCatalogDocument(readJson(assertFixedFilePath(v5CatalogPath, 'data/defi-catalog/v5/catalog.json')));
     if (JSON.stringify({ schemaVersion: 1, chains: current.chains }) !== JSON.stringify({ schemaVersion: 1, chains: saved.chains })) throw new Error('V5 catalog does not match the current explicit plan, sources, and admissions');
   } else current = validateCatalogDocument(readJson(inputPath));
-  const comparison = isV8
+  const comparison = isV9
+    ? validateCatalogDocument(readJson(assertFixedFilePath(v8CatalogPath, 'data/defi-catalog/v8/catalog.json')))
+    : isV8
     ? validateCatalogDocument(readJson(assertFixedFilePath(v7CatalogPath, 'data/defi-catalog/v7/catalog.json')))
     : isV7
     ? validateCatalogDocument(readJson(assertFixedFilePath(v6CatalogPath, 'data/defi-catalog/v6/catalog.json')))
@@ -249,17 +300,19 @@ try {
     writeFileSync(outputPath, renderGeneratedModule(current), 'utf8');
   } else if (options.mode === 'check') {
     assertBaselinePreserved(current, baseline);
-    if (isV8) {
+    if (isV9) {
       const expected = renderGeneratedModule(current);
       const actual = readFileSync(outputPath, 'utf8');
-      if (actual !== expected) throw new Error('V8 catalog and generated production registry are stale; run npm run defi:catalog:generate');
-      process.stdout.write('V8 catalog and generated production registry are current against fixed Enso source/admission and immutable v7 baseline.\n');
+      if (actual !== expected) throw new Error('V9 catalog and generated production registry are stale; run npm run defi:catalog:generate');
+      process.stdout.write('V9 catalog and generated production registry are current against fixed sDAI source/admissions and immutable v8 baseline.\n');
+    } else if (isV8) {
+      process.stdout.write('Historical v8 catalog is current against fixed Enso source/admission and immutable v7 baseline; the production module targets v9.\n');
     } else if (isV7) {
-      process.stdout.write('Historical v7 catalog is current against its fixed v6 baseline, sources, identity map, and admissions; the production module currently targets v8.\n');
+      process.stdout.write('Historical v7 catalog is current against its fixed v6 baseline, sources, identity map, and admissions; the production module currently targets v9.\n');
     } else if (isV6) {
-      process.stdout.write('V6 catalog is current against its fixed sources and admissions; the production module currently targets v8.\n');
+      process.stdout.write('V6 catalog is current against its fixed sources and admissions; the production module currently targets v9.\n');
     } else if (isV5) {
-      process.stdout.write('V5 catalog is current against its fixed sources and admissions; the production module currently targets v8.\n');
+      process.stdout.write('V5 catalog is current against its fixed sources and admissions; the production module currently targets v9.\n');
     } else {
     const expected = renderGeneratedModule(current);
     const actual = readFileSync(outputPath, 'utf8');

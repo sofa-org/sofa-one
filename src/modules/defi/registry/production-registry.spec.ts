@@ -29,15 +29,16 @@ import { validateCatalogDocument } from '../catalog-tooling/catalog-generator';
 import { V6_SOURCE_IDENTITIES } from '../catalog-tooling/v6-identities';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { executionScopeHash } from '../execution/scope';
+import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
 @Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }], exports: [PrismaService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
-  it('assembles 669 exact, source-verified function capabilities as active', () => {
+  it('assembles 673 exact, source-verified function capabilities as active', () => {
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST)).toBe(true);
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST.capabilities)).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(669);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(673);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
     expect(PRODUCTION_DEFI_CATALOG).toBe(PRODUCTION_DEFI_MANIFEST.chains);
     expect(PRODUCTION_DEFI_CATALOG.map((chain) => chain.chainId)).toEqual([1, 10, 56, 137, 143, 8453, 42161]);
@@ -45,7 +46,7 @@ describe('production DeFi registry assembly', () => {
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => fn.provenance.sourceRef.length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(fn.provenance.verifiedAt))).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => Object.isFrozen(fn) && Object.isFrozen(fn.abi) && Object.isFrozen(fn.abi.inputs) && Object.isFrozen(fn.abi.outputs) && Object.isFrozen(fn.provenance))).toBe(true);
     expect(PRODUCTION_DEFI_CATALOG.every((chain) => Object.isFrozen(chain) && Object.isFrozen(chain.contracts) && chain.contracts.every((contract) => Object.isFrozen(contract) && Object.isFrozen(contract.functions)))).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(646);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(650);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Aave V3')).toHaveLength(28);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Compound III')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Morpho Vault V2')).toHaveLength(6);
@@ -104,8 +105,22 @@ describe('production DeFi registry assembly', () => {
     expect(baselineApprovalIds).toHaveLength(20);
     expect(newApprovalFunctions.every((fn) => !baselineApprovalIds.includes(fn.capabilityId))).toBe(true);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(669);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(669);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(673);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(673);
+    const v9Functions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId));
+    expect(v9Functions).toHaveLength(4);
+    expect(v9Functions.map((fn) => fn.capabilityId).sort()).toEqual(V9_SDAI_BINDINGS.map((binding) => binding.capabilityId).sort());
+    for (const binding of V9_SDAI_BINDINGS) {
+      const fn = v9Functions.find((candidate) => candidate.capabilityId === binding.capabilityId)!;
+      expect(fn).toMatchObject({ chainId: 1, contract: '0x83f20f44975d03b1b09e64809b757c47f942beea', functionName: binding.functionName, signature: binding.signature, status: 'active', provenance: { status: 'verified' } });
+      expect(toFunctionSelector(fn.signature)).toBe(binding.selector);
+      expect(functionAbiHash(fn)).toBe(binding.abiHash);
+      expect(fn.executionScope).toBeUndefined();
+    }
+    const frozenV8 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v8/catalog.json'), 'utf8')));
+    const v8Functions = buildReviewedManifest([frozenV8]).capabilities;
+    expect(v8Functions).toHaveLength(669);
+    for (const prior of v8Functions) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === prior.capabilityId)).toEqual(prior);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? ''));
     expect(sourceFunctions).toHaveLength(160);

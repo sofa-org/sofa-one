@@ -5,6 +5,7 @@ import { DefiPolicyService } from '../defi-policy.service';
 import type { DefiExecutionContext } from '../defi.types';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { PRODUCTION_DEFI_MANIFEST } from './production-registry';
+import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const rootAbi = parseAbi(['function routeSingle((uint8 tokenType, bytes data) tokenIn, bytes data) payable returns (bytes response)']);
 const shortcutAbi = parseAbi(['function executeShortcut(bytes32 accountId, bytes32 requestId, bytes32[] commands, bytes[] state)']);
@@ -78,7 +79,8 @@ function finalTx(grants: string[] = allGrants, pausedScopeKeys: string[] = []) {
 
 describe('integrated v8 Enso production policy fixture', () => {
   it('loads the admitted root and all three children from generated production manifest, then authorizes canonical native and ERC-20 routes', async () => {
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(669);
+    const historicalV8Projection = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId));
+    expect(historicalV8Projection).toHaveLength(669);
     const rootFn = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === rootId)!;
     expect(rootFn.status).toBe('active');
     expect(rootFn.executionScope?.kind).toBe('enso-static-weiroll-v1');

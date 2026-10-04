@@ -4,6 +4,7 @@ import { DefiPolicyService } from '../defi-policy.service';
 import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from './production-registry';
 import { V7_SOURCE_IDENTITIES } from '../catalog-tooling/v7-identities';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
+import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const owner = '0x0000000000000000000000000000000000000001';
 const apiKeyId = '00000000-0000-4000-8000-000000000001';
@@ -38,23 +39,27 @@ function fixture() {
   return { policy, context, transaction };
 }
 
-describe('v7 baseline bindings in current v8 production policy', () => {
+describe('v7 and v8 historical bindings in current v9 production policy', () => {
   const additions = V7_SOURCE_IDENTITIES.map((identity) => PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === identity.capabilityId)!).sort((a, b) => a.capabilityId.localeCompare(b.capabilityId));
 
-  it('keeps all 28 v7 bindings in current v8 production policy and projects the exact 668-definition v7 baseline', async () => {
+  it('keeps all 28 v7 bindings in current policy and projects exact v8/v7 historical baselines', async () => {
     expect(additions).toHaveLength(28);
     expect(additions.every((fn) => fn?.status === 'active' && fn.provenance.status === 'verified' && !fn.executionScope)).toBe(true);
     const currentCapabilities = PRODUCTION_DEFI_MANIFEST.capabilities;
-    expect(currentCapabilities).toHaveLength(669);
-    expect(currentCapabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(646);
+    const historicalV8Projection = currentCapabilities.filter((fn) => !V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId));
+    expect(currentCapabilities).toHaveLength(673);
+    expect(historicalV8Projection).toHaveLength(669);
+    expect(currentCapabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(650);
     expect(currentCapabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     expect(currentCapabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
-    const v7Baseline = currentCapabilities.filter((fn) => fn.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId);
+    const v7Baseline = historicalV8Projection.filter((fn) => fn.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId);
     expect(currentCapabilities.filter((fn) => fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)).toHaveLength(1);
     expect(v7Baseline).toHaveLength(668);
     expect(v7Baseline.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(645);
     expect(v7Baseline.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     expect(v7Baseline.filter((fn) => fn.executionScope)).toHaveLength(15);
+    expect(historicalV8Projection.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(646);
+    expect(historicalV8Projection.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     const { policy, context, transaction } = fixture();
     for (const fn of additions) {
       for (const edge of ['max', 'zero'] as const) {

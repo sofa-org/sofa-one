@@ -11,6 +11,10 @@ import {
   V8_ASSEMBLY_PLAN_PATH, V8_BASELINE_MANIFEST_HASH, V8_BASELINE_PATH, V8_BASELINE_RAW_SHA256, V8_ROOT_IDENTITY,
   V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS,
 } from './v8-identities';
+import {
+  V9_ASSEMBLY_PLAN_PATH, V9_BASELINE_MANIFEST_HASH, V9_BASELINE_PATH, V9_BASELINE_RAW_SHA256,
+  V9_SOURCE_CANONICAL_SHA256, V9_SOURCE_PATHS, V9_SDAI_BINDINGS, V9_SDAI_SOURCE_REFS,
+} from './v9-identities';
 
 export const BASELINE_MANIFEST_HASH = '0x43ec3be0b20a32457719d8edb17c8eaa40c93480921d6e7c86e9c2cacdec5897' as const;
 
@@ -23,7 +27,7 @@ const ABI_PARAM_KEYS = ['name', 'type', 'components', 'internalType'];
 const PROVENANCE_KEYS = ['sourceRef', 'verifiedAt', 'status'];
 const POLICY_KEYS = ['ref', 'version'];
 
-export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6' | 'prepare-v7' | 'prepare-v8';
+export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6' | 'prepare-v7' | 'prepare-v8' | 'prepare-v9';
 export type CatalogCliOptions = Readonly<{ mode: CatalogCliMode; inputPath: string }>;
 export type SourceCatalogInput = Readonly<{ sourcePath: string; document: unknown }>;
 
@@ -130,6 +134,9 @@ export type V7PreparationReport = Readonly<{ sourceCount: number; familyCount: n
 export type V8AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: typeof V8_BASELINE_PATH; baselineRawSha256: typeof V8_BASELINE_RAW_SHA256; baselineManifestHash: typeof V8_BASELINE_MANIFEST_HASH; sourcePaths: readonly string[]; sourceCanonicalSha256: typeof V8_SOURCE_CANONICAL_SHA256 }>;
 export type V8CompiledBinding = Readonly<{ sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: DefiExecutionScope; executionScopeHash: string }>;
 export type V8PreparationReport = Readonly<{ sourceCount: 1; familyCount: 1; targetCount: 1; bindingCount: 1; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V8CompiledBinding[] }>;
+export type V9AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: typeof V9_BASELINE_PATH; baselineRawSha256: typeof V9_BASELINE_RAW_SHA256; baselineManifestHash: typeof V9_BASELINE_MANIFEST_HASH; sourcePaths: readonly string[]; sourceCanonicalSha256: typeof V9_SOURCE_CANONICAL_SHA256 }>;
+export type V9CompiledBinding = Readonly<{ sourcePath: string; familyId: 'sdai-savings'; familyVersion: 'no-referral-v1@66587976'; chainId: 1; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: null; executionScopeHash: null }>;
+export type V9PreparationReport = Readonly<{ sourceCount: 1; familyCount: 1; targetCount: 1; bindingCount: 4; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V9CompiledBinding[] }>;
 export type V8AdmissionDocument = Readonly<{ schemaVersion: 1; snapshots: readonly Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly Readonly<{ familyId: string; chainId: number; contract: string; signature: string; selector: string; abiHash: string; capabilityId: string; executionScope: DefiExecutionScope; executionScopeHash: string }>[] }>[] }>;
 
 export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; selector?: string; abiHash: string; capabilityId: string; executionScope?: DefiExecutionScope; executionScopeHash?: string }>;
@@ -156,9 +163,9 @@ function assertJsonData(value: unknown, label: string, seen = new Set<object>())
 
 export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions {
   const mode = args[0];
-  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6' && mode !== 'prepare-v7' && mode !== 'prepare-v8') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6|prepare-v7|prepare-v8> [--input fixed repository file]');
-  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6' || mode === 'prepare-v7' || mode === 'prepare-v8') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
-  let inputPath = 'data/defi-catalog/v8/catalog.json';
+  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6' && mode !== 'prepare-v7' && mode !== 'prepare-v8' && mode !== 'prepare-v9') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6|prepare-v7|prepare-v8|prepare-v9> [--input fixed repository file]');
+  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6' || mode === 'prepare-v7' || mode === 'prepare-v8' || mode === 'prepare-v9') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
+  let inputPath = 'data/defi-catalog/v9/catalog.json';
   let inputSeen = false;
   for (let index = 1; index < args.length; index += 1) {
     if (args[index] !== '--input' || inputSeen || !args[index + 1]) throw new Error('Usage: cli.ts <generate|check|diff> [--input data/defi-catalog/vN/catalog.json]');
@@ -166,8 +173,8 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
     inputPath = args[++index];
   }
   if (mode === 'assemble') {
-    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json', 'data/defi-catalog/v7/catalog.json', 'data/defi-catalog/v8/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, v6, v7, or v8 source assembly selector');
-    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v8/catalog.json' };
+    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json', 'data/defi-catalog/v7/catalog.json', 'data/defi-catalog/v8/catalog.json', 'data/defi-catalog/v9/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, v6, v7, v8, or v9 source assembly selector');
+    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v9/catalog.json' };
   }
   if (mode === 'prepare-v5') {
     if (inputSeen && inputPath !== V5_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v5 only accepts ${V5_ASSEMBLY_PLAN_PATH}`);
@@ -184,6 +191,10 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
   if (mode === 'prepare-v8') {
     if (inputSeen && inputPath !== V8_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v8 only accepts ${V8_ASSEMBLY_PLAN_PATH}`);
     return { mode, inputPath: V8_ASSEMBLY_PLAN_PATH };
+  }
+  if (mode === 'prepare-v9') {
+    if (inputSeen && inputPath !== V9_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v9 only accepts ${V9_ASSEMBLY_PLAN_PATH}`);
+    return { mode, inputPath: V9_ASSEMBLY_PLAN_PATH };
   }
   if (!/^data\/defi-catalog\/v[1-9][0-9]*\/catalog\.json$/.test(inputPath)) throw new Error('Catalog input must be a repository source file at data/defi-catalog/vN/catalog.json');
   return { mode, inputPath };
@@ -219,6 +230,19 @@ export function validateV8AssemblyPlan(value: unknown): V8AssemblyPlan {
     throw new Error('V8 plan must pin the immutable v7 catalog and the one exact Enso source snapshot');
   }
   return { schemaVersion: 1, baselinePath: V8_BASELINE_PATH, baselineRawSha256: V8_BASELINE_RAW_SHA256, baselineManifestHash: V8_BASELINE_MANIFEST_HASH, sourcePaths: [...V8_SOURCE_PATHS], sourceCanonicalSha256: V8_SOURCE_CANONICAL_SHA256 };
+}
+
+export function validateV9AssemblyPlan(value: unknown): V9AssemblyPlan {
+  const plan = record(value, 'V9 assembly plan');
+  const keys = ['schemaVersion', 'baselinePath', 'baselineRawSha256', 'baselineManifestHash', 'sourcePaths', 'sourceCanonicalSha256'];
+  onlyKeys(plan, keys, 'V9 assembly plan'); requireKeys(plan, keys, 'V9 assembly plan');
+  if (plan.schemaVersion !== 1 || plan.baselinePath !== V9_BASELINE_PATH || plan.baselineRawSha256 !== V9_BASELINE_RAW_SHA256
+    || plan.baselineManifestHash !== V9_BASELINE_MANIFEST_HASH || !Array.isArray(plan.sourcePaths)
+    || !equal(plan.sourcePaths, V9_SOURCE_PATHS) || plan.sourceCanonicalSha256 !== V9_SOURCE_CANONICAL_SHA256) {
+    throw new Error('V9 plan must pin the immutable v8 catalog and the one exact sDAI source snapshot');
+  }
+  return { schemaVersion: 1, baselinePath: V9_BASELINE_PATH, baselineRawSha256: V9_BASELINE_RAW_SHA256,
+    baselineManifestHash: V9_BASELINE_MANIFEST_HASH, sourcePaths: [...V9_SOURCE_PATHS], sourceCanonicalSha256: V9_SOURCE_CANONICAL_SHA256 };
 }
 
 export function validateV5AssemblyPlan(value: unknown): V5AssemblyPlan {
@@ -620,6 +644,121 @@ export function prepareV8Sources(inputs: readonly SourceCatalogInput[]): V8Prepa
     executionScopeHash: V8_ROOT_IDENTITY.executionScopeHash,
   };
   return { sourceCount: 1, familyCount: 1, targetCount: 1, bindingCount: 1, sourceDigests: [{ sourcePath, canonicalSha256: digest }], bindings: [binding] };
+}
+
+/** Compile only the four exact inactive no-referral sDAI declarations; no admission is applied here. */
+export function prepareV9Sources(inputs: readonly SourceCatalogInput[]): V9PreparationReport {
+  if (inputs.length !== 1 || inputs[0].sourcePath !== V9_SOURCE_PATHS[0]) throw new Error('V9 preparation requires the single fixed sDAI source path');
+  const { sourcePath, document } = inputs[0];
+  const digest = canonicalSourceSha256(document);
+  if (digest !== V9_SOURCE_CANONICAL_SHA256) throw new Error('V9 sDAI source does not match the pinned canonical source digest');
+  const root = record(document, sourcePath);
+  onlyKeys(root, ['schemaVersion', 'families', 'sources'], 'V9 sDAI source');
+  if (root.schemaVersion !== 1 || !Array.isArray(root.families) || root.families.length !== 1 || !Array.isArray(root.sources) || root.sources.length !== 3) throw new Error('V9 source must contain exactly the reviewed family and three source records');
+  const family = record(root.families[0], 'V9 sDAI family');
+  if (family.familyId !== 'sdai-savings' || family.familyVersion !== 'no-referral-v1@66587976' || !Array.isArray(family.contracts) || family.contracts.length !== 1) throw new Error('V9 source family/version/target inventory differs from reviewed identity');
+  const contract = record(family.contracts[0], 'V9 sDAI contract');
+  const target = '0x83f20f44975d03b1b09e64809b757c47f942beea';
+  if (contract.chainId !== 1 || contract.address !== target || contract.status !== 'inactive' || contract.contractName !== 'SavingsDai'
+    || !Array.isArray(contract.sourceRefs) || !equal(contract.sourceRefs, V9_SDAI_SOURCE_REFS)
+    || !Array.isArray(contract.abiFunctions) || contract.abiFunctions.length !== V9_SDAI_BINDINGS.length) throw new Error('V9 source target/references/ABI count is not exact');
+  const sourceRecords = root.sources as unknown[];
+  const abiEntries = contract.abiFunctions as unknown[];
+  const sourceIds = sourceRecords.map((value) => requireString(record(value, 'V9 source record').sourceId, 'V9 sourceId'));
+  if (!equal(sourceIds, V9_SDAI_SOURCE_REFS)) throw new Error('V9 source references are missing, reordered, duplicated, or unknown');
+  const compiled = sourceFamilies(normalizeV9SourceDocument(root), sourcePath);
+  if (compiled.length !== 1 || compiled[0].chainId !== 1 || compiled[0].contracts.length !== 1 || compiled[0].contracts[0].functions.length !== 4) throw new Error('V9 compilation did not produce exactly four sDAI functions');
+  const functions = compiled[0].contracts[0].functions;
+  const bindings: V9CompiledBinding[] = V9_SDAI_BINDINGS.map((identity) => {
+    const candidate = functions.find((fn) => fn.functionName === identity.functionName);
+    const abiIndex = abiEntries.findIndex((value) => record(value, 'V9 ABI entry').name === identity.functionName);
+    const rawAbi = record(abiEntries[abiIndex], `V9 ABI entry ${abiIndex}`);
+    if (!candidate || abiIndex < 0) throw new Error(`V9 source is missing exact function ${identity.functionName}`);
+    if (rawAbi.sourceId !== 'maker-sdai-no-referral-implementation-66587976'
+      || candidate.status !== 'inactive' || candidate.provenance.status !== 'candidate'
+      || candidate.protocol !== 'sdai-savings' || candidate.chainId !== 1 || candidate.contract.toLowerCase() !== target
+      || candidate.functionName !== identity.functionName || candidate.signature !== identity.signature
+      || toFunctionSelector(candidate.signature).toLowerCase() !== identity.selector || functionAbiHash(candidate) !== identity.abiHash
+      || candidate.executionScope !== undefined && candidate.executionScope !== null) {
+      throw new Error(`V9 source ABI or inactive provenance does not match exact reviewed binding ${identity.functionName}`);
+    }
+    const refs = record(sourceRecords.find((item: unknown) => record(item, 'V9 source record').sourceId === rawAbi.sourceId), 'V9 implementation source record');
+    if (candidate.provenance.sourceRef !== refs.url) throw new Error(`V9 ${identity.functionName} provenance does not resolve to its exact implementation source`);
+    return { sourcePath, familyId: 'sdai-savings', familyVersion: 'no-referral-v1@66587976', chainId: 1, contract: target,
+      functionName: identity.functionName, signature: identity.signature, selector: identity.selector, capabilityId: identity.capabilityId,
+      abiHash: identity.abiHash, executionScope: null, executionScopeHash: null };
+  });
+  if (new Set(bindings.map((binding) => binding.capabilityId)).size !== 4 || new Set(bindings.map((binding) => binding.selector)).size !== 4) throw new Error('V9 binding inventory contains duplicate IDs or selectors');
+  return { sourceCount: 1, familyCount: 1, targetCount: 1, bindingCount: 4, sourceDigests: [{ sourcePath, canonicalSha256: digest }], bindings };
+}
+
+function normalizeV9SourceDocument(root: Record<string, unknown>): unknown {
+  const sources = (root.sources as unknown[]).map((value, index) => {
+    const source = record(value, `V9 source record[${index}]`);
+    onlyKeys(source, ['sourceId', 'url', 'retrievedAt', 'sha256', 'notes'], 'V9 source record');
+    requireKeys(source, ['sourceId', 'url', 'retrievedAt', 'notes'], 'V9 source record');
+    if (typeof source.retrievedAt !== 'string' || typeof source.notes !== 'string' || (source.sha256 !== undefined && source.sha256 !== null && (typeof source.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(source.sha256)))) throw new Error('V9 source has invalid dated evidence fields');
+    const retrievedAtUtc = source.retrievedAt.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(retrievedAtUtc) || Number.isNaN(Date.parse(`${retrievedAtUtc}T00:00:00Z`))) throw new Error('V9 source has invalid retrieval date');
+    return { sourceId: source.sourceId, url: source.url, retrievedAtUtc, evidence: `${source.notes}${source.sha256 ? ` SHA-256 ${source.sha256}.` : ''}` };
+  });
+  return { ...root, sources, unresolved: [] };
+}
+
+/** In-memory projection over frozen v8; optional admissions are only for explicit synthetic verification. */
+export function assembleV9SourceCandidates(baseline: DefiRegistryFragment, planValue: unknown, inputs: readonly SourceCatalogInput[], baselineRawSha256: string, admissionDocument?: unknown): DefiRegistryFragment {
+  const plan = validateV9AssemblyPlan(planValue);
+  if (baselineRawSha256 !== plan.baselineRawSha256 || buildReviewedManifest([baseline]).manifestHash !== plan.baselineManifestHash) throw new Error('V9 baseline catalog or manifest identity does not match the immutable v8 plan');
+  const report = prepareV9Sources(inputs);
+  if (report.sourceDigests[0].canonicalSha256 !== plan.sourceCanonicalSha256) throw new Error('V9 source digest does not match the fixed plan');
+  const before = baseline.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+  const baselineScopes = before.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!));
+  if (before.length !== 669 || baselineScopes.length !== 16 || report.bindings.some((binding) => before.some((fn) => fn.capabilityId === binding.capabilityId))) throw new Error('V9 requires complete immutable v8 and absent candidate identities');
+  const authorized = new Set<string>();
+  if (admissionDocument !== undefined) {
+    const root = record(admissionDocument, 'V9 synthetic admissions'); onlyKeys(root, ['schemaVersion', 'snapshots'], 'V9 synthetic admissions');
+    requireKeys(root, ['schemaVersion', 'snapshots'], 'V9 synthetic admissions');
+    if (root.schemaVersion !== 1 || !Array.isArray(root.snapshots) || root.snapshots.length !== 1) throw new Error('V9 admissions must bind exactly one source');
+    const snapshot = record(root.snapshots[0], 'V9 admission snapshot'); onlyKeys(snapshot, ['sourcePath', 'canonicalSha256', 'bindings'], 'V9 admission snapshot');
+    requireKeys(snapshot, ['sourcePath', 'canonicalSha256', 'bindings'], 'V9 admission snapshot');
+    if (snapshot.sourcePath !== V9_SOURCE_PATHS[0] || snapshot.canonicalSha256 !== plan.sourceCanonicalSha256 || !Array.isArray(snapshot.bindings) || snapshot.bindings.length !== 4) throw new Error('V9 admission path/digest/binding count is not exact');
+    for (const [index, value] of snapshot.bindings.entries()) {
+      const b = record(value, `V9 admission binding ${index}`); const expected = report.bindings[index];
+      const fields = ['familyId', 'chainId', 'contract', 'signature', 'selector', 'abiHash', 'capabilityId', 'executionScope', 'executionScopeHash'];
+      onlyKeys(b, fields, 'V9 admission binding'); requireKeys(b, fields, 'V9 admission binding');
+      if (b.familyId !== expected.familyId || b.chainId !== 1 || b.contract !== expected.contract || b.signature !== expected.signature || b.selector !== expected.selector || b.abiHash !== expected.abiHash || b.capabilityId !== expected.capabilityId || b.executionScope !== null || b.executionScopeHash !== null) throw new Error('V9 admission must exactly bind the reviewed scope-free sDAI identity');
+      authorized.add(expected.capabilityId);
+    }
+    if (authorized.size !== 4) throw new Error('V9 admission identities must be unique and bijective');
+  }
+  const sourceRoot = record(inputs[0].document, 'V9 source snapshot');
+  const sourceFragment = sourceFamilies(normalizeV9SourceDocument(sourceRoot), inputs[0].sourcePath)[0];
+  const additions = report.bindings.map((binding) => {
+    const fn = sourceFragment.contracts[0].functions.find((candidate) => candidate.functionName === binding.functionName)!;
+    return { ...fn, capabilityId: binding.capabilityId,
+      ...(authorized.has(binding.capabilityId) ? { status: 'active' as const, provenance: { ...fn.provenance, status: 'verified' as const } } : {}) };
+  });
+  const chains = baseline.chains.map((chain) => {
+    const contracts = chain.contracts.map((contract) => ({ ...contract, functions: [...contract.functions] }));
+    if (chain.chainId !== 1) return { ...chain, contracts };
+    const existing = contracts.find((contract) => contract.address.toLowerCase() === report.bindings[0].contract);
+    if (existing) {
+      if (existing.functions.some((fn) => additions.some((added) => toFunctionSelector(fn.signature).toLowerCase() === toFunctionSelector(added.signature).toLowerCase()))) throw new Error('V9 sDAI selector collision in v8 baseline');
+      return { ...chain, contracts: contracts.map((contract) => contract === existing ? { ...contract, functions: [...contract.functions, ...additions].sort((a, b) => cmp(a.capabilityId, b.capabilityId)) } : contract) };
+    }
+    return { ...chain, contracts: [...contracts, { address: report.bindings[0].contract, status: authorized.size === 4 ? 'active' as const : 'inactive' as const, functions: additions }].sort((a, b) => cmp(a.address.toLowerCase(), b.address.toLowerCase())) };
+  });
+  const result: DefiRegistryFragment = { chains };
+  const all = result.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+  const manifest = buildReviewedManifest([result]);
+  for (const binding of report.bindings) {
+    const fn = manifest.capabilities.find((candidate) => candidate.capabilityId === binding.capabilityId);
+    if (!fn || fn.signature !== binding.signature || functionAbiHash(fn) !== binding.abiHash || (fn.executionScope ?? null) !== null) throw new Error('V9 assembled function failed exact ABI/scope validation');
+  }
+  if (all.length !== 673 || before.some((fn) => JSON.stringify(manifest.capabilities.find((candidate) => candidate.capabilityId === fn.capabilityId)) !== JSON.stringify(fn))) throw new Error('V9 candidate assembly changed immutable v8 definitions');
+  const resultingScopes = all.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!));
+  if (!equal(resultingScopes, baselineScopes)) throw new Error('V9 candidate assembly changed immutable v8 scopes');
+  return result;
 }
 
 function validateV8Admission(value: unknown, digest: string): V8AdmissionDocument {

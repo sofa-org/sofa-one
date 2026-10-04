@@ -4,6 +4,7 @@ import type { DefiCapabilityBundle } from './types';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { buildEnsoRegistry } from '../registry/enso';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
+import { SDAI_SAVINGS_CAPABILITIES } from '../registry/sdai-savings';
 
 const addressA = '0x1111111111111111111111111111111111111111';
 const addressB = '0x2222222222222222222222222222222222222222';
@@ -98,11 +99,12 @@ describe('DefiBundleService', () => {
   });
 
   it('accepts an explicitly empty injectable bundle list without inventing profiles', async () => {
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(68);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toHaveLength(12);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)).toHaveLength(21);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62)).toHaveLength(29);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67)).toHaveLength(5);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(67, 69)).toHaveLength(2);
     const service = new DefiBundleService([], catalog([]));
     await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, maxGrants: 100, bundles: [] });
   });
@@ -160,5 +162,22 @@ describe('DefiBundleService', () => {
     });
     expect(profile.capabilityIds).toHaveLength(1);
     expect(profile.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
+  });
+
+  it('validates and serves the four-member sDAI profile against its isolated declared-ABI fixture', async () => {
+    const profile = PRODUCTION_DEFI_CAPABILITY_BUNDLES[68];
+    expect(profile.bundleId).toBe('sdai-savings-no-referral-v1');
+    expect(profile.version).toBe('1.0.0');
+    expect(profile.chainIds).toEqual([1]);
+    expect(profile.capabilityIds).toEqual(SDAI_SAVINGS_CAPABILITIES.map((fn) => fn.capabilityId).sort());
+    expect(profile.capabilityIds).toHaveLength(4);
+    expect(profile.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
+    expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, SDAI_SAVINGS_CAPABILITIES));
+    const service = new DefiBundleService([profile], catalog(SDAI_SAVINGS_CAPABILITIES));
+    await expect(service.listMetadata()).resolves.toMatchObject({
+      schemaVersion: 1,
+      maxGrants: 100,
+      bundles: [{ bundleId: profile.bundleId, version: profile.version, capabilityIds: profile.capabilityIds, available: true, unavailableCapabilityIds: [] }],
+    });
   });
 });

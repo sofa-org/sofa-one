@@ -1666,5 +1666,29 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "The three exact child identities are not a full DEX/lending population. ABI/source qualification does not establish current runtime or proxy identity, constructor/slot state, liquidity, funding, funded execution, transaction success, complete workflow, or financial safety."
     ],
     "fingerprint": "sha256:f98b818570c294ba61b2f4b74fed73bc65c8622409bcd0958c9f88f9404e82ec"
+  },
+  {
+    "bundleId": "sdai-savings-no-referral-v1",
+    "version": "1.0.0",
+    "label": "sDAI Savings · no-referral Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit",
+      "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:mint",
+      "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:redeem",
+      "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:withdraw"
+    ],
+    "warnings": [
+      "Four dated no-referral SavingsDai operations only: deposit/mint caller-selected DAI assets or sDAI shares for a receiver; withdraw/redeem caller-selected sDAI shares or DAI assets for receiver/owner under protocol rules. No platform amount, recipient, owner, market, price/oracle, funding or return-value restrictions are added.",
+      "Each function requires its own explicit grant. DAI approval is separate authority and is neither a profile member nor automatically paired or granted; profile selection assigns no grants.",
+      "The named receiver and owner arguments remain caller-selected and are not constrained to the executing wallet by this profile. ABI-valid zero and maximum uint256 values remain allowed by the platform policy."
+    ],
+    "limitations": [
+      "Source-qualified from the dated Mainnet role and the pinned 2023 no-referral implementation declarations; not the later referral-enabled ABI or compiler-generated artifact. It is not Spark Pool, sUSDS, or agEUR Savings authority.",
+      "Fixed implementation DAI transferFrom, DaiJoin and Pot dependencies remain protocol behavior. This four-method selection is not a complete savings workflow or proof of current runtime/code/proxy/DSR identity, conversion behavior, market eligibility, liquidity, funded execution, transaction success or financial safety."
+    ],
+    "fingerprint": "sha256:b3bcafb925788872d0f01a236eebd26d1d9d24cd76ba6ac32e533e79f21d2ea4"
   }
 ]);

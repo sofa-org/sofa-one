@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "baselinePath": "data/defi-catalog/v8/catalog.json",
+  "baselineRawSha256": "638f6c4f3cd813dd843a8d4848d6822c7e603d353f5a963cbb23dd8f677a9575",
+  "baselineManifestHash": "0xb9ae883df83aac2ed6bb2224ec6818f1623ec0de0987ade69e25dc54a7798aac",
+  "sourcePaths": ["data/defi-catalog/v9/sources/sdai-savings.json"],
+  "sourceCanonicalSha256": "c1ca1ed92e19a6958b7b5824cf340d82f127605ce0e9e2d531c43dd61258c862"
+}
