@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "bebop",
+      "familyVersion": "bop-amm-v1@b098881c",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xB098881c587f623FAC85eAe60809bEE7A174CeE7",
+          "status": "inactive",
+          "contractName": "BopAmmRouter (Ethereum)",
+          "sourceRefs": [
+            "bebop-official-full-abi",
+            "bebop-etherscan-source",
+            "bebop-official-role-docs"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "tokenIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenOut",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minAmountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "fee",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapWithAllowance",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "bebop-official-full-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "bebop-official-full-abi",
+      "url": "https://etherscan.io/address/0xB098881c587f623FAC85eAe60809bEE7A174CeE7#code",
+      "retrievedAt": "2026-10-04T17:24:14Z",
+      "sha256": "c0966bf4c1d9adb707b0eb4f42793c5374a4c0fcdb9d8328c99953108baec609",
+      "notes": "Full verified compiler ABI from Etherscan; selected function ABI hash 0x5a53829938a28226220683aed1235bb83c74de4aedb3b88b65e17e3c21fb231f."
+    },
+    {
+      "sourceId": "bebop-etherscan-source",
+      "url": "https://etherscan.io/address/0xB098881c587f623FAC85eAe60809bEE7A174CeE7#code",
+      "retrievedAt": "2026-10-04T17:24:14Z",
+      "sha256": "3ffbaf4eed40764bf8e914f8fa514d8a6178d95aafea649d1f8aa1e3c8ad0032",
+      "notes": "Verified BopAmmRouter source; source role and fixed transfer flow reviewed."
+    },
+    {
+      "sourceId": "bebop-official-role-docs",
+      "url": "https://docs.bebop.xyz/bopamm/introduction",
+      "retrievedAt": "2026-10-04T17:24:14Z",
+      "sha256": null,
+      "notes": "Official BOP AMM protocol documentation identifying the product role."
+    }
+  ]
+}

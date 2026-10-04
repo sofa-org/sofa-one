@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync } from 'node:
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildReviewedManifest } from '../registry/defi-manifest';
-import { assembleCatalogFromSources, assembleV6SourceCandidates, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, prepareV6Sources, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument, validateV6AssemblyPlan, V6_SOURCE_PATHS } from './catalog-generator';
+import { assembleCatalogFromSources, assembleV6SourceCandidates, assembleV7SourceCandidates, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument, validateV6AssemblyPlan, validateV7AssemblyPlan, V6_SOURCE_PATHS, V7_SOURCE_PATHS } from './catalog-generator';
 import { functionAbiHash } from '../registry/defi-manifest';
 import type { DefiFunctionPolicy } from '../defi.types';
 import { toFunctionSelector } from 'viem';
@@ -31,8 +31,33 @@ import { buildRenzoRegistry } from '../registry/renzo';
 import { buildSiloVaultRegistry } from '../registry/silo-vault';
 import { executionScopeHash } from '../execution/scope';
 import { V6_SOURCE_IDENTITIES } from './v6-identities';
+import { V7_SOURCE_IDENTITIES } from './v7-identities';
+import { buildOneInchRegistry, ONE_INCH_CAPABILITIES } from '../registry/one-inch';
+import { buildZeroXRegistry, ZERO_X_CAPABILITIES } from '../registry/zero-x';
+import { buildVeloraRegistry, VELORA_CAPABILITIES } from '../registry/velora';
+import { buildBebopRegistry, BEBOP_CAPABILITIES } from '../registry/bebop';
+import { buildOpenOceanRegistry, OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
+
+function readV7Inputs() {
+  return V7_SOURCE_PATHS.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) as unknown }));
+}
+
+function makeV7Admissions(inputs: ReturnType<typeof readV7Inputs>, bindings = prepareV7Sources(inputs).bindings) {
+  return {
+    schemaVersion: 1,
+    snapshots: inputs.map(({ sourcePath, document }) => ({
+      sourcePath,
+      canonicalSha256: canonicalSourceSha256(document),
+      bindings: bindings.filter((binding) => binding.sourcePath === sourcePath).map(({ familyId, chainId, contract, signature, selector, abiHash, capabilityId, executionScope, executionScopeHash }) => ({ familyId, chainId, contract, signature, selector, abiHash, capabilityId, executionScope, executionScopeHash })).sort((a, b) => {
+        const left = `${a.familyId}:${a.chainId}:${a.contract}:${a.signature}`;
+        const right = `${b.familyId}:${b.chainId}:${b.contract}:${b.signature}`;
+        return left < right ? -1 : left > right ? 1 : 0;
+      }),
+    })),
+  };
+}
 
 function assertFixtureBindings(actual: DefiFunctionPolicy[], expected: DefiFunctionPolicy[]): void {
   if (actual.length !== expected.length) throw new Error(`Source/fixture function count mismatch: ${actual.length} vs ${expected.length}`);
@@ -137,6 +162,129 @@ describe('DeFi catalog generator', () => {
     expect(buildReviewedManifest([baseline]).capabilities).toHaveLength(506);
   });
 
+  it('prepares five fixed inactive v7 sources against all 640 frozen v6 definitions and synthetic admissions only', () => {
+    const inputs = readV7Inputs();
+    const plan = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v7/assembly-plan.json'), 'utf8'));
+    expect(validateV7AssemblyPlan(plan)).toEqual({ schemaVersion: 1, baselinePath: 'data/defi-catalog/v6/catalog.json', sourcePaths: V7_SOURCE_PATHS });
+    expect(V7_SOURCE_IDENTITIES).toHaveLength(28);
+    expect(new Set(V7_SOURCE_IDENTITIES.map((row) => row.capabilityId)).size).toBe(28);
+    expect(new Set(V7_SOURCE_IDENTITIES.map((row) => `${row.sourcePath}:${row.chainId}:${row.address}:${row.selector}`)).size).toBe(28);
+    expect(inputs.map((input) => input.sourcePath)).toEqual(V7_SOURCE_PATHS);
+    const report = prepareV7Sources(inputs);
+    expect(report).toMatchObject({ sourceCount: 5, familyCount: 5, targetCount: 5, bindingCount: 28 });
+    expect(report.sourceDigests).toHaveLength(5);
+    expect(report.bindings).toHaveLength(28);
+    for (const binding of report.bindings) {
+      const identity = V7_SOURCE_IDENTITIES.find((row) => row.sourcePath === binding.sourcePath && row.familyId === binding.familyId && row.familyVersion === binding.familyVersion && row.chainId === binding.chainId && row.address === binding.contract.toLowerCase() && row.signature === binding.signature);
+      expect(identity).toBeDefined();
+      expect(binding).toMatchObject({ capabilityId: identity!.capabilityId, abiHash: identity!.abiHash, selector: identity!.selector, executionScope: null, executionScopeHash: null });
+    }
+
+    const fixtureFns = [ONE_INCH_CAPABILITIES, ZERO_X_CAPABILITIES, VELORA_CAPABILITIES, BEBOP_CAPABILITIES, OPEN_OCEAN_CAPABILITIES].flat();
+    expect(fixtureFns).toHaveLength(28);
+    expect(new Set(fixtureFns.map((fn) => fn.capabilityId)).size).toBe(28);
+    const candidateFns = report.bindings;
+    expect(candidateFns.map((fn) => fn.capabilityId).sort()).toEqual(fixtureFns.map((fn) => fn.capabilityId).sort());
+    for (const input of inputs) {
+      const source = input.document as any;
+      expect(source.families).toHaveLength(1);
+      const family = source.families[0];
+      const contract = family.contracts[0];
+      expect(contract.status).toBe('inactive');
+      const refs = new Set(source.sources.map((record: any) => record.sourceId));
+      expect(contract.sourceRefs.every((ref: string) => refs.has(ref))).toBe(true);
+      const compiledForSource = report.bindings.filter((binding) => binding.sourcePath === input.sourcePath);
+      expect(contract.abiFunctions).toHaveLength(compiledForSource.length);
+      for (const abiEntry of contract.abiFunctions) {
+        const fn = fixtureFns.find((candidate) => candidate.functionName === abiEntry.name && candidate.contract.toLowerCase() === contract.address.toLowerCase());
+        expect(fn).toBeDefined();
+        const { sourceId: _sourceId, ...fullAbi } = abiEntry;
+        expect(fullAbi).toEqual(fn!.abi);
+        expect(functionAbiHash({ abi: fullAbi })).toBe(functionAbiHash(fn!));
+        expect(toFunctionSelector(fn!.signature)).toBe(report.bindings.find((binding) => binding.capabilityId === fn!.capabilityId)!.selector);
+      }
+    }
+    const oneInchSource = (inputs.find((input) => input.sourcePath.endsWith('/one-inch.json'))!.document as any).families[0].contracts[0].abiFunctions;
+    expect(oneInchSource.find((fn: any) => fn.name === 'unoswap')!.inputs.find((input: any) => input.name === 'token')).toMatchObject({ type: 'uint256', internalType: 'Address' });
+    const zeroX = (inputs.find((input) => input.sourcePath.endsWith('/zero-x.json'))!.document as any).families[0].contracts[0].abiFunctions.find((fn: any) => fn.name === 'fillRfqOrder');
+    expect(zeroX.inputs[0].components.map((field: any) => [field.name, field.type])).toEqual([['makerToken','address'],['takerToken','address'],['makerAmount','uint128'],['takerAmount','uint128'],['maker','address'],['taker','address'],['txOrigin','address'],['pool','bytes32'],['expiry','uint64'],['salt','uint256']]);
+
+    const v6 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v6/catalog.json'), 'utf8')));
+    const inactive = assembleV7SourceCandidates({ chains: v6.chains }, plan, inputs);
+    const inactiveDiff = catalogDiff(v6, inactive);
+    expect(inactiveDiff).toEqual({ added: expect.arrayContaining(report.bindings.map((binding) => binding.capabilityId)), removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(inactiveDiff.added).toHaveLength(28);
+    const oldById = new Map(v6.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => [fn.capabilityId, fn] as const))));
+    const inactiveById = new Map(inactive.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => [fn.capabilityId, fn] as const))));
+    expect(oldById.size).toBe(640);
+    for (const [id, fn] of oldById) expect(inactiveById.get(id)).toEqual(fn);
+    const addedCandidates = report.bindings.map((binding) => inactiveById.get(binding.capabilityId)!);
+    expect(addedCandidates).toHaveLength(28);
+    expect(addedCandidates.every((fn) => fn.status === 'inactive' && fn.provenance.status === 'candidate')).toBe(true);
+    expect(buildReviewedManifest([inactive]).capabilities).toHaveLength(668);
+    expect(inactive.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.executionScope)).toHaveLength(15);
+
+    const admissions = makeV7Admissions(inputs, report.bindings);
+    const admitted = assembleV7SourceCandidates({ chains: v6.chains }, plan, inputs, admissions);
+    const admittedDiff = catalogDiff(v6, admitted);
+    expect(admittedDiff.added).toHaveLength(28);
+    expect(admittedDiff).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    const admittedById = new Map(admitted.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => [fn.capabilityId, fn] as const))));
+    for (const [id, fn] of oldById) expect(admittedById.get(id)).toEqual(fn);
+    expect(report.bindings.map((binding) => admittedById.get(binding.capabilityId)!.status).every((status) => status === 'active')).toBe(true);
+    expect(buildReviewedManifest([admitted]).capabilities).toHaveLength(668);
+    expect(admitted.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.executionScope)).toHaveLength(15);
+
+    for (const badPlan of [
+      { ...plan, extra: true },
+      { ...plan, baselinePath: 'data/defi-catalog/v5/catalog.json' },
+      { ...plan, sourcePaths: plan.sourcePaths.slice(1) },
+      { ...plan, sourcePaths: [...plan.sourcePaths, 'data/defi-catalog/v7/sources/unreviewed.json'] },
+      { ...plan, sourcePaths: [...plan.sourcePaths].reverse() },
+      { ...plan, sourcePaths: [...plan.sourcePaths, plan.sourcePaths[0]] },
+    ]) expect(() => validateV7AssemblyPlan(badPlan)).toThrow();
+    expect(() => prepareV7Sources(inputs.slice(1))).toThrow(/fixed source path/);
+    expect(() => prepareV7Sources([{ ...inputs[0], sourcePath: 'data/defi-catalog/v7/sources/unreviewed.json' }, ...inputs.slice(1)])).toThrow(/fixed source path/);
+
+    const mutations: Array<(copy: any[]) => void> = [
+      (copy) => { copy[0].document.families[0].familyVersion = 'unknown-version'; },
+      (copy) => { copy[0].document.families[0].contracts[0].address = '0x0000000000000000000000000000000000000001'; },
+      (copy) => { copy[0].document.families[0].contracts[0].sourceRefs = ['missing-reference']; },
+      (copy) => { copy[0].document.families[0].contracts[0].abiFunctions[0].outputs[0].name = 'altered'; },
+      (copy) => { copy[0].document.families[0].contracts[0].abiFunctions.pop(); },
+      (copy) => { copy[0].document.families[0].contracts[0].abiFunctions.push({ ...copy[0].document.families[0].contracts[0].abiFunctions[0] }); },
+    ];
+    for (const mutate of mutations) {
+      const changed = JSON.parse(JSON.stringify(inputs)); mutate(changed);
+      expect(() => prepareV7Sources(changed)).toThrow();
+    }
+    const noScopeRef = JSON.parse(JSON.stringify(inputs)); noScopeRef[0].document.sources[0].sourceId = 'changed-source-id';
+    expect(() => prepareV7Sources(noScopeRef)).toThrow();
+
+    const admissionMutations: Array<(copy: any) => void> = [
+      (copy) => { copy.snapshots[0].canonicalSha256 = '0'.repeat(64); },
+      (copy) => { copy.snapshots[0].bindings[0].capabilityId = 'unreviewed:id'; },
+      (copy) => { copy.snapshots[0].bindings[0].abiHash = `0x${'0'.repeat(64)}`; },
+      (copy) => { copy.snapshots[0].bindings[0].selector = '0xdeadbeef'; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScopeHash = `0x${'0'.repeat(64)}`; },
+      (copy) => { delete copy.snapshots[0].bindings[0].executionScope; },
+      (copy) => { delete copy.snapshots[0].bindings[0].executionScopeHash; },
+      (copy) => { copy.snapshots[0].bindings.pop(); },
+      (copy) => { copy.snapshots[0].bindings.push({ ...copy.snapshots[0].bindings[0] }); },
+      (copy) => { copy.snapshots[0].bindings[0].executionScope = { kind: 'empty-callback-data-v1', bytesArgIndex: 0 }; copy.snapshots[0].bindings[0].executionScopeHash = executionScopeHash(copy.snapshots[0].bindings[0].executionScope); },
+      (copy) => { copy.snapshots[0].sourcePath = 'data/defi-catalog/v7/sources/unreviewed.json'; },
+    ];
+    for (const mutate of admissionMutations) {
+      const changed = JSON.parse(JSON.stringify(admissions)); mutate(changed);
+      expect(() => assembleV7SourceCandidates({ chains: v6.chains }, plan, inputs, changed)).toThrow();
+    }
+    const asymmetricNulls = JSON.parse(JSON.stringify(admissions)); asymmetricNulls.snapshots[0].bindings[0].executionScopeHash = '0x' + '0'.repeat(64);
+    expect(() => assembleV7SourceCandidates({ chains: v6.chains }, plan, inputs, asymmetricNulls)).toThrow(/inconsistent null execution-scope pair/);
+    expect(() => assembleV7SourceCandidates({ chains: v6.chains.slice(1) }, plan, inputs)).toThrow(/640-definition, 15-scope v6 baseline/);
+    expect(() => assembleV7SourceCandidates({ chains: v6.chains }, { ...plan, sourcePaths: plan.sourcePaths.slice(1) }, inputs)).toThrow();
+    expect(buildReviewedManifest([v6]).capabilities).toHaveLength(640);
+  });
+
   it('pins the complete pre-migration 202-definition snapshot, hierarchy, and 179/23 action-approval split', () => {
     const dataRoot = resolve(process.cwd(), 'data/defi-catalog/v1');
     const baseline = validateBaseline(JSON.parse(readFileSync(resolve(dataRoot, 'pre-migration-baseline.json'), 'utf8')));
@@ -164,17 +312,19 @@ describe('DeFi catalog generator', () => {
   });
 
   it('parses versioned repository inputs and rejects arbitrary paths/options', () => {
-    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v6/catalog.json' });
+    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v7/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v2/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v2/catalog.json' });
-    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v6/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v7/catalog.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v3/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v3/catalog.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['check', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v5/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v5/catalog.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v5/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v5/catalog.json' });
-    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v6/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v6/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v6/catalog.json' });
     expect(parseCatalogCliArgs(['check', '--input', 'data/defi-catalog/v6/catalog.json'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v6/catalog.json' });
+    expect(parseCatalogCliArgs(['prepare-v7'])).toEqual({ mode: 'prepare-v7', inputPath: 'data/defi-catalog/v7/assembly-plan.json' });
+    expect(parseCatalogCliArgs(['prepare-v7', '--input', 'data/defi-catalog/v7/assembly-plan.json'])).toEqual({ mode: 'prepare-v7', inputPath: 'data/defi-catalog/v7/assembly-plan.json' });
     for (const args of [
       ['generate', '--input', '../catalog.json'],
       ['generate', '--input', 'https://example.invalid/catalog.json'],
@@ -182,6 +332,7 @@ describe('DeFi catalog generator', () => {
       ['generate', '--input', 'data/defi-catalog/v2/catalog.json', '--input', 'data/defi-catalog/v1/catalog.json'],
       ['generate', '--output', 'arbitrary.ts'],
       ['assemble', '--input', 'data/defi-catalog/v2/catalog.json'],
+      ['prepare-v7', '--input', 'data/defi-catalog/v7/sources'],
     ]) expect(() => parseCatalogCliArgs(args)).toThrow();
   });
 

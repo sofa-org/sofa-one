@@ -70,6 +70,11 @@ const phase2Builders = [
   ['lista', 'buildListaRegistry'],
 ] as const;
 
+const phase3Builders = [
+  ['one-inch', 'ONE_INCH_CAPABILITIES'], ['zero-x', 'ZERO_X_CAPABILITIES'], ['velora', 'VELORA_CAPABILITIES'],
+  ['bebop', 'BEBOP_CAPABILITIES'], ['open-ocean', 'OPEN_OCEAN_CAPABILITIES'],
+] as const;
+
 function phase2CandidateManifest() {
   const fragments = phase2Builders.map(([directory, builder]) => {
     const module = require(`../registry/${directory}`) as Record<string, () => unknown>;
@@ -78,13 +83,20 @@ function phase2CandidateManifest() {
   return buildReviewedManifest(fragments as never[]);
 }
 
+function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
+  return phase3Builders.flatMap(([directory, exportName]) => {
+    const module = require(`../registry/${directory}`) as Record<string, DefiFunctionPolicy[]>;
+    return module[exportName];
+  });
+}
+
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(640);
+    expect(flat).toHaveLength(668);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(617);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(645);
     expect(flat.filter((fn) => fn.executionScope)).toHaveLength(15);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(62);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(67);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {
       expect(bundle.version).toBe('1.0.0');
@@ -93,8 +105,10 @@ describe('published production profiles', () => {
         expect(bundle.capabilityIds).toHaveLength(bundle.bundleId.startsWith('uniswap-v3-') ? 9 : bundle.bundleId === 'curve-3pool-1' ? 4 : bundle.bundleId === 'pancakeswap-v3-positions-56' ? 9 : bundle.bundleId === 'yearn-tokenized-strategy-1' ? 6 : 6);
       } else if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 33) {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(17);
-      } else {
+      } else if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 62) {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(10);
+      } else {
+        expect(bundle.capabilityIds.length).toBeLessThanOrEqual(100);
       }
       expect(bundle.capabilityIds).toEqual([...bundle.capabilityIds].sort(cmp));
       expect(new Set(bundle.capabilityIds).size).toBe(bundle.capabilityIds.length);
@@ -154,6 +168,15 @@ describe('published production profiles', () => {
     expect(copy).toMatch(/extra referrer argument and void return/);
   });
 
+  it('preserves all 62 immutable 74bb052 full-metadata profile objects exactly', () => {
+    const fixtureBytes = readFileSync(resolve(process.cwd(), 'src/modules/defi/bundles/__fixtures__/phase3-baseline-profiles-74bb052.json'));
+    expect(createHash('sha256').update(fixtureBytes).digest('hex')).toBe('3a73ad25307a3bd7ac4f77517b5cd9b09da4d83373fed1ea1f98176b9f7ff2a6');
+    const fixture = JSON.parse(fixtureBytes.toString('utf8')) as { provenance: { gitCommit: string; sourcePath: string }; profiles: unknown[] };
+    expect(fixture.provenance).toEqual({ gitCommit: '74bb052ec003656e5810d5af42d50a300e94aad3', sourcePath: 'src/modules/defi/bundles/production-bundles.ts' });
+    expect(fixture.profiles).toHaveLength(62);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 62)).toEqual(fixture.profiles);
+  });
+
   it('preserves the independent 82d96a7 full-metadata profile baseline exactly', () => {
     const legacyFixtureBytes = readFileSync(resolve(process.cwd(), 'src/modules/defi/bundles/__fixtures__/legacy-production-profiles-82d96a7.json'));
     expect(createHash('sha256').update(legacyFixtureBytes).digest('hex')).toBe('e227c92dc24be8e0a307618e91e8bd201f8c1ae4938e928df187edd70e4d9eb1');
@@ -176,7 +199,7 @@ describe('published production profiles', () => {
   it('pins 29 literal phase2 profiles to all 134 selected active manifest identities and isolated ABI fingerprints', () => {
     const candidates = phase2CandidateManifest();
     const candidateIds = candidates.capabilities.map((fn) => fn.capabilityId).sort(cmp);
-    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33);
+    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62);
     expect(candidates.capabilities).toHaveLength(134);
     expect(profiles).toHaveLength(29);
     expect(profiles.map((profile) => profile.version)).toEqual(Array(29).fill('1.0.0'));
@@ -218,6 +241,51 @@ describe('published production profiles', () => {
       'frxETH; it is not an ETH queue', 'withdrawal settlement or completion', 'exits and settlement are not represented',
       'Comptroller interface, not a Vault',
     ]) expect(caveats).toContain(phrase);
+  });
+
+  it('pins five literal phase3 selections to exactly 28 source-builder identities without automatic approvals', () => {
+    const candidates = phase3CandidateCapabilities();
+    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62);
+    expect(candidates).toHaveLength(28);
+    expect(profiles.map(({ bundleId, capabilityIds }) => [bundleId, capabilityIds.length])).toEqual([
+      ['one-inch-ethereum', 12], ['zero-x-native-orders-ethereum', 8], ['velora-augustus-rfq-ethereum', 4],
+      ['bebop-bop-amm-ethereum', 1], ['open-ocean-uniswap-routes-ethereum', 3],
+    ]);
+    expect(profiles).toHaveLength(5);
+    const memberIds = profiles.flatMap((profile) => profile.capabilityIds);
+    expect(memberIds).toHaveLength(28);
+    expect(new Set(memberIds).size).toBe(28);
+    expect([...memberIds].sort(cmp)).toEqual(candidates.map((fn) => fn.capabilityId).sort(cmp));
+    const baselineIds = new Set(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 62).flatMap((profile) => profile.capabilityIds));
+    expect(memberIds.some((id) => baselineIds.has(id))).toBe(false);
+    expect(memberIds.every((id) => !id.includes(':approve'))).toBe(true);
+    for (const profile of profiles) {
+      expect(profile.version).toBe('1.0.0');
+      expect(profile.chainIds).toEqual([1]);
+      expect(profile.capabilityIds).toEqual([...profile.capabilityIds].sort(cmp));
+      expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, candidates));
+      expect(profile.capabilityIds.length).toBeLessThanOrEqual(100);
+      expect(profile.warnings.join(' ')).toMatch(/approvals?.*independent|approvals? are separate/i);
+      expect(profile.warnings.join(' ')).toMatch(/not .*paired|not automatic|not included|neither .*paired/i);
+      expect(profile.limitations.join(' ')).toMatch(/not all .* (?:methods|routes|routing)|not a complete workflow|all .* workflow.*not certified|not full .* (?:routing|workflow)/i);
+      expect(profile.limitations.join(' ')).toMatch(/current (?:facet\/)?runtime/i);
+      expect(profile.limitations.join(' ')).toMatch(/liquidity.*funded execution/i);
+    }
+    const oneInch = profiles[0];
+    expect(oneInch.capabilityIds).toHaveLength(12);
+    expect(oneInch.warnings.join(' ')).toMatch(/ten decoded execution nodes per request/);
+    expect(oneInch.warnings.join(' ')).toMatch(/V3 canonical factory\/pool checks apply only.*external-payer callback branch/i);
+    expect(oneInch.warnings.join(' ')).toMatch(/Curve\/router-balance callbacks assume no stranded router funds/i);
+    const zeroX = profiles[1];
+    expect(zeroX.warnings.join(' ')).toMatch(/RFQ txOrigin eligibility.*not a platform-owner restriction/i);
+    expect(zeroX.warnings.join(' ')).toMatch(/historical Native Orders facet.*not a current facet\/runtime identity/i);
+    expect(profiles[2].warnings.join(' ')).toMatch(/WithTarget.*bounded selection, not a restriction imposed by the platform/i);
+    expect(profiles[3].warnings.join(' ')).toMatch(/fallback.*callback.*other Bebop RFQ.*pricing-selected maker\/fee hooks may still be invoked.*execution\/trust dependencies/i);
+    expect(profiles[3].limitations.join(' ')).toMatch(/fixed-route fee\/maker hooks.*remain external dependencies/i);
+    expect(profiles[3].limitations.join(' ')).toMatch(/All Bebop RFQ products.*full workflow.*not certified/i);
+    expect(profiles[4].warnings.join(' ')).toMatch(/opaque makeCalls.*excluded/i);
+    expect(profiles[4].warnings.join(' ')).toMatch(/returnAmount may differ from net recipient proceeds/i);
+    expect(profiles[4].warnings.join(' ')).toMatch(/whenNotPaused guards.*platform pause remains an independent policy overlay/i);
   });
 
   it('binds every NPM multicall profile to its wrapper and exactly its eight explicit child grants', () => {
@@ -301,6 +369,6 @@ describe('published production profiles', () => {
     const response = await service.listMetadata();
     expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
-    expect(response.bundles).toHaveLength(62);
+    expect(response.bundles).toHaveLength(67);
   });
 });

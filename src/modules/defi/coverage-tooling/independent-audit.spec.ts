@@ -60,14 +60,21 @@ function loadInputs(): AuditInputs {
 }
 
 describe('independent DeFi coverage audit', () => {
-  it('keeps the immutable v4 audit profiles and 587f888 33-profile baseline separate from explicit phase2 profiles', () => {
+  it('keeps the immutable v4 audit profiles, complete 74bb052 baseline, and phase2/phase3 additions separate', () => {
     const legacyProfiles = loadInputs().currentV4Profiles!;
     const appendedProfiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33);
-    const phase2Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33);
+    const phase2Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62);
+    const phase3Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62);
     expect(legacyProfiles).toHaveLength(12);
     expect(legacyProfiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(94);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(62);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(67);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toEqual(legacyProfiles);
+    const phase3BaselineBytes = readFileSync('src/modules/defi/bundles/__fixtures__/phase3-baseline-profiles-74bb052.json');
+    expect(sha256(phase3BaselineBytes)).toBe('3a73ad25307a3bd7ac4f77517b5cd9b09da4d83373fed1ea1f98176b9f7ff2a6');
+    const phase3Baseline = JSON.parse(phase3BaselineBytes.toString('utf8')) as { provenance: { gitCommit: string }; profiles: StaticProfile[] };
+    expect(phase3Baseline.provenance.gitCommit).toBe('74bb052ec003656e5810d5af42d50a300e94aad3');
+    expect(phase3Baseline.profiles).toHaveLength(62);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 62)).toEqual(phase3Baseline.profiles);
     const phase2BaselineBytes = readFileSync('src/modules/defi/bundles/__fixtures__/phase2-baseline-profiles-587f888.json');
     expect(sha256(phase2BaselineBytes)).toBe('9e6f596c0630b5a0dba45e03541612bc4b3e6915dad8d89db470926f1b512783');
     const phase2Baseline = JSON.parse(phase2BaselineBytes.toString('utf8')) as { provenance: { gitCommit: string }, profiles: StaticProfile[] };
@@ -84,8 +91,12 @@ describe('independent DeFi coverage audit', () => {
     expect(new Set(phase2Ids).size).toBe(134);
     expect(Math.max(...phase2Profiles.map((profile) => profile.capabilityIds.length))).toBe(10);
     const allProfileIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(allProfileIds).toHaveLength(366);
-    expect(new Set(allProfileIds).size).toBe(366);
+    expect(phase3Profiles).toHaveLength(5);
+    expect(phase3Profiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(28);
+    expect(Math.max(...phase3Profiles.map((profile) => profile.capabilityIds.length))).toBe(12);
+    expect(phase3Profiles.flatMap((profile) => profile.capabilityIds).every((id) => !id.includes(':approve'))).toBe(true);
+    expect(allProfileIds).toHaveLength(394);
+    expect(new Set(allProfileIds).size).toBe(394);
   });
 
   it('recomputes catalog, admission, scopes, activity and exact-profile facts without trusting a coverage report', () => {

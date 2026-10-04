@@ -6,6 +6,7 @@ import type { DefiRegistryFragment } from '../registry/defi-manifest.types';
 import { executionScopeHash } from '../execution/scope';
 import type { DefiExecutionScope } from '../defi.types';
 import { V6_SOURCE_IDENTITIES } from './v6-identities';
+import { V7_SOURCE_IDENTITIES } from './v7-identities';
 
 export const BASELINE_MANIFEST_HASH = '0x43ec3be0b20a32457719d8edb17c8eaa40c93480921d6e7c86e9c2cacdec5897' as const;
 
@@ -18,7 +19,7 @@ const ABI_PARAM_KEYS = ['name', 'type', 'components', 'internalType'];
 const PROVENANCE_KEYS = ['sourceRef', 'verifiedAt', 'status'];
 const POLICY_KEYS = ['ref', 'version'];
 
-export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6';
+export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6' | 'prepare-v7';
 export type CatalogCliOptions = Readonly<{ mode: CatalogCliMode; inputPath: string }>;
 export type SourceCatalogInput = Readonly<{ sourcePath: string; document: unknown }>;
 
@@ -106,10 +107,22 @@ export const V6_SOURCE_PATHS = Object.freeze([
   'data/defi-catalog/v6/sources/usual.json',
 ]);
 export const V6_ASSEMBLY_PLAN_PATH = 'data/defi-catalog/v6/assembly-plan.json';
+export const V7_ASSEMBLY_PLAN_PATH = 'data/defi-catalog/v7/assembly-plan.json';
+/** Fixed candidate paths, sorted and explicit; no directory discovery is used. */
+export const V7_SOURCE_PATHS = Object.freeze([
+  'data/defi-catalog/v7/sources/bebop.json',
+  'data/defi-catalog/v7/sources/one-inch.json',
+  'data/defi-catalog/v7/sources/open-ocean.json',
+  'data/defi-catalog/v7/sources/velora.json',
+  'data/defi-catalog/v7/sources/zero-x.json',
+]);
 export type V6AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: 'data/defi-catalog/v5/catalog.json'; sourcePaths: readonly string[] }>;
 export type V6CompiledBinding = Readonly<{ sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: DefiExecutionScope | null; executionScopeHash: string | null }>;
 export type V6PreparationReport = Readonly<{ sourceCount: number; familyCount: number; targetCount: number; bindingCount: number; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V6CompiledBinding[] }>;
 export type V5AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: 'data/defi-catalog/v4/catalog.json'; sourcePaths: readonly string[] }>;
+export type V7AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: 'data/defi-catalog/v6/catalog.json'; sourcePaths: readonly string[] }>;
+export type V7CompiledBinding = Readonly<{ sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: DefiExecutionScope | null; executionScopeHash: string | null }>;
+export type V7PreparationReport = Readonly<{ sourceCount: number; familyCount: number; targetCount: number; bindingCount: number; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V7CompiledBinding[] }>;
 
 export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; selector?: string; abiHash: string; capabilityId: string; executionScope?: DefiExecutionScope; executionScopeHash?: string }>;
 export type SourceAdmissionSnapshot = Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly SourceAdmissionBinding[] }>;
@@ -135,9 +148,9 @@ function assertJsonData(value: unknown, label: string, seen = new Set<object>())
 
 export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions {
   const mode = args[0];
-  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6> [--input fixed repository file]');
-  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
-  let inputPath = 'data/defi-catalog/v6/catalog.json';
+  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6' && mode !== 'prepare-v7') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6|prepare-v7> [--input fixed repository file]');
+  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6' || mode === 'prepare-v7') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
+  let inputPath = 'data/defi-catalog/v7/catalog.json';
   let inputSeen = false;
   for (let index = 1; index < args.length; index += 1) {
     if (args[index] !== '--input' || inputSeen || !args[index + 1]) throw new Error('Usage: cli.ts <generate|check|diff> [--input data/defi-catalog/vN/catalog.json]');
@@ -145,8 +158,8 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
     inputPath = args[++index];
   }
   if (mode === 'assemble') {
-    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, or v6 source assembly selector');
-    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v6/catalog.json' };
+    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json', 'data/defi-catalog/v7/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, v6, or v7 source assembly selector');
+    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v7/catalog.json' };
   }
   if (mode === 'prepare-v5') {
     if (inputSeen && inputPath !== V5_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v5 only accepts ${V5_ASSEMBLY_PLAN_PATH}`);
@@ -155,6 +168,10 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
   if (mode === 'prepare-v6') {
     if (inputSeen && inputPath !== 'data/defi-catalog/v6/sources') throw new Error('prepare-v6 does not accept source selectors');
     return { mode, inputPath: 'data/defi-catalog/v6/sources' };
+  }
+  if (mode === 'prepare-v7') {
+    if (inputSeen && inputPath !== V7_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v7 only accepts ${V7_ASSEMBLY_PLAN_PATH}`);
+    return { mode, inputPath: V7_ASSEMBLY_PLAN_PATH };
   }
   if (!/^data\/defi-catalog\/v[1-9][0-9]*\/catalog\.json$/.test(inputPath)) throw new Error('Catalog input must be a repository source file at data/defi-catalog/vN/catalog.json');
   return { mode, inputPath };
@@ -167,6 +184,15 @@ export function validateV6AssemblyPlan(value: unknown): V6AssemblyPlan {
   if (plan.schemaVersion !== 1 || plan.baselinePath !== 'data/defi-catalog/v5/catalog.json' || !Array.isArray(plan.sourcePaths)) throw new Error('V6 assembly plan has unsupported schema or baseline');
   if (plan.sourcePaths.length !== V6_SOURCE_PATHS.length || plan.sourcePaths.some((path, index) => path !== V6_SOURCE_PATHS[index])) throw new Error('V6 assembly plan must select every fixed v6 source exactly once in canonical order');
   return { schemaVersion: 1, baselinePath: plan.baselinePath, sourcePaths: [...V6_SOURCE_PATHS] };
+}
+
+export function validateV7AssemblyPlan(value: unknown): V7AssemblyPlan {
+  const plan = record(value, 'V7 assembly plan');
+  onlyKeys(plan, ['schemaVersion', 'baselinePath', 'sourcePaths'], 'V7 assembly plan');
+  requireKeys(plan, ['schemaVersion', 'baselinePath', 'sourcePaths'], 'V7 assembly plan');
+  if (plan.schemaVersion !== 1 || plan.baselinePath !== 'data/defi-catalog/v6/catalog.json' || !Array.isArray(plan.sourcePaths)) throw new Error('V7 assembly plan has unsupported schema or baseline');
+  if (plan.sourcePaths.length !== V7_SOURCE_PATHS.length || plan.sourcePaths.some((path, index) => path !== V7_SOURCE_PATHS[index])) throw new Error('V7 assembly plan must select every fixed v7 source exactly once in canonical order');
+  return { schemaVersion: 1, baselinePath: plan.baselinePath, sourcePaths: [...V7_SOURCE_PATHS] };
 }
 
 export function validateV5AssemblyPlan(value: unknown): V5AssemblyPlan {
@@ -234,6 +260,30 @@ function sourceList(value: unknown, label: string): SourceRecord[] {
     ids.add(sourceId);
     return { sourceId, url, retrievedAtUtc, evidence };
   });
+}
+
+/** Normalize only the two recorded v7 source-record formats into the strict compiler shape. */
+function normalizeV7SourceDocument(document: unknown, sourcePath: string): unknown {
+  if (!V7_SOURCE_PATHS.includes(sourcePath)) return document;
+  const root = record(document, sourcePath);
+  const sources = root.sources;
+  if (!Array.isArray(sources)) throw new Error(`${sourcePath}.sources must be an array`);
+  const normalizedSources = sources.map((value, index) => {
+    const source = record(value, `${sourcePath}.sources[${index}]`);
+    if ('retrievedAtUtc' in source || 'evidence' in source) return source;
+    onlyKeys(source, ['sourceId', 'url', 'retrievedAt', 'sha256', 'notes'], `${sourcePath}.sources[${index}]`);
+    requireKeys(source, ['sourceId', 'url', 'retrievedAt', 'sha256', 'notes'], `${sourcePath}.sources[${index}]`);
+    if (typeof source.retrievedAt !== 'string' || typeof source.notes !== 'string' || (source.sha256 !== null && (typeof source.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(source.sha256)))) throw new Error(`${sourcePath}.sources[${index}] has invalid dated evidence fields`);
+    const retrievedAtUtc = source.retrievedAt.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(retrievedAtUtc) || Number.isNaN(Date.parse(`${retrievedAtUtc}T00:00:00Z`))) throw new Error(`${sourcePath}.sources[${index}] has invalid retrieval date`);
+    return {
+      sourceId: source.sourceId,
+      url: source.url,
+      retrievedAtUtc,
+      evidence: `${source.notes}${source.sha256 ? ` SHA-256 ${source.sha256}.` : ''}`,
+    };
+  });
+  return { ...root, ...(Object.hasOwn(root, 'unresolved') ? {} : { unresolved: [] }), sources: normalizedSources };
 }
 
 function normalizeSourceAddress(value: unknown, label: string): string {
@@ -356,7 +406,9 @@ function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[
   }
   const chains = new Map<number, Map<string, DefiFunctionPolicy[]>>();
   const isV6Source = sourcePath.startsWith('data/defi-catalog/v6/');
+  const isV7Source = V7_SOURCE_PATHS.includes(sourcePath);
   const matchedV6Identities = new Set<string>();
+  const matchedV7Identities = new Set<string>();
   const add = (familyId: string, familyVersion: string, familySources: readonly string[], chainValue: unknown, addressValue: unknown, nameValue: unknown, refsValue: unknown, functionsValue: unknown, label: string, contractStatus?: unknown) => {
     const chainId = chainValue;
     if (typeof chainId !== 'number' || !SOURCE_CHAIN_IDS.includes(chainId)) throw new Error(`${label} has unsupported chain`);
@@ -367,6 +419,15 @@ function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[
     if (!Array.isArray(functionsValue)) throw new Error(`${label} functions must be an array`);
     const entries = functionsValue.map((item, i) => {
       const candidate = makeSourceFunction(record(item, `${label}.functions[${i}]`), { familyId, familyVersion, chainId, address, contractName, familySources, records: recordMap });
+      if (isV7Source) {
+        const identity = V7_SOURCE_IDENTITIES.find((row) => row.sourcePath === sourcePath && row.familyId === familyId && row.familyVersion === familyVersion && row.chainId === chainId && row.address === address && row.signature === candidate.signature);
+        if (!identity || matchedV7Identities.has(identity.capabilityId)) throw new Error(`${sourcePath} has a missing, ambiguous, or duplicate reviewed v7 identity for ${familyId}:${chainId}:${address}:${candidate.signature}`);
+        if (identity.abiHash !== functionAbiHash(candidate)) throw new Error(`${sourcePath} ABI does not match reviewed v7 identity ${identity.capabilityId}`);
+        const scopeHash = candidate.executionScope ? executionScopeHash(candidate.executionScope) : null;
+        if (identity.executionScopeHash !== scopeHash || (identity.executionScope === null) !== (candidate.executionScope === undefined) || identity.executionScope && !equal(identity.executionScope, candidate.executionScope)) throw new Error(`${sourcePath} execution scope does not match reviewed v7 identity ${identity.capabilityId}`);
+        matchedV7Identities.add(identity.capabilityId);
+        return { ...candidate, capabilityId: identity.capabilityId };
+      }
       if (!isV6Source) return candidate;
       const identity = V6_SOURCE_IDENTITIES.find((row) => row.sourcePath === sourcePath && row.familyId === familyId && row.familyVersion === familyVersion && row.chainId === chainId && row.address === address && row.signature === candidate.signature) as { sourcePath: string; familyId: string; familyVersion: string; chainId: number; address: string; signature: string; capabilityId: string; abiHash: string; executionScope?: DefiExecutionScope | null } | undefined;
       if (!identity || matchedV6Identities.has(identity.capabilityId)) throw new Error(`${sourcePath} has a missing, ambiguous, or duplicate reviewed v6 identity for ${familyId}:${chainId}:${address}:${candidate.signature}`);
@@ -417,6 +478,7 @@ function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[
     } else throw new Error('Source family must use a supported contracts or chains format');
   }
   if (isV6Source && matchedV6Identities.size !== V6_SOURCE_IDENTITIES.filter((row) => row.sourcePath === sourcePath).length) throw new Error(`${sourcePath} did not consume every reviewed v6 identity binding exactly once`);
+  if (isV7Source && matchedV7Identities.size !== V7_SOURCE_IDENTITIES.filter((row) => row.sourcePath === sourcePath).length) throw new Error(`${sourcePath} did not consume every reviewed v7 identity binding exactly once`);
   return [...chains.entries()].sort(([a], [b]) => a - b).map(([chainId, contracts]) => ({ chainId, status: 'inactive' as const, contracts: [...contracts.entries()].sort(([a], [b]) => cmp(a, b)).map(([address, functions]) => ({ address, status: 'inactive' as const, functions: functions.sort((a, b) => cmp(a.capabilityId, b.capabilityId)) })) }));
 }
 
@@ -442,6 +504,29 @@ export function prepareV6Sources(inputs: readonly SourceCatalogInput[]): V6Prepa
   return { sourceCount: inputs.length, familyCount, targetCount, bindingCount, sourceDigests, bindings };
 }
 
+/** Compile the fixed v7 identity inventory for review. No candidate is activated or written. */
+export function prepareV7Sources(inputs: readonly SourceCatalogInput[]): V7PreparationReport {
+  if (inputs.length !== V7_SOURCE_PATHS.length || inputs.some((input, index) => input.sourcePath !== V7_SOURCE_PATHS[index])) throw new Error('V7 preparation requires every fixed source path exactly once, in canonical order');
+  let familyCount = 0;
+  let targetCount = 0;
+  const bindings: V7CompiledBinding[] = [];
+  const sourceDigests = inputs.map(({ sourcePath, document }) => {
+    const normalized = normalizeV7SourceDocument(document, sourcePath);
+    const root = record(normalized, sourcePath);
+    const families = sourceFamilies(normalized, sourcePath);
+    familyCount += (root.families as unknown[]).length;
+    targetCount += families.reduce((count, chain) => count + chain.contracts.length, 0);
+    for (const chain of families) for (const contract of chain.contracts) for (const fn of contract.functions) {
+      const identity = V7_SOURCE_IDENTITIES.find((row) => row.sourcePath === sourcePath && row.capabilityId === fn.capabilityId);
+      if (!identity) throw new Error(`${sourcePath} has no exact reviewed v7 identity for ${fn.capabilityId}`);
+      bindings.push({ sourcePath, familyId: identity.familyId, familyVersion: identity.familyVersion, chainId: chain.chainId, contract: fn.contract, functionName: fn.functionName, signature: fn.signature, selector: toFunctionSelector(fn.signature).toLowerCase(), capabilityId: fn.capabilityId, abiHash: functionAbiHash(fn), executionScope: fn.executionScope ?? null, executionScopeHash: fn.executionScope ? executionScopeHash(fn.executionScope) : null });
+    }
+    return { sourcePath, canonicalSha256: canonicalSourceSha256(document) };
+  });
+  if (bindings.length !== V7_SOURCE_IDENTITIES.length || new Set(bindings.map((binding) => binding.capabilityId)).size !== bindings.length || new Set(bindings.map((binding) => `${binding.sourcePath}:${binding.chainId}:${binding.contract.toLowerCase()}:${binding.selector}`)).size !== bindings.length) throw new Error('V7 preparation did not consume a unique, exact identity inventory');
+  return { sourceCount: inputs.length, familyCount, targetCount, bindingCount: bindings.length, sourceDigests, bindings };
+}
+
 export function canonicalSourceSha256(document: unknown): string {
   assertJsonData(document, 'Source snapshot');
   return createHash('sha256').update(canonical(document), 'utf8').digest('hex');
@@ -458,7 +543,8 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     const isV4 = expectedPaths.length === V4_SOURCE_PATHS.length && expectedPaths.every((path, index) => path === V4_SOURCE_PATHS[index]);
     const isV5 = expectedPaths.length === V5_SOURCE_PATHS.length && expectedPaths.every((path, index) => path === V5_SOURCE_PATHS[index]);
     const isV6 = expectedPaths.length === V6_SOURCE_PATHS.length && expectedPaths.every((path, index) => path === V6_SOURCE_PATHS[index]);
-    if (!isV3 && !isV4 && !isV5 && !isV6 && (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index]))) throw new Error('Admissions require exactly the allowlisted v2 source snapshots, fixed v3 workflow source, fixed v4 source group, or a complete selected v5 plan group');
+    const isV7 = expectedPaths.length === V7_SOURCE_PATHS.length && expectedPaths.every((path, index) => path === V7_SOURCE_PATHS[index]);
+    if (!isV3 && !isV4 && !isV5 && !isV6 && !isV7 && (expectedPaths.length !== ALLOWED_SOURCE_PATHS.length || expectedPaths.some((path, index) => path !== ALLOWED_SOURCE_PATHS[index]))) throw new Error('Admissions require exactly the allowlisted v2 source snapshots, fixed v3 workflow source, fixed v4 source group, or a complete selected v5 plan group');
   if (root.snapshots.length !== expectedPaths.length) throw new Error('Admissions must bind every complete source snapshot');
   const snapshots = new Map<string, Record<string, unknown>>();
   for (const [index, value] of root.snapshots.entries()) {
@@ -466,7 +552,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     onlyKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     requireKeys(row, ['sourcePath', 'canonicalSha256', 'bindings'], 'Source admission snapshot');
     const path = requireString(row.sourcePath, 'Source admission sourcePath');
-      if (!(isV3 ? path === V3_SOURCE_PATH : isV4 ? V4_SOURCE_PATHS.includes(path) : isV5 ? V5_SOURCE_PATHS.includes(path) : isV6 ? V6_SOURCE_PATHS.includes(path) : ALLOWED_SOURCE_PATHS.includes(path)) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
+      if (!(isV3 ? path === V3_SOURCE_PATH : isV4 ? V4_SOURCE_PATHS.includes(path) : isV5 ? V5_SOURCE_PATHS.includes(path) : isV6 ? V6_SOURCE_PATHS.includes(path) : isV7 ? V7_SOURCE_PATHS.includes(path) : ALLOWED_SOURCE_PATHS.includes(path)) || snapshots.has(path)) throw new Error('Source admissions contain an unknown or duplicate path');
     if (typeof row.canonicalSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(row.canonicalSha256)) throw new Error('Source admission has invalid canonical SHA-256');
     if (!Array.isArray(row.bindings)) throw new Error('Source admission bindings must be an array');
     snapshots.set(path, row);
@@ -479,28 +565,30 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
     if (snapshot.canonicalSha256 !== source.sha256) throw new Error(`Source snapshot hash does not match admission: ${source.sourcePath}`);
     const expected = source.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => ({
       familyId: fn.protocol!, chainId: fn.chainId, contract: fn.contract.toLowerCase(), signature: fn.signature,
-      ...(isV6 ? { selector: toFunctionSelector(fn.signature).toLowerCase() } : {}), abiHash: functionAbiHash(fn), capabilityId: fn.capabilityId,
+      ...(isV6 || isV7 ? { selector: toFunctionSelector(fn.signature).toLowerCase() } : {}), abiHash: functionAbiHash(fn), capabilityId: fn.capabilityId,
     })))).sort((a, b) => cmp(`${a.familyId}:${a.chainId}:${a.contract}:${a.signature}`, `${b.familyId}:${b.chainId}:${b.contract}:${b.signature}`));
-    if (!isV6 && expected.some((binding) => !FAMILY_ID_VERSIONS[binding.familyId])) throw new Error(`Source admission includes a family without an explicit stable ID version: ${source.sourcePath}`);
+    if (!isV6 && !isV7 && expected.some((binding) => !FAMILY_ID_VERSIONS[binding.familyId])) throw new Error(`Source admission includes a family without an explicit stable ID version: ${source.sourcePath}`);
     const bindings = snapshot.bindings as unknown[];
     if (bindings.length !== expected.length) throw new Error(`Admission binding count mismatch for ${source.sourcePath}`);
     for (const [index, value] of bindings.entries()) {
       const binding = record(value, `Admission binding[${index}]`);
-       onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', ...(isV6 ? ['selector'] : []), 'abiHash', 'capabilityId', ...(isV3 || isV4 || isV5 || isV6 ? ['executionScope', 'executionScopeHash'] : [])], 'Admission binding');
-      requireKeys(binding, ['familyId', 'chainId', 'contract', 'signature', ...(isV6 ? ['selector', 'executionScope', 'executionScopeHash'] : []), 'abiHash', 'capabilityId'], 'Admission binding');
-      if (typeof binding.familyId !== 'string' || typeof binding.chainId !== 'number' || typeof binding.contract !== 'string' || typeof binding.signature !== 'string' || isV6 && typeof binding.selector !== 'string' || typeof binding.abiHash !== 'string' || typeof binding.capabilityId !== 'string' || isV6 && binding.executionScope !== null && (typeof binding.executionScope !== 'object' || Array.isArray(binding.executionScope)) || isV6 && binding.executionScopeHash !== null && typeof binding.executionScopeHash !== 'string') throw new Error('Admission binding has invalid field types');
-      const normalized = { familyId: binding.familyId, chainId: binding.chainId, contract: binding.contract.toLowerCase(), signature: binding.signature, ...(isV6 ? { selector: (binding.selector as string).toLowerCase() } : {}), abiHash: binding.abiHash, capabilityId: binding.capabilityId };
+     onlyKeys(binding, ['familyId', 'chainId', 'contract', 'signature', ...(isV6 || isV7 ? ['selector'] : []), 'abiHash', 'capabilityId', ...(isV3 || isV4 || isV5 || isV6 || isV7 ? ['executionScope', 'executionScopeHash'] : [])], 'Admission binding');
+       requireKeys(binding, ['familyId', 'chainId', 'contract', 'signature', ...(isV6 || isV7 ? ['selector', 'executionScope', 'executionScopeHash'] : []), 'abiHash', 'capabilityId'], 'Admission binding');
+       if (typeof binding.familyId !== 'string' || typeof binding.chainId !== 'number' || typeof binding.contract !== 'string' || typeof binding.signature !== 'string' || (isV6 || isV7) && typeof binding.selector !== 'string' || typeof binding.abiHash !== 'string' || typeof binding.capabilityId !== 'string' || (isV6 || isV7) && binding.executionScope !== null && (typeof binding.executionScope !== 'object' || Array.isArray(binding.executionScope)) || (isV6 || isV7) && binding.executionScopeHash !== null && typeof binding.executionScopeHash !== 'string') throw new Error('Admission binding has invalid field types');
+       const hasVersionedSelector = isV6 || isV7;
+       const nullScopePairAllowed = isV6 || isV7;
+       const normalized = { familyId: binding.familyId, chainId: binding.chainId, contract: binding.contract.toLowerCase(), signature: binding.signature, ...(hasVersionedSelector ? { selector: (binding.selector as string).toLowerCase() } : {}), abiHash: binding.abiHash, capabilityId: binding.capabilityId };
       if (!equal(normalized, expected[index])) throw new Error(`Admission binding does not match source ABI in ${source.sourcePath}: ${normalized.capabilityId}`);
-        if (isV3 || isV4 || isV5 || isV6) {
+        if (isV3 || isV4 || isV5 || isV6 || isV7) {
          const candidate = source.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => fn.capabilityId === normalized.capabilityId);
          const candidateScope = candidate?.executionScope;
          const hasScope = Object.hasOwn(binding, 'executionScope');
          const hasScopeHash = Object.hasOwn(binding, 'executionScopeHash');
          const scopeIsNull = binding.executionScope === null;
          const hashIsNull = binding.executionScopeHash === null;
-         if (isV6) {
-           if (!hasScope || !hasScopeHash) throw new Error(`V6 admission must explicitly bind executionScope and executionScopeHash: ${normalized.capabilityId}`);
-           if (scopeIsNull !== hashIsNull) throw new Error(`V6 admission has an inconsistent null execution-scope pair: ${normalized.capabilityId}`);
+          if (isV6 || isV7) {
+            if (!hasScope || !hasScopeHash) throw new Error(`${isV6 ? 'V6' : 'V7'} admission must explicitly bind executionScope and executionScopeHash: ${normalized.capabilityId}`);
+            if (scopeIsNull !== hashIsNull) throw new Error(`${isV6 ? 'V6' : 'V7'} admission has an inconsistent null execution-scope pair: ${normalized.capabilityId}`);
          } else if (scopeIsNull || hashIsNull) {
            throw new Error(`Admission execution scope/hash must be omitted rather than null: ${normalized.capabilityId}`);
          }
@@ -523,7 +611,7 @@ function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInp
             throw new Error(`Admission execution scope is not defined for this function identity: ${normalized.capabilityId}`);
            }
            if (ambientScopeRequired && (scope.kind !== 'ambient-coldpath-v1' || !equal(scope, { kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1 }))) throw new Error(`Admission execution scope is not defined for this Ambient root: ${normalized.capabilityId}`);
-         } else if (hasScopeHash && binding.executionScopeHash !== undefined && !(isV6 && scopeIsNull && hashIsNull)) throw new Error(`Admission has execution-scope hash without scope: ${normalized.capabilityId}`);
+          } else if (hasScopeHash && binding.executionScopeHash !== undefined && !(nullScopePairAllowed && scopeIsNull && hashIsNull)) throw new Error(`Admission has execution-scope hash without scope: ${normalized.capabilityId}`);
            const scopeRequired = (candidate?.protocol === 'uniswap-v3-position-manager' || isV4 && candidate?.protocol === 'pancakeswap-v3-position-manager') && candidate.signature === 'multicall(bytes[])'
             || candidate?.protocol === 'morpho-blue' && ['supply', 'repay', 'supplyCollateral'].includes(candidate.functionName)
             || candidate?.protocol === 'ambient' && candidate.chainId === 1 && candidate.contract.toLowerCase() === '0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688' && candidate.signature === 'userCmd(uint16,bytes)';
@@ -549,7 +637,8 @@ export function assembleCatalogFromSources(baseline: DefiRegistryFragment, input
   const compiled = inputs.map((input) => {
     const document = record(input.document, input.sourcePath);
     const normalized = input.sourcePath.startsWith('data/defi-catalog/v6/') && !Object.hasOwn(document, 'unresolved') ? { ...document, unresolved: [] } : input.document;
-    return { sourcePath: input.sourcePath, sha256: canonicalSourceSha256(input.document), chains: sourceFamilies(normalized, input.sourcePath) };
+    const sourceDocument = normalizeV7SourceDocument(normalized, input.sourcePath);
+    return { sourcePath: input.sourcePath, sha256: canonicalSourceSha256(input.document), chains: sourceFamilies(sourceDocument, input.sourcePath) };
   });
   const admissions = admissionDocument === undefined ? undefined : validateAdmissions(admissionDocument, inputs, compiled);
   for (const [inputIndex, input] of inputs.entries()) {
@@ -597,6 +686,17 @@ export function assembleCatalogFromSources(baseline: DefiRegistryFragment, input
 export function assembleV6SourceCandidates(baseline: DefiRegistryFragment, inputs: readonly SourceCatalogInput[], admissionDocument?: unknown): DefiRegistryFragment {
   prepareV6Sources(inputs);
   return assembleCatalogFromSources(baseline, inputs, admissionDocument);
+}
+
+/** Pure v7 preparation/assembly against the complete immutable v6 catalog baseline. */
+export function assembleV7SourceCandidates(baseline: DefiRegistryFragment, planValue: unknown, inputs: readonly SourceCatalogInput[], admissionDocument?: unknown): DefiRegistryFragment {
+  const plan = validateV7AssemblyPlan(planValue);
+  if (inputs.length !== plan.sourcePaths.length || inputs.some((input, index) => input.sourcePath !== plan.sourcePaths[index])) throw new Error('V7 source inputs must exactly match the selected assembly-plan paths');
+  const validatedBaseline = validateCatalogDocument({ schemaVersion: 1, chains: baseline.chains });
+  const baselineFunctions = buildReviewedManifest([validatedBaseline]).capabilities;
+  if (baselineFunctions.length !== 640 || baselineFunctions.filter((fn) => fn.executionScope).length !== 15) throw new Error('V7 preparation requires the frozen 640-definition, 15-scope v6 baseline');
+  prepareV7Sources(inputs);
+  return assembleCatalogFromSources({ chains: validatedBaseline.chains }, inputs, admissionDocument);
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {

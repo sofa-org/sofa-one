@@ -1526,4 +1526,124 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
     ],
     "fingerprint": "sha256:7538fb97efdf7707d1e83f5b7a4382570db6c5dfbe66324fb2b36f4bf8eae3f8"
   }
+,
+  {
+    "bundleId": "one-inch-ethereum",
+    "version": "1.0.0",
+    "label": "1inch Unoswap routes · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap-to",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap-to2",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap-to3",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap2",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:eth-unoswap3",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap-to",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap-to2",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap-to3",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap2",
+      "one-inch:aggregation-router-v6:1:0x111111125421ca6dc452d289314280a0f8842a65:unoswap3"
+    ],
+    "warnings": [
+      "Twelve fixed one-to-three-hop Unoswap entrypoints are selected; choose no more than ten decoded execution nodes per request under the unchanged runtime node limit.",
+      "Packed route words carry Address-in-uint256 values; V3 canonical factory/pool checks apply only to the external-payer callback branch. Curve/router-balance callbacks assume no stranded router funds; governance and route identity remain outside this profile.",
+      "Amounts, recipients, route words, fees and payable value remain caller-controlled; no platform amount, recipient, asset-pair or feed caps apply. Token approvals remain independent authority and are not included, automatic or paired."
+    ],
+    "limitations": [
+      "Dated exact ABI/source selection only; not all 1inch methods, authenticated route/pool identities, complete workflow, current runtime, liquidity, funded execution or financial-safety proof."
+    ],
+    "fingerprint": "sha256:1d43e2d5120d982ff6d8f7130e2216ef865aca1bc8823cd2de55314a02b137d1"
+  },
+  {
+    "bundleId": "zero-x-native-orders-ethereum",
+    "version": "1.0.0",
+    "label": "0x Native Orders · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:batch-cancel-limit-orders",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:batch-cancel-rfq-orders",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:cancel-limit-order",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:cancel-rfq-order",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-limit-order",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-or-kill-limit-order",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-or-kill-rfq-order",
+      "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-rfq-order"
+    ],
+    "warnings": [
+      "Eight fixed Native Orders fill/cancellation methods are selected; RFQ txOrigin eligibility is an actual-submission protocol condition, not a platform-owner restriction.",
+      "Only the reviewed historical Native Orders facet body is covered; this is not a current facet/runtime identity assertion. Orders, amounts, recipients, fees, tokens and signatures remain ABI/protocol controlled; no platform amount, recipient, asset-pair or feed caps apply. Approvals are independent and not paired."
+    ],
+    "limitations": [
+      "Dated exact ABI/role evidence only; not all 0x routes, current facet/runtime, liquidity, funded execution, a complete workflow or financial-safety proof."
+    ],
+    "fingerprint": "sha256:a3224ab852ce7d55028689badac43a8c93715773573e5b81048bd215455be802"
+  },
+  {
+    "bundleId": "velora-augustus-rfq-ethereum",
+    "version": "1.0.0",
+    "label": "Velora Augustus RFQ · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:cancel-order",
+      "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:cancel-orders",
+      "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:fill-order",
+      "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:partial-fill-order"
+    ],
+    "warnings": [
+      "Four fixed Augustus RFQ fill/cancellation methods only. Omitted WithTarget variants are a bounded selection, not a restriction imposed by the platform.",
+      "Order assets, maker/taker identities, amounts, fill amount and signatures remain caller-selected and subject to protocol checks; no platform amount, recipient, asset-pair or feed caps apply. Token approvals are independent and are neither included nor paired."
+    ],
+    "limitations": [
+      "Dated exact RFQ ABI selection only; not all Velora routing, current runtime, liquidity, funded execution, complete workflow or financial-safety proof."
+    ],
+    "fingerprint": "sha256:cb2ad6a283152123f457ccafa0daacf824c5601c5f48c026a23c17f6c1f01501"
+  },
+  {
+    "bundleId": "bebop-bop-amm-ethereum",
+    "version": "1.0.0",
+    "label": "Bebop BOP AMM allowance swap · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "bebop:bop-amm-v1:1:0xb098881c587f623fac85eae60809bee7a174cee7:swap-with-allowance"
+    ],
+    "warnings": [
+      "One fixed BOP AMM swapWithAllowance entrypoint only; fallback and fixed core callback entrypoints, other Bebop RFQ/routing products, and arbitrary caller-selected hook selectors are excluded from granted authority. Pricing-selected maker/fee hooks may still be invoked by the fixed router path and remain protocol execution/trust dependencies.",
+      "Token, amounts, minimum return, recipient, deadline, fee and payable value remain caller-controlled; no platform amount, recipient, asset-pair or feed caps apply. Token approval is independent authority, not automatic or paired."
+    ],
+    "limitations": [
+      "Dated exact method selection only; fixed-route fee/maker hooks, pool eligibility, governance, and trust remain external dependencies. All Bebop RFQ products, a full workflow, current runtime, liquidity, funded execution, and financial safety are not certified."
+    ],
+    "fingerprint": "sha256:296572ad146b7feb7f8280e6c381b12cfae6cc5bbcc0f0b4919841df87645e90"
+  },
+  {
+    "bundleId": "open-ocean-uniswap-routes-ethereum",
+    "version": "1.0.0",
+    "label": "OpenOcean fixed Uniswap routes · Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "open-ocean:uniswap-routes-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:call-uniswap",
+      "open-ocean:uniswap-routes-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:call-uniswap-to",
+      "open-ocean:uniswap-routes-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:uniswap-v3-swap-to"
+    ],
+    "warnings": [
+      "Three fixed direct Uniswap-family proxy methods only; opaque makeCalls, fallback and callback surfaces are excluded. Fixed returnAmount may differ from net recipient proceeds; positive-slippage distribution is hardcoded to 0x8dd9433e6F86a035bB318A6f74AD2d3Ac6731861.",
+      "The inherited methods lack protocol whenNotPaused guards; platform pause remains an independent policy overlay. Amounts, minimum return, route words, pools, recipient and payable value remain caller-controlled; no platform amount, recipient, asset-pair or feed caps apply. Approvals remain independent authority and are neither paired nor automatic."
+    ],
+    "limitations": [
+      "Dated exact ABI subset only; not full OpenOcean routing, current runtime, route/pool authentication, liquidity, funded execution, complete workflow or financial-safety proof."
+    ],
+    "fingerprint": "sha256:232431b4619ae5d77fba29da4ea8c83eb3950a33e9c6ed3d734482f12d1f4d62"
+  }
 ]);

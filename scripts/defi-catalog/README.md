@@ -1,8 +1,12 @@
 # Offline DeFi catalog CLI
 
-This CLI validates, deterministically assembles, and generates only repository-owned catalog snapshots. It performs no network/RPC calls and has no configurable output destination. Package catalog scripts select v6. Direct `cli.ts` use without `--input` retains its historical v1 compatibility default, explicit versioned inputs remain supported, and bare CLI `assemble` remains v2-compatible.
+This CLI validates, deterministically assembles, and generates only repository-owned catalog snapshots. It performs no network/RPC calls and has no configurable output destination. Current package catalog scripts select v7; explicit `:v6` and `:v5` commands retain frozen historical workflows. V7 assembly/admission is pinned to five explicit source files and the immutable complete v6 baseline; `prepare-v7` previews those sources as inactive candidates and does not apply admissions.
 
-## Current v6 dated snapshot
+## Current local v7 default snapshot
+
+Current package assemble/generate/check/diff commands and bare CLI `assemble` select v7; explicit `:v6` and `:v5` commands retain frozen historical snapshots. The accepted v7 catalog has 668 definitions (645 actions, 23 independent approvals), 15 scopes, and 67 literal profiles / 394 unique selected IDs. It preserves all 640 v6 definitions, all prior scopes, and the complete 62-profile baseline including order/fingerprints, then adds 28 source-qualified methods across five bounded aggregator selections. Gate 3 attempt 2 passed after Oracle code-scope closeout and final read-only validation: 180 suites/2,679 tests passed, with one PostgreSQL pause-concurrency suite/test skipped because `DATABASE_URL` was unavailable (not DB proof). Build, v7 default and explicit v6/v5 checks, deterministic admission-aware assembly, production catalog/module byte comparison, and inactive `prepare-v7` checks passed. Profiles remain metadata, not grants; source qualification does not establish runtime identity, liquidity, funded execution, or full workflows. Enso implementation is next; Odos/Kyber opaque executor gaps and existing-protocol literal extensions remain pending; 55-protocol and 90% market objectives remain unmet.
+
+## Historical v6 dated snapshot
 
 The v6 source set contains 27 fixed source snapshots with 134 exact function bindings across 35 targets (31 Ethereum, 3 Optimism, 1 BNB). The generated production snapshot has 640 definitions (617 actions, 23 independent approvals) across seven aggregate chain IDs and 15 finite scopes; the 29 appended literal profiles select 134 new identities, for 62 profiles and 366 unique profile members. This preserves the complete 506-definition v5 snapshot and its 33-profile baseline; historical v4 remains 368 definitions / 12 profiles, and the earlier 368-definition / 12-profile engineering baseline is not rewritten. There are 27 of the planned 28 phase-2 source families; Kyber remains unresolved and excluded.
 
@@ -36,7 +40,7 @@ report 19 additions with no removals, same-ID authority/ABI changes, or prior
 metadata changes. V4 `generate` writes only the fixed production TypeScript
   registry; v4 `check` checks that registry against the selected v4 catalog. The
   package assemble/generate/check/diff commands explicitly selected v5 at that
-  staging checkpoint. Current package commands select v6. Gate 2 attempt 2 and
+  staging checkpoint. Current package commands select v7; explicit `:v6` commands remain. Gate 2 attempt 2 and
   final independent validation passed; catalog generation does not
 change stored grants or establish deployment/funding/market coverage.
 
@@ -49,8 +53,8 @@ PancakeSwap `multicall(bytes[])` binding has an execution scope, fixed to its
 eight same-target admitted children. This does not create automatic dependencies
 or grants.
 
-`--input` accepts only `data/defi-catalog/vN/catalog.json` paths resolving inside the repository's `data/defi-catalog/` source tree. Absolute paths, traversal, URLs, unknown flags, and output-path overrides are rejected. Direct CLI use defaults to the v1 input for compatibility. Current package assemble/generate/check/diff commands select v6; historical v1-v5 inputs remain separately selectable, and bare v2-compatible assembly remains available. The baseline remains the independent full 202-definition pre-migration fixture, and every old definition is retained exactly in the staged snapshots. V2-v5 historical inputs and their fixed admission validations remain unchanged; v6 validates its 27 fixed source snapshots, canonical hashes, exact family/chain/target/signature/full ABI/capability bindings, and records explicit admissions. Missing, extra, stale, malformed, or mismatched bindings fail closed. Source status flags alone never activate functions. Production output always targets the single repository-owned generated TypeScript module; generation does not rebind grants or silently upgrade an existing ID. Existing grants are unchanged and new IDs remain denied unless separately granted.
+`--input` accepts only `data/defi-catalog/vN/catalog.json` paths resolving inside the repository's `data/defi-catalog/` source tree. Absolute paths, traversal, URLs, unknown flags, and output-path overrides are rejected. Current package assemble/generate/check/diff commands select v7; explicit `:v6` commands select the frozen v6 snapshot, and historical v1-v5 inputs remain separately selectable. V7 preserves all 640 v6 definitions exactly and adds 28 admitted source-qualified ordinary methods, producing 668 definitions (645 actions, 23 approvals) with the same 15 finite scopes. Its five source digests, full ABI identities, capability IDs, and explicit scope/hash pairs are verified fail-closed. Runtime imports only the generated TypeScript module, not source files or fixture builders. Existing grants are unchanged; new IDs are not automatically granted. Admission does not prove deployment identity, funded execution, financial safety, or live operation.
 
-After generating v6, the production registry file reflects the selected local v6 snapshot. Historical v1-v5 source comparisons remain available through fixed inputs and `diff` mode; package catalog commands target v6.
+Production generation reflects the selected local v7 snapshot. Historical v1-v6 source comparisons remain available through fixed inputs and `diff` mode; explicit `:v6` package commands preserve the previous production baseline workflow.
 
 The reproducible v2 catalog retains all 202 v1 definitions unchanged and adds 113 source-qualified function definitions (59 DEX and 54 lending/yield) under new stable IDs. The generated catalog has 315 definitions, zero approvals added, and a diff of 113 added with no removed, authority-changed, ABI-changed, or metadata-changed prior IDs. Admission records source ABI identity only; it is not financial validation, deployment proof, or a change to existing grants.
