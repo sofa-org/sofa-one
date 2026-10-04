@@ -23,7 +23,21 @@ export type DefiProvenance = Readonly<{
 export type DefiExecutionScope =
   | Readonly<{ kind: 'empty-callback-data-v1'; bytesArgIndex: number }>
   | Readonly<{ kind: 'ambient-coldpath-v1'; callpathArgIndex: 0; bytesArgIndex: 1 }>
-  | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>;
+  | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>
+  | Readonly<{ kind: 'enso-static-weiroll-v1'; allowedChildren: readonly EnsoStaticWeirollChildBinding[] }>;
+
+/** One of the three fixed, ordinary catalog children of the bounded Enso language. */
+export type EnsoStaticWeirollChildBinding = Readonly<{
+  chainId: number;
+  contract: string;
+  capabilityId: string;
+  signature: string;
+  abiHash: `0x${string}`;
+}>;
+export type EnsoStaticWeirollExecutionScope = Readonly<{
+  kind: 'enso-static-weiroll-v1';
+  allowedChildren: readonly EnsoStaticWeirollChildBinding[];
+}>;
 
 /** Function-level authority: identity + fixed ABI + provenance, never runtime validators. */
 export type DefiFunctionPolicy = Readonly<{

@@ -10,6 +10,8 @@ import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { capabilityBundleFingerprint } from './bundle.service';
 import { DefiBundleService } from './bundle.service';
 import { buildReviewedManifest } from '../registry/defi-manifest';
+import { buildEnsoRegistry } from '../registry/enso';
+import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 
 const OWNER = '0x0000000000000000000000000000000000000001';
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -92,11 +94,11 @@ function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
 
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(668);
+    expect(flat).toHaveLength(669);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(645);
-    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(15);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(67);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(646);
+    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(16);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(68);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {
       expect(bundle.version).toBe('1.0.0');
@@ -166,6 +168,37 @@ describe('published production profiles', () => {
     expect(copy).toMatch(/nonzero conduit can hold LP.*counterparty asset-loss risk.*governable sidecars/i);
     expect(copy).toMatch(/externalSwap is excluded/);
     expect(copy).toMatch(/extra referrer argument and void return/);
+  });
+
+  it('copies the independent 445d448 baseline exactly and adds one root-only Enso profile against its isolated candidate fixture', () => {
+    const fixtureBytes = readFileSync(resolve(process.cwd(), 'src/modules/defi/bundles/__fixtures__/enso-baseline-profiles-445d448.json'));
+    expect(createHash('sha256').update(fixtureBytes).digest('hex')).toBe('1467dc962a15dd4cc795267e2b677857babc45398a654d5b2ba37c1d7208dd94');
+    const fixture = JSON.parse(fixtureBytes.toString('utf8')) as { provenance: { gitCommit: string; sourcePath: string }; profiles: unknown[] };
+    expect(fixture.provenance).toEqual({ gitCommit: '445d448cca6fb4e8b2c2cf9d649c2a68f4122242', sourcePath: 'src/modules/defi/bundles/production-bundles.ts' });
+    expect(fixture.profiles).toHaveLength(67);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 67)).toEqual(fixture.profiles);
+    const allIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
+    expect(allIds).toHaveLength(395);
+    expect(new Set(allIds).size).toBe(395);
+    const enso = PRODUCTION_DEFI_CAPABILITY_BUNDLES[67];
+    expect(enso).toMatchObject({ bundleId: 'enso-static-weiroll-root-v1', version: '1.0.0', chainIds: [1], capabilityIds: [ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId] });
+    expect(enso.capabilityIds).toEqual([ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId]);
+    expect(enso.fingerprint).toBe(capabilityBundleFingerprint(enso, buildEnsoRegistry().chains[0].contracts[0].functions));
+    expect(enso.fingerprint).toBe('sha256:f98b818570c294ba61b2f4b74fed73bc65c8622409bcd0958c9f88f9404e82ec');
+    expect(enso.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
+    expect(enso.warnings.join(' ')).toMatch(/each used child requires a separate explicit grant/i);
+    expect(enso.warnings.join(' ')).toMatch(/approval is never automatically paired/i);
+    expect(enso.warnings.join(' ')).toMatch(/constructor-created internal role.*not an independently verified current runtime address/i);
+    expect(enso.warnings.join(' ')).toMatch(/shared or stranded shortcut funds.*caller context/i);
+    expect(enso.limitations.join(' ')).toMatch(/discards outputs.*no dynamic output dependencies/i);
+    expect(enso.limitations.join(' ')).toMatch(/does not include NFT modes, routeMulti, safeRoute, other Enso methods/i);
+    expect(enso.limitations.join(' ')).toMatch(/ABI\/source qualification does not establish current runtime or proxy identity/i);
+
+    const root = flat.find((fn) => fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)!;
+    expect(enso.fingerprint).toBe(capabilityBundleFingerprint(enso, [root]));
+    expect(enso.capabilityIds).not.toContain('uniswap-v3-router02:v3:1:0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45:exact-input-single');
+    expect(enso.capabilityIds).not.toContain('aave-v3:1:0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2:supply');
+    expect(enso.capabilityIds).not.toContain('erc20:1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48:approve');
   });
 
   it('preserves all 62 immutable 74bb052 full-metadata profile objects exactly', () => {
@@ -245,7 +278,7 @@ describe('published production profiles', () => {
 
   it('pins five literal phase3 selections to exactly 28 source-builder identities without automatic approvals', () => {
     const candidates = phase3CandidateCapabilities();
-    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62);
+    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67);
     expect(candidates).toHaveLength(28);
     expect(profiles.map(({ bundleId, capabilityIds }) => [bundleId, capabilityIds.length])).toEqual([
       ['one-inch-ethereum', 12], ['zero-x-native-orders-ethereum', 8], ['velora-augustus-rfq-ethereum', 4],
@@ -369,6 +402,6 @@ describe('published production profiles', () => {
     const response = await service.listMetadata();
     expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
-    expect(response.bundles).toHaveLength(67);
+      expect(response.bundles).toHaveLength(68);
   });
 });

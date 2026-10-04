@@ -9,6 +9,8 @@ import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-mani
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
 import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRoot, validateAmbientColdpathPayload } from './execution/ambient';
+import { decodeEnsoStaticWeirollRoot } from './execution/enso';
+import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -96,9 +98,14 @@ export class DefiPolicyService {
   }
 
   async recordAllowedInTx(tx: DefiDbClient, authorization: DefiAuthorization) {
+    const ensoRoots = authorization.executionPlan.flatMap((node) => {
+      if (node.match.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId) return [];
+      const decoded = decodeEnsoStaticWeirollRoot(node.data, BigInt(node.match.nativeValue ?? '0'));
+      return [{ path: node.path, commandCount: decoded.commandCount, stateCount: decoded.stateCount, childValueSum: decoded.childValueSum.toString() }];
+    });
     return this.events.record({
       actorType: 'api_key', eventType: 'defi.capability_allowed', userId: authorization.context.userId, apiKeyId: authorization.context.apiKeyId, walletId: authorization.context.walletId, result: 'allowed',
-      metadata: { capabilities: authorization.executionPlan.map((node) => ({ capabilityId: node.match.capabilityId, abiHash: node.match.abiHash, policy: node.match.policy, path: node.path, ...(node.match.executionScopeHash ? { executionScopeHash: node.match.executionScopeHash } : {}) })) } as Prisma.InputJsonValue,
+      metadata: { capabilities: authorization.executionPlan.map((node) => ({ capabilityId: node.match.capabilityId, abiHash: node.match.abiHash, policy: node.match.policy, path: node.path, ...(node.match.executionScopeHash ? { executionScopeHash: node.match.executionScopeHash } : {}) })), ...(ensoRoots.length ? { ensoRoots } : {}) } as Prisma.InputJsonValue,
     }, tx, { deferExport: true });
   }
 
@@ -157,6 +164,50 @@ export class DefiPolicyService {
     const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn, root.value as string) });
     const scope = rootFn.executionScope;
     const ambientIdentity = rootFn.chainId === AMBIENT_CHAIN_ID && rootFn.contract.toLowerCase() === AMBIENT_TARGET.toLowerCase();
+    const ensoIdentityMarker = rootFn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId
+      || rootFn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId && rootFn.contract.toLowerCase() === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+      || rootFn.signature === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature;
+    if (ensoIdentityMarker) {
+      if (rootFn.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId
+        || rootFn.chainId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId
+        || rootFn.contract.toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+        || root.to.toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+        || rootFn.functionName !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.functionName
+        || rootFn.signature !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature
+        || functionAbiHash(rootFn) !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.abiHash
+        || rootFn.abi.stateMutability !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.stateMutability
+        || toFunctionSelector(rootFn.signature).toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.selector
+        || scope?.kind !== 'enso-static-weiroll-v1') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      try {
+        executionScopeHash(scope);
+      } catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
+      const allowedChildren = scope.allowedChildren;
+      if (allowedChildren.length !== ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.length
+        || ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.some((literal) => !allowedChildren.some((child) => child.chainId === literal.chainId
+          && child.contract.toLowerCase() === literal.contract && child.capabilityId === literal.capabilityId
+          && child.signature === literal.signature && child.abiHash.toLowerCase() === literal.abiHash))) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      this.assertCanonicalCall(root, rootFn, context);
+      let decoded: ReturnType<typeof decodeEnsoStaticWeirollRoot>;
+      try { decoded = decodeEnsoStaticWeirollRoot(root.data as `0x${string}`, BigInt(root.value ?? '0')); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      if (alreadyPlanned + 1 + decoded.children.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      const nodes: DefiExecutionPlanNode[] = [rootNode];
+      for (let childIndex = 0; childIndex < decoded.children.length; childIndex++) {
+        const childCall = decoded.children[childIndex];
+        const literal = ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.find((child) => child.contract === childCall.target.toLowerCase());
+        const chain = this.catalog.activeChain(context.chainId);
+        const contract = chain?.contracts.find((entry) => entry.status === 'active' && entry.address.toLowerCase() === childCall.target.toLowerCase());
+        const childFn = contract?.functions.find((candidate) => candidate.status === 'active' && candidate.type === 'contract_call' && candidate.capabilityId === literal?.capabilityId);
+        if (!literal || !childFn || childFn.executionScope || childFn.chainId !== literal.chainId || childFn.contract.toLowerCase() !== literal.contract
+          || childFn.signature !== literal.signature || functionAbiHash(childFn) !== literal.abiHash
+          || !allowedChildren.some((child) => child.chainId === childFn.chainId && child.contract.toLowerCase() === childFn.contract.toLowerCase()
+            && child.capabilityId === childFn.capabilityId && child.signature === childFn.signature && child.abiHash.toLowerCase() === functionAbiHash(childFn))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+        const childInteraction: DefiInteraction = { to: childCall.target, data: childCall.data, value: childCall.value.toString() };
+        this.assertCanonicalCall(childInteraction, childFn, context);
+        nodes.push(deepFreeze({ path: [...path, childIndex], data: childCall.data.toLowerCase() as `0x${string}`, match: toMatch(childFn, childCall.value.toString()) }));
+      }
+      return nodes;
+    }
     if (ambientIdentity && (rootFn.signature !== AMBIENT_SIGNATURE || scope?.kind !== 'ambient-coldpath-v1')) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
     if (!scope) {
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);

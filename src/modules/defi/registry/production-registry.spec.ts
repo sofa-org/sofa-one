@@ -24,18 +24,20 @@ import { buildSushiV2Registry } from './sushi-v2';
 import { buildExpansionTokenApprovalRegistry } from './expansion-token-approvals';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildReviewedManifest } from './defi-manifest';
+import { buildReviewedManifest, functionAbiHash } from './defi-manifest';
 import { validateCatalogDocument } from '../catalog-tooling/catalog-generator';
 import { V6_SOURCE_IDENTITIES } from '../catalog-tooling/v6-identities';
+import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
+import { executionScopeHash } from '../execution/scope';
 
 const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
 @Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }], exports: [PrismaService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
-  it('assembles 668 exact, source-verified function capabilities as active', () => {
+  it('assembles 669 exact, source-verified function capabilities as active', () => {
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST)).toBe(true);
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST.capabilities)).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(668);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(669);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
     expect(PRODUCTION_DEFI_CATALOG).toBe(PRODUCTION_DEFI_MANIFEST.chains);
     expect(PRODUCTION_DEFI_CATALOG.map((chain) => chain.chainId)).toEqual([1, 10, 56, 137, 143, 8453, 42161]);
@@ -43,7 +45,7 @@ describe('production DeFi registry assembly', () => {
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => fn.provenance.sourceRef.length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(fn.provenance.verifiedAt))).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => Object.isFrozen(fn) && Object.isFrozen(fn.abi) && Object.isFrozen(fn.abi.inputs) && Object.isFrozen(fn.abi.outputs) && Object.isFrozen(fn.provenance))).toBe(true);
     expect(PRODUCTION_DEFI_CATALOG.every((chain) => Object.isFrozen(chain) && Object.isFrozen(chain.contracts) && chain.contracts.every((contract) => Object.isFrozen(contract) && Object.isFrozen(contract.functions)))).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(645);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(646);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Aave V3')).toHaveLength(28);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Compound III')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Morpho Vault V2')).toHaveLength(6);
@@ -102,8 +104,8 @@ describe('production DeFi registry assembly', () => {
     expect(baselineApprovalIds).toHaveLength(20);
     expect(newApprovalFunctions.every((fn) => !baselineApprovalIds.includes(fn.capabilityId))).toBe(true);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(668);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(668);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(669);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(669);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? ''));
     expect(sourceFunctions).toHaveLength(160);
@@ -139,7 +141,7 @@ describe('production DeFi registry assembly', () => {
     expect(newNpmFunctions).toHaveLength(28);
     expect(newMorphoFunctions).toHaveLength(6);
     expect([...newNpmFunctions, ...newMorphoFunctions]).toHaveLength(34);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(15);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
     expect(newMorphoFunctions.every((fn) => fn.executionScope?.kind === 'empty-callback-data-v1')).toBe(true);
     const pancakeWrapper = pancakeswap.find((fn) => fn.signature === 'multicall(bytes[])')!;
     expect(pancakeWrapper.executionScope?.kind).toBe('same-target-multicall-v1');
@@ -158,6 +160,29 @@ describe('production DeFi registry assembly', () => {
     expect(v6Capabilities).toHaveLength(134);
     expect(v6Capabilities.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified')).toBe(true);
     expect(v6Capabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(0);
+    const v7Catalog = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v7/catalog.json'), 'utf8')));
+    const v7Manifest = buildReviewedManifest([v7Catalog]);
+    expect(v7Manifest.capabilities).toHaveLength(668);
+    expect(v7Manifest.capabilities.filter((fn) => fn.executionScope)).toHaveLength(15);
+    for (const fn of v7Manifest.capabilities) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((candidate) => candidate.capabilityId === fn.capabilityId)).toEqual(fn);
+    const ensoRoot = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)!;
+    expect(ensoRoot).toMatchObject({
+      status: 'active', chainId: 1, contract: ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract,
+      functionName: 'routeSingle', signature: ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature,
+      abiHash: ENSO_STATIC_WEIROLL_ROOT_IDENTITY.abiHash,
+    });
+    expect(toFunctionSelector(ensoRoot.signature)).toBe(ENSO_STATIC_WEIROLL_ROOT_IDENTITY.selector);
+    expect(ensoRoot.executionScope && executionScopeHash(ensoRoot.executionScope)).toBe('0xf55170b87634460f24a5f4ced30d21b134bf950327078b5f31e0bfe2074959e5');
+    if (ensoRoot.executionScope?.kind !== 'enso-static-weiroll-v1') throw new Error('Production Enso root must have its exact mandatory scope');
+    expect(ensoRoot.executionScope.allowedChildren).toEqual(ENSO_STATIC_WEIROLL_CHILD_IDENTITIES);
+    for (const child of ENSO_STATIC_WEIROLL_CHILD_IDENTITIES) {
+      const resolved = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === child.capabilityId);
+      expect(resolved?.status).toBe('active');
+      expect(resolved?.signature).toBe(child.signature);
+      expect(resolved?.contract.toLowerCase()).toBe(child.contract.toLowerCase());
+      expect(resolved && functionAbiHash(resolved)).toBe(child.abiHash);
+      expect(resolved?.executionScope).toBeUndefined();
+    }
   });
 
   it('keeps source-added calls subject to exact capability, chain, target, selector, and ABI matching', async () => {

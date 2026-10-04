@@ -7,6 +7,10 @@ import { executionScopeHash } from '../execution/scope';
 import type { DefiExecutionScope } from '../defi.types';
 import { V6_SOURCE_IDENTITIES } from './v6-identities';
 import { V7_SOURCE_IDENTITIES } from './v7-identities';
+import {
+  V8_ASSEMBLY_PLAN_PATH, V8_BASELINE_MANIFEST_HASH, V8_BASELINE_PATH, V8_BASELINE_RAW_SHA256, V8_ROOT_IDENTITY,
+  V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS,
+} from './v8-identities';
 
 export const BASELINE_MANIFEST_HASH = '0x43ec3be0b20a32457719d8edb17c8eaa40c93480921d6e7c86e9c2cacdec5897' as const;
 
@@ -19,7 +23,7 @@ const ABI_PARAM_KEYS = ['name', 'type', 'components', 'internalType'];
 const PROVENANCE_KEYS = ['sourceRef', 'verifiedAt', 'status'];
 const POLICY_KEYS = ['ref', 'version'];
 
-export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6' | 'prepare-v7';
+export type CatalogCliMode = 'generate' | 'check' | 'diff' | 'assemble' | 'prepare-v5' | 'prepare-v6' | 'prepare-v7' | 'prepare-v8';
 export type CatalogCliOptions = Readonly<{ mode: CatalogCliMode; inputPath: string }>;
 export type SourceCatalogInput = Readonly<{ sourcePath: string; document: unknown }>;
 
@@ -123,6 +127,10 @@ export type V5AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: 'data/de
 export type V7AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: 'data/defi-catalog/v6/catalog.json'; sourcePaths: readonly string[] }>;
 export type V7CompiledBinding = Readonly<{ sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: DefiExecutionScope | null; executionScopeHash: string | null }>;
 export type V7PreparationReport = Readonly<{ sourceCount: number; familyCount: number; targetCount: number; bindingCount: number; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V7CompiledBinding[] }>;
+export type V8AssemblyPlan = Readonly<{ schemaVersion: 1; baselinePath: typeof V8_BASELINE_PATH; baselineRawSha256: typeof V8_BASELINE_RAW_SHA256; baselineManifestHash: typeof V8_BASELINE_MANIFEST_HASH; sourcePaths: readonly string[]; sourceCanonicalSha256: typeof V8_SOURCE_CANONICAL_SHA256 }>;
+export type V8CompiledBinding = Readonly<{ sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string; functionName: string; signature: string; selector: string; capabilityId: string; abiHash: string; executionScope: DefiExecutionScope; executionScopeHash: string }>;
+export type V8PreparationReport = Readonly<{ sourceCount: 1; familyCount: 1; targetCount: 1; bindingCount: 1; sourceDigests: readonly Readonly<{ sourcePath: string; canonicalSha256: string }>[]; bindings: readonly V8CompiledBinding[] }>;
+export type V8AdmissionDocument = Readonly<{ schemaVersion: 1; snapshots: readonly Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly Readonly<{ familyId: string; chainId: number; contract: string; signature: string; selector: string; abiHash: string; capabilityId: string; executionScope: DefiExecutionScope; executionScopeHash: string }>[] }>[] }>;
 
 export type SourceAdmissionBinding = Readonly<{ familyId: string; chainId: number; contract: string; signature: string; selector?: string; abiHash: string; capabilityId: string; executionScope?: DefiExecutionScope; executionScopeHash?: string }>;
 export type SourceAdmissionSnapshot = Readonly<{ sourcePath: string; canonicalSha256: string; bindings: readonly SourceAdmissionBinding[] }>;
@@ -148,9 +156,9 @@ function assertJsonData(value: unknown, label: string, seen = new Set<object>())
 
 export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions {
   const mode = args[0];
-  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6' && mode !== 'prepare-v7') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6|prepare-v7> [--input fixed repository file]');
-  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6' || mode === 'prepare-v7') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
-  let inputPath = 'data/defi-catalog/v7/catalog.json';
+  if (mode !== 'generate' && mode !== 'check' && mode !== 'diff' && mode !== 'assemble' && mode !== 'prepare-v5' && mode !== 'prepare-v6' && mode !== 'prepare-v7' && mode !== 'prepare-v8') throw new Error('Usage: cli.ts <generate|check|diff|assemble|prepare-v5|prepare-v6|prepare-v7|prepare-v8> [--input fixed repository file]');
+  if ((mode === 'assemble' || mode === 'prepare-v5' || mode === 'prepare-v6' || mode === 'prepare-v7' || mode === 'prepare-v8') && args.length > 3) throw new Error(`${mode} accepts at most one fixed input selector`);
+  let inputPath = 'data/defi-catalog/v8/catalog.json';
   let inputSeen = false;
   for (let index = 1; index < args.length; index += 1) {
     if (args[index] !== '--input' || inputSeen || !args[index + 1]) throw new Error('Usage: cli.ts <generate|check|diff> [--input data/defi-catalog/vN/catalog.json]');
@@ -158,8 +166,8 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
     inputPath = args[++index];
   }
   if (mode === 'assemble') {
-    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json', 'data/defi-catalog/v7/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, v6, or v7 source assembly selector');
-    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v7/catalog.json' };
+    if (inputSeen && !['data/defi-catalog/v3/catalog.json', 'data/defi-catalog/v4/catalog.json', 'data/defi-catalog/v5/catalog.json', 'data/defi-catalog/v6/catalog.json', 'data/defi-catalog/v7/catalog.json', 'data/defi-catalog/v8/catalog.json'].includes(inputPath)) throw new Error('assemble only accepts a fixed v3, v4, v5, v6, v7, or v8 source assembly selector');
+    return { mode, inputPath: inputSeen ? inputPath : 'data/defi-catalog/v8/catalog.json' };
   }
   if (mode === 'prepare-v5') {
     if (inputSeen && inputPath !== V5_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v5 only accepts ${V5_ASSEMBLY_PLAN_PATH}`);
@@ -172,6 +180,10 @@ export function parseCatalogCliArgs(args: readonly string[]): CatalogCliOptions 
   if (mode === 'prepare-v7') {
     if (inputSeen && inputPath !== V7_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v7 only accepts ${V7_ASSEMBLY_PLAN_PATH}`);
     return { mode, inputPath: V7_ASSEMBLY_PLAN_PATH };
+  }
+  if (mode === 'prepare-v8') {
+    if (inputSeen && inputPath !== V8_ASSEMBLY_PLAN_PATH) throw new Error(`prepare-v8 only accepts ${V8_ASSEMBLY_PLAN_PATH}`);
+    return { mode, inputPath: V8_ASSEMBLY_PLAN_PATH };
   }
   if (!/^data\/defi-catalog\/v[1-9][0-9]*\/catalog\.json$/.test(inputPath)) throw new Error('Catalog input must be a repository source file at data/defi-catalog/vN/catalog.json');
   return { mode, inputPath };
@@ -193,6 +205,20 @@ export function validateV7AssemblyPlan(value: unknown): V7AssemblyPlan {
   if (plan.schemaVersion !== 1 || plan.baselinePath !== 'data/defi-catalog/v6/catalog.json' || !Array.isArray(plan.sourcePaths)) throw new Error('V7 assembly plan has unsupported schema or baseline');
   if (plan.sourcePaths.length !== V7_SOURCE_PATHS.length || plan.sourcePaths.some((path, index) => path !== V7_SOURCE_PATHS[index])) throw new Error('V7 assembly plan must select every fixed v7 source exactly once in canonical order');
   return { schemaVersion: 1, baselinePath: plan.baselinePath, sourcePaths: [...V7_SOURCE_PATHS] };
+}
+
+export function validateV8AssemblyPlan(value: unknown): V8AssemblyPlan {
+  const plan = record(value, 'V8 assembly plan');
+  onlyKeys(plan, ['schemaVersion', 'baselinePath', 'baselineRawSha256', 'baselineManifestHash', 'sourcePaths', 'sourceCanonicalSha256'], 'V8 assembly plan');
+  requireKeys(plan, ['schemaVersion', 'baselinePath', 'baselineRawSha256', 'baselineManifestHash', 'sourcePaths', 'sourceCanonicalSha256'], 'V8 assembly plan');
+  if (plan.schemaVersion !== 1 || plan.baselinePath !== V8_BASELINE_PATH || plan.baselineRawSha256 !== V8_BASELINE_RAW_SHA256
+    || plan.baselineManifestHash !== V8_BASELINE_MANIFEST_HASH
+    || !Array.isArray(plan.sourcePaths) || plan.sourcePaths.length !== V8_SOURCE_PATHS.length
+    || plan.sourcePaths.some((path, index) => path !== V8_SOURCE_PATHS[index])
+    || plan.sourceCanonicalSha256 !== V8_SOURCE_CANONICAL_SHA256) {
+    throw new Error('V8 plan must pin the immutable v7 catalog and the one exact Enso source snapshot');
+  }
+  return { schemaVersion: 1, baselinePath: V8_BASELINE_PATH, baselineRawSha256: V8_BASELINE_RAW_SHA256, baselineManifestHash: V8_BASELINE_MANIFEST_HASH, sourcePaths: [...V8_SOURCE_PATHS], sourceCanonicalSha256: V8_SOURCE_CANONICAL_SHA256 };
 }
 
 export function validateV5AssemblyPlan(value: unknown): V5AssemblyPlan {
@@ -530,6 +556,150 @@ export function prepareV7Sources(inputs: readonly SourceCatalogInput[]): V7Prepa
 export function canonicalSourceSha256(document: unknown): string {
   assertJsonData(document, 'Source snapshot');
   return createHash('sha256').update(canonical(document), 'utf8').digest('hex');
+}
+
+function normalizeV8SourceDocument(document: unknown, sourcePath: string): unknown {
+  if (sourcePath !== V8_SOURCE_PATHS[0]) throw new Error('V8 source path is not the one fixed Enso snapshot');
+  const root = record(document, sourcePath);
+  if (Object.hasOwn(root, 'unresolved')) return document;
+  if (!Array.isArray(root.sources)) throw new Error(`${sourcePath}.sources must be an array`);
+  const sources = root.sources.map((value, index) => {
+    const source = record(value, `${sourcePath}.sources[${index}]`);
+    onlyKeys(source, ['sourceId', 'url', 'retrievedAt', 'sha256', 'notes'], `${sourcePath}.sources[${index}]`);
+    requireKeys(source, ['sourceId', 'url', 'retrievedAt', 'sha256', 'notes'], `${sourcePath}.sources[${index}]`);
+    if (typeof source.retrievedAt !== 'string' || typeof source.notes !== 'string' || (source.sha256 !== null && (typeof source.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(source.sha256)))) throw new Error(`${sourcePath}.sources[${index}] has invalid dated evidence fields`);
+    const retrievedAtUtc = source.retrievedAt.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(retrievedAtUtc) || Number.isNaN(Date.parse(`${retrievedAtUtc}T00:00:00Z`))) throw new Error(`${sourcePath}.sources[${index}] has invalid retrieval date`);
+    return { sourceId: source.sourceId, url: source.url, retrievedAtUtc, evidence: `${source.notes}${source.sha256 ? ` SHA-256 ${source.sha256}.` : ''}` };
+  });
+  return { ...root, sources, unresolved: [] };
+}
+
+/** Compile the one exact Enso candidate with its mandatory closed scope; never activates it. */
+export function prepareV8Sources(inputs: readonly SourceCatalogInput[]): V8PreparationReport {
+  if (inputs.length !== 1 || inputs[0].sourcePath !== V8_SOURCE_PATHS[0]) throw new Error('V8 preparation requires the single fixed Enso source path');
+  const [{ sourcePath, document }] = inputs;
+  const digest = canonicalSourceSha256(document);
+  if (digest !== V8_SOURCE_CANONICAL_SHA256) throw new Error('V8 Enso source does not match the pinned canonical source digest');
+  const normalizedDocument = normalizeV8SourceDocument(document, sourcePath);
+  const root = record(normalizedDocument, sourcePath);
+  if (root.schemaVersion !== 1 || !Array.isArray(root.families) || root.families.length !== 1 || !Array.isArray(root.sources)) throw new Error('V8 source must contain exactly the reviewed Enso family and source records');
+  const family = record(root.families[0], 'V8 Enso family');
+  if (family.familyId !== V8_ROOT_IDENTITY.familyId || family.familyVersion !== V8_ROOT_IDENTITY.familyVersion
+    || !Array.isArray(family.contracts) || family.contracts.length !== 1) throw new Error('V8 source family/version/contract inventory differs from the reviewed Enso identity');
+  const contract = record(family.contracts[0], 'V8 Enso contract');
+  if (contract.chainId !== V8_ROOT_IDENTITY.chainId || contract.address !== V8_ROOT_IDENTITY.contract
+    || contract.contractName !== V8_ROOT_IDENTITY.contractName || contract.status !== 'inactive'
+    || !Array.isArray(contract.sourceRefs) || !equal(contract.sourceRefs, V8_ROOT_IDENTITY.sourceRefs)
+    || !Array.isArray(contract.abiFunctions) || contract.abiFunctions.length !== 1) throw new Error('V8 Enso source contract is not the exact inactive reviewed root target');
+  const sourceIds = root.sources.map((value) => requireString(record(value, 'V8 source record').sourceId, 'V8 sourceId'));
+  if (!equal(sourceIds, V8_ROOT_IDENTITY.sourceRefs)) throw new Error('V8 source references are missing, reordered, duplicated, or unknown');
+
+  const [compiled] = sourceFamilies(normalizedDocument, sourcePath);
+  if (!compiled || compiled.contracts.length !== 1 || compiled.contracts[0].functions.length !== 1) throw new Error('V8 compilation did not produce exactly one Enso function');
+  const candidate = compiled.contracts[0].functions[0];
+  const abiEntry = record(contract.abiFunctions[0], 'V8 Enso ABI entry');
+  if (abiEntry.sourceId !== V8_ROOT_IDENTITY.sourceRef || candidate.status !== 'inactive' || candidate.provenance.status !== 'candidate'
+    || candidate.protocol !== V8_ROOT_IDENTITY.familyId || candidate.chainId !== V8_ROOT_IDENTITY.chainId
+    || candidate.contract.toLowerCase() !== V8_ROOT_IDENTITY.contract || candidate.functionName !== V8_ROOT_IDENTITY.functionName
+    || candidate.signature !== V8_ROOT_IDENTITY.signature || toFunctionSelector(candidate.signature).toLowerCase() !== V8_ROOT_IDENTITY.selector
+    || functionAbiHash(candidate) !== V8_ROOT_IDENTITY.abiHash || candidate.provenance.sourceRef !== (root.sources.find((value) => record(value, 'V8 source record').sourceId === V8_ROOT_IDENTITY.sourceRef) as Record<string, unknown>).url) {
+    throw new Error('V8 source ABI or provenance does not match the exact reviewed Enso root identity');
+  }
+  const scopedCandidate: DefiFunctionPolicy = {
+    ...candidate,
+    capabilityId: V8_ROOT_IDENTITY.capabilityId,
+    executionScope: V8_ROOT_IDENTITY.executionScope,
+  };
+  if (executionScopeHash(scopedCandidate.executionScope!) !== V8_ROOT_IDENTITY.executionScopeHash) throw new Error('V8 mandatory Enso scope does not match its pinned identity');
+  const binding: V8CompiledBinding = {
+    sourcePath, familyId: V8_ROOT_IDENTITY.familyId, familyVersion: V8_ROOT_IDENTITY.familyVersion,
+    chainId: V8_ROOT_IDENTITY.chainId, contract: V8_ROOT_IDENTITY.contract, functionName: V8_ROOT_IDENTITY.functionName,
+    signature: V8_ROOT_IDENTITY.signature, selector: V8_ROOT_IDENTITY.selector, capabilityId: V8_ROOT_IDENTITY.capabilityId,
+    abiHash: V8_ROOT_IDENTITY.abiHash, executionScope: V8_ROOT_IDENTITY.executionScope,
+    executionScopeHash: V8_ROOT_IDENTITY.executionScopeHash,
+  };
+  return { sourceCount: 1, familyCount: 1, targetCount: 1, bindingCount: 1, sourceDigests: [{ sourcePath, canonicalSha256: digest }], bindings: [binding] };
+}
+
+function validateV8Admission(value: unknown, digest: string): V8AdmissionDocument {
+  const admission = record(value, 'V8 admissions');
+  onlyKeys(admission, ['schemaVersion', 'snapshots'], 'V8 admissions');
+  requireKeys(admission, ['schemaVersion', 'snapshots'], 'V8 admissions');
+  if (admission.schemaVersion !== 1 || !Array.isArray(admission.snapshots) || admission.snapshots.length !== 1) throw new Error('V8 admission must bind exactly the single Enso source snapshot');
+  const snapshot = record(admission.snapshots[0], 'V8 admission snapshot');
+  onlyKeys(snapshot, ['sourcePath', 'canonicalSha256', 'bindings'], 'V8 admission snapshot');
+  requireKeys(snapshot, ['sourcePath', 'canonicalSha256', 'bindings'], 'V8 admission snapshot');
+  if (snapshot.sourcePath !== V8_SOURCE_PATHS[0] || snapshot.canonicalSha256 !== digest || !Array.isArray(snapshot.bindings) || snapshot.bindings.length !== 1) throw new Error('V8 admission snapshot path/hash/binding count is not exact');
+  const binding = record(snapshot.bindings[0], 'V8 admission binding');
+  const bindingKeys = ['familyId', 'chainId', 'contract', 'signature', 'selector', 'abiHash', 'capabilityId', 'executionScope', 'executionScopeHash'];
+  onlyKeys(binding, bindingKeys, 'V8 admission binding');
+  requireKeys(binding, bindingKeys, 'V8 admission binding');
+  if (binding.familyId !== V8_ROOT_IDENTITY.familyId || binding.chainId !== V8_ROOT_IDENTITY.chainId
+    || binding.contract !== V8_ROOT_IDENTITY.contract || binding.signature !== V8_ROOT_IDENTITY.signature
+    || binding.selector !== V8_ROOT_IDENTITY.selector || binding.abiHash !== V8_ROOT_IDENTITY.abiHash
+    || binding.capabilityId !== V8_ROOT_IDENTITY.capabilityId || binding.executionScopeHash !== V8_ROOT_IDENTITY.executionScopeHash
+    || !equal(binding.executionScope, V8_ROOT_IDENTITY.executionScope)
+    || executionScopeHash(binding.executionScope as DefiExecutionScope) !== V8_ROOT_IDENTITY.executionScopeHash) {
+    throw new Error('V8 admission must exactly bind the reviewed root, source digest, and non-null mandatory scope/hash');
+  }
+  return admission as unknown as V8AdmissionDocument;
+}
+
+/** Assemble in memory over frozen v7. Filesystem writes are performed only by the explicit CLI modes. */
+export function assembleV8SourceCandidates(
+  baseline: DefiRegistryFragment,
+  planValue: unknown,
+  inputs: readonly SourceCatalogInput[],
+  baselineRawSha256: string,
+  admissionDocument?: unknown,
+): DefiRegistryFragment {
+  const plan = validateV8AssemblyPlan(planValue);
+  if (baselineRawSha256 !== plan.baselineRawSha256) throw new Error('V8 baseline catalog hash does not match the immutable v7 assembly plan');
+  if (buildReviewedManifest([baseline]).manifestHash !== V8_BASELINE_MANIFEST_HASH) throw new Error('V8 baseline manifest identity does not match the immutable v7 plan');
+  const report = prepareV8Sources(inputs);
+  if (report.sourceDigests[0].canonicalSha256 !== plan.sourceCanonicalSha256) throw new Error('V8 source digest does not match the fixed assembly plan');
+  const sourceDocument = normalizeV8SourceDocument(inputs[0].document, inputs[0].sourcePath);
+  const [sourceFragment] = sourceFamilies(sourceDocument, inputs[0].sourcePath);
+  const [binding] = report.bindings;
+  const baselineCapabilities = baseline.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+  const baselineScopeHashes = baselineCapabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!));
+  if (baselineCapabilities.length !== 668 || baselineScopeHashes.length !== 15) throw new Error('V8 requires the complete immutable 668-definition/15-scope v7 baseline');
+  if (baselineCapabilities.some((fn) => fn.capabilityId === binding.capabilityId)) throw new Error('V8 Enso root identity already exists in the v7 baseline');
+  const candidate = sourceFragment.contracts[0].functions[0];
+  const rootScope = V8_ROOT_IDENTITY.executionScope;
+  if (executionScopeHash(rootScope) !== binding.executionScopeHash || binding.executionScopeHash !== V8_ROOT_IDENTITY.executionScopeHash) throw new Error('V8 Enso root scope/hash binding is not exact');
+  let root: DefiFunctionPolicy = { ...candidate, capabilityId: binding.capabilityId, executionScope: rootScope };
+  if (admissionDocument !== undefined) {
+    validateV8Admission(admissionDocument, report.sourceDigests[0].canonicalSha256);
+    root = { ...root, status: 'active', provenance: { ...root.provenance, status: 'verified' } };
+  }
+  if (!baseline.chains.some((item) => item.chainId === V8_ROOT_IDENTITY.chainId)) throw new Error('V8 baseline lacks the Enso chain');
+  const chains: DefiChainPolicy[] = baseline.chains.map((item) => {
+    const cloned = item.contracts.map((entry) => ({ ...entry, functions: [...entry.functions] }));
+    if (item.chainId !== V8_ROOT_IDENTITY.chainId) return { ...item, contracts: cloned };
+    const existing = cloned.find((entry) => entry.address.toLowerCase() === V8_ROOT_IDENTITY.contract);
+    if (existing) {
+      if (existing.functions.some((fn) => toFunctionSelector(fn.signature).toLowerCase() === binding.selector)) throw new Error('V8 Enso selector collides with an existing v7 function');
+      const contracts = cloned.map((entry) => entry === existing
+        ? { ...entry, functions: [...entry.functions, root].sort((a, b) => cmp(a.capabilityId, b.capabilityId)) }
+        : entry);
+      return { ...item, contracts };
+    }
+    const contracts = [...cloned, { address: V8_ROOT_IDENTITY.contract, status: root.status, functions: [root] }]
+      .sort((a, b) => cmp(a.address.toLowerCase(), b.address.toLowerCase()));
+    return { ...item, contracts };
+  });
+  const assembled: DefiRegistryFragment = { chains };
+  const manifest = buildReviewedManifest([assembled]);
+  const resolvedRoot = manifest.capabilities.find((fn) => fn.capabilityId === binding.capabilityId);
+  if (!resolvedRoot || resolvedRoot.signature !== binding.signature || functionAbiHash(resolvedRoot) !== binding.abiHash
+    || !resolvedRoot.executionScope || executionScopeHash(resolvedRoot.executionScope) !== binding.executionScopeHash) throw new Error('V8 assembled root failed exact reviewed-manifest identity/scope validation');
+  if (resolvedRoot.executionScope.kind !== 'enso-static-weiroll-v1' || resolvedRoot.executionScope.allowedChildren.length !== 3) throw new Error('V8 Enso scope must retain exactly the three fixed children');
+  const finalCapabilities = assembled.chains.flatMap((item) => item.contracts.flatMap((entry) => entry.functions));
+  const byId = new Map(finalCapabilities.map((fn) => [fn.capabilityId, fn]));
+  if (baselineCapabilities.some((fn) => JSON.stringify(byId.get(fn.capabilityId)) !== JSON.stringify(fn))) throw new Error('V8 candidate assembly changed an immutable v7 capability');
+  return assembled;
 }
 
 function validateAdmissions(document: unknown, inputs: readonly SourceCatalogInput[], compiled: readonly { sourcePath: string; sha256: string; chains: readonly DefiChainPolicy[] }[]): Map<string, SourceAdmissionBinding> {

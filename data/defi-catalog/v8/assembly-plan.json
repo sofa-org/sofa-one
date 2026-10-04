@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "baselinePath": "data/defi-catalog/v7/catalog.json",
+  "baselineRawSha256": "498c1c0d564472f2e585fba0ed3d46372f5f08e205f3e429163b7a1d9bedc570",
+  "baselineManifestHash": "0x32baaa989d966a12bf1b38f95d7bdc859ca2779b495ae27abbe40f0e95381533",
+  "sourcePaths": ["data/defi-catalog/v8/sources/enso.json"],
+  "sourceCanonicalSha256": "e497e4e31b7f82990e966c44d2a3abcf36c0a7174a15f8f100098094fdd2b7de"
+}

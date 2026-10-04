@@ -2,6 +2,8 @@ import type { DefiFunctionPolicy } from '../defi.types';
 import { capabilityBundleFingerprint, DefiBundleService } from './bundle.service';
 import type { DefiCapabilityBundle } from './types';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
+import { buildEnsoRegistry } from '../registry/enso';
+import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 
 const addressA = '0x1111111111111111111111111111111111111111';
 const addressB = '0x2222222222222222222222222222222222222222';
@@ -96,11 +98,11 @@ describe('DefiBundleService', () => {
   });
 
   it('accepts an explicitly empty injectable bundle list without inventing profiles', async () => {
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(67);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(68);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toHaveLength(12);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)).toHaveLength(21);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62)).toHaveLength(29);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62)).toHaveLength(5);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67)).toHaveLength(5);
     const service = new DefiBundleService([], catalog([]));
     await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, maxGrants: 100, bundles: [] });
   });
@@ -113,7 +115,7 @@ describe('DefiBundleService', () => {
       ...require('../registry/bebop').BEBOP_CAPABILITIES,
       ...require('../registry/open-ocean').OPEN_OCEAN_CAPABILITIES,
     ] as DefiFunctionPolicy[];
-    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62);
+    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67);
     expect(capabilities).toHaveLength(28);
     expect(profiles.flatMap((profile) => profile.capabilityIds)).toHaveLength(28);
     expect(new Set(profiles.flatMap((profile) => profile.capabilityIds)).size).toBe(28);
@@ -141,5 +143,22 @@ describe('DefiBundleService', () => {
     expect(profiles[4].warnings.join(' ')).toMatch(/opaque makeCalls.*excluded/i);
     expect(profiles[4].warnings.join(' ')).toMatch(/returnAmount may differ from net recipient proceeds/i);
     expect(profiles[4].warnings.join(' ')).toMatch(/whenNotPaused guards.*platform pause remains an independent policy overlay/i);
+  });
+
+  it('validates and serves the single Enso root profile against its isolated candidate identity without child membership', async () => {
+    const root = buildEnsoRegistry().chains[0].contracts[0].functions[0];
+    const profile = PRODUCTION_DEFI_CAPABILITY_BUNDLES[67];
+    expect(profile.bundleId).toBe('enso-static-weiroll-root-v1');
+    expect(profile.capabilityIds).toEqual([ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId]);
+    expect(root.capabilityId).toBe(ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId);
+    expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, [root]));
+    const service = new DefiBundleService([profile], catalog([root]));
+    await expect(service.listMetadata()).resolves.toMatchObject({
+      schemaVersion: 1,
+      maxGrants: 100,
+      bundles: [{ bundleId: profile.bundleId, version: '1.0.0', capabilityIds: [root.capabilityId], available: true, unavailableCapabilityIds: [] }],
+    });
+    expect(profile.capabilityIds).toHaveLength(1);
+    expect(profile.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
   });
 });

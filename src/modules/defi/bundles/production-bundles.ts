@@ -1645,5 +1645,26 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "Dated exact ABI subset only; not full OpenOcean routing, current runtime, route/pool authentication, liquidity, funded execution, complete workflow or financial-safety proof."
     ],
     "fingerprint": "sha256:232431b4619ae5d77fba29da4ea8c83eb3950a33e9c6ed3d734482f12d1f4d62"
+  },
+  {
+    "bundleId": "enso-static-weiroll-root-v1",
+    "version": "1.0.0",
+    "label": "Enso static Weiroll · routeSingle root",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "enso:router-static-weiroll-v1:1:0xf75584ef6673ad213a685a1b58cc0330b8ea22cf:route-single"
+    ],
+    "warnings": [
+      "This selects only the payable routeSingle root; it is not a standalone executable workflow. Each used child requires a separate explicit grant. The fixed grammar permits only the exact Uniswap V3 Router02 exactInputSingle, Aave V3 Pool supply, and USDC approve identities; approval is never automatically paired with or granted for this root.",
+      "Canonical native route data amount equals root value; ERC-20 route value is zero. Child value accounting is exact uint256 and child-value sums may exceed root value; no extra amount, recipient, token, spender, owner, or price-feed cap is imposed.",
+      "The source-fixed shortcut executor is a constructor-created internal role, not an independently verified current runtime address. Children execute from the shortcuts contract rather than the wallet; shared or stranded shortcut funds and caller context remain trust/workflow risks."
+    ],
+    "limitations": [
+      "This bounded static Weiroll selection discards outputs and has no dynamic output dependencies. It does not include NFT modes, routeMulti, safeRoute, other Enso methods, opaque/recursive executors, or other workflows; a separate wallet approval to the Enso router is not automatic or paired.",
+      "The three exact child identities are not a full DEX/lending population. ABI/source qualification does not establish current runtime or proxy identity, constructor/slot state, liquidity, funding, funded execution, transaction success, complete workflow, or financial safety."
+    ],
+    "fingerprint": "sha256:f98b818570c294ba61b2f4b74fed73bc65c8622409bcd0958c9f88f9404e82ec"
   }
 ]);

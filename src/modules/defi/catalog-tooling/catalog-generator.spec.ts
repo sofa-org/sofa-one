@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { buildReviewedManifest } from '../registry/defi-manifest';
 import { assembleCatalogFromSources, assembleV6SourceCandidates, assembleV7SourceCandidates, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument, validateV6AssemblyPlan, validateV7AssemblyPlan, V6_SOURCE_PATHS, V7_SOURCE_PATHS } from './catalog-generator';
 import { functionAbiHash } from '../registry/defi-manifest';
-import type { DefiFunctionPolicy } from '../defi.types';
+import type { DefiExecutionScope, DefiFunctionPolicy } from '../defi.types';
 import { toFunctionSelector } from 'viem';
 import { buildSparkLendRegistry } from '../registry/spark-lend';
 import { buildFluidRegistry } from '../registry/fluid';
@@ -37,6 +37,10 @@ import { buildZeroXRegistry, ZERO_X_CAPABILITIES } from '../registry/zero-x';
 import { buildVeloraRegistry, VELORA_CAPABILITIES } from '../registry/velora';
 import { buildBebopRegistry, BEBOP_CAPABILITIES } from '../registry/bebop';
 import { buildOpenOceanRegistry, OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
+import { createHash } from 'node:crypto';
+import { assembleV8SourceCandidates, prepareV8Sources, validateV8AssemblyPlan } from './catalog-generator';
+import { V8_ASSEMBLY_PLAN_PATH, V8_BASELINE_RAW_SHA256, V8_ROOT_IDENTITY, V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS } from './v8-identities';
+import { createEnsoStaticWeirollScope } from '../execution/enso-identity';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
 
@@ -285,6 +289,101 @@ describe('DeFi catalog generator', () => {
     expect(buildReviewedManifest([v6]).capabilities).toHaveLength(640);
   });
 
+  it('prepares the single exact v8 Enso root over frozen v7 without admission or writes', () => {
+    const baselineBytes = readFileSync(resolve(process.cwd(), 'data/defi-catalog/v7/catalog.json'));
+    const baselineRawSha256 = createHash('sha256').update(baselineBytes).digest('hex');
+    const baseline = validateCatalogDocument(JSON.parse(baselineBytes.toString('utf8')));
+    const planValue = JSON.parse(readFileSync(resolve(process.cwd(), V8_ASSEMBLY_PLAN_PATH), 'utf8'));
+    const plan = validateV8AssemblyPlan(planValue);
+    const inputs = V8_SOURCE_PATHS.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) as unknown }));
+    const report = prepareV8Sources(inputs);
+    expect(report).toMatchObject({ sourceCount: 1, familyCount: 1, targetCount: 1, bindingCount: 1 });
+    expect(report.sourceDigests).toEqual([{ sourcePath: V8_SOURCE_PATHS[0], canonicalSha256: V8_SOURCE_CANONICAL_SHA256 }]);
+    expect(report.bindings[0]).toMatchObject({
+      familyId: 'enso', familyVersion: 'router-static-weiroll-v1@c032c8f9', chainId: 1,
+      contract: V8_ROOT_IDENTITY.contract, signature: V8_ROOT_IDENTITY.signature, selector: '0xb94c3609',
+      capabilityId: V8_ROOT_IDENTITY.capabilityId, abiHash: V8_ROOT_IDENTITY.abiHash,
+      executionScope: createEnsoStaticWeirollScope(), executionScopeHash: '0xf55170b87634460f24a5f4ced30d21b134bf950327078b5f31e0bfe2074959e5',
+    });
+    const inactive = assembleV8SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256);
+    const diff = catalogDiff(baseline, inactive);
+    expect(diff.added).toEqual([V8_ROOT_IDENTITY.capabilityId]);
+    expect(diff).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    const inactiveCapabilities = inactive.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+    expect(inactiveCapabilities).toHaveLength(669);
+    expect(inactiveCapabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
+    const candidate = inactiveCapabilities.find((fn) => fn.capabilityId === V8_ROOT_IDENTITY.capabilityId)!;
+    expect(candidate).toMatchObject({ status: 'inactive', provenance: { status: 'candidate' }, capabilityId: V8_ROOT_IDENTITY.capabilityId });
+    expect(candidate.executionScope).toEqual(createEnsoStaticWeirollScope());
+    const beforeById = new Map(baseline.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => [fn.capabilityId, fn] as const))));
+    const afterById = new Map(inactiveCapabilities.map((fn) => [fn.capabilityId, fn] as const));
+    expect(beforeById.size).toBe(668);
+    for (const [id, fn] of beforeById) expect(afterById.get(id)).toEqual(fn);
+    expect(buildReviewedManifest([inactive]).capabilities).toHaveLength(669);
+    expect(renderGeneratedModule(inactive)).toBe(renderGeneratedModule(assembleV8SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256)));
+
+    const admission = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v8/admissions.json'), 'utf8'));
+    const admitted = assembleV8SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, admission);
+    const admittedCapabilities = admitted.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions));
+    expect(admittedCapabilities).toHaveLength(669);
+    expect(admittedCapabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
+    expect(admittedCapabilities.find((fn) => fn.capabilityId === V8_ROOT_IDENTITY.capabilityId)).toMatchObject({ status: 'active', provenance: { status: 'verified' } });
+    expect(buildReviewedManifest([admitted]).capabilities).toHaveLength(669);
+
+    for (const badPlan of [
+      { ...planValue, extra: true }, { ...planValue, baselinePath: 'data/defi-catalog/v6/catalog.json' },
+      { ...planValue, baselineRawSha256: '0'.repeat(64) }, { ...planValue, sourceCanonicalSha256: '0'.repeat(64) },
+      { ...planValue, baselineManifestHash: '0x' + '0'.repeat(64) },
+      { ...planValue, sourcePaths: [] }, { ...planValue, sourcePaths: [...planValue.sourcePaths, V8_SOURCE_PATHS[0]] },
+      { ...planValue, sourcePaths: ['data/defi-catalog/v8/sources/unreviewed.json'] },
+    ]) expect(() => validateV8AssemblyPlan(badPlan)).toThrow();
+    expect(() => assembleV8SourceCandidates({ chains: baseline.chains }, plan, inputs, '0'.repeat(64))).toThrow(/baseline catalog hash/);
+    expect(() => prepareV8Sources([])).toThrow(/single fixed Enso source path/);
+    expect(() => prepareV8Sources([{ ...inputs[0], sourcePath: 'data/defi-catalog/v8/sources/other.json' }])).toThrow(/single fixed Enso source path/);
+    expect(() => assembleV8SourceCandidates({ chains: baseline.chains }, plan, [{ ...inputs[0], document: { ...(inputs[0].document as any), unexpected: true } }], baselineRawSha256)).toThrow(/canonical source digest/);
+    const sourceMutations: Array<(source: any) => void> = [
+      (source) => { source.families[0].familyId = 'unknown-family'; },
+      (source) => { source.families[0].familyVersion = 'unknown-version'; },
+      (source) => { source.families[0].contracts[0].address = '0x0000000000000000000000000000000000000001'; },
+      (source) => { source.families[0].contracts[0].sourceRefs.pop(); },
+      (source) => { source.families[0].contracts[0].abiFunctions[0].outputs[0].name = 'altered'; },
+      (source) => { source.families[0].contracts[0].abiFunctions[0].sourceId = 'unknown-source'; },
+      (source) => { source.families[0].contracts[0].abiFunctions.push({ ...source.families[0].contracts[0].abiFunctions[0] }); },
+    ];
+    for (const mutate of sourceMutations) {
+      const changed = JSON.parse(JSON.stringify(inputs[0].document));
+      mutate(changed);
+      expect(() => prepareV8Sources([{ ...inputs[0], document: changed }])).toThrow();
+    }
+    expect(() => assembleV8SourceCandidates({ chains: baseline.chains.slice(1) }, plan, inputs, baselineRawSha256)).toThrow(/baseline manifest identity/);
+
+    const badAdmissionMutations: Array<(copy: any) => void> = [
+      (copy) => { copy.snapshots[0].canonicalSha256 = '0'.repeat(64); },
+      (copy) => { copy.snapshots[0].sourcePath = 'data/defi-catalog/v8/sources/other.json'; },
+      (copy) => { copy.extra = true; },
+      (copy) => { copy.snapshots[0].bindings[0].capabilityId = 'unreviewed:route'; },
+      (copy) => { copy.snapshots[0].bindings[0].signature = 'routeMulti(bytes)'; },
+      (copy) => { copy.snapshots[0].bindings[0].abiHash = '0x' + '0'.repeat(64); },
+      (copy) => { copy.snapshots[0].bindings[0].selector = '0xdeadbeef'; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScope = null; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScopeHash = null; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScope = null; copy.snapshots[0].bindings[0].executionScopeHash = null; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScopeHash = '0x' + '0'.repeat(64); },
+      (copy) => { copy.snapshots[0].bindings[0].executionScope = { kind: 'empty-callback-data-v1', bytesArgIndex: 0 }; },
+      (copy) => { copy.snapshots[0].bindings[0].executionScope.allowedChildren = []; },
+      (copy) => { copy.snapshots[0].bindings[0].extra = true; },
+      (copy) => { copy.snapshots[0].bindings.pop(); },
+      (copy) => { copy.snapshots[0].bindings.push({ ...copy.snapshots[0].bindings[0] }); },
+      (copy) => { copy.snapshots.pop(); },
+      (copy) => { delete copy.snapshots[0].bindings[0].executionScopeHash; },
+    ];
+    for (const mutate of badAdmissionMutations) {
+      const badAdmission = JSON.parse(JSON.stringify(admission));
+      mutate(badAdmission);
+      expect(() => assembleV8SourceCandidates({ chains: baseline.chains }, plan, inputs, baselineRawSha256, badAdmission)).toThrow();
+    }
+  });
+
   it('pins the complete pre-migration 202-definition snapshot, hierarchy, and 179/23 action-approval split', () => {
     const dataRoot = resolve(process.cwd(), 'data/defi-catalog/v1');
     const baseline = validateBaseline(JSON.parse(readFileSync(resolve(dataRoot, 'pre-migration-baseline.json'), 'utf8')));
@@ -312,9 +411,13 @@ describe('DeFi catalog generator', () => {
   });
 
   it('parses versioned repository inputs and rejects arbitrary paths/options', () => {
-    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v7/catalog.json' });
+    expect(parseCatalogCliArgs(['check'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v8/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v2/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v2/catalog.json' });
-    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v7/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v8/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v7/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v7/catalog.json' });
+    expect(parseCatalogCliArgs(['prepare-v8'])).toEqual({ mode: 'prepare-v8', inputPath: V8_ASSEMBLY_PLAN_PATH });
+    expect(parseCatalogCliArgs(['prepare-v8', '--input', V8_ASSEMBLY_PLAN_PATH])).toEqual({ mode: 'prepare-v8', inputPath: V8_ASSEMBLY_PLAN_PATH });
+    expect(() => parseCatalogCliArgs(['prepare-v8', '--input', 'data/defi-catalog/v7/catalog.json'])).toThrow();
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v3/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v3/catalog.json' });
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v4/catalog.json' });
@@ -859,7 +962,7 @@ describe('DeFi catalog generator', () => {
     const wrapper = v3.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).find((fn) => fn.signature === 'multicall(bytes[])')!;
     const scope = wrapper.executionScope!;
     const children = scope.kind === 'same-target-multicall-v1' ? scope.allowedChildren.map((child, index) => index === 0 ? { ...child, capabilityId: `${child.capabilityId}:revised` } : child) : [];
-    const changed = { ...wrapper, executionScope: { ...scope, allowedChildren: children } };
+    const changed = { ...wrapper, executionScope: { ...scope, allowedChildren: children } as DefiExecutionScope };
     const one = { chains: [{ chainId: wrapper.chainId, status: 'active' as const, contracts: [{ address: wrapper.contract, status: 'active' as const, functions: [wrapper] }] }] };
     const two = { chains: [{ chainId: wrapper.chainId, status: 'active' as const, contracts: [{ address: wrapper.contract, status: 'active' as const, functions: [changed] }] }] };
     expect(catalogDiff(one, two).authorityChanged).toEqual([wrapper.capabilityId]);

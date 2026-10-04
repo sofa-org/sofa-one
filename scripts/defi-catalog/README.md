@@ -1,10 +1,16 @@
 # Offline DeFi catalog CLI
 
-This CLI validates, deterministically assembles, and generates only repository-owned catalog snapshots. It performs no network/RPC calls and has no configurable output destination. Current package catalog scripts select v7; explicit `:v6` and `:v5` commands retain frozen historical workflows. V7 assembly/admission is pinned to five explicit source files and the immutable complete v6 baseline; `prepare-v7` previews those sources as inactive candidates and does not apply admissions.
+This CLI validates, deterministically assembles, and generates only repository-owned catalog snapshots. It performs no network/RPC calls and has no configurable output destination. Current package catalog scripts and bare `assemble` select v8; explicit `:v7`, `:v6`, and `:v5` workflows remain available. `prepare-v8` is a strict read-only preview and does not apply admissions or write a catalog/module.
 
-## Current local v7 default snapshot
+## Accepted v8 integration — Gate 4 attempt 2 PASS (2026-10-05)
 
-Current package assemble/generate/check/diff commands and bare CLI `assemble` select v7; explicit `:v6` and `:v5` commands retain frozen historical snapshots. The accepted v7 catalog has 668 definitions (645 actions, 23 independent approvals), 15 scopes, and 67 literal profiles / 394 unique selected IDs. It preserves all 640 v6 definitions, all prior scopes, and the complete 62-profile baseline including order/fingerprints, then adds 28 source-qualified methods across five bounded aggregator selections. Gate 3 attempt 2 passed after Oracle code-scope closeout and final read-only validation: 180 suites/2,679 tests passed, with one PostgreSQL pause-concurrency suite/test skipped because `DATABASE_URL` was unavailable (not DB proof). Build, v7 default and explicit v6/v5 checks, deterministic admission-aware assembly, production catalog/module byte comparison, and inactive `prepare-v7` checks passed. Profiles remain metadata, not grants; source qualification does not establish runtime identity, liquidity, funded execution, or full workflows. Enso implementation is next; Odos/Kyber opaque executor gaps and existing-protocol literal extensions remain pending; 55-protocol and 90% market objectives remain unmet.
+V8 assembles one explicitly admitted Enso `routeSingle((uint8,bytes),bytes)` root over immutable v7 (668 definitions / 15 scopes / 67 complete profiles), producing 669 definitions (646 actions, 23 approvals), 16 scopes, and 68 profiles / 395 selected IDs. The root-only literal profile selects only the root, not its three independently grantable children; profiles remain metadata, not grants or a complete workflow. Exact source path/digest, root ABI/identity, and non-null `enso-static-weiroll-v1` scope/hash bind exactly three existing scope-free v7 children. Admission requires matching source path/hash and every root ABI/scope field; there is no generic scoped-family admission route. The raw Enso source snapshot remains inactive; the separate explicit admission makes the generated root active. `prepare-v8` remains read-only and reports the candidate inactive without applying admission. The isolated Enso registry builder is used only by tests and is not imported into production; production receives the root through the generated catalog.
+
+**Gate 4 attempt 1 of 3 failed on sole P1 R1; attempt 2 PASS after R1 closeout.** The decoder now structurally preflights inner command/state counts, offsets, canonical contiguous tails, bounded payloads, and padding before invoking the inner ABI decoder. Durable adversarial tests prove hostile array counts and malformed offsets reject before that decoder. The original 64,516-byte/1,000-state amplification reproduction now rejects in 4.47 ms at approximately 256 MiB process heap, rather than expanding nested arrays (historical attempt-1 measurement: 1,888 ms / approximately 971 MiB RSS). Independent attempt 2 reviewed 16 adversarial cases and passed; it noted a nonblocking durable-coverage improvement opportunity for additional two-element alias/overlap/head/maximum-length variants, not an unresolved authority defect. The generated root retains inherited candidate `inactiveReason` text; this remains non-blocking provenance/copy metadata and was not normalized. Final post-R1 Jest validation passed 184 suites / 2,709 tests, with one opt-in PostgreSQL suite/test skipped; log: `/private/var/folders/d5/bq_4hlms3xb3f03m4w9y582h0000gp/T/opencode/v8-r1-full-jest-final.log`. The skip is not database concurrency proof. Build and default v8, explicit v7/v6/v5, deterministic admission-aware generation and frozen preservation checks passed. No claim of current constructor/runtime identity, funded execution, liquidity, complete workflows, financial safety, all 55 protocols, or 90% market coverage follows.
+
+## Accepted v7 baseline (historical immutable baseline)
+
+The accepted v7 catalog has 668 definitions (645 actions, 23 independent approvals), 15 scopes, and 67 literal profiles / 394 unique selected IDs. It preserves all 640 v6 definitions, all prior scopes, and the complete 62-profile baseline including order/fingerprints, then adds 28 source-qualified methods across five bounded aggregator selections. Gate 3 attempt 2 passed after Oracle code-scope closeout and final read-only validation: 180 suites/2,679 tests passed, with one PostgreSQL pause-concurrency suite/test skipped because `DATABASE_URL` was unavailable (not DB proof). Build, v7 and explicit v6/v5 checks, deterministic admission-aware assembly, production catalog/module byte comparison, and inactive `prepare-v7` checks passed. Profiles remain metadata, not grants; source qualification does not establish runtime identity, liquidity, funded execution, or full workflows. Odos/Kyber opaque executor gaps, existing-protocol literal extensions, 55-protocol support, and 90% market coverage remain unresolved.
 
 ## Historical v6 dated snapshot
 
@@ -18,7 +24,9 @@ The fixed FIRST20 cohort is Ambient, Aura, Beefy, Camelot, Convex, DODO, Dolomit
 
 ```sh
 npm run defi:catalog:assemble
+npm run defi:catalog:prepare-v8
 npm run defi:catalog:prepare-v5
+npm run defi:catalog:check:v7
 npx ts-node --transpile-only scripts/defi-catalog/cli.ts assemble --input data/defi-catalog/v3/catalog.json
 npm run defi:catalog:diff
 npm run defi:catalog:generate
@@ -39,8 +47,7 @@ It fails closed when source or admission bindings are missing or invalid.
 report 19 additions with no removals, same-ID authority/ABI changes, or prior
 metadata changes. V4 `generate` writes only the fixed production TypeScript
   registry; v4 `check` checks that registry against the selected v4 catalog. The
-  package assemble/generate/check/diff commands explicitly selected v5 at that
-  staging checkpoint. Current package commands select v7; explicit `:v6` commands remain. Gate 2 attempt 2 and
+  package assemble/generate/check/diff commands select v8; explicit `:v7`, `:v6`, and `:v5` workflows remain. Gate 2 attempt 2 and
   final independent validation passed; catalog generation does not
 change stored grants or establish deployment/funding/market coverage.
 
@@ -53,8 +60,8 @@ PancakeSwap `multicall(bytes[])` binding has an execution scope, fixed to its
 eight same-target admitted children. This does not create automatic dependencies
 or grants.
 
-`--input` accepts only `data/defi-catalog/vN/catalog.json` paths resolving inside the repository's `data/defi-catalog/` source tree. Absolute paths, traversal, URLs, unknown flags, and output-path overrides are rejected. Current package assemble/generate/check/diff commands select v7; explicit `:v6` commands select the frozen v6 snapshot, and historical v1-v5 inputs remain separately selectable. V7 preserves all 640 v6 definitions exactly and adds 28 admitted source-qualified ordinary methods, producing 668 definitions (645 actions, 23 approvals) with the same 15 finite scopes. Its five source digests, full ABI identities, capability IDs, and explicit scope/hash pairs are verified fail-closed. Runtime imports only the generated TypeScript module, not source files or fixture builders. Existing grants are unchanged; new IDs are not automatically granted. Admission does not prove deployment identity, funded execution, financial safety, or live operation.
+`--input` accepts only `data/defi-catalog/vN/catalog.json` paths resolving inside the repository's `data/defi-catalog/` source tree. Absolute paths, traversal, URLs, unknown flags, and output-path overrides are rejected. Current package assemble/generate/check/diff commands select v8; explicit `:v7`, `:v6`, and `:v5` workflows remain separately selectable. V8 pins one source digest and exact root identity/scope/child bindings over v7; v7 preserves the 640-definition v6 baseline and adds 28 ordinary methods. Runtime imports only the generated TypeScript module, not source files or fixture builders. Existing grants are unchanged; new IDs are not automatically granted. Admission does not prove deployment identity, funded execution, financial safety, or live operation.
 
-Production generation reflects the selected local v7 snapshot. Historical v1-v6 source comparisons remain available through fixed inputs and `diff` mode; explicit `:v6` package commands preserve the previous production baseline workflow.
+Production generation reflects the selected local v8 snapshot. Historical v1-v7 source comparisons remain available through fixed inputs and `diff` mode; explicit versioned workflows preserve historical baselines.
 
 The reproducible v2 catalog retains all 202 v1 definitions unchanged and adds 113 source-qualified function definitions (59 DEX and 54 lending/yield) under new stable IDs. The generated catalog has 315 definitions, zero approvals added, and a diff of 113 added with no removed, authority-changed, ABI-changed, or metadata-changed prior IDs. Admission records source ABI identity only; it is not financial validation, deployment proof, or a change to existing grants.

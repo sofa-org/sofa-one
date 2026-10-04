@@ -1,5 +1,6 @@
 import { keccak256, stringToHex } from 'viem';
 import type { DefiExecutionScope } from '../defi.types';
+import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES } from './enso-identity';
 
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 export const NPM_MULTICALL_CHILD_SIGNATURES = Object.freeze([
@@ -28,6 +29,21 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
     }).sort((a, b) => cmp(a.capabilityId, b.capabilityId) || cmp(a.signature, b.signature) || cmp(a.abiHash, b.abiHash));
     if (children.length !== NPM_MULTICALL_CHILD_SIGNATURES.length || new Set(children.map((child) => child.capabilityId)).size !== children.length || new Set(children.map((child) => child.signature)).size !== children.length || NPM_MULTICALL_CHILD_SIGNATURES.some((signature) => !children.some((child) => child.signature === signature))) throw new TypeError('Invalid DeFi execution scope');
     normalized = { kind: scope.kind, bytesArrayArgIndex: 0, allowedChildren: children };
+  } else if (scope.kind === 'enso-static-weiroll-v1') {
+    if (Object.keys(scope).sort().join(',') !== 'allowedChildren,kind' || !Array.isArray(scope.allowedChildren)) throw new TypeError('Invalid DeFi execution scope');
+    const children = scope.allowedChildren.map((child) => {
+      if (!child || Object.keys(child).sort().join(',') !== 'abiHash,capabilityId,chainId,contract,signature'
+        || !Number.isSafeInteger(child.chainId) || child.chainId <= 0
+        || typeof child.contract !== 'string' || !/^0x[0-9a-f]{40}$/i.test(child.contract)
+        || typeof child.capabilityId !== 'string' || !child.capabilityId
+        || typeof child.signature !== 'string' || !child.signature
+        || typeof child.abiHash !== 'string' || !/^0x[0-9a-f]{64}$/i.test(child.abiHash)) throw new TypeError('Invalid DeFi execution scope');
+      const literal = ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.find((identity) => identity.capabilityId === child.capabilityId);
+      if (!literal || child.chainId !== literal.chainId || child.contract.toLowerCase() !== literal.contract || child.signature !== literal.signature || child.abiHash.toLowerCase() !== literal.abiHash) throw new TypeError('Invalid DeFi execution scope');
+      return { chainId: child.chainId, contract: child.contract.toLowerCase(), capabilityId: child.capabilityId, signature: child.signature, abiHash: child.abiHash.toLowerCase() };
+    }).sort((a, b) => cmp(a.capabilityId, b.capabilityId));
+    if (children.length !== ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.length || new Set(children.map((child) => child.capabilityId)).size !== children.length) throw new TypeError('Invalid DeFi execution scope');
+    normalized = { kind: scope.kind, allowedChildren: children };
   } else throw new TypeError('Invalid DeFi execution scope');
   return keccak256(stringToHex(JSON.stringify(normalized)));
 }

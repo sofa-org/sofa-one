@@ -64,10 +64,11 @@ describe('independent DeFi coverage audit', () => {
     const legacyProfiles = loadInputs().currentV4Profiles!;
     const appendedProfiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33);
     const phase2Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62);
-    const phase3Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62);
+    const phase3Profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67);
+    const ensoRootProfile = PRODUCTION_DEFI_CAPABILITY_BUNDLES[67];
     expect(legacyProfiles).toHaveLength(12);
     expect(legacyProfiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(94);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(67);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(68);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toEqual(legacyProfiles);
     const phase3BaselineBytes = readFileSync('src/modules/defi/bundles/__fixtures__/phase3-baseline-profiles-74bb052.json');
     expect(sha256(phase3BaselineBytes)).toBe('3a73ad25307a3bd7ac4f77517b5cd9b09da4d83373fed1ea1f98176b9f7ff2a6');
@@ -95,8 +96,16 @@ describe('independent DeFi coverage audit', () => {
     expect(phase3Profiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(28);
     expect(Math.max(...phase3Profiles.map((profile) => profile.capabilityIds.length))).toBe(12);
     expect(phase3Profiles.flatMap((profile) => profile.capabilityIds).every((id) => !id.includes(':approve'))).toBe(true);
-    expect(allProfileIds).toHaveLength(394);
-    expect(new Set(allProfileIds).size).toBe(394);
+    expect(ensoRootProfile).toMatchObject({ bundleId: 'enso-static-weiroll-root-v1', version: '1.0.0', chainIds: [1], capabilityIds: ['enso:router-static-weiroll-v1:1:0xf75584ef6673ad213a685a1b58cc0330b8ea22cf:route-single'] });
+    expect(ensoRootProfile.capabilityIds).toHaveLength(1);
+    expect(allProfileIds).toHaveLength(395);
+    expect(new Set(allProfileIds).size).toBe(395);
+    const baselineProfileBytes = readFileSync('src/modules/defi/bundles/__fixtures__/enso-baseline-profiles-445d448.json');
+    expect(sha256(baselineProfileBytes)).toBe('1467dc962a15dd4cc795267e2b677857babc45398a654d5b2ba37c1d7208dd94');
+    const baselineProfiles = JSON.parse(baselineProfileBytes.toString('utf8')) as { provenance: { gitCommit: string }; profiles: StaticProfile[] };
+    expect(baselineProfiles.provenance.gitCommit).toBe('445d448cca6fb4e8b2c2cf9d649c2a68f4122242');
+    expect(baselineProfiles.profiles).toHaveLength(67);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 67)).toEqual(baselineProfiles.profiles);
   });
 
   it('recomputes catalog, admission, scopes, activity and exact-profile facts without trusting a coverage report', () => {

@@ -1,5 +1,6 @@
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './scope';
 import type { DefiExecutionScope } from '../defi.types';
+import { createEnsoStaticWeirollScope, ENSO_STATIC_WEIROLL_CHILD_IDENTITIES } from './enso-identity';
 
 const bindings = () => NPM_MULTICALL_CHILD_SIGNATURES.map((signature, index) => ({ capabilityId: `npm:${index}`, signature, abiHash: `0x${index.toString(16).padStart(64, '0')}` as `0x${string}` }));
 
@@ -30,5 +31,37 @@ describe('executionScopeHash', () => {
     expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 1, bytesArgIndex: 1 } as never)).toThrow();
     expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 2 } as never)).toThrow();
     expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1, commands: [1, 2] } as never)).toThrow();
+  });
+
+  it('hashes only the three exact Enso static Weiroll child identities independent of their input order', () => {
+    const scope = createEnsoStaticWeirollScope();
+    expect(executionScopeHash(scope)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(executionScopeHash(scope)).toBe(executionScopeHash({ ...scope, allowedChildren: [...scope.allowedChildren].reverse() }));
+    expect(Object.isFrozen(ENSO_STATIC_WEIROLL_CHILD_IDENTITIES)).toBe(true);
+    expect(ENSO_STATIC_WEIROLL_CHILD_IDENTITIES).toHaveLength(3);
+  });
+
+  it('rejects any malformed, extra, duplicate, missing, or altered Enso child binding', () => {
+    const valid = createEnsoStaticWeirollScope();
+    expect(() => executionScopeHash({ ...valid, extra: true } as never)).toThrow();
+    expect(() => executionScopeHash({ kind: 'enso-static-weiroll-v1' } as never)).toThrow();
+    expect(() => executionScopeHash({ ...valid, allowedChildren: valid.allowedChildren.slice(1) })).toThrow();
+    expect(() => executionScopeHash({ ...valid, allowedChildren: [...valid.allowedChildren, valid.allowedChildren[0]] })).toThrow();
+    for (const [index, altered] of valid.allowedChildren.entries()) {
+      const children = [...valid.allowedChildren];
+      const mutations = [
+        { ...altered, chainId: 10 },
+        { ...altered, contract: '0x0000000000000000000000000000000000000001' },
+        { ...altered, capabilityId: 'unreviewed:child' },
+        { ...altered, signature: 'permit(address)' },
+        { ...altered, abiHash: `0x${'0'.repeat(64)}` },
+        { ...altered, extra: true },
+      ];
+      for (const mutation of mutations) {
+        const changed = [...children]; changed[index] = mutation as typeof altered;
+        expect(() => executionScopeHash({ ...valid, allowedChildren: changed })).toThrow();
+      }
+    }
+    expect(executionScopeHash({ ...valid, allowedChildren: valid.allowedChildren.map((child) => ({ ...child, contract: child.contract.toUpperCase() })) })).toBe(executionScopeHash(valid));
   });
 });

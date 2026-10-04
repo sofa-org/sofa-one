@@ -3,6 +3,7 @@ import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment, ReviewedManifest } from './defi-manifest.types';
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from '../execution/scope';
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET } from '../execution/ambient';
+import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -75,6 +76,23 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   if (fn.status === 'active' && fn.provenance.status !== 'verified') throw new Error('Active DeFi function requires verified provenance');
   if (fn.policy && (!fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1)) throw new Error('Invalid display policy identity');
   if (fn.executionScope) executionScopeHash(fn.executionScope);
+  const ensoRootIdentity = (fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)
+    || (fn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId
+      && contract.address.toLowerCase() === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+      && fn.signature === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature);
+  const ensoScope = fn.executionScope?.kind === 'enso-static-weiroll-v1';
+  if (ensoRootIdentity || ensoScope) {
+    if (!ensoRootIdentity || !ensoScope || fn.type !== 'contract_call'
+      || fn.chainId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId
+      || fn.contract.toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+      || contract.address.toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+      || fn.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId
+      || fn.functionName !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.functionName
+      || fn.signature !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature
+      || functionAbiHash(fn) !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.abiHash
+      || fn.abi.stateMutability !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.stateMutability
+      || toFunctionSelector(fn.signature).toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.selector) throw new Error('Invalid Enso static Weiroll root identity or mandatory scope');
+  }
   const ambientAddress = chain.chainId === AMBIENT_CHAIN_ID && contract.address.toLowerCase() === AMBIENT_TARGET.toLowerCase();
   const ambientScope = fn.executionScope?.kind === 'ambient-coldpath-v1';
   if (ambientAddress || ambientScope) {
@@ -140,6 +158,22 @@ export function buildReviewedManifest(fragments: readonly DefiRegistryFragment[]
     for (const child of scope.allowedChildren) {
       const resolved = capabilities.find((fn) => fn.capabilityId === child.capabilityId);
       if (!resolved || resolved.status !== 'active' || resolved.chainId !== wrapper.chainId || resolved.contract.toLowerCase() !== wrapper.contract.toLowerCase() || resolved.signature !== child.signature || functionAbiHash(resolved) !== child.abiHash.toLowerCase() || !multicallAllowed.has(resolved.signature) || resolved.executionScope) throw new Error('Invalid DeFi execution-scope child binding');
+    }
+  }
+  for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'enso-static-weiroll-v1')) {
+    const scope = wrapper.executionScope;
+    if (!scope || scope.kind !== 'enso-static-weiroll-v1') continue;
+    if (wrapper.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId
+      || wrapper.chainId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId
+      || wrapper.contract.toLowerCase() !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract
+      || wrapper.signature !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.signature
+      || functionAbiHash(wrapper) !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.abiHash
+      || wrapper.abi.stateMutability !== 'payable') throw new Error('Invalid Enso static Weiroll root binding');
+    for (const child of scope.allowedChildren) {
+      const resolved = capabilities.find((fn) => fn.capabilityId === child.capabilityId);
+      if (!resolved || resolved.type !== 'contract_call' || resolved.status !== 'active' || resolved.chainId !== child.chainId
+        || resolved.contract.toLowerCase() !== child.contract.toLowerCase() || resolved.signature !== child.signature
+        || functionAbiHash(resolved) !== child.abiHash.toLowerCase() || resolved.executionScope) throw new Error('Invalid Enso static Weiroll child binding');
     }
   }
   return deepFreeze(cloneDefiValue({ chains, capabilities, manifestHash: buildDefiManifestHash(capabilities) }));
