@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "fluid-lending",
+      "familyVersion": "v1",
+      "contracts": [
+        {"chainId":8453,"address":"0xf42f5795d9ac7e9d757db633d693cd548cfd9169","contractName":"Fluid fToken fUSDC","sourceRefs":["fluid-ftoken-fusdc"],"abiFunctions":[
+          {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"minAmountOut_","type":"uint256"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"maxAssets_","type":"uint256"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"},{"name":"maxSharesBurn_","type":"uint256"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"},{"name":"minAmountOut_","type":"uint256"}],"outputs":[{"name":"assets_","type":"uint256"}]}
+        ]},
+        {"chainId":8453,"address":"0x9272d6153133175175bc276512b2336be3931ce9","contractName":"Fluid fToken fWETH","sourceRefs":["fluid-ftoken-fweth"],"abiFunctions":[
+          {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"minAmountOut_","type":"uint256"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"maxAssets_","type":"uint256"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"assets_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"},{"name":"maxSharesBurn_","type":"uint256"}],"outputs":[{"name":"shares_","type":"uint256"}]},
+          {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"}],"outputs":[{"name":"assets_","type":"uint256"}]},
+          {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"shares_","type":"uint256"},{"name":"receiver_","type":"address"},{"name":"owner_","type":"address"},{"name":"minAmountOut_","type":"uint256"}],"outputs":[{"name":"assets_","type":"uint256"}]}
+        ]}
+      ]
+    },
+    {"familyId":"fluid-vault-t1","familyVersion":"v1","contracts":[{"chainId":8453,"address":"0x03271c337c86a6fd89625a2820e48621dc2a128b","contractName":"Fluid Vault T1 ETH GHO","sourceRefs":["fluid-vault-t1-eth-gho"],"abiFunctions":[{"type":"function","name":"operate","stateMutability":"payable","inputs":[{"name":"nftId_","type":"uint256"},{"name":"newCol_","type":"int256"},{"name":"newDebt_","type":"int256"},{"name":"to_","type":"address"}],"outputs":[{"name":"","type":"uint256"},{"name":"","type":"int256"},{"name":"","type":"int256"}]}]}]}
+  ],
+  "sources": [
+    {"sourceId":"fluid-ftoken-fusdc","url":"https://raw.githubusercontent.com/Instadapp/fluid-contracts-public/9496626f71a761fc296dc3b2efbfd54c504e18f0/deployments/base/fToken_fUSDC.json","retrievedAtUtc":"2026-10-04","evidence":"Official pinned Fluid deployment artifact; fetched HTTP 200 (117157 body bytes, SHA-256 0ff19be5732b998ce478b6050ed43b691ee651321cc3c64efc49138225689a25). Artifact address is 0xf42f5795D9ac7e9D757dB633D693cD548Cfd9169; embedded ABI has 48 function entries, including the eight listed nonpayable overloads. Retrieved 2026-10-04; source-to-current-runtime identity, liquidity, solvency, and funded execution are not established."},
+    {"sourceId":"fluid-ftoken-fweth","url":"https://raw.githubusercontent.com/Instadapp/fluid-contracts-public/9496626f71a761fc296dc3b2efbfd54c504e18f0/deployments/base/fToken_fWETH.json","retrievedAtUtc":"2026-10-04","evidence":"Official pinned Fluid deployment artifact; fetched HTTP 200 (130157 body bytes, SHA-256 8351f76ff28a4015ac10f397f47b9ba5f1eb81d1c3653d032cc34d593f783d75). Artifact address is 0x9272D6153133175175Bc276512B2336BE3931CE9; embedded ABI has 59 function entries, including the eight listed nonpayable overloads. Retrieved 2026-10-04; source-to-current-runtime identity, liquidity, solvency, and funded execution are not established."},
+    {"sourceId":"fluid-vault-t1-eth-gho","url":"https://raw.githubusercontent.com/Instadapp/fluid-contracts-public/9496626f71a761fc296dc3b2efbfd54c504e18f0/deployments/base/VaultT1_ETH_GHO.json","retrievedAtUtc":"2026-10-04","evidence":"Official pinned Fluid deployment artifact; fetched HTTP 200 (113624 body bytes, SHA-256 ce55d2e7964d46cf27f866a5c366d2183619a50fd39c6f1a57827773fe6e6899). Artifact address is 0x03271C337c86a6Fd89625A2820e48621DC2a128b; embedded ABI has 12 function entries and supplies payable operate(uint256,int256,int256,address). Artifact establishes source declaration only, not current runtime identity, liquidity, solvency, or funded execution."}
+  ],
+  "unresolved": []
+}

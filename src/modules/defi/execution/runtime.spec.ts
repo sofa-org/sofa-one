@@ -1,4 +1,4 @@
-import { encodeFunctionData, parseAbi } from 'viem';
+import { encodeAbiParameters, encodeFunctionData, parseAbi, toFunctionSelector } from 'viem';
 import { DefiCatalogService } from '../defi-catalog.service';
 import { DefiPolicyService } from '../defi-policy.service';
 import { buildReviewedManifest, functionAbiHash } from '../registry/defi-manifest';
@@ -7,6 +7,7 @@ import { buildDefiRequestCommitment } from '../defi-policy.service';
 import type { DefiChainPolicy, DefiExecutionContext, DefiFunctionPolicy } from '../defi.types';
 import type { PrismaService } from '../../../core/database/prisma.service';
 import type { SecurityEventService } from '../../security-events/security-event.service';
+import { AMBIENT_CHAIN_ID, AMBIENT_SELECTOR, AMBIENT_SIGNATURE, AMBIENT_TARGET } from './ambient';
 
 const target = '0x1111111111111111111111111111111111111111';
 const owner = '0x2222222222222222222222222222222222222222';
@@ -189,5 +190,121 @@ describe('scoped execution runtime', () => {
         }
       }
     }
+  });
+});
+
+const ambientAbi = parseAbi(['function userCmd(uint16,bytes) payable returns (bytes)'])[0];
+const ambientFunction: DefiFunctionPolicy = {
+  capabilityId: `ambient:v1:1:${AMBIENT_TARGET.toLowerCase()}:${toFunctionSelector(AMBIENT_SIGNATURE)}`,
+  type: 'contract_call', chainId: AMBIENT_CHAIN_ID, contract: AMBIENT_TARGET, functionName: 'userCmd', signature: AMBIENT_SIGNATURE, abi: ambientAbi, status: 'active',
+  provenance: { sourceRef: 'official Ambient docs and fixed userCmd ABI test fixture', verifiedAt: '2026-10-04', status: 'verified' },
+  protocol: 'Ambient', operation: 'swap-and-lp-mint-burn', label: 'Ambient cold-path swap and LP mint/burn',
+  warnings: ['Ambient cold-path execution delegates to governable sidecars and external-conduit callbacks; caller-selected conduit counterparties and assets carry asset-loss risk. No funded execution is certified.'],
+  executionScope: { kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1 },
+};
+const ambientCatalog: DefiChainPolicy[] = [{ chainId: 1, status: 'active', contracts: [{ address: AMBIENT_TARGET, status: 'active', functions: [ambientFunction] }] }];
+const ambientManifest = buildReviewedManifest([{ chains: ambientCatalog }]);
+const ambientGrantContext: DefiExecutionContext = { ...context, chainId: 1, allowedCapabilityIds: [ambientFunction.capabilityId] };
+const ambientTypes1 = [{ type: 'address' }, { type: 'address' }, { type: 'uint256' }, { type: 'bool' }, { type: 'bool' }, { type: 'uint128' }, { type: 'uint16' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint8' }] as const;
+const ambientTypes2 = [{ type: 'uint8' }, { type: 'address' }, { type: 'address' }, { type: 'uint256' }, { type: 'int24' }, { type: 'int24' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint8' }, { type: 'address' }] as const;
+const ambientTokenA = '0x1111111111111111111111111111111111111111';
+const ambientTokenB = '0x2222222222222222222222222222222222222222';
+const ambientConduit = '0x3333333333333333333333333333333333333333';
+const ambientPayload1 = () => encodeAbiParameters(ambientTypes1, [ambientTokenA, ambientTokenB, (1n << 256n) - 1n, true, false, (1n << 128n) - 1n, 65535, (1n << 128n) - 1n, (1n << 128n) - 1n, 255]);
+const ambientPayload2 = (code: number) => encodeAbiParameters(ambientTypes2, [code, ambientTokenA, ambientTokenB, (1n << 256n) - 1n, -8388608, 8388607, (1n << 128n) - 1n, 0n, (1n << 128n) - 1n, 255, ambientConduit]);
+const ambientCall = (callpath: number, payload: `0x${string}`, value?: string) => ({ to: AMBIENT_TARGET, value, data: encodeFunctionData({ abi: [ambientAbi], functionName: 'userCmd', args: [callpath, payload] } as never) });
+const makeAmbientService = (pausedScopeKeys: string[] = []) => {
+  const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) } };
+  return { service: new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(ambientCatalog, prisma as never, ambientManifest)), prisma };
+};
+
+describe('Ambient cold-path policy runtime', () => {
+  it('binds the exact selector and one-root scope identity', () => {
+    expect(AMBIENT_SELECTOR).toBe(toFunctionSelector(AMBIENT_SIGNATURE));
+    expect(ambientFunction.executionScope).toEqual({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1 });
+  });
+
+  it('plans the canonical root once and accepts exact swap/LP grammar with arbitrary ABI-valid financial fields', async () => {
+    const { service } = makeAmbientService();
+    const swap = await service.authorizeContractCalls([ambientCall(1, ambientPayload1(), '17')], ambientGrantContext);
+    expect(swap.matches).toHaveLength(1);
+    expect(swap.executionPlan).toHaveLength(1);
+    expect(swap.executionPlan[0].path).toEqual([0]);
+    expect(swap.executionPlan[0].match.nativeValue).toBe('17');
+    for (const code of [1, 2, 3, 4, 11, 12, 21, 22, 31, 32, 41, 42]) {
+      await expect(service.authorizeContractCalls([ambientCall(2, ambientPayload2(code))], ambientGrantContext)).resolves.toMatchObject({ executionPlan: [{ path: [0] }] });
+    }
+  });
+
+  it('denies missing grants, unknown paths, recursive generic commands, malformed root offsets/lengths/trailing bytes and overflow value', async () => {
+    const { service } = makeAmbientService();
+    await expect(service.authorizeContractCalls([ambientCall(1, ambientPayload1())], { ...ambientGrantContext, allowedCapabilityIds: [] })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    for (const path of [0, 3, 5]) await expect(service.authorizeContractCalls([ambientCall(path, ambientPayload1())], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([ambientCall(2, ambientPayload2(5))], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([ambientCall(3, `0x${'a'.repeat(320 * 2)}`)], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([{ ...ambientCall(1, ambientPayload1()), data: `0xdeadbeef${ambientCall(1, ambientPayload1()).data.slice(10)}` }], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
+    const good = ambientCall(1, ambientPayload1());
+    const offsetStart = 10 + 64;
+    const badOffset = `${good.data.slice(0, offsetStart)}${'0'.repeat(62)}80${good.data.slice(offsetStart + 64)}`;
+    await expect(service.authorizeContractCalls([{ ...good, data: badOffset }], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    const lenStart = 10 + 64 + 64;
+    const hugeLen = `${good.data.slice(0, lenStart)}${'f'.repeat(64)}${good.data.slice(lenStart + 64)}`;
+    await expect(service.authorizeContractCalls([{ ...good, data: hugeLen }], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([{ ...good, data: `${good.data}00` }], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([ambientCall(1, ambientPayload1(), (1n << 256n).toString())], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+
+    const path1 = ambientPayload1();
+    const replacePayloadWord = (payload: string, wordIndex: number, word: string) => `${payload.slice(0, 2 + wordIndex * 64)}${word}${payload.slice(2 + (wordIndex + 1) * 64)}` as `0x${string}`;
+    const badBool = replacePayloadWord(path1, 3, `${'0'.repeat(63)}2`);
+    const badAddress = replacePayloadWord(path1, 0, `${'0'.repeat(22)}01${path1.slice(2, 2 + 64).slice(24)}`);
+    await expect(service.authorizeContractCalls([ambientCall(1, badBool)], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(service.authorizeContractCalls([ambientCall(1, badAddress)], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    const path2 = ambientPayload2(1);
+    const badInt24Padding = replacePayloadWord(path2, 4, `00${path2.slice(2 + 4 * 64 + 2, 2 + 5 * 64)}`);
+    await expect(service.authorizeContractCalls([ambientCall(2, badInt24Padding)], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+  });
+
+  it('fails closed on target/chain/scope mismatch and live grant removal or pause', async () => {
+    const { service, prisma } = makeAmbientService();
+    const call = ambientCall(1, ambientPayload1());
+    await expect(service.authorizeContractCalls([call], { ...ambientGrantContext, chainId: 8453 })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_FOUND' } });
+    await expect(service.authorizeContractCalls([{ ...call, to: target }], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
+    const auth = await service.authorizeContractCalls([call], ambientGrantContext);
+    const removed = mockTx([]);
+    await expect(service.assertStillAuthorized(removed as never, auth)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    const paused = mockTx([ambientFunction.capabilityId]);
+    paused.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`capability:${ambientFunction.capabilityId}`] });
+    await expect(service.assertStillAuthorized(paused as never, auth)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+    const initiallyPaused = makeAmbientService(['global']).service;
+    await expect(initiallyPaused.authorizeContractCalls([call], ambientGrantContext)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+    expect(prisma.defiPolicyState.findUnique).toHaveBeenCalled();
+  });
+
+  it('rejects startup identity, ABI, scope-index and missing-scope mismatches', () => {
+    const wrong = (patch: Partial<DefiFunctionPolicy>) => buildReviewedManifest([{ chains: [{ chainId: 1, status: 'active', contracts: [{ address: AMBIENT_TARGET, status: 'active', functions: [{ ...ambientFunction, ...patch } as DefiFunctionPolicy] }] }] }]);
+    expect(() => wrong({ executionScope: undefined })).toThrow();
+    expect(() => wrong({ executionScope: { kind: 'ambient-coldpath-v1', callpathArgIndex: 1, bytesArgIndex: 1 } as never })).toThrow();
+    expect(() => wrong({ abi: parseAbi(['function userCmd(uint16,bytes) payable returns (uint256)'])[0] })).toThrow();
+    expect(() => wrong({ abi: parseAbi(['function userCmd(uint16,bytes) returns (bytes)'])[0] })).toThrow();
+    expect(() => wrong({ signature: 'userCmd(uint16,bytes[])' })).toThrow();
+    expect(() => buildReviewedManifest([{ chains: [{ chainId: 8453, status: 'active', contracts: [{ address: AMBIENT_TARGET, status: 'active', functions: [ambientFunction] }] }] }])).toThrow();
+    expect(() => buildReviewedManifest([{ chains: [{ chainId: 1, status: 'active', contracts: [{ address: target, status: 'active', functions: [{ ...ambientFunction, contract: target } as DefiFunctionPolicy] }] }] }])).toThrow();
+  });
+
+  it('rechecks data, value, context, plan, manifest and scoped match tampering at final authorization', async () => {
+    const { service } = makeAmbientService();
+    const call = ambientCall(1, ambientPayload1(), '17');
+    const auth = await service.authorizeContractCalls([call], ambientGrantContext);
+    const tx = mockTx([ambientFunction.capabilityId]);
+    const forgedInteractions = [{ ...auth.interactions[0], value: '18' }];
+    const forgedValue = { ...auth, interactions: forgedInteractions, requestCommitment: buildDefiRequestCommitment(forgedInteractions, auth.context, auth.manifestHash) };
+    await expect(service.assertStillAuthorized(tx as never, forgedValue as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    const changedData = [{ ...auth.interactions[0], data: ambientCall(2, ambientPayload2(1)).data }];
+    const forgedData = { ...auth, interactions: changedData, requestCommitment: buildDefiRequestCommitment(changedData, auth.context, auth.manifestHash) };
+    await expect(service.assertStillAuthorized(tx as never, forgedData as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    await expect(service.assertStillAuthorized(tx as never, { ...auth, context: { ...auth.context, allowedCapabilityIds: [] } } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    await expect(service.assertStillAuthorized(tx as never, { ...auth, executionPlan: [{ ...auth.executionPlan[0], match: { ...auth.executionPlan[0].match, nativeValue: '18' } }] } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    await expect(service.assertStillAuthorized(tx as never, { ...auth, manifestHash: `0x${'0'.repeat(64)}` } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    await expect(service.assertStillAuthorized(tx as never, { ...auth, executionPlan: [{ ...auth.executionPlan[0], match: { ...auth.executionPlan[0].match, executionScopeHash: `0x${'0'.repeat(64)}` } }] } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
   });
 });

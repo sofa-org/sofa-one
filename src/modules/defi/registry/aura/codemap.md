@@ -1,0 +1,5 @@
+# Aura registry fixture
+
+This directory contains a test-only Ethereum fixture for exactly four Aura Phase 6 Booster methods and two methods on one historically observed pool-0 BaseRewardPool. Source ABI declarations come from Aura-owned pinned implementation sources; the pool-0 reward-pool role is linked to the Booster's historical pool registry row. The source candidate is inactive and the builder is not connected to production admission or automatic grants.
+
+The historical pool-0 row had `shutdown=true`; this reward-pool subset only describes possible exit/claim calls for existing positions, not new-stake readiness, current liquidity, or every Aura pool. No currently open deposit pool was verified, and the sampled shut-down pools do not establish that all 283 are shut down. Caller-selected PID, amount, and bool arguments are not platform-filtered. Token approvals, operator-only `withdrawTo`, conflicting/extra `withdrawAll(bool)` variants, administrative calls, zaps, and arbitrary callbacks are excluded.

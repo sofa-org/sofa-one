@@ -22,6 +22,7 @@ export type DefiProvenance = Readonly<{
 /** Closed, versioned execution languages for explicitly scoped router workflows. */
 export type DefiExecutionScope =
   | Readonly<{ kind: 'empty-callback-data-v1'; bytesArgIndex: number }>
+  | Readonly<{ kind: 'ambient-coldpath-v1'; callpathArgIndex: 0; bytesArgIndex: 1 }>
   | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>;
 
 /** Function-level authority: identity + fixed ABI + provenance, never runtime validators. */
@@ -55,6 +56,7 @@ export type DefiMatch = Readonly<{
   abiHash: `0x${string}`;
   policy?: Readonly<{ ref: string; version: number }>;
   executionScopeHash?: `0x${string}`;
+  nativeValue?: string;
 }>;
 
 export type DefiExecutionPlanNode = Readonly<{ path: readonly number[]; data: `0x${string}`; match: DefiMatch }>;

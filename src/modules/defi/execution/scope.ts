@@ -17,6 +17,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
   if (scope.kind === 'empty-callback-data-v1') {
     if (Object.keys(scope).sort().join(',') !== 'bytesArgIndex,kind' || !Number.isSafeInteger(scope.bytesArgIndex) || scope.bytesArgIndex < 0) throw new TypeError('Invalid DeFi execution scope');
     normalized = { kind: scope.kind, bytesArgIndex: scope.bytesArgIndex };
+  } else if (scope.kind === 'ambient-coldpath-v1') {
+    if (Object.keys(scope).sort().join(',') !== 'bytesArgIndex,callpathArgIndex,kind' || scope.callpathArgIndex !== 0 || scope.bytesArgIndex !== 1) throw new TypeError('Invalid DeFi execution scope');
+    normalized = { kind: scope.kind, callpathArgIndex: 0, bytesArgIndex: 1 };
   } else if (scope.kind === 'same-target-multicall-v1') {
     if (Object.keys(scope).sort().join(',') !== 'allowedChildren,bytesArrayArgIndex,kind' || scope.bytesArrayArgIndex !== 0 || !Array.isArray(scope.allowedChildren)) throw new TypeError('Invalid DeFi execution scope');
     const children = scope.allowedChildren.map((child) => {

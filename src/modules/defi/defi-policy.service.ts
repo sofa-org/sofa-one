@@ -8,6 +8,7 @@ import { DefiCatalogService } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
 import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
+import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRoot, validateAmbientColdpathPayload } from './execution/ambient';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -151,10 +152,12 @@ export class DefiPolicyService {
     if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
   }
 
-  /** Expands only the two closed scope languages; never recursively interprets child calldata. */
+  /** Interprets only reviewed closed scopes; Ambient protocol callbacks never become recursive wallet children. */
   private expandExecution(root: DefiInteraction, rootFn: DefiFunctionPolicy, context: DefiExecutionContext, path: number[], alreadyPlanned: number): DefiExecutionPlanNode[] {
-    const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn) });
+    const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn, root.value as string) });
     const scope = rootFn.executionScope;
+    const ambientIdentity = rootFn.chainId === AMBIENT_CHAIN_ID && rootFn.contract.toLowerCase() === AMBIENT_TARGET.toLowerCase();
+    if (ambientIdentity && (rootFn.signature !== AMBIENT_SIGNATURE || scope?.kind !== 'ambient-coldpath-v1')) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
     if (!scope) {
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       this.assertCanonicalCall(root, rootFn, context);
@@ -165,6 +168,17 @@ export class DefiPolicyService {
       const args = this.decodeCanonicalArgs(root, rootFn, context);
       const index = scope.bytesArgIndex;
       if (rootFn.abi.inputs[index]?.type !== 'bytes' || args[index] !== '0x') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'ambient-coldpath-v1') {
+      if (!ambientIdentity || rootFn.signature !== AMBIENT_SIGNATURE || rootFn.abi.stateMutability !== 'payable' || rootFn.abi.inputs.length !== 2 || rootFn.abi.inputs[0].type !== 'uint16' || rootFn.abi.inputs[1].type !== 'bytes' || rootFn.abi.outputs.length !== 1 || rootFn.abi.outputs[0].type !== 'bytes' || scope.callpathArgIndex !== 0 || scope.bytesArgIndex !== 1) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      this.assertNativeValue(root, rootFn, context);
+      let preflight: ReturnType<typeof preflightAmbientRoot>;
+      try { preflight = preflightAmbientRoot(root.data); } catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      const args = this.decodeCanonicalArgs(root, rootFn, context);
+      if (BigInt(args[scope.callpathArgIndex] as number | bigint) !== BigInt(preflight.callpath) || args[scope.bytesArgIndex] !== preflight.payload) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      try { validateAmbientColdpathPayload(preflight.callpath, preflight.payload); } catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }
@@ -188,7 +202,7 @@ export class DefiPolicyService {
       if (!childFn || !NPM_MULTICALL_CHILD_SIGNATURES.includes(childFn.signature) || childFn.executionScope || !scope.allowedChildren.some((child) => child.capabilityId === childFn.capabilityId && child.signature === childFn.signature && child.abiHash.toLowerCase() === functionAbiHash(childFn))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
       const interaction: DefiInteraction = { to: root.to, data, value: root.value };
       this.assertCanonicalCall(interaction, childFn, context);
-      nodes.push(deepFreeze({ path: [...path, childIndex], data: data.toLowerCase() as `0x${string}`, match: toMatch(childFn) }));
+      nodes.push(deepFreeze({ path: [...path, childIndex], data: data.toLowerCase() as `0x${string}`, match: toMatch(childFn, root.value as string) }));
     }
     return nodes;
   }
@@ -265,11 +279,11 @@ function denyShape(context: DefiExecutionContext): never {
 }
 
 function sameMatch(actual: DefiMatch, expected: DefiMatch): boolean {
-  return actual.capabilityId === expected.capabilityId && actual.type === expected.type && actual.chainId === expected.chainId && actual.contract.toLowerCase() === expected.contract.toLowerCase() && actual.functionSignature === expected.functionSignature && actual.abiHash === expected.abiHash && actual.executionScopeHash === expected.executionScopeHash && JSON.stringify(actual.policy ?? null) === JSON.stringify(expected.policy ?? null);
+  return actual.capabilityId === expected.capabilityId && actual.type === expected.type && actual.chainId === expected.chainId && actual.contract.toLowerCase() === expected.contract.toLowerCase() && actual.functionSignature === expected.functionSignature && actual.abiHash === expected.abiHash && actual.executionScopeHash === expected.executionScopeHash && actual.nativeValue === expected.nativeValue && JSON.stringify(actual.policy ?? null) === JSON.stringify(expected.policy ?? null);
 }
 
-function toMatch(fn: DefiFunctionPolicy): DefiMatch {
-  return deepFreeze({ capabilityId: fn.capabilityId, type: fn.type, chainId: fn.chainId, contract: fn.contract, functionSignature: fn.signature, abiHash: functionAbiHash(fn), ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}), ...(fn.policy ? { policy: cloneValue(fn.policy) } : {}) });
+function toMatch(fn: DefiFunctionPolicy, nativeValue?: string): DefiMatch {
+  return deepFreeze({ capabilityId: fn.capabilityId, type: fn.type, chainId: fn.chainId, contract: fn.contract, functionSignature: fn.signature, abiHash: functionAbiHash(fn), ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}), ...(nativeValue !== undefined ? { nativeValue } : {}), ...(fn.policy ? { policy: cloneValue(fn.policy) } : {}) });
 }
 
 function freezeClone<T>(value: T): T {

@@ -1,12 +1,50 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { buildReviewedManifest } from '../registry/defi-manifest';
 import { assembleCatalogFromSources, assertBaselinePreserved, BASELINE_MANIFEST_HASH, canonicalSourceSha256, catalogDiff, parseCatalogCliArgs, renderGeneratedModule, stableCatalogJson, validateBaseline, validateCatalogDocument } from './catalog-generator';
 import { functionAbiHash } from '../registry/defi-manifest';
+import type { DefiFunctionPolicy } from '../defi.types';
 import { toFunctionSelector } from 'viem';
 import { buildSparkLendRegistry } from '../registry/spark-lend';
+import { buildFluidRegistry } from '../registry/fluid';
+import { buildQuickSwapV2Registry } from '../registry/quickswap-v2';
+import { buildRocketPoolRegistry } from '../registry/rocket-pool';
+import { buildMoonwellRegistry, MOONWELL_CAPABILITIES } from '../registry/moonwell';
+import { assembleV5SourceCandidates, validateV5AssemblyPlan, V5_ASSEMBLY_PLAN_PATH } from './catalog-generator';
+import { spawnSync } from 'node:child_process';
+import { buildEtherfiRegistry } from '../registry/etherfi';
+import { buildCamelotRegistry } from '../registry/camelot-v2';
+import { buildLfjRegistry } from '../registry/lfj-liquidity-book';
+import { buildBeefyStandardRegistry } from '../registry/beefy-standard';
+import { buildKelpRegistry } from '../registry/kelp';
+import { buildPendleV3Registry } from '../registry/pendle-v3';
+import { buildAmbientRegistry } from '../registry/ambient';
+import { buildConvexRegistry } from '../registry/convex';
+import { buildMaverickV2Registry } from '../registry/maverick-v2';
+import { buildStakeWiseRegistry } from '../registry/stakewise';
+import { buildDodoV2Registry } from '../registry/dodo-v2';
+import { buildDolomiteRouterRegistry } from '../registry/dolomite-router';
+import { buildAuraRegistry } from '../registry/aura';
+import { buildEulerVaultRegistry } from '../registry/euler-vault';
+import { buildRenzoRegistry } from '../registry/renzo';
+import { buildSiloVaultRegistry } from '../registry/silo-vault';
+import { executionScopeHash } from '../execution/scope';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
+
+function assertFixtureBindings(actual: DefiFunctionPolicy[], expected: DefiFunctionPolicy[]): void {
+  if (actual.length !== expected.length) throw new Error(`Source/fixture function count mismatch: ${actual.length} vs ${expected.length}`);
+  for (const fixture of expected) {
+    const matches = actual.filter((fn) => fn.chainId === fixture.chainId && fn.contract.toLowerCase() === fixture.contract.toLowerCase() && fn.signature === fixture.signature);
+    if (matches.length !== 1) throw new Error(`Source/fixture target/signature mismatch: ${fixture.capabilityId}`);
+    const candidate = matches[0];
+    if (candidate.capabilityId !== fixture.capabilityId || functionAbiHash(candidate) !== functionAbiHash(fixture)) throw new Error(`Source/fixture binding mismatch: ${fixture.capabilityId}`);
+    const candidateScope = candidate.executionScope ? executionScopeHash(candidate.executionScope) : undefined;
+    const fixtureScope = fixture.executionScope ? executionScopeHash(fixture.executionScope) : undefined;
+    if (candidateScope !== fixtureScope) throw new Error(`Source/fixture scope mismatch: ${fixture.capabilityId}`);
+  }
+}
 
 describe('DeFi catalog generator', () => {
   it('pins the complete pre-migration 202-definition snapshot, hierarchy, and 179/23 action-approval split', () => {
@@ -43,6 +81,8 @@ describe('DeFi catalog generator', () => {
     expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v4/catalog.json' });
     expect(parseCatalogCliArgs(['check', '--input', 'data/defi-catalog/v4/catalog.json'])).toEqual({ mode: 'check', inputPath: 'data/defi-catalog/v4/catalog.json' });
+    expect(parseCatalogCliArgs(['generate', '--input', 'data/defi-catalog/v5/catalog.json'])).toEqual({ mode: 'generate', inputPath: 'data/defi-catalog/v5/catalog.json' });
+    expect(parseCatalogCliArgs(['assemble', '--input', 'data/defi-catalog/v5/catalog.json'])).toEqual({ mode: 'assemble', inputPath: 'data/defi-catalog/v5/catalog.json' });
     for (const args of [
       ['generate', '--input', '../catalog.json'],
       ['generate', '--input', 'https://example.invalid/catalog.json'],
@@ -227,6 +267,191 @@ describe('DeFi catalog generator', () => {
     }
     expect(catalogDiff(v3, first)).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
     expect(catalogDiff(v3, first).added).toHaveLength(6);
+  });
+
+  it('prepares the complete explicit v5 source cohort as inactive candidates matching all reviewed fixtures', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const plan = validateV5AssemblyPlan(JSON.parse(readFileSync(resolve(process.cwd(), V5_ASSEMBLY_PLAN_PATH), 'utf8')));
+    expect(plan).toEqual({ schemaVersion: 1, baselinePath: 'data/defi-catalog/v4/catalog.json', sourcePaths: [
+      'data/defi-catalog/v5/sources/ambient.json', 'data/defi-catalog/v5/sources/aura.json', 'data/defi-catalog/v5/sources/beefy.json',
+      'data/defi-catalog/v5/sources/camelot.json', 'data/defi-catalog/v5/sources/convex.json',
+      'data/defi-catalog/v5/sources/dodo.json', 'data/defi-catalog/v5/sources/dolomite.json',
+      'data/defi-catalog/v5/sources/etherfi.json', 'data/defi-catalog/v5/sources/euler.json', 'data/defi-catalog/v5/sources/fluid.json',
+      'data/defi-catalog/v5/sources/kelp.json', 'data/defi-catalog/v5/sources/lfj.json',
+      'data/defi-catalog/v5/sources/maverick.json', 'data/defi-catalog/v5/sources/moonwell.json',
+      'data/defi-catalog/v5/sources/pendle.json', 'data/defi-catalog/v5/sources/quickswap.json',
+      'data/defi-catalog/v5/sources/renzo.json', 'data/defi-catalog/v5/sources/rocket-pool.json',
+      'data/defi-catalog/v5/sources/silo.json', 'data/defi-catalog/v5/sources/stakewise.json',
+    ] });
+    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v4/catalog.json'), 'utf8')));
+    const inputs = plan.sourcePaths.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) }));
+    const candidate = assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs);
+    const added = catalogDiff(v4, candidate).added;
+    const v4Functions = buildReviewedManifest([v4]).capabilities;
+    expect(v4Functions).toHaveLength(368);
+    expect(v4Functions.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
+    expect(v4Functions.filter((fn) => fn.executionScope !== undefined)).toHaveLength(14);
+    expect(added).toHaveLength(138);
+    const additions = candidate.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => added.includes(fn.capabilityId));
+    expect(additions).toHaveLength(138);
+    expect(additions.every((fn) => fn.status === 'inactive' && fn.provenance.status === 'candidate')).toBe(true);
+    expect(buildReviewedManifest([candidate]).capabilities).toHaveLength(506);
+    expect(catalogDiff(v4, candidate)).toMatchObject({ removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    const sources = [buildQuickSwapV2Registry(), buildMoonwellRegistry(), buildFluidRegistry(), buildRocketPoolRegistry(),
+      buildEtherfiRegistry(), buildCamelotRegistry(), buildLfjRegistry(), buildBeefyStandardRegistry(),
+      buildKelpRegistry(), buildPendleV3Registry(), buildAmbientRegistry(), buildConvexRegistry(),
+      buildMaverickV2Registry(), buildStakeWiseRegistry(), buildDodoV2Registry(), buildDolomiteRouterRegistry(),
+      buildAuraRegistry(), buildEulerVaultRegistry(), buildRenzoRegistry(), buildSiloVaultRegistry()]
+      .flatMap(({ chains }) => chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)));
+    expect(sources).toHaveLength(138);
+    const expectedIds = new Set(sources.map((fn) => fn.capabilityId));
+    expect(additions.map((fn) => fn.capabilityId).sort()).toEqual([...expectedIds].sort());
+    expect(additions.filter((fn) => fn.abi.stateMutability === 'payable')).toHaveLength(22);
+    expect(additions.filter((fn) => fn.protocol === 'moonwell')).toHaveLength(17);
+    expect(MOONWELL_CAPABILITIES).toHaveLength(17);
+    const expectedCounts: Record<string, number> = {
+      'quickswap-v2': 10, moonwell: 17, 'fluid-lending': 16, 'fluid-vault-t1': 1,
+      'rocket-pool': 2, etherfi: 7, 'camelot-v2': 3, 'lfj-liquidity-book': 3,
+      'beefy-standard': 8, kelp: 4, 'pendle-v3': 6, ambient: 1, convex: 6,
+      'maverick-v2': 2, stakewise: 3, 'dodo-v2': 3, 'dolomite-router': 6,
+      aura: 6, 'euler-vault': 12, 'euler-evc': 4, renzo: 6, 'silo-vault': 12,
+    };
+    for (const [family, count] of Object.entries(expectedCounts)) expect(additions.filter((fn) => fn.protocol === family)).toHaveLength(count);
+    for (const input of inputs) {
+      const doc = input.document as any;
+      const digest = canonicalSourceSha256(doc);
+      expect(digest).toMatch(/^[a-f0-9]{64}$/);
+      expect(canonicalSourceSha256(JSON.parse(JSON.stringify(doc)))).toBe(digest);
+      expect(doc.sources.every((source: any) => Object.keys(source).sort().join(',') === 'evidence,retrievedAtUtc,sourceId,url')).toBe(true);
+      expect(new Set(doc.sources.map((source: any) => source.sourceId)).size).toBe(doc.sources.length);
+      for (const family of doc.families) {
+        for (const contract of family.contracts ?? family.chains.flatMap((chain: any) => chain.contracts)) {
+          if (contract.status !== undefined) expect(contract.status).toBe('inactive');
+          for (const fn of contract.abiFunctions ?? contract.functions) if (fn.status !== undefined) expect(fn.status).toBe('inactive');
+        }
+      }
+    }
+    assertFixtureBindings(additions, sources);
+    for (const fixture of sources) {
+      const candidateFn = additions.find((fn) => fn.chainId === fixture.chainId && fn.contract.toLowerCase() === fixture.contract.toLowerCase() && fn.signature === fixture.signature)!;
+      expect(candidateFn.abiHash).toBe(functionAbiHash(fixture));
+    }
+    const candidateById = new Map(candidate.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => [fn.capabilityId, fn] as const))));
+    for (const oldFn of v4.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions))) expect(candidateById.get(oldFn.capabilityId)).toEqual(oldFn);
+    const fluidOverloads = additions.filter((fn) => fn.protocol === 'fluid-lending');
+    expect(fluidOverloads).toHaveLength(16);
+    for (const fn of fluidOverloads) expect(fn.capabilityId).toMatch(new RegExp(`:${toFunctionSelector(fn.signature).slice(2)}$`));
+    expect(additions.find((fn) => fn.protocol === 'fluid-vault-t1')?.capabilityId).toMatch(/:operate$/);
+    const moonwellSource = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v5/sources/moonwell.json'), 'utf8'));
+    expect(moonwellSource.families[0].contracts[0].address).toBe('0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22');
+    const missingHex = JSON.parse(JSON.stringify(moonwellSource));
+    missingHex.families[0].contracts[0].address = '0xedc817a28e8b93b03976fb4a3ddbc9f7d176c22';
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === 1 ? { ...input, document: missingHex } : input))).toThrow(/address must be an EVM address/);
+    const ambientIndex = inputs.findIndex((input) => input.sourcePath.endsWith('/ambient.json'));
+    const missingAmbientScope = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    delete missingAmbientScope.families[0].chains[0].contracts[0].functions[0].executionScope;
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: missingAmbientScope } : input))).toThrow(/mandatory cold-path scope/);
+    const wrongAmbientScope = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    wrongAmbientScope.families[0].chains[0].contracts[0].functions[0].executionScope.bytesArgIndex = 2;
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: wrongAmbientScope } : input))).toThrow();
+    const wrongAmbientRoot = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    wrongAmbientRoot.families[0].chains[0].contracts[0].functions[0].contract = '0x0000000000000000000000000000000000000001';
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: wrongAmbientRoot } : input))).toThrow(/identity\/status|Ethereum userCmd ABI/);
+    const changedAbi = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    changedAbi.families[0].chains[0].contracts[0].functions[0].abi.outputs[0].type = 'uint256';
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: changedAbi } : input))).toThrow(/exact Ethereum userCmd ABI/);
+    const missingInternalType = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    delete missingInternalType.families[0].chains[0].contracts[0].functions[0].abi.inputs[0].internalType;
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: missingInternalType } : input))).toThrow(/exact Ethereum userCmd ABI/);
+    const nullAmbientScope = JSON.parse(JSON.stringify(inputs[ambientIndex].document));
+    nullAmbientScope.families[0].chains[0].contracts[0].functions[0].executionScope = null;
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === ambientIndex ? { ...input, document: nullAmbientScope } : input))).toThrow();
+    const dodoIndex = inputs.findIndex((input) => input.sourcePath.endsWith('/dodo.json'));
+    const malformedDodoBool = JSON.parse(JSON.stringify(inputs[dodoIndex].document));
+    const dodoFn = malformedDodoBool.families[0].chains[0].contracts[0].functions[0];
+    dodoFn.abi.inputs.find((param: any) => param.type === 'bool').name = 'notUnnamed';
+    const malformedDodo = assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === dodoIndex ? { ...input, document: malformedDodoBool } : input));
+    const malformedDodoAdded = malformedDodo.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => !v4.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).some((old) => old.capabilityId === fn.capabilityId));
+    expect(() => assertFixtureBindings(malformedDodoAdded, sources)).toThrow(/Source\/fixture binding mismatch/);
+    const lfjIndex = inputs.findIndex((input) => input.sourcePath.endsWith('/lfj.json'));
+    const wrongLfjTuple = JSON.parse(JSON.stringify(inputs[lfjIndex].document));
+    const tupleFn = wrongLfjTuple.families[0].contracts.flatMap((contract: any) => contract.abiFunctions).find((fn: any) => fn.inputs.some((param: any) => param.type.startsWith('tuple')));
+    expect(tupleFn).toBeDefined();
+    tupleFn.inputs.find((param: any) => param.type.startsWith('tuple')).components[0].type = 'uint8';
+    const malformedTuple = assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.map((input, index) => index === lfjIndex ? { ...input, document: wrongLfjTuple } : input));
+    const malformedTupleAdded = malformedTuple.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => !v4.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).some((old) => old.capabilityId === fn.capabilityId));
+    expect(() => assertFixtureBindings(malformedTupleAdded, sources)).toThrow(/Source\/fixture target\/signature mismatch/);
+  });
+
+  it('strictly validates v5 plan paths and source candidacy and exposes only fixed v5 CLI routes', () => {
+    const plan = JSON.parse(readFileSync(resolve(process.cwd(), V5_ASSEMBLY_PLAN_PATH), 'utf8'));
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v4/catalog.json'), 'utf8')));
+    const inputs = plan.sourcePaths.map((sourcePath: string) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) }));
+    for (const bad of [
+      { ...plan, unexpected: true }, { ...plan, baselinePath: 'data/defi-catalog/v1/catalog.json' },
+      { ...plan, sourcePaths: [...plan.sourcePaths, plan.sourcePaths[0]] },
+      { ...plan, sourcePaths: ['../secret.json'] }, { ...plan, sourcePaths: [...plan.sourcePaths].reverse() },
+      { ...plan, sourcePaths: plan.sourcePaths.slice(1) },
+      { ...plan, sourcePaths: plan.sourcePaths.map((path: string) => `https://example.invalid/${path}`) },
+    ]) expect(() => validateV5AssemblyPlan(bad)).toThrow();
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, inputs.slice(1))).toThrow(/exactly match/);
+    const forgedVersion = JSON.parse(JSON.stringify(inputs[0].document)); forgedVersion.families[0].familyVersion = 'made-up-version';
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, [{ ...inputs[0], document: forgedVersion }, ...inputs.slice(1)])).toThrow(/familyVersion/);
+    const forgedStatus = JSON.parse(JSON.stringify(inputs[0].document)); forgedStatus.families[0].chains[0].contracts[0].functions[0].status = 'active';
+    expect(() => assembleV5SourceCandidates({ chains: v4.chains }, plan, [{ ...inputs[0], document: forgedStatus }, ...inputs.slice(1)])).toThrow(/identity\/status/);
+    expect(parseCatalogCliArgs(['prepare-v5'])).toEqual({ mode: 'prepare-v5', inputPath: V5_ASSEMBLY_PLAN_PATH });
+    const cli = resolve(process.cwd(), 'scripts/defi-catalog/cli.ts');
+    const prepared = spawnSync(process.execPath, ['-r', 'ts-node/register/transpile-only', cli, 'prepare-v5'], { cwd: process.cwd(), encoding: 'utf8' });
+    expect(prepared.status).toBe(0);
+    expect(prepared.stdout).toMatch(/Prepared 138 inactive v5 source candidates from 20 explicit snapshots; no admission or catalog file was written/);
+    const temporaryRoot = mkdtempSync(resolve(tmpdir(), 'defi-v5-plan-symlink-'));
+    try {
+      const planDirectory = resolve(temporaryRoot, 'data/defi-catalog/v5');
+      mkdirSync(planDirectory, { recursive: true });
+      symlinkSync(resolve(process.cwd(), V5_ASSEMBLY_PLAN_PATH), resolve(planDirectory, 'assembly-plan.json'));
+      const cliPath = resolve(process.cwd(), 'scripts/defi-catalog/cli.ts');
+      const tsNodeRegister = resolve(process.cwd(), 'node_modules/ts-node/register/transpile-only');
+      const symlinkedPlan = spawnSync(process.execPath, ['-r', tsNodeRegister, cliPath, 'prepare-v5'], { cwd: temporaryRoot, encoding: 'utf8', env: { ...process.env, TS_NODE_PROJECT: resolve(process.cwd(), 'tsconfig.json') } });
+      expect(symlinkedPlan.status).toBe(1);
+    expect(symlinkedPlan.stderr).toMatch(/fixed repository-owned file/);
+    } finally { rmSync(temporaryRoot, { recursive: true, force: true }); }
+  });
+
+  it('admits exactly 138 bound v5 functions onto the immutable 368-definition v4 baseline', () => {
+    const root = resolve(process.cwd(), 'data/defi-catalog');
+    const plan = validateV5AssemblyPlan(JSON.parse(readFileSync(resolve(process.cwd(), V5_ASSEMBLY_PLAN_PATH), 'utf8')));
+    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v4/catalog.json'), 'utf8')));
+    const inputs = plan.sourcePaths.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) }));
+    const admissions = JSON.parse(readFileSync(resolve(root, 'v5/admissions.json'), 'utf8'));
+    const admitted = assembleCatalogFromSources({ chains: v4.chains }, inputs, admissions);
+    const output = validateCatalogDocument(JSON.parse(readFileSync(resolve(root, 'v5/catalog.json'), 'utf8')));
+    expect(buildReviewedManifest([v4]).capabilities).toHaveLength(368);
+    expect(buildReviewedManifest([v4]).capabilities.filter((fn) => fn.executionScope)).toHaveLength(14);
+    expect(buildReviewedManifest([admitted]).capabilities).toHaveLength(506);
+    expect(buildReviewedManifest([admitted]).capabilities.filter((fn) => fn.executionScope)).toHaveLength(15);
+    expect(buildReviewedManifest([admitted]).capabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
+    expect(catalogDiff(v4, admitted)).toMatchObject({ added: expect.any(Array), removed: [], authorityChanged: [], abiChanged: [], metadataChanged: [] });
+    expect(catalogDiff(v4, admitted).added).toHaveLength(138);
+    expect(stableCatalogJson(output)).toBe(stableCatalogJson(admitted));
+    expect(admitted.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.status === 'active')).toHaveLength(506);
+    expect(admitted.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((fn) => fn.protocol === 'ambient')[0].executionScope).toEqual({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1 });
+
+    const mutate = (fn: (copy: any) => void) => { const copy = JSON.parse(JSON.stringify(admissions)); fn(copy); return copy; };
+    const wrongHash = mutate((copy) => { copy.snapshots[0].canonicalSha256 = '0'.repeat(64); });
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs, wrongHash)).toThrow(/hash does not match admission/);
+    const missing = mutate((copy) => { copy.snapshots[0].bindings.pop(); });
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs, missing)).toThrow(/binding count mismatch/);
+    const extra = mutate((copy) => { copy.snapshots[0].bindings.push(copy.snapshots[0].bindings[0]); });
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs, extra)).toThrow(/binding count mismatch/);
+    const ambient = admissions.snapshots.find((snapshot: any) => snapshot.sourcePath.endsWith('/ambient.json'));
+    const ambientIndex = admissions.snapshots.indexOf(ambient);
+    const noScope = mutate((copy) => { delete copy.snapshots[ambientIndex].bindings[0].executionScope; delete copy.snapshots[ambientIndex].bindings[0].executionScopeHash; });
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs, noScope)).toThrow(/scope|scope binding/i);
+    const badScopeHash = mutate((copy) => { copy.snapshots[ambientIndex].bindings[0].executionScopeHash = `0x${'0'.repeat(64)}`; });
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs, badScopeHash)).toThrow(/scope hash mismatch/);
+    expect(() => assembleCatalogFromSources({ chains: v4.chains }, inputs.slice(0, 1), { schemaVersion: 1, snapshots: [] })).toThrow(/complete selected v5 plan group/);
+
   });
 
   it('admits the exact v4 source group, preserves v3, and binds the Pancake wrapper to exactly eight scoped children', () => {

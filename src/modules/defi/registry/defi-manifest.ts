@@ -2,6 +2,7 @@ import { keccak256, stringToHex, toFunctionSelector } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment, ReviewedManifest } from './defi-manifest.types';
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from '../execution/scope';
+import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET } from '../execution/ambient';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -74,6 +75,11 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   if (fn.status === 'active' && fn.provenance.status !== 'verified') throw new Error('Active DeFi function requires verified provenance');
   if (fn.policy && (!fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1)) throw new Error('Invalid display policy identity');
   if (fn.executionScope) executionScopeHash(fn.executionScope);
+  const ambientAddress = chain.chainId === AMBIENT_CHAIN_ID && contract.address.toLowerCase() === AMBIENT_TARGET.toLowerCase();
+  const ambientScope = fn.executionScope?.kind === 'ambient-coldpath-v1';
+  if (ambientAddress || ambientScope) {
+    if (!ambientAddress || fn.signature !== AMBIENT_SIGNATURE || !ambientScope || fn.executionScope.callpathArgIndex !== 0 || fn.executionScope.bytesArgIndex !== 1 || fn.abi.stateMutability !== 'payable' || fn.abi.inputs.length !== 2 || fn.abi.inputs[0].type !== 'uint16' || fn.abi.inputs[1].type !== 'bytes' || fn.abi.outputs.length !== 1 || fn.abi.outputs[0].type !== 'bytes') throw new Error('Invalid Ambient cold-path scope binding');
+  }
 }
 
 /** Merges nested family catalogs, validates fixed ABI/provenance identities, and freezes the result. */
@@ -125,6 +131,7 @@ export function buildReviewedManifest(fragments: readonly DefiRegistryFragment[]
   const multicallAllowed = new Set(NPM_MULTICALL_CHILD_SIGNATURES);
   for (const scoped of capabilities.filter((fn) => fn.executionScope)) {
     if (scoped.executionScope?.kind === 'empty-callback-data-v1' && scoped.abi.inputs[scoped.executionScope.bytesArgIndex]?.type !== 'bytes') throw new Error('Invalid DeFi callback-data scope ABI binding');
+    if (scoped.executionScope?.kind === 'ambient-coldpath-v1' && (scoped.executionScope.callpathArgIndex !== 0 || scoped.executionScope.bytesArgIndex !== 1)) throw new Error('Invalid Ambient cold-path scope arguments');
   }
   for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'same-target-multicall-v1')) {
     const scope = wrapper.executionScope;

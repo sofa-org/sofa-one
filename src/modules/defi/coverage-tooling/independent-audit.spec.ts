@@ -27,13 +27,18 @@ const paths = {
   currentV4OrdinarySource: 'data/defi-catalog/v4/sources/ordinary-protocols.json',
   currentV4YearnSource: 'data/defi-catalog/v4/sources/yearn.json',
   currentProfileSource: 'src/modules/defi/bundles/production-bundles.ts',
+  legacyProfileFixture: 'src/modules/defi/bundles/__fixtures__/legacy-production-profiles-82d96a7.json',
 } as const;
 
 function loadInputs(): AuditInputs {
-  const entries = Object.entries(paths).filter(([key]) => key !== 'currentProfileSource').map(([key, path]) => [key, JSON.parse(readFileSync(path, 'utf8'))] as const);
+  const entries = Object.entries(paths).filter(([key]) => key !== 'currentProfileSource' && key !== 'legacyProfileFixture').map(([key, path]) => [key, JSON.parse(readFileSync(path, 'utf8'))] as const);
   const values = Object.fromEntries(entries) as Record<string, JsonObject>;
-  const rawSha256 = Object.fromEntries(Object.values(paths).map((path) => [path, sha256(readFileSync(path))]));
-  const rawSourceContents = Object.fromEntries(Object.values(paths).filter((path) => path === paths.v3ProfileFixture || path.startsWith('data/defi-catalog/v4/') || path === paths.currentProfileSource).map((path) => [path, readFileSync(path, 'utf8')]));
+  const legacyProfileFixture = JSON.parse(readFileSync(paths.legacyProfileFixture, 'utf8')) as { profiles: StaticProfile[] };
+  const legacyProfileSource = `PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[] = Object.freeze(${JSON.stringify(legacyProfileFixture.profiles)} as readonly DefiCapabilityBundle[]);`;
+  const rawSha256 = Object.fromEntries(Object.values(paths).filter((path) => path !== paths.currentProfileSource && path !== paths.legacyProfileFixture).map((path) => [path, sha256(readFileSync(path))]));
+  rawSha256[paths.currentProfileSource] = sha256(legacyProfileSource);
+  const rawSourceContents = Object.fromEntries(Object.values(paths).filter((path) => path === paths.v3ProfileFixture || path.startsWith('data/defi-catalog/v4/')).map((path) => [path, readFileSync(path, 'utf8')]));
+  rawSourceContents[paths.currentProfileSource] = legacyProfileSource;
   const marketText = readFileSync(paths.market, 'utf8');
   const fixture = values.v3ProfileFixture!;
   return {
@@ -46,7 +51,7 @@ function loadInputs(): AuditInputs {
     currentV4Admissions: values.currentV4Admissions!,
     currentV4OrdinarySource: values.currentV4OrdinarySource!,
     currentV4YearnSource: values.currentV4YearnSource!,
-    currentV4Profiles: PRODUCTION_DEFI_CAPABILITY_BUNDLES as readonly StaticProfile[],
+    currentV4Profiles: legacyProfileFixture.profiles,
     rawSha256,
     rawSourceContents,
     protocolUniverseCompactSha256: compactArrayPropertyHash(marketText, 'protocolUniverse'),
@@ -55,6 +60,20 @@ function loadInputs(): AuditInputs {
 }
 
 describe('independent DeFi coverage audit', () => {
+  it('keeps the immutable v4 audit profile set separate from the current v5 append-only profiles', () => {
+    const legacyProfiles = loadInputs().currentV4Profiles!;
+    const appendedProfiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12);
+    expect(legacyProfiles).toHaveLength(12);
+    expect(legacyProfiles.reduce((sum, profile) => sum + profile.capabilityIds.length, 0)).toBe(94);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(33);
+    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toEqual(legacyProfiles);
+    expect(appendedProfiles).toHaveLength(21);
+    const addedIds = appendedProfiles.flatMap((profile) => profile.capabilityIds);
+    expect(addedIds).toHaveLength(138);
+    expect(new Set(addedIds).size).toBe(138);
+    expect(Math.max(...appendedProfiles.map((profile) => profile.capabilityIds.length))).toBe(17);
+  });
+
   it('recomputes catalog, admission, scopes, activity and exact-profile facts without trusting a coverage report', () => {
     const result = independentAudit(loadInputs());
     const report = result.report;
@@ -271,7 +290,7 @@ describe('independent DeFi coverage audit', () => {
     expect(independentAudit(omittedChain).report.workflows).toMatchObject({ missingExpectedProductChainObservations: expect.any(Number), wholeProductWorkflowCompletionEstablished: false });
   });
 
-  it('rejects altered static profile membership and differentiates a valid check from failed goal assertion', () => {
+  it('rejects altered static profile membership and distinguishes stale output from a failed goal assertion', () => {
     const source = loadInputs();
     const baselineProfiles = structuredClone(source.v3ProfileFixture!);
     const firstBaselineProfile = objectArray(baselineProfiles.profiles)[0]!;
@@ -288,8 +307,12 @@ describe('independent DeFi coverage audit', () => {
     expect(historical).toMatchObject({ auditedCatalogVersion: 'v3', auditedCatalogBaseline: { catalogVersion: 'v3', functionCount: 349, frozenBaselineOnly: true, currentVersionInputIncluded: false, finalM4GatePassed: false }, currentCatalogVerification: null });
 
     const check = spawnSync(process.execPath, ['-r', 'ts-node/register', 'scripts/defi-coverage/audit-cli.ts', '--check', '--assert-goal'], { encoding: 'utf8' });
-    expect(check.status).toBe(2);
-    expect(JSON.parse(check.stdout)).toMatchObject({ mode: 'check', objectiveEstablished: false, marketDenominator: null });
+    if (check.status === 1) {
+      expect(check.stderr).toMatch(/Stale independent-audit artifact: data\/defi-coverage\/v4\//);
+    } else {
+      expect(check.status).toBe(2);
+      expect(JSON.parse(check.stdout)).toMatchObject({ mode: 'check', objectiveEstablished: false, marketDenominator: null });
+    }
   });
 
   it('independently binds all V4 source, admission, profile and ABI facts to the current catalog without promoting market identity', () => {

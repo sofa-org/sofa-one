@@ -1,0 +1,3 @@
+# Euler vault and EVC fixture registry
+
+Explicit test-only fixture for two registered Ethereum EVaults and four fixed Ethereum Vault Connector methods. The source candidate remains inactive and neither builder output nor source is production-wired. Six vault methods bind the pinned EVault ABI; EVC methods are separately identified payable void functions, not arbitrary batch/call authority. All ABI-valid financial and party arguments remain caller-controlled. Underlying approvals, EVC authorization/controller state, solvency, curator settings, and available liquidity are independent protocol conditions; no complete-population, recommendation, runtime-code, or funded-execution claim is made.

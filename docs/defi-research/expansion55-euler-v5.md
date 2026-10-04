@@ -1,0 +1,16 @@
+# Euler Ethereum EVault and EVC fixture (v5 expansion)
+
+Canonical source is `euler-xyz/euler-interfaces` at commit `d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3`; relevant pinned files are `EulerChains.json`, `abis/GenericFactory.json`, `abis/EVault.json`, and `abis/EthereumVaultConnector.json`. Its chain-1 data identifies GenericFactory `0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e` and EVC `0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383`.
+
+Parent-observed, read-only Ethereum public RPC data (2026-10-04, pinned block `0x18e88b7`, hash `0x84e2463ffb267cd1101208c23f88e5d1ffc32a7363a6fe627ff840c573a924b6`) reported factory `getProxyListLength()` = 889 and `getProxyListSlice(0,4)` containing four targets. Only two were selected, with typed `asset()`, `symbol()`, and `EVC()` views:
+
+- `0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8`: WETH asset `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2`, symbol `eWETH-1`.
+- `0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4`: wstETH asset `0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0`, symbol `ewstETH-1`.
+
+Both typed EVC getters match the official EVC address. These are registered factory-created vault roles and dated typed-view observations, not per-address implementation/runtime proof, current liquidity, curator endorsement, funded execution, or whole-market enumeration/safety. The two targets are not recommended or curated market selections.
+
+Each EVault exposes six exact, nonpayable pinned ABI functions: `deposit(uint256 amount,address receiver)`, `mint(uint256 amount,address receiver)`, `withdraw(uint256 amount,address receiver,address owner)`, `redeem(uint256 amount,address receiver,address owner)`, `borrow(uint256 amount,address receiver)`, and `repay(uint256 amount,address receiver)`; each returns unnamed `uint256`. The EVC separately exposes four exact payable-void methods: `enableCollateral(address account,address vault)`, `disableCollateral(address account,address vault)`, `enableController(address account,address vault)`, and `disableController(address account)`. The selected set excludes EVC batching/arbitrary-call authority and other privileged/general methods.
+
+Every ABI-valid amount, receiver, owner, account, and vault choice remains caller-controlled; no platform financial, asset, ownership, health-factor, or controller cap is imposed. Euler's own authorization, controller/collateral state, solvency, curator parameters, allowance/funding, and liquidity remain intrinsic protocol prerequisites, not platform promises. Existing underlying WETH/wstETH approvals are separate, independent capabilities and do not imply or automatically bundle with vault actions. Successful authorization/simulation is not proof of economic eligibility or execution.
+
+Raw source candidates in `data/defi-catalog/v5/sources/euler.json` stay inactive. `buildEulerVaultRegistry()` is an explicit fixture builder only, not production admission or user grant. IDs `euler-vault:evk-v1:1:<vault-lowercase>:<operation>` and `euler-evc:evc-v1:1:<EVC-lowercase>:<operation>` identify permission templates, not deployed implementation semvers. This is a two-vault, ten-method subset—not complete Euler support, live/funded code certification, or a claim that all registered vaults are suitable for users.

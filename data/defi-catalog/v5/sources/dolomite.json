@@ -1,0 +1,354 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "dolomite-router",
+      "familyVersion": "v1",
+      "chains": [
+        {
+          "chainId": 42161,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+              "status": "inactive",
+              "contractName": "DepositWithdrawalRouter",
+              "functions": [
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-wei",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "depositWei",
+                  "signature": "depositWei(uint256,uint256,uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "depositWei",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_toAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_marketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_amountWei",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_eventFlag",
+                        "type": "uint8",
+                        "internalType": "enum IDepositWithdrawalRouter.EventFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite deposit-wei",
+                  "protocol": "Dolomite",
+                  "operation": "deposit-wei",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-payable",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "depositPayable",
+                  "signature": "depositPayable(uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "depositPayable",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_toAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_eventFlag",
+                        "type": "uint8",
+                        "internalType": "enum IDepositWithdrawalRouter.EventFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite deposit-payable",
+                  "protocol": "Dolomite",
+                  "operation": "deposit-payable",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-par",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "depositPar",
+                  "signature": "depositPar(uint256,uint256,uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "depositPar",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_toAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_marketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_amountPar",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_eventFlag",
+                        "type": "uint8",
+                        "internalType": "enum IDepositWithdrawalRouter.EventFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite deposit-par",
+                  "protocol": "Dolomite",
+                  "operation": "deposit-par",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-wei",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "withdrawWei",
+                  "signature": "withdrawWei(uint256,uint256,uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdrawWei",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_fromAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_marketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_amountWei",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_balanceCheckFlag",
+                        "type": "uint8",
+                        "internalType": "enum AccountBalanceLib.BalanceCheckFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite withdraw-wei",
+                  "protocol": "Dolomite",
+                  "operation": "withdraw-wei",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-payable",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "withdrawPayable",
+                  "signature": "withdrawPayable(uint256,uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdrawPayable",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_fromAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_amountWei",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_balanceCheckFlag",
+                        "type": "uint8",
+                        "internalType": "enum AccountBalanceLib.BalanceCheckFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite withdraw-payable",
+                  "protocol": "Dolomite",
+                  "operation": "withdraw-payable",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-par",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf",
+                  "functionName": "withdrawPar",
+                  "signature": "withdrawPar(uint256,uint256,uint256,uint256,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdrawPar",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_isolationModeMarketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_fromAccountNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_marketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_amountPar",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_balanceCheckFlag",
+                        "type": "uint8",
+                        "internalType": "enum AccountBalanceLib.BalanceCheckFlag"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "dolomite-router-interface",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Dolomite withdraw-par",
+                  "protocol": "Dolomite",
+                  "operation": "withdraw-par",
+                  "warnings": [
+                    "Caller-controlled account, market, amount and flag values; no platform financial/market restrictions are implied."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "dolomite-arbitrum-router-address",
+      "url": "https://docs.dolomite.io/smart-contract-addresses/core-routers",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Dolomite core-router address documentation identifies the Arbitrum One DepositWithdrawalRouter at 0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf. Router role is not a proxy-only user requirement."
+    },
+    {
+      "sourceId": "dolomite-router-interface",
+      "url": "https://github.com/dolomite-exchange/dolomite-margin-modules/blob/master/packages/base/contracts/routers/interfaces/IDepositWithdrawalRouter.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Dolomite moving master interface declares the six selected deposit/withdraw methods and source-level parameter types, names, and mutability. Moving source observed 2026-10-04; no immutable commit pin asserted. Interface evidence does not verify deployed implementation bytecode."
+    },
+    {
+      "sourceId": "dolomite-router-docs",
+      "url": "https://docs.dolomite.io/developer-documentation/depositing-or-withdrawing.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation describes deposits and withdrawals, including caller-controlled accounts and whole-balance Wei withdrawal behavior; withdrawals may create debt and do not guarantee immediate liquidity."
+    },
+    {
+      "sourceId": "dolomite-router-sourcify-shell",
+      "url": "https://sourcify.dev/server/v2/contract/42161/0xf8b2c637A68cF6A17b1DF9F8992EeBeFf63d2dFf?fields=abi",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify target record reports verified proxy-shell metadata timestamp 2026-01-04T12:02:07Z. It does not establish the six delegated router methods or implementation identity and is not used as their ABI evidence."
+    }
+  ]
+}

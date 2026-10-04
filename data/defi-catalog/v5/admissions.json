@@ -1,0 +1,1235 @@
+{
+  "schemaVersion": 1,
+  "snapshots": [
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/ambient.json",
+      "canonicalSha256": "1547ef76ca9f1ac8ca034126817063a62ada7cc032c40e4963be93828e783cd1",
+      "bindings": [
+        {
+          "familyId": "ambient",
+          "chainId": 1,
+          "contract": "0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688",
+          "signature": "userCmd(uint16,bytes)",
+          "abiHash": "0x482a97f1bdab17c198aea7b30634280f216ce1c6a74bba4be98810c02971b6d0",
+          "capabilityId": "ambient:coldpath-v1:1:0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688:user-cmd",
+          "executionScope": {
+            "kind": "ambient-coldpath-v1",
+            "callpathArgIndex": 0,
+            "bytesArgIndex": 1
+          },
+          "executionScopeHash": "0xe943d529d847f9e0158fe9411c3a9914df7e2a5c6836bd86928b87f02f01f9c4"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/aura.json",
+      "canonicalSha256": "58ddf14f11ae74b1fbf0e00c629bc396e6510badf6178997392c12f02b1095ca",
+      "bindings": [
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f",
+          "signature": "getReward()",
+          "abiHash": "0xc9f29c6957f237e2477879e0dcb415d6c8d5a0bbee22883b451dc925129e6fd8",
+          "capabilityId": "aura:v1:1:0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f:get-reward"
+        },
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f",
+          "signature": "withdrawAndUnwrap(uint256,bool)",
+          "abiHash": "0x059090bd41e3095113c76182202ad5e14cf83480ee1257ea1416d56d80494e73",
+          "capabilityId": "aura:v1:1:0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f:withdraw-and-unwrap"
+        },
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0xa57b8d98dae62b26ec3bcc4a365338157060b234",
+          "signature": "deposit(uint256,uint256,bool)",
+          "abiHash": "0xdcfc97455ba592f51fa369cab5aab85fa59cf95b0c4ccb91058176445a93c513",
+          "capabilityId": "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:deposit"
+        },
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0xa57b8d98dae62b26ec3bcc4a365338157060b234",
+          "signature": "depositAll(uint256,bool)",
+          "abiHash": "0x0ce1b688dada19c2435c215af3b6095735c07a602a59fe94f163ff2e215d68b2",
+          "capabilityId": "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:deposit-all"
+        },
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0xa57b8d98dae62b26ec3bcc4a365338157060b234",
+          "signature": "withdraw(uint256,uint256)",
+          "abiHash": "0x9666a90dfd3f2c6d176978f0c0f4eda33c57caf7b34e01c31f35d9e0b93c6cb4",
+          "capabilityId": "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:withdraw"
+        },
+        {
+          "familyId": "aura",
+          "chainId": 1,
+          "contract": "0xa57b8d98dae62b26ec3bcc4a365338157060b234",
+          "signature": "withdrawAll(uint256)",
+          "abiHash": "0x6562007f92c3c381e27d1575aaede5b9ee1ef84b61f82ce3ff6c0e7baa7656ef",
+          "capabilityId": "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:withdraw-all"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/beefy.json",
+      "canonicalSha256": "db9ed17f688a0084e4269092cd7a35e8bdc4461f57c1ff0695a6de42342f3b80",
+      "bindings": [
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x01f1a592b0b757b2931bbccf28227cdc1e892dde",
+          "signature": "deposit(uint256)",
+          "abiHash": "0x504d4669e05f6ee2c15c47f9e78b7a52f9bfd83fc88baecf8dfb6dd5fc3abe65",
+          "capabilityId": "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:deposit"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x01f1a592b0b757b2931bbccf28227cdc1e892dde",
+          "signature": "depositAll()",
+          "abiHash": "0x981b3c68ca0144dd91b520d544df7773dad1731ecb43957d617c3fcea5c75f82",
+          "capabilityId": "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:deposit-all"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x01f1a592b0b757b2931bbccf28227cdc1e892dde",
+          "signature": "withdraw(uint256)",
+          "abiHash": "0x19f8e0a68e6d76ac67f87f4b3fce8024d12f9e94e0dfbcf1aeecfae2fc66effe",
+          "capabilityId": "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:withdraw"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x01f1a592b0b757b2931bbccf28227cdc1e892dde",
+          "signature": "withdrawAll()",
+          "abiHash": "0x2a20e509ad1da832fc1e017a1c356de0837abc4493f3c0ec855034eefbf2c6a3",
+          "capabilityId": "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:withdraw-all"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x028baca249b33d24fc32ac01d6531f6be0061c8e",
+          "signature": "deposit(uint256)",
+          "abiHash": "0x504d4669e05f6ee2c15c47f9e78b7a52f9bfd83fc88baecf8dfb6dd5fc3abe65",
+          "capabilityId": "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:deposit"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x028baca249b33d24fc32ac01d6531f6be0061c8e",
+          "signature": "depositAll()",
+          "abiHash": "0x981b3c68ca0144dd91b520d544df7773dad1731ecb43957d617c3fcea5c75f82",
+          "capabilityId": "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:deposit-all"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x028baca249b33d24fc32ac01d6531f6be0061c8e",
+          "signature": "withdraw(uint256)",
+          "abiHash": "0x19f8e0a68e6d76ac67f87f4b3fce8024d12f9e94e0dfbcf1aeecfae2fc66effe",
+          "capabilityId": "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:withdraw"
+        },
+        {
+          "familyId": "beefy-standard",
+          "chainId": 8453,
+          "contract": "0x028baca249b33d24fc32ac01d6531f6be0061c8e",
+          "signature": "withdrawAll()",
+          "abiHash": "0x2a20e509ad1da832fc1e017a1c356de0837abc4493f3c0ec855034eefbf2c6a3",
+          "capabilityId": "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:withdraw-all"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/camelot.json",
+      "canonicalSha256": "d68c6bb601acad04b53dd12bd54053ef7e303c03bb45913ef92e97dd4f9c3f32",
+      "bindings": [
+        {
+          "familyId": "camelot-v2",
+          "chainId": 42161,
+          "contract": "0xc873fecbd354f5a56e00e710b90ef4201db2448d",
+          "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0x88368c13c09a4a6630af0a4c17fdfef75105560c2f318cb86d56175dc7bfcefe",
+          "capabilityId": "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:add-liquidity"
+        },
+        {
+          "familyId": "camelot-v2",
+          "chainId": 42161,
+          "contract": "0xc873fecbd354f5a56e00e710b90ef4201db2448d",
+          "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0xfa8983e4d312af6bcbe3b0d00d4eb0e596087dd20f9d93225efd71a8b40649b6",
+          "capabilityId": "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:remove-liquidity"
+        },
+        {
+          "familyId": "camelot-v2",
+          "chainId": 42161,
+          "contract": "0xc873fecbd354f5a56e00e710b90ef4201db2448d",
+          "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,address,uint256)",
+          "abiHash": "0xa4bbe70bc4cee3bf607cdc71ee0471f1a720137611bea0aa1d967aaf5f601e8a",
+          "capabilityId": "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/convex.json",
+      "canonicalSha256": "4eb728179207bb2bfe2ec83d4649acfbeb179601f122b0742b15ee27d7ba675d",
+      "bindings": [
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf34dff761145ff0b05e917811d488b441f33a968",
+          "signature": "getReward()",
+          "abiHash": "0xdbceeba9d16ce40574de971d0175bbce495c0746703f68ac6a1377d63516f3d9",
+          "capabilityId": "convex:v1:1:0xf34dff761145ff0b05e917811d488b441f33a968:get-reward"
+        },
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf34dff761145ff0b05e917811d488b441f33a968",
+          "signature": "withdrawAndUnwrap(uint256,bool)",
+          "abiHash": "0x20b1c1e2c49e55e46b699d83bc88304f6319e228c6a668c209349e75178ad40b",
+          "capabilityId": "convex:v1:1:0xf34dff761145ff0b05e917811d488b441f33a968:withdraw-and-unwrap"
+        },
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf403c135812408bfbe8713b5a23a04b3d48aae31",
+          "signature": "deposit(uint256,uint256,bool)",
+          "abiHash": "0x4f2f3ac106e7ed1792719c3028ac55cc047ccfa801b50b104b6da0a388e16dce",
+          "capabilityId": "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:deposit"
+        },
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf403c135812408bfbe8713b5a23a04b3d48aae31",
+          "signature": "depositAll(uint256,bool)",
+          "abiHash": "0xd6c9bc0593e67e6f471ceb092728f09d3dfc3d3a4069ab46a579abff3c8b10ab",
+          "capabilityId": "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:deposit-all"
+        },
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf403c135812408bfbe8713b5a23a04b3d48aae31",
+          "signature": "withdraw(uint256,uint256)",
+          "abiHash": "0x53ebc4f778fae858564ce4d07e88cf37e8accf5a36a9516c75247421175c3805",
+          "capabilityId": "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:withdraw"
+        },
+        {
+          "familyId": "convex",
+          "chainId": 1,
+          "contract": "0xf403c135812408bfbe8713b5a23a04b3d48aae31",
+          "signature": "withdrawAll(uint256)",
+          "abiHash": "0x42903ac82955385026d89dd9a139b04a4391d5ded93c71047c2cddb1ceaecaef",
+          "capabilityId": "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:withdraw-all"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/dodo.json",
+      "canonicalSha256": "48697634ec921468e3a7a8766e9970c5a041da9f5adee53bffb96ff2f096859d",
+      "bindings": [
+        {
+          "familyId": "dodo-v2",
+          "chainId": 8453,
+          "contract": "0x4cad0052524648a7fa2cfe279997b00239295f33",
+          "signature": "dodoSwapV2ETHToToken(address,uint256,address[],uint256,bool,uint256)",
+          "abiHash": "0xb96b9aaf8a4d70e7d41fcfb8240e3643ac9c357e4fdb25f94abb0be95873e927",
+          "capabilityId": "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-eth-to-token"
+        },
+        {
+          "familyId": "dodo-v2",
+          "chainId": 8453,
+          "contract": "0x4cad0052524648a7fa2cfe279997b00239295f33",
+          "signature": "dodoSwapV2TokenToETH(address,uint256,uint256,address[],uint256,bool,uint256)",
+          "abiHash": "0xe01e9577894cd26611e2433adedfd5ab5fcb5be75948b679f1b5fd322b6756b9",
+          "capabilityId": "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-token-to-eth"
+        },
+        {
+          "familyId": "dodo-v2",
+          "chainId": 8453,
+          "contract": "0x4cad0052524648a7fa2cfe279997b00239295f33",
+          "signature": "dodoSwapV2TokenToToken(address,address,uint256,uint256,address[],uint256,bool,uint256)",
+          "abiHash": "0xefcd878d36d44991b8512c9fd71796153e874b8883b5a766026cbd0664d96306",
+          "capabilityId": "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-token-to-token"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/dolomite.json",
+      "canonicalSha256": "876b72f11f58c2b5dba396dc7728f55ffab30525240fe14e0c8c74ee5a63280d",
+      "bindings": [
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "depositPar(uint256,uint256,uint256,uint256,uint8)",
+          "abiHash": "0x843c381ef31c38842bcd55e0b2caa5c4c8398e7dfacf74b9c92f4c5306417ec4",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-par"
+        },
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "depositPayable(uint256,uint256,uint8)",
+          "abiHash": "0x74a521a7e70ef289a77b777436d2a520dfb6591966bfbc8efa2f8f8768f89108",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-payable"
+        },
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "depositWei(uint256,uint256,uint256,uint256,uint8)",
+          "abiHash": "0x8cd0742080ffb7717463c7ec6fc5158fa597e10d10c181659999b5b5e8396142",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-wei"
+        },
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "withdrawPar(uint256,uint256,uint256,uint256,uint8)",
+          "abiHash": "0xb0ee94e8810fa3441c429d7651a15433eac5c9e7aad2cef23da27fc579cedcc6",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-par"
+        },
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "withdrawPayable(uint256,uint256,uint256,uint8)",
+          "abiHash": "0xdc682ed1ededcaaba5e2851cdbe1532b262acea8767107f14cbe59e56295aedc",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-payable"
+        },
+        {
+          "familyId": "dolomite-router",
+          "chainId": 42161,
+          "contract": "0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff",
+          "signature": "withdrawWei(uint256,uint256,uint256,uint256,uint8)",
+          "abiHash": "0x35b66e4cbd8ebaea734682036daf0c92eb8f953a974a24a1a7d1d3c052b3d56b",
+          "capabilityId": "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-wei"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/etherfi.json",
+      "canonicalSha256": "ff782bf429a0a5440c4c779ece3403119cf471a9fc13636dbb5b4ab5578a9b01",
+      "bindings": [
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0x308861a430be4cce5502d0a12724771fc6daf216",
+          "signature": "deposit()",
+          "abiHash": "0xf7af3a303718e2f8f8599ac7d638ed7190b4f4c4d8a5b1c8ef0b4c86f0d07e89",
+          "capabilityId": "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:d0e30db0"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0x308861a430be4cce5502d0a12724771fc6daf216",
+          "signature": "deposit(address)",
+          "abiHash": "0xb50fc27b16c9555b0ed08af0792ded852fdce8bcf04d2acde5e83a3fee46e00b",
+          "capabilityId": "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:f340fa01"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0x308861a430be4cce5502d0a12724771fc6daf216",
+          "signature": "deposit(address,address)",
+          "abiHash": "0xbe77959949fbed5af9432bf10cd21068e4283a2ae41772d56e95c334e57c3518",
+          "capabilityId": "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:f9609f08"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0x308861a430be4cce5502d0a12724771fc6daf216",
+          "signature": "requestWithdraw(address,uint256)",
+          "abiHash": "0x28900edd71403a6f64323785dc40fc4a15ec0f948ce6469f2d7248edad31ec77",
+          "capabilityId": "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:397a1b28"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0x7d5706f6ef3f89b3951e23e557cdfbc3239d4e2c",
+          "signature": "claimWithdraw(uint256)",
+          "abiHash": "0x1701d9cc5bbe02b68380f08f17d74d4c9c700655446eb2e071027b15e20327ab",
+          "capabilityId": "etherfi:v1:1:0x7d5706f6ef3f89b3951e23e557cdfbc3239d4e2c:b13acedd"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
+          "signature": "unwrap(uint256)",
+          "abiHash": "0xaad15ecb9d0836014e6e89dac692e38f25457f0655f68eccb6382c5cfefdde30",
+          "capabilityId": "etherfi:v1:1:0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee:de0e9a3e"
+        },
+        {
+          "familyId": "etherfi",
+          "chainId": 1,
+          "contract": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
+          "signature": "wrap(uint256)",
+          "abiHash": "0x2b20a9ca5787645c38325f2503bb1c45807a755425a588f043bed26fd5f9fdc8",
+          "capabilityId": "etherfi:v1:1:0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee:ea598cb0"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/euler.json",
+      "canonicalSha256": "b6eaece5972cc34fc82d5e8b57d89241a9b66e71d8ed732cb8f325ce9bb91f9c",
+      "bindings": [
+        {
+          "familyId": "euler-evc",
+          "chainId": 1,
+          "contract": "0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383",
+          "signature": "disableCollateral(address,address)",
+          "abiHash": "0x76dbf3bd39614d2de44edd4be1aed2923cdf318b78d29fc48dad3865decd247a",
+          "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-collateral"
+        },
+        {
+          "familyId": "euler-evc",
+          "chainId": 1,
+          "contract": "0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383",
+          "signature": "disableController(address)",
+          "abiHash": "0xf831094ca3673aded3ea182c510e06bf6a062aaf74cf69c625ed38a15d36811f",
+          "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-controller"
+        },
+        {
+          "familyId": "euler-evc",
+          "chainId": 1,
+          "contract": "0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383",
+          "signature": "enableCollateral(address,address)",
+          "abiHash": "0x036ad45e8849bda4a460a3b45bfe4ecc830453a560eec7c79f8f9395b1ea0e74",
+          "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-collateral"
+        },
+        {
+          "familyId": "euler-evc",
+          "chainId": 1,
+          "contract": "0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383",
+          "signature": "enableController(address,address)",
+          "abiHash": "0x8618f54dc2ac5e3d480f4be07c7d73805d1dfadcf213cc7812710a6ff849a78a",
+          "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-controller"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "borrow(uint256,address)",
+          "abiHash": "0xd0724d98df5270886c0cd03819620c724c64c3775ff2c67e0ee115916f214dc7",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:borrow"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "deposit(uint256,address)",
+          "abiHash": "0x2875796fb6b1d0c2bcf0ec80cf67059018a20d04268f450a9ab1c74a4e5c9bb5",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:deposit"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "mint(uint256,address)",
+          "abiHash": "0xba0cd39d6b2766c7bfb286ab37ab5bf1df0ef097130f82f7cce6668765a61a5c",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:mint"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "redeem(uint256,address,address)",
+          "abiHash": "0xf50f91fdc6dc17592e38bf67f90199b9e35f9e90661c3c4f8588193c8b6ac73e",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:redeem"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "repay(uint256,address)",
+          "abiHash": "0x96b4fe0dd314c383159813447134af74a3b251568318c5bcae7a548ff8f660e8",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:repay"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
+          "signature": "withdraw(uint256,address,address)",
+          "abiHash": "0x8a7dc9747eb51cdddc3d9eeb6feca1f3bbfe693eae71bdfbfb13e1a452609030",
+          "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:withdraw"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "borrow(uint256,address)",
+          "abiHash": "0xd0724d98df5270886c0cd03819620c724c64c3775ff2c67e0ee115916f214dc7",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:borrow"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "deposit(uint256,address)",
+          "abiHash": "0x2875796fb6b1d0c2bcf0ec80cf67059018a20d04268f450a9ab1c74a4e5c9bb5",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:deposit"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "mint(uint256,address)",
+          "abiHash": "0xba0cd39d6b2766c7bfb286ab37ab5bf1df0ef097130f82f7cce6668765a61a5c",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:mint"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "redeem(uint256,address,address)",
+          "abiHash": "0xf50f91fdc6dc17592e38bf67f90199b9e35f9e90661c3c4f8588193c8b6ac73e",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:redeem"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "repay(uint256,address)",
+          "abiHash": "0x96b4fe0dd314c383159813447134af74a3b251568318c5bcae7a548ff8f660e8",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:repay"
+        },
+        {
+          "familyId": "euler-vault",
+          "chainId": 1,
+          "contract": "0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4",
+          "signature": "withdraw(uint256,address,address)",
+          "abiHash": "0x8a7dc9747eb51cdddc3d9eeb6feca1f3bbfe693eae71bdfbfb13e1a452609030",
+          "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:withdraw"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/fluid.json",
+      "canonicalSha256": "4f40d901396cc6cdf224bd855ec918933b25bed915b2830eb120765bfffda923",
+      "bindings": [
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "deposit(uint256,address)",
+          "abiHash": "0xe497380ea86e6b869e571ea8ec0962b3f7a66760bbf00bcc4cce167627048bf1",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:6e553f65"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "deposit(uint256,address,uint256)",
+          "abiHash": "0x9ded6658aaa147b4bcd547139f3e762eb8dd62de07eada607d4e775e4438024c",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:bc157ac1"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "mint(uint256,address)",
+          "abiHash": "0x6705a990c2c76d3d20526f8d09b0b4fa97093d7d705896e3acf7a921dcc25764",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:94bf804d"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "mint(uint256,address,uint256)",
+          "abiHash": "0xded7660117e1579ebec99f63056c1b6bd111ca9a486db8b9819192246d19ff0c",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:836a1040"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "redeem(uint256,address,address)",
+          "abiHash": "0xfd6dbe828ebe4867fb58e9926290b0467f90ea15664bfff37607ec9f9bc6eec7",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:ba087652"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "redeem(uint256,address,address,uint256)",
+          "abiHash": "0x1c5b0e6ee1d6f288fff4898b92194359ac7ec0e6bb13d8cbeaa48c6a6d51b1b1",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:9f40a7b3"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "withdraw(uint256,address,address)",
+          "abiHash": "0xb0961f92d91ed7be73963fb3158f8a36bd5a0eec31f6aef824c0545de1aef1b3",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:b460af94"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0x9272d6153133175175bc276512b2336be3931ce9",
+          "signature": "withdraw(uint256,address,address,uint256)",
+          "abiHash": "0xe00fe2909e7e87497320dcb76abbc6fd90de06157078033d29f8e2a2e33ae780",
+          "capabilityId": "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:a318c1a4"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "deposit(uint256,address)",
+          "abiHash": "0xe497380ea86e6b869e571ea8ec0962b3f7a66760bbf00bcc4cce167627048bf1",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:6e553f65"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "deposit(uint256,address,uint256)",
+          "abiHash": "0x9ded6658aaa147b4bcd547139f3e762eb8dd62de07eada607d4e775e4438024c",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:bc157ac1"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "mint(uint256,address)",
+          "abiHash": "0x6705a990c2c76d3d20526f8d09b0b4fa97093d7d705896e3acf7a921dcc25764",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:94bf804d"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "mint(uint256,address,uint256)",
+          "abiHash": "0xded7660117e1579ebec99f63056c1b6bd111ca9a486db8b9819192246d19ff0c",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:836a1040"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "redeem(uint256,address,address)",
+          "abiHash": "0xfd6dbe828ebe4867fb58e9926290b0467f90ea15664bfff37607ec9f9bc6eec7",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:ba087652"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "redeem(uint256,address,address,uint256)",
+          "abiHash": "0x1c5b0e6ee1d6f288fff4898b92194359ac7ec0e6bb13d8cbeaa48c6a6d51b1b1",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:9f40a7b3"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "withdraw(uint256,address,address)",
+          "abiHash": "0xb0961f92d91ed7be73963fb3158f8a36bd5a0eec31f6aef824c0545de1aef1b3",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:b460af94"
+        },
+        {
+          "familyId": "fluid-lending",
+          "chainId": 8453,
+          "contract": "0xf42f5795d9ac7e9d757db633d693cd548cfd9169",
+          "signature": "withdraw(uint256,address,address,uint256)",
+          "abiHash": "0xe00fe2909e7e87497320dcb76abbc6fd90de06157078033d29f8e2a2e33ae780",
+          "capabilityId": "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:a318c1a4"
+        },
+        {
+          "familyId": "fluid-vault-t1",
+          "chainId": 8453,
+          "contract": "0x03271c337c86a6fd89625a2820e48621dc2a128b",
+          "signature": "operate(uint256,int256,int256,address)",
+          "abiHash": "0x816575c0acdb9b9d90664a2fa30594525a904b848f60d52f9d3de852b48bd093",
+          "capabilityId": "fluid-vault-t1:v1:8453:0x03271c337c86a6fd89625a2820e48621dc2a128b:operate"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/kelp.json",
+      "canonicalSha256": "3347ebbf8b9d366cda712e51d35c7ba15e753ed2d3c8c46ccf1d3f8b65efcad3",
+      "bindings": [
+        {
+          "familyId": "kelp",
+          "chainId": 1,
+          "contract": "0x036676389e48133b63a802f8635ad39e752d375d",
+          "signature": "depositAsset(address,uint256,uint256,string)",
+          "abiHash": "0xb4cf004a41be90f56cb8d3abc3c75dd40f1f7858e896755e3164b8a4e07fb2c7",
+          "capabilityId": "kelp:v1:1:0x036676389e48133b63a802f8635ad39e752d375d:deposit-asset"
+        },
+        {
+          "familyId": "kelp",
+          "chainId": 1,
+          "contract": "0x036676389e48133b63a802f8635ad39e752d375d",
+          "signature": "depositETH(uint256,string)",
+          "abiHash": "0x437398cec02435efb45ec9fa8bf94836321c4af8a6555d4b890b3fed7c708682",
+          "capabilityId": "kelp:v1:1:0x036676389e48133b63a802f8635ad39e752d375d:deposit-eth"
+        },
+        {
+          "familyId": "kelp",
+          "chainId": 1,
+          "contract": "0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16",
+          "signature": "completeWithdrawal(address,string)",
+          "abiHash": "0x8c145db6c7b45083a496e07a4b85fdcba13bebfd7ffda272ad351712171ce253",
+          "capabilityId": "kelp:v1:1:0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16:complete-withdrawal"
+        },
+        {
+          "familyId": "kelp",
+          "chainId": 1,
+          "contract": "0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16",
+          "signature": "initiateWithdrawal(address,uint256,string)",
+          "abiHash": "0x415ffa61aab871876c2e9f1313bc4d672bb319444b940c093c109ad801535616",
+          "capabilityId": "kelp:v1:1:0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16:initiate-withdrawal"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/lfj.json",
+      "canonicalSha256": "95efdc8b4b9156dc1889d7b15c5cf309d181432da5ca625acee8ad848ad07e09",
+      "bindings": [
+        {
+          "familyId": "lfj-liquidity-book",
+          "chainId": 42161,
+          "contract": "0x18556da13313f3532c54711497a8fedac273220e",
+          "signature": "addLiquidity((address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,int256[],uint256[],uint256[],address,address,uint256))",
+          "abiHash": "0x5ecc1198b1135e48bc766d18ffa9a2943186d61425ba6cce8d0d6c958dcce159",
+          "capabilityId": "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:add-liquidity"
+        },
+        {
+          "familyId": "lfj-liquidity-book",
+          "chainId": 42161,
+          "contract": "0x18556da13313f3532c54711497a8fedac273220e",
+          "signature": "removeLiquidity(address,address,uint16,uint256,uint256,uint256[],uint256[],address,uint256)",
+          "abiHash": "0xd8b70f819d3a861f0318759b4d6fcd45de092a885cc745bd085339ac56603a67",
+          "capabilityId": "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:remove-liquidity"
+        },
+        {
+          "familyId": "lfj-liquidity-book",
+          "chainId": 42161,
+          "contract": "0x18556da13313f3532c54711497a8fedac273220e",
+          "signature": "swapExactTokensForTokens(uint256,uint256,(uint256[],uint8[],address[]),address,uint256)",
+          "abiHash": "0x346b5e9f8e2544cf23b2675a4cffee98ad0a4ff03e3fbe804cec07e3674bffa4",
+          "capabilityId": "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:swap-exact-tokens-for-tokens"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/maverick.json",
+      "canonicalSha256": "85fea57ad8e81ab092afd91a11cf62c6e331e0c0e32cf650a40913668033b206",
+      "bindings": [
+        {
+          "familyId": "maverick-v2",
+          "chainId": 42161,
+          "contract": "0x5c3b380e5aeec389d1014da3eb372fa2c9e0fc76",
+          "signature": "exactInputSingle(address,address,bool,uint256,uint256)",
+          "abiHash": "0x3d03c422f4b1471b30cacfb70f300db0ac677dc07248b55e543a218dec087a6e",
+          "capabilityId": "maverick-v2:v2:42161:0x5c3b380e5aeec389d1014da3eb372fa2c9e0fc76:exact-input-single"
+        },
+        {
+          "familyId": "maverick-v2",
+          "chainId": 8453,
+          "contract": "0x5eded0d7e76c563ff081ca01d9d12d6b404df527",
+          "signature": "exactInputSingle(address,address,bool,uint256,uint256)",
+          "abiHash": "0x3d03c422f4b1471b30cacfb70f300db0ac677dc07248b55e543a218dec087a6e",
+          "capabilityId": "maverick-v2:v2:8453:0x5eded0d7e76c563ff081ca01d9d12d6b404df527:exact-input-single"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/moonwell.json",
+      "canonicalSha256": "792bc5872520c0258448cb03157acd2164ac5787ff43ec6ff8589f2ea681c6ef",
+      "bindings": [
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "signature": "borrow(uint256)",
+          "abiHash": "0x5c19524f1d73756b91768190dd67dbfac8ed6f10d3cc9accf1ede4614b3413b5",
+          "capabilityId": "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "signature": "mint(uint256)",
+          "abiHash": "0x8b17395600f41470737ebb056e884a37c492d71b5247f8bdeb4403370fcb0644",
+          "capabilityId": "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:mint"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "signature": "redeem(uint256)",
+          "abiHash": "0x9a232313131c29efedda944bf160a7cef35fd5916ba38d92c3d3d2d540a61657",
+          "capabilityId": "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:redeem"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "signature": "redeemUnderlying(uint256)",
+          "abiHash": "0x23b68612f08d4091954faf298c01593a6e753b35800c34b995b25b95a67582c9",
+          "capabilityId": "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:redeem-underlying"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "signature": "repayBorrow(uint256)",
+          "abiHash": "0x55be26b14f86a58ae06129c79b0e2d155e65ff43c1e5eda0fd0b3bf77f24b679",
+          "capabilityId": "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:repay-borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "signature": "borrow(uint256)",
+          "abiHash": "0x5c19524f1d73756b91768190dd67dbfac8ed6f10d3cc9accf1ede4614b3413b5",
+          "capabilityId": "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "signature": "mint(uint256)",
+          "abiHash": "0x8b17395600f41470737ebb056e884a37c492d71b5247f8bdeb4403370fcb0644",
+          "capabilityId": "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:mint"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "signature": "redeem(uint256)",
+          "abiHash": "0x9a232313131c29efedda944bf160a7cef35fd5916ba38d92c3d3d2d540a61657",
+          "capabilityId": "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:redeem"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "signature": "redeemUnderlying(uint256)",
+          "abiHash": "0x23b68612f08d4091954faf298c01593a6e753b35800c34b995b25b95a67582c9",
+          "capabilityId": "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:redeem-underlying"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "signature": "repayBorrow(uint256)",
+          "abiHash": "0x55be26b14f86a58ae06129c79b0e2d155e65ff43c1e5eda0fd0b3bf77f24b679",
+          "capabilityId": "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:repay-borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "signature": "borrow(uint256)",
+          "abiHash": "0x5c19524f1d73756b91768190dd67dbfac8ed6f10d3cc9accf1ede4614b3413b5",
+          "capabilityId": "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "signature": "mint(uint256)",
+          "abiHash": "0x8b17395600f41470737ebb056e884a37c492d71b5247f8bdeb4403370fcb0644",
+          "capabilityId": "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:mint"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "signature": "redeem(uint256)",
+          "abiHash": "0x9a232313131c29efedda944bf160a7cef35fd5916ba38d92c3d3d2d540a61657",
+          "capabilityId": "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:redeem"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "signature": "redeemUnderlying(uint256)",
+          "abiHash": "0x23b68612f08d4091954faf298c01593a6e753b35800c34b995b25b95a67582c9",
+          "capabilityId": "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:redeem-underlying"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "signature": "repayBorrow(uint256)",
+          "abiHash": "0x55be26b14f86a58ae06129c79b0e2d155e65ff43c1e5eda0fd0b3bf77f24b679",
+          "capabilityId": "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:repay-borrow"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xfbb21d0380bee3312b33c4353c8936a0f13ef26c",
+          "signature": "enterMarkets(address[])",
+          "abiHash": "0x15eca5aaa779b4b58900184dfa4f8fc132ec9cf22a595873315e869d2274825e",
+          "capabilityId": "moonwell:v2:8453:0xfbb21d0380bee3312b33c4353c8936a0f13ef26c:enter-markets"
+        },
+        {
+          "familyId": "moonwell",
+          "chainId": 8453,
+          "contract": "0xfbb21d0380bee3312b33c4353c8936a0f13ef26c",
+          "signature": "exitMarket(address)",
+          "abiHash": "0x678bb0714f9a0ccb5e467575857010f7398e6575e0e9ea2b4ade513fe8ed1961",
+          "capabilityId": "moonwell:v2:8453:0xfbb21d0380bee3312b33c4353c8936a0f13ef26c:exit-market"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/pendle.json",
+      "canonicalSha256": "9c1b895a7a2ef9d83538bb6b16a20b5022416c0fa8c3cbf453c507bb2e8c351b",
+      "bindings": [
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0x888888888889758f76e7103c6cbf23abbf58f946",
+          "signature": "addLiquidityDualSyAndPt(address,address,uint256,uint256,uint256)",
+          "abiHash": "0xf7a98a125c9a347533f3734540bd6adcfa53761fc6fe511d24520775046eaf05",
+          "capabilityId": "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:add-liquidity-dual-sy-pt"
+        },
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0x888888888889758f76e7103c6cbf23abbf58f946",
+          "signature": "mintPyFromSy(address,address,uint256,uint256)",
+          "abiHash": "0x6d78fe2e824ccfe9bba647bd05f6363d9dd59e97c12c5610434c48d4b72a28ae",
+          "capabilityId": "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:mint-py-from-sy"
+        },
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0x888888888889758f76e7103c6cbf23abbf58f946",
+          "signature": "redeemPyToSy(address,address,uint256,uint256)",
+          "abiHash": "0x885334a63a66f1e8c4f9551ec8132304b100ba96e98c00b5341612bd7e3e3063",
+          "capabilityId": "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:redeem-py-to-sy"
+        },
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0x888888888889758f76e7103c6cbf23abbf58f946",
+          "signature": "removeLiquidityDualSyAndPt(address,address,uint256,uint256,uint256)",
+          "abiHash": "0x800464606db0b727b8ecd32e4063ca05bc92163f70ff242a7a8bce3c91e825ba",
+          "capabilityId": "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:remove-liquidity-dual-sy-pt"
+        },
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0xcad69479358c1ef3560f29f278966df772abf42f",
+          "signature": "deposit(address,address,uint256,uint256)",
+          "abiHash": "0x845bdc164adac7854b57ed1558cdf1308473ba46ded3b4efa9a77367a07ddfea",
+          "capabilityId": "pendle-v3:v3:1:0xcad69479358c1ef3560f29f278966df772abf42f:deposit-sy"
+        },
+        {
+          "familyId": "pendle-v3",
+          "chainId": 1,
+          "contract": "0xcad69479358c1ef3560f29f278966df772abf42f",
+          "signature": "redeem(address,uint256,address,uint256,bool)",
+          "abiHash": "0xc435706365c56ae3a11a1e9704458de4075877a791d0ec475a919eff09850d0f",
+          "capabilityId": "pendle-v3:v3:1:0xcad69479358c1ef3560f29f278966df772abf42f:redeem-sy"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/quickswap.json",
+      "canonicalSha256": "eec02e8484ceb66b5bff2f7d1d3dbd5601f25836abe4ab6774625bc490ee898c",
+      "bindings": [
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0x5661533958b3ce1882d77fb48557ada6c4c8f6655efa6268468049d67427f758",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:add-liquidity"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0xd98fc34470c76fa1fb6dcecf2d54ee88c77154cd919550e769564de34dcaa27c",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:add-liquidity-eth"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0x1f759b2df1ad80c48e5c713c3836c0d73004f0decf8b60003eeda7fc889dde80",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:remove-liquidity"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+          "abiHash": "0x895b8588b8173da087ed8034728d3be2b162a828bdddbcbae3f668aa90bdb6c0",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:remove-liquidity-eth"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+          "abiHash": "0x65837268c78b0fd4eda2d36e82582366d0cb9cbd2edf63e0365d724249104d5f",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-eth-for-exact-tokens"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+          "abiHash": "0xdc13b0493310f8ede7ae906fedc01ca53061ed9d9d2ffb9db8b61631330358cc",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-eth-for-tokens"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+          "abiHash": "0xd7ef46101fe4712370b2dce6145a8c0ecd28081efaf2733b6589d75dd6373c0c",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-tokens-for-eth"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+          "abiHash": "0xe675fcad9cae4a094ae9f0f13131c8f934afc061ff1b122a9e6f8815440f18d6",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-tokens-for-tokens"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+          "abiHash": "0x0234b6474d36e4b373464f2ce39244339ba6351ab4a7f2b6ff7b09a9da02c7b5",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-tokens-for-exact-eth"
+        },
+        {
+          "familyId": "quickswap-v2",
+          "chainId": 137,
+          "contract": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+          "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+          "abiHash": "0x23184a084029c5f737269f08fe0e0c7807fcbbfc294584092b9a6a4cc1a2fc57",
+          "capabilityId": "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-tokens-for-exact-tokens"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/renzo.json",
+      "canonicalSha256": "76ee9710e0a8b11f2b9f6e82c8a8eb06c06aacb818c2e626334e42a6322bb514",
+      "bindings": [
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918",
+          "signature": "claim(uint256,address)",
+          "abiHash": "0x9ac011f395580be00b604437914a1403278d07c67b043a64641fbbba3932b8e7",
+          "capabilityId": "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:ddd5e1b2"
+        },
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918",
+          "signature": "withdraw(uint256,address)",
+          "abiHash": "0xcbcd177177adfba790ff8295ca3f6513cbcbcdeefb6ba5a8ea6794ccaaaece07",
+          "capabilityId": "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:00f714ce"
+        },
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x74a09653a083691711cf8215a6ab074bb4e99ef5",
+          "signature": "deposit(address,uint256)",
+          "abiHash": "0x926b7f5354f3160e09a525a910325a55844383eab9d8dcee1e1ede346087b721",
+          "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:47e7ef24"
+        },
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x74a09653a083691711cf8215a6ab074bb4e99ef5",
+          "signature": "deposit(address,uint256,uint256)",
+          "abiHash": "0xb2a54139fbca15f7e0c7537341a3dcfcb56010a7ddcb57e05f5110d65527999d",
+          "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:0efe6a8b"
+        },
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x74a09653a083691711cf8215a6ab074bb4e99ef5",
+          "signature": "depositETH()",
+          "abiHash": "0x457320b0486f940fa2f9ee7c294fc3d958836370ee67635665108552e7967357",
+          "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:f6326fb3"
+        },
+        {
+          "familyId": "renzo",
+          "chainId": 1,
+          "contract": "0x74a09653a083691711cf8215a6ab074bb4e99ef5",
+          "signature": "depositETH(uint256)",
+          "abiHash": "0x4c1ab4fb4090be0eb0f957566d8ff36a3b54873e516a5168d3bc81c0c3479108",
+          "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:5358fbda"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/rocket-pool.json",
+      "canonicalSha256": "855103f1ff7b3b36f3fb480fa43fd1808af4b6c71862c18f6396c5f5e1e2fff9",
+      "bindings": [
+        {
+          "familyId": "rocket-pool",
+          "chainId": 1,
+          "contract": "0xae78736cd615f374d3085123a210448e74fc6393",
+          "signature": "burn(uint256)",
+          "abiHash": "0x144d29b134a4a86a98ee9bbbe5c32756c7d0d3a46b563d31cd243b849ce929b6",
+          "capabilityId": "rocket-pool:v1:1:0xae78736cd615f374d3085123a210448e74fc6393:burn"
+        },
+        {
+          "familyId": "rocket-pool",
+          "chainId": 1,
+          "contract": "0xdd3f50f8a6cafbe9b31a427582963f465e745af8",
+          "signature": "deposit()",
+          "abiHash": "0x843bc76e9b37f6f244f6c3fb4e28e3326df5c9f744f45f159a9eed920b284b1a",
+          "capabilityId": "rocket-pool:v1:1:0xdd3f50f8a6cafbe9b31a427582963f465e745af8:deposit"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/silo.json",
+      "canonicalSha256": "58d95da7f9ec996a61a7186428c0739146bb5d91a6c8ff0654a1eaef067187be",
+      "bindings": [
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "borrow(uint256,address,address)",
+          "abiHash": "0xa41339292253920b3b93de134979b99f3e2d6a83102a3da426302fa210cd5edf",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:borrow"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "deposit(uint256,address,uint8)",
+          "abiHash": "0x75381b56fbc609fb1d093d2a3ec4e0a665d42dd59ccb9c59cac7d853102e8c08",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:deposit"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "mint(uint256,address,uint8)",
+          "abiHash": "0xeee7ae0cf7dc9fae9351f2880ab597e792eb90ddacaa2bcd15d5c5047bec4695",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:mint"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "redeem(uint256,address,address,uint8)",
+          "abiHash": "0x73a692a6ce2ea038f6bc77a9c55f252cf1db19f4aaa808c5b2fdd399d0d3b403",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:redeem"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "repay(uint256,address)",
+          "abiHash": "0xbb2ebc0bfac9adc9e370a6881957e5d4d8f2b7ccda0b8e5f2c3b7c6a1d28ddc5",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:repay"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x5b73fb33c602351664d02ed199847b7a155297b5",
+          "signature": "withdraw(uint256,address,address,uint8)",
+          "abiHash": "0x94510c160f2bd6a24e3e4b13e4f94bc661d91cde7999a774c7930462b26e9f98",
+          "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:withdraw"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "borrow(uint256,address,address)",
+          "abiHash": "0xa41339292253920b3b93de134979b99f3e2d6a83102a3da426302fa210cd5edf",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:borrow"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "deposit(uint256,address,uint8)",
+          "abiHash": "0x75381b56fbc609fb1d093d2a3ec4e0a665d42dd59ccb9c59cac7d853102e8c08",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:deposit"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "mint(uint256,address,uint8)",
+          "abiHash": "0xeee7ae0cf7dc9fae9351f2880ab597e792eb90ddacaa2bcd15d5c5047bec4695",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:mint"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "redeem(uint256,address,address,uint8)",
+          "abiHash": "0x73a692a6ce2ea038f6bc77a9c55f252cf1db19f4aaa808c5b2fdd399d0d3b403",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:redeem"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "repay(uint256,address)",
+          "abiHash": "0xbb2ebc0bfac9adc9e370a6881957e5d4d8f2b7ccda0b8e5f2c3b7c6a1d28ddc5",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:repay"
+        },
+        {
+          "familyId": "silo-vault",
+          "chainId": 42161,
+          "contract": "0x84d1b853c1f34a01c6120013ac7ac704d5383a8d",
+          "signature": "withdraw(uint256,address,address,uint8)",
+          "abiHash": "0x94510c160f2bd6a24e3e4b13e4f94bc661d91cde7999a774c7930462b26e9f98",
+          "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:withdraw"
+        }
+      ]
+    },
+    {
+      "sourcePath": "data/defi-catalog/v5/sources/stakewise.json",
+      "canonicalSha256": "55f1d083571da46dd76c4bbf8f5255ab2950a3bebe01bf383a96935ea445399f",
+      "bindings": [
+        {
+          "familyId": "stakewise",
+          "chainId": 1,
+          "contract": "0xac0f906e433d58fa868f936e8a43230473652885",
+          "signature": "claimExitedAssets(uint256,uint256,uint256)",
+          "abiHash": "0x090e61d90b524ad7cf4af44c4a2a2b60fee4cbfd4a5b03f5339ffd169b827091",
+          "capabilityId": "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:claim-exited-assets"
+        },
+        {
+          "familyId": "stakewise",
+          "chainId": 1,
+          "contract": "0xac0f906e433d58fa868f936e8a43230473652885",
+          "signature": "deposit(address,address)",
+          "abiHash": "0xc4e38d2a3b7da8d0f96df0a8c0d76b650e1df4deb75dc305cf202febea76d25d",
+          "capabilityId": "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:deposit"
+        },
+        {
+          "familyId": "stakewise",
+          "chainId": 1,
+          "contract": "0xac0f906e433d58fa868f936e8a43230473652885",
+          "signature": "enterExitQueue(uint256,address)",
+          "abiHash": "0x3b438a431348458aefd574abbd7281b67f202acfda5f7a90b3e3d60ae8cfe795",
+          "capabilityId": "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:enter-exit-queue"
+        }
+      ]
+    }
+  ]
+}

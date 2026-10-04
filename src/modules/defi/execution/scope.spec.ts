@@ -24,4 +24,11 @@ describe('executionScopeHash', () => {
     expect(() => executionScopeHash({ kind: 'empty-callback-data-v1', bytesArgIndex: -1 })).toThrow();
     expect(() => executionScopeHash({ kind: 'empty-callback-data-v1', bytesArgIndex: 1, extra: true } as never)).toThrow();
   });
+
+  it('hashes the exact closed Ambient callpath and bytes indices', () => {
+    expect(executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1 })).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 1, bytesArgIndex: 1 } as never)).toThrow();
+    expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 2 } as never)).toThrow();
+    expect(() => executionScopeHash({ kind: 'ambient-coldpath-v1', callpathArgIndex: 0, bytesArgIndex: 1, commands: [1, 2] } as never)).toThrow();
+  });
 });

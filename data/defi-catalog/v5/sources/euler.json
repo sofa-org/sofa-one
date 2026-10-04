@@ -1,0 +1,778 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "euler-vault",
+      "familyVersion": "evk-v1",
+      "chains": [
+        {
+          "chainId": 1,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+              "status": "inactive",
+              "contractName": "Euler eWETH-1 registered EVault",
+              "functions": [
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:deposit",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "deposit",
+                  "signature": "deposit(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "deposit",
+                  "label": "Euler deposit",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:mint",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "mint",
+                  "signature": "mint(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "mint",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "mint",
+                  "label": "Euler mint",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:withdraw",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdraw",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "owner",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "withdraw",
+                  "label": "Euler withdraw",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:redeem",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "redeem",
+                  "signature": "redeem(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "redeem",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "owner",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "redeem",
+                  "label": "Euler redeem",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:borrow",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "borrow",
+                  "signature": "borrow(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "borrow",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "borrow",
+                  "label": "Euler borrow",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:repay",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8",
+                  "functionName": "repay",
+                  "signature": "repay(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "repay",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "repay",
+                  "label": "Euler repay",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                }
+              ]
+            },
+            {
+              "address": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+              "status": "inactive",
+              "contractName": "Euler ewstETH-1 registered EVault",
+              "functions": [
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:deposit",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "deposit",
+                  "signature": "deposit(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "deposit",
+                  "label": "Euler deposit",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:mint",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "mint",
+                  "signature": "mint(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "mint",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "mint",
+                  "label": "Euler mint",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:withdraw",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdraw",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "owner",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "withdraw",
+                  "label": "Euler withdraw",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:redeem",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "redeem",
+                  "signature": "redeem(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "redeem",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "owner",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "redeem",
+                  "label": "Euler redeem",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:borrow",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "borrow",
+                  "signature": "borrow(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "borrow",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "borrow",
+                  "label": "Euler borrow",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:repay",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4",
+                  "functionName": "repay",
+                  "signature": "repay(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "repay",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evault-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "repay",
+                  "label": "Euler repay",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "familyId": "euler-evc",
+      "familyVersion": "evc-v1",
+      "chains": [
+        {
+          "chainId": 1,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383",
+              "status": "inactive",
+              "contractName": "Ethereum Vault Connector",
+              "functions": [
+                {
+                  "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-collateral",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383",
+                  "functionName": "enableCollateral",
+                  "signature": "enableCollateral(address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "enableCollateral",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "account",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "vault",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evc-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "enable-collateral",
+                  "label": "Euler enable-collateral",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-collateral",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383",
+                  "functionName": "disableCollateral",
+                  "signature": "disableCollateral(address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "disableCollateral",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "account",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "vault",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evc-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "disable-collateral",
+                  "label": "Euler disable-collateral",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-controller",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383",
+                  "functionName": "enableController",
+                  "signature": "enableController(address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "enableController",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "account",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "vault",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evc-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "enable-controller",
+                  "label": "Euler enable-controller",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                },
+                {
+                  "capabilityId": "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-controller",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383",
+                  "functionName": "disableController",
+                  "signature": "disableController(address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "disableController",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "account",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "euler-evc-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Euler",
+                  "operation": "disable-controller",
+                  "label": "Euler disable-controller",
+                  "warnings": [
+                    "Caller-selected ABI-valid values and protocol state; no platform financial or asset restrictions are implied."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "euler-official-chains",
+    "url": "https://github.com/euler-xyz/euler-interfaces/blob/d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3/EulerChains.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official euler-interfaces commit d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3 identifies Ethereum chain-1 core GenericFactory 0x29a56a1b8214D9Cf7c5561811750D5cBDb45CC8e and EVC 0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383."
+    },
+    {
+      "sourceId": "euler-factory-list",
+      "url": "https://github.com/euler-xyz/euler-interfaces/blob/d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3/abis/GenericFactory.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official GenericFactory ABI specifies getProxyListLength and getProxyListSlice. Parent-observed read-only public Ethereum RPC pinned at block 0x18e88b7 (hash 0x84e2463ffb267cd1101208c23f88e5d1ffc32a7363a6fe627ff840c573a924b6), factory proxy list length 889 and slice [0,4] returned four vault addresses; only two selected below."
+    },
+    {
+      "sourceId": "euler-evault-abi",
+      "url": "https://github.com/euler-xyz/euler-interfaces/blob/d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3/abis/EVault.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official EVault ABI provides the exact selected deposit/mint/withdraw/redeem/borrow/repay declarations. At parent-observed pinned public Ethereum RPC block 0x18e88b7 typed asset(), symbol(), and EVC() views succeeded for both selected registered vaults: eWETH-1 with WETH asset and ewstETH-1 with wstETH asset; both EVC views matched the official EVC address. Vaults are factory-registered targets, not implementation artifacts."
+    },
+    {
+      "sourceId": "euler-evc-abi",
+      "url": "https://github.com/euler-xyz/euler-interfaces/blob/d0e9a428523b3de6cb3e6c7a06ad55b6e59223f3/abis/EthereumVaultConnector.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official EthereumVaultConnector ABI supplies exact payable void declarations enableCollateral(account,vault), disableCollateral(account,vault), enableController(account,vault), and disableController(account). At parent-observed pinned public Ethereum RPC block 0x18e88b7 the official EVC role is the typed getter reported for both selected vaults."
+    },
+    {
+      "sourceId": "euler-pinned-views",
+      "url": "https://ethereum-rpc.publicnode.com",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Parent-observed read-only Ethereum RPC chain 1, block 0x18e88b7/hash 0x84e2463ffb267cd1101208c23f88e5d1ffc32a7363a6fe627ff840c573a924b6. getProxyListLength() selector 0x0a68b7ba returned 889; getProxyListSlice(0,4) returned 0xb3b36220fA7d12f7055dab5c9FD18E860e9a6bF8, 0xD8b27CF359b7D15710a5BE299AF6e7Bf904984C2, 0xF6E2EfDF175e7a91c8847dade42f2d39A9aE57D4, 0xbC4B4AC47582c3E38Ce5940B80Da65401F4628f1. For only selected first and third, typed asset/symbol/EVC views succeeded: WETH/eWETH-1 and wstETH/ewstETH-1; both EVC 0x0C9a3dd6b8F28529d72d7f9cE918D493519EE383. This dated observation is not a current/funded-code, liquidity, safety, curator-endorsement, or whole-population claim."
+    }
+  ]
+}

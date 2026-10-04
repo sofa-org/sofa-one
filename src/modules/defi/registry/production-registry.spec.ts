@@ -17,7 +17,7 @@ import { buildStakingRegistry } from './staking';
 import { buildMorphoBlueRegistry } from './morpho-blue';
 import { buildPancakeV2Registry } from './pancake-v2';
 import { buildStakingExitRegistry } from './staking-exit';
-import { encodeFunctionData, toFunctionSelector } from 'viem';
+import { encodeAbiParameters, encodeFunctionData, maxUint256, toFunctionSelector } from 'viem';
 import { buildSparkLendRegistry } from './spark-lend';
 import { buildVenusRegistry } from './venus';
 import { buildSushiV2Registry } from './sushi-v2';
@@ -31,10 +31,10 @@ const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
 @Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }], exports: [PrismaService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
-  it('assembles 368 exact, source-verified function capabilities as active', () => {
+  it('assembles 506 exact, source-verified function capabilities as active', () => {
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST)).toBe(true);
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST.capabilities)).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(368);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(506);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
     expect(PRODUCTION_DEFI_CATALOG).toBe(PRODUCTION_DEFI_MANIFEST.chains);
     expect(PRODUCTION_DEFI_CATALOG.map((chain) => chain.chainId)).toEqual([1, 10, 56, 137, 143, 8453, 42161]);
@@ -42,7 +42,7 @@ describe('production DeFi registry assembly', () => {
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => fn.provenance.sourceRef.length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(fn.provenance.verifiedAt))).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => Object.isFrozen(fn) && Object.isFrozen(fn.abi) && Object.isFrozen(fn.abi.inputs) && Object.isFrozen(fn.abi.outputs) && Object.isFrozen(fn.provenance))).toBe(true);
     expect(PRODUCTION_DEFI_CATALOG.every((chain) => Object.isFrozen(chain) && Object.isFrozen(chain.contracts) && chain.contracts.every((contract) => Object.isFrozen(contract) && Object.isFrozen(contract.functions)))).toBe(true);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(345);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(483);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Aave V3')).toHaveLength(28);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Compound III')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Morpho Vault V2')).toHaveLength(6);
@@ -101,8 +101,8 @@ describe('production DeFi registry assembly', () => {
     expect(baselineApprovalIds).toHaveLength(20);
     expect(newApprovalFunctions.every((fn) => !baselineApprovalIds.includes(fn.capabilityId))).toBe(true);
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(368);
-    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(368);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(506);
+    expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(506);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? ''));
     expect(sourceFunctions).toHaveLength(160);
@@ -138,7 +138,7 @@ describe('production DeFi registry assembly', () => {
     expect(newNpmFunctions).toHaveLength(28);
     expect(newMorphoFunctions).toHaveLength(6);
     expect([...newNpmFunctions, ...newMorphoFunctions]).toHaveLength(34);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(14);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(15);
     expect(newMorphoFunctions.every((fn) => fn.executionScope?.kind === 'empty-callback-data-v1')).toBe(true);
     const pancakeWrapper = pancakeswap.find((fn) => fn.signature === 'multicall(bytes[])')!;
     expect(pancakeWrapper.executionScope?.kind).toBe('same-target-multicall-v1');
@@ -175,8 +175,10 @@ describe('production DeFi registry assembly', () => {
 
   it('authorizes each of the 19 v4 source additions only under its exact grant and fixed ABI/scope', async () => {
     const v3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v3/catalog.json'), 'utf8')));
+    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v4/catalog.json'), 'utf8')));
     const priorIds = new Set(buildReviewedManifest([v3]).capabilities.map((fn) => fn.capabilityId));
-    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !priorIds.has(fn.capabilityId));
+    const v4Ids = new Set(buildReviewedManifest([v4]).capabilities.map((fn) => fn.capabilityId));
+    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => v4Ids.has(fn.capabilityId) && !priorIds.has(fn.capabilityId));
     expect(additions).toHaveLength(19);
     const curve = additions.filter((fn) => fn.protocol === 'curve-3pool-stableswap');
     const pancake = additions.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager');
@@ -296,6 +298,76 @@ describe('production DeFi registry assembly', () => {
     const otherNpm = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.protocol === 'uniswap-v3-position-manager' && fn.chainId === 56 && fn.signature === wrapper.signature)!;
     await expect(policy.authorizeContractCalls([{ to: otherNpm.contract, data: wrapperData, value: '17' }], fullContext))
       .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+  });
+
+  it('authorizes all 138 exact v5 additions through the assembled catalog and policy', async () => {
+    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v4/catalog.json'), 'utf8')));
+    const v4Ids = new Set(buildReviewedManifest([v4]).capabilities.map((fn) => fn.capabilityId));
+    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !v4Ids.has(fn.capabilityId));
+    expect(additions).toHaveLength(138);
+    expect(additions.some((fn) => fn.type === 'contract_call' && fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toBe(false);
+    expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(23);
+
+    type Param = { type: string; name?: string; components?: readonly Param[] };
+    const address = '0x1111111111111111111111111111111111111111';
+    const secondAddress = '0x2222222222222222222222222222222222222222';
+    const argument = (param: Param): unknown => {
+      const array = param.type.match(/^(.*)\[(\d*)\]$/);
+      if (array) return Array.from({ length: array[2] ? Number(array[2]) : 1 }, () => argument({ ...param, type: array[1] }));
+      if (param.type === 'tuple') return Object.fromEntries((param.components ?? []).map((part, index) => [part.name || String(index), argument(part)]));
+      if (param.type === 'address') return address;
+      if (param.type === 'bool') return true;
+      if (param.type === 'bytes') return '0x';
+      if (param.type === 'string') return '';
+      if (param.type.startsWith('bytes')) return `0x${'00'.repeat(Number(param.type.slice(5)))}`;
+      if (param.type.startsWith('int')) return -1n;
+      if (param.type.startsWith('uint')) {
+        const bits = Number(param.type.slice(4)) || 256;
+        return (1n << BigInt(bits)) - 1n;
+      }
+      throw new Error(`Unsupported v5 test ABI type ${param.type}`);
+    };
+    const encode = (fn: (typeof additions)[number]) => encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: (fn.abi.inputs as readonly Param[]).map(argument) as never });
+    const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+    const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST));
+    const context = (chainId: number, grants: string[]) => ({ userId: 'v5-policy-test', apiKeyId: '00000000-0000-4000-8000-000000000001', walletId: 'w', chainId, executionMode: 'session_key' as const, executionOwner: address, allowedCapabilityIds: grants });
+    const ambient = additions.find((fn) => fn.protocol === 'ambient')!;
+    const ambientTypes = [{ type: 'address' }, { type: 'address' }, { type: 'uint256' }, { type: 'bool' }, { type: 'bool' }, { type: 'uint128' }, { type: 'uint16' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint8' }] as const;
+    const ambientPayload = encodeAbiParameters(ambientTypes, [address, secondAddress, maxUint256, true, false, (1n << 128n) - 1n, 65535, (1n << 128n) - 1n, 0n, 255]);
+    const validAmbientData = encodeFunctionData({ abi: [ambient.abi], functionName: ambient.functionName, args: [1, ambientPayload] });
+    const callData = (fn: (typeof additions)[number]) => fn === ambient ? validAmbientData : encode(fn);
+
+    for (const fn of additions) {
+      const data = callData(fn);
+      const value = fn.abi.stateMutability === 'payable' ? '17' : undefined;
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+        .resolves.toMatchObject({ matches: [{ capabilityId: fn.capabilityId }] });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId === 1 ? 10 : 1, [fn.capabilityId])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
+      await expect(policy.authorizeContractCalls([{ to: address, data, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `0xdeadbeef${data.slice(10)}`, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `${data}00`, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+      if (fn.abi.stateMutability !== 'payable') {
+        await expect(policy.authorizeContractCalls([{ to: fn.contract, data, value: '1' }], context(fn.chainId, [fn.capabilityId])))
+          .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+      }
+      const otherSameTarget = additions.find((other) => other.contract.toLowerCase() === fn.contract.toLowerCase() && other.capabilityId !== fn.capabilityId);
+      if (otherSameTarget) await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [otherSameTarget.capabilityId])))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    }
+
+    const lpTypes = [{ type: 'uint8' }, { type: 'address' }, { type: 'address' }, { type: 'uint256' }, { type: 'int24' }, { type: 'int24' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint128' }, { type: 'uint8' }, { type: 'address' }] as const;
+    const lpCodes = [1, 2, 3, 4, 11, 12, 21, 22, 31, 32, 41, 42];
+    for (const code of lpCodes) {
+      const payload = encodeAbiParameters(lpTypes, [code, address, secondAddress, maxUint256, -8388608, 8388607, (1n << 128n) - 1n, 0n, (1n << 128n) - 1n, 255, secondAddress]);
+      const data = encodeFunctionData({ abi: [ambient.abi], functionName: ambient.functionName, args: [2, payload] });
+      await expect(policy.authorizeContractCalls([{ to: ambient.contract, data }], context(1, [ambient.capabilityId]))).resolves.toBeDefined();
+    }
   });
 
   it('keeps all twenty-three canonical approvals independently grantable with arbitrary spender and uint256 amounts', () => {

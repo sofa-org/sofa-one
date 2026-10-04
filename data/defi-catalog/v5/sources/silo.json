@@ -1,0 +1,650 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "silo-vault",
+      "familyVersion": "v3-market@f896c9da",
+      "chains": [
+        {
+          "chainId": 42161,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+              "status": "inactive",
+              "contractName": "Silo vault0 (WETH/USDC market configuration)",
+              "functions": [
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:deposit",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "deposit",
+                  "signature": "deposit(uint256,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "deposit",
+                  "label": "Silo deposit",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:mint",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "mint",
+                  "signature": "mint(uint256,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "mint",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "mint",
+                  "label": "Silo mint",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:withdraw",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256,address,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdraw",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_owner",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "withdraw",
+                  "label": "Silo withdraw",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:redeem",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "redeem",
+                  "signature": "redeem(uint256,address,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "redeem",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_owner",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "redeem",
+                  "label": "Silo redeem",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:borrow",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "borrow",
+                  "signature": "borrow(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "borrow",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_borrower",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "borrow",
+                  "label": "Silo borrow",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:repay",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x84D1B853C1F34a01c6120013AC7AC704D5383a8D",
+                  "functionName": "repay",
+                  "signature": "repay(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "repay",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_borrower",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "repay",
+                  "label": "Silo repay",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                }
+              ]
+            },
+            {
+              "address": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+              "status": "inactive",
+              "contractName": "Silo vault1 (WETH/USDC market configuration)",
+              "functions": [
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:deposit",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "deposit",
+                  "signature": "deposit(uint256,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "deposit",
+                  "label": "Silo deposit",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:mint",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "mint",
+                  "signature": "mint(uint256,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "mint",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "mint",
+                  "label": "Silo mint",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:withdraw",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256,address,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdraw",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_owner",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "withdraw",
+                  "label": "Silo withdraw",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:redeem",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "redeem",
+                  "signature": "redeem(uint256,address,address,uint8)",
+                  "abi": {
+                    "type": "function",
+                    "name": "redeem",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_owner",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_collateralType",
+                        "type": "uint8",
+                        "internalType": "enum ISilo.CollateralType"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "redeem",
+                  "label": "Silo redeem",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:borrow",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "borrow",
+                  "signature": "borrow(uint256,address,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "borrow",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_receiver",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "_borrower",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "borrow",
+                  "label": "Silo borrow",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:repay",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5B73fb33c602351664D02ed199847B7A155297B5",
+                  "functionName": "repay",
+                  "signature": "repay(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "repay",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_assets",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_borrower",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "shares",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ]
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "silo-contracts-v2-f896c9da",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Silo Finance",
+                  "operation": "repay",
+                  "label": "Silo repay",
+                  "warnings": [
+                    "Caller-selected ABI arguments and protocol-side state; no platform financial, asset, owner, solvency, or liquidity guarantee."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "silo-contracts-v2-f896c9da",
+      "url": "https://github.com/silo-finance/silo-contracts-v2/tree/f896c9da3a4b292f74d8dcb41f1295661cb7441f",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official silo-finance/silo-contracts-v2 commit f896c9da3a4b292f74d8dcb41f1295661cb7441f. PinnedSiloConfig.getSilos() source and the pinned Arbitrum market config establish the two vault-role candidates; ISilo.sol and source ArbitrumSilo artifact supply function ABI declarations. The two vault targets are role-qualified, not assertions of implementation bytecode or a complete market population."
+    },
+    {
+      "sourceId": "silo-arbitrum-market-registry",
+      "url": "https://github.com/silo-finance/silo-contracts-v2/blob/f896c9da3a4b292f74d8dcb41f1295661cb7441f/scripts/tasks/set-permissioned-liquidation/v3_markets_by_chain.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official source lists Arbitrum chain 42161 market 3000 WETH/USDC configuration 0xE14CC9C2b2429c85Ab11CaDd8c47a043d56CA149; this identifies the market config rather than itself being a user-call target."
+    },
+    {
+      "sourceId": "silo-arbitrum-get-silos-observation",
+      "url": "https://arbitrum-one-rpc.publicnode.com",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Parent-observed read-only eth_call selector 0xaecc90cb against config 0xE14CC9C2b2429c85Ab11CaDd8c47a043d56CA149 at block 0x1e7e173c (hash 0x0776cfd41b36a5e4c8fcf3e650f716e652203d164c3e709bab74fe1dfa27aa72, chain 0xa4b1) returned Silo0 0x84D1B853C1F34a01c6120013AC7AC704D5383a8D and Silo1 0x5B73fb33c602351664D02ed199847B7A155297B5. This is a dated public read-only role observation only, not current/funded code, liquidity, security, or entire-market certification."
+    }
+  ]
+}

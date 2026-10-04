@@ -22,7 +22,7 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:sweep-token",
       "uniswap-v3-position-manager:v3-npm:1:0xc36442b4a4522e871399cd717abdd847ab11fe88:unwrap-weth9"
     ],
-    "warnings": [
+  "warnings": [
       "All nine listed function grants are separate authority; NPM multicall uses delegatecall and requires the wrapper plus each selected child grant.",
       "Native value is supplied once to the outer transaction and inherited by every selected child. Existing key spending limits still apply.",
       "NPM helpers can act on residual contract balances; sweep/unwrap operations retain whole-contract balance risk."
@@ -336,5 +336,521 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
       "Version/index evidence does not prove runtime identity, current liquidity, or financial safety."
     ],
     "fingerprint": "sha256:47b1aca498c4871b0b026bf5391ab78e4fd4c9210f07513b46ce21f63773f192"
+  },
+  {
+    "bundleId": "quickswap-137",
+    "version": "1.0.0",
+    "label": "QuickSwap — Polygon",
+    "chainIds": [
+      137
+    ],
+    "capabilityIds": [
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:add-liquidity",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:add-liquidity-eth",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:remove-liquidity",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:remove-liquidity-eth",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-eth-for-exact-tokens",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-eth-for-tokens",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-tokens-for-eth",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-exact-tokens-for-tokens",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-tokens-for-exact-eth",
+      "quickswap-v2:v2:137:0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff:swap-tokens-for-exact-tokens"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Finite router swap/LP ABI operations only; pool population, funding, liquidity, and financial safety are not established."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:0f1f3fc1b8a7ae01998a5dad318831eb2b07dcb35963ca451161724f43e0e8ae"
+  },
+  {
+    "bundleId": "camelot-42161",
+    "version": "1.0.0",
+    "label": "Camelot — Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:add-liquidity",
+      "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:remove-liquidity",
+      "camelot-v2:v2:42161:0xc873fecbd354f5a56e00e710b90ef4201db2448d:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+    "Finite router swap/LP ABI operations only; fee-on-transfer swap has its actual extra referrer argument and void return. Pool population, funding, liquidity, and financial safety are not established."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:4952364a28ef7b6a2c23364180bf35556cb3dd1c8bed379d6f7f01a582c6ec88"
+  },
+  {
+    "bundleId": "lfj-42161",
+    "version": "1.0.0",
+    "label": "LFJ — Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:add-liquidity",
+      "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:remove-liquidity",
+      "lfj-liquidity-book:v2.2:42161:0x18556da13313f3532c54711497a8fedac273220e:swap-exact-tokens-for-tokens"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Finite router swap/LP ABI operations only; pool population, funding, liquidity, and financial safety are not established."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:01abb6b3cdb36b3e2784238d82fbf89ebdaad22daa13e4de9f4c24f8102b0935"
+  },
+  {
+    "bundleId": "maverick-8453",
+    "version": "1.0.0",
+    "label": "Maverick V2 swaps — Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "maverick-v2:v2:8453:0x5eded0d7e76c563ff081ca01d9d12d6b404df527:exact-input-single"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Only one exactInputSingle swap function is included on this chain; no LP entry/exit workflow is included."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:35101a4fc7b0501df9452a2a5998a0994ced8de99d2b60d659282e10260711bb"
+  },
+  {
+    "bundleId": "maverick-42161",
+    "version": "1.0.0",
+    "label": "Maverick V2 swaps — Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "maverick-v2:v2:42161:0x5c3b380e5aeec389d1014da3eb372fa2c9e0fc76:exact-input-single"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Only one exactInputSingle swap function is included on this chain; no LP entry/exit workflow is included."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:fe9c6dda1e9b0b66a87fbd4512f4f700415bbf46984f9494c80979280bf9521d"
+  },
+  {
+    "bundleId": "dodo-8453",
+    "version": "1.0.0",
+    "label": "DODO — Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-eth-to-token",
+      "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-token-to-eth",
+      "dodo-v2:v2:8453:0x4cad0052524648a7fa2cfe279997b00239295f33:dodo-swap-v2-token-to-token"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Finite proxy swap ABI operations only; externalSwap is excluded. Pool population, funding, liquidity, and financial safety are not established."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:6cdd05573a5a66f9d77aaff606d6726b0c06e7e1721235c14c96dfae1f73d87a"
+  },
+  {
+    "bundleId": "ambient-1",
+    "version": "1.0.0",
+    "label": "Ambient — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "ambient:coldpath-v1:1:0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688:user-cmd"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "One payable root grant covers the finite swap AND LP mint/burn grammar, not swap-only authority. A nonzero conduit can hold LP and execute fixed callbacks with counterparty asset-loss risk; governable sidecars remain, and this is not arbitrary wallet execution."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:b23e46d91c25784fcb567d602a55495592c55da091a858ffb53d364e2fa5b100"
+  },
+  {
+    "bundleId": "fluid-8453",
+    "version": "1.0.0",
+    "label": "Fluid — Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:6e553f65",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:836a1040",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:94bf804d",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:9f40a7b3",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:a318c1a4",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:b460af94",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:ba087652",
+      "fluid-lending:v1:8453:0x9272d6153133175175bc276512b2336be3931ce9:bc157ac1",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:6e553f65",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:836a1040",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:94bf804d",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:9f40a7b3",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:a318c1a4",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:b460af94",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:ba087652",
+      "fluid-lending:v1:8453:0xf42f5795d9ac7e9d757db633d693cd548cfd9169:bc157ac1",
+      "fluid-vault-t1:v1:8453:0x03271c337c86a6fd89625a2820e48621dc2a128b:operate"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "The fToken lending functions and VaultT1 operate function are distinct interfaces. Signed operate deltas remain caller-chosen; this selection does not claim full-product support."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:940a7c667e61b053fff67363134d2b0625543a946523b7b3f8ef8c38e8defe1f"
+  },
+  {
+    "bundleId": "euler-1",
+    "version": "1.0.0",
+    "label": "Euler — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-collateral",
+      "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:disable-controller",
+      "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-collateral",
+      "euler-evc:evc-v1:1:0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383:enable-controller",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:borrow",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:deposit",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:mint",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:redeem",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:repay",
+      "euler-vault:evk-v1:1:0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8:withdraw",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:borrow",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:deposit",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:mint",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:redeem",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:repay",
+      "euler-vault:evk-v1:1:0xf6e2efdf175e7a91c8847dade42f2d39a9ae57d4:withdraw"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Factory-enumerated eWETH/wstETH vaults are sampled targets, not a curated safety list or proof of funded execution, collateral pairing, or LTV compatibility."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:8dbe295e43dd4580c9f749f5fedb546b0018a14a3e7479a6585d44ff627f7389"
+  },
+  {
+    "bundleId": "silo-42161",
+    "version": "1.0.0",
+    "label": "Silo — Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:borrow",
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:deposit",
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:mint",
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:redeem",
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:repay",
+      "silo-vault:v3-market:42161:0x5b73fb33c602351664d02ed199847b7a155297b5:withdraw",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:borrow",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:deposit",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:mint",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:redeem",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:repay",
+      "silo-vault:v3-market:42161:0x84d1b853c1f34a01c6120013ac7ac704d5383a8d:withdraw"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "The two selected vaults belong to a WETH/USDC market configuration, but individual asset0/asset1 assignments were not verified; no token mapping is asserted."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:af1529fe177ba88ef93b7d48c233077a167252dcb6f333c0987b0122896b0f3d"
+  },
+  {
+    "bundleId": "moonwell-8453",
+    "version": "1.0.0",
+    "label": "Moonwell — Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:borrow",
+      "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:mint",
+      "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:redeem",
+      "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:redeem-underlying",
+      "moonwell:v2:8453:0x628ff693426583d9a7fb391e54366292f509d457:repay-borrow",
+      "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:borrow",
+      "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:mint",
+      "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:redeem",
+      "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:redeem-underlying",
+      "moonwell:v2:8453:0x703843c3379b52f9ff486c9f5892218d2a065cc8:repay-borrow",
+      "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:borrow",
+      "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:mint",
+      "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:redeem",
+      "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:redeem-underlying",
+      "moonwell:v2:8453:0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22:repay-borrow",
+      "moonwell:v2:8453:0xfbb21d0380bee3312b33c4353c8936a0f13ef26c:enter-markets",
+      "moonwell:v2:8453:0xfbb21d0380bee3312b33c4353c8936a0f13ef26c:exit-market"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Unsigned integer returns are protocol error codes (zero indicates success), not business-success evidence from a confirmed EVM receipt."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:9b3dd784ceb36e781a412e7b502a8346587360decd3d13f98353bdd4f36d65d5"
+  },
+  {
+    "bundleId": "dolomite-42161",
+    "version": "1.0.0",
+    "label": "Dolomite — Arbitrum",
+    "chainIds": [
+      42161
+    ],
+    "capabilityIds": [
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-par",
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-payable",
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:deposit-wei",
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-par",
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-payable",
+      "dolomite-router:v1:42161:0xf8b2c637a68cf6a17b1df9f8992eebeff63d2dff:withdraw-wei"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Finite router deposit/withdraw ABI operations only; pool population, funding, liquidity, and financial safety are not established."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:999064e221b3f12e3ea67a079ec446f0674fb12765c73f386edbbec903b4c988"
+  },
+  {
+    "bundleId": "rocket-pool-1",
+    "version": "1.0.0",
+    "label": "Rocket Pool — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "rocket-pool:v1:1:0xae78736cd615f374d3085123a210448e74fc6393:burn",
+      "rocket-pool:v1:1:0xdd3f50f8a6cafbe9b31a427582963f465e745af8:deposit"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "The deposit target comes from a dated deployment snapshot and registry state can change. rETH burning remains subject to liquidity."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:a2cda43e550686b0c68ebd0cdfeaf3126ca02958b5ae9d895bdbfde170340601"
+  },
+  {
+    "bundleId": "ether-fi-1",
+    "version": "1.0.0",
+    "label": "Ether.fi — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:397a1b28",
+      "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:d0e30db0",
+      "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:f340fa01",
+      "etherfi:v1:1:0x308861a430be4cce5502d0a12724771fc6daf216:f9609f08",
+      "etherfi:v1:1:0x7d5706f6ef3f89b3951e23e557cdfbc3239d4e2c:b13acedd",
+      "etherfi:v1:1:0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee:de0e9a3e",
+      "etherfi:v1:1:0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee:ea598cb0"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Queue/request paths are asynchronous; finalization, unlock, delay, or cooldown mean this is not an immediate-exit guarantee."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:1248a72a45aefb44dc752a9d97acb9b5ebbee702397c8d3fd090db96b4072d91"
+  },
+  {
+    "bundleId": "renzo-1",
+    "version": "1.0.0",
+    "label": "Renzo — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:00f714ce",
+      "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:ddd5e1b2",
+      "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:0efe6a8b",
+      "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:47e7ef24",
+      "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:5358fbda",
+      "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:f6326fb3"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Withdrawal/claim is asynchronous and subject to finalization/delay. A claim can be triggered for another user and pays that user; no caller-owner restriction is asserted."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:0497d274471a5fc32e18af97741158b76a25592a00c181591505d3f5942a2cba"
+  },
+  {
+    "bundleId": "kelp-1",
+    "version": "1.0.0",
+    "label": "Kelp — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "kelp:v1:1:0x036676389e48133b63a802f8635ad39e752d375d:deposit-asset",
+      "kelp:v1:1:0x036676389e48133b63a802f8635ad39e752d375d:deposit-eth",
+      "kelp:v1:1:0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16:complete-withdrawal",
+      "kelp:v1:1:0x62de59c08eb5dae4b7e6f7a8cad3006d6965ec16:initiate-withdrawal"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Withdrawal is asynchronous: initiate, then complete after applicable unlock; no instant-withdrawal guarantee."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:575d79b8c0f1de2a18f5200d0503684d6b99c838a69d82b0a254c116647f3c66"
+  },
+  {
+    "bundleId": "stakewise-1",
+    "version": "1.0.0",
+    "label": "StakeWise — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:claim-exited-assets",
+      "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:deposit",
+      "stakewise:v3-genesis:1:0xac0f906e433d58fa868f936e8a43230473652885:enter-exit-queue"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Exit is asynchronous: queue entry then later claim after protocol finalization/delay; no immediate-exit guarantee."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:e163876dcd8992b4af3b12255b3d43c260f7560fbc531b7efeec8de3c59b78fe"
+  },
+  {
+    "bundleId": "beefy-8453",
+    "version": "1.0.0",
+    "label": "Beefy — Base",
+    "chainIds": [
+      8453
+    ],
+    "capabilityIds": [
+      "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:deposit",
+      "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:deposit-all",
+      "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:withdraw",
+      "beefy-standard:v1:8453:0x01f1a592b0b757b2931bbccf28227cdc1e892dde:withdraw-all",
+      "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:deposit",
+      "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:deposit-all",
+      "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:withdraw",
+      "beefy-standard:v1:8453:0x028baca249b33d24fc32ac01d6531f6be0061c8e:withdraw-all"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Methods return void. depositAll consumes the caller’s underlying-asset balance; withdrawAll concerns vault shares."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:c9a0d64496db827f92e7a1af6034a56032012a605cd11bfcbf10dc8de108315d"
+  },
+  {
+    "bundleId": "pendle-1",
+    "version": "1.0.0",
+    "label": "Pendle — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:add-liquidity-dual-sy-pt",
+      "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:mint-py-from-sy",
+      "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:redeem-py-to-sy",
+      "pendle-v3:v3:1:0x888888888889758f76e7103c6cbf23abbf58f946:remove-liquidity-dual-sy-pt",
+      "pendle-v3:v3:1:0xcad69479358c1ef3560f29f278966df772abf42f:deposit-sy",
+      "pendle-v3:v3:1:0xcad69479358c1ef3560f29f278966df772abf42f:redeem-sy"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "Ordinary SY/PY/dual-SY-PT LP methods only. SY, PT, YT, and LP funding/approvals are independent. Pre-expiry redemption requires PT plus YT; external zaps/aggregators are excluded."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:75584844b9bad75719f051eefe8c9e65c251e8405a4b49b96c4a44bcfc9e8956"
+  },
+  {
+    "bundleId": "convex-1",
+    "version": "1.0.0",
+    "label": "Convex — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "convex:v1:1:0xf34dff761145ff0b05e917811d488b441f33a968:get-reward",
+      "convex:v1:1:0xf34dff761145ff0b05e917811d488b441f33a968:withdraw-and-unwrap",
+      "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:deposit",
+      "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:deposit-all",
+      "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:withdraw",
+      "convex:v1:1:0xf403c135812408bfbe8713b5a23a04b3d48aae31:withdraw-all"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "One historical pool-0 reward-pool relation is included; this is not a full pool inventory or readiness proof."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:5650a977425a6de0e2f811f189cca46c0c78704280c070b8f6ec0b447e7e2af8"
+  },
+  {
+    "bundleId": "aura-1",
+    "version": "1.0.0",
+    "label": "Aura — Ethereum",
+    "chainIds": [
+      1
+    ],
+    "capabilityIds": [
+      "aura:v1:1:0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f:get-reward",
+      "aura:v1:1:0x712cc5bed99aa06fc4d5fb50aea3750fa5161d0f:withdraw-and-unwrap",
+      "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:deposit",
+      "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:deposit-all",
+      "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:withdraw",
+      "aura:v1:1:0xa57b8d98dae62b26ec3bcc4a365338157060b234:withdraw-all"
+    ],
+    "warnings": [
+      "Token approvals are separate authority and are not included or automatic. All ABI financial arguments remain caller-controlled; no platform amount, recipient, asset, spender, price, or owner restrictions are added.",
+      "No verified open-deposit pool was found. The selected pool-0 target was observed shutdown; reward/withdraw functions concern existing positions. Six ABI methods do not certify current deposit readiness, and bounded samples do not prove all pools are closed."
+    ],
+    "limitations": [
+      "Fixed selection of source-qualified functions, not a complete workflow, all deployments/markets/pools, or a guarantee of current liveness, liquidity, funded execution, safety, or transaction success."
+    ],
+    "fingerprint": "sha256:04110a6703844a19eb2fffb3b9487268e4bf6ad74abf6d4a7f02654be0476216"
   }
 ] as readonly DefiCapabilityBundle[]);
