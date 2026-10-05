@@ -114,6 +114,12 @@ The current ordinary update adds only payable zero-argument `stakeAndClaimAethC(
 
 The caller supplies native ETH; the inspected R46 body accounts shares through its configured token and claims them to `msg.sender`. Protocol positive-value, pause, non-reentrancy, share, or transfer conditions can revert. No platform amount/recipient/feed/balance gate or automatic grant is added. Dated proxy/source evidence does not establish current runtime/storage/token configuration, funding, execution outcome, or financial safety. See the [Ankr ETH staking update report](defi-research/ankr-eth-staking-update.md).
 
+## Mantle mETH staking
+
+The current ordinary update adds only payable `stake(uint256 minMETHAmount)` to documented Ethereum Staking role `0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f` (not the mETH token). Production is 728 definitions (705 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 727 functions and scoped bindings remain unchanged, and the new ID is not profiled.
+
+The inspected verified body accounts native ETH, computes protocol mETH, checks protocol min/max/allowlist and the caller-provided output minimum, and mints to `msg.sender` through its fixed configured mETH token. These are protocol conditions; no platform amount/category/recipient/feed/balance gate is added. The pinned repository source differs from the address-bound verified source, and neither proves current proxy/storage/token configuration, funding, successful execution, or financial safety. See the [Mantle mETH staking update report](defi-research/mantle-meth-staking-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
