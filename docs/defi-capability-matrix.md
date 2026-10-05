@@ -28,6 +28,12 @@ The pinned generic update adds exactly `supplyFrom(address,address,address,uint2
 
 The pinned implementation passes caller-selected `from`/`src`, destination, asset, and amount into fixed supply/withdraw internals and calls `hasPermission(from|src,msg.sender)`; protocol delegation may be needed. This platform catalog does not create Comet delegation and adds no from/src-equals-wallet policy. ABI arguments remain caller-selected and uncapped by this platform; Comet protocol checks can reject calls, and base-asset withdrawal may borrow. These declarations do not establish current runtime identity, delegated permission state, liquidity, funded execution, full workflows, or financial safety. This batch is ordinary data maintenance and does not depend on broader protocol or market-coverage goals.
 
+## Aave V3 Arbitrum and Polygon aToken repayment additions
+
+The current generic update adds only `repayWithATokens(address,uint256,uint256)` (`0x2dad97d4`) to the existing Arbitrum and Polygon Aave V3 main Pool roles at `0x794a61358D6845594F94dc1DB02A252b5b4814aD`. The declaration models nonpayable mutability and one unnamed `uint256` return; the full ABI hash is `0x71271224f317a07c84a48e0f3a9604bcfc9c0045f99457edfea937c25ae0cada`. Production becomes 682 definitions (659 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. No new ID is selected in a profile.
+
+The pinned Origin `Pool.sol` routes this method to fixed BorrowLogic with caller=user and onBehalfOf and `useATokens=true`; protocol reserve/debt/collateral/rate-mode checks remain. The catalog imposes no amount/rate/asset restrictions and creates no approval pairing. Dated address-book roles and source qualification do not prove live proxy/runtime identity, successful repayment, balance, liquidity, funded execution, or financial safety.
+
 ## Aave V3 main-pool aToken repayment additions
 
 The current generic update adds only `repayWithATokens(address,uint256,uint256)` (`0x2dad97d4`) to the existing Ethereum, Optimism, and Base Aave V3 main Pool roles. The modeled ABI is nonpayable, returns one unnamed `uint256`, and has full ABI hash `0x71271224f317a07c84a48e0f3a9604bcfc9c0045f99457edfea937c25ae0cada` on each target. The versioned v9 catalog stays at 673 definitions; generated production now has 680 (657 actions, 23 approvals), with 16 unchanged scopes and 69 unchanged profiles / 399 selected IDs. All prior 677 full function objects and profiles are preserved; none of the new IDs is in a profile.
