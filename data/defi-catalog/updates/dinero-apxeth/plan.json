@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/spark-speth-v2/catalog.json",
+    "rawSha256": "81f4e6d6710d807f07ba39fffb2e612d7e592c6b2dc9d2caec0867cdad561ea2",
+    "manifestHash": "0xafd9911c85561b2690a24aa09acf72dcc5a8d30def28571a383ec829ed9a949b"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/dinero-apxeth/sources/dinero-apxeth.json",
+      "canonicalSha256": "5f9dd6de2d6dc803cc94feaf12d592cb95b4ebb1ebf5146d8aaf4eb78549b1c1"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/dinero-apxeth/sources/dinero-apxeth.json",
+      "familyId": "dinero-apxeth",
+      "familyVersion": "auto-px-eth@b5cb20da",
+      "chainId": 1,
+      "contract": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xd9aa3738e0f53bd8105b8c7e2517c7338d49553e906e80abf32af4c3a38f5997",
+      "capabilityId": "dinero-apxeth:v1:1:0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6:deposit",
+      "sourceRefs": [
+        "dinero-official-deployed-contracts",
+        "dinero-apx-eth-address-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dinero-official-deployed-contracts",
+          "dinero-apx-eth-address-source"
+        ],
+        "evidence": "The inspected inherited Solmate ERC4626 deposit previews shares and rejects a zero-share result, transfers the vault\u2019s fixed immutable ERC-20 asset from msg.sender, mints to the caller-selected receiver, and invokes AutoPxEth.afterDeposit to update staked accounting. The ordinary path does not wrap native ETH. Protocol token behavior, zero-share rounding, and asset allowance/balance may reject execution. No platform amount/receiver/feed rule or automatic approval/grant is added. The dated official product role and address-bound source/ABI do not establish current runtime/constructor asset configuration, asset value, funding, liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dinero-apxeth/sources/dinero-apxeth.json",
+      "familyId": "dinero-apxeth",
+      "familyVersion": "auto-px-eth@b5cb20da",
+      "chainId": 1,
+      "contract": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0xb8f77e58b52fad3ac88bf14cb752b27c8e41983c8c149319e73db4c84f21e352",
+      "capabilityId": "dinero-apxeth:v1:1:0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6:mint",
+      "sourceRefs": [
+        "dinero-official-deployed-contracts",
+        "dinero-apx-eth-address-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dinero-official-deployed-contracts",
+          "dinero-apx-eth-address-source"
+        ],
+        "evidence": "The inspected inherited Solmate ERC4626 mint previews the required assets, transfers the vault\u2019s fixed immutable ERC-20 asset from msg.sender, mints the caller-selected shares to receiver, and invokes AutoPxEth.afterDeposit to update staked accounting. The ordinary path does not wrap native ETH. Protocol conversion, token behavior, and asset allowance/balance may reject execution. No platform financial/receiver rule or automatic approval/grant is added. The dated official product role and address-bound source/ABI do not establish current runtime/constructor asset configuration, asset value, funding, liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dinero-apxeth/sources/dinero-apxeth.json",
+      "familyId": "dinero-apxeth",
+      "familyVersion": "auto-px-eth@b5cb20da",
+      "chainId": 1,
+      "contract": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x59b31bf3102e98ba6650eb9794b53143fd4c1b90166242569843084f9d8df901",
+      "capabilityId": "dinero-apxeth:v1:1:0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6:withdraw",
+      "sourceRefs": [
+        "dinero-official-deployed-contracts",
+        "dinero-apx-eth-address-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dinero-official-deployed-contracts",
+          "dinero-apx-eth-address-source"
+        ],
+        "evidence": "The inherited ERC4626 path previews required shares (including AutoPxEth withdrawal penalty behavior), checks/spends existing owner-to-caller share allowance when needed, calls beforeWithdraw, burns owner shares, and transfers the fixed ERC-20 asset to caller-selected receiver. AutoPxEth beforeWithdraw may harvest if the requested assets exceed totalStaked; harvest pays the configured platform address from the fixed asset, then the path updates accounting. Owner/receiver/amount remain caller-selected; protocol balances, allowance, rounding, fee/reward state, and liquidity may revert. No platform equality/cap/feed gate or automatic approval is added. The dated official product role and address-bound source/ABI do not establish current runtime/constructor asset configuration, asset value, funding, liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dinero-apxeth/sources/dinero-apxeth.json",
+      "familyId": "dinero-apxeth",
+      "familyVersion": "auto-px-eth@b5cb20da",
+      "chainId": 1,
+      "contract": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e",
+      "capabilityId": "dinero-apxeth:v1:1:0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6:redeem",
+      "sourceRefs": [
+        "dinero-official-deployed-contracts",
+        "dinero-apx-eth-address-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dinero-official-deployed-contracts",
+          "dinero-apx-eth-address-source"
+        ],
+        "evidence": "The inherited ERC4626 path checks/spends existing owner-to-caller share allowance when needed, previews assets after AutoPxEth redemption penalty (and rejects zero assets), calls beforeWithdraw, burns owner shares, and transfers the fixed ERC-20 asset to caller-selected receiver. AutoPxEth beforeWithdraw may harvest if assets exceed totalStaked; harvest pays the configured platform address from the fixed asset, then the path updates accounting. Owner/receiver/amount remain caller-selected; protocol balances, allowance, rounding, fee/reward state, and liquidity may revert. No platform equality/cap/feed gate or automatic approval is added. The dated official product role and address-bound source/ABI do not establish current runtime/constructor asset configuration, asset value, funding, liquidity, execution success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

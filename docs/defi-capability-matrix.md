@@ -96,6 +96,12 @@ The current ordinary update adds only `deposit`, `mint`, `withdraw`, and `redeem
 
 spETH is a product label, not payable/native-ETH wrapping authority. The implementation uses a configured ERC-20 asset; the target's initialized value is not established here. Protocol conversion/cap/role checks, asset transfers, share balance/allowance and liquidity determine call outcomes. No platform financial/owner/recipient/balance/feed gates, auto-grants, or approval pairing are added. Dated registry and shared implementation-version evidence does not prove current proxy/runtime identity, initialized asset, funding, liquidity, execution success, or financial safety. See the [spETH update report](defi-research/spark-speth-v2-update.md).
 
+## Dinero AutoPxEth ordinary additions
+
+The current ordinary update adds only the four nonpayable ERC4626 methods—`deposit`, `mint`, `withdraw`, and `redeem`—to Ethereum AutoPxEth `0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6`. Production is 725 definitions (702 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 721 function objects and scoped bindings are preserved; none of the four new IDs is profiled.
+
+The fixed implementation uses a configured ERC-20 asset; `pxETH` does not imply native-ETH wrapping. Protocol rounding, share allowance, withdrawal penalty, reward/fee accounting and liquidity affect behavior. Separate asset approval and third-party share allowance remain prerequisites; no automatic grant or approval pairing is added. Platform financial/owner/recipient/balance/feed gates are unchanged. Dated product and address-bound code/ABI evidence does not establish current runtime/constructor asset configuration, funding, liquidity, success, or financial safety. See the [Dinero AutoPxEth update report](defi-research/dinero-apxeth-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
