@@ -128,6 +128,7 @@ describe('production DeFi registry assembly', () => {
     const pinnedV9 = buildReviewedManifest([validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v9/catalog.json'), 'utf8')))]).capabilities;
     for (const prior of pinnedV9) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === prior.capabilityId)).toEqual(prior);
     expect(pinnedV9.filter((fn) => fn.protocol === 'aave-v3')).toHaveLength(12);
+    expect(pinnedV9.filter((fn) => fn.protocol === 'compound-v2')).toHaveLength(22);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
     const isSourceFunction = (fn: { protocol?: string }) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? '');
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter(isSourceFunction);
@@ -136,7 +137,7 @@ describe('production DeFi registry assembly', () => {
     expect(sourceFunctions.filter((fn) => fn.protocol === 'balancer-v2-vault')).toHaveLength(24);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'aave-v3')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'aave-v3').length);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-iii')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'compound-iii').length);
-    expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-v2')).toHaveLength(22);
+    expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-v2')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'compound-v2').length);
     const curve = sourceFunctions.filter((fn) => fn.protocol === 'curve-3pool-stableswap');
     const pancakeswap = sourceFunctions.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager');
     const yearn = sourceFunctions.filter((fn) => fn.protocol === 'yearn-tokenized-strategy');

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/aave-emode/catalog.json",
+    "rawSha256": "54555d19ead986a641005e738f0d5ecd09de6eff12572c84c2021fece5e15635",
+    "manifestHash": "0xe190cb6a7569f7712a3aa381e8dea8b6d91651d3396b6fa5bf6faca8aea5708a"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/compound-v2-repay-behalf/sources/compound-v2.json",
+      "canonicalSha256": "4d20319fccc7bc77ff3258cabddb1ed715ee0ae77ccb30c6408b630e8b66e6cd"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/compound-v2-repay-behalf/sources/compound-v2.json",
+      "familyId": "compound-v2",
+      "familyVersion": "mainnet@a3214f67",
+      "chainId": 1,
+      "contract": "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643",
+      "signature": "repayBorrowBehalf(address,uint256)",
+      "selector": "0x2608f818",
+      "abiHash": "0x03d2ed7ac3a5890a630d11b74cee9b475908a97c7b47e95ce94d3b361c11cc0c",
+      "capabilityId": "compound-v2:v2-compound:1:0x5d3a536e4d6dbd6114cc1ead35777bab948e3643:repay-borrow-behalf",
+      "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+        "evidence": "The pinned CToken path accrues interest, applies fixed comptroller permission, applies the caller-selected borrower and repayment amount to borrower debt, and transfers the fixed underlying token from msg.sender. The full-width uint256 return is a protocol error code, not a repaid amount or a successful-transaction guarantee. Borrower and repayAmount remain caller-selected without platform equality, amount, balance, allowance, or other financial gates; underlying-token approval is an independent prerequisite where needed and is not automatically paired. Protocol permissions, debt, token behavior, balance, allowance, and return/error behavior may affect outcomes. Dated market roles and pinned source do not prove current delegator/implementation/runtime identity, funding, liquidity, success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/compound-v2-repay-behalf/sources/compound-v2.json",
+      "familyId": "compound-v2",
+      "familyVersion": "mainnet@a3214f67",
+      "chainId": 1,
+      "contract": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+      "signature": "repayBorrowBehalf(address,uint256)",
+      "selector": "0x2608f818",
+      "abiHash": "0x03d2ed7ac3a5890a630d11b74cee9b475908a97c7b47e95ce94d3b361c11cc0c",
+      "capabilityId": "compound-v2:v2-compound:1:0x39aa39c021dfbae8fac545936693ac917d5e7563:repay-borrow-behalf",
+      "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+        "evidence": "The pinned CToken path accrues interest, applies fixed comptroller permission, applies the caller-selected borrower and repayment amount to borrower debt, and transfers the fixed underlying token from msg.sender. The full-width uint256 return is a protocol error code, not a repaid amount or a successful-transaction guarantee. Borrower and repayAmount remain caller-selected without platform equality, amount, balance, allowance, or other financial gates; underlying-token approval is an independent prerequisite where needed and is not automatically paired. Protocol permissions, debt, token behavior, balance, allowance, and return/error behavior may affect outcomes. Dated market roles and pinned source do not prove current delegator/implementation/runtime identity, funding, liquidity, success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/compound-v2-repay-behalf/sources/compound-v2.json",
+      "familyId": "compound-v2",
+      "familyVersion": "mainnet@a3214f67",
+      "chainId": 1,
+      "contract": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
+      "signature": "repayBorrowBehalf(address,uint256)",
+      "selector": "0x2608f818",
+      "abiHash": "0x03d2ed7ac3a5890a630d11b74cee9b475908a97c7b47e95ce94d3b361c11cc0c",
+      "capabilityId": "compound-v2:v2-compound:1:0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9:repay-borrow-behalf",
+      "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+        "evidence": "The pinned CToken path accrues interest, applies fixed comptroller permission, applies the caller-selected borrower and repayment amount to borrower debt, and transfers the fixed underlying token from msg.sender. The full-width uint256 return is a protocol error code, not a repaid amount or a successful-transaction guarantee. Borrower and repayAmount remain caller-selected without platform equality, amount, balance, allowance, or other financial gates; underlying-token approval is an independent prerequisite where needed and is not automatically paired. Protocol permissions, debt, token behavior, balance, allowance, and return/error behavior may affect outcomes. Dated market roles and pinned source do not prove current delegator/implementation/runtime identity, funding, liquidity, success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

@@ -58,6 +58,12 @@ The current generic update adds only `setUserEMode(uint8)` (`0x28530a47`) to the
 
 The pinned Pool routes the caller and category ID to fixed SupplyLogic, which updates the caller's EMode state and invokes protocol validation. All values in the uint8 domain remain caller-selected; the platform adds no category whitelist or asset, debt, balance, oracle, owner, or health-factor admission restriction. Category availability, caller state, and protocol validation can cause a revert. Dated address-book roles and pinned source do not prove current proxy/runtime identity, category availability, execution success, liquidity, funded outcome, or financial safety.
 
+## Compound V2 three-market repay-on-behalf additions
+
+The current generic update adds only `repayBorrowBehalf(address,uint256)` (`0x2608f818`) to the existing Ethereum cDAI, cUSDC, and cUSDT ERC20 CToken targets. Its modeled ABI is nonpayable with `borrower: address` and `repayAmount: uint256`, returning one unnamed `uint256`; the full ABI hash is `0x03d2ed7ac3a5890a630d11b74cee9b475908a97c7b47e95ce94d3b361c11cc0c`. Generated production is 696 definitions (673 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs. All prior 693 function objects remain unchanged; the three new IDs are not profiled.
+
+The pinned CToken path accrues interest, applies fixed comptroller permission, accounts repayment against the caller-selected borrower and amount, then transfers the market's fixed underlying token from `msg.sender`. The `uint256` return is a protocol error code, not an amount repaid or a success guarantee. Borrower and amount remain caller-selected without platform bounds or borrower/execution-owner equality. Underlying approval may be required separately and is not automatically paired. Protocol permission, debt, token behavior, allowance, and balance affect outcomes. Dated source roles do not prove current delegator/implementation identity, funding, liquidity, transaction success, or financial safety.
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
