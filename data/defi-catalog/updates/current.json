@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/comet-usdc-delegated/plan.json",
-  "planRawSha256": "5d9c6dbed11f63a25b819ac0fe7e441fa8e9ceec2aee1fc4d4b3dd2c1d112296"
+  "planPath": "data/defi-catalog/updates/aave-atoken-repay/plan.json",
+  "planRawSha256": "c2289933f5ed105c476a1d59293e6584ba54ccec00fa662fe9100926465db9ee"
 }

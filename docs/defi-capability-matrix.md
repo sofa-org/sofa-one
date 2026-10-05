@@ -28,6 +28,12 @@ The pinned generic update adds exactly `supplyFrom(address,address,address,uint2
 
 The pinned implementation passes caller-selected `from`/`src`, destination, asset, and amount into fixed supply/withdraw internals and calls `hasPermission(from|src,msg.sender)`; protocol delegation may be needed. This platform catalog does not create Comet delegation and adds no from/src-equals-wallet policy. ABI arguments remain caller-selected and uncapped by this platform; Comet protocol checks can reject calls, and base-asset withdrawal may borrow. These declarations do not establish current runtime identity, delegated permission state, liquidity, funded execution, full workflows, or financial safety. This batch is ordinary data maintenance and does not depend on broader protocol or market-coverage goals.
 
+## Aave V3 main-pool aToken repayment additions
+
+The current generic update adds only `repayWithATokens(address,uint256,uint256)` (`0x2dad97d4`) to the existing Ethereum, Optimism, and Base Aave V3 main Pool roles. The modeled ABI is nonpayable, returns one unnamed `uint256`, and has full ABI hash `0x71271224f317a07c84a48e0f3a9604bcfc9c0045f99457edfea937c25ae0cada` on each target. The versioned v9 catalog stays at 673 definitions; generated production now has 680 (657 actions, 23 approvals), with 16 unchanged scopes and 69 unchanged profiles / 399 selected IDs. All prior 677 full function objects and profiles are preserved; none of the new IDs is in a profile.
+
+Pinned Aave V3 Origin `Pool.sol` routes this method to fixed `BorrowLogic` with the caller as user and on-behalf-of and `useATokens=true`. The fixed logic burns caller-owned aTokens in this branch and returns actual payback; protocol reserve/debt, collateral, rate-mode, cap, and amount checks remain. Asset, amount, and rate mode are caller-selected ABI values with no platform-specific bounds, and protocol validation may reject them. This is not arbitrary execution or an underlying-token transfer approval. Dated role/source records do not establish current runtime identity, repayment success, balances, liquidity, funded execution, or financial safety.
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
