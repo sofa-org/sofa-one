@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "liquid-collective-river",
+      "familyVersion": "river-v1@eda01404",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549",
+          "status": "inactive",
+          "contractName": "River",
+          "sourceRefs": [
+            "liquid-collective-official-docs",
+            "liquid-collective-pinned-deployment",
+            "liquid-collective-river-proxy-abi",
+            "liquid-collective-river-verified-source",
+            "liquid-collective-user-deposit-manager",
+            "liquid-collective-user-deposit-interface",
+            "liquid-collective-shares-manager",
+            "liquid-collective-allowlist-mask"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [],
+              "name": "deposit",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "liquid-collective-official-docs",
+                "liquid-collective-pinned-deployment",
+                "liquid-collective-river-proxy-abi",
+                "liquid-collective-river-verified-source",
+                "liquid-collective-user-deposit-manager",
+                "liquid-collective-user-deposit-interface",
+                "liquid-collective-shares-manager",
+                "liquid-collective-allowlist-mask"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "liquid-collective-official-docs",
+      "url": "https://docs.liquidcollective.io/v1",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official Liquid Collective documentation overview carrier inspected 2026-10-06 (SHA-256 1a626f6718586477b4c875ae02dcdb6df4c4520043db43cbc4232e99567461d7). Product/docs role evidence does not establish current proxy implementation, initialized storage, live configuration, funding, liquidity, or financial safety."
+    },
+    {
+      "sourceId": "liquid-collective-pinned-deployment",
+      "url": "https://github.com/Liquid-Collective/liquid-collective-protocol/tree/afee50fbc504b47ae3d6abade77eea13d55acb5a/deployments/mainnet",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned official Liquid-Collective/liquid-collective-protocol commit afee50fbc504b47ae3d6abade77eea13d55acb5a, dated 2026-08-27. deployments/mainnet/deployment.mainnet.json lists River at 0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549; deployments/mainnet/River_Proxy.json is the corresponding proxy carrier. deployment.mainnet.json SHA-256 9e59bb1b819241e9707ea4882ed3809730a3550e119d02830c628773d0d4db5a; River_Proxy.json SHA-256 c6946aaf78e8a169d23161e943e02279f5f39523647584c378bf861137d97af0. This dated repository deployment record is not proof of present proxy storage or implementation."
+    },
+    {
+      "sourceId": "liquid-collective-river-proxy-abi",
+      "url": "https://etherscan.io/address/0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan proxy page inspected 2026-10-06; proxy HTML SHA-256 64841132aef52d12d1fea8ec611dc38bca64a4f814db179e01b2445d8ef149b9. The page associates this proxy with verified implementation 0x0056f9ed62daa4dc3f972340c92326accddd1a9d as a dated observation only, not current runtime/storage proof."
+    },
+    {
+      "sourceId": "liquid-collective-river-verified-source",
+      "url": "https://etherscan.io/address/0x0056f9ed62daa4dc3f972340c92326accddd1a9d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan verified River.1.sol source SHA-256 eda014044494c5db8c8b46ba8c1abf8ab499ee219cab5d8c4937f96d1a334519; full implementation ABI SHA-256 09b9bc97766044b893f96957fd19ca442286feb5b7cf67e5ed2f2992375432ad; selected deposit ABI SHA-256 70242815c0c25e83d2a6dcdd06c8fe75a2f263f401d64a164cd2eb1991653dd9; implementation HTML SHA-256 85a9650c98040ee461f1032ca5432ac5474f9da4252c1805b9f71efcf185cc36. Official pinned repository River.1.sol carrier SHA-256 f99fcd8945ad1c6019902ca4debab2917799f01da2b3c3542b1aa75288b4b065 differs from the address-bound verified source; no source equivalence is asserted. Verification/source inspection is not compiler proof or current proxy/runtime/storage proof."
+    },
+    {
+      "sourceId": "liquid-collective-user-deposit-manager",
+      "url": "https://etherscan.io/address/0x0056f9ed62daa4dc3f972340c92326accddd1a9d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Inherited UserDepositManager.1.sol Etherscan carrier SHA-256 585be68ad71c53427112721133fbe6e881fbef4b0afe58812deee056a25b3b59 (standalone retained source SHA-256 c5c74c9a1b6a0d73998800dda7ac51dbb832a288a347f35ffec0fc2aedb1f845). deposit() forwards to _deposit(msg.sender); _deposit rejects zero value, accounts msg.value, and invokes the fixed virtual _onDeposit path. This inheritance evidence does not assert current deployed code identity."
+    },
+    {
+      "sourceId": "liquid-collective-user-deposit-interface",
+      "url": "https://etherscan.io/address/0x0056f9ed62daa4dc3f972340c92326accddd1a9d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Inherited IUserDepositManager.1.sol Etherscan carrier SHA-256 91db5d9887f5dd0d04e10f05338252cefcb1006db0296fe505d9eb9198709832 (standalone retained source SHA-256 8504124920a1f68de31d0ba148cd871d161bf11fcd9dffb5cad90d9521b86049)."
+    },
+    {
+      "sourceId": "liquid-collective-shares-manager",
+      "url": "https://etherscan.io/address/0x0056f9ed62daa4dc3f972340c92326accddd1a9d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "SharesManager.1.sol Etherscan carrier SHA-256 a47d72e171dfeff51dbf805a518fb928d83a9f9d36a6504399bb8947449fc3d9. Its _mintShares computes share conversion from accounting balances and records shares for the supplied owner; River calls it with the deposit caller. This helper evidence is not proof of current proxy storage or deployed helper identity."
+    },
+    {
+      "sourceId": "liquid-collective-allowlist-mask",
+      "url": "https://etherscan.io/address/0x0056f9ed62daa4dc3f972340c92326accddd1a9d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "LibAllowlistMasks.sol Etherscan carrier SHA-256 e4be8949c8b0cc08dfc6f567e6832da1bbbcb2a80049fcc96d647e28853f2739; River's fixed deposit path calls the protocol DEPOSIT_MASK allowlist check for the caller."
+    }
+  ],
+  "unresolved": []
+}
