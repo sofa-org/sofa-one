@@ -40,6 +40,12 @@ The current generic update adds only `repayWithATokens(address,uint256,uint256)`
 
 Pinned Aave V3 Origin `Pool.sol` routes this method to fixed `BorrowLogic` with the caller as user and on-behalf-of and `useATokens=true`. The fixed logic burns caller-owned aTokens in this branch and returns actual payback; protocol reserve/debt, collateral, rate-mode, cap, and amount checks remain. Asset, amount, and rate mode are caller-selected ABI values with no platform-specific bounds, and protocol validation may reject them. This is not arbitrary execution or an underlying-token transfer approval. Dated role/source records do not establish current runtime identity, repayment success, balances, liquidity, funded execution, or financial safety.
 
+## Aave V3 five-chain collateral-toggle additions
+
+The current generic update adds only `setUserUseReserveAsCollateral(address,bool)` (`0x5a3b74b9`) to the existing Ethereum, Optimism, Polygon, Base, and Arbitrum Aave V3 main Pool roles. The declaration is nonpayable with `asset: address`, `useAsCollateral: bool`, and no outputs; its full ABI hash is `0x2294fd1903e82223e42d8d52c96a6e6a704d31eab78d24677917efc6360045ef`. Generated production is 687 definitions (664 actions, 23 approvals), with 16 unchanged scopes and 69 profiles / 399 IDs. All prior 682 function objects are preserved; the five new IDs are not selected in profiles.
+
+The pinned Origin Pool routes caller, asset, and bool to fixed SupplyLogic and ValidationLogic. The protocol determines whether reserve/aToken eligibility and collateral/health checks permit a requested transition. Both bool values and caller-selected ABI assets remain unconstrained by this platform; no platform health-factor or financial-safety gate is added. These dated source roles and pinned code do not prove live runtime identity, protocol acceptance, balances, liquidity, funded execution, or financial safety.
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`

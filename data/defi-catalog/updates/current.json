@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/aave-atoken-repay-arbitrum-polygon/plan.json",
-  "planRawSha256": "e01ffe4280cc0c3d993e5bb5a7e9b522337697973d7c37cb79305d72031ff584"
+  "planPath": "data/defi-catalog/updates/aave-collateral-toggle/plan.json",
+  "planRawSha256": "13ae6bb11405947cef02d3e615016550f877c3da2f9a023de6a9a86e8318466f"
 }
