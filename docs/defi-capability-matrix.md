@@ -84,6 +84,12 @@ The current ordinary update adds only `deposit(uint256,address)`, `mint(uint256,
 
 These are the plain, exact full-ABI declarations; referral overloads and unrelated helpers are excluded. Vault conversion, receiver/taker/cap checks, asset transfer, owner share balance/allowance, and asset liquidity are protocol behavior. Asset approval and third-party share allowance remain separate prerequisites. The platform adds no amount, recipient/owner, balance, or feed gates, automatic grants, or approval pairing. Product/address/source records do not prove current proxy/runtime identity or initialized asset configuration, funding, liquidity, execution success, or financial safety. See the [Spark update report](defi-research/spark-spusdc-v2-update.md).
 
+## Spark spUSDT and spPYUSD Vault V2 additions
+
+The next ordinary update adds the same four plain Vault V2 methods—`deposit`, `mint`, `withdraw`, and `redeem`—to spPYUSD `0x80128dbb9f07b93dde62a6daeadb69ed14a7d354` and spUSDT `0xe2e7a17dff93280dec073c995595155283e3c372`. Production is 717 definitions (694 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 709 function objects and scoped bindings are preserved; none of the eight new IDs is profiled.
+
+These bindings use the exact plain ABI declarations; referral overloads and other methods are excluded. Protocol conversion, cap/role checks, asset transfers, share ownership/allowance, and liquidity remain contract behavior. Asset approval and third-party share allowance are independent prerequisites. No automatic grants, approval pairing, or platform financial/owner/recipient/balance/feed gates are introduced. Dated product/address/version evidence does not prove current proxy/runtime identity or initialized assets, funding, liquidity, transaction success, or financial safety. See the [spUSDT/spPYUSD update report](defi-research/spark-spusdt-sppyusd-v2-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
