@@ -13,6 +13,7 @@ import { buildReviewedManifest } from '../registry/defi-manifest';
 import { buildEnsoRegistry } from '../registry/enso';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { SDAI_SAVINGS_CAPABILITIES } from '../registry/sdai-savings';
+import { loadCurrentProductionExpectations } from '../registry/__fixtures__/current-production-expectations';
 
 const OWNER = '0x0000000000000000000000000000000000000001';
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -100,10 +101,11 @@ function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
 
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(675);
-    expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(652);
-    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(16);
+    const expected = loadCurrentProductionExpectations(process.cwd());
+    expect(flat).toHaveLength(expected.definitions);
+    expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(expected.approvals);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(expected.actions);
+    expect(flat.filter((fn) => fn.executionScope)).toHaveLength(expected.capabilities.filter((fn) => fn.executionScope).length);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
     const ids = new Set<string>();
     for (const bundle of PRODUCTION_DEFI_CAPABILITY_BUNDLES) {

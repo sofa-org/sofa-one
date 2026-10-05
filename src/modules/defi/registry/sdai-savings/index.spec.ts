@@ -7,8 +7,9 @@ import { DefiCatalogService } from '../../defi-catalog.service';
 import { DefiPolicyService } from '../../defi-policy.service';
 import type { DefiExecutionContext, DefiInteraction, DefiFunctionPolicy } from '../../defi.types';
 import { buildReviewedManifest, functionAbiHash } from '../defi-manifest';
-import { canonicalSourceSha256 } from '../../catalog-tooling/catalog-generator';
-import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from '../production-registry';
+import { canonicalSourceSha256, validateCatalogDocument } from '../../catalog-tooling/catalog-generator';
+import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
+import { loadCurrentProductionExpectations } from '../__fixtures__/current-production-expectations';
 import { executionScopeHash } from '../../execution/scope';
 import { buildSdaiSavingsRegistry, SDAI_SAVINGS_CAPABILITIES } from './index';
 
@@ -26,18 +27,8 @@ const contractSource = sourceFamily.contracts[0];
 const builder = buildSdaiSavingsRegistry();
 const baselineIds = PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId);
 const candidateIds = SDAI_SAVINGS_CAPABILITIES.map((fn) => fn.capabilityId);
-const cometDirectIds = [
-  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to',
-  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to',
-];
-// Remove the four v9 sDAI IDs and two later Comet IDs to reconstruct the exact historical v8 base.
-const historicalV8Projection = PRODUCTION_DEFI_CATALOG.map((chain) => ({
-  ...chain,
-  contracts: chain.contracts.map((contract) => ({
-    ...contract,
-    functions: contract.functions.filter((fn) => !candidateIds.includes(fn.capabilityId) && !cometDirectIds.includes(fn.capabilityId)),
-  })).filter((contract) => contract.functions.length > 0),
-}));
+// Use the pinned historical v8 artifact, not subtraction from an evolving current production catalog.
+const historicalV8Projection = validateCatalogDocument(JSON.parse(readFileSync('data/defi-catalog/v8/catalog.json', 'utf8'))).chains;
 
 function argsFor(fn: DefiFunctionPolicy, maxValues = false): readonly unknown[] {
   const amount = maxValues ? MAX : 0n;
@@ -118,7 +109,7 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(sourceFamily.familyVersion).toBe('no-referral-v1@66587976');
   });
 
-  it('reconstructs pinned v8 by excluding the exact sDAI and Comet IDs, then adds only the four sDAI methods', () => {
+  it('uses pinned v8 directly, then adds only the four sDAI methods', () => {
     expect(historicalV8Projection.flatMap((chain) => chain.contracts).some((entry) => entry.address.toLowerCase() === CONTRACT)).toBe(false);
     expect(candidateIds).toEqual([
       `sdai-savings:no-referral-v1:1:${CONTRACT}:deposit`,
@@ -129,7 +120,7 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(candidateIds.every((id) => baselineIds.includes(id))).toBe(true);
     const projectedIds = historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId)));
     expect(candidateIds.some((id) => projectedIds.includes(id))).toBe(false);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(675);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(loadCurrentProductionExpectations(process.cwd()).definitions);
     const pinnedV8 = buildReviewedManifest([JSON.parse(readFileSync('data/defi-catalog/v8/catalog.json', 'utf8'))]);
     const projectedV8 = buildReviewedManifest([{ chains: historicalV8Projection }]);
     expect(pinnedV8.capabilities).toHaveLength(669);
@@ -138,12 +129,13 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions))).toHaveLength(669);
     const combined = buildReviewedManifest([{ chains: historicalV8Projection }, builder]);
     expect(combined.capabilities).toHaveLength(673);
-    const originalScopeHashes = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
-    const fixtureScopeHashes = combined.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
-    expect(fixtureScopeHashes).toEqual(originalScopeHashes);
-    for (const original of PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !candidateIds.includes(fn.capabilityId) && !cometDirectIds.includes(fn.capabilityId))) {
+    const pinnedV9 = buildReviewedManifest([JSON.parse(readFileSync('data/defi-catalog/v9/catalog.json', 'utf8'))]);
+    for (const original of pinnedV9.capabilities.filter((fn) => !candidateIds.includes(fn.capabilityId))) {
       expect(combined.capabilities.find((fn) => fn.capabilityId === original.capabilityId)).toEqual(original);
     }
+    const originalScopeHashes = pinnedV8.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
+    const fixtureScopeHashes = combined.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
+    expect(fixtureScopeHashes).toEqual(originalScopeHashes);
   });
 });
 

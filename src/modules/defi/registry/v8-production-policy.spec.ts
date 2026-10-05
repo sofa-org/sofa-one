@@ -1,16 +1,13 @@
 import { encodeAbiParameters, encodeFunctionData, parseAbi, parseAbiParameters, toFunctionSelector } from 'viem';
 import type { Hex } from 'viem';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { DefiCatalogService } from '../defi-catalog.service';
 import { DefiPolicyService } from '../defi-policy.service';
 import type { DefiExecutionContext } from '../defi.types';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { PRODUCTION_DEFI_MANIFEST } from './production-registry';
-import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
-
-const COMET_DIRECT_IDS = [
-  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to',
-  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to',
-];
+import { buildReviewedManifest } from './defi-manifest';
 
 const rootAbi = parseAbi(['function routeSingle((uint8 tokenType, bytes data) tokenIn, bytes data) payable returns (bytes response)']);
 const shortcutAbi = parseAbi(['function executeShortcut(bytes32 accountId, bytes32 requestId, bytes32[] commands, bytes[] state)']);
@@ -84,7 +81,7 @@ function finalTx(grants: string[] = allGrants, pausedScopeKeys: string[] = []) {
 
 describe('integrated v8 Enso production policy fixture', () => {
   it('loads the admitted root and all three children from generated production manifest, then authorizes canonical native and ERC-20 routes', async () => {
-    const historicalV8Projection = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId) && !COMET_DIRECT_IDS.includes(fn.capabilityId));
+    const historicalV8Projection = buildReviewedManifest([JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v8/catalog.json'), 'utf8'))]).capabilities;
     expect(historicalV8Projection).toHaveLength(669);
     const rootFn = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === rootId)!;
     expect(rootFn.status).toBe('active');

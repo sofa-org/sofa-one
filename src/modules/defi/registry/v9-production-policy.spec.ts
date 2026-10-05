@@ -4,6 +4,7 @@ import { DefiCatalogService } from '../defi-catalog.service';
 import { DefiPolicyService } from '../defi-policy.service';
 import { PRODUCTION_DEFI_MANIFEST } from './production-registry';
 import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
+import { loadCurrentProductionExpectations } from './__fixtures__/current-production-expectations';
 
 const CONTRACT = '0x83f20f44975d03b1b09e64809b757c47f942beea';
 const USER = 'v9-sdai-policy-test';
@@ -44,11 +45,12 @@ function finalTx(grants: string[] = functions.map((fn) => fn.capabilityId), paus
 
 describe('integrated v9 sDAI production policy fixture', () => {
   it('loads the four exact active source-qualified identities and authorizes only ordinary, individually granted roots', async () => {
+    const expected = loadCurrentProductionExpectations(process.cwd());
     expect(functions).toHaveLength(4);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(675);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(652);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(expected.actions);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(expected.approvals);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(expected.capabilities.filter((fn) => fn.executionScope).length);
     for (const [index, fn] of functions.entries()) {
       const identity = V9_SDAI_BINDINGS[index];
       expect(fn).toMatchObject({ capabilityId: identity.capabilityId, chainId: 1, contract: CONTRACT, signature: identity.signature, status: 'active', provenance: { status: 'verified' } });

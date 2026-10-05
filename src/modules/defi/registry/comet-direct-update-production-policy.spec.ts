@@ -4,6 +4,7 @@ import { DefiCatalogService } from '../defi-catalog.service';
 import { DefiPolicyService } from '../defi-policy.service';
 import { functionAbiHash } from './defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from './production-registry';
+import { loadCurrentProductionExpectations } from './__fixtures__/current-production-expectations';
 
 const TARGET = '0xc3d688b66703497daa19211eedff47f25384cdc3';
 const USER = 'comet-direct-policy-test';
@@ -60,7 +61,7 @@ function call(fn: DefiFunctionPolicy, edge: 'zero' | 'max' = 'zero', recipient?:
 
 describe('Compound Comet USDC direct additions in the production policy', () => {
   it('binds both exact ordinary ABI identities and authorizes independently granted caller-selected zero/MAX arguments', async () => {
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(675);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(loadCurrentProductionExpectations(process.cwd()).definitions);
     expect(functions).toHaveLength(2);
     const { policy } = policyFixture();
 
