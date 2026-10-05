@@ -126,11 +126,17 @@ The current ordinary update adds only payable zero-argument `deposit()` on River
 
 The inherited caller deposit rejects zero ETH, accounts the deposit, and River mints protocol shares to the caller through its fixed accounting helper before the protocol caller-allowlist check. Source-specific pause/slashing, allowlist/compliance, share accounting, or governance checks may revert. The pinned repository source differs from the address-bound verified source; dated evidence does not prove current proxy/runtime state, funding, execution, or financial safety. See the [Liquid Collective River deposit update report](defi-research/liquid-collective-deposit-update.md).
 
-## Vesper vaETH payable deposit
+## Prior Vesper vaETH payable deposit
 
-The current ordinary update adds only payable zero-argument `deposit()` on the Ethereum vaETH Grow-pool role at `0xd1c117319b3595fbc39b471ab1fd485629eb05f2`. Production is 730 definitions (707 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 729 function objects and scoped bindings remain unchanged, and the new ID is not profiled.
+The prior ordinary update added only payable zero-argument `deposit()` on the Ethereum vaETH Grow-pool role at `0xd1c117319b3595fbc39b471ab1fd485629eb05f2`. Production at that stage was 730 definitions (707 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 729 function objects and scoped bindings were unchanged, and the new ID was not profiled.
 
 The inspected VETH body updates rewards for the caller, calculates shares from native value, wraps through its fixed configured WETH token, and mints shares to the caller. Protocol pause, rates/accounting, supply/strategy liquidity, governance, and reward-module conditions may revert. No platform native-value or recipient restriction is added; zero and positive values remain permitted by the payable ABI and may be rejected by protocol logic. Only `deposit()` is included; ERC-20 `deposit(uint256)`, withdrawals, reward claims, receive/fallback, and administration are excluded. Dated repository and address-bound source associations do not prove current implementation/storage, initialization, runtime identity, funding, liquidity, or financial safety. See the [Vesper vaETH deposit update report](defi-research/vesper-vaeth-deposit-update.md).
+
+## Vesper production vUSDC deposit and withdraw
+
+The current ordinary update adds only nonpayable `deposit(uint256 amount)` and `withdraw(uint256 shares)` to Ethereum production vUSDC Grow pool `0x0c49066c0808ee8c673553b7cbd99bcc9abf113d`. Production is 732 definitions (709 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 730 function objects and scoped bindings remain unchanged, and neither new ID is profiled.
+
+The address-bound VUSDC source transfers the fixed configured USDC-like collateral from the caller and mints pool shares to the caller on deposit; withdrawal applies protocol fee/valuation, burns caller shares, may withdraw from its fixed controller-configured strategy, and transfers collateral to the caller. This version burns computed fee-adjusted shares before clamping the final token payout to available balance: strategy shortfall can reduce assets received without a proportional share-burn adjustment. Zero arguments may be rejected by protocol checks; no platform amount cap, recipient/owner/feed/balance gate, or automatic approval pairing is added. Internal strategy/controller interactions are fixed protocol behavior, not extra wallet-selected calls. Dated metadata and address-bound verification do not prove current runtime/storage, initialization, funded execution, liquidity, or financial safety. See the [production vUSDC update report](defi-research/vesper-vusdc-prod-update.md).
 
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 

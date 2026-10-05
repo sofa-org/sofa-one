@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/vesper-vaeth-deposit/catalog.json",
+    "rawSha256": "2a2edbaf1bbe8bc14e10e423a97709a1bf91815a928eb0131438e279381f7878",
+    "manifestHash": "0xea9c1edbfa17560a11239e6478e9330e76134df753fe841b8d96a770ba99a5ba"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/vesper-vusdc-prod/sources/vesper-vusdc.json",
+      "canonicalSha256": "56da4049b77eb9fd18b6d72b5568700617707b52fc17963973611514260ba6ad"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/vesper-vusdc-prod/sources/vesper-vusdc.json",
+      "familyId": "vesper-vusdc",
+      "familyVersion": "vusdc@894defe7",
+      "chainId": 1,
+      "contract": "0x0c49066c0808ee8c673553b7cbd99bcc9abf113d",
+      "signature": "deposit(uint256)",
+      "selector": "0xb6b55f25",
+      "abiHash": "0x4b8d5087f536c653adfbe5bb850747e7d834ad59aa36b4fdbb671f0a4dcc38ba",
+      "capabilityId": "vesper-vusdc:v1:1:0x0c49066c0808ee8c673553b7cbd99bcc9abf113d:deposit",
+      "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"],
+        "evidence": "The exact nonpayable deposit(uint256 amount) is guarded by nonReentrant and whenNotPaused and enters the fixed _deposit path. It converts amount, computes shares through total-supply/total-value valuation, invokes _beforeMinting to transfer the pool's fixed configured token from msg.sender, mints shares to msg.sender, and emits Deposit. Configured controller/reward hooks may update caller rewards on token mint. The token, controller, reward module, share valuation, and accounting are protocol dependencies, not wallet-selected callees or nested execution steps. Zero amount is permitted by platform ABI policy but the inspected source rejects a zero share-conversion amount; other values can fail protocol conversion, token allowance/balance, or arithmetic checks. ERC-20 allowance remains a separate independently granted token capability; no approval is paired or granted here. No platform amount, owner, recipient, balance, feed, or financial gate is added. Only this exact method is admitted; withdraw and all other methods are separately bound or excluded. Dated source evidence is not current runtime/storage, funding, liquidity, or financial-safety proof."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/vesper-vusdc-prod/sources/vesper-vusdc.json",
+      "familyId": "vesper-vusdc",
+      "familyVersion": "vusdc@894defe7",
+      "chainId": 1,
+      "contract": "0x0c49066c0808ee8c673553b7cbd99bcc9abf113d",
+      "signature": "withdraw(uint256)",
+      "selector": "0x2e1a7d4d",
+      "abiHash": "0xedeff682646a16fce72d0397c106942d1bc502ff5fc61027967fd2bf63a97071",
+      "capabilityId": "vesper-vusdc:v1:1:0x0c49066c0808ee8c673553b7cbd99bcc9abf113d:withdraw",
+      "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"],
+        "evidence": "The exact nonpayable withdraw(uint256 shares) is guarded by nonReentrant and whenNotShutdown. Its fixed internal path rejects zero shares, calls the pool's controller-configured strategy.beforeWithdraw(), computes shares after the configured withdrawal fee and amount from pool valuation, burns those caller shares, then invokes the configured strategy withdrawal if local collateral is insufficient. The payout is clamped to the collateral actually available and transferred to msg.sender. The computed fee-adjusted shares are burned before that final available-balance clamp; unlike another Vesper pool version, this source does not proportionally reduce burned shares on partial payout. Therefore full collateral redemption is not guaranteed, and a shortfall can result in less collateral than the amount computed before strategy withdrawal. Strategy, controller, fee collector, rewards, valuation, liquidity, token, governance, and external protocol conditions are dependencies that may revert or affect outcome. Internal configured calls do not create wallet-selected targets or extra execution nodes. No platform amount, recipient, owner, balance, feed, or financial-safety gate is introduced. Zero shares are platform-allowed by the ABI but source-rejected; other values may fail protocol execution. Only this exact method is admitted; combined claim methods, strategy/admin functions, and native-ETH helpers are excluded. Dated source does not prove current runtime/storage, funding, liquidity, execution outcome, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}
