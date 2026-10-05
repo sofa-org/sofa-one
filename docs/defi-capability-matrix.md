@@ -52,6 +52,12 @@ The current generic update adds only `buyCollateral(address,uint256,uint256,addr
 
 The pinned Comet implementation uses its configured base token, collateral token, pricing, and reserve state in a fixed purchase path: it transfers the caller-selected `baseAmount` from the caller, checks the computed collateral amount against `minAmount`, then transfers collateral to the caller-selected `recipient`. A separate base-token approval may be required; no approval is automatically paired. The ABI leaves asset, minAmount, baseAmount, and recipient caller-selected without platform bounds. Protocol pause, configuration, pricing, balance, and reserve conditions may reject calls. This does not prove liquidity, execution success, current runtime identity, or financial safety.
 
+## Aave V3 main-pool EMode additions
+
+The current generic update adds only `setUserEMode(uint8)` (`0x28530a47`) to the existing Ethereum, Optimism, Polygon, Base, and Arbitrum Aave V3 main Pool roles. Its modeled ABI has one named `categoryId: uint8` input, is nonpayable, returns no outputs, and has full hash `0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6`. Generated production is 693 definitions (670 actions, 23 approvals), with 16 unchanged scopes and 69 profiles / 399 IDs. All prior 688 function objects remain unchanged; none of the five new IDs is profiled.
+
+The pinned Pool routes the caller and category ID to fixed SupplyLogic, which updates the caller's EMode state and invokes protocol validation. All values in the uint8 domain remain caller-selected; the platform adds no category whitelist or asset, debt, balance, oracle, owner, or health-factor admission restriction. Category availability, caller state, and protocol validation can cause a revert. Dated address-book roles and pinned source do not prove current proxy/runtime identity, category availability, execution success, liquidity, funded outcome, or financial safety.
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`

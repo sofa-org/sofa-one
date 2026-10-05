@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/comet-usdc-collateral-purchase/catalog.json",
+    "rawSha256": "8c7d92aedfc66d62ae9f8cb96fcabafbc143e082b5b6eb934f35b0bcbd4dad62",
+    "manifestHash": "0x814448a2ab5d904b1aabeda8ca436d9d6311833d4aa7621796528c378cf06162"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "canonicalSha256": "9a06dff6519251127e15374509a29abb2a354a3f23a08c6228984ca0de59ff8e"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 1,
+      "contract": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+      "signature": "setUserEMode(uint8)",
+      "selector": "0x28530a47",
+      "abiHash": "0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6",
+      "capabilityId": "aave-v3:v3-origin:1:0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2:set-user-e-mode",
+      "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+        "evidence": "The pinned Pool routes caller and uint8 categoryId to fixed SupplyLogic, which updates that caller's EMode state and invokes protocol validation. Category IDs remain caller-selected across the full ABI uint8 range; the platform adds no category whitelist or asset, debt, balance, oracle, ownership, or health-factor admission rule. Protocol configuration, caller state, and validation may revert. The dated role and pinned source do not prove current proxy/runtime identity, category availability, successful execution, liquidity, funded outcome, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 10,
+      "contract": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "signature": "setUserEMode(uint8)",
+      "selector": "0x28530a47",
+      "abiHash": "0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6",
+      "capabilityId": "aave-v3:v3-origin:10:0x794a61358d6845594f94dc1db02a252b5b4814ad:set-user-e-mode",
+      "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+        "evidence": "The pinned Pool routes caller and uint8 categoryId to fixed SupplyLogic, which updates that caller's EMode state and invokes protocol validation. Category IDs remain caller-selected across the full ABI uint8 range; the platform adds no category whitelist or asset, debt, balance, oracle, ownership, or health-factor admission rule. Protocol configuration, caller state, and validation may revert. The dated role and pinned source do not prove current proxy/runtime identity, category availability, successful execution, liquidity, funded outcome, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 137,
+      "contract": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "signature": "setUserEMode(uint8)",
+      "selector": "0x28530a47",
+      "abiHash": "0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6",
+      "capabilityId": "aave-v3:v3-origin:137:0x794a61358d6845594f94dc1db02a252b5b4814ad:set-user-e-mode",
+      "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-polygon", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-polygon", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+        "evidence": "The pinned Pool routes caller and uint8 categoryId to fixed SupplyLogic, which updates that caller's EMode state and invokes protocol validation. Category IDs remain caller-selected across the full ABI uint8 range; the platform adds no category whitelist or asset, debt, balance, oracle, ownership, or health-factor admission rule. Protocol configuration, caller state, and validation may revert. The dated role and pinned source do not prove current proxy/runtime identity, category availability, successful execution, liquidity, funded outcome, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 8453,
+      "contract": "0xa238dd80c259a72e81d7e4664a9801593f98d1c5",
+      "signature": "setUserEMode(uint8)",
+      "selector": "0x28530a47",
+      "abiHash": "0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6",
+      "capabilityId": "aave-v3:v3-origin:8453:0xa238dd80c259a72e81d7e4664a9801593f98d1c5:set-user-e-mode",
+      "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+        "evidence": "The pinned Pool routes caller and uint8 categoryId to fixed SupplyLogic, which updates that caller's EMode state and invokes protocol validation. Category IDs remain caller-selected across the full ABI uint8 range; the platform adds no category whitelist or asset, debt, balance, oracle, ownership, or health-factor admission rule. Protocol configuration, caller state, and validation may revert. The dated role and pinned source do not prove current proxy/runtime identity, category availability, successful execution, liquidity, funded outcome, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-emode/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 42161,
+      "contract": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "signature": "setUserEMode(uint8)",
+      "selector": "0x28530a47",
+      "abiHash": "0x9b87bec8d6e4c410420fda9eb24b179321649d13d011f932998d03f1a5896cf6",
+      "capabilityId": "aave-v3:v3-origin:42161:0x794a61358d6845594f94dc1db02a252b5b4814ad:set-user-e-mode",
+      "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-arbitrum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-arbitrum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+        "evidence": "The pinned Pool routes caller and uint8 categoryId to fixed SupplyLogic, which updates that caller's EMode state and invokes protocol validation. Category IDs remain caller-selected across the full ABI uint8 range; the platform adds no category whitelist or asset, debt, balance, oracle, ownership, or health-factor admission rule. Protocol configuration, caller state, and validation may revert. The dated role and pinned source do not prove current proxy/runtime identity, category availability, successful execution, liquidity, funded outcome, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

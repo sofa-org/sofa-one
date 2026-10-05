@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/comet-usdc-collateral-purchase/plan.json",
-  "planRawSha256": "bf8c6d4862d7fde7cae7e44a618eda1392a773f240e68337b81a5417d2d0accc"
+  "planPath": "data/defi-catalog/updates/aave-emode/plan.json",
+  "planRawSha256": "b618f65ff221aed5584c5869e2f77a611150839e22307298c2d8fc3000cd7673"
 }
