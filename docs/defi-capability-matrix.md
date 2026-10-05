@@ -64,6 +64,14 @@ The current generic update adds only `repayBorrowBehalf(address,uint256)` (`0x26
 
 The pinned CToken path accrues interest, applies fixed comptroller permission, accounts repayment against the caller-selected borrower and amount, then transfers the market's fixed underlying token from `msg.sender`. The `uint256` return is a protocol error code, not an amount repaid or a success guarantee. Borrower and amount remain caller-selected without platform bounds or borrower/execution-owner equality. Underlying approval may be required separately and is not automatically paired. Protocol permission, debt, token behavior, allowance, and balance affect outcomes. Dated source roles do not prove current delegator/implementation identity, funding, liquidity, transaction success, or financial safety.
 
+## Maple Pool V2 ordinary additions
+
+The production registry adds exactly six explicitly admitted, scope-free Ethereum methods: `deposit(uint256,address)`, `mint(uint256,address)`, and `requestRedeem(uint256,address)` on syrupUSDC (`0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b`) and syrupUSDT (`0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d`). These use the exact fixed-source ABI field names (`assets_`, `shares_`, `receiver_`, `owner_`) and outputs (`shares_`, `assets_`, `escrowedShares_`). The entries are ordinary contract calls; `requestRedeem` is the request/escrow step and does not return underlying assets or imply completed withdrawal/redemption.
+
+Production is 702 definitions (679 actions, 23 independent approvals), with 16 scopes and 69 profiles / 399 selected IDs. All prior 696 catalog function objects and profiles are preserved; none of the six Maple IDs is selected in a profile. Inclusion adds no automatic grants, approval pairing, amount/recipient/owner/balance/feed restrictions, or special financial gates.
+
+The dated official Maple product map and pinned SDK ABI corroborate the target roles and selected ABI; address-bound Etherscan source records and inspected bodies show fixed configured asset/manager/escrow routes. The calls remain dependent on protocol manager permission and protocol state. Underlying-token approval for deposits and LP-share allowance for third-party exit requests are separate prerequisites, not automatically paired or granted. Caller-selected uint256 values and receiver/owner arguments remain unbounded by this platform; protocol conditions can reject them. Dated evidence does not prove current runtime or constructor/manager configuration, funding, liquidity, successful execution, withdrawal completion, or financial safety. See the [Maple update evidence and boundaries](defi-research/maple-pool-v2-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`

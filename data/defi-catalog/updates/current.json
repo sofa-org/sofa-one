@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/compound-v2-repay-behalf/plan.json",
-  "planRawSha256": "8927e9531f9638117eb5d8580339d43eeba2551bfeb9f933b8c0749e101cac6c"
+  "planPath": "data/defi-catalog/updates/maple-pool-v2/plan.json",
+  "planRawSha256": "8e108c5ebd56b9f23e8d46411436417f9800920377cf11a98c32972c4cb277fc"
 }
