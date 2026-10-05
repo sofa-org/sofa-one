@@ -45,7 +45,9 @@ function finalTx(grants: string[] = functions.map((fn) => fn.capabilityId), paus
 describe('integrated v9 sDAI production policy fixture', () => {
   it('loads the four exact active source-qualified identities and authorizes only ordinary, individually granted roots', async () => {
     expect(functions).toHaveLength(4);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(673);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(675);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(652);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
     for (const [index, fn] of functions.entries()) {
       const identity = V9_SDAI_BINDINGS[index];

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/v9/catalog.json",
+    "rawSha256": "912a83cf0bf6e555d7f7afd8a5f0d2b19ced4b5e9ef55267fbbf21fd8ab9ce87",
+    "manifestHash": "0xf693b2f6dbc8353d88a38e9713c191cfac4b3342f1fb0ca1adeee12ee3fa8357"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/comet-usdc-direct/sources/compound-comet.json",
+      "canonicalSha256": "0e3ec9f1add7c4f605d29401a05fa4a681d350bca8411834971688263bf6e531"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/comet-usdc-direct/sources/compound-comet.json",
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "chainId": 1,
+      "contract": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+      "signature": "supplyTo(address,address,uint256)",
+      "selector": "0x4232cd63",
+      "abiHash": "0x354ce7510e69b2b82081178c5da4c8af37e411423425ad7b60bb8be5846207df",
+      "capabilityId": "compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to",
+      "sourceRefs": [
+        "compound-comet-implementation",
+        "compound-comet-main-interface",
+        "compound-comet-usdc-mainnet-role"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "compound-comet-implementation",
+          "compound-comet-main-interface",
+          "compound-comet-usdc-mainnet-role"
+        ],
+        "evidence": "Human source-body review of the dated official Compound Comet pin f766f51583c23acc33b2a7824654ef2029a96804: the USDC mainnet role record identifies this target; the interface declares the exact nonpayable supplyTo(address,address,uint256) ABI with no outputs; implementation lines 718–720 forward caller identity as source/account and caller-selected dst, asset, and amount to supplyInternal. Lines 737–749 enforce protocol pause/permission and base-asset-or-collateral checks. The ABI has no amount or recipient bound; protocol behavior may revert or repay negative base-asset principal before adding supply. This qualifies the dated ordinary direct method declaration only, not current proxy/runtime identity, deployment state, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/comet-usdc-direct/sources/compound-comet.json",
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "chainId": 1,
+      "contract": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+      "signature": "withdrawTo(address,address,uint256)",
+      "selector": "0xc3b35a7e",
+      "abiHash": "0xbbbf820ef51e8eeaaca6ae4dcabb7d4e5e9eec5bf4221405b1e5ea0d9b6dfea0",
+      "capabilityId": "compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to",
+      "sourceRefs": [
+        "compound-comet-implementation",
+        "compound-comet-main-interface",
+        "compound-comet-usdc-mainnet-role"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "compound-comet-implementation",
+          "compound-comet-main-interface",
+          "compound-comet-usdc-mainnet-role"
+        ],
+        "evidence": "Human source-body review of the dated official Compound Comet pin f766f51583c23acc33b2a7824654ef2029a96804: the USDC mainnet role record identifies this target; the interface declares the exact nonpayable withdrawTo(address,address,uint256) ABI with no outputs; implementation lines 940–942 forward caller identity as source/account and caller-selected to, asset, and amount to withdrawInternal. Lines 959–971 enforce protocol pause/permission and base-asset-or-collateral checks. The ABI has no amount, recipient, or borrow bound; a base-asset withdrawal may borrow according to protocol semantics and may revert. This qualifies the dated ordinary direct method declaration only, not current proxy/runtime identity, deployment state, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

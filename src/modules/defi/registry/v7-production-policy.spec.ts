@@ -8,6 +8,10 @@ import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const owner = '0x0000000000000000000000000000000000000001';
 const apiKeyId = '00000000-0000-4000-8000-000000000001';
+const cometDirectIds = [
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to',
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to',
+];
 type Param = { name?: string; type: string; components?: readonly Param[] };
 
 function arg(parameter: Param, financialEdge: 'max' | 'zero' = 'max'): unknown {
@@ -46,10 +50,10 @@ describe('v7 and v8 historical bindings in current v9 production policy', () => 
     expect(additions).toHaveLength(28);
     expect(additions.every((fn) => fn?.status === 'active' && fn.provenance.status === 'verified' && !fn.executionScope)).toBe(true);
     const currentCapabilities = PRODUCTION_DEFI_MANIFEST.capabilities;
-    const historicalV8Projection = currentCapabilities.filter((fn) => !V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId));
-    expect(currentCapabilities).toHaveLength(673);
+    const historicalV8Projection = currentCapabilities.filter((fn) => !V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId) && !cometDirectIds.includes(fn.capabilityId));
+    expect(currentCapabilities).toHaveLength(675);
     expect(historicalV8Projection).toHaveLength(669);
-    expect(currentCapabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(650);
+    expect(currentCapabilities.filter((fn) => fn.type === 'contract_call' && fn.functionName !== 'approve')).toHaveLength(652);
     expect(currentCapabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     expect(currentCapabilities.filter((fn) => fn.executionScope)).toHaveLength(16);
     const v7Baseline = historicalV8Projection.filter((fn) => fn.capabilityId !== ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId);

@@ -26,12 +26,16 @@ const contractSource = sourceFamily.contracts[0];
 const builder = buildSdaiSavingsRegistry();
 const baselineIds = PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId);
 const candidateIds = SDAI_SAVINGS_CAPABILITIES.map((fn) => fn.capabilityId);
-// Project only the exact four v9 IDs out of current production to re-run the historical v8 fixture.
+const cometDirectIds = [
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to',
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to',
+];
+// Remove the four v9 sDAI IDs and two later Comet IDs to reconstruct the exact historical v8 base.
 const historicalV8Projection = PRODUCTION_DEFI_CATALOG.map((chain) => ({
   ...chain,
   contracts: chain.contracts.map((contract) => ({
     ...contract,
-    functions: contract.functions.filter((fn) => !candidateIds.includes(fn.capabilityId)),
+    functions: contract.functions.filter((fn) => !candidateIds.includes(fn.capabilityId) && !cometDirectIds.includes(fn.capabilityId)),
   })).filter((contract) => contract.functions.length > 0),
 }));
 
@@ -114,7 +118,7 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(sourceFamily.familyVersion).toBe('no-referral-v1@66587976');
   });
 
-  it('excludes exactly the reviewed v9 IDs from the current catalog to reconstruct the isolated 669-definition baseline', () => {
+  it('reconstructs pinned v8 by excluding the exact sDAI and Comet IDs, then adds only the four sDAI methods', () => {
     expect(historicalV8Projection.flatMap((chain) => chain.contracts).some((entry) => entry.address.toLowerCase() === CONTRACT)).toBe(false);
     expect(candidateIds).toEqual([
       `sdai-savings:no-referral-v1:1:${CONTRACT}:deposit`,
@@ -125,14 +129,19 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(candidateIds.every((id) => baselineIds.includes(id))).toBe(true);
     const projectedIds = historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId)));
     expect(candidateIds.some((id) => projectedIds.includes(id))).toBe(false);
-    const combined = buildReviewedManifest([{ chains: historicalV8Projection }, builder]);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(673);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(675);
+    const pinnedV8 = buildReviewedManifest([JSON.parse(readFileSync('data/defi-catalog/v8/catalog.json', 'utf8'))]);
+    const projectedV8 = buildReviewedManifest([{ chains: historicalV8Projection }]);
+    expect(pinnedV8.capabilities).toHaveLength(669);
+    expect(projectedV8.capabilities).toHaveLength(669);
+    expect(projectedV8.capabilities).toEqual(pinnedV8.capabilities);
     expect(historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions))).toHaveLength(669);
+    const combined = buildReviewedManifest([{ chains: historicalV8Projection }, builder]);
     expect(combined.capabilities).toHaveLength(673);
     const originalScopeHashes = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
     const fixtureScopeHashes = combined.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
     expect(fixtureScopeHashes).toEqual(originalScopeHashes);
-    for (const original of PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !candidateIds.includes(fn.capabilityId))) {
+    for (const original of PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !candidateIds.includes(fn.capabilityId) && !cometDirectIds.includes(fn.capabilityId))) {
       expect(combined.capabilities.find((fn) => fn.capabilityId === original.capabilityId)).toEqual(original);
     }
   });

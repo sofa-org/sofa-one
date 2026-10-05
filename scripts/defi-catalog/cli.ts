@@ -4,6 +4,11 @@ import { dirname, relative, resolve, sep } from 'node:path';
 import { assembleCatalogFromSources, assembleV5SourceCandidates, assembleV6SourceCandidates, assembleV7SourceCandidates, assembleV8SourceCandidates, assembleV9SourceCandidates, assertBaselinePreserved, catalogDiff, parseCatalogCliArgs, prepareV6Sources, prepareV7Sources, prepareV8Sources, prepareV9Sources, renderGeneratedModule, validateBaseline, validateCatalogDocument, V5_ASSEMBLY_PLAN_PATH, V6_ASSEMBLY_PLAN_PATH, V6_SOURCE_PATHS, V7_ASSEMBLY_PLAN_PATH, validateV5AssemblyPlan, validateV6AssemblyPlan, validateV7AssemblyPlan, validateV8AssemblyPlan, validateV9AssemblyPlan } from '../../src/modules/defi/catalog-tooling/catalog-generator';
 import { V8_ASSEMBLY_PLAN_PATH, V8_SOURCE_PATHS } from '../../src/modules/defi/catalog-tooling/v8-identities';
 import { V9_ASSEMBLY_PLAN_PATH, V9_SOURCE_PATHS, V9_SOURCE_RAW_SHA256 } from '../../src/modules/defi/catalog-tooling/v9-identities';
+import { assembleCatalogUpdate, prepareCatalogUpdate, validateUpdatePlan } from '../../src/modules/defi/catalog-tooling/catalog-update';
+import { parseUpdateArgs } from './update-cli-args';
+import { assertSavedUpdateCatalogParity, assertUpdateRepositoryFile } from './update-cli-files';
+import { createCatalogUpdateCliReport } from './update-cli-report';
+import { isBareLegacyV9Check, selectBareCatalogUpdateArgs } from './update-cli-current';
 
 const root = process.cwd();
 const baselinePath = resolve(root, 'data/defi-catalog/v1/pre-migration-baseline.json');
@@ -142,7 +147,27 @@ function readJson(path: string): unknown {
 }
 
 try {
-  const options = parseCatalogCliArgs(process.argv.slice(2));
+  const argv = [...selectBareCatalogUpdateArgs(root,process.argv.slice(2))];
+  if (['update-preview','update-build','generate','check','diff'].includes(argv[0]) && (['update-preview','update-build'].includes(argv[0])||argv.includes('--plan'))) {
+    const mode=argv.shift()! as 'update-preview'|'update-build'|'generate'|'check'|'diff';
+    const { planPath: planArg, write } = parseUpdateArgs(mode, argv);
+    const planFile=assertUpdateRepositoryFile(root,planArg), plan=validateUpdatePlan(readJson(planFile),planArg);
+    const baseFile=assertUpdateRepositoryFile(root,plan.baseline.path), baseBytes=readFileSync(baseFile), baseline=validateCatalogDocument(JSON.parse(baseBytes.toString('utf8')) as unknown);
+    const inputs=plan.sources.map(s=>({sourcePath:s.path,document:readJson(assertUpdateRepositoryFile(root,s.path))}));
+    const prepared=prepareCatalogUpdate({chains:baseline.chains},plan,inputs,createHash('sha256').update(baseBytes).digest('hex'));
+    if(mode==='update-preview'){const baselineDefinitions=baseline.chains.reduce((n,c)=>n+c.contracts.reduce((m,k)=>m+k.functions.length,0),0);process.stdout.write(`${JSON.stringify(createCatalogUpdateCliReport(prepared,plan,baselineDefinitions),null,2)}\n`);}
+    else if(write){if(plan.deactivations.length)throw new Error('Applying deactivations is deferred');const target=assertUpdateRepositoryFile(root,`${planArg.slice(0,planArg.lastIndexOf('/'))}/catalog.json`,true);const assembled=assembleCatalogUpdate({chains:baseline.chains},plan,inputs,createHash('sha256').update(baseBytes).digest('hex'));writeFileSync(target,`${JSON.stringify({schemaVersion:1,chains:assembled.chains},null,2)}\n`,'utf8');process.stdout.write('Update catalog written to the selected update folder.\n');}
+    else if(mode==='update-build')process.stdout.write(`${JSON.stringify({projectedDiff:prepared.projectedDiff,sourceDigests:prepared.sourceDigests,writePerformed:false},null,2)}\n`);
+    else {
+      if(plan.deactivations.length)throw new Error('Applying deactivations is deferred');
+      const assembled=assembleCatalogUpdate({chains:baseline.chains},plan,inputs,createHash('sha256').update(baseBytes).digest('hex'));
+      const savedPath=`${planArg.slice(0,planArg.lastIndexOf('/'))}/catalog.json`;
+      if(mode==='diff') process.stdout.write(`${JSON.stringify(prepared.projectedDiff,null,2)}\n`);
+       else { const expected=JSON.stringify({schemaVersion:1,chains:assembled.chains}); assertSavedUpdateCatalogParity(root,savedPath,expected,(value)=>{const saved=validateCatalogDocument(value);return JSON.stringify({schemaVersion:1,chains:saved.chains});}); const modulePath=assertUpdateRepositoryFile(root,'src/modules/defi/registry/generated/production-catalog.ts',mode==='generate'); if(mode==='generate') { writeFileSync(modulePath,renderGeneratedModule(assembled),'utf8'); process.stdout.write('Production module generated from the saved, pinned update catalog.\n'); } else { if(readFileSync(modulePath,'utf8')!==renderGeneratedModule(assembled))throw new Error('Production module is not generated from this update plan'); process.stdout.write('Plan catalog and production module match.\n'); } }
+    }
+    process.exit(0);
+  }
+  const options = parseCatalogCliArgs(argv);
   if (options.mode === 'prepare-v5') {
     const plan = validateV5AssemblyPlan(readJson(assertFixedFilePath(v5PlanPath, V5_ASSEMBLY_PLAN_PATH)));
     const base = validateCatalogDocument(readJson(assertFixedFilePath(resolve(root, plan.baselinePath), plan.baselinePath)));
@@ -300,19 +325,21 @@ try {
     writeFileSync(outputPath, renderGeneratedModule(current), 'utf8');
   } else if (options.mode === 'check') {
     assertBaselinePreserved(current, baseline);
-    if (isV9) {
+    if (isV9 && isBareLegacyV9Check(process.argv.slice(2))) {
       const expected = renderGeneratedModule(current);
       const actual = readFileSync(outputPath, 'utf8');
       if (actual !== expected) throw new Error('V9 catalog and generated production registry are stale; run npm run defi:catalog:generate');
       process.stdout.write('V9 catalog and generated production registry are current against fixed sDAI source/admissions and immutable v8 baseline.\n');
+    } else if (isV9) {
+      process.stdout.write('Historical v9 catalog is current against fixed sDAI source/admissions and immutable v8 baseline; production-module selection is separate.\n');
     } else if (isV8) {
-      process.stdout.write('Historical v8 catalog is current against fixed Enso source/admission and immutable v7 baseline; the production module targets v9.\n');
+      process.stdout.write('Historical v8 catalog is current against fixed Enso source/admission and immutable v7 baseline; production-module selection is separate.\n');
     } else if (isV7) {
-      process.stdout.write('Historical v7 catalog is current against its fixed v6 baseline, sources, identity map, and admissions; the production module currently targets v9.\n');
+      process.stdout.write('Historical v7 catalog is current against its fixed v6 baseline, sources, identity map, and admissions; production-module selection is separate.\n');
     } else if (isV6) {
-      process.stdout.write('V6 catalog is current against its fixed sources and admissions; the production module currently targets v9.\n');
+      process.stdout.write('V6 catalog is current against its fixed sources and admissions; production-module selection is separate.\n');
     } else if (isV5) {
-      process.stdout.write('V5 catalog is current against its fixed sources and admissions; the production module currently targets v9.\n');
+      process.stdout.write('V5 catalog is current against its fixed sources and admissions; production-module selection is separate.\n');
     } else {
     const expected = renderGeneratedModule(current);
     const actual = readFileSync(outputPath, 'utf8');

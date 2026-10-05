@@ -51,6 +51,11 @@ function catalogIds(path: string): string[] {
   return catalog.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId)));
 }
 
+const cometDirectIds = [
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-to',
+  'compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-to',
+];
+
 function first20SourceIds(): string[] {
   const root = resolve(process.cwd(), 'data/defi-catalog');
   const before = catalogIds(resolve(root, 'v4/catalog.json'));
@@ -95,9 +100,9 @@ function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
 
 describe('published production profiles', () => {
   it('pins the actual production manifest inventory and all literal fingerprints', () => {
-    expect(flat).toHaveLength(673);
+    expect(flat).toHaveLength(675);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
-    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(650);
+    expect(flat.filter((fn) => fn.type === 'contract_call' && !(fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)'))).toHaveLength(652);
     expect(flat.filter((fn) => fn.executionScope)).toHaveLength(16);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
     const ids = new Set<string>();
@@ -122,6 +127,10 @@ describe('published production profiles', () => {
         expect(flat.find((fn) => fn.capabilityId === id)).toMatchObject({ status: 'active', type: 'contract_call' });
       }
     }
+    expect(cometDirectIds.every((id) => flat.some((fn) => fn.capabilityId === id))).toBe(true);
+    expect(cometDirectIds.some((id) => ids.has(id))).toBe(false);
+    const v9Ids = catalogIds(resolve(process.cwd(), 'data/defi-catalog/v9/catalog.json')).sort(cmp);
+    expect(flat.map((fn) => fn.capabilityId).filter((id) => !cometDirectIds.includes(id)).sort(cmp)).toEqual(v9Ids);
     const npm = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((bundle) => bundle.bundleId.startsWith('uniswap-v3-'));
     const blue = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((bundle) => bundle.bundleId.startsWith('morpho-blue-'));
     expect(npm).toHaveLength(7);

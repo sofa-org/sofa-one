@@ -434,7 +434,7 @@ function makeSourceFunction(input: SourceFunction, context: { familyId: string; 
   };
 }
 
-function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[] {
+function sourceFamilies(document: unknown, sourcePath: string, onCandidate?: (binding: { familyId: string; familyVersion: string; candidate: DefiFunctionPolicy; sourceRefs: readonly string[] }) => void): DefiChainPolicy[] {
   assertJsonData(document, sourcePath);
   const root = record(document, sourcePath);
   onlyKeys(root, SOURCE_ROOT_KEYS, sourcePath);
@@ -468,7 +468,16 @@ function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[
     if (!Array.isArray(refsValue) || refsValue.length === 0 || new Set(refsValue).size !== refsValue.length || refsValue.some((ref) => typeof ref !== 'string' || !recordMap.has(ref))) throw new Error(`${label} has missing, duplicate, or undeclared source references`);
     if (!Array.isArray(functionsValue)) throw new Error(`${label} functions must be an array`);
     const entries = functionsValue.map((item, i) => {
-      const candidate = makeSourceFunction(record(item, `${label}.functions[${i}]`), { familyId, familyVersion, chainId, address, contractName, familySources, records: recordMap });
+      const raw = record(item, `${label}.functions[${i}]`);
+      const candidate = makeSourceFunction(raw, { familyId, familyVersion, chainId, address, contractName, familySources, records: recordMap });
+      let rawRefs: unknown = raw.sourceRefs ?? (raw.sourceId === undefined ? familySources : [raw.sourceId]);
+      if ('abi' in raw || 'capabilityId' in raw) {
+        const provenance = record(raw.provenance, 'Source policy function provenance');
+        const ref = requireString(provenance.sourceRef, 'Source policy function provenance.sourceRef');
+        rawRefs = [recordMap.has(ref) ? ref : [...recordMap.entries()].find(([, row]) => row.url === ref)?.[0]];
+      }
+      if (!Array.isArray(rawRefs) || rawRefs.some((ref) => typeof ref !== 'string' || !recordMap.has(ref))) throw new Error(`${label}.functions[${i}] has unresolved effective source references`);
+      onCandidate?.({ familyId, familyVersion, candidate, sourceRefs: [...new Set(rawRefs as string[])].sort(cmp) });
       if (isV7Source) {
         const identity = V7_SOURCE_IDENTITIES.find((row) => row.sourcePath === sourcePath && row.familyId === familyId && row.familyVersion === familyVersion && row.chainId === chainId && row.address === address && row.signature === candidate.signature);
         if (!identity || matchedV7Identities.has(identity.capabilityId)) throw new Error(`${sourcePath} has a missing, ambiguous, or duplicate reviewed v7 identity for ${familyId}:${chainId}:${address}:${candidate.signature}`);
@@ -530,6 +539,43 @@ function sourceFamilies(document: unknown, sourcePath: string): DefiChainPolicy[
   if (isV6Source && matchedV6Identities.size !== V6_SOURCE_IDENTITIES.filter((row) => row.sourcePath === sourcePath).length) throw new Error(`${sourcePath} did not consume every reviewed v6 identity binding exactly once`);
   if (isV7Source && matchedV7Identities.size !== V7_SOURCE_IDENTITIES.filter((row) => row.sourcePath === sourcePath).length) throw new Error(`${sourcePath} did not consume every reviewed v7 identity binding exactly once`);
   return [...chains.entries()].sort(([a], [b]) => a - b).map(([chainId, contracts]) => ({ chainId, status: 'inactive' as const, contracts: [...contracts.entries()].sort(([a], [b]) => cmp(a, b)).map(([address, functions]) => ({ address, status: 'inactive' as const, functions: functions.sort((a, b) => cmp(a.capabilityId, b.capabilityId)) })) }));
+}
+
+/** Strictly compile one ordinary source snapshot without historical assembly/admission rules. */
+export function compileSourceSnapshot(document: unknown, sourcePath: string): DefiChainPolicy[] {
+  if (!/^data\/defi-catalog\/updates\/[a-z0-9]+(?:-[a-z0-9]+)*\/sources\/[A-Za-z0-9._-]+\.json$/.test(sourcePath)) {
+    throw new Error('Generic source path must be inside one update sources directory');
+  }
+  const root = record(document, sourcePath);
+  if (!Array.isArray(root.unresolved)) throw new Error(`${sourcePath} must explicitly provide unresolved`);
+  const families = sourceFamilies(document, sourcePath);
+  return families.map((chain) => ({ ...chain, contracts: chain.contracts.map((contract) => ({
+    ...contract, functions: contract.functions.map((fn) => ({ ...fn,
+      capabilityId: `candidate:${createHash('sha256').update(`${chain.chainId}:${contract.address}:${fn.signature}:${functionAbiHash(fn)}`).digest('hex')}`,
+    }))
+  })) }));
+}
+
+/** Compile ordinary snapshot candidates with their exact parsed family/version/reference bindings. */
+export function compileSourceSnapshotBindings(document: unknown, sourcePath: string): Array<{
+  sourcePath: string; familyId: string; familyVersion: string; chainId: number; contract: string;
+  signature: string; selector: string; abiHash: string; sourceRefs: readonly string[]; fn: DefiFunctionPolicy;
+}> {
+  if (!/^data\/defi-catalog\/updates\/[a-z0-9]+(?:-[a-z0-9]+)*\/sources\/[A-Za-z0-9._-]+\.json$/.test(sourcePath)) throw new Error('Generic source path must be inside one update sources directory');
+  const root = record(document, sourcePath);
+  if (!Array.isArray(root.unresolved)) throw new Error(`${sourcePath} must explicitly provide unresolved`);
+  for (const [fi, familyValue] of (root.families as unknown[]).entries()) {
+    const family=record(familyValue,`${sourcePath}.families[${fi}]`);
+    if(Array.isArray(family.contracts)) for(const [ci,contractValue] of (family.contracts as unknown[]).entries()){const c=record(contractValue,`${sourcePath}.families[${fi}].contracts[${ci}]`);if(c.status!=='inactive')throw Error('Generic source contracts must be explicitly inactive');for(const fnValue of Array.isArray(c.abiFunctions)?c.abiFunctions:[]){const fn=record(fnValue,'generic source function');if(fn.status!=='inactive')throw Error('Generic source functions must be explicitly inactive');}}
+    if(Array.isArray(family.chains)) for(const chainValue of family.chains as unknown[]){const chain=record(chainValue,'generic source chain');if(chain.status!=='inactive')throw Error('Generic source chains must be inactive');for(const contractValue of Array.isArray(chain.contracts)?chain.contracts:[]){const c=record(contractValue,'generic source contract');if(c.status!=='inactive')throw Error('Generic source contracts must be inactive');for(const fnValue of Array.isArray(c.functions)?c.functions:[]){const fn=record(fnValue,'generic source function');if(fn.status!=='inactive')throw Error('Generic source functions must be inactive');}}}
+  }
+  const bindings: ReturnType<typeof compileSourceSnapshotBindings> = [];
+  sourceFamilies(document, sourcePath, ({ familyId, familyVersion, candidate, sourceRefs }) => {
+    if (candidate.status !== 'inactive' || candidate.provenance.status !== 'candidate' || candidate.executionScope) throw new Error('Generic source functions must be inactive and unscoped');
+    const fn = { ...candidate, capabilityId: `candidate:${createHash('sha256').update(`${sourcePath}:${familyId}:${familyVersion}:${candidate.chainId}:${candidate.contract}:${candidate.signature}:${functionAbiHash(candidate)}`).digest('hex')}` };
+    bindings.push({ sourcePath, familyId, familyVersion, chainId: candidate.chainId, contract: candidate.contract.toLowerCase(), signature: candidate.signature, selector: toFunctionSelector(candidate.signature).toLowerCase(), abiHash: functionAbiHash(candidate), sourceRefs, fn });
+  });
+  return bindings;
 }
 
 /** Compile the fixed v6 inventory for review only. No source status is promoted and nothing is written. */
