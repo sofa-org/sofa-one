@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "yieldnest-yneth",
+      "familyVersion": "yneth@54093dda",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x09db87a538bd693e9d08544577d5ccfaa6373a48",
+          "status": "inactive",
+          "contractName": "YieldNest ynETH Proxy",
+          "sourceRefs": [
+            "yieldnest-inherited-base-and-interface-sources",
+            "yieldnest-official-mainnet-deployments",
+            "yneth-address-bound-abi",
+            "yneth-address-bound-implementation-source"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                { "internalType": "address", "name": "receiver", "type": "address" }
+              ],
+              "name": "depositETH",
+              "outputs": [
+                { "internalType": "uint256", "name": "shares", "type": "uint256" }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "yieldnest-inherited-base-and-interface-sources",
+                "yieldnest-official-mainnet-deployments",
+                "yneth-address-bound-abi",
+                "yneth-address-bound-implementation-source"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "yieldnest-inherited-base-and-interface-sources",
+      "url": "https://etherscan.io/address/0x09db87a538bd693e9d08544577d5ccfaa6373a48#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "The address-bound verified source imports ynBase (retained src_ynBase.sol carrier SHA-256 60dc82db7b5c4919b6a5db7a05b2f363c8ed5feae58abc40c0c80d884b74a639), IynETH (src/interfaces/IynETH.sol SHA-256 ddb6c1bc418fe0b1596dc42465e541c1cf87e54f8ddcfbe7852c253efbf01b37), IStakingNodesManager (src/interfaces/IStakingNodesManager.sol SHA-256 67ee1f7720bfc329b3d6dc14162dbb47668b6da2fd2c91dda2264a0b135911a2), and IRewardsDistributor (src/interfaces/IRewardsDistributor.sol SHA-256 47c0cca5ebf929c5d4287c286912159356a2fd258e976ea0caf1b5d29f63f386). These are source-context/dependency references only; they do not assert configured live dependencies or current proxy storage."
+    },
+    {
+      "sourceId": "yieldnest-official-mainnet-deployments",
+      "url": "https://github.com/yieldnest/ynETH/tree/81046a6a207abba16d324c878b5254e76ba3b45c",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned YieldNest ynETH repository commit 81046a6a207abba16d324c878b5254e76ba3b45c (2025-07-11); retained README.md carrier SHA-256 c5c132a498e06bf3bce501ffdab7fe9eaad8bc6200e73e978683e561a5bf3a9a documents the mainnet ynETH Proxy at 0x09db87a538bd693e9d08544577d5ccfaa6373a48. The retained deployment record SHA-256 da92744b82a08e6bcff8bef457af37f55a9057a4f83a6f611df0952d89edcd03 separately maps proxy-ynETH to that address and implementation-ynETH to 0x87e2a51d3b88fc2f5917a7ab793ea595b243710a. This dated repository/deployment evidence is not a live proxy, storage, or runtime identity assertion."
+    },
+    {
+      "sourceId": "yneth-address-bound-implementation-source",
+      "url": "https://etherscan.io/address/0x09db87a538bd693e9d08544577d5ccfaa6373a48#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Retained address-bound Etherscan proxy and implementation page carriers identify implementation 0x87e2a51d3b88fc2f5917a7ab793ea595b243710a; the verified src/ynETH.sol carrier SHA-256 is 54093dda6420db0456436cc4ec1058ee0e8066c88deff0d366d13f4e3198baf0. The repository's similarly named source has a different digest and is not asserted equivalent; no full-generation equivalence, present proxy implementation, storage configuration, or current runtime claim is made."
+    },
+    {
+      "sourceId": "yneth-address-bound-abi",
+      "url": "https://etherscan.io/address/0x09db87a538bd693e9d08544577d5ccfaa6373a48#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Retained full ABI carrier SHA-256 1152d53af4a2fc86c9fb2a2c9150b29a736a6274f8b15931486c9e3bb55a05de has exactly one function depositETH(address) with receiver:address, shares:uint256, and payable mutability. The independently selected depositETH ABI carrier SHA-256 b166e3db6326a066706bf59b03605b8caf244e648d1a12a95ac003a0e440c49e matches that sole full-ABI entry including names and internal types. Only this exact method is selected."
+    }
+  ],
+  "unresolved": []
+}
