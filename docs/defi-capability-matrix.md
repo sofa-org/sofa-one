@@ -78,6 +78,12 @@ The next ordinary update adds only `deposit(uint256,address)`, `mint(uint256,add
 
 This is a fixed PoolV2 target, not SyrupRouter or wrapped-token authority. Exact ABI fields and outputs remain the PoolV2 declarations; `requestRedeem` returns escrowed LP shares, not assets or completion. Manager permissions, configured asset/escrow, underlying-token approval and applicable LP allowance remain protocol dependencies, with no auto-grants, approval pairing, amount/recipient/owner/feed gates, or profile. Dated role and verified-source evidence does not prove current runtime/constructor/manager identity, funding, liquidity, transaction success, completed exit, or financial safety. See the [syrupUSDG update report](defi-research/maple-usdg-pool-v2-update.md).
 
+## Spark spUSDC Savings Vault V2 addition
+
+The current ordinary update adds only `deposit(uint256,address)`, `mint(uint256,address)`, `withdraw(uint256,address,address)`, and `redeem(uint256,address,address)` to the exact Ethereum spUSDC Vault V2 target `0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d`. Production is 709 definitions (686 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 705 function objects and scoped bindings are preserved; none of the four new IDs is profiled.
+
+These are the plain, exact full-ABI declarations; referral overloads and unrelated helpers are excluded. Vault conversion, receiver/taker/cap checks, asset transfer, owner share balance/allowance, and asset liquidity are protocol behavior. Asset approval and third-party share allowance remain separate prerequisites. The platform adds no amount, recipient/owner, balance, or feed gates, automatic grants, or approval pairing. Product/address/source records do not prove current proxy/runtime identity or initialized asset configuration, funding, liquidity, execution success, or financial safety. See the [Spark update report](defi-research/spark-spusdc-v2-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
