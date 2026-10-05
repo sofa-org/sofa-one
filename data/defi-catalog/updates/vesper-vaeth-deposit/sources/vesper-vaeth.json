@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "vesper-vaeth",
+      "familyVersion": "veth@60b621ea",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xd1c117319b3595fbc39b471ab1fd485629eb05f2",
+          "status": "inactive",
+          "contractName": "Vesper vaETH Pool",
+          "sourceRefs": ["vesper-metadata", "vesper-contracts-pinned-deployment", "vaeth-proxy-descriptor", "vaeth-verified-implementation", "vpool-verified-inherited-source"],
+          "abiFunctions": [
+            {
+              "inputs": [],
+              "name": "deposit",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": ["vesper-metadata", "vesper-contracts-pinned-deployment", "vaeth-proxy-descriptor", "vaeth-verified-implementation", "vpool-verified-inherited-source"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "vesper-metadata",
+      "url": "https://github.com/VesperFi/metadata/tree/7334bb44adcce9de3e318e0322218197c932fee0",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official VesperFi/metadata commit 7334bb44adcce9de3e318e0322218197c932fee0 (2024-12-04); retained vesper-metadata.json SHA-256 8f2b548013e944bb5c91a692e3cd49d0bfd36d54a1db6778bf0588f8ccc774f1 identifies Ethereum vaETH as a production Grow pool with WETH collateral. Dated product metadata is not proof of current deployment, proxy storage, or configuration."
+    },
+    {
+      "sourceId": "vesper-contracts-pinned-deployment",
+      "url": "https://github.com/VesperFi/vesper-contracts/tree/5f23bd54f8408cdf5ed5251faa70b4888e03c5d3",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official VesperFi/vesper-contracts commit 5f23bd54f8408cdf5ed5251faa70b4888e03c5d3 (2025-08-13); retained vaeth/VETH_Proxy.json carrier SHA-256 ba458f6af115a5ba65c6fed366753bb195a8b8e47c4fae4dcd4702571c217cfb identifies the proxy role and vaeth/VETH.json SHA-256 0f226a39b3989098b8610feeaee23dc36b7b79e81d4a691b2ec26a64a8283748 identifies VETH pool role at the selected target. These dated repository artifacts are not current proxy-storage/runtime proof."
+    },
+    {
+      "sourceId": "vaeth-proxy-descriptor",
+      "url": "https://etherscan.io/address/0xd1c117319b3595fbc39b471ab1fd485629eb05f2#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound proxy carrier associates the vaETH pool with implementation 0xf296b1113cc49ae4c6890e7b5dd3bed780407487 as a dated observation only; it is not proof of live implementation, current storage, or initializer state."
+    },
+    {
+      "sourceId": "vaeth-verified-implementation",
+      "url": "https://etherscan.io/address/0xf296b1113cc49ae4c6890e7b5dd3bed780407487#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound verified VETH.sol carrier SHA-256 60b621ea6db021c05af19a0790dd47a866e06e207798466da6e74d131a960a8d; implementation ABI carrier SHA-256 f0a40173d2fe8be4b662b7787de376e9bc7e45b5b9bf62394bfe2ff873c7d757; selected payable deposit() ABI carrier SHA-256 ef2d429e5db20d17df022d627c0d078f6f4d3d9b85e325396868e9dfb1f9e704. The ABI includes other overloads/methods, which are not admitted. Source inspection is not compiler, current-runtime, or storage proof."
+    },
+    {
+      "sourceId": "vpool-verified-inherited-source",
+      "url": "https://etherscan.io/address/0xf296b1113cc49ae4c6890e7b5dd3bed780407487#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound VPool.sol carrier SHA-256 991a4702b502de8c2a24507808a4af72a49cffcb26211a805face0560e2b8923. VETH.deposit() updates rewards for msg.sender, calculates shares from msg.value, wraps that value through the pool's configured WETH token, mints shares to msg.sender, and emits Deposit. VPool reward updates target the fixed configured poolRewards module when present; mintage depends on configured accounting and share-valuation state. The helper source does not prove deployed helper identity or current configuration."
+    }
+  ],
+  "unresolved": []
+}

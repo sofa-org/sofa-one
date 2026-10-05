@@ -120,11 +120,17 @@ The current ordinary update adds only payable `stake(uint256 minMETHAmount)` to 
 
 The inspected verified body accounts native ETH, computes protocol mETH, checks protocol min/max/allowlist and the caller-provided output minimum, and mints to `msg.sender` through its fixed configured mETH token. These are protocol conditions; no platform amount/category/recipient/feed/balance gate is added. The pinned repository source differs from the address-bound verified source, and neither proves current proxy/storage/token configuration, funding, successful execution, or financial safety. See the [Mantle mETH staking update report](defi-research/mantle-meth-staking-update.md).
 
-## Liquid Collective River deposit
+## Prior Liquid Collective River deposit
 
 The current ordinary update adds only payable zero-argument `deposit()` on River proxy role `0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549`. Production is 729 definitions (706 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 728 functions and scoped bindings remain unchanged, and the new ID is not profiled.
 
 The inherited caller deposit rejects zero ETH, accounts the deposit, and River mints protocol shares to the caller through its fixed accounting helper before the protocol caller-allowlist check. Source-specific pause/slashing, allowlist/compliance, share accounting, or governance checks may revert. The pinned repository source differs from the address-bound verified source; dated evidence does not prove current proxy/runtime state, funding, execution, or financial safety. See the [Liquid Collective River deposit update report](defi-research/liquid-collective-deposit-update.md).
+
+## Vesper vaETH payable deposit
+
+The current ordinary update adds only payable zero-argument `deposit()` on the Ethereum vaETH Grow-pool role at `0xd1c117319b3595fbc39b471ab1fd485629eb05f2`. Production is 730 definitions (707 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; all prior 729 function objects and scoped bindings remain unchanged, and the new ID is not profiled.
+
+The inspected VETH body updates rewards for the caller, calculates shares from native value, wraps through its fixed configured WETH token, and mints shares to the caller. Protocol pause, rates/accounting, supply/strategy liquidity, governance, and reward-module conditions may revert. No platform native-value or recipient restriction is added; zero and positive values remain permitted by the payable ABI and may be rejected by protocol logic. Only `deposit()` is included; ERC-20 `deposit(uint256)`, withdrawals, reward claims, receive/fallback, and administration are excluded. Dated repository and address-bound source associations do not prove current implementation/storage, initialization, runtime identity, funding, liquidity, or financial safety. See the [Vesper vaETH deposit update report](defi-research/vesper-vaeth-deposit-update.md).
 
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
