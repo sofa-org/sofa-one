@@ -108,6 +108,12 @@ The current ordinary update adds only payable `deposit(address)` to the document
 
 The caller supplies native ETH as the payable call value and chooses the ETHx receiver. The inspected path applies Stader protocol min/max/pause/exchange-rate/configuration conditions and mints through the fixed configured ETHx token. No separate platform financial, receiver, feed, or balance gate is added; existing wallet native-outflow budgets remain. Other methods and the referral overload are excluded. Dated source/address evidence does not prove current proxy/configuration, funding, execution success, or financial safety. See the [Stader ETHx update report](defi-research/stader-ethx-deposit-update.md).
 
+## Ankr ETH stake and claim
+
+The current ordinary update adds only payable zero-argument `stakeAndClaimAethC()` on documented Ethereum GlobalPool proxy role `0x84db6ee82b7cf3b47e8f19270abde5718b936670`. Production is 727 definitions (704 actions, 23 approvals), with 16 scopes and 69 profiles / 399 IDs; prior 726 function objects and scoped bindings remain unchanged, and the new ID is not profiled.
+
+The caller supplies native ETH; the inspected R46 body accounts shares through its configured token and claims them to `msg.sender`. Protocol positive-value, pause, non-reentrancy, share, or transfer conditions can revert. No platform amount/recipient/feed/balance gate or automatic grant is added. Dated proxy/source evidence does not establish current runtime/storage/token configuration, funding, execution outcome, or financial safety. See the [Ankr ETH staking update report](defi-research/ankr-eth-staking-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`

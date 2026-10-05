@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/stader-ethx-deposit/catalog.json",
+    "rawSha256": "fcba1f520377d1c7c7c6c6105295a5ef6421caa12a789cc2ead68674678853f6",
+    "manifestHash": "0x25a5e3e965e09cf2505bb9c6d43ab6afb83827cbdb6cc7669c867fefb6e97e6d"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/ankr-eth-staking/sources/ankr-eth-global-pool.json",
+      "canonicalSha256": "70005f5cec72d7955e12df295c4aeae897d4e59bd724a2e0f5fa6a957df6c95d"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/ankr-eth-staking/sources/ankr-eth-global-pool.json",
+      "familyId": "ankr-eth-global-pool",
+      "familyVersion": "global-pool-r46@c3723c49",
+      "chainId": 1,
+      "contract": "0x84db6ee82b7cf3b47e8f19270abde5718b936670",
+      "signature": "stakeAndClaimAethC()",
+      "selector": "0x9fa65c56",
+      "abiHash": "0xe67ba4befa7ee925b266ded353800f70d18c202406d7f9097dc32806a21335e8",
+      "capabilityId": "ankr-eth-global-pool:r46:1:0x84db6ee82b7cf3b47e8f19270abde5718b936670:stake-and-claim-aeth-c",
+      "sourceRefs": [
+        "ankr-eth-official-staking-docs",
+        "ankr-eth-global-pool-implementation",
+        "ankr-eth-global-pool-proxy"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "ankr-eth-official-staking-docs",
+          "ankr-eth-global-pool-implementation",
+          "ankr-eth-global-pool-proxy"
+        ],
+        "evidence": "This exact payable zero-argument method uses msg.value, calls _stake(msg.sender, msg.value, LockStrategy.Claimable), then claimAETH(). The inspected body requires positive native value and paused/nonreentrant conditions, computes shares through the fixed configured _aethContract bondsToShares path, mints those shares to this pool and credits only the caller's claimable-share balance, then claimAETH resets that caller credit and transfers shares from the same configured token to msg.sender. Protocol pause, share calculation/mint, zero claim, or token transfer can revert. This does not authorize arbitrary targets/calldata or imply a separate platform amount/receiver/feed/balance restriction; existing root native-value budgets remain in force. Documentation naming ankrETH does not prove current _aethContract storage/configuration, proxy implementation, funding, execution outcome, or financial safety. The deprecated stake alias, standalone claim, validator/admin, unstake/withdraw, and all other methods are excluded."
+      }
+    }
+  ],
+  "deactivations": []
+}
