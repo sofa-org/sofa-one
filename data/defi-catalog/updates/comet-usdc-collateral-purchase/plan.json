@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/aave-collateral-toggle/catalog.json",
+    "rawSha256": "ec5b4e1c6fb8ea3153b5a7c119d8f0f0d23bca8ce484d62d4caad9719e0724ad",
+    "manifestHash": "0x0418865a36110cf3a5aac4bcc6eb129cd7d28f7de41bb050e5ab9db3fafafce5"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/comet-usdc-collateral-purchase/sources/compound-comet.json",
+      "canonicalSha256": "c5b706eac3d597ad2ffbf2b0a1a8879fd750e4130d6fce1eea639cede1775061"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/comet-usdc-collateral-purchase/sources/compound-comet.json",
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "chainId": 1,
+      "contract": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+      "signature": "buyCollateral(address,uint256,uint256,address)",
+      "selector": "0xe4e6e779",
+      "abiHash": "0xa6e84436299da494593db33a343545d2fd6c769e10b73bd387a468f0abd013e2",
+      "capabilityId": "compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:buy-collateral",
+      "sourceRefs": ["compound-comet-implementation", "compound-comet-main-interface", "compound-comet-usdc-mainnet-role"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["compound-comet-implementation", "compound-comet-main-interface", "compound-comet-usdc-mainnet-role"],
+        "evidence": "Human review of the pinned Comet implementation, main interface, and Ethereum USDC role. The exact nonpayable buyCollateral(address,uint256,uint256,address) declaration has no outputs. The fixed implementation path transfers the caller-selected baseAmount of the configured base token from msg.sender, computes the configured collateral purchase, checks protocol minAmount/reserve conditions, and transfers the configured collateral token to the caller-selected recipient. Asset, minAmount, baseAmount, and recipient remain caller-selected ABI values without platform-specific bounds; base-token approval may be a separate prerequisite, not automatically paired. Protocol pause, configuration, pricing, balance, and reserve checks may reject a call. Dated role and pinned source do not prove current proxy/runtime identity, liquidity, execution success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

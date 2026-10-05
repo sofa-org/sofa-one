@@ -46,6 +46,12 @@ The current generic update adds only `setUserUseReserveAsCollateral(address,bool
 
 The pinned Origin Pool routes caller, asset, and bool to fixed SupplyLogic and ValidationLogic. The protocol determines whether reserve/aToken eligibility and collateral/health checks permit a requested transition. Both bool values and caller-selected ABI assets remain unconstrained by this platform; no platform health-factor or financial-safety gate is added. These dated source roles and pinned code do not prove live runtime identity, protocol acceptance, balances, liquidity, funded execution, or financial safety.
 
+## Compound Comet USDC collateral purchase addition
+
+The current generic update adds only `buyCollateral(address,uint256,uint256,address)` (`0xe4e6e779`) to the existing Ethereum Comet USDC target `0xc3d688b66703497daa19211eedff47f25384cdc3`. Its modeled ABI is nonpayable, has named address/uint256/uint256/address inputs, no outputs, and full hash `0xa6e84436299da494593db33a343545d2fd6c769e10b73bd387a468f0abd013e2`. Generated production is 688 definitions (665 actions, 23 approvals), with 16 unchanged scopes and 69 profiles / 399 IDs. All prior 687 functions remain unchanged; the new ID is not profiled.
+
+The pinned Comet implementation uses its configured base token, collateral token, pricing, and reserve state in a fixed purchase path: it transfers the caller-selected `baseAmount` from the caller, checks the computed collateral amount against `minAmount`, then transfers collateral to the caller-selected `recipient`. A separate base-token approval may be required; no approval is automatically paired. The ABI leaves asset, minAmount, baseAmount, and recipient caller-selected without platform bounds. Protocol pause, configuration, pricing, balance, and reserve conditions may reject calls. This does not prove liquidity, execution success, current runtime identity, or financial safety.
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
