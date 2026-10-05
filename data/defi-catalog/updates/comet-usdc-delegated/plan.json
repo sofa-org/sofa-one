@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/comet-usdc-direct/catalog.json",
+    "rawSha256": "f78e379e28b44f32909128f083ca3b01b00988ae652255c13ef80cde31d4faf1",
+    "manifestHash": "0xadb45237118c5992b2c3b3834bfd45de3901e1c8bd8534dda9f1dc879b68f8e9"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/comet-usdc-delegated/sources/compound-comet.json",
+      "canonicalSha256": "a44e85fbd4e30fdff30e37df77fea9e69146ec677f56931909f3ef9326d784d0"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/comet-usdc-delegated/sources/compound-comet.json",
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "chainId": 1,
+      "contract": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+      "signature": "supplyFrom(address,address,address,uint256)",
+      "selector": "0x90323177",
+      "abiHash": "0x2020844e720825b6535b604bbce504a6c09b7559bebcaea5e59ffdeab1bd06c8",
+      "capabilityId": "compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:supply-from",
+      "sourceRefs": [
+        "compound-comet-implementation",
+        "compound-comet-main-interface",
+        "compound-comet-usdc-mainnet-role"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "compound-comet-implementation",
+          "compound-comet-main-interface",
+          "compound-comet-usdc-mainnet-role"
+        ],
+        "evidence": "Human review of the pinned official implementation/interface/USDC role records. The interface declares supplyFrom(address,address,address,uint256) as nonpayable with no outputs. Implementation lines 729–731 pass the external caller and caller-selected from, dst, asset, and amount to supplyInternal; lines 737–749 enforce protocol pause, hasPermission(from,msg.sender), and fixed base-asset-or-collateral handling. Comet delegation may be required; platform admission neither creates delegation nor adds a platform from/self constraint. This records the ordinary selector/ABI only, not runtime identity or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/comet-usdc-delegated/sources/compound-comet.json",
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "chainId": 1,
+      "contract": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+      "signature": "withdrawFrom(address,address,address,uint256)",
+      "selector": "0x26441318",
+      "abiHash": "0x0348abeab1659c7f632296771445107e1f2ef6f40085865cf627fca8c21c5462",
+      "capabilityId": "compound-iii:v3-comet:1:0xc3d688b66703497daa19211eedff47f25384cdc3:withdraw-from",
+      "sourceRefs": [
+        "compound-comet-implementation",
+        "compound-comet-main-interface",
+        "compound-comet-usdc-mainnet-role"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "compound-comet-implementation",
+          "compound-comet-main-interface",
+          "compound-comet-usdc-mainnet-role"
+        ],
+        "evidence": "Human review of the pinned official implementation/interface/USDC role records. The interface declares withdrawFrom(address,address,address,uint256) as nonpayable with no outputs. Implementation lines 951–953 pass the external caller and caller-selected src, to, asset, and amount to withdrawInternal; lines 959–971 enforce protocol pause, hasPermission(src,msg.sender), and fixed base-asset-or-collateral handling. Comet delegation may be required; platform admission neither creates delegation nor adds a platform src/self constraint. Base-asset withdrawal may borrow according to protocol semantics. This records the ordinary selector/ABI only, not runtime identity or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

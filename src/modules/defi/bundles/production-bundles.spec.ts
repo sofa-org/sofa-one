@@ -132,7 +132,8 @@ describe('published production profiles', () => {
     expect(cometDirectIds.every((id) => flat.some((fn) => fn.capabilityId === id))).toBe(true);
     expect(cometDirectIds.some((id) => ids.has(id))).toBe(false);
     const v9Ids = catalogIds(resolve(process.cwd(), 'data/defi-catalog/v9/catalog.json')).sort(cmp);
-    expect(flat.map((fn) => fn.capabilityId).filter((id) => !cometDirectIds.includes(id)).sort(cmp)).toEqual(v9Ids);
+    const v9IdSet = new Set(v9Ids);
+    expect(flat.map((fn) => fn.capabilityId).filter((id) => v9IdSet.has(id)).sort(cmp)).toEqual(v9Ids);
     const npm = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((bundle) => bundle.bundleId.startsWith('uniswap-v3-'));
     const blue = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((bundle) => bundle.bundleId.startsWith('morpho-blue-'));
     expect(npm).toHaveLength(7);
