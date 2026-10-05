@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/maple-pool-v2/plan.json",
-  "planRawSha256": "8e108c5ebd56b9f23e8d46411436417f9800920377cf11a98c32972c4cb277fc"
+  "planPath": "data/defi-catalog/updates/maple-usdg-pool-v2/plan.json",
+  "planRawSha256": "ce41f29099209108ba157d049afe0c850d0adc0808138e409df7824989eec5e6"
 }

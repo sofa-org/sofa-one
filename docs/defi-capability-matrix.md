@@ -72,6 +72,12 @@ Production is 702 definitions (679 actions, 23 independent approvals), with 16 s
 
 The dated official Maple product map and pinned SDK ABI corroborate the target roles and selected ABI; address-bound Etherscan source records and inspected bodies show fixed configured asset/manager/escrow routes. The calls remain dependent on protocol manager permission and protocol state. Underlying-token approval for deposits and LP-share allowance for third-party exit requests are separate prerequisites, not automatically paired or granted. Caller-selected uint256 values and receiver/owner arguments remain unbounded by this platform; protocol conditions can reject them. Dated evidence does not prove current runtime or constructor/manager configuration, funding, liquidity, successful execution, withdrawal completion, or financial safety. See the [Maple update evidence and boundaries](defi-research/maple-pool-v2-update.md).
 
+## Maple syrupUSDG Pool V2 addition
+
+The next ordinary update adds only `deposit(uint256,address)`, `mint(uint256,address)`, and `requestRedeem(uint256,address)` to syrupUSDG PoolV2 at `0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a`. Production is now 705 definitions (682 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 702 function objects and scoped bindings remain identical; none of the three new IDs is in a profile.
+
+This is a fixed PoolV2 target, not SyrupRouter or wrapped-token authority. Exact ABI fields and outputs remain the PoolV2 declarations; `requestRedeem` returns escrowed LP shares, not assets or completion. Manager permissions, configured asset/escrow, underlying-token approval and applicable LP allowance remain protocol dependencies, with no auto-grants, approval pairing, amount/recipient/owner/feed gates, or profile. Dated role and verified-source evidence does not prove current runtime/constructor/manager identity, funding, liquidity, transaction success, completed exit, or financial safety. See the [syrupUSDG update report](defi-research/maple-usdg-pool-v2-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
