@@ -102,6 +102,12 @@ The current ordinary update adds only the four nonpayable ERC4626 methods—`dep
 
 The fixed implementation uses a configured ERC-20 asset; `pxETH` does not imply native-ETH wrapping. Protocol rounding, share allowance, withdrawal penalty, reward/fee accounting and liquidity affect behavior. Separate asset approval and third-party share allowance remain prerequisites; no automatic grant or approval pairing is added. Platform financial/owner/recipient/balance/feed gates are unchanged. Dated product and address-bound code/ABI evidence does not establish current runtime/constructor asset configuration, funding, liquidity, success, or financial safety. See the [Dinero AutoPxEth update report](defi-research/dinero-apxeth-update.md).
 
+## Stader ETHx payable deposit
+
+The current ordinary update adds only payable `deposit(address)` to the documented Ethereum StakePoolsManager role at `0xcf5ea1b38380f6af39068375516daf40ed70d299`. Production is 726 definitions (703 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 725 function objects and scoped bindings remain unchanged; the new ID is not profiled.
+
+The caller supplies native ETH as the payable call value and chooses the ETHx receiver. The inspected path applies Stader protocol min/max/pause/exchange-rate/configuration conditions and mints through the fixed configured ETHx token. No separate platform financial, receiver, feed, or balance gate is added; existing wallet native-outflow budgets remain. Other methods and the referral overload are excluded. Dated source/address evidence does not prove current proxy/configuration, funding, execution success, or financial safety. See the [Stader ETHx update report](defi-research/stader-ethx-deposit-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`

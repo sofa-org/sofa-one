@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/dinero-apxeth/catalog.json",
+    "rawSha256": "e5e96e7b934043d87f0ae8a72dd68857c11cbfe56656e573b7fa00fa77aafd03",
+    "manifestHash": "0xa841dea1554af510617e3d85625c00de5fe1fc9e99c5fa2c8a1bc133ede8c7b8"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/stader-ethx-deposit/sources/stader-ethx-manager.json",
+      "canonicalSha256": "4f6f54ad75ab47428279fcb2a08c231343ce6e018587a781ab3445ec32014ee0"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/stader-ethx-deposit/sources/stader-ethx-manager.json",
+      "familyId": "stader-ethx-manager",
+      "familyVersion": "staking-pool-manager@6be9f851",
+      "chainId": 1,
+      "contract": "0xcf5ea1b38380f6af39068375516daf40ed70d299",
+      "signature": "deposit(address)",
+      "selector": "0xf340fa01",
+      "abiHash": "0x42abde06a5110aaf72bf13d8ac24f72c008cc68abb15657c3e1ce24ff971c062",
+      "capabilityId": "stader-ethx-manager:v1:1:0xcf5ea1b38380f6af39068375516daf40ed70d299:deposit",
+      "sourceRefs": [
+        "stader-official-ethx-docs",
+        "stader-official-address-registry",
+        "stader-ethx-target-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "stader-official-ethx-docs",
+          "stader-official-address-registry",
+          "stader-ethx-target-source"
+        ],
+        "evidence": "This payable deposit accepts native ETH from the caller and a caller-selected ETHx receiver. The inspected manager checks protocol minDeposit/maxDeposit and pause/configuration state, computes shares from its configured exchange-rate path, then calls the fixed ETHx token mint for receiver and shares. The function accepts no arbitrary callee or calldata and does not itself prove a later withdrawal workflow. Native value is the ordinary function argument; no additional platform-native financial cap, receiver, feed, or balance gate is introduced. Protocol amount, oracle/exchange-rate, token, pause, or governance conditions may revert. The dated source/address role and ABI do not establish current proxy/storage/configuration, funding or outcome."
+      }
+    }
+  ],
+  "deactivations": []
+}
