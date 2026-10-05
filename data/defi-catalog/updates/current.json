@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "planPath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/plan.json",
-  "planRawSha256": "70cd2388312f8cc4d2fda9b9ca56fcad6aefbe6dc5475bed3a3276e58da567e3"
+  "planPath": "data/defi-catalog/updates/spark-speth-v2/plan.json",
+  "planRawSha256": "bec3dd3742558192a7f9d6011c49dd1a2d642ced51d88db6bd979758892ed585"
 }

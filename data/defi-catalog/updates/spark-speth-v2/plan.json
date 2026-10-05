@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/catalog.json",
+    "rawSha256": "9ff2fa04ff4eb0f8d35ac15f3a0198739ef91f45e20a88aef8532ee1153063cf",
+    "manifestHash": "0xe5002e4ea10a4ffa0a24de0dce3b5a37b8b369ffb0d1fa6933d0d20d905166a1"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/spark-speth-v2/sources/spark-vault-v2.json",
+      "canonicalSha256": "34523454cd30652956aa1cd5daa44f58fa709b77d25abe0e60287789d24ab544"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-speth-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xd9aa3738e0f53bd8105b8c7e2517c7338d49553e906e80abf32af4c3a38f5997",
+      "capabilityId": "spark-vault-v2:v2:1:0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f:deposit",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-pinned-implementation"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-pinned-implementation"
+        ],
+        "evidence": "The fixed SparkVault implementation converts the caller-selected ERC-20 asset amount through its exchange-rate path, validates receiver (not zero or vault), taker roles and deposit cap, then pulls the configured ERC-20 asset from msg.sender and mints shares. Arguments remain caller-selected; the platform adds no amount/recipient/owner/balance/feed gate. Protocol cap/role/state and separate asset approval may reject calls; no automatic approval/grant or native-ETH wrapping is implied. The dated role and shared implementation-version evidence does not establish current proxy/runtime identity, initialized asset value, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-speth-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0xb8f77e58b52fad3ac88bf14cb752b27c8e41983c8c149319e73db4c84f21e352",
+      "capabilityId": "spark-vault-v2:v2:1:0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f:mint",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-pinned-implementation"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-pinned-implementation"
+        ],
+        "evidence": "The fixed SparkVault implementation converts caller-selected shares through its exchange-rate path, then checks receiver, taker roles and deposit cap, pulls the configured ERC-20 asset from msg.sender, and mints shares. Arguments remain caller-selected; the platform adds no amount/recipient/owner/balance/feed gate. Protocol cap/role/state and separate asset approval may reject calls; no automatic approval/grant or native-ETH wrapping is implied. The dated role and shared implementation-version evidence does not establish current proxy/runtime identity, initialized asset value, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-speth-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x59b31bf3102e98ba6650eb9794b53143fd4c1b90166242569843084f9d8df901",
+      "capabilityId": "spark-vault-v2:v2:1:0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f:withdraw",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-pinned-implementation"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-pinned-implementation"
+        ],
+        "evidence": "The fixed SparkVault implementation converts caller-selected assets, checks/burns selected owner shares and, when owner differs from msg.sender, checks and spends existing share allowance; it then pushes the configured ERC-20 asset to caller-selected receiver subject to liquidity. No platform amount, recipient/owner, balance or feed gate applies; protocol state, allowance and liquidity may reject. No automatic share approval or completion guarantee. The dated role and shared implementation-version evidence does not establish current proxy/runtime identity, initialized asset value, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-speth-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e",
+      "capabilityId": "spark-vault-v2:v2:1:0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f:redeem",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-pinned-implementation"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-pinned-implementation"
+        ],
+        "evidence": "The fixed SparkVault implementation converts caller-selected shares to assets, checks/burns selected owner shares and, when owner differs from msg.sender, checks and spends existing share allowance; it then pushes the configured ERC-20 asset to caller-selected receiver subject to liquidity. No platform amount, recipient/owner, balance or feed gate applies; protocol state, allowance and liquidity may reject. No automatic share approval or completion guarantee. The dated role and shared implementation-version evidence does not establish current proxy/runtime identity, initialized asset value, funding, live liquidity, execution success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

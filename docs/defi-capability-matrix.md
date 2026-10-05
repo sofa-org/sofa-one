@@ -90,6 +90,12 @@ The next ordinary update adds the same four plain Vault V2 methods—`deposit`, 
 
 These bindings use the exact plain ABI declarations; referral overloads and other methods are excluded. Protocol conversion, cap/role checks, asset transfers, share ownership/allowance, and liquidity remain contract behavior. Asset approval and third-party share allowance are independent prerequisites. No automatic grants, approval pairing, or platform financial/owner/recipient/balance/feed gates are introduced. Dated product/address/version evidence does not prove current proxy/runtime identity or initialized assets, funding, liquidity, transaction success, or financial safety. See the [spUSDT/spPYUSD update report](defi-research/spark-spusdt-sppyusd-v2-update.md).
 
+## Spark spETH Vault V2 addition
+
+The current ordinary update adds only `deposit`, `mint`, `withdraw`, and `redeem` to the spETH user proxy `0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f`, using the exact same four plain nonpayable ABI declarations. Production is now 721 definitions (698 actions, 23 approvals), preserving 16 scopes and 69 profiles / 399 IDs. All prior 717 function objects and scoped bindings are preserved; none of the new IDs is profiled.
+
+spETH is a product label, not payable/native-ETH wrapping authority. The implementation uses a configured ERC-20 asset; the target's initialized value is not established here. Protocol conversion/cap/role checks, asset transfers, share balance/allowance and liquidity determine call outcomes. No platform financial/owner/recipient/balance/feed gates, auto-grants, or approval pairing are added. Dated registry and shared implementation-version evidence does not prove current proxy/runtime identity, initialized asset, funding, liquidity, execution success, or financial safety. See the [spETH update report](defi-research/spark-speth-v2-update.md).
+
 The one literal `sdai-savings-no-referral-v1` version `1.0.0` profile on Ethereum selects exactly these four members in canonical lexical order:
 
 - `sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit`
