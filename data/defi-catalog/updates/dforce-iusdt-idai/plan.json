@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/dforce-iusdc/catalog.json",
+    "rawSha256": "e50c22030c7f474a88c14194af688bf7da6c873b5e9f99387ffdcf8d261fa3e4",
+    "manifestHash": "0x6e020d6fd85932fc128f5111bbabe7b87ebb08ea16611f0810b0db2c3d280f57"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/dforce-iusdt-idai/sources/dforce-itoken.json",
+      "canonicalSha256": "3b71a97fe048b81b30e96e1f716e9e0144232ca6b369d5540c66a64c57bb962a"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/dforce-iusdt-idai/sources/dforce-itoken.json",
+      "familyId": "dforce-itoken",
+      "familyVersion": "itoken-v2-blp@126c6d83",
+      "chainId": 1,
+      "contract": "0x1180c114f7fadcb6957670432a3cf8ef08ab5354",
+      "signature": "mint(address,uint256)",
+      "selector": "0x40c10f19",
+      "abiHash": "0x9fc0f7364ccf5669b21ae3da6d102e41ee47dde89768d65b19550ed745f7fb4a",
+      "capabilityId": "dforce-itoken:v2:1:0x1180c114f7fadcb6957670432a3cf8ef08ab5354:mint",
+      "sourceRefs": [
+        "dforce-inherited-token-market-sources",
+        "dforce-iusdt-address-bound-source",
+        "dforce-iusdt-full-abi",
+        "dforce-iusdt-proxy-role",
+        "dforce-official-deployed-addresses"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dforce-inherited-token-market-sources",
+          "dforce-iusdt-address-bound-source",
+          "dforce-iusdt-full-abi",
+          "dforce-iusdt-proxy-role",
+          "dforce-official-deployed-addresses"
+        ],
+        "evidence": "Only the inherited two-argument nonpayable mint(address _recipient,uint256 _mintAmount) is admitted. It runs nonReentrant and settleInterest; Base._mintInternal invokes the configured controller's beforeMint, computes an exchange rate, then iToken._doTransferIn uses the configured underlying token's safeTransferFrom(msg.sender, iToken, amount). It calculates iTokens from actual received assets and the exchange rate, mints to caller-selected _recipient, checks the total-supply threshold, calls controller.afterMint, and emits Mint. The controller, configured underlying, interest/exchange rate, balances, allowance, supply threshold and protocol conditions may affect or revert execution. The distinct concrete BLP three-argument mint(address,uint256,bool) only adds optional refreshEligibility behavior and is excluded. Policy adds no recipient/owner equality, amount, balance, oracle, or financial gate; ABI-valid zero/arbitrary recipients and uint256 values remain caller-selected and can still fail protocol checks. Underlying approval remains separate and is neither paired nor granted. Dated address-role evidence does not prove current proxy implementation/storage, underlying configuration, funded execution, complete workflow, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dforce-iusdt-idai/sources/dforce-itoken.json",
+      "familyId": "dforce-itoken",
+      "familyVersion": "itoken-v2-blp@126c6d83",
+      "chainId": 1,
+      "contract": "0x1180c114f7fadcb6957670432a3cf8ef08ab5354",
+      "signature": "redeem(address,uint256)",
+      "selector": "0x1e9a6950",
+      "abiHash": "0x7b00a8c11f3db3cc93aec1dbe34ac479746e38ddf47871763ba61e4bf1f93b7a",
+      "capabilityId": "dforce-itoken:v2:1:0x1180c114f7fadcb6957670432a3cf8ef08ab5354:redeem",
+      "sourceRefs": [
+        "dforce-inherited-token-market-sources",
+        "dforce-iusdt-address-bound-source",
+        "dforce-iusdt-full-abi",
+        "dforce-iusdt-proxy-role",
+        "dforce-official-deployed-addresses"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dforce-inherited-token-market-sources",
+          "dforce-iusdt-address-bound-source",
+          "dforce-iusdt-full-abi",
+          "dforce-iusdt-proxy-role",
+          "dforce-official-deployed-addresses"
+        ],
+        "evidence": "Only inherited two-argument nonpayable redeem(address _from,uint256 _redeemiToken) is admitted. It runs nonReentrant and settleInterest, computes underlying via the interest-dependent exchange rate, calls controller.beforeRedeem, burns caller-selected _from (the inherited _burnFrom requires allowance if _from differs from msg.sender), enforces the total-supply threshold, calls _doTransferOut(msg.sender, amount), then controller.afterRedeem. The iTokenV2 override calls configured controller.beforeTransferUnderlying(iToken, configuredUnderlying, amount, msg.sender), receives _dst, and safe-transfers underlying to _dst. Thus the caller is passed to the hook, but the configured controller selects the actual destination; payout to caller or _from is not guaranteed. Controller routing/permission/accounting, configured underlying, interest/rate, _from balance/allowance, market cash, supply threshold and protocol conditions may redirect or revert. Policy adds no _from/owner or recipient restriction, balance/oracle check, share-amount cap, or financial gate; zero/arbitrary _from and all uint256 ABI values remain caller-selected but protocol logic may reject them. The distinct BLP three-argument redeem(address,uint256,bool) refreshEligibility wrapper is excluded. No separate approval is paired or granted. Dated evidence does not prove current controller routing, underlying configuration, liquidity, funded execution, complete workflow, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dforce-iusdt-idai/sources/dforce-itoken.json",
+      "familyId": "dforce-itoken",
+      "familyVersion": "itoken-v2-blp@126c6d83",
+      "chainId": 1,
+      "contract": "0x298f243ad592b6027d4717fbe9decda668e3c3a8",
+      "signature": "mint(address,uint256)",
+      "selector": "0x40c10f19",
+      "abiHash": "0x9fc0f7364ccf5669b21ae3da6d102e41ee47dde89768d65b19550ed745f7fb4a",
+      "capabilityId": "dforce-itoken:v2:1:0x298f243ad592b6027d4717fbe9decda668e3c3a8:mint",
+      "sourceRefs": [
+        "dforce-inherited-token-market-sources",
+        "dforce-idai-address-bound-source",
+        "dforce-idai-full-abi",
+        "dforce-idai-proxy-role",
+        "dforce-official-deployed-addresses"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dforce-inherited-token-market-sources",
+          "dforce-idai-address-bound-source",
+          "dforce-idai-full-abi",
+          "dforce-idai-proxy-role",
+          "dforce-official-deployed-addresses"
+        ],
+        "evidence": "Only the inherited two-argument nonpayable mint(address _recipient,uint256 _mintAmount) is admitted. It runs nonReentrant and settleInterest; Base._mintInternal invokes the configured controller's beforeMint, computes an exchange rate, then iToken._doTransferIn uses the configured underlying token's safeTransferFrom(msg.sender, iToken, amount). It calculates iTokens from actual received assets and the exchange rate, mints to caller-selected _recipient, checks the total-supply threshold, calls controller.afterMint, and emits Mint. The controller, configured underlying, interest/exchange rate, balances, allowance, supply threshold and protocol conditions may affect or revert execution. The distinct concrete BLP three-argument mint(address,uint256,bool) only adds optional refreshEligibility behavior and is excluded. Policy adds no recipient/owner equality, amount, balance, oracle, or financial gate; ABI-valid zero/arbitrary recipients and uint256 values remain caller-selected and can still fail protocol checks. Underlying approval remains separate and is neither paired nor granted. Dated address-role evidence does not prove current proxy implementation/storage, underlying configuration, funded execution, complete workflow, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/dforce-iusdt-idai/sources/dforce-itoken.json",
+      "familyId": "dforce-itoken",
+      "familyVersion": "itoken-v2-blp@126c6d83",
+      "chainId": 1,
+      "contract": "0x298f243ad592b6027d4717fbe9decda668e3c3a8",
+      "signature": "redeem(address,uint256)",
+      "selector": "0x1e9a6950",
+      "abiHash": "0x7b00a8c11f3db3cc93aec1dbe34ac479746e38ddf47871763ba61e4bf1f93b7a",
+      "capabilityId": "dforce-itoken:v2:1:0x298f243ad592b6027d4717fbe9decda668e3c3a8:redeem",
+      "sourceRefs": [
+        "dforce-inherited-token-market-sources",
+        "dforce-idai-address-bound-source",
+        "dforce-idai-full-abi",
+        "dforce-idai-proxy-role",
+        "dforce-official-deployed-addresses"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "dforce-inherited-token-market-sources",
+          "dforce-idai-address-bound-source",
+          "dforce-idai-full-abi",
+          "dforce-idai-proxy-role",
+          "dforce-official-deployed-addresses"
+        ],
+        "evidence": "Only inherited two-argument nonpayable redeem(address _from,uint256 _redeemiToken) is admitted. It runs nonReentrant and settleInterest, computes underlying via the interest-dependent exchange rate, calls controller.beforeRedeem, burns caller-selected _from (the inherited _burnFrom requires allowance if _from differs from msg.sender), enforces the total-supply threshold, calls _doTransferOut(msg.sender, amount), then controller.afterRedeem. The iTokenV2 override calls configured controller.beforeTransferUnderlying(iToken, configuredUnderlying, amount, msg.sender), receives _dst, and safe-transfers underlying to _dst. Thus the caller is passed to the hook, but the configured controller selects the actual destination; payout to caller or _from is not guaranteed. Controller routing/permission/accounting, configured underlying, interest/rate, _from balance/allowance, market cash, supply threshold and protocol conditions may redirect or revert. Policy adds no _from/owner or recipient restriction, balance/oracle check, share-amount cap, or financial gate; zero/arbitrary _from and all uint256 ABI values remain caller-selected but protocol logic may reject them. The distinct BLP three-argument redeem(address,uint256,bool) refreshEligibility wrapper is excluded. No separate approval is paired or granted. Dated evidence does not prove current controller routing, underlying configuration, liquidity, funded execution, complete workflow, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

@@ -10,11 +10,13 @@ import { PRODUCTION_DEFI_MANIFEST } from './production-registry';
 import { loadCurrentProductionExpectations } from './__fixtures__/current-production-expectations';
 import { validateCatalogDocument } from '../catalog-tooling/catalog-generator';
 
-const TARGET = '0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45';
-const MINT_ID = `dforce-itoken:v2:1:${TARGET}:mint`;
-const REDEEM_ID = `dforce-itoken:v2:1:${TARGET}:redeem`;
-const KEY_ID = '00000000-0000-4000-8000-000000000230';
-const USER = 'dforce-iusdc-policy-test';
+const TARGETS = [
+  '0x1180c114f7fadcb6957670432a3cf8ef08ab5354',
+  '0x298f243ad592b6027d4717fbe9decda668e3c3a8',
+] as const;
+const PRIOR_DFORCE_TARGET = '0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45';
+const KEY_ID = '00000000-0000-4000-8000-000000000231';
+const USER = 'dforce-iusdt-idai-policy-test';
 const MINT_ABI = {
   type: 'function',
   name: 'mint',
@@ -35,42 +37,51 @@ const REDEEM_ABI = {
   ],
   outputs: [],
 } as const;
-const FUNCTIONS = {
+const METHODS = {
   mint: {
-    id: MINT_ID,
     signature: 'mint(address,uint256)',
     selector: '0x40c10f19',
     hash: '0x9fc0f7364ccf5669b21ae3da6d102e41ee47dde89768d65b19550ed745f7fb4a',
     abi: MINT_ABI,
   },
   redeem: {
-    id: REDEEM_ID,
     signature: 'redeem(address,uint256)',
     selector: '0x1e9a6950',
     hash: '0x7b00a8c11f3db3cc93aec1dbe34ac479746e38ddf47871763ba61e4bf1f93b7a',
     abi: REDEEM_ABI,
   },
 } as const;
+type Method = keyof typeof METHODS;
+type Spec = (typeof SPECIFICATIONS)[number];
+const SPECIFICATIONS = TARGETS.flatMap((target) =>
+  (Object.keys(METHODS) as Method[]).map((method) => ({
+    target,
+    method,
+    id: `dforce-itoken:v2:1:${target}:${method}`,
+    ...METHODS[method],
+  })),
+);
+const ALL_IDS = SPECIFICATIONS.map(({ id }) => id);
 const MAX_UINT256 = ((1n << 256n) - 1n).toString();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const OTHER_ADDRESS = '0x2222222222222222222222222222222222222222';
 const EXECUTION_OWNER = '0x9999999999999999999999999999999999999999';
-const PREVIOUS_CATALOG_PATH = 'data/defi-catalog/updates/yieldnest-yneth-deposit/catalog.json';
+const PREVIOUS_CATALOG_PATH = 'data/defi-catalog/updates/dforce-iusdc/catalog.json';
 const db = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
 const catalog = new DefiCatalogService(PRODUCTION_DEFI_MANIFEST.chains, db as never, PRODUCTION_DEFI_MANIFEST);
 const policy = new DefiPolicyService(db as never, {} as never, catalog);
-const functions = Object.fromEntries(
-  Object.entries(FUNCTIONS).map(([name, spec]) => [
-    name,
+const functions = new Map(
+  SPECIFICATIONS.map((spec) => [
+    spec.id,
     PRODUCTION_DEFI_MANIFEST.capabilities.find((candidate) => candidate.capabilityId === spec.id) as DefiFunctionPolicy,
   ]),
-) as Record<keyof typeof FUNCTIONS, DefiFunctionPolicy>;
+);
 const previousManifest = buildReviewedManifest([
   validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), PREVIOUS_CATALOG_PATH), 'utf8'))),
 ]);
 const previousCapabilityIds = previousManifest.capabilities.map((candidate) => candidate.capabilityId);
 
-function context(grants: string[] = [MINT_ID, REDEEM_ID], chainId = 1): DefiExecutionContext {
+function context(grants: string[] = ALL_IDS, chainId = 1): DefiExecutionContext {
   return {
     userId: USER,
     apiKeyId: KEY_ID,
@@ -82,8 +93,7 @@ function context(grants: string[] = [MINT_ID, REDEEM_ID], chainId = 1): DefiExec
   };
 }
 
-function calldata(name: keyof typeof FUNCTIONS, address: string, amount: string): string {
-  const spec = FUNCTIONS[name];
+function calldata(spec: Spec, address: string, amount: string): string {
   const args = encodeAbiParameters(
     [{ type: 'address' }, { type: 'uint256' }],
     [address as `0x${string}`, BigInt(amount)],
@@ -91,15 +101,11 @@ function calldata(name: keyof typeof FUNCTIONS, address: string, amount: string)
   return `${spec.selector}${args.slice(2)}`;
 }
 
-function tx(name: keyof typeof FUNCTIONS, address = OTHER_ADDRESS, amount = '1', value = '0', data = calldata(name, address, amount)) {
-  return { to: TARGET, value, data };
+function tx(spec: Spec, target: string = spec.target, address = OTHER_ADDRESS, amount = '1', value = '0', data = calldata(spec, address, amount)) {
+  return { to: target, value, data };
 }
 
-function finalTx(
-  grants: string[],
-  pausedScopeKeys: string[] = [],
-  keyOverrides: Record<string, unknown> = {},
-) {
+function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides: Record<string, unknown> = {}) {
   return {
     $queryRaw: jest.fn().mockResolvedValue([]),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) },
@@ -117,28 +123,28 @@ function finalTx(
   };
 }
 
-describe('dForce mainnet iUSDC iTokenV2BLP ordinary mint/redeem additions', () => {
-  it('preserves all prior full function objects and admits only the two exact nonpayable ABIs', async () => {
+describe('dForce iUSDT/iDAI ordinary inherited mint/redeem additions', () => {
+  it('preserves the selected prior catalog and admits exactly four exact nonpayable ABIs', async () => {
     const expected = loadCurrentProductionExpectations(process.cwd());
     expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
     const currentById = new Map(PRODUCTION_DEFI_MANIFEST.capabilities.map((candidate) => [candidate.capabilityId, candidate]));
     for (const priorFunction of previousManifest.capabilities) {
       expect(currentById.get(priorFunction.capabilityId)).toEqual(priorFunction);
     }
+    const saved = validateCatalogDocument(
+      JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/updates/dforce-iusdt-idai/catalog.json'), 'utf8')),
+    );
+    const savedManifest = buildReviewedManifest([saved]);
+    expect(savedManifest.capabilities).toHaveLength(previousManifest.capabilities.length + SPECIFICATIONS.length);
+    expect(savedManifest.capabilities.filter(({ capabilityId }) => ALL_IDS.includes(capabilityId))).toHaveLength(SPECIFICATIONS.length);
 
-    const savedUpdate = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/updates/dforce-iusdc/catalog.json'), 'utf8')));
-    const savedUpdateManifest = buildReviewedManifest([savedUpdate]);
-    expect(savedUpdateManifest.capabilities).toHaveLength(previousManifest.capabilities.length + 2);
-    expect(savedUpdateManifest.capabilities.filter((candidate) => [MINT_ID, REDEEM_ID].includes(candidate.capabilityId)).map((candidate) => candidate.capabilityId)).toEqual([MINT_ID, REDEEM_ID]);
-
-    for (const name of Object.keys(FUNCTIONS) as (keyof typeof FUNCTIONS)[]) {
-      const spec = FUNCTIONS[name];
-      const fn = functions[name];
+    for (const spec of SPECIFICATIONS) {
+      const fn = functions.get(spec.id)!;
       expect(fn).toMatchObject({
         capabilityId: spec.id,
         chainId: 1,
-        contract: TARGET,
-        functionName: name,
+        contract: spec.target,
+        functionName: spec.method,
         signature: spec.signature,
         status: 'active',
         provenance: { status: 'verified' },
@@ -151,26 +157,22 @@ describe('dForce mainnet iUSDC iTokenV2BLP ordinary mint/redeem additions', () =
       expect(functionAbiHash(fn)).toBe(spec.hash);
       expect(fn.executionScope).toBeUndefined();
     }
-
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.executionScope)).toEqual(
-      previousManifest.capabilities.filter((candidate) => candidate.executionScope),
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter(({ executionScope }) => executionScope)).toEqual(
+      previousManifest.capabilities.filter(({ executionScope }) => executionScope),
     );
-    const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(new Set(profileMembers).size).toBe(profileMembers.length);
-    expect(profileMembers).not.toContain(MINT_ID);
-    expect(profileMembers).not.toContain(REDEEM_ID);
+    const profileIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap(({ capabilityIds }) => capabilityIds);
+    expect(new Set(profileIds).size).toBe(profileIds.length);
+    for (const id of ALL_IDS) expect(profileIds).not.toContain(id);
 
-    for (const name of Object.keys(FUNCTIONS) as (keyof typeof FUNCTIONS)[]) {
-      const otherName = name === 'mint' ? 'redeem' : 'mint';
-      const spec = FUNCTIONS[name];
+    for (const spec of SPECIFICATIONS) {
       for (const address of [ZERO_ADDRESS, OTHER_ADDRESS]) {
         for (const amount of ['0', '1', MAX_UINT256]) {
-          const authorization = await policy.authorizeContractCalls([tx(name, address, amount)], context([spec.id]));
+          const authorization = await policy.authorizeContractCalls([tx(spec, spec.target, address, amount)], context([spec.id]));
           expect(authorization.matches).toEqual([
             expect.objectContaining({
               capabilityId: spec.id,
               chainId: 1,
-              contract: TARGET,
+              contract: spec.target,
               functionSignature: spec.signature,
               abiHash: spec.hash,
             }),
@@ -179,65 +181,62 @@ describe('dForce mainnet iUSDC iTokenV2BLP ordinary mint/redeem additions', () =
           await expect(policy.assertStillAuthorized(finalTx([spec.id]) as never, authorization)).resolves.toBeUndefined();
         }
       }
-      expect(otherName).not.toBe(name);
     }
   });
 
-  it('requires independent exact grants and rejects wrong chain/targets, other methods, and malformed calls', async () => {
-    for (const name of Object.keys(FUNCTIONS) as (keyof typeof FUNCTIONS)[]) {
-      const spec = FUNCTIONS[name];
-      const otherName = name === 'mint' ? 'redeem' : 'mint';
-      const otherId = FUNCTIONS[otherName].id;
-      const address = OTHER_ADDRESS;
-      for (const grants of [[], ['unrelated'], [otherId], previousCapabilityIds]) {
-        await expect(policy.authorizeContractCalls([tx(name)], context(grants))).rejects.toMatchObject({
+  it('requires independent exact grants and rejects peer markets, wrong chains, and malformed/nonpayable calls', async () => {
+    for (const spec of SPECIFICATIONS) {
+      const peerTarget = TARGETS.find((target) => target !== spec.target)!;
+      const otherMethod: Method = spec.method === 'mint' ? 'redeem' : 'mint';
+      const sameMarketPeer = SPECIFICATIONS.find(({ target, method }) => target === spec.target && method === otherMethod)!;
+      const otherMarketSameMethod = SPECIFICATIONS.find(({ target, method }) => target === peerTarget && method === spec.method)!;
+      for (const grants of [[], ['unrelated'], [sameMarketPeer.id], [otherMarketSameMethod.id], previousCapabilityIds]) {
+        await expect(policy.authorizeContractCalls([tx(spec)], context(grants))).rejects.toMatchObject({
           audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
         });
       }
-      const otherMethodCall = tx(otherName, address, '1');
-      await expect(policy.authorizeContractCalls([otherMethodCall], context([spec.id]))).rejects.toMatchObject({
+      await expect(policy.authorizeContractCalls([tx(sameMarketPeer)], context([spec.id]))).rejects.toMatchObject({
         audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
       });
-
-      await expect(policy.authorizeContractCalls([tx(name)], context([spec.id], 10))).rejects.toMatchObject({
+      for (const wrongTarget of [...TARGETS.filter((target) => target !== spec.target), PRIOR_DFORCE_TARGET]) {
+        await expect(policy.authorizeContractCalls([tx(spec, wrongTarget)], context([spec.id]))).rejects.toMatchObject({
+          audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
+        });
+      }
+      for (const wrongTarget of ['0x1111111111111111111111111111111111111111']) {
+        await expect(policy.authorizeContractCalls([tx(spec, wrongTarget)], context([spec.id]))).rejects.toMatchObject({
+          audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' },
+        });
+      }
+      await expect(policy.authorizeContractCalls([tx(spec)], context([spec.id], 10))).rejects.toMatchObject({
         audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' },
       });
-      await expect(policy.authorizeContractCalls([{ ...tx(name), to: '0x1180c114f7fadcb6957670432a3cf8ef08ab5354' }], context([spec.id]))).rejects.toMatchObject({
-        audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
-      });
-      await expect(policy.authorizeContractCalls([{ ...tx(name), to: '0x1111111111111111111111111111111111111111' }], context([spec.id]))).rejects.toMatchObject({
-        audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' },
-      });
 
-      const validData = calldata(name, address, '1');
+      const validData = calldata(spec, OTHER_ADDRESS, '1');
       const malformedAddress = `${spec.selector}01${'00'.repeat(31)}${'00'.repeat(32)}`;
-      const otherSignatureSelector = toFunctionSelector(name === 'mint' ? 'redeemUnderlying(address,uint256)' : 'mintForSelfAndEnterMarket(uint256)');
-      for (const data of ['0x', '0xdeadbeef', otherSignatureSelector]) {
-        await expect(policy.authorizeContractCalls([tx(name, address, '1', '0', data)], context([spec.id]))).rejects.toMatchObject({
+      const unknownSelector = toFunctionSelector(
+        spec.method === 'mint' ? 'redeemUnderlying(address,uint256)' : 'mintForSelfAndEnterMarket(uint256)',
+      );
+      for (const data of ['0x', '0xdeadbeef', unknownSelector]) {
+        await expect(policy.authorizeContractCalls([tx(spec, spec.target, OTHER_ADDRESS, '1', '0', data)], context([spec.id]))).rejects.toMatchObject({
           audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' },
         });
       }
-      for (const data of [
-        spec.selector,
-        `${spec.selector}${'00'.repeat(31)}`,
-        `${validData}00`,
-        malformedAddress,
-      ]) {
-        await expect(policy.authorizeContractCalls([tx(name, address, '1', '0', data)], context([spec.id]))).rejects.toMatchObject({
+      for (const data of [spec.selector, `${spec.selector}${'00'.repeat(31)}`, `${validData}00`, malformedAddress]) {
+        await expect(policy.authorizeContractCalls([tx(spec, spec.target, OTHER_ADDRESS, '1', '0', data)], context([spec.id]))).rejects.toMatchObject({
           audit: { code: 'DEFI_INVALID_PARAMETERS' },
         });
       }
-      await expect(policy.authorizeContractCalls([tx(name, address, '1', '1')], context([spec.id]))).rejects.toMatchObject({
+      await expect(policy.authorizeContractCalls([tx(spec, spec.target, OTHER_ADDRESS, '1', '1')], context([spec.id]))).rejects.toMatchObject({
         audit: { code: 'DEFI_INVALID_PARAMETERS' },
       });
     }
   });
 
-  it('rechecks both methods under ordered tagged SQL locks and rejects grant, pause, key, and binding changes', async () => {
-    for (const name of Object.keys(FUNCTIONS) as (keyof typeof FUNCTIONS)[]) {
-      const spec = FUNCTIONS[name];
-      const otherId = name === 'mint' ? REDEEM_ID : MINT_ID;
-      const authorization = await policy.authorizeContractCalls([tx(name, OTHER_ADDRESS, MAX_UINT256)], context([spec.id]));
+  it('rechecks all four methods under ordered tagged SQL locks and rejects grant, pause, key, and commitment mutations', async () => {
+    for (const spec of SPECIFICATIONS) {
+      const otherId = SPECIFICATIONS.find(({ target, method }) => target === spec.target && method !== spec.method)!.id;
+      const authorization = await policy.authorizeContractCalls([tx(spec, spec.target, OTHER_ADDRESS, MAX_UINT256)], context([spec.id]));
       const liveTx = finalTx([spec.id]);
       await expect(policy.assertStillAuthorized(liveTx as never, authorization)).resolves.toBeUndefined();
       const locks = liveTx.$queryRaw.mock.calls;
@@ -267,8 +266,8 @@ describe('dForce mainnet iUSDC iTokenV2BLP ordinary mint/redeem additions', () =
         });
       }
 
-      const altered = [
-        { ...authorization, interactions: [{ ...authorization.interactions[0], to: '0x1180c114f7fadcb6957670432a3cf8ef08ab5354' }] },
+      const changed = [
+        { ...authorization, interactions: [{ ...authorization.interactions[0], to: TARGETS.find((target) => target !== spec.target)! }] },
         { ...authorization, interactions: [{ ...authorization.interactions[0], data: '0xdeadbeef' }] },
         { ...authorization, interactions: [{ ...authorization.interactions[0], value: '1' }] },
         { ...authorization, manifestHash: `0x${'00'.repeat(32)}` },
@@ -287,13 +286,10 @@ describe('dForce mainnet iUSDC iTokenV2BLP ordinary mint/redeem additions', () =
             match: { ...node.match, abiHash: `0x${'00'.repeat(32)}` },
           })),
         },
-        {
-          ...authorization,
-          matches: authorization.matches.map((match) => ({ ...match, abiHash: `0x${'00'.repeat(32)}` })),
-        },
+        { ...authorization, matches: authorization.matches.map((match) => ({ ...match, abiHash: `0x${'00'.repeat(32)}` })) },
       ];
-      for (const changed of altered) {
-        await expect(policy.assertStillAuthorized(finalTx([spec.id]) as never, changed as never)).rejects.toMatchObject({
+      for (const mutated of changed) {
+        await expect(policy.assertStillAuthorized(finalTx([spec.id]) as never, mutated as never)).rejects.toMatchObject({
           audit: { code: 'DEFI_POLICY_UNAVAILABLE' },
         });
       }
