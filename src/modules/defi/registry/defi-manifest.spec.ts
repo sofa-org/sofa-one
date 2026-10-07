@@ -4,6 +4,7 @@ import type { DefiRegistryFragment } from './defi-manifest.types';
 import { GENERATED_DEFI_REGISTRY } from './generated/production-catalog';
 import { createEnsoStaticWeirollScope, ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import type { DefiFunctionPolicy } from '../defi.types';
+import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY, POLYMARKET_PUSD_WRAP_SCOPE } from '../execution/pusd-identity';
 
 const fn = (capabilityId: string, overrides: Record<string, unknown> = {}) => ({
   capabilityId, type: 'contract_call' as const, chainId: 1, contract: '0x0000000000000000000000000000000000000001',
@@ -139,5 +140,33 @@ describe('reviewed manifest assembler', () => {
       };
       expect(() => withRoot(alteredChildAbi)).toThrow(/Enso static Weiroll child binding/);
     }
+  });
+
+  it('requires the pUSD wrap scope for every active exact target selector, independent of the ID', () => {
+    const wrap = (overrides: Record<string, unknown> = {}): DefiFunctionPolicy => ({
+      capabilityId: POLYMARKET_PUSD_WRAP_IDENTITY.capabilityId, type: 'contract_call', chainId: 137,
+      contract: POLYMARKET_PUSD_WRAP_IDENTITY.contract, functionName: 'wrap', signature: POLYMARKET_PUSD_WRAP_IDENTITY.signature,
+      abi: POLYMARKET_PUSD_WRAP_ABI[0], status: 'active',
+      provenance: { sourceRef: 'reviewed', verifiedAt: '2026-10-06', status: 'verified' }, executionScope: POLYMARKET_PUSD_WRAP_SCOPE,
+      ...overrides,
+    } as DefiFunctionPolicy);
+    const fragmentFor = (item: DefiFunctionPolicy): DefiRegistryFragment => ({ chains: [{ chainId: item.chainId, status: 'active', contracts: [{ address: item.contract, status: 'active', functions: [item] }] }] });
+    expect(functionAbiHash({ abi: POLYMARKET_PUSD_WRAP_ABI[0] })).toBe(POLYMARKET_PUSD_WRAP_IDENTITY.abiHash);
+    expect(buildReviewedManifest([fragmentFor(wrap())]).capabilities).toHaveLength(1);
+    for (const invalid of [
+      wrap({ executionScope: undefined }),
+      wrap({ capabilityId: 'renamed:capability', executionScope: undefined }),
+      wrap({ contract: '0x0000000000000000000000000000000000000001', executionScope: undefined }),
+      wrap({ signature: 'wrap(address,address,uint256)', contract: '0x0000000000000000000000000000000000000001', executionScope: undefined }),
+      wrap({ signature: 'approve(address,uint256)', executionScope: undefined }),
+      wrap({ executionScope: { ...POLYMARKET_PUSD_WRAP_SCOPE, recipientPolicy: 'required-v1' } }),
+      wrap({ signature: 'wrap(address,address,uint256)', functionName: 'other' }),
+      wrap({ abi: { ...POLYMARKET_PUSD_WRAP_ABI[0], inputs: [...POLYMARKET_PUSD_WRAP_ABI[0].inputs].reverse() } }),
+      wrap({ chainId: 1 }),
+      wrap({ contract: '0x0000000000000000000000000000000000000001' }),
+      wrap({ capabilityId: 'renamed:capability' }),
+    ]) expect(() => buildReviewedManifest([fragmentFor(invalid)])).toThrow();
+    expect(buildReviewedManifest([fragmentFor(wrap({ status: 'inactive', executionScope: undefined }))]).capabilities).toHaveLength(1);
+    expect(() => buildReviewedManifest([fragmentFor(wrap({ contract: '0x0000000000000000000000000000000000000001', executionScope: POLYMARKET_PUSD_WRAP_SCOPE }))])).toThrow();
   });
 });

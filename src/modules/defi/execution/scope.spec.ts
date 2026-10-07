@@ -1,6 +1,7 @@
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './scope';
 import type { DefiExecutionScope } from '../defi.types';
 import { createEnsoStaticWeirollScope, ENSO_STATIC_WEIROLL_CHILD_IDENTITIES } from './enso-identity';
+import { POLYMARKET_PUSD_WRAP_SCOPE } from './pusd-identity';
 
 const bindings = () => NPM_MULTICALL_CHILD_SIGNATURES.map((signature, index) => ({ capabilityId: `npm:${index}`, signature, abiHash: `0x${index.toString(16).padStart(64, '0')}` as `0x${string}` }));
 
@@ -63,5 +64,12 @@ describe('executionScopeHash', () => {
       }
     }
     expect(executionScopeHash({ ...valid, allowedChildren: valid.allowedChildren.map((child) => ({ ...child, contract: child.contract.toUpperCase() })) })).toBe(executionScopeHash(valid));
+  });
+
+  it('hashes the fixed pUSD scope and rejects alternate recipient or asset policies', () => {
+    expect(executionScopeHash(POLYMARKET_PUSD_WRAP_SCOPE)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(() => executionScopeHash({ ...POLYMARKET_PUSD_WRAP_SCOPE, asset: '0x0000000000000000000000000000000000000001' })).toThrow();
+    expect(() => executionScopeHash({ ...POLYMARKET_PUSD_WRAP_SCOPE, recipientPolicy: 'required-v1' } as never)).toThrow();
+    expect(() => executionScopeHash({ ...POLYMARKET_PUSD_WRAP_SCOPE, extra: true } as never)).toThrow();
   });
 });

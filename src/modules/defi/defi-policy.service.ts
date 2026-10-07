@@ -11,6 +11,7 @@ import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRoot, validateAmbientColdpathPayload } from './execution/ambient';
 import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
+import { decodePusdWrapCall, isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from './execution/pusd-identity';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -24,6 +25,14 @@ export class DefiPolicyService {
     if (!Array.isArray(interactions) || interactions.length === 0) this.deny('DEFI_INVALID_PARAMETERS', context);
     const snapshotContext = freezeClone({ ...context, executionOwner: context.executionOwner.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() });
     const snapshotInteractions = interactions.map((interaction) => freezeClone(normalizeInteraction(interaction, snapshotContext)));
+    // This adapter is intentionally a singleton top-level lane, never an implicit
+    // child inside a broader execution scope. Reject mixtures in either order.
+    let hasPusdWrap = false;
+    for (const interaction of snapshotInteractions) {
+      try { if (decodePusdWrapCall(snapshotContext.chainId, interaction)) hasPusdWrap = true; }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', snapshotContext); }
+    }
+    if (hasPusdWrap && snapshotInteractions.length !== 1) this.deny('DEFI_INVALID_PARAMETERS', snapshotContext);
     if (snapshotInteractions.length > MAX_DEFI_EXECUTION_NODES || snapshotInteractions.reduce((sum, call) => sum + Math.max(0, (call.data.length - 2) / 2), 0) > 65_536) this.deny('DEFI_INVALID_PARAMETERS', snapshotContext);
     const matches: DefiMatch[] = [];
     const executionPlan: DefiExecutionPlanNode[] = [];
@@ -77,7 +86,7 @@ export class DefiPolicyService {
        const liveGrants = new Set<string>(key.allowedCapabilityIds);
        const recomputedPlan: DefiExecutionPlanNode[] = [];
        for (let index = 0; index < authorization.interactions.length; index++) {
-        const fn = this.resolveInteraction(authorization.interactions[index], context);
+         const fn = this.resolveInteraction(authorization.interactions[index], context);
         const match = authorization.matches[index];
          if (!match || !sameMatch(match, toMatch(fn)) || !context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
          if (!liveGrants.has(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
@@ -88,7 +97,13 @@ export class DefiPolicyService {
            if (!child || !liveGrants.has(child.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, child);
            if (isPaused(state, child)) this.deny('DEFI_CAPABILITY_PAUSED', context, child);
            recomputedPlan.push(node);
-         }
+        }
+        let hasPusdWrap = false;
+        for (const interaction of authorization.interactions) {
+          try { if (decodePusdWrapCall(context.chainId, interaction)) hasPusdWrap = true; }
+          catch { this.deny('DEFI_POLICY_UNAVAILABLE', context); }
+        }
+        if (hasPusdWrap && authorization.interactions.length !== 1) this.deny('DEFI_POLICY_UNAVAILABLE', context);
        }
        if (!sameExecutionPlan(authorization.executionPlan, recomputedPlan, sameMatch)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
     } catch (error) {
@@ -140,6 +155,16 @@ export class DefiPolicyService {
     const selector = interaction.data.slice(0, 10).toLowerCase();
     const fn = contract.functions.find((entry) => entry.status === 'active' && entry.type === 'contract_call' && toFunctionSelector(entry.signature).toLowerCase() === selector);
     if (!fn) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, undefined, { contract: contract.address, functionSelector: safeFunctionSelector(interaction.data) });
+    const pusdIdentityMarker = isPolymarketPusdWrapIdentity(fn);
+    if (pusdIdentityMarker || fn.executionScope?.kind === 'polymarket-pusd-wrap-v1') {
+      if (pusdIdentityMarker && fn.executionScope?.kind !== 'polymarket-pusd-wrap-v1') {
+        this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
+      }
+      try { validatePolymarketPusdWrapBinding(fn); }
+      catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, fn); }
+      try { decodePusdWrapCall(context.chainId, interaction); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, fn); }
+    }
     if (!context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
     return fn;
   }
@@ -212,6 +237,16 @@ export class DefiPolicyService {
     if (!scope) {
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       this.assertCanonicalCall(root, rootFn, context);
+      return [rootNode];
+    }
+    if (scope.kind === 'polymarket-pusd-wrap-v1') {
+      try {
+        validatePolymarketPusdWrapBinding(rootFn);
+        if (path.length !== 1 || path[0] !== 0 || root.to.toLowerCase() !== rootFn.contract.toLowerCase()
+          || !decodePusdWrapCall(context.chainId, root)) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      } catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
+      this.assertCanonicalCall(root, rootFn, context);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }
     if (scope.kind === 'empty-callback-data-v1') {

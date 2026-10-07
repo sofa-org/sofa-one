@@ -109,7 +109,7 @@ describe('YieldNest mainnet ynETH depositETH ordinary addition', () => {
     expect(toFunctionSelector(fn.signature)).toBe(SELECTOR);
     expect(functionAbiHash(fn)).toBe(ABI_HASH);
     expect(fn.executionScope).toBeUndefined();
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.executionScope)).toEqual(
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.executionScope && candidate.capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(
       previousManifest.capabilities.filter((candidate) => candidate.executionScope),
     );
 

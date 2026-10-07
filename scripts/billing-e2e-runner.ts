@@ -27,6 +27,7 @@
  *   npm run test:e2e:billing -- --fixture-wallet-peak-only # disposable DB, signed billing fixture lifecycle
  *   npm run test:e2e:billing -- --defi-policy-only # disposable DB, DeFi pause/grant serialization evidence
  *   npm run test:e2e:billing -- --direct-egress-only # disposable DB, direct-egress HTTP suite only
+ *   npm run test:e2e:billing -- --pusd-only # disposable DB, Polymarket pUSD acceptance race only
  */
 import { randomBytes } from 'crypto';
 import { spawn } from 'child_process';
@@ -354,6 +355,7 @@ async function main(): Promise<number> {
   const fixtureWalletPeakOnly = process.argv.includes('--fixture-wallet-peak-only');
   const defiPolicyOnly = process.argv.includes('--defi-policy-only');
   const directEgressOnly = process.argv.includes('--direct-egress-only');
+  const pusdOnly = process.argv.includes('--pusd-only');
 
   // Always run no-DB gate tests first (no admin URL required; no provisioned resources).
   const gateEnv: NodeJS.ProcessEnv = {
@@ -430,7 +432,9 @@ async function main(): Promise<number> {
       });
     });
 
-    const billingSuites = directEgressOnly
+    const billingSuites = pusdOnly
+      ? ['test/polymarket-pusd-concurrency.e2e-spec.ts']
+      : directEgressOnly
       ? ['test/api-key-direct-egress.e2e-spec.ts']
       : defiPolicyOnly
       ? ['test/defi-policy.pg.e2e-spec.ts']

@@ -87,7 +87,7 @@ describe('Vesper production vUSDC deposit and withdraw ordinary additions', () =
     }
     const newCapabilityIds = [DEPOSIT_ID, WITHDRAW_ID];
     expect(savedUpdateManifest.capabilities.filter((candidate) => newCapabilityIds.includes(candidate.capabilityId)).map((candidate) => candidate.capabilityId)).toEqual(newCapabilityIds);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.executionScope)).toEqual(priorManifest.capabilities.filter((candidate) => candidate.executionScope));
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.executionScope && candidate.capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(priorManifest.capabilities.filter((candidate) => candidate.executionScope));
 
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);

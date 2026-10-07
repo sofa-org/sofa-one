@@ -58,7 +58,7 @@ describe('Spark spETH Vault V2 ordinary additions', () => {
     expect(functions).toHaveLength(4);
     const priorScopes = priorManifest.capabilities.filter((fn) => fn.executionScope);
     expect(priorScopes).toHaveLength(16);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope)).toEqual(priorScopes);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope && fn.capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(priorScopes);
 
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);

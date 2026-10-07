@@ -44,6 +44,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
     }).sort((a, b) => cmp(a.capabilityId, b.capabilityId));
     if (children.length !== ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.length || new Set(children.map((child) => child.capabilityId)).size !== children.length) throw new TypeError('Invalid DeFi execution scope');
     normalized = { kind: scope.kind, allowedChildren: children };
+  } else if (scope.kind === 'polymarket-pusd-wrap-v1') {
+    if (Object.keys(scope).sort().join(',') !== 'asset,kind,recipientPolicy' || scope.asset !== '0x2791bca1f2de4661ed88a30c99a7a9449aa84174' || scope.recipientPolicy !== 'withdrawal-allowlist-v1') throw new TypeError('Invalid DeFi execution scope');
+    normalized = { kind: scope.kind, asset: scope.asset, recipientPolicy: scope.recipientPolicy };
   } else throw new TypeError('Invalid DeFi execution scope');
   return keccak256(stringToHex(JSON.stringify(normalized)));
 }

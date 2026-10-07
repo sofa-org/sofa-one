@@ -157,7 +157,7 @@ describe('dForce iUSDT/iDAI ordinary inherited mint/redeem additions', () => {
       expect(functionAbiHash(fn)).toBe(spec.hash);
       expect(fn.executionScope).toBeUndefined();
     }
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter(({ executionScope }) => executionScope)).toEqual(
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter(({ executionScope, capabilityId }) => executionScope && capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(
       previousManifest.capabilities.filter(({ executionScope }) => executionScope),
     );
     const profileIds = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap(({ capabilityIds }) => capabilityIds);

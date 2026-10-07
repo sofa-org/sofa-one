@@ -37,6 +37,7 @@ import {
 import { AssetFlowSimulationUnavailableError } from './transaction-simulation.service';
 import { hashRequest } from '../../common/utils/request-hash';
 import { DefiPolicyDenial } from '../defi/defi.types';
+import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY } from '../defi/execution/pusd-identity';
 
 function erc20TransferData(to: string, amount: bigint = 1n): string {
   return encodeFunctionData({
@@ -1701,6 +1702,71 @@ describe('TransactionsService', () => {
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  describe('restricted pUSD wrap destination handling', () => {
+    const wrapCall = (recipient: string) => ({
+      to: POLYMARKET_PUSD_WRAP_IDENTITY.contract,
+      data: encodeFunctionData({ abi: POLYMARKET_PUSD_WRAP_ABI, functionName: 'wrap', args: [
+        POLYMARKET_PUSD_WRAP_IDENTITY.asset as Hex, recipient as Hex, 10n,
+      ] }), value: '0',
+    });
+    const wrapDto = (recipient: string, key: string) => ({ ...dto, chainId: 137, interactions: [wrapCall(recipient)], idempotencyKey: key });
+
+    it('protection off and missing policy preserve arbitrary recipient behavior', async () => {
+      prisma.withdrawalPolicy.findUnique.mockResolvedValueOnce(null);
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-off-1') as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+      expect(prisma.transaction.create).toHaveBeenCalled();
+      expect(openfort.sendUserOperation).toHaveBeenCalled();
+    });
+
+    it('protection on sends exact decoded recipient through allowlist and permits member including self', async () => {
+      enableDestinationProtection();
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-on-1') as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase()], expect.any(Object));
+      expect(prisma.transaction.create).toHaveBeenCalled();
+    });
+
+    it('protection on denies unavailable, absent, or cooling destinations, including self, before insert/broadcast', async () => {
+      enableDestinationProtection();
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ServiceUnavailableException('db unavailable'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-db-fail') as any, apiKeyContext)).rejects.toThrow(ServiceUnavailableException);
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('not allowlisted'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-absent') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('cooldown'));
+      await expect(service.send('user-1', wrapDto(wallet.walletAddress, 'pusd-self') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    });
+
+    it('rechecks enabled protection and decoded recipient at acceptance; never trusts forged outer gate metadata', async () => {
+      prisma.withdrawalPolicy.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ requireAddressAllowlist: true });
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('removed during flight'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-final-remove') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase()], expect.any(Object), expect.objectContaining({ prisma: expect.any(Object), deferAudit: true }));
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    });
+
+    it.each(['missing', 'wrong-recipient', 'false-classification'] as const)(
+      'rejects %s destination metadata at final creation', async (mutation) => {
+        const original = (service as any).createPendingOrReturnExisting.bind(service);
+        jest.spyOn(service as any, 'createPendingOrReturnExisting').mockImplementation((userId: string, params: any) => {
+          const gate = params.destinationGate;
+          const forged = mutation === 'missing' ? undefined : {
+            ...gate,
+            restrictedWrap: mutation === 'false-classification' ? false : true,
+            destinations: mutation === 'wrong-recipient' ? [wallet.walletAddress.toLowerCase()] : gate.destinations,
+          };
+          return original(userId, { ...params, destinationGate: forged });
+        });
+        await expect(service.send('user-1', wrapDto(EXTERNAL, `pusd-forged-${mutation}`) as any, apiKeyContext))
+          .rejects.toThrow(/Restricted wrap destination classification is inconsistent/);
+        expect(prisma.transaction.create).not.toHaveBeenCalled();
+        expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+      },
+    );
   });
 
   it('outer preflight pass + inner deferred deny: records audit once after TX, stable 403, no create/provider', async () => {

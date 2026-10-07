@@ -5,6 +5,7 @@ import { DefiCatalogService } from './defi-catalog.service';
 import { DefiPolicyService, buildDefiRequestCommitment } from './defi-policy.service';
 import { buildReviewedManifest } from './registry/defi-manifest';
 import { DefiChainPolicy, DefiExecutionContext, DefiInteraction, DefiPolicyDenial } from './defi.types';
+import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY, POLYMARKET_PUSD_WRAP_SCOPE } from './execution/pusd-identity';
 
 const ABI = parseAbi(['function touch(address owner, uint256 amount)', 'function deposit(address owner, uint256 amount) payable']);
 const ADDRESS = '0x0000000000000000000000000000000000000001';
@@ -126,5 +127,82 @@ describe('DefiPolicyService', () => {
     const authorization = await policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], ctx);
     await policy.recordAllowedInTx({} as never, authorization);
     expect(events.record).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.capability_allowed' }), {}, { deferExport: true });
+  });
+
+  describe('restricted Polygon pUSD wrap lane', () => {
+    const wrapFn: any = {
+      capabilityId: POLYMARKET_PUSD_WRAP_IDENTITY.capabilityId, type: 'contract_call', chainId: 137,
+      contract: POLYMARKET_PUSD_WRAP_IDENTITY.contract, signature: POLYMARKET_PUSD_WRAP_IDENTITY.signature,
+      functionName: 'wrap', abi: POLYMARKET_PUSD_WRAP_ABI[0], executionScope: POLYMARKET_PUSD_WRAP_SCOPE,
+      policy: { ref: 'fixture', version: 1 }, status: 'active',
+      provenance: { sourceRef: 'fixture verified ABI', verifiedAt: '2026-01-01', status: 'verified' },
+    };
+    const chain: DefiChainPolicy[] = [{ chainId: 137, status: 'active', contracts: [{ address: wrapFn.contract, status: 'active', functions: [wrapFn] }] }];
+    const wrapManifest = buildReviewedManifest([{ chains: chain }]);
+    const wrapContext: DefiExecutionContext = { ...ctx, chainId: 137, allowedCapabilityIds: [wrapFn.capabilityId] };
+    const call = (asset: string = POLYMARKET_PUSD_WRAP_IDENTITY.asset, recipient: string = OTHER, amount = 9n, value?: string): DefiInteraction => ({
+      to: wrapFn.contract,
+      data: encodeFunctionData({ abi: POLYMARKET_PUSD_WRAP_ABI, functionName: 'wrap', args: [asset as `0x${string}`, recipient as `0x${string}`, amount] }),
+      ...(value === undefined ? {} : { value }),
+    });
+    const makeWrapPolicy = (pausedScopeKeys: string[] = []) => {
+      const db = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) } };
+      return new DefiPolicyService(db as unknown as PrismaService, {} as SecurityEventService,
+        new DefiCatalogService(chain, db as unknown as PrismaService, wrapManifest));
+    };
+
+    it('accepts canonical zero-native USDC.e wrap with the exact admitted identity and scope', async () => {
+      await expect(makeWrapPolicy().authorizeContractCalls([call()], wrapContext)).resolves.toMatchObject({
+        matches: [{ capabilityId: wrapFn.capabilityId, executionScopeHash: expect.any(String) }],
+      });
+    });
+
+    it.each([
+      ['wrong asset', call(OTHER)],
+      ['native USDC', call('0x3c499c542cef5e3811e1192ce70d8cc03d5c3359')],
+      ['nonzero native value', call(POLYMARKET_PUSD_WRAP_IDENTITY.asset, OTHER, 1n, '1')],
+    ])('denies %s regardless of destination policy', async (_label, interaction) => {
+      await expect(makeWrapPolicy().authorizeContractCalls([interaction], wrapContext))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    });
+
+    it('rejects mixed top-level calls and wrap hidden inside a scope', async () => {
+      await expect(makeWrapPolicy().authorizeContractCalls([call(), { to: ADDRESS, data: touch() }], wrapContext))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+      const scoped: any = { ...wrapFn, executionScope: { kind: 'empty-callback-data-v1', bytesArgIndex: 0 } };
+      const badChain: DefiChainPolicy[] = [{ chainId: 137, status: 'active', contracts: [{ address: scoped.contract, status: 'active', functions: [scoped] }] }];
+      expect(() => buildReviewedManifest([{ chains: badChain }])).toThrow(/Invalid Polymarket pUSD wrap identity/);
+    });
+
+    it('rejects a moved reserved capability ID even when it has no pUSD scope', async () => {
+      const moved: any = {
+        ...catalog[0].contracts[0].functions[0],
+        capabilityId: POLYMARKET_PUSD_WRAP_IDENTITY.capabilityId,
+      };
+      const movedCatalog: DefiChainPolicy[] = [{ chainId: 1, status: 'active', contracts: [{ address: ADDRESS, status: 'active', functions: [moved] }] }];
+      const db = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+      const policy = new DefiPolicyService(db as unknown as PrismaService, {} as SecurityEventService,
+        { manifest: () => wrapManifest, activeChain: () => movedCatalog[0] } as unknown as DefiCatalogService);
+      await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], {
+        ...ctx, allowedCapabilityIds: [POLYMARKET_PUSD_WRAP_IDENTITY.capabilityId],
+      })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    });
+
+    it('enforces grant, pause, and final authorization against live grant/pause state', async () => {
+      await expect(makeWrapPolicy().authorizeContractCalls([call()], { ...wrapContext, allowedCapabilityIds: [] }))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(makeWrapPolicy(['global']).authorizeContractCalls([call()], wrapContext))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+      const policy = makeWrapPolicy();
+      const authorization = await policy.authorizeContractCalls([call()], wrapContext);
+      const tx: any = {
+        $queryRaw: jest.fn(),
+        defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+        apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [wrapFn.capabilityId] }) },
+      };
+      await expect(policy.assertStillAuthorized(tx, authorization)).resolves.toBeUndefined();
+      tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['global'] });
+      await expect(policy.assertStillAuthorized(tx, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+    });
   });
 });
