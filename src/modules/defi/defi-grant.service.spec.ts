@@ -16,6 +16,10 @@ describe('DefiGrantService', () => {
     expect(() => service.normalizeIds(['x', 'x'])).toThrow();
     expect(() => service.normalizeIds(['x'.repeat(161)])).toThrow();
   });
+  it('accepts more than 100 unique capability IDs without truncating', () => {
+    const ids = Array.from({ length: 101 }, (_, index) => `cap:${index}`);
+    expect(service.normalizeIds(ids)).toHaveLength(101);
+  });
   it('defaults only omitted grants to empty, locks pause state, and ships no grantable capabilities', async () => {
     const tx = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
     expect(service.normalizeIds(undefined)).toEqual([]);

@@ -46,7 +46,6 @@ describe('DefiBundleService', () => {
     expect(capabilityBundleFingerprint(definition, withChangedProvenance)).toBe(definition.fingerprint);
     const service = new DefiBundleService([definition], catalog(caps, { 'cap:b': 'paused', 'cap:c': 'inactive' }));
     const result = await service.listMetadata();
-    expect(result.maxGrants).toBe(100);
     expect(result.bundles[0]).toMatchObject({ capabilityIds: ['cap:a', 'cap:b', 'cap:c'], fingerprint: definition.fingerprint, available: false, unavailableCapabilityIds: ['cap:b', 'cap:c'] });
   });
 
@@ -98,6 +97,17 @@ describe('DefiBundleService', () => {
     expect(() => new DefiBundleService([good, good], catalog([cap]))).toThrow(/Duplicate DeFi capability bundle version/);
   });
 
+  it('accepts a bundle with more than 100 exact members', () => {
+    const capabilities = Array.from({ length: 101 }, (_, index) => capability({
+      capabilityId: `cap:${String(index).padStart(3, '0')}`,
+      functionName: `call${index}`,
+      signature: `call${index}(uint256)`,
+      abi: { type: 'function', name: `call${index}`, stateMutability: 'nonpayable', inputs: [{ name: 'value', type: 'uint256' }], outputs: [] },
+    }));
+    const definition = bundle(capabilities);
+    expect(new DefiBundleService([definition], catalog(capabilities))).toBeDefined();
+  });
+
   it('accepts an explicitly empty injectable bundle list without inventing profiles', async () => {
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toHaveLength(12);
@@ -106,7 +116,7 @@ describe('DefiBundleService', () => {
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67)).toHaveLength(5);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(67, 69)).toHaveLength(2);
     const service = new DefiBundleService([], catalog([]));
-    await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, maxGrants: 100, bundles: [] });
+    await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, bundles: [] });
   });
 
   it('accepts the five exact phase3 profile selections against isolated source-builder identities', () => {
@@ -130,7 +140,6 @@ describe('DefiBundleService', () => {
       expect(profile.warnings.join(' ')).toMatch(/not .*paired|not paired|neither .*paired/i);
     }
     expect(profiles[0].capabilityIds).toHaveLength(12);
-    expect(profiles[0].capabilityIds.length).toBeLessThanOrEqual(100);
     expect(profiles[0].warnings.join(' ')).toMatch(/ten decoded execution nodes per request/);
     expect(profiles[0].warnings.join(' ')).toMatch(/V3 canonical factory\/pool checks apply only.*external-payer callback branch/i);
     expect(profiles[0].warnings.join(' ')).toMatch(/Curve\/router-balance callbacks assume no stranded router funds/i);
@@ -157,8 +166,7 @@ describe('DefiBundleService', () => {
     const service = new DefiBundleService([profile], catalog([root]));
     await expect(service.listMetadata()).resolves.toMatchObject({
       schemaVersion: 1,
-      maxGrants: 100,
-      bundles: [{ bundleId: profile.bundleId, version: '1.0.0', capabilityIds: [root.capabilityId], available: true, unavailableCapabilityIds: [] }],
+            bundles: [{ bundleId: profile.bundleId, version: '1.0.0', capabilityIds: [root.capabilityId], available: true, unavailableCapabilityIds: [] }],
     });
     expect(profile.capabilityIds).toHaveLength(1);
     expect(profile.capabilityIds.some((id) => id.includes(':approve'))).toBe(false);
@@ -176,8 +184,7 @@ describe('DefiBundleService', () => {
     const service = new DefiBundleService([profile], catalog(SDAI_SAVINGS_CAPABILITIES));
     await expect(service.listMetadata()).resolves.toMatchObject({
       schemaVersion: 1,
-      maxGrants: 100,
-      bundles: [{ bundleId: profile.bundleId, version: profile.version, capabilityIds: profile.capabilityIds, available: true, unavailableCapabilityIds: [] }],
+            bundles: [{ bundleId: profile.bundleId, version: profile.version, capabilityIds: profile.capabilityIds, available: true, unavailableCapabilityIds: [] }],
     });
   });
 });

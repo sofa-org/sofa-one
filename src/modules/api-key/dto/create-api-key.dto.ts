@@ -32,11 +32,11 @@ class IsIpOrCidrConstraint implements ValidatorConstraintInterface {
 @ValidatorConstraint({ name: 'isCapabilityIdList', async: false })
 class IsCapabilityIdListConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    return Array.isArray(value) && value.length <= 100 && value.every((id) =>
+    return Array.isArray(value) && value.every((id) =>
       typeof id === 'string' && id.length > 0 && id.length <= 160 && id.trim() === id,
     ) && new Set(value).size === value.length;
   }
-  defaultMessage(): string { return 'allowedCapabilityIds must contain at most 100 unique non-empty IDs of at most 160 characters'; }
+  defaultMessage(): string { return 'allowedCapabilityIds must contain unique non-empty IDs of at most 160 characters'; }
 }
 
 @ValidatorConstraint({ name: 'isWeiAmount', async: false })

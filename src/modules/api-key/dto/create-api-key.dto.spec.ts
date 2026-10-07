@@ -69,9 +69,10 @@ describe('CreateApiKeyDto', () => {
     expect(errors.some((error) => error.property === 'permissions')).toBe(true);
   });
 
-  it('accepts a valid capability grant list and rejects null/invalid grant lists', async () => {
+  it('accepts grant lists larger than 100 and rejects null/invalid grant lists', async () => {
     expect(await validateDto({ name: 'Valid', allowedCapabilityIds: ['cap:a:v1'] })).toHaveLength(0);
-    for (const allowedCapabilityIds of [null, [''], ['x'.repeat(161)], Array(101).fill('x'), ['x', 'x']]) {
+    expect(await validateDto({ name: 'Valid', allowedCapabilityIds: Array.from({ length: 101 }, (_, index) => `cap:${index}:v1`) })).toHaveLength(0);
+    for (const allowedCapabilityIds of [null, [''], ['x'.repeat(161)], ['x', 'x']]) {
       const errors = await validateDto({ name: 'Valid', allowedCapabilityIds: allowedCapabilityIds as any });
       expect(errors.some((error) => error.property === 'allowedCapabilityIds')).toBe(true);
     }

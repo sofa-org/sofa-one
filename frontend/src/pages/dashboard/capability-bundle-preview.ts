@@ -34,7 +34,7 @@ export function getBundlePreviewDiff(preview: BundlePreviewSnapshot) {
 
 export function validateBundlePreview(
   preview: BundlePreviewSnapshot, target: string, currentIds: readonly string[],
-  bundles: readonly DefiCapabilityBundle[], capabilities: readonly DefiCapability[], maxGrants: number,
+  bundles: readonly DefiCapabilityBundle[], capabilities: readonly DefiCapability[],
 ): string | null {
   if (preview.target !== target) return 'This preview belongs to a different key form. Reopen the preview.';
   if (JSON.stringify(currentIds) !== JSON.stringify(preview.baseline)) return 'The selection changed after this preview. Reopen it to review the current selection.';
@@ -46,6 +46,5 @@ export function validateBundlePreview(
   if (!bundle.capabilityIds.every((id) => capabilities.some((item) => item.capabilityId === id && item.status === 'active'))) {
     return 'One or more bundle functions are missing or unavailable in the current catalog. Refresh the preview before applying.';
   }
-  if (preview.ids.length > maxGrants) return `This selection has ${preview.ids.length} grants; the limit is ${maxGrants}. Remove grants manually before applying.`;
   return null;
 }

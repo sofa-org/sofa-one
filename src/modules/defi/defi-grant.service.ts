@@ -7,7 +7,7 @@ export class DefiGrantService {
   constructor(private readonly catalog: DefiCatalogService) {}
   normalizeIds(ids?: string[] | null): string[] {
     if (ids === undefined) ids = [];
-    if (!Array.isArray(ids) || ids.length > 100 || ids.some((id) => typeof id !== 'string' || !id.trim() || id.length > 160) || new Set(ids).size !== ids.length) throw new BadRequestException({ code: 'DEFI_INVALID_PARAMETERS', message: 'Invalid DeFi capability grants' });
+    if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !id.trim() || id.length > 160) || new Set(ids).size !== ids.length) throw new BadRequestException({ code: 'DEFI_INVALID_PARAMETERS', message: 'Invalid DeFi capability grants' });
     return [...ids].sort();
   }
   async assertGrantableInTx(tx: DefiDbClient, ids?: string[] | null) {

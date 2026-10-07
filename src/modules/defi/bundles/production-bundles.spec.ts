@@ -118,7 +118,6 @@ describe('published production profiles', () => {
       } else if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 62) {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(10);
       } else {
-        expect(bundle.capabilityIds.length).toBeLessThanOrEqual(100);
       }
       expect(bundle.capabilityIds).toEqual([...bundle.capabilityIds].sort(cmp));
       expect(new Set(bundle.capabilityIds).size).toBe(bundle.capabilityIds.length);
@@ -345,7 +344,6 @@ describe('published production profiles', () => {
       expect(profile.chainIds).toEqual([1]);
       expect(profile.capabilityIds).toEqual([...profile.capabilityIds].sort(cmp));
       expect(profile.fingerprint).toBe(capabilityBundleFingerprint(profile, candidates));
-      expect(profile.capabilityIds.length).toBeLessThanOrEqual(100);
       expect(profile.warnings.join(' ')).toMatch(/approvals?.*independent|approvals? are separate/i);
       expect(profile.warnings.join(' ')).toMatch(/not .*paired|not automatic|not included|neither .*paired/i);
       expect(profile.limitations.join(' ')).toMatch(/not all .* (?:methods|routes|routing)|not a complete workflow|all .* workflow.*not certified|not full .* (?:routing|workflow)/i);
@@ -448,7 +446,6 @@ describe('published production profiles', () => {
     const catalog = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST);
     const service = new DefiBundleService(PRODUCTION_DEFI_CAPABILITY_BUNDLES, catalog);
     const response = await service.listMetadata();
-    expect(response.maxGrants).toBe(100);
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: bundle.capabilityIds, unavailableCapabilityIds: [pausedId] });
     expect(response.bundles).toHaveLength(69);
   });

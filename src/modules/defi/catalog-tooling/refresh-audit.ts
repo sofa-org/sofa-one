@@ -92,7 +92,6 @@ function validateProfiles(profiles: readonly DefiCapabilityBundle[], fns: readon
       || [...profile.warnings, ...profile.limitations].some((text) => typeof text !== 'string' || !text.trim() || text.trim() !== text || text.length > 500)
       || typeof profile.fingerprint !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(profile.fingerprint)
       || new Set(profile.capabilityIds).size !== profile.capabilityIds.length
-      || profile.capabilityIds.length > 100
       || profile.chainIds.some((id, i) => !Number.isSafeInteger(id) || id <= 0 || (i > 0 && profile.chainIds[i - 1] >= id))
       || profile.capabilityIds.some((id, i) => typeof id !== 'string' || !id.trim() || id.length > 160 || (i > 0 && cmp(profile.capabilityIds[i - 1], id) >= 0))) {
       throw new Error('Malformed versioned profile or non-canonical membership');

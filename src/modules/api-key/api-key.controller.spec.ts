@@ -141,7 +141,7 @@ describe('DefiCapabilityController', () => {
 
 describe('DefiCapabilityBundleController', () => {
   it('serves bundle metadata through the IAM/frontend-only guarded dashboard route', async () => {
-    const response = { schemaVersion: 1, maxGrants: 100, currentCatalogManifestHash: '0xmanifest', bundles: [] };
+    const response = { schemaVersion: 1, currentCatalogManifestHash: '0xmanifest', bundles: [] };
     const service = { listMetadata: jest.fn().mockResolvedValue(response) };
     const controller = new DefiCapabilityBundleController(service as any);
     await expect(controller.list()).resolves.toBe(response);

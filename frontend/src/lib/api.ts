@@ -373,7 +373,6 @@ export interface DefiCapabilityBundle {
 
 export interface DefiCapabilityBundlesResponse {
   schemaVersion: 1;
-  maxGrants: number;
   currentCatalogManifestHash: string;
   bundles: DefiCapabilityBundle[];
 }

@@ -5,7 +5,7 @@ import type { DefiFunctionPolicy } from '../defi.types';
 import { executionScopeHash } from '../execution/scope';
 import { functionAbiHash } from '../registry/defi-manifest';
 import { DEFI_CAPABILITY_BUNDLES } from './production-bundles';
-import { MAX_CAPABILITY_GRANTS, type DefiCapabilityBundle, type DefiCapabilityBundleMetadata, type DefiCapabilityBundlesResponse } from './types';
+import type { DefiCapabilityBundle, DefiCapabilityBundleMetadata, DefiCapabilityBundlesResponse } from './types';
 
 const cmp = (left: string, right: string) => left < right ? -1 : left > right ? 1 : 0;
 const BUNDLE_ID = /^[a-zA-Z0-9][a-zA-Z0-9:._/-]{0,79}$/;
@@ -44,7 +44,7 @@ function validateBundleShape(bundle: DefiCapabilityBundle): void {
     || !Array.isArray(bundle.chainIds) || bundle.chainIds.length === 0 || bundle.chainIds.length > 7
     || bundle.chainIds.some((id) => !Number.isSafeInteger(id) || id <= 0)
     || new Set(bundle.chainIds).size !== bundle.chainIds.length || bundle.chainIds.some((id, index) => index > 0 && bundle.chainIds[index - 1] >= id)
-    || !Array.isArray(bundle.capabilityIds) || bundle.capabilityIds.length === 0 || bundle.capabilityIds.length > MAX_CAPABILITY_GRANTS
+    || !Array.isArray(bundle.capabilityIds) || bundle.capabilityIds.length === 0
     || bundle.capabilityIds.some((id) => typeof id !== 'string' || !id.trim() || id.length > 160 || id.trim() !== id)
     || new Set(bundle.capabilityIds).size !== bundle.capabilityIds.length || bundle.capabilityIds.some((id, index) => index > 0 && cmp(bundle.capabilityIds[index - 1], id) >= 0)
     || !HASH.test(bundle.fingerprint) || !validCopyList(bundle.warnings) || !validCopyList(bundle.limitations)) {
@@ -110,7 +110,6 @@ export class DefiBundleService {
     });
     return {
       schemaVersion: 1,
-      maxGrants: MAX_CAPABILITY_GRANTS,
       currentCatalogManifestHash: this.catalog.manifest().manifestHash,
       bundles,
     };
