@@ -649,8 +649,9 @@ export default function ApiKeysPage() {
             </>
           )}
         </div>
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="space-y-2 lg:flex-1">
+        <div className="mt-6 space-y-5">
+          <div className="grid gap-5 md:grid-cols-2 rounded-xl border border-brand-border bg-white p-4">
+          <div className="space-y-2">
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Key Name</label>
             <input
               type="text"
@@ -661,14 +662,13 @@ export default function ApiKeysPage() {
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
             <p className="text-xs leading-5 text-brand-muted">
-              Use a unique active name per environment or app. The raw key is shown once after creation, so copy it
-              directly into your backend secret store. If you do not choose a custom expiry via the API, the backend
-              applies a 90-day default.
+              Use a unique active name. The key is shown once after creation; store it in your backend secret store.
             </p>
           </div>
-          <div className="space-y-2 lg:flex-1">
+          <details className="space-y-2 md:col-span-2 rounded-lg border border-brand-border bg-brand-bg/50 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-brand-text">Restrict by IP <span className="font-normal text-brand-muted">· optional</span></summary>
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
-              IP allowlist <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
+              IP allowlist
             </label>
             <textarea
               rows={3}
@@ -678,16 +678,18 @@ export default function ApiKeysPage() {
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
             <p className="text-xs leading-5 text-brand-muted">
-              Restrict this key to trusted backend egress IPs. To open access to all IPv4 addresses, enter 0.0.0.0/0.
-              Leave blank only for local development or rotating IP environments.
+              Only allow requests from trusted backend IPs. Blank allows any IP; 0.0.0.0/0 allows all IPv4 addresses.
             </p>
+          </details>
           </div>
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
-            <div><p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Function permissions</p><p className="mt-1 text-xs leading-5 text-brand-muted">Grant only the exact chain, contract address and function this key needs. Each grant uses a fixed ABI; signing and broad multicall commands are not available here. The catalog may not cover every chain or protocol. No selection means no catalog operations are allowed.</p></div>
+          <section className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/40 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-brand-text">DeFi function access</p><p className="mt-1 text-xs leading-5 text-brand-muted">Choose exact chain, contract and function grants. No selection denies catalog operations. Signing and broad multicall commands are not available here.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-brand-muted">Separate from API endpoints</span></div>
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">You choose the authority for this key. A grant does not guarantee safe protocol limits or prices: your caller chooses assets, amounts, recipients, native value, borrow risk, minimum output and deadlines. ERC-20 approval calls can approve any spender, for any amount including unlimited, even when no action grant is selected. Review your caller and each transaction.</div>
             {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds, 'create')}
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:col-span-2">
+          </section>
+          <details className="rounded-xl border border-brand-border bg-white p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-brand-text">Set native-token spend limits <span className="font-normal text-brand-muted">· optional</span></summary>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
                 Daily spend limit (wei) <span className="font-semibold normal-case tracking-normal text-brand-muted">optional</span>
@@ -719,12 +721,12 @@ export default function ApiKeysPage() {
               </p>
             </div>
           </div>
-          <div className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 lg:col-span-2">
+          </details>
+          <section className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/40 p-4">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">Permissions</p>
+              <p className="text-sm font-semibold text-brand-text">API endpoint access</p>
               <p className="mt-1 text-xs leading-5 text-brand-muted">
-                Start read-only, then grant only the capabilities this backend needs. EOA execution is privileged and
-                should stay off unless this key is for a reviewed EOA-signing workflow.
+                Controls which API endpoints this key can call. Keep privileged EOA execution off unless reviewed.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -756,8 +758,8 @@ export default function ApiKeysPage() {
                 </label>
               ))}
             </div>
-          </div>
-          <div className="lg:col-span-2">
+          </section>
+          <div>
             <button
               onClick={handleCreate}
               disabled={loading || actionLoading || !newKeyName.trim() || hasReachedKeyLimit}
@@ -1017,8 +1019,8 @@ export default function ApiKeysPage() {
                   </div>
                   {editingKeyId === key.id && (
                     <div className="mx-5 mb-4 space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 sm:mx-7">
-                       <p className="text-sm font-semibold text-brand-text">Edit function grants</p>
-                        <p className="text-xs leading-5 text-brand-muted">Select the exact functions this key may call. Saving replaces all current grants.</p>
+                        <p className="text-sm font-semibold text-brand-text">DeFi function access</p>
+                         <p className="text-xs leading-5 text-brand-muted">Choose exact functions. Saving replaces all current grants.</p>
                         <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">Your caller chooses recipients, assets, amounts and native value (only payable functions accept native value), as well as protocol-specific minimum output and deadlines. The platform does not financially validate these choices; review your caller and each transaction.</p>
                       {capabilityError && <p role="alert" className="text-sm text-red-700">{capabilityError}</p>}
                       {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, `key:${key.id}`, capabilitySaving)}
