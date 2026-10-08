@@ -30,6 +30,8 @@ type ApiKeyAuthRecord = {
   canSign?: boolean;
   canSendTransaction?: boolean;
   canUseEoaExecution?: boolean;
+  allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   allowedIps?: string[];
   user?: { id?: string | null; frozenAt?: Date | string | null; frozenReason?: string | null } | null;
 };

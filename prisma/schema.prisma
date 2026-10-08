@@ -11,6 +11,12 @@ enum BillingUsageMetric {
   api_call
 }
 
+enum ApiKeyCapabilityMode {
+  all
+  custom
+  @@map("api_key_capability_mode")
+}
+
 enum BillingInvoiceStatus {
   open
   finalized
@@ -205,6 +211,7 @@ model ApiKey {
   canUseEoaExecution           Boolean   @default(false) @map("can_use_eoa_execution")
   allowedIps                   String[]  @map("allowed_ips")
   allowedCapabilityIds         String[]  @default([]) @map("allowed_capability_ids")
+  capabilityMode               ApiKeyCapabilityMode @default(all) @map("capability_mode")
   dailySpendLimit              String?   @map("daily_spend_limit") @db.VarChar(40)
   monthlySpendLimit            String?   @map("monthly_spend_limit") @db.VarChar(40)
   // BILL-016: operator ack that API-key sends honor the user's withdrawal

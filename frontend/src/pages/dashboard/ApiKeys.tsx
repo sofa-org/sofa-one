@@ -24,6 +24,7 @@ import {
   matchesApiKeyLifecycleFilter,
   type ApiKeyLifecycleStatus,
   type ApiKeyRecord,
+  type ApiKeyCapabilityMode,
   type DefiCapability,
   type DefiCapabilityBundle,
 } from '@/lib/api';
@@ -32,6 +33,7 @@ import { getDashboardStepUpToken } from './step-up-session';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
 import { createBundlePreview, getBundlePreviewDiff, validateBundlePreview, type BundlePreviewSnapshot } from './capability-bundle-preview';
 import { capabilityCategory, capabilityGroupsForChain, validCapabilityGroupForChain } from './capability-groups';
+import { applyCapabilityUpdate, capabilityFieldsForMode, capabilityUpdateForMode, getCapabilityTechnicalLabel, previewForCapabilityModeChange } from './api-key-capabilities';
 
 const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
@@ -177,8 +179,10 @@ export default function ApiKeysPage() {
   const [bundlePreview, setBundlePreview] = useState<BundlePreviewSnapshot | null>(null);
   const [bundlePreviewError, setBundlePreviewError] = useState<string | null>(null);
   const [newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds] = useState<string[]>([]);
+  const [newKeyCapabilityMode, setNewKeyCapabilityMode] = useState<ApiKeyCapabilityMode>('all');
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [editingCapabilityIds, setEditingCapabilityIds] = useState<string[]>([]);
+  const [editingCapabilityMode, setEditingCapabilityMode] = useState<ApiKeyCapabilityMode>('all');
   const [capabilitySaving, setCapabilitySaving] = useState(false);
   const [capabilityError, setCapabilityError] = useState<string | null>(null);
   const [capabilitySearch, setCapabilitySearch] = useState('');
@@ -380,7 +384,7 @@ export default function ApiKeysPage() {
         {
           name: trimmedName,
           ...(allowedIps.length > 0 ? { allowedIps } : {}),
-          allowedCapabilityIds: newKeyAllowedCapabilityIds,
+          ...capabilityFieldsForMode(newKeyCapabilityMode, newKeyAllowedCapabilityIds),
           ...(Object.keys(spendLimits).length > 0 ? { spendLimits } : {}),
           permissions: newKeyPermissions,
         },
@@ -390,7 +394,8 @@ export default function ApiKeysPage() {
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
       setNewKeyAllowedIps('');
-       setNewKeyAllowedCapabilityIds([]);
+      setNewKeyAllowedCapabilityIds([]);
+      setNewKeyCapabilityMode('all');
       setNewKeyDailySpendLimit('');
       setNewKeyMonthlySpendLimit('');
       setNewKeyPermissions({
@@ -473,15 +478,17 @@ export default function ApiKeysPage() {
 
   async function handleSaveCapabilities(key: ApiKeyRecord) {
     if (capabilitySaving) return;
-    if (!confirm(`Update capabilities for ${key.name || key.displayPrefix}? An empty grant allows no catalog operations.`)) return;
+    const modeRequest = capabilityUpdateForMode(editingCapabilityMode, editingCapabilityIds);
+    const confirmation = editingCapabilityMode === 'all'
+      ? `Reset capabilities for ${key.name || key.displayPrefix} to all currently active and future unpaused capabilities?`
+      : `Update capabilities for ${key.name || key.displayPrefix}? ${editingCapabilityIds.length === 0 ? 'No capabilities are selected, so this key will have no catalog access.' : 'This replaces the full custom selection.'}`;
+    if (!confirm(confirmation)) return;
     setCapabilitySaving(true);
     setCapabilityError(null);
     try {
       const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      const result = await updateApiKeyCapabilitiesAuth(getToken, key.id, editingCapabilityIds, stepUpToken);
-      setKeys((current) => current.map((item) => item.id === result.id
-        ? { ...item, allowedCapabilityIds: result.allowedCapabilityIds }
-        : item));
+      const result = await updateApiKeyCapabilitiesAuth(getToken, key.id, modeRequest, stepUpToken);
+      setKeys((current) => current.map((item) => applyCapabilityUpdate(item, result)));
       setEditingKeyId(null);
     } catch (err: unknown) {
       setCapabilityError(getApiErrorMessage(err));
@@ -494,9 +501,14 @@ export default function ApiKeysPage() {
     setter(ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
   }
 
-  function capabilityChoices(ids: string[], setter: (value: string[]) => void, target: string, disabled = false) {
-    if (capabilitiesLoading) return <p className="text-sm text-brand-muted">Loading capability catalog…</p>;
-    if (capabilitiesError) return <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div>;
+  function capabilityChoices(
+    mode: ApiKeyCapabilityMode,
+    setMode: (value: ApiKeyCapabilityMode) => void,
+    ids: string[],
+    setter: (value: string[]) => void,
+    target: string,
+    disabled = false,
+  ) {
     const visibleCapabilities = capabilities.filter((capability) => capability.status === 'active' || ids.includes(capability.capabilityId));
     const unknownIds = ids.filter((id) => !capabilities.some((capability) => capability.capabilityId === id));
     const query = capabilitySearch.trim().toLowerCase();
@@ -516,9 +528,29 @@ export default function ApiKeysPage() {
       else setter([...ids, id]);
     };
     const filtered = Boolean(query || capabilityChainFilter !== 'all' || capabilityGroupFilter !== 'all' || capabilitySelectedOnly);
-     const selectedCapabilities = ids.map((id) => capabilities.find((item) => item.capabilityId === id));
-     return <div className="space-y-3">
-       <details className="rounded-lg border border-brand-border bg-white p-3">
+      const selectedCapabilities = ids.map((id) => capabilities.find((item) => item.capabilityId === id));
+      const changeMode = (nextMode: ApiKeyCapabilityMode) => {
+        if (nextMode === mode) return;
+        setMode(nextMode);
+        setBundlePreview((current) => previewForCapabilityModeChange(current, mode, nextMode));
+        setBundlePreviewError(null);
+      };
+      return <div className="space-y-3">
+        <fieldset className="grid gap-2 sm:grid-cols-2">
+          <legend className="sr-only">Choose catalog capability access mode</legend>
+          <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition-colors ${mode === 'all' ? 'border-brand-accent bg-white ring-1 ring-brand-accent/20' : 'border-brand-border bg-white hover:border-brand-accent'}`}>
+            <input type="radio" name={`capability-mode-${target}`} value="all" checked={mode === 'all'} disabled={disabled} onChange={() => changeMode('all')} className="mt-0.5 h-4 w-4 border-brand-border text-brand-accent focus:ring-brand-accent" />
+            <span><span className="block font-semibold text-brand-text">All active capabilities</span><span className="mt-1 block text-xs leading-5 text-brand-muted">Allow all currently active, unpaused capabilities and include future additions automatically.</span></span>
+          </label>
+          <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition-colors ${mode === 'custom' ? 'border-brand-accent bg-white ring-1 ring-brand-accent/20' : 'border-brand-border bg-white hover:border-brand-accent'}`}>
+            <input type="radio" name={`capability-mode-${target}`} value="custom" checked={mode === 'custom'} disabled={disabled} onChange={() => changeMode('custom')} className="mt-0.5 h-4 w-4 border-brand-border text-brand-accent focus:ring-brand-accent" />
+            <span><span className="block font-semibold text-brand-text">Choose specific capabilities</span><span className="mt-1 block text-xs leading-5 text-brand-muted">Only selected capabilities are allowed. No selection means no catalog access.</span></span>
+          </label>
+        </fieldset>
+        <p className="text-xs leading-5 text-brand-muted">This controls catalog capability access only; API permissions for transaction submission, signing and EOA execution remain separate. Pauses and other policy checks still apply.</p>
+        {mode === 'all' ? <div className="rounded-lg border border-brand-accent/20 bg-white px-3 py-3 text-sm text-brand-text">This key can use all currently active, unpaused catalog capabilities, including future additions. No catalog IDs are stored in this selection.</div> : <>
+        {capabilitiesLoading ? <p className="text-sm text-brand-muted">Loading capability catalog…</p> : capabilitiesError ? <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div> : <>
+        <details className="rounded-lg border border-brand-border bg-white p-3">
          <summary className="cursor-pointer text-sm font-semibold text-brand-text">Quick setup with a bundle <span className="ml-2 text-xs font-normal text-brand-muted">Optional</span></summary>
          <div className="pt-3">
          <p className="text-xs leading-5 text-brand-muted">Bundles are starting points, not guaranteed workflows or asset support. Review changes before applying.</p>
@@ -532,11 +564,11 @@ export default function ApiKeysPage() {
           <p className="mt-1 text-brand-muted">Chains: {bundle.chainIds.map((chain) => SUPPORTED_CHAINS.find((item) => item.id === chain)?.name ?? `Chain ${chain}`).join(', ')}</p>
           {(!bundle.available || memberUnavailable) && <p className="mt-2 font-semibold text-red-800">Unavailable: {bundle.unavailableCapabilityIds.join(', ') || 'one or more functions are missing or inactive in the current catalog'}. This bundle cannot be applied.</p>}
           {[...bundle.warnings, ...bundle.limitations].length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-900">{[...bundle.warnings, ...bundle.limitations].map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>}
-          <details className="mt-2"><summary className="cursor-pointer font-semibold">Inspect all functions ({bundle.capabilityIds.length})</summary><ul className="mt-2 max-h-56 space-y-1 overflow-auto">{bundle.capabilityIds.map((id) => { const cap = capabilities.find((item) => item.capabilityId === id); return <li key={id} className="break-all">{cap ? `${cap.label} · ${cap.functionSignature || 'Contract call'} · ${cap.contract} · ${SUPPORTED_CHAINS.find((item) => item.id === cap.chainId)?.name ?? `Chain ${cap.chainId}`}` : id} <code className="text-[10px] text-brand-muted">{id}</code></li>; })}</ul></details>
+          <details className="mt-2"><summary className="cursor-pointer font-semibold">Inspect all functions ({bundle.capabilityIds.length})</summary><ul className="mt-2 max-h-56 space-y-1 overflow-auto">{bundle.capabilityIds.map((id) => { const cap = capabilities.find((item) => item.capabilityId === id); return <li key={id} className="break-all">{cap ? `${cap.label} · ${getCapabilityTechnicalLabel(cap)}${cap.contract ? ` · ${cap.contract}` : ''} · ${SUPPORTED_CHAINS.find((item) => item.id === cap.chainId)?.name ?? `Chain ${cap.chainId}`}` : id} <code className="text-[10px] text-brand-muted">{id}</code></li>; })}</ul></details>
         </div>; })()}
         {bundlePreview?.target === target && (() => { const bundle = bundles.find((item) => item.bundleId === bundlePreview.bundleId && item.version === bundlePreview.version); const { added, removed, unchanged } = getBundlePreviewDiff(bundlePreview); const invalidReason = validateBundlePreview(bundlePreview, target, ids, bundles, capabilities); const labelFor = (id: string) => { const capability = capabilities.find((item) => item.capabilityId === id); return capability ? `${capability.label || capability.functionSignature || id} · ${id}` : `Unavailable function · ${id}`; }; return <div role="region" aria-label="Bundle selection preview" className="mt-3 rounded-lg border border-brand-accent/40 bg-white p-3 text-xs leading-5"><p className="font-semibold text-brand-text">Preview {bundlePreview.mode === 'add' ? 'add' : 'replacement'} · {bundle?.label} v{bundlePreview.version}</p><p>{added.length} added · {removed.length} removed · {unchanged.length} unchanged · {bundlePreview.ids.length} selected functions</p>{[['Added', added], ['Removed', removed], ['Unchanged', unchanged]].map(([heading, values]) => <details key={heading as string} className="mt-2"><summary className="cursor-pointer font-semibold">{heading as string} ({(values as string[]).length})</summary><ul className="mt-1 max-h-40 space-y-1 overflow-auto">{(values as string[]).map((id) => <li key={id} className="break-all">{labelFor(id)}</li>)}</ul></details>)}{invalidReason && <p role="alert" className="mt-2 font-semibold text-red-800">{invalidReason}</p>}{bundlePreviewError && <p role="alert" className="mt-2 font-semibold text-red-800">{bundlePreviewError}</p>}<div className="mt-2 flex gap-2"><button type="button" disabled={disabled || Boolean(invalidReason)} onClick={() => applyBundlePreview(target, ids, setter)} className="rounded-full bg-brand-text px-3 py-1.5 font-semibold text-white disabled:opacity-50">Apply to form</button><button type="button" onClick={() => { setBundlePreview(null); setBundlePreviewError(null); }} className="rounded-full border border-brand-border px-3 py-1.5">Cancel</button></div></div>; })()}
          </div>
-       </details>
+        </details>
        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm"><button type="button" aria-expanded={selectedManagementOpen} onClick={() => setSelectedManagementOpen(!selectedManagementOpen)} className="font-semibold text-brand-text">Selected functions · {ids.length} <span className="ml-1 text-xs font-normal text-brand-muted">{selectedManagementOpen ? 'Hide list' : 'Manage list'}</span></button>{ids.length > 0 && <button type="button" disabled={disabled} onClick={() => setter([])} className="text-xs font-semibold text-brand-muted underline">Remove all</button>}</div>
        {selectedManagementOpen && <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-brand-border bg-white p-3">{ids.map((id, index) => { const capability = selectedCapabilities[index]; return <div key={id} className="flex min-w-0 items-start justify-between gap-3 border-b border-brand-border/60 pb-2 last:border-0"><span className="min-w-0"><span className="block font-semibold text-sm">{capability?.label ?? 'Unavailable capability'}</span><span className="block text-xs text-brand-muted">{capability ? `${SUPPORTED_CHAINS.find((chain) => chain.id === capability.chainId)?.name ?? `Chain ${capability.chainId}`} · ${capability.protocol || capability.operation || 'Function'}` : 'No longer in catalog'}</span><code className="block break-all text-[10px] text-brand-muted">{id}</code></span><button type="button" disabled={disabled} onClick={() => toggleCapability(ids, id, setter)} aria-label={`Remove ${capability?.label ?? 'unavailable capability'} ${id}`} className="shrink-0 rounded-full border border-brand-border px-2 py-1 text-xs hover:bg-brand-bg disabled:opacity-50">Remove</button></div>; })}</div>}
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
@@ -545,7 +577,7 @@ export default function ApiKeysPage() {
         <select aria-label="Filter by protocol or group" value={capabilityGroupFilter} onChange={(event) => setCapabilityGroupFilter(event.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text"><option value="all">All protocols / groups</option>{groups.map((group) => <option key={group} value={group}>{group}</option>)}</select>
       </div>
        <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-brand-muted"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={capabilitySelectedOnly} onChange={(event) => setCapabilitySelectedOnly(event.target.checked)} className="h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />Selected only</label>{filtered && <button type="button" onClick={() => { setCapabilitySearch(''); setCapabilityChainFilter('all'); setCapabilityGroupFilter('all'); setCapabilitySelectedOnly(false); }} className="font-semibold text-brand-text underline underline-offset-2">Clear filters</button>}</div>
-      {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No capabilities are available from the catalog right now. New keys will have no catalog access until capabilities are published.</p>}
+      {capabilities.length === 0 && <p className="text-sm leading-6 text-brand-muted">No catalog capabilities are available to select right now. “All active capabilities” will include eligible additions when they are published; an empty custom selection denies catalog access.</p>}
        {matches.length === 0 && visibleCapabilities.length > 0 && <p className="rounded-lg border border-brand-border bg-white p-4 text-sm text-brand-muted">No functions match these filters.</p>}
          <p className="text-xs text-brand-muted">Showing {Math.min(matches.length, capabilityResultLimit)} of {matches.length} matching functions</p>
         {matches.slice(0, capabilityResultLimit).map((capability) => {
@@ -556,7 +588,7 @@ export default function ApiKeysPage() {
            <span className="block text-xs leading-5 text-brand-muted">{capability.description}</span>
            <span className="block text-xs text-brand-muted">{SUPPORTED_CHAINS.find((chain) => chain.id === capability.chainId)?.name ?? `Chain ${capability.chainId}`} · {capability.protocol || capability.operation || 'Function'}</span>
           {(capability.protocol || capability.operation) && <span className="mt-1 block text-xs text-brand-muted">{[capability.protocol, capability.operation].filter(Boolean).join(' · ')}</span>}
-           <details className="mt-1 text-xs"><summary className="w-fit cursor-pointer font-semibold text-brand-muted">Technical details</summary><div className="mt-1 space-y-1"><span className="block break-all font-mono">{capability.functionSignature || 'Contract call'} · {capability.contract} · {capability.capabilityId}</span>{capability.policy && <span className="block">Policy: {capability.policy.ref} v{capability.policy.version}</span>}{capability.provenance && <span className="block break-all">Source: {capability.provenance.sourceRef} · {capability.provenance.status}{capability.provenance.verifiedAt ? ` · ${capability.provenance.verifiedAt}` : ''}</span>}</div></details>
+             <details className="mt-1 text-xs"><summary className="w-fit cursor-pointer font-semibold text-brand-muted">Technical details</summary><div className="mt-1 space-y-1"><span className="block break-all font-mono">{getCapabilityTechnicalLabel(capability)}{capability.contract ? ` · ${capability.contract}` : ''} · ${capability.capabilityId}</span>{capability.policy && <span className="block">Policy: {capability.policy.ref} v{capability.policy.version}</span>}{capability.provenance && <span className="block break-all">Source: {capability.provenance.sourceRef} · {capability.provenance.status}{capability.provenance.verifiedAt ? ` · ${capability.provenance.verifiedAt}` : ''}</span>}</div></details>
           {((capability.warnings ?? []).length > 0 || FUNCTION_WARNINGS[capability.operation?.toLowerCase() ?? ''] || FUNCTION_WARNINGS[capability.functionSignature?.split('(')[0] ?? '']) && <span className="mt-2 block rounded-md bg-amber-50 px-2.5 py-2 text-xs leading-5 text-amber-900">{[...(capability.warnings ?? []), FUNCTION_WARNINGS[capability.operation?.toLowerCase() ?? ''] ?? FUNCTION_WARNINGS[capability.functionSignature?.split('(')[0] ?? '']].filter(Boolean).join(' ')}</span>}
          </div>
        </div>;
@@ -566,8 +598,10 @@ export default function ApiKeysPage() {
         <input type="checkbox" checked disabled aria-label={`Unavailable grant ${id}`} className="mt-1 h-4 w-4 rounded border-brand-border text-brand-accent focus:ring-brand-accent" />
         <span className="min-w-0"><span className="block font-semibold text-brand-text">Unavailable capability</span><code className="block break-all text-xs text-brand-muted">{id}</code><button type="button" disabled={disabled} onClick={() => toggleCapability(ids, id, setter)} className="mt-1 text-xs font-semibold text-amber-800 underline disabled:opacity-50">Remove grant</button></span>
       </div>)}
-      {ids.length > 0 && <button type="button" disabled={disabled} onClick={() => setter([])} className="mt-1 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent disabled:opacity-50">Clear all grants</button>}
-    </div>;
+       <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={disabled || ids.length === 0} onClick={() => setter([])} className="rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent disabled:opacity-50">Clear all grants</button><button type="button" disabled={disabled} onClick={() => changeMode('all')} className="rounded-full border border-brand-accent/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent disabled:opacity-50">Reset to all active capabilities</button></div>
+        </>}
+        </>}
+     </div>;
   }
 
   return (
@@ -683,9 +717,9 @@ export default function ApiKeysPage() {
           </details>
           </div>
           <section className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/40 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-brand-text">DeFi function access</p><p className="mt-1 text-xs leading-5 text-brand-muted">Choose exact chain, contract and function grants. No selection denies catalog operations. Signing and broad multicall commands are not available here.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-brand-muted">Separate from API endpoints</span></div>
+            <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-brand-text">Catalog capability access</p><p className="mt-1 text-xs leading-5 text-brand-muted">Choose all active capabilities or limit this key to specific chain, contract and function grants. This is separate from API endpoint permissions.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-brand-muted">Separate from API endpoints</span></div>
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">You choose the authority for this key. A grant does not guarantee safe protocol limits or prices: your caller chooses assets, amounts, recipients, native value, borrow risk, minimum output and deadlines. ERC-20 approval calls can approve any spender, for any amount including unlimited, even when no action grant is selected. Review your caller and each transaction.</div>
-            {capabilityChoices(newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds, 'create')}
+            {capabilityChoices(newKeyCapabilityMode, setNewKeyCapabilityMode, newKeyAllowedCapabilityIds, setNewKeyAllowedCapabilityIds, 'create')}
           </section>
           <details className="rounded-xl border border-brand-border bg-white p-4">
             <summary className="cursor-pointer text-sm font-semibold text-brand-text">Set native-token spend limits <span className="font-normal text-brand-muted">· optional</span></summary>
@@ -921,6 +955,7 @@ export default function ApiKeysPage() {
               const frozenReasonLabel =
                 lifecycleStatus === 'frozen' ? formatApiKeyFrozenReason(key.frozenReason) : null;
               const allowedCapabilityIds = key.allowedCapabilityIds ?? [];
+              const capabilityMode = key.capabilityMode;
               const canRevoke = lifecycleStatus !== 'revoked';
 
               return (
@@ -957,8 +992,8 @@ export default function ApiKeysPage() {
                         !key.permissions.canSign &&
                         !key.permissions.canSendTransaction &&
                         !key.permissions.canUseEoaExecution && <span className="shrink-0">none</span>}
-                      <span className={`shrink-0 rounded-full px-1.5 py-0.5 ${allowedCapabilityIds.length ? 'bg-blue-50 text-blue-700' : 'bg-brand-bg text-brand-muted'}`}>
-                        {allowedCapabilityIds.length} {allowedCapabilityIds.length === 1 ? 'capability' : 'capabilities'}
+                      <span className={`shrink-0 rounded-full px-1.5 py-0.5 ${capabilityMode === 'all' ? 'bg-blue-50 text-blue-700' : allowedCapabilityIds.length ? 'bg-blue-50 text-blue-700' : 'bg-brand-bg text-brand-muted'}`}>
+                        {capabilityMode === 'all' ? 'all active + future' : `custom · ${allowedCapabilityIds.length}`}
                       </span>
                       {(key.dailySpendLimit || key.monthlySpendLimit) && (
                         <>
@@ -1019,16 +1054,16 @@ export default function ApiKeysPage() {
                   </div>
                   {editingKeyId === key.id && (
                     <div className="mx-5 mb-4 space-y-3 rounded-xl border border-brand-border bg-brand-bg/60 p-4 sm:mx-7">
-                        <p className="text-sm font-semibold text-brand-text">DeFi function access</p>
-                         <p className="text-xs leading-5 text-brand-muted">Choose exact functions. Saving replaces all current grants.</p>
+                         <p className="text-sm font-semibold text-brand-text">Catalog capability access</p>
+                          <p className="text-xs leading-5 text-brand-muted">Current setting: {capabilityMode === 'all' ? 'all active and future unpaused capabilities' : `custom · ${allowedCapabilityIds.length} selected`}. Changes apply only when you confirm and save.</p>
                         <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-950">Your caller chooses recipients, assets, amounts and native value (only payable functions accept native value), as well as protocol-specific minimum output and deadlines. The platform does not financially validate these choices; review your caller and each transaction.</p>
                       {capabilityError && <p role="alert" className="text-sm text-red-700">{capabilityError}</p>}
-                      {capabilityChoices(editingCapabilityIds, setEditingCapabilityIds, `key:${key.id}`, capabilitySaving)}
-                      <div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleSaveCapabilities(key)} disabled={capabilitySaving || capabilitiesLoading || Boolean(capabilitiesError)} className="inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{capabilitySaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Save grants</button><button type="button" onClick={() => { setEditingKeyId(null); setCapabilityError(null); }} disabled={capabilitySaving} className="rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text">Cancel</button></div>
+                      {capabilityChoices(editingCapabilityMode, setEditingCapabilityMode, editingCapabilityIds, setEditingCapabilityIds, `key:${key.id}`, capabilitySaving)}
+                      <div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleSaveCapabilities(key)} disabled={capabilitySaving || (editingCapabilityMode === 'custom' && (capabilitiesLoading || Boolean(capabilitiesError)))} className="inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{capabilitySaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{editingCapabilityMode === 'all' ? 'Save all active access' : 'Save custom selection'}</button><button type="button" onClick={() => { setEditingKeyId(null); setCapabilityError(null); }} disabled={capabilitySaving} className="rounded-full border border-brand-border bg-white px-4 py-2 text-xs font-semibold text-brand-text">Cancel</button></div>
                     </div>
                   )}
                   {editingKeyId !== key.id && canRevoke && (
-                    <button type="button" onClick={() => { setEditingKeyId(key.id); setEditingCapabilityIds(allowedCapabilityIds); setCapabilityError(null); }} disabled={actionLoading || capabilitySaving} className="mx-5 mb-4 inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent sm:mx-7"><ShieldCheck className="h-3.5 w-3.5" />Edit capabilities ({allowedCapabilityIds.length})</button>
+                    <button type="button" onClick={() => { setEditingKeyId(key.id); setEditingCapabilityMode(capabilityMode); setEditingCapabilityIds(allowedCapabilityIds); setCapabilityError(null); }} disabled={actionLoading || capabilitySaving} className="mx-5 mb-4 inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-text hover:border-brand-accent sm:mx-7"><ShieldCheck className="h-3.5 w-3.5" />Edit capabilities ({capabilityMode === 'all' ? 'all active + future' : `custom · ${allowedCapabilityIds.length}`})</button>
                   )}
                   {lifecycleStatus === 'frozen' && (
                     <div className="mx-5 mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 sm:mx-5 xl:mx-7">

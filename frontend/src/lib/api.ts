@@ -195,6 +195,7 @@ export interface ApiKeyRecord {
   lastUsedIp: string | null;
   lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
+  capabilityMode: ApiKeyCapabilityMode;
   allowedCapabilityIds: string[];
   dailySpendLimit: string | null;
   monthlySpendLimit: string | null;
@@ -323,6 +324,8 @@ export interface CreateApiKeyResponse {
   expiresAt: string;
   createdAt: string;
   permissions: ApiKeyPermissions;
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
 }
 
 export interface ApiKeySpendLimits {
@@ -333,6 +336,7 @@ export interface ApiKeySpendLimits {
 export interface CreateApiKeyRequest {
   name: string;
   allowedIps?: string[];
+  capabilityMode?: ApiKeyCapabilityMode;
   allowedCapabilityIds?: string[];
   spendLimits?: ApiKeySpendLimits;
   permissions?: Partial<ApiKeyPermissions>;
@@ -342,7 +346,7 @@ export interface DefiCapability {
   capabilityId: string;
   type: 'contract_call' | 'typed_data_sign';
   chainId: number;
-  contract: string;
+  contract?: string;
   functionSignature?: string;
   label: string;
   description: string;
@@ -379,8 +383,15 @@ export interface DefiCapabilityBundlesResponse {
 
 export interface UpdateApiKeyCapabilitiesResponse {
   id: string;
+  capabilityMode: ApiKeyCapabilityMode;
   allowedCapabilityIds: string[];
 }
+
+export type ApiKeyCapabilityMode = 'all' | 'custom';
+
+export type UpdateApiKeyCapabilitiesRequest =
+  | { capabilityMode: 'all' }
+  | { capabilityMode: 'custom'; allowedCapabilityIds: string[] };
 
 export interface StepUpChallengeResponse {
   challengeId: string;
@@ -952,13 +963,13 @@ export async function listDefiCapabilityBundlesAuth(getToken: () => Promise<stri
 export async function updateApiKeyCapabilitiesAuth(
   getToken: () => Promise<string | null>,
   id: string,
-  allowedCapabilityIds: string[],
+  request: UpdateApiKeyCapabilitiesRequest,
   stepUpToken: string,
 ) {
   return authFetch<UpdateApiKeyCapabilitiesResponse>(`/v1/api-keys/${id}/capabilities`, getToken, {
     method: 'PATCH',
     headers: { 'X-Step-Up-Token': stepUpToken },
-    body: JSON.stringify({ allowedCapabilityIds }),
+    body: JSON.stringify(request),
   });
 }
 

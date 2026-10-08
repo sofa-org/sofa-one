@@ -74,17 +74,17 @@ describe('ApiKeyService', () => {
   });
 
   it('replaces grants only for an owned active key and exports audit after transaction success', async () => {
-    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
-    prisma.apiKey.update.mockResolvedValue({ id: 'key-1', allowedCapabilityIds: ['cap:a:v1'] });
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [], capability_mode: 'custom' }]);
+    prisma.apiKey.update.mockResolvedValue({ id: 'key-1', capabilityMode: 'custom', allowedCapabilityIds: ['cap:a:v1'] });
     const service = createService();
-    await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).resolves.toEqual({ id: 'key-1', allowedCapabilityIds: ['cap:a:v1'] });
+    await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).resolves.toEqual({ id: 'key-1', capabilityMode: 'custom', allowedCapabilityIds: ['cap:a:v1'] });
     expect(securityEvents.record).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.grants_updated' }), prisma, { deferExport: true });
     expect(securityEvents.exportCommitted).toHaveBeenCalledTimes(2);
     expect(prisma.$transaction.mock.calls[0][1]).toEqual({ isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
   });
 
   it('does not audit or export a no-op replacement and rejects non-owned keys', async () => {
-    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: ['cap:a:v1'] }]);
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: ['cap:a:v1'], capability_mode: 'custom' }]);
     const service = createService();
     await service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1']);
     expect(securityEvents.record).not.toHaveBeenCalled();
@@ -94,11 +94,11 @@ describe('ApiKeyService', () => {
   });
 
   it('rejects inactive keys and never exports events for a failed grant update', async () => {
-    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: new Date(), expires_at: null, allowed_capability_ids: [] }]);
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: new Date(), expires_at: null, allowed_capability_ids: [], capability_mode: 'custom' }]);
     const service = createService();
     await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).rejects.toThrow(/not active/i);
     expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
-    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [], capability_mode: 'custom' }]);
     prisma.apiKey.update.mockRejectedValue(new Error('write failed'));
     await expect(service.replaceCapabilities('key-1', 'user-1', ['cap:a:v1'])).rejects.toThrow('write failed');
     expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
@@ -120,6 +120,7 @@ describe('ApiKeyService', () => {
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
       allowedCapabilityIds: [],
+      capabilityMode: 'all',
     });
     expect(prisma.apiKey.create.mock.calls[0][0].data.keyPrefix).toBe(
       result.rawKey.slice(0, API_KEY_PREFIX_LENGTH),
@@ -160,6 +161,7 @@ describe('ApiKeyService', () => {
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
+            capabilityMode: 'all',
           }),
         }),
       }),
@@ -180,6 +182,35 @@ describe('ApiKeyService', () => {
     prisma.apiKey.findMany.mockResolvedValue([]);
     await service.rotateApiKey('user-1', 'Rotated');
     expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, []);
+  });
+
+  it('normalizes dynamic all/custom capability semantics and rejects invalid combinations', async () => {
+    const service = createService();
+    await service.createApiKey('user-1', { name: 'Default all' });
+    expect(prisma.apiKey.create.mock.calls.at(-1)[0].data).toEqual(expect.objectContaining({ capabilityMode: 'all', allowedCapabilityIds: [] }));
+    await service.createApiKey('user-1', { name: 'Explicit all', capabilityMode: 'all', allowedCapabilityIds: [] });
+    await service.createApiKey('user-1', { name: 'Empty custom', allowedCapabilityIds: [] });
+    expect(prisma.apiKey.create.mock.calls.at(-1)[0].data).toEqual(expect.objectContaining({ capabilityMode: 'custom', allowedCapabilityIds: [] }));
+    for (const options of [
+      { name: 'Bad null mode', capabilityMode: null },
+      { name: 'Bad null IDs', allowedCapabilityIds: null },
+      { name: 'Bad unknown', capabilityMode: 'future' },
+      { name: 'Bad custom omitted', capabilityMode: 'custom' },
+      { name: 'Bad all IDs', capabilityMode: 'all', allowedCapabilityIds: ['cap:a:v1'] },
+    ]) await expect(service.createApiKey('user-1', options as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('PATCH replaces both fields, supports mode-only reset, rejects empty body, and compares mode in no-op checks', async () => {
+    const service = createService();
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: ['cap:a:v1'], capability_mode: 'custom' }]);
+    prisma.apiKey.update.mockResolvedValue({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    await expect(service.replaceCapabilities('key-1', 'user-1', { capabilityMode: 'all' })).resolves.toEqual({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    expect(prisma.apiKey.update).toHaveBeenLastCalledWith({ where: { id: 'key-1' }, data: { capabilityMode: 'all', allowedCapabilityIds: [] } });
+    expect(securityEvents.record).toHaveBeenCalledWith(expect.objectContaining({ metadata: expect.objectContaining({ previousCapabilityMode: 'custom', capabilityMode: 'all' }) }), prisma, { deferExport: true });
+    await expect(service.replaceCapabilities('key-1', 'user-1', {})).rejects.toBeInstanceOf(BadRequestException);
+    for (const invalid of [{ capabilityMode: null }, { allowedCapabilityIds: null }, { capabilityMode: 'custom' }, { capabilityMode: 'all', allowedCapabilityIds: ['x'] }]) {
+      await expect(service.replaceCapabilities('key-1', 'user-1', invalid as any)).rejects.toBeInstanceOf(BadRequestException);
+    }
   });
 
   it('rejects blank API key names', async () => {
@@ -500,6 +531,7 @@ describe('ApiKeyService', () => {
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
       allowedCapabilityIds: [],
+      capabilityMode: 'all',
     });
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
@@ -534,6 +566,7 @@ describe('ApiKeyService', () => {
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
+            capabilityMode: 'all',
           },
         }),
       }),
@@ -558,6 +591,7 @@ describe('ApiKeyService', () => {
             expiresAt: '2026-07-26T00:00:00.000Z',
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
+            capabilityMode: 'all',
           },
         }),
       }),
@@ -603,6 +637,7 @@ describe('ApiKeyService', () => {
         canUseEoaExecution: false,
         allowedIps: [],
         allowedCapabilityIds: [],
+        capabilityMode: 'all',
         dailySpendLimit: null,
         monthlySpendLimit: null,
         directEgressPolicyAcceptedAt: null,
@@ -631,6 +666,7 @@ describe('ApiKeyService', () => {
         },
         allowedIps: [],
         allowedCapabilityIds: [],
+        capabilityMode: 'all',
         dailySpendLimit: null,
         monthlySpendLimit: null,
         directEgressPolicyAcceptedAt: null,
@@ -642,6 +678,7 @@ describe('ApiKeyService', () => {
         where: { userId: 'user-1' },
         select: expect.objectContaining({
           directEgressPolicyAcceptedAt: true,
+          capabilityMode: true,
         }),
       }),
     );

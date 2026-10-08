@@ -42,6 +42,7 @@ type ApiKeyCreateOptions = {
   expiresAt?: string | Date;
   allowedIps?: string[];
   allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   spendLimits?: { daily?: string; monthly?: string };
   permissions?: Partial<ApiKeyPermissions>;
 };
@@ -82,14 +83,14 @@ export class ApiKeyService {
    */
   async createApiKey(userId: string, options: ApiKeyCreateOptions) {
     const normalized = this.normalizeCreateOptions(options);
-    const allowedCapabilityIds = this.defiGrants.normalizeIds(options.allowedCapabilityIds === undefined ? [] : options.allowedCapabilityIds);
+    const capabilities = this.normalizeCapabilityOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
 
     const events: Array<{ eventType?: string }> = [];
     let createdKey: any;
     try { createdKey = await this.prisma.$transaction(async (tx) => {
       await this.assertCanCreateKey(tx, userId, normalized.name);
-      await this.defiGrants.assertGrantableInTx(tx, allowedCapabilityIds);
+      await this.defiGrants.assertGrantableInTx(tx, capabilities.allowedCapabilityIds);
 
       const created = await tx.apiKey.create({
         data: {
@@ -99,7 +100,7 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
-          allowedCapabilityIds,
+          ...capabilities,
           dailySpendLimit: normalized.dailySpendLimit,
           monthlySpendLimit: normalized.monthlySpendLimit,
           ...normalized.permissions,
@@ -114,6 +115,7 @@ export class ApiKeyService {
           expiresAt: created.expiresAt?.toISOString() ?? null,
           permissions: this.toPermissions(created),
           allowedCapabilityIds: created.allowedCapabilityIds,
+          capabilityMode: created.capabilityMode,
         },
       }, true);
       events.push(event);
@@ -135,6 +137,7 @@ export class ApiKeyService {
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
       allowedCapabilityIds: createdKey.allowedCapabilityIds,
+      capabilityMode: createdKey.capabilityMode,
     };
   }
 
@@ -237,6 +240,7 @@ export class ApiKeyService {
           expiresAt: normalized.expiresAt,
           allowedIps: [],
           allowedCapabilityIds: [],
+          capabilityMode: 'all',
           ...normalized.permissions,
         },
       });
@@ -249,6 +253,7 @@ export class ApiKeyService {
           expiresAt: created.expiresAt?.toISOString() ?? null,
           permissions: this.toPermissions(created),
           allowedCapabilityIds: created.allowedCapabilityIds,
+          capabilityMode: created.capabilityMode,
         },
       }, true));
 
@@ -265,6 +270,7 @@ export class ApiKeyService {
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
       allowedCapabilityIds: createdKey.allowedCapabilityIds,
+      capabilityMode: createdKey.capabilityMode,
     };
   }
 
@@ -290,6 +296,7 @@ export class ApiKeyService {
         canUseEoaExecution: true,
         allowedIps: true,
         allowedCapabilityIds: true,
+        capabilityMode: true,
         dailySpendLimit: true,
         monthlySpendLimit: true,
         directEgressPolicyAcceptedAt: true,
@@ -312,31 +319,36 @@ export class ApiKeyService {
       permissions: this.toPermissions(key),
       allowedIps: key.allowedIps,
       allowedCapabilityIds: key.allowedCapabilityIds,
+      capabilityMode: key.capabilityMode,
       dailySpendLimit: key.dailySpendLimit,
       monthlySpendLimit: key.monthlySpendLimit,
       directEgressPolicyAcceptedAt: key.directEgressPolicyAcceptedAt,
     }));
   }
 
-  async replaceCapabilities(keyId: string, userId: string, ids: string[]) {
-    const allowedCapabilityIds = this.defiGrants.normalizeIds(ids);
+  async replaceCapabilities(keyId: string, userId: string, input: { allowedCapabilityIds?: string[] | null; capabilityMode?: 'all' | 'custom' | null } | string[]) {
+    if (Array.isArray(input)) input = { allowedCapabilityIds: input };
+    if (input.allowedCapabilityIds === null || input.capabilityMode === null) throw new BadRequestException('Invalid capability replacement');
+    if (input.allowedCapabilityIds === undefined && input.capabilityMode === undefined) throw new BadRequestException('At least one capability field is required');
+    const capabilities = this.normalizeCapabilityOptions(input);
+    const { allowedCapabilityIds, capabilityMode } = capabilities;
     const pendingEvents: Array<{ eventType?: string }> = [];
     try {
       const result = await this.prisma.$transaction(async (tx) => {
         await this.defiGrants.assertGrantableInTx(tx, allowedCapabilityIds);
-        const rows = await tx.$queryRaw<Array<{ id: string; key_prefix: string; name: string | null; revoked: boolean; frozen_at: Date | null; expires_at: Date | null; allowed_capability_ids: string[] }>>`
-          SELECT "id", "key_prefix", "name", "revoked", "frozen_at", "expires_at", "allowed_capability_ids"
+        const rows = await tx.$queryRaw<Array<{ id: string; key_prefix: string; name: string | null; revoked: boolean; frozen_at: Date | null; expires_at: Date | null; allowed_capability_ids: string[]; capability_mode: 'all' | 'custom' }>>`
+          SELECT "id", "key_prefix", "name", "revoked", "frozen_at", "expires_at", "allowed_capability_ids", "capability_mode"
           FROM "api_keys" WHERE "id" = ${keyId}::uuid AND "user_id" = ${userId}::uuid FOR UPDATE`;
         const key = rows[0];
         if (!key) throw new NotFoundException('API key not found');
         if (key.revoked || key.frozen_at || (key.expires_at && key.expires_at <= new Date())) throw new ForbiddenException('API key is not active');
         const old = [...key.allowed_capability_ids].sort();
-        if (old.length === allowedCapabilityIds.length && old.every((id, i) => id === allowedCapabilityIds[i])) return { id: key.id, allowedCapabilityIds: old };
-        const updated = await tx.apiKey.update({ where: { id: key.id }, data: { allowedCapabilityIds } });
-        const event = await this.audit(tx, userId, key.id, 'api_key.permission_changed', { keyPrefix: key.key_prefix, keyName: key.name, metadata: { allowedCapabilityIds, previousAllowedCapabilityIds: old } }, true);
-        const grantEvent = await this.securityEvents.record({ actorType: 'user', userId, apiKeyId: key.id, eventType: 'defi.grants_updated', riskLevel: 'low', result: 'allowed', metadata: { previousAllowedCapabilityIds: old, allowedCapabilityIds } }, tx as any, { deferExport: true });
+        if (key.capability_mode === capabilityMode && old.length === allowedCapabilityIds.length && old.every((id, i) => id === allowedCapabilityIds[i])) return { id: key.id, capabilityMode, allowedCapabilityIds: old };
+        const updated = await tx.apiKey.update({ where: { id: key.id }, data: capabilities });
+        const event = await this.audit(tx, userId, key.id, 'api_key.permission_changed', { keyPrefix: key.key_prefix, keyName: key.name, metadata: { capabilityMode, allowedCapabilityIds, previousCapabilityMode: key.capability_mode, previousAllowedCapabilityIds: old } }, true);
+        const grantEvent = await this.securityEvents.record({ actorType: 'user', userId, apiKeyId: key.id, eventType: 'defi.grants_updated', riskLevel: 'low', result: 'allowed', metadata: { previousCapabilityMode: key.capability_mode, previousAllowedCapabilityIds: old, capabilityMode, allowedCapabilityIds } }, tx as any, { deferExport: true });
         pendingEvents.push(event, grantEvent as any);
-        return { id: updated.id, allowedCapabilityIds: updated.allowedCapabilityIds };
+        return { id: updated.id, capabilityMode: updated.capabilityMode, allowedCapabilityIds: updated.allowedCapabilityIds };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
       await this.exportEvents(pendingEvents);
       return result;
@@ -477,6 +489,17 @@ export class ApiKeyService {
       monthlySpendLimit,
       permissions,
     };
+  }
+
+  private normalizeCapabilityOptions(options: { allowedCapabilityIds?: string[] | null; capabilityMode?: 'all' | 'custom' | null }) {
+    if (options.allowedCapabilityIds === null || options.capabilityMode === null) throw new BadRequestException('Invalid capability mode or IDs');
+    const hasIds = options.allowedCapabilityIds !== undefined;
+    const capabilityMode = options.capabilityMode ?? (hasIds ? 'custom' : 'all');
+    if (capabilityMode !== 'all' && capabilityMode !== 'custom') throw new BadRequestException('capabilityMode must be all or custom');
+    if (capabilityMode === 'custom' && !hasIds) throw new BadRequestException('custom capability mode requires allowedCapabilityIds');
+    const allowedCapabilityIds = this.defiGrants.normalizeIds(options.allowedCapabilityIds ?? []);
+    if (capabilityMode === 'all' && allowedCapabilityIds.length > 0) throw new BadRequestException('all capability mode requires an empty allowedCapabilityIds list');
+    return { capabilityMode, allowedCapabilityIds };
   }
 
   private normalizePermissions(permissions?: Partial<ApiKeyPermissions>): ApiKeyPermissions {

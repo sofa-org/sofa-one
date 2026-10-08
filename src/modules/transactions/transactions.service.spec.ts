@@ -9,7 +9,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { encodeFunctionData, getAddress, type Hex } from 'viem';
+import { encodeFunctionData, getAddress, parseAbi, type Hex } from 'viem';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -38,6 +38,10 @@ import { AssetFlowSimulationUnavailableError } from './transaction-simulation.se
 import { hashRequest } from '../../common/utils/request-hash';
 import { DefiPolicyDenial } from '../defi/defi.types';
 import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY } from '../defi/execution/pusd-identity';
+import { DefiPolicyService } from '../defi/defi-policy.service';
+import { DefiCatalogService } from '../defi/defi-catalog.service';
+import { buildReviewedManifest, functionAbiHash } from '../defi/registry/defi-manifest';
+import type { DefiChainPolicy } from '../defi/defi.types';
 
 function erc20TransferData(to: string, amount: bigint = 1n): string {
   return encodeFunctionData({
@@ -152,6 +156,8 @@ describe('TransactionsService', () => {
     canSendTransaction: true,
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
+    capabilityMode: 'all' as const,
+    allowedCapabilityIds: [] as string[],
     dailySpendLimit: undefined,
     monthlySpendLimit: undefined,
     // BILL-016: unit fixtures assume destination-policy reauth already completed.
@@ -218,7 +224,7 @@ describe('TransactionsService', () => {
     recordAllowedInTx: jest.fn().mockResolvedValue({ id: 'event-1' }),
     recordDenied: jest.fn().mockResolvedValue(undefined),
   } as any;
-  const securityEvents = { exportCommitted: jest.fn().mockResolvedValue(undefined) } as any;
+  const securityEvents = { record: jest.fn().mockResolvedValue({ id: 'deferred-event' }), exportCommitted: jest.fn().mockResolvedValue(undefined) } as any;
   const SIM_RPC = 'https://rpc.example.test/base';
   const config = {
     get: jest.fn((key: string) => {
@@ -408,6 +414,99 @@ describe('TransactionsService', () => {
 
   afterEach(() => {
     loggerWarnSpy.mockRestore();
+  });
+
+  it.each([
+    ['empty custom mode', [] as string[]],
+    ['custom subset excluding root', ['fixture:unrelated:v1']],
+    ['custom root without scoped child', ['fixture:multicall:v1']],
+  ])('real DeFi policy rejects a live key change to %s after transaction locks', async (_label, liveIds) => {
+    const target = '0x4444444444444444444444444444444444444444';
+    const childDefinitions = [
+      ['mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))', 'function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline) params) payable'],
+      ['increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))', 'function increaseLiquidity((uint256 tokenId,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+      ['decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))', 'function decreaseLiquidity((uint256 tokenId,uint128 liquidity,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+      ['collect((uint256,address,uint128,uint128))', 'function collect((uint256 tokenId,address recipient,uint128 amount0Max,uint128 amount1Max) params) payable'],
+      ['burn(uint256)', 'function burn(uint256 tokenId) payable'],
+      ['refundETH()', 'function refundETH() payable'],
+      ['unwrapWETH9(uint256,address)', 'function unwrapWETH9(uint256 amountMinimum,address recipient) payable'],
+      ['sweepToken(address,uint256,address)', 'function sweepToken(address token,uint256 amountMinimum,address recipient) payable'],
+    ] as const;
+    const childAbis = childDefinitions.map(([, signature]) => parseAbi([signature])[0]);
+    const wrapperAbi = parseAbi(['function multicall(bytes[] data) payable returns (bytes[] results)'])[0];
+    const children: any[] = childAbis.map((abi, index) => ({
+      capabilityId: `fixture:child:${index}:v1`, type: 'contract_call', chainId: 8453, contract: target,
+      signature: childDefinitions[index][0], functionName: abi.name, abi, status: 'active',
+      provenance: { sourceRef: 'transaction acceptance fixture', verifiedAt: '2026-01-01', status: 'verified' },
+    }));
+    const wrapper: any = {
+      capabilityId: 'fixture:multicall:v1', type: 'contract_call', chainId: 8453, contract: target,
+      signature: 'multicall(bytes[])', functionName: 'multicall', abi: wrapperAbi, status: 'active',
+      provenance: { sourceRef: 'transaction acceptance fixture', verifiedAt: '2026-01-01', status: 'verified' },
+      executionScope: { kind: 'same-target-multicall-v1', bytesArrayArgIndex: 0,
+        allowedChildren: children.map((child) => ({ capabilityId: child.capabilityId, signature: child.signature, abiHash: functionAbiHash(child) })) },
+    };
+    const chains: DefiChainPolicy[] = [{ chainId: 8453, status: 'active', contracts: [{ address: target, status: 'active', functions: [wrapper, ...children] }] }];
+    const manifest = buildReviewedManifest([{ chains }]);
+    const refund = children.find((child) => child.signature === 'refundETH()')!;
+    const data = encodeFunctionData({ abi: [refund.abi], functionName: 'refundETH' } as any);
+    const rootData = encodeFunctionData({ abi: [wrapperAbi], functionName: 'multicall', args: [[data]] });
+    const request = { ...dto, chainId: 8453, executionMode: 'eoa', interactions: [{ to: target, data: rootData, value: '0' }], idempotencyKey: `real-policy-${_label.replaceAll(' ', '-')}` };
+    const policyDb = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+    const realPolicy = new DefiPolicyService(policyDb as any, securityEvents, new DefiCatalogService(chains, policyDb as any, manifest));
+    const preflight = jest.spyOn(realPolicy, 'authorizeContractCalls');
+    const final = jest.spyOn(realPolicy, 'assertStillAuthorized');
+    (service as any).defiPolicy = realPolicy;
+
+    let order: string[] = [];
+    let liveKeyReadCount = 0;
+    const liveKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null,
+      canSendTransaction: true, capabilityMode: 'custom', allowedCapabilityIds: liveIds };
+    destinationPolicy.acquireUserDestinationLock.mockImplementation(async () => { order.push('destination'); });
+    prisma.$transaction.mockImplementation(async (callback: any) => callback({
+      $executeRaw: jest.fn().mockResolvedValue(undefined),
+      $queryRaw: jest.fn((strings: TemplateStringsArray) => {
+        const sql = strings.join(' ');
+        order.push(sql.includes('defi_policy_state') ? 'policy-share' : 'key-update');
+        return Promise.resolve([]);
+      }),
+      defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+      apiKey: { findUnique: jest.fn(async ({ select }: any) => { liveKeyReadCount++; order.push(select ? 'spend-key-read' : 'live-key-read'); return liveKey; }) },
+      withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
+      transaction: { findFirst: txFindFirst, findMany: prisma.transaction.findMany,
+        create: prisma.transaction.create, update: prisma.transaction.update, updateMany: prisma.transaction.updateMany },
+    }));
+    prisma.transaction.create.mockClear();
+    openfort.submitUserOperation.mockClear(); openfort.sendBackendTransaction.mockClear();
+    openfort.getTransactionReceipt.mockClear(); openfort.waitForUserOperationReceipt.mockClear();
+    transactionSimulation.assertSimulatable.mockClear(); transactionSimulation.simulateAssetFlowEvidence.mockClear();
+    securityEvents.record.mockClear(); securityEvents.exportCommitted.mockClear();
+
+    await expect(service.send('user-1', request as any, { ...apiKeyContext, canUseEoaExecution: true })).rejects.toMatchObject({
+      response: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
+    });
+    expect(preflight).toHaveBeenCalledTimes(1);
+    await expect(preflight.mock.results[0].value).resolves.toMatchObject({
+      context: { capabilityMode: 'all', allowedCapabilityIds: [] },
+      executionPlan: [
+        { path: [0], match: { capabilityId: 'fixture:multicall:v1' } },
+        { path: [0, 0], match: { capabilityId: 'fixture:child:5:v1' } },
+      ],
+    });
+    expect(final).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['destination', 'policy-share', 'key-update', 'live-key-read']);
+    expect(liveKeyReadCount).toBe(1); // live key is fetched only after both policy locks.
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+    expect(openfort.getTransactionReceipt).not.toHaveBeenCalled();
+    expect(openfort.waitForUserOperationReceipt).not.toHaveBeenCalled();
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
+    expect(securityEvents.record).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.policy_denied', result: 'denied' }));
+    const denial = securityEvents.record.mock.calls.find(([event]: any[]) => event.eventType === 'defi.policy_denied')?.[0];
+    expect(denial?.metadata).not.toHaveProperty('calldata');
+    expect(denial?.metadata).not.toHaveProperty('interactions');
   });
 
   it('uses requested chainId and creates idempotency record before sending', async () => {

@@ -34,8 +34,9 @@ export function getBundlePreviewDiff(preview: BundlePreviewSnapshot) {
 
 export function validateBundlePreview(
   preview: BundlePreviewSnapshot, target: string, currentIds: readonly string[],
-  bundles: readonly DefiCapabilityBundle[], capabilities: readonly DefiCapability[],
+  bundles: readonly DefiCapabilityBundle[], capabilities: readonly DefiCapability[], capabilityMode: 'all' | 'custom' = 'custom',
 ): string | null {
+  if (capabilityMode !== 'custom') return 'Bundle previews are only available for custom capability selections.';
   if (preview.target !== target) return 'This preview belongs to a different key form. Reopen the preview.';
   if (JSON.stringify(currentIds) !== JSON.stringify(preview.baseline)) return 'The selection changed after this preview. Reopen it to review the current selection.';
   const bundle = bundles.find((item) => item.bundleId === preview.bundleId && item.version === preview.version);

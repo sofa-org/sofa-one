@@ -11,7 +11,7 @@ Defines the validated request shape for API-key creation (`POST /v1/api-keys`). 
 ### Exported classes
 | Symbol | Kind | Purpose |
 |--------|------|---------|
-| `CreateApiKeyDto` | DTO (root) | Request body for API-key creation; optional explicit `allowedCapabilityIds` list (maximum 100 unique nonempty IDs ≤160 chars), plus name, expiry, IPs, spend limits, and permissions. |
+| `CreateApiKeyDto` | DTO (root) | Request body for API-key creation; capability mode (`all`/`custom`) and optional configured IDs (maximum 100 unique nonempty IDs ≤160 chars), plus name, expiry, IPs, spend limits, and permissions. |
 | `ApiKeyPermissionsDto` | DTO (nested) | Optional boolean flags: `canSign`, `canSendTransaction`, `canReadTransactionStatus`, `canUseEoaExecution`. All optional; absence means "not granted". |
 | `ApiKeySpendLimitsDto` | DTO (nested) | Optional wei-amount strings: `daily`, `monthly`. Validated as non-negative integer strings via `IsWeiAmountConstraint`. |
 

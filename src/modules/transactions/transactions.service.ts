@@ -105,6 +105,7 @@ type ApiKeyTransactionContext = {
   canReadTransactionStatus?: boolean;
   canUseEoaExecution?: boolean;
   allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
   /** BILL-016: null/undefined = not authorized for new direct-egress sends. */
@@ -311,6 +312,7 @@ export class TransactionsService {
         userId, apiKeyId: apiKeyRecord.id!, apiKeyPrefix: apiKeyRecord.keyPrefix,
         walletId: wallet.id, chainId, executionMode, executionOwner,
         allowedCapabilityIds: apiKeyRecord.allowedCapabilityIds ?? [],
+        capabilityMode: apiKeyRecord.capabilityMode,
       });
     } catch (error) {
       if (error instanceof DefiPolicyDenial) {

@@ -953,15 +953,20 @@ describe('WalletService.sign()', () => {
     prisma.defiPolicyState = { findUnique: jest.fn().mockImplementation(async () => { rootPauseKeysObserved.push([...pauseKeys]); return { id: 'global', pausedScopeKeys: pauseKeys }; }) };
     const catalog = new DefiCatalogService([], prisma, buildReviewedManifest());
     const realPolicy = new DefiPolicyService(prisma, { record: mockSecurityEventRecord, exportCommitted: mockDefiExportSigningAllowed } as any, catalog);
+    const preflightSpy = jest.spyOn(realPolicy, 'authorizeSigning');
+    const finalAcceptanceSpy = jest.spyOn(realPolicy, 'assertSigningStillAuthorized');
     (service as any).defiPolicy = realPolicy;
     const timestamp = String(Math.floor(Date.now() / 1000));
     const typedData = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: WALLET.agentWalletAddress, timestamp, nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
-    const acceptedKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
-    let liveKey = acceptedKey;
+    const acceptedKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
+    let liveKey: any = acceptedKey;
     let finalPauseKeys: string[] = [];
     let failCommit = false;
     let txOpen = false;
     let finalLockQueries: unknown[][] = [];
+    let lockOrder: string[] = [];
+    let liveKeyReadCount = 0;
+    mockAcquireUserDestinationLock.mockImplementation(async () => { lockOrder.push('destination'); });
     mockSecurityEventRecord.mockImplementation(async (event: any) => {
       if (event.eventType === 'defi.policy_denied') expect(txOpen).toBe(false);
       if (event.eventType === 'defi.signing_capability_allowed') expect(txOpen).toBe(true);
@@ -970,11 +975,13 @@ describe('WalletService.sign()', () => {
     mockTransaction.mockImplementation(async (callback) => {
       txOpen = true;
       finalLockQueries = [];
+      lockOrder = [];
+      liveKeyReadCount = 0;
       try {
       const result = await callback({
-        signingRequest: { create: mockSigningRequestCreate }, withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique }, $queryRaw: jest.fn((...args: unknown[]) => { finalLockQueries.push(args); }),
+        signingRequest: { create: mockSigningRequestCreate }, withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique }, $queryRaw: jest.fn((...args: unknown[]) => { finalLockQueries.push(args); const sql = Array.isArray(args[0]) ? args[0].join(' ') : String(args[0]); lockOrder.push(sql.includes('defi_policy_state') ? 'policy-share' : 'key-update'); }),
         defiPolicyState: { findUnique: jest.fn().mockImplementation(async () => ({ id: 'global', pausedScopeKeys: finalPauseKeys })) },
-        apiKey: { findUnique: jest.fn().mockImplementation(async () => liveKey) },
+        apiKey: { findUnique: jest.fn().mockImplementation(async () => { liveKeyReadCount++; lockOrder.push('live-key-read'); return liveKey; }) },
         userWallet: { findFirst: jest.fn().mockResolvedValue({ ...WALLET, frozenAt: null }) },
         user: { findUnique: jest.fn().mockResolvedValue({ id: 'user-1', frozenAt: null }) },
       });
@@ -982,9 +989,10 @@ describe('WalletService.sign()', () => {
       return result;
       } finally { txOpen = false; }
     });
-    const key = { ...API_KEY_CONTEXT, canUseEoaExecution: true, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
+    const key = { ...API_KEY_CONTEXT, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
     for (const failure of [
-      { key: { ...acceptedKey, allowedCapabilityIds: [] }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, capabilityMode: 'custom', allowedCapabilityIds: [] }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, capabilityMode: 'custom', allowedCapabilityIds: ['another:capability:v1'] }, rootPause: [], finalPause: [] },
       { key: acceptedKey, rootPause: [], finalPause: ['global'] },
       { key: { ...acceptedKey, revoked: true }, rootPause: [], finalPause: [] },
       { key: { ...acceptedKey, canSign: false }, rootPause: [], finalPause: [] },
@@ -999,10 +1007,19 @@ describe('WalletService.sign()', () => {
         expect(rootPauseKeysObserved).toEqual([[]]);
         expect(finalLockQueries).toHaveLength(2);
       } else await expect(signing).rejects.toThrow();
+      expect(finalAcceptanceSpy).toHaveBeenCalled();
+      expect(liveKeyReadCount).toBe(1);
+      expect(lockOrder).toEqual(['destination', 'policy-share', 'key-update', 'live-key-read']);
+      expect(finalLockQueries).toHaveLength(2);
       expect(mockSigningRequestCreate).not.toHaveBeenCalled();
       expect(mockSignData).not.toHaveBeenCalled();
       expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+      expect(mockSecurityEventRecord).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.policy_denied', result: 'denied' }));
+      const denialEvent = mockSecurityEventRecord.mock.calls.find(([event]) => event.eventType === 'defi.policy_denied')?.[0];
+      expect(denialEvent?.metadata).not.toHaveProperty('digest');
+      expect(denialEvent?.metadata).not.toHaveProperty('typedData');
     }
+    await expect(preflightSpy.mock.results[0].value).resolves.toMatchObject({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, context: { capabilityMode: 'all', allowedCapabilityIds: [] } });
     pauseKeys = []; finalPauseKeys = []; liveKey = acceptedKey;
     mockSigningRequestCreate.mockClear(); mockSignData.mockClear(); mockDefiExportSigningAllowed.mockClear();
     await expect(service.sign('user-1', { type: 'message', message: 'x', chainId: 137, typedData } as any, key)).rejects.toThrow(ForbiddenException);

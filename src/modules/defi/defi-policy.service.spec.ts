@@ -60,6 +60,36 @@ describe('DefiPolicyService', () => {
     await expect(policy.authorizeContractCalls([{ to: ADDRESS, data }], ctx)).resolves.toMatchObject({ interactions: [{ data }] });
   });
 
+  it('authorizes capabilities in its reviewed catalog snapshot with all mode but not empty custom mode', async () => {
+    const { policy } = makePolicy();
+    await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'all', allowedCapabilityIds: [] })).resolves.toMatchObject({ matches: [{ capabilityId: capabilities[0] }] });
+    await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'custom', allowedCapabilityIds: [] })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'future' as any, allowedCapabilityIds: capabilities })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+  });
+
+  it('allows a newly reviewed catalog member through all mode without an ID grant and denies it to old custom membership', async () => {
+    const previous = makePolicy().policy;
+    const newAbi = parseAbi(['function newlyActive(address owner)'])[0];
+    const newFunction: any = {
+      capabilityId: 'fixture:newly-active:v1', type: 'contract_call', chainId: 1,
+      contract: ADDRESS, signature: 'newlyActive(address)', functionName: 'newlyActive',
+      abi: newAbi, policy: { ref: 'fixture', version: 1 }, status: 'active',
+      provenance: { sourceRef: 'fixture newly reviewed ABI', verifiedAt: '2026-01-02', status: 'verified' },
+    };
+    const addedChain = [{ ...catalog[0], contracts: [{ ...catalog[0].contracts[0], functions: [...catalog[0].contracts[0].functions, newFunction] }] }];
+    const addedManifest = buildReviewedManifest([{ chains: addedChain }]);
+    const db = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+    const updated = new DefiPolicyService(db as unknown as PrismaService, {} as SecurityEventService,
+      new DefiCatalogService(addedChain, db as unknown as PrismaService, addedManifest));
+    const call = { to: ADDRESS, data: encodeFunctionData({ abi: [newAbi], functionName: 'newlyActive', args: [OWNER] }) };
+    await expect(previous.authorizeContractCalls([call], { ...ctx, capabilityMode: 'all', allowedCapabilityIds: [] }))
+      .rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
+    await expect(updated.authorizeContractCalls([call], { ...ctx, capabilityMode: 'all', allowedCapabilityIds: [] }))
+      .resolves.toMatchObject({ matches: [{ capabilityId: newFunction.capabilityId }] });
+    await expect(updated.authorizeContractCalls([call], { ...ctx, capabilityMode: 'custom', allowedCapabilityIds: capabilities }))
+      .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+  });
+
   it('accepts payable native value only as an exact nonnegative uint256', async () => {
     const { policy } = makePolicy();
     await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: deposit(), value: '5' }], ctx)).resolves.toMatchObject({ interactions: [{ value: '5' }] });
@@ -77,14 +107,21 @@ describe('DefiPolicyService', () => {
     const { policy } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
     const payload = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
-    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], capabilityMode: 'custom', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
     const auth = await policy.authorizeSigning(payload, context);
-    const key = { userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
+    const key = { userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
     const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
     const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
     expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
+    const allAuth = await policy.authorizeSigning(payload, { ...context, capabilityMode: 'all', allowedCapabilityIds: [] });
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, capabilityMode: 'custom', allowedCapabilityIds: [] });
+    await expect(policy.assertSigningStillAuthorized(tx, allAuth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    const customAuth = await policy.authorizeSigning(payload, context);
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, capabilityMode: 'all', allowedCapabilityIds: [] });
+    await expect(policy.assertSigningStillAuthorized(tx, customAuth, actual)).resolves.toBeUndefined();
+    tx.apiKey.findUnique.mockResolvedValue(key);
     tx.apiKey.findUnique.mockResolvedValue({ ...key, revoked: true });
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     tx.apiKey.findUnique.mockResolvedValue({ ...key, expiresAt: new Date(Date.now() - 1000) });
@@ -109,6 +146,15 @@ describe('DefiPolicyService', () => {
     const clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 301_000);
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toBeInstanceOf(DefiPolicyDenial);
     clock.mockRestore();
+  });
+
+  it('allows exact ClobAuth dynamically in all mode and denies empty custom mode', async () => {
+    const { policy } = makePolicy();
+    const agent = '0x2222222222222222222222222222222222222222';
+    const input = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
+    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent };
+    await expect(policy.authorizeSigning(input, base as any)).resolves.toMatchObject({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, context: { capabilityMode: 'all', allowedCapabilityIds: [] } });
+    await expect(policy.authorizeSigning(input, { ...base, capabilityMode: 'custom' } as any)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
   });
 
   it('fails closed when pause state is absent', async () => {
@@ -144,6 +190,21 @@ describe('DefiPolicyService', () => {
     const tamperedMatch = { ...authorization, matches: [{ ...authorization.matches[0], abiHash: `0x${'0'.repeat(64)}` as `0x${string}` }, authorization.matches[1]] };
     await expect(policy.assertStillAuthorized(tx as never, tamperedMatch)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     expect(tx.$queryRaw).toHaveBeenCalledTimes(14);
+  });
+
+  it('rechecks snapshot and live all/custom capability modes at final transaction acceptance', async () => {
+    const { policy } = makePolicy();
+    const makeTx = (capabilityMode: string, allowedCapabilityIds: string[]) => ({
+      $queryRaw: jest.fn(),
+      defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode, allowedCapabilityIds }) },
+    });
+    const all = await policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'all', allowedCapabilityIds: [] });
+    await expect(policy.assertStillAuthorized(makeTx('all', []) as never, all)).resolves.toBeUndefined();
+    await expect(policy.assertStillAuthorized(makeTx('custom', []) as never, all)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    const custom = await policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'custom' });
+    await expect(policy.assertStillAuthorized(makeTx('all', []) as never, custom)).resolves.toBeUndefined();
+    await expect(policy.assertStillAuthorized(makeTx('future', capabilities) as never, custom)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
   });
 
   it('records allowlisted denial metadata without calldata and never masks denial if audit fails', async () => {

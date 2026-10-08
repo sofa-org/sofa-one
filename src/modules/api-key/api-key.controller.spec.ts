@@ -24,6 +24,7 @@ describe('ApiKeyController', () => {
     revokeApiKey: jest.fn(),
     revokeAllKeys: jest.fn(),
     authorizeDirectEgress: jest.fn(),
+    replaceCapabilities: jest.fn(),
   };
 
   let controller: ApiKeyController;
@@ -52,6 +53,7 @@ describe('ApiKeyController', () => {
       expiresAt: undefined,
       allowedIps: undefined,
       allowedCapabilityIds: undefined,
+      capabilityMode: undefined,
       spendLimits: undefined,
       permissions: undefined,
     });
@@ -89,6 +91,13 @@ describe('ApiKeyController', () => {
         spendLimits: { daily: '1000', monthly: '5000' },
       }),
     );
+  });
+
+  it('passes complete capability mode replacements to the service', async () => {
+    apiKeyService.replaceCapabilities.mockResolvedValue({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    const dto = { capabilityMode: 'all' };
+    await expect(controller.replaceCapabilities('user-1', 'key-1', dto as any)).resolves.toEqual({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    expect(apiKeyService.replaceCapabilities).toHaveBeenCalledWith('key-1', 'user-1', dto);
   });
 
   it('delegates list to apiKeyService.listApiKeys', async () => {

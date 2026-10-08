@@ -41,8 +41,9 @@ module owns the *policy* (should this API-key operation be allowed?).
 
 1. **Caller builds context.** `TransactionsService.sendTransaction` (operation
    `'send_transaction'`) constructs a `SessionKeyPolicyContext` from the API-key record
-   (`expiresAt`) and wallet (`accountAddress`, `agentKeyHash`). API-key signing is disabled
-   by DeFi policy before this service is reached.
+   (`expiresAt`) and wallet (`accountAddress`, `agentKeyHash`). Session-key API-key signing
+   is unsupported; the separate narrowly scoped ClobAuth bootstrap uses EOA mode and does
+   not reach this service.
 2. **On-chain key status** (`verifyOnChainKeyStatus`):
    - `getSupportedChain(chainId)` → viem `createPublicClient` (default `http()` transport).
    - `hasCaliburDelegation` — account `code` must equal the EIP-7702 delegation designator

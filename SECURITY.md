@@ -69,8 +69,11 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
   and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
   name:string, version:string, chainId:uint256. This is not order, Permit, arbitrary
   typed/message/hash, or session-key signing.
-- The API key needs explicit `polymarket:137:clob-auth:v1` grant plus `canSign` and
-  `canUseEoaExecution`; no automatic grant exists and omission remains `[]`. Preserve EOA
+- ClobAuth eligibility requires `canSign`, `canUseEoaExecution`, and either `capabilityMode: all`
+  or `capabilityMode: custom` containing `polymarket:137:clob-auth:v1`. `all` dynamically
+  includes active, unpaused reviewed capabilities, but never bypasses permissions, chain,
+  schema, scope, freeze, pause, destination, or other independent controls. `custom` grants
+  only exact IDs; `[]` denies catalog capabilities. Preserve EOA
   isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live
   key and final grant/pause/digest acceptance checks. The final live-state read does not
   serialize against concurrent freeze writers; do not promise race-free freeze exclusion.

@@ -28,6 +28,7 @@ export class ApiKeyController {
       expiresAt: dto.expiresAt,
       allowedIps: dto.allowedIps,
       allowedCapabilityIds: dto.allowedCapabilityIds,
+      capabilityMode: dto.capabilityMode,
       spendLimits: dto.spendLimits,
       permissions: dto.permissions,
     });
@@ -38,7 +39,7 @@ export class ApiKeyController {
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Patch(':id/capabilities')
   async replaceCapabilities(@CurrentUser('id') userId: string, @Param('id', ParseUUIDPipe) keyId: string, @Body() dto: PatchApiKeyCapabilitiesDto) {
-    return this.apiKeyService.replaceCapabilities(keyId, userId, dto.allowedCapabilityIds);
+    return this.apiKeyService.replaceCapabilities(keyId, userId, dto);
   }
 
   /** GET /v1/api-keys — list all keys (metadata only). */

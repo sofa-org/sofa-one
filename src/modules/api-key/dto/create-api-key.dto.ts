@@ -39,6 +39,32 @@ class IsCapabilityIdListConstraint implements ValidatorConstraintInterface {
   defaultMessage(): string { return 'allowedCapabilityIds must contain unique non-empty IDs of at most 160 characters'; }
 }
 
+@ValidatorConstraint({ name: 'isCapabilityMode', async: false })
+class IsCapabilityModeConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean { return value === 'all' || value === 'custom'; }
+}
+
+@ValidatorConstraint({ name: 'hasCapabilityPatchFields', async: false })
+class HasCapabilityPatchFieldsConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args?: import('class-validator').ValidationArguments): boolean {
+    const object = args?.object as Record<string, unknown> | undefined;
+    return object?.allowedCapabilityIds !== undefined || object?.capabilityMode !== undefined;
+  }
+}
+
+@ValidatorConstraint({ name: 'validCapabilityModePair', async: false })
+class ValidCapabilityModePairConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args?: import('class-validator').ValidationArguments): boolean {
+    const object = args?.object as Record<string, unknown> | undefined;
+    if (!object) return false;
+    const mode = object.capabilityMode;
+    const ids = object.allowedCapabilityIds;
+    if (mode === undefined) return true; // ids-only means custom; neither means all.
+    if (mode === 'all') return ids === undefined || (Array.isArray(ids) && ids.length === 0);
+    return mode === 'custom' && Array.isArray(ids);
+  }
+}
+
 @ValidatorConstraint({ name: 'isWeiAmount', async: false })
 class IsWeiAmountConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
@@ -102,6 +128,11 @@ export class CreateApiKeyDto {
   @Validate(IsCapabilityIdListConstraint)
   allowedCapabilityIds?: string[];
 
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @Validate(IsCapabilityModeConstraint)
+  capabilityMode?: 'all' | 'custom';
+
   @IsOptional()
   @IsObject()
   @ValidateNested()
@@ -113,10 +144,25 @@ export class CreateApiKeyDto {
   @ValidateNested()
   @Type(() => ApiKeyPermissionsDto)
   permissions?: ApiKeyPermissionsDto;
+
+  @Validate(ValidCapabilityModePairConstraint)
+  private readonly validCapabilityModePair?: true;
 }
 
 export class PatchApiKeyCapabilitiesDto {
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @Validate(IsCapabilityIdListConstraint)
-  allowedCapabilityIds!: string[];
+  allowedCapabilityIds?: string[];
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @Validate(IsCapabilityModeConstraint)
+  capabilityMode?: 'all' | 'custom';
+
+  @Validate(HasCapabilityPatchFieldsConstraint)
+  private readonly atLeastOneField?: true;
+
+  @Validate(ValidCapabilityModePairConstraint)
+  private readonly validCapabilityModePair?: true;
 }

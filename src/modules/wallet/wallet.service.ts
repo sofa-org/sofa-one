@@ -92,6 +92,7 @@ type ApiKeySigningContext = {
   canSign?: boolean;
   canUseEoaExecution?: boolean;
   allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
 };
 
 @Injectable()
@@ -238,7 +239,7 @@ export class WalletService {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: selectedForPolicy.id, chainId, executionMode,
         executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,
-        allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [],
+        allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [], capabilityMode: apiKey.capabilityMode,
         walletAddress: selectedForPolicy.walletAddress!, agentWalletAddress: selectedForPolicy.agentWalletAddress!, agentOpenfortAccountId: selectedForPolicy.agentOpenfortAccountId!,
       });
     } catch (error) {

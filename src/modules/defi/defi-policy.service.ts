@@ -13,6 +13,7 @@ import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
 import { decodePusdWrapCall, isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from './execution/pusd-identity';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, signingPayloadDigest, validatePolymarketClobAuth } from './signing/polymarket-clob-auth';
+import { assertCapabilityConfiguration, hasCapability, normalizeCapabilityMode } from './capability-grants';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -21,10 +22,10 @@ export class DefiPolicyService {
   constructor(private readonly prisma: PrismaService, private readonly events: SecurityEventService, private readonly catalog: DefiCatalogService) {}
 
   async authorizeContractCalls(interactions: readonly DefiInteraction[], context: DefiExecutionContext, expectedCommitment?: `0x${string}`): Promise<DefiAuthorization> {
-    if (!context || !Array.isArray(context.allowedCapabilityIds)) this.deny('DEFI_POLICY_UNAVAILABLE');
+    if (!context || !Array.isArray(context.allowedCapabilityIds) || (context.capabilityMode !== undefined && context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0)) this.deny('DEFI_POLICY_UNAVAILABLE');
     if (!Number.isSafeInteger(context.chainId) || context.chainId <= 0 || !isAddress(context.executionOwner, { strict: false })) this.deny('DEFI_INVALID_PARAMETERS', context);
     if (!Array.isArray(interactions) || interactions.length === 0) this.deny('DEFI_INVALID_PARAMETERS', context);
-    const snapshotContext = freezeClone({ ...context, executionOwner: context.executionOwner.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() });
+    const snapshotContext = freezeClone({ ...context, capabilityMode: normalizeCapabilityMode(context.capabilityMode), executionOwner: context.executionOwner.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() });
     const snapshotInteractions = interactions.map((interaction) => freezeClone(normalizeInteraction(interaction, snapshotContext)));
     // This adapter is intentionally a singleton top-level lane, never an implicit
     // child inside a broader execution scope. Reject mixtures in either order.
@@ -43,7 +44,7 @@ export class DefiPolicyService {
       matches.push(toMatch(fn));
       const expanded = this.expandExecution(interaction, fn, snapshotContext, [matches.length - 1], executionPlan.length);
       for (const node of expanded) {
-        if (!snapshotContext.allowedCapabilityIds.includes(node.match.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, this.catalog.functionForCapability(node.match.capabilityId));
+        if (!hasCapability(snapshotContext.capabilityMode, snapshotContext.allowedCapabilityIds, node.match.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, this.catalog.functionForCapability(node.match.capabilityId));
         const childFn = this.catalog.functionForCapability(node.match.capabilityId)!;
         const state = await this.readPauseState(snapshotContext, childFn);
         if (isPaused(state, childFn)) this.deny('DEFI_CAPABILITY_PAUSED', snapshotContext, childFn);
@@ -67,7 +68,8 @@ export class DefiPolicyService {
 
   async authorizeSigning(input: unknown, context: DefiExecutionContext & { agentOpenfortAccountId: string; walletAddress: string; agentWalletAddress: string }): Promise<DefiSigningAuthorization> {
     try {
-      if (context.chainId !== 137 || context.executionMode !== 'eoa' || !context.allowedCapabilityIds.includes(POLYMARKET_CLOB_AUTH_CAPABILITY_ID)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
+      if ((context.capabilityMode !== undefined && context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      if (context.chainId !== 137 || context.executionMode !== 'eoa' || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, POLYMARKET_CLOB_AUTH_CAPABILITY_ID)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
       const payload = validatePolymarketClobAuth(input, context.agentWalletAddress);
       let state;
       try { state = await this.prisma.defiPolicyState.findUnique({ where: { id: 'global' } }); }
@@ -76,8 +78,8 @@ export class DefiPolicyService {
       if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
       const policyHash = keccak256(stringToHex('polymarket-clob-auth-policy:v1'));
       const typedDataDigest = signingPayloadDigest(payload);
-      const snapshotContext = freezeClone({ ...context, executionOwner: context.agentWalletAddress.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() }) as DefiExecutionContext;
-      const bindings = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: context.agentWalletAddress.toLowerCase(), walletAddress: context.walletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId };
+      const snapshotContext = freezeClone({ ...context, capabilityMode: normalizeCapabilityMode(context.capabilityMode), executionOwner: context.agentWalletAddress.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() }) as DefiExecutionContext;
+      const bindings = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: context.agentWalletAddress.toLowerCase(), walletAddress: context.walletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
       return deepFreeze({ context: snapshotContext, requiredPermission: 'canSign' as const, capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137 as const, executionMode: 'eoa' as const, policyHash, typedDataDigest, payload, bindingCommitment: keccak256(stringToHex(JSON.stringify(bindings))), walletAddress: context.walletAddress.toLowerCase(), agentWalletAddress: context.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId });
     } catch (error) {
       if (error instanceof DefiPolicyDenial) throw error;
@@ -88,11 +90,11 @@ export class DefiPolicyService {
   async assertSigningStillAuthorized(tx: DefiDbClient, auth: DefiSigningAuthorization, actual: { userId: string; apiKeyId: string; chainId: number; executionMode: string; type: string; digest: string; walletId: string; walletAddress: string; agentWalletAddress: string; agentOpenfortAccountId: string }): Promise<void> {
     const context = auth?.context;
     try {
-      if (!context || !Object.isFrozen(auth) || !Object.isFrozen(auth.payload) || !Object.isFrozen(context) || !Object.isFrozen(context.allowedCapabilityIds) || auth.requiredPermission !== 'canSign' || auth.capabilityId !== POLYMARKET_CLOB_AUTH_CAPABILITY_ID || auth.chainId !== 137 || auth.executionMode !== 'eoa' || context.chainId !== 137 || context.executionMode !== 'eoa' || context.executionOwner.toLowerCase() !== auth.agentWalletAddress.toLowerCase() || !context.allowedCapabilityIds.includes(auth.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      if (!context || !Object.isFrozen(auth) || !Object.isFrozen(auth.payload) || !Object.isFrozen(context) || !Object.isFrozen(context.allowedCapabilityIds) || (context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0) || auth.requiredPermission !== 'canSign' || auth.capabilityId !== POLYMARKET_CLOB_AUTH_CAPABILITY_ID || auth.chainId !== 137 || auth.executionMode !== 'eoa' || context.chainId !== 137 || context.executionMode !== 'eoa' || context.executionOwner.toLowerCase() !== auth.agentWalletAddress.toLowerCase() || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, auth.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (actual.type !== 'typed_data' || actual.userId !== context.userId || actual.apiKeyId !== context.apiKeyId || actual.chainId !== auth.chainId || actual.executionMode !== auth.executionMode) this.deny('DEFI_INVALID_PARAMETERS', context);
       const typed = validatePolymarketClobAuth(auth.payload, auth.agentWalletAddress);
       const expectedDigest = signingPayloadDigest(typed);
-      const binds = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: auth.agentWalletAddress.toLowerCase(), walletAddress: auth.walletAddress.toLowerCase(), agentOpenfortAccountId: auth.agentOpenfortAccountId };
+       const binds = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: auth.agentWalletAddress.toLowerCase(), walletAddress: auth.walletAddress.toLowerCase(), agentOpenfortAccountId: auth.agentOpenfortAccountId, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
       if (expectedDigest !== auth.typedDataDigest || auth.bindingCommitment !== keccak256(stringToHex(JSON.stringify(binds)))) this.deny('DEFI_INVALID_PARAMETERS', context);
       await tx.$queryRaw`SELECT id FROM defi_policy_state WHERE id = 'global' FOR SHARE`;
       await tx.$queryRaw`SELECT id FROM api_keys WHERE id = ${context.apiKeyId}::uuid FOR UPDATE`;
@@ -103,7 +105,8 @@ export class DefiPolicyService {
         tx.user.findUnique({ where: { id: context.userId }, select: { id: true, frozenAt: true } }),
       ]);
       if (actual.digest !== auth.typedDataDigest || actual.walletId !== context.walletId || actual.walletAddress.toLowerCase() !== auth.walletAddress || actual.agentWalletAddress.toLowerCase() !== auth.agentWalletAddress || actual.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_INVALID_PARAMETERS', context);
-      if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSign || !key.canUseEoaExecution || !Array.isArray(key.allowedCapabilityIds) || !key.allowedCapabilityIds.includes(auth.capabilityId) || !wallet || wallet.status !== 'active' || wallet.frozenAt || !user || user.frozenAt || wallet.walletAddress?.toLowerCase() !== auth.walletAddress || wallet.agentWalletAddress?.toLowerCase() !== auth.agentWalletAddress || wallet.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+       const liveMode = key?.capabilityMode ?? 'custom';
+       if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSign || !key.canUseEoaExecution || !Array.isArray(key.allowedCapabilityIds) || !['all', 'custom'].includes(liveMode) || (liveMode === 'all' && key.allowedCapabilityIds.length !== 0) || !hasCapability(liveMode, key.allowedCapabilityIds, auth.capabilityId) || !wallet || wallet.status !== 'active' || wallet.frozenAt || !user || user.frozenAt || wallet.walletAddress?.toLowerCase() !== auth.walletAddress || wallet.agentWalletAddress?.toLowerCase() !== auth.agentWalletAddress || wallet.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${auth.capabilityId}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
       const descriptor = this.catalog.signingCapability(auth.capabilityId);
       if (!descriptor || descriptor.type !== 'typed_data_sign' || descriptor.chainId !== auth.chainId || auth.policyHash !== keccak256(stringToHex('polymarket-clob-auth-policy:v1'))) this.deny('DEFI_POLICY_UNAVAILABLE', context);
@@ -123,29 +126,30 @@ export class DefiPolicyService {
   async assertStillAuthorized(tx: DefiDbClient, authorization: DefiAuthorization): Promise<void> {
     const context = authorization?.context;
     try {
-      if (!context) this.deny('DEFI_POLICY_UNAVAILABLE');
+       if (!context || (context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       await tx.$queryRaw`SELECT id FROM defi_policy_state WHERE id = 'global' FOR SHARE`;
       await tx.$queryRaw`SELECT id FROM api_keys WHERE id = ${context.apiKeyId}::uuid FOR UPDATE`;
       const [state, key] = await Promise.all([
         tx.defiPolicyState.findUnique({ where: { id: 'global' } }),
         tx.apiKey.findUnique({ where: { id: context.apiKeyId } }),
       ]);
-      if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSendTransaction || !Array.isArray(key.allowedCapabilityIds)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+       const liveMode = key?.capabilityMode ?? 'custom';
+       if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSendTransaction || !Array.isArray(key.allowedCapabilityIds) || !['all', 'custom'].includes(liveMode) || (liveMode === 'all' && key.allowedCapabilityIds.length !== 0)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       const manifest = this.catalog.manifest();
        if (authorization.requiredPermission !== 'canSendTransaction' || !reviewedManifestHashValid(manifest) || manifest.manifestHash !== authorization.manifestHash || !Array.isArray(authorization.interactions) || !Array.isArray(authorization.matches) || !Array.isArray(authorization.executionPlan) || authorization.interactions.length === 0 || authorization.interactions.length !== authorization.matches.length || authorization.interactions.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (buildDefiRequestCommitment(authorization.interactions, context, authorization.manifestHash) !== authorization.requestCommitment) this.deny('DEFI_POLICY_UNAVAILABLE', context);
-       const liveGrants = new Set<string>(key.allowedCapabilityIds);
+        assertCapabilityConfiguration(liveMode, key.allowedCapabilityIds);
        const recomputedPlan: DefiExecutionPlanNode[] = [];
        for (let index = 0; index < authorization.interactions.length; index++) {
          const fn = this.resolveInteraction(authorization.interactions[index], context);
         const match = authorization.matches[index];
-         if (!match || !sameMatch(match, toMatch(fn)) || !context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
-         if (!liveGrants.has(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
+          if (!match || !sameMatch(match, toMatch(fn)) || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
+          if (!hasCapability(liveMode, key.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
          if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
           const expanded = this.expandExecution(authorization.interactions[index], fn, context, [index], recomputedPlan.length);
          for (const node of expanded) {
            const child = this.catalog.functionForCapability(node.match.capabilityId);
-           if (!child || !liveGrants.has(child.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, child);
+            if (!child || !hasCapability(liveMode, key.allowedCapabilityIds, child.capabilityId) || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, child.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, child);
            if (isPaused(state, child)) this.deny('DEFI_CAPABILITY_PAUSED', context, child);
            recomputedPlan.push(node);
         }
@@ -216,7 +220,7 @@ export class DefiPolicyService {
       try { decodePusdWrapCall(context.chainId, interaction); }
       catch { this.deny('DEFI_INVALID_PARAMETERS', context, fn); }
     }
-    if (!context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
+     if (!hasCapability(context.capabilityMode, context.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
     return fn;
   }
 
@@ -231,7 +235,7 @@ export class DefiPolicyService {
   }
 
   private assertGrantedAndUnpaused(fn: DefiFunctionPolicy, context: DefiExecutionContext, state: { pausedScopeKeys: string[] }): void {
-    if (!context.allowedCapabilityIds.includes(fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
+     if (!hasCapability(context.capabilityMode, context.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
     if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
   }
 
@@ -377,7 +381,7 @@ export function buildDefiRequestCommitment(interactions: readonly DefiInteractio
   const identity = {
     userId: context.userId, apiKeyId: context.apiKeyId, apiKeyPrefix: context.apiKeyPrefix ?? null, walletId: context.walletId,
     chainId: context.chainId, executionMode: context.executionMode, executionOwner: context.executionOwner.toLowerCase(),
-    allowedCapabilityIds: [...context.allowedCapabilityIds].sort(),
+     capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort(),
   };
   return keccak256(stringToHex(JSON.stringify({ interactions: calls, context: identity, manifestHash })));
 }

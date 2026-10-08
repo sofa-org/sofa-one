@@ -1,6 +1,7 @@
 import { HttpException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import type { AbiFunction } from 'viem';
+import type { CapabilityMode } from './capability-grants';
 
 export type DefiExecutionContext = Readonly<{
   userId: string;
@@ -11,6 +12,7 @@ export type DefiExecutionContext = Readonly<{
   executionMode: string;
   executionOwner: string;
   allowedCapabilityIds: readonly string[];
+  capabilityMode?: CapabilityMode;
 }>;
 
 export type DefiProvenance = Readonly<{

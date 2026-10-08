@@ -46,6 +46,12 @@ describe('capability bundle preview logic', () => {
     expect(validateBundlePreview(preview, 'key:k1', ['existing'], [original], [capability('active-a'), capability('active-b', 'paused')])).toMatch(/missing or unavailable/);
   });
 
+  it('rejects applying a custom bundle while all-capabilities mode is active', () => {
+    const original = bundle();
+    const preview = createBundlePreview('add', 'create', [], original);
+    expect(validateBundlePreview(preview, 'create', [], [original], catalog, 'all')).toMatch(/only available for custom/);
+  });
+
   it('keeps same bundle IDs at different versions distinct and never adds approvals implicitly', () => {
     const one = bundle({ capabilityIds: ['active-a'], fingerprint: 'sha256:v1' });
     const two = bundle({ version: '2.0.0', capabilityIds: ['active-b'], fingerprint: 'sha256:v2' });

@@ -56,6 +56,24 @@ Do not accept Openfort IAM-only auth on these routes.
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
 
+API-key capability configuration has `capabilityMode: "all" | "custom"` and
+`allowedCapabilityIds`. `all` dynamically allows all currently and subsequently active,
+unpaused capabilities in the reviewed supported catalog; it does not bypass permission,
+chain, schema, scope, freeze, pause, or any other independent policy. `custom` permits
+only the exact listed IDs, with `[]` meaning no capability grants. Create with both fields
+omitted defaults to `all` and `[]`; IDs alone selects custom, including `[]`; explicit `all`
+accepts omitted or empty IDs. `custom` requires IDs, and
+`all` rejects nonempty or null IDs. List/create/rotation/PATCH expose the configured mode
+and IDs, not a materialized expansion of effective IDs. Rotation resets to `all` with an
+empty ID list while preserving its established permission/IP/TTL defaults. IAM step-up
+PATCH accepts `{ "capabilityMode": "all" }` to reset, or custom plus the complete ID list;
+IDs-only PATCH remains custom for compatibility. `{}` is invalid.
+
+Neither mode implies signing or sending permissions. ClobAuth eligibility requires
+`canSign`, `canUseEoaExecution`, and either `capabilityMode: "all"` or custom IDs containing
+`polymarket:137:clob-auth:v1`; independent EOA, chain, payload, pause, destination and risk
+policies still apply.
+
 `POST /v1/wallets/sign` remains API-key-only (`canSign`). Its sole typed-data exception is
 the Polymarket CLOB `ClobAuth` bootstrap: `type: typed_data`, `executionMode: eoa`, chain
 137, exact domain (`ClobAuthDomain`, version `1`, chainId `137`, no verifying contract or
@@ -67,9 +85,10 @@ salt), exact `ClobAuth` primary type and ordered fields (`address`, `timestamp`,
 valid). The EIP712Domain type
 declaration, if supplied, must be exactly `name:string`, `version:string`, `chainId:uint256`.
 
-The API key must have the dedicated explicit `polymarket:137:clob-auth:v1` capability
-grant and both `canSign` and `canUseEoaExecution`; catalog presence does not grant it,
-there is no automatic grant, and omitted grants remain `[]`. EOA isolation policy (including
+The API key must have both `canSign` and `canUseEoaExecution`, plus either
+`capabilityMode: all` or `capabilityMode: custom` with the dedicated
+`polymarket:137:clob-auth:v1` ID.
+Catalog presence does not by itself grant a custom-mode key this capability. EOA isolation policy (including
 IP/TTL/rate controls), destination allowlist/protection, risk/signing-policy and frozen/live
 state checks remain in force; destination protection may deny signing. The final live-state
 read does not serialize against concurrent freeze writers; do not treat it as a race-free
