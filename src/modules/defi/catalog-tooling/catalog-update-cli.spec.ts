@@ -1,7 +1,8 @@
 import { parseUpdateArgs } from '../../../../scripts/defi-catalog/update-cli-args';
 import { assertSavedUpdateCatalogParity, assertUpdateRepositoryFile } from '../../../../scripts/defi-catalog/update-cli-files';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 describe('generic catalog update CLI arguments', () => {
@@ -27,7 +28,7 @@ describe('generic catalog update CLI arguments', () => {
 });
 
 describe('generic catalog update CLI filesystem guards', () => {
-  const tempParent = '/private/var/folders/d5/bq_4hlms3xb3f03m4w9y582h0000gp/T/opencode';
+  const tempParent = tmpdir();
   let root: string;
   const plan = 'data/defi-catalog/updates/demo/plan.json';
   const catalog = 'data/defi-catalog/updates/demo/catalog.json';
@@ -53,9 +54,10 @@ describe('generic catalog update CLI filesystem guards', () => {
   });
 
   it('allows fixed repository files and a missing leaf output without writing during validation', () => {
+    const canonicalRoot = realpathSync(root);
     const before = createHash('sha256').update(readFileSync(join(root, module))).digest('hex');
-    expect(assertUpdateRepositoryFile(root, plan)).toBe(join(root, plan));
-    expect(assertUpdateRepositoryFile(root, 'data/defi-catalog/updates/demo/new-catalog.json', true)).toBe(join(root, 'data/defi-catalog/updates/demo/new-catalog.json'));
+    expect(assertUpdateRepositoryFile(root, plan)).toBe(join(canonicalRoot, plan));
+    expect(assertUpdateRepositoryFile(root, 'data/defi-catalog/updates/demo/new-catalog.json', true)).toBe(join(canonicalRoot, 'data/defi-catalog/updates/demo/new-catalog.json'));
     assertSavedUpdateCatalogParity(root, catalog, canonicalize(document), canonicalize);
     const after = createHash('sha256').update(readFileSync(join(root, module))).digest('hex');
     expect(after).toBe(before);
