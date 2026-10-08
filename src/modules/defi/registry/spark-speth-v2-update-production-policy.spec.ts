@@ -94,7 +94,7 @@ describe('Spark spETH Vault V2 ordinary additions', () => {
   });
 
   it('denies empty/unrelated/cross-method grants, wrong target/chain, malformed calldata, and native value', async () => {
-    for (const [index, fn] of functions.entries()) {
+    for (const fn of functions) {
       const call = tx(fn, 0n, OTHER_ADDRESS, OTHER_OWNER);
       for (const grants of [[], ['unrelated'], ...IDS.filter((id) => id !== fn.capabilityId).map((id) => [id])]) {
         await expect(policy.authorizeContractCalls([call], context(fn, grants))).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });

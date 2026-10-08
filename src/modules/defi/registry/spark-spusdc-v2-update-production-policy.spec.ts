@@ -93,7 +93,7 @@ describe('Spark spUSDC Vault V2 ordinary additions', () => {
   });
 
   it('denies missing/cross-method grants, wrong identity, malformed ABI data, and native value', async () => {
-    for (const [index, fn] of functions.entries()) {
+    for (const fn of functions) {
       const call = tx(fn, 0n, OTHER_ADDRESS, '0x3333333333333333333333333333333333333333');
       for (const grants of [[], ['unrelated'], ...IDS.filter((id) => id !== fn.capabilityId).map((id) => [id])]) {
         await expect(policy.authorizeContractCalls([call], context(fn, grants))).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
@@ -108,7 +108,7 @@ describe('Spark spUSDC Vault V2 ordinary additions', () => {
   });
 
   it('rechecks every final grant, pause and key gate with SQL lock order and denies changed bindings', async () => {
-    for (const [index, fn] of functions.entries()) {
+    for (const fn of functions) {
       const call = tx(fn, (1n << 256n) - 1n, OTHER_ADDRESS, '0x3333333333333333333333333333333333333333');
       const authorization = await policy.authorizeContractCalls([call], context(fn));
       const liveTx = finalTx([fn.capabilityId]);

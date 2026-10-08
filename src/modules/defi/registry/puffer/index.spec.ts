@@ -11,7 +11,6 @@ const manager = '0xDdA0483184E75a5579ef9635ED14BacCf9d50283';
 const receiver = '0x1111111111111111111111111111111111111111';
 const owner = '0x2222222222222222222222222222222222222222';
 const fragment = buildPufferRegistry();
-const contracts = fragment.chains[0].contracts;
 const manifest = buildReviewedManifest([fragment]);
 const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
 const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));

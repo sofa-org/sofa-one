@@ -5,6 +5,11 @@ import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { buildEnsoRegistry } from '../registry/enso';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { SDAI_SAVINGS_CAPABILITIES } from '../registry/sdai-savings';
+import { ONE_INCH_CAPABILITIES } from '../registry/one-inch';
+import { ZERO_X_CAPABILITIES } from '../registry/zero-x';
+import { VELORA_CAPABILITIES } from '../registry/velora';
+import { BEBOP_CAPABILITIES } from '../registry/bebop';
+import { OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
 
 const addressA = '0x1111111111111111111111111111111111111111';
 const addressB = '0x2222222222222222222222222222222222222222';
@@ -121,12 +126,12 @@ describe('DefiBundleService', () => {
 
   it('accepts the five exact phase3 profile selections against isolated source-builder identities', () => {
     const capabilities = [
-      ...require('../registry/one-inch').ONE_INCH_CAPABILITIES,
-      ...require('../registry/zero-x').ZERO_X_CAPABILITIES,
-      ...require('../registry/velora').VELORA_CAPABILITIES,
-      ...require('../registry/bebop').BEBOP_CAPABILITIES,
-      ...require('../registry/open-ocean').OPEN_OCEAN_CAPABILITIES,
-    ] as DefiFunctionPolicy[];
+      ...ONE_INCH_CAPABILITIES,
+      ...ZERO_X_CAPABILITIES,
+      ...VELORA_CAPABILITIES,
+      ...BEBOP_CAPABILITIES,
+      ...OPEN_OCEAN_CAPABILITIES,
+    ];
     const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67);
     expect(capabilities).toHaveLength(28);
     expect(profiles.flatMap((profile) => profile.capabilityIds)).toHaveLength(28);

@@ -1,4 +1,4 @@
-import { toFunctionSelector, type AbiFunction } from 'viem';
+import type { AbiFunction } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../../defi.types';
 import type { DefiRegistryFragment } from '../defi-manifest.types';
 

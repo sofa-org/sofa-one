@@ -42,7 +42,7 @@ for (const [chainId, pool, module] of aave) {
     fn(chainId, pool, 'Aave V3', 'repay', 'repay(address,uint256,uint256,address)', [{ name: 'asset', type: 'address' }, { name: 'amount', type: 'uint256' }, { name: 'interestRateMode', type: 'uint256' }, { name: 'onBehalfOf', type: 'address' }], [{ name: '', type: 'uint256' }], sourceRef),
   );
 }
-for (const [chainId, market, _base, network] of comet) {
+for (const [chainId, market, , network] of comet) {
   const sourceRef = `${source('compound-finance/comet', COMET_SHA, `deployments/${network}/usdc/roots.json`)}; ${source('compound-finance/comet', COMET_SHA, 'CometMainInterface.sol')}`;
   functions.push(
     fn(chainId, market, 'Compound III', 'supply', 'supply(address,uint256)', [{ name: 'asset', type: 'address' }, { name: 'amount', type: 'uint256' }], [], sourceRef),

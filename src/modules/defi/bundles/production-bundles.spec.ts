@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { encodeFunctionData } from 'viem';
 import { DefiCatalogService } from '../defi-catalog.service';
 import { DefiPolicyService } from '../defi-policy.service';
-import { DefiPolicyDenial, defiPauseScopeKeysForCapability, type DefiFunctionPolicy } from '../defi.types';
+import { defiPauseScopeKeysForCapability, type DefiFunctionPolicy } from '../defi.types';
 import { PRODUCTION_DEFI_MANIFEST, PRODUCTION_DEFI_CATALOG } from '../registry/production-registry';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { capabilityBundleFingerprint } from './bundle.service';
@@ -20,6 +21,8 @@ const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const flat = PRODUCTION_DEFI_MANIFEST.capabilities;
 const addressValue = '0x0000000000000000000000000000000000000002';
 type TestAbiParameter = { type: string; components?: readonly TestAbiParameter[] };
+const loadModule = createRequire(__filename);
+const registryModule = (directory: string) => loadModule(`../registry/${directory}`);
 
 function sample(parameter: TestAbiParameter): unknown {
   if (parameter.type === 'address') return addressValue;
@@ -86,7 +89,7 @@ const phase3Builders = [
 
 function phase2CandidateManifest() {
   const fragments = phase2Builders.map(([directory, builder]) => {
-    const module = require(`../registry/${directory}`) as Record<string, () => unknown>;
+    const module = registryModule(directory) as Record<string, () => unknown>;
     return module[builder]();
   });
   return buildReviewedManifest(fragments as never[]);
@@ -94,7 +97,7 @@ function phase2CandidateManifest() {
 
 function phase3CandidateCapabilities(): DefiFunctionPolicy[] {
   return phase3Builders.flatMap(([directory, exportName]) => {
-    const module = require(`../registry/${directory}`) as Record<string, DefiFunctionPolicy[]>;
+    const module = registryModule(directory) as Record<string, DefiFunctionPolicy[]>;
     return module[exportName];
   });
 }
@@ -117,7 +120,6 @@ describe('published production profiles', () => {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(17);
       } else if (PRODUCTION_DEFI_CAPABILITY_BUNDLES.indexOf(bundle) < 62) {
         expect(bundle.capabilityIds.length).toBeLessThanOrEqual(10);
-      } else {
       }
       expect(bundle.capabilityIds).toEqual([...bundle.capabilityIds].sort(cmp));
       expect(new Set(bundle.capabilityIds).size).toBe(bundle.capabilityIds.length);

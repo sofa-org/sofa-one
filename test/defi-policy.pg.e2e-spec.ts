@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { randomBytes } from 'crypto';
-import { encodeFunctionData, keccak256, parseAbi, stringToHex } from 'viem';
+import { Client as Pg } from 'pg';
+import { encodeFunctionData, parseAbi } from 'viem';
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -63,9 +64,6 @@ const catalogFixture: DefiCatalog = [{ chainId: 8453, status: 'active', contract
 const reviewedManifest = buildReviewedManifest([{ chains: catalogFixture }]);
 let allowedEventExporter: { exportSecurityEvent: jest.Mock };
 
-type PgClient = { connect(): Promise<void>; end(): Promise<void>; query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> };
-type PgClientCtor = new (config: { connectionString: string; application_name?: string }) => PgClient;
-const Pg = (require('pg') as { Client: PgClientCtor }).Client;
 
 const deferred = () => {
   let resolve!: () => void; let reject!: (error: unknown) => void;

@@ -69,7 +69,6 @@ describe('Maverick V2 bounded router fixture', () => {
       await expect(policy.authorizeContractCalls([{ ...good, data: malformedBool }], ctx(fn.chainId, [fn.capabilityId]))).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
     }
     const fn = functions[0];
-    const fakeTuple = { type: 'function', name: 'exactInputSingle', stateMutability: 'payable', inputs: [{ name: 'params', type: 'tuple', components: [{ name: 'recipient', type: 'address' }, { name: 'pool', type: 'address' }, { name: 'tokenAIn', type: 'bool' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOutMinimum', type: 'uint256' }] }], outputs: [{ name: 'amountOut', type: 'uint256' }] };
     const impostor = `${toFunctionSelector('exactInputSingle((address,address,bool,uint256,uint256))')}${encodeAbiParameters([{ type: 'address' }, { type: 'address' }, { type: 'bool' }, { type: 'uint256' }, { type: 'uint256' }], [B, A, true, 1n, 1n]).slice(2)}` as `0x${string}`;
     await expect(policy.authorizeContractCalls([{ to: fn.contract, data: impostor }], ctx(fn.chainId, [fn.capabilityId]))).rejects.toBeDefined();
   });

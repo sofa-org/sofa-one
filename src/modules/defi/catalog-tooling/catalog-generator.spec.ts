@@ -1,4 +1,5 @@
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildReviewedManifest } from '../registry/defi-manifest';
@@ -32,18 +33,19 @@ import { buildSiloVaultRegistry } from '../registry/silo-vault';
 import { executionScopeHash } from '../execution/scope';
 import { V6_SOURCE_IDENTITIES } from './v6-identities';
 import { V7_SOURCE_IDENTITIES } from './v7-identities';
-import { buildOneInchRegistry, ONE_INCH_CAPABILITIES } from '../registry/one-inch';
-import { buildZeroXRegistry, ZERO_X_CAPABILITIES } from '../registry/zero-x';
-import { buildVeloraRegistry, VELORA_CAPABILITIES } from '../registry/velora';
-import { buildBebopRegistry, BEBOP_CAPABILITIES } from '../registry/bebop';
-import { buildOpenOceanRegistry, OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
+import { ONE_INCH_CAPABILITIES } from '../registry/one-inch';
+import { ZERO_X_CAPABILITIES } from '../registry/zero-x';
+import { VELORA_CAPABILITIES } from '../registry/velora';
+import { BEBOP_CAPABILITIES } from '../registry/bebop';
+import { OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
 import { createHash } from 'node:crypto';
 import { assembleV8SourceCandidates, prepareV8Sources, validateV8AssemblyPlan } from './catalog-generator';
-import { V8_ASSEMBLY_PLAN_PATH, V8_BASELINE_RAW_SHA256, V8_ROOT_IDENTITY, V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS } from './v8-identities';
+import { V8_ASSEMBLY_PLAN_PATH, V8_ROOT_IDENTITY, V8_SOURCE_CANONICAL_SHA256, V8_SOURCE_PATHS } from './v8-identities';
 import { createEnsoStaticWeirollScope } from '../execution/enso-identity';
 import { V9_ASSEMBLY_PLAN_PATH, V9_BASELINE_RAW_SHA256, V9_SOURCE_CANONICAL_SHA256, V9_SOURCE_PATHS } from './v9-identities';
 
 const valid = { schemaVersion: 1, chains: buildSparkLendRegistry().chains };
+const loadModule = createRequire(__filename);
 
 function readV7Inputs() {
   return V7_SOURCE_PATHS.map((sourcePath) => ({ sourcePath, document: JSON.parse(readFileSync(resolve(process.cwd(), sourcePath), 'utf8')) as unknown }));
@@ -103,7 +105,7 @@ describe('DeFi catalog generator', () => {
     const registryDirectory: Record<string, string> = { bancor: 'bancor-v3', gearbox: 'gearbox-pool', liquity: 'liquity-v2' };
     for (const sourcePath of V6_SOURCE_PATHS) {
       const family = sourcePath.split('/').at(-1)!.replace('.json', '');
-      const module = require(resolve(process.cwd(), 'src/modules/defi/registry', registryDirectory[family] ?? family));
+      const module = loadModule(resolve(process.cwd(), 'src/modules/defi/registry', registryDirectory[family] ?? family));
       const builder = Object.values(module).find((value: any) => typeof value === 'function' && value.name.startsWith('build')) as (() => { chains: Array<{ chainId: number; contracts: Array<{ address: string; functions: DefiFunctionPolicy[] }> }> }) | undefined;
       expect(builder).toBeDefined();
       const fixtureFunctions = builder!().chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => ({ ...fn, chainId: chain.chainId, contract: contract.address }))));
@@ -203,9 +205,9 @@ describe('DeFi catalog generator', () => {
       for (const abiEntry of contract.abiFunctions) {
         const fn = fixtureFns.find((candidate) => candidate.functionName === abiEntry.name && candidate.contract.toLowerCase() === contract.address.toLowerCase());
         expect(fn).toBeDefined();
-        const { sourceId: _sourceId, ...fullAbi } = abiEntry;
+        const fullAbi = Object.fromEntries(Object.entries(abiEntry).filter(([key]) => key !== 'sourceId'));
         expect(fullAbi).toEqual(fn!.abi);
-        expect(functionAbiHash({ abi: fullAbi })).toBe(functionAbiHash(fn!));
+        expect(functionAbiHash({ abi: fullAbi as DefiFunctionPolicy['abi'] })).toBe(functionAbiHash(fn!));
         expect(toFunctionSelector(fn!.signature)).toBe(report.bindings.find((binding) => binding.capabilityId === fn!.capabilityId)!.selector);
       }
     }

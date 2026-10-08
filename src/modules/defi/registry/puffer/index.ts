@@ -3,7 +3,6 @@ import type { DefiChainPolicy, DefiFunctionPolicy } from '../../defi.types';
 import type { DefiRegistryFragment } from '../defi-manifest.types';
 
 const chainId = 1;
-const familyVersion = 'listed-impl-v5';
 const vault = '0xD9A442856C234a39a81a089C06451EBAa4306a72';
 const manager = '0xDdA0483184E75a5579ef9635ED14BacCf9d50283';
 const uint = (name: string, bits: 128 | 256 = 256) => ({ name, type: `uint${bits}`, internalType: `uint${bits}` });

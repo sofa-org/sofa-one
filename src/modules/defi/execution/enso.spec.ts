@@ -5,7 +5,6 @@ import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY
 import { decodeEnsoStaticWeirollRoot } from './enso';
 
 const ROOT_ABI = parseAbi(['function routeSingle((uint8 tokenType, bytes data) tokenIn, bytes data) payable returns (bytes response)']);
-const ROOT_PARAMS = parseAbiParameters('(uint8 tokenType, bytes data), bytes');
 const SHORTCUT_ABI = parseAbi(['function executeShortcut(bytes32 accountId, bytes32 requestId, bytes32[] commands, bytes[] state)']);
 const encodeFn = encodeFunctionData as (parameters: any) => Hex;
 const parseDynamicAbi = parseAbi as unknown as (signatures: string[]) => any;

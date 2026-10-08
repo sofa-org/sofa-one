@@ -32,7 +32,6 @@ export const POLYMARKET_PUSD_WRAP_ABI = [{
     { name: '_amount', type: 'uint256', internalType: 'uint256' },
   ], outputs: [],
 }] as const;
-const PUSD_WRAP_FUNCTION = POLYMARKET_PUSD_WRAP_ABI[0];
 
 /** True for the canonical identity regardless of its catalog capability ID. */
 export function isPolymarketPusdWrapIdentity(fn: Pick<DefiFunctionPolicy, 'capabilityId' | 'chainId' | 'contract' | 'signature'>): boolean {

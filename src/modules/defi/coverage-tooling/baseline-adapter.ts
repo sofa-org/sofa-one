@@ -112,7 +112,7 @@ export function adaptFrozenBaseline(source: BaselineSources): { input: CoverageI
   const metricCategoryCounts: JsonObject = {};
   for (const row of rawMetricRows) {
     for (const [chainKey, metrics] of Object.entries(row.byChain ?? {})) {
-      for (const [category, values] of Object.entries(metrics as JsonObject)) {
+      for (const category of Object.keys(metrics as JsonObject)) {
         const key = `${chainKey}:${category}`;
         metricCategoryCounts[key] = (metricCategoryCounts[key] ?? 0) + 1;
       }

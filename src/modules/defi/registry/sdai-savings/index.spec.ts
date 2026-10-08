@@ -92,7 +92,7 @@ describe('sDAI no-referral isolated registry fixture', () => {
     for (let index = 0; index < expectedNames.length; index++) {
       const fn = parsed.find((candidate) => candidate.functionName === expectedNames[index])!;
       const sourceFn = contractSource.abiFunctions.find((candidate: any) => candidate.name === expectedNames[index]);
-      const { sourceId: _sourceId, ...literalAbi } = sourceFn;
+      const literalAbi = Object.fromEntries(Object.entries(sourceFn).filter(([key]) => key !== 'sourceId'));
       expect(fn.abi).toEqual(literalAbi);
       expect(fn.functionName).toBe(expectedNames[index]);
       expect(fn.signature).toBe(expectedSignatures[index]);

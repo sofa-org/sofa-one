@@ -1214,8 +1214,9 @@ export function catalogDiff(before: DefiRegistryFragment, after: DefiRegistryFra
       status: fn.status,
       ...(fn.executionScope ? { executionScopeHash: executionScopeHash(fn.executionScope) } : {}),
     });
-    const { capabilityId: _id, type: _type, chainId: _chainId, contract: _contract, functionName: _name, signature: oldSignature, abi: oldAbi, abiHash: _hash, status: _status, ...oldMetadata } = oldFn;
-    const { capabilityId: _newId, type: _newType, chainId: _newChainId, contract: _newContract, functionName: _newName, signature: newSignature, abi: newAbi, abiHash: _newHash, status: _newStatus, ...newMetadata } = newFn;
+    const excluded = ['capabilityId', 'type', 'chainId', 'contract', 'functionName', 'abiHash', 'status'];
+    const { signature: oldSignature, abi: oldAbi, ...oldMetadata } = Object.fromEntries(Object.entries(oldFn).filter(([key]) => !excluded.includes(key))) as DefiFunctionPolicy;
+    const { signature: newSignature, abi: newAbi, ...newMetadata } = Object.fromEntries(Object.entries(newFn).filter(([key]) => !excluded.includes(key))) as DefiFunctionPolicy;
     if (!equal(authority(oldFn), authority(newFn))) authorityChanged.push(id);
     if (!equal([oldAbi, oldSignature], [newAbi, newSignature])) abiChanged.push(id);
     if (!equal(oldMetadata, newMetadata)) metadataChanged.push(id);

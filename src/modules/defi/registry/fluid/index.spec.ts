@@ -18,7 +18,7 @@ const maxSigned = (1n << 255n) - 1n;
 function argsFor(fn: (typeof FLUID_CAPABILITIES)[number]): readonly unknown[] {
   if (fn.functionName === 'operate') return [0n, maxSigned, -maxSigned, address(90)];
   const inputs = fn.abi.inputs;
-  return inputs.map(({ name, type }, index) => type === 'address' ? address(20 + index) : max);
+  return inputs.map(({ type }, index) => type === 'address' ? address(20 + index) : max);
 }
 function calldata(fn: (typeof FLUID_CAPABILITIES)[number], args = argsFor(fn)): `0x${string}` {
   return encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: args as never });

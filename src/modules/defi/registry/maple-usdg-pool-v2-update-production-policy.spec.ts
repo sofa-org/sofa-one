@@ -89,7 +89,7 @@ describe('Maple syrupUSDG Pool V2 ordinary additions', () => {
   });
 
   it('denies missing/cross-method grants, wrong identity, malformed arguments, and native value', async () => {
-    for (const [index, fn] of functions.entries()) {
+    for (const fn of functions) {
       const call = tx(fn, 0n, '0x1111111111111111111111111111111111111111');
       for (const grants of [[], ['unrelated'], ...IDS.filter((id) => id !== fn.capabilityId).map((id) => [id])]) {
         await expect(policy.authorizeContractCalls([call], context(fn, grants))).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });

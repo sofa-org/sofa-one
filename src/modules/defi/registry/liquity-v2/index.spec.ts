@@ -11,7 +11,6 @@ const stability = '0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf';
 const anyone = '0x1111111111111111111111111111111111111111';
 const other = '0x2222222222222222222222222222222222222222';
 const fragment = buildLiquityV2Registry();
-const contracts = fragment.chains[0].contracts;
 const manifest = buildReviewedManifest([fragment]);
 const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
 const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));

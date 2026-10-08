@@ -273,7 +273,7 @@ function verifyCatalogs(inputs: AuditInputs): JsonObject {
   const m1 = flattenCatalog(inputs.m1Catalog);
   const m2 = flattenCatalog(inputs.m2Catalog);
   const m3 = flattenCatalog(inputs.m3Catalog);
-  const m1Map = functionIndex(m1), m2Map = functionIndex(m2), m3Map = functionIndex(m3);
+  const m2Map = functionIndex(m2), m3Map = functionIndex(m3);
   const m1Preserved = m1.every((fn) => stableJson(fn) === stableJson(m2Map.get(fn.capabilityId)));
   const m2Preserved = m2.every((fn) => stableJson(fn) === stableJson(m3Map.get(fn.capabilityId)));
   const additions = m3.filter((fn) => !m2Map.has(fn.capabilityId));
@@ -491,8 +491,8 @@ function verifyWorkflows(inputs: AuditInputs, functions: readonly FunctionRow[],
     return functions.some((fn) => fn.capabilityId === req.capabilityId && fn.chainId === req.chainId && fn.contract.toLowerCase() === String(req.contract).toLowerCase() && fn.signature === req.signature && canonicalAbiHash(fn.abi) === String(req.abiHash).toLowerCase());
   }));
   const inventoryBundles = array(inputs.m3WorkflowInventory.scopedWorkflowBundles).map((x) => x as unknown as JsonObject);
-  const targetBindings = inventoryBundles.flatMap((bundle) => array(bundle.requiredCapabilities).map((req) => ({ bundle, req: req as unknown as JsonObject })));
-  const exactTargetBindings = targetBindings.filter(({ bundle, req }) => functions.some((fn) => fn.capabilityId === req.capabilityId && fn.chainId === req.chainId && fn.contract.toLowerCase() === String(req.contract).toLowerCase() && fn.signature === req.signature && canonicalAbiHash(fn.abi) === String(req.abiHash).toLowerCase() && (req.executionScopeHash === undefined || fn.executionScope && scopeHash(fn.executionScope) === req.executionScopeHash))).length;
+  const targetBindings = inventoryBundles.flatMap((bundle) => array(bundle.requiredCapabilities).map((req) => req as unknown as JsonObject));
+  const exactTargetBindings = targetBindings.filter((req) => functions.some((fn) => fn.capabilityId === req.capabilityId && fn.chainId === req.chainId && fn.contract.toLowerCase() === String(req.contract).toLowerCase() && fn.signature === req.signature && canonicalAbiHash(fn.abi) === String(req.abiHash).toLowerCase() && (req.executionScopeHash === undefined || fn.executionScope && scopeHash(fn.executionScope) === req.executionScopeHash))).length;
   const targetScopeRows = inventoryBundles.length === 9 && inventoryBundles.every((bundle) => bundle.status === 'target-scoped-functions-admitted' && String(bundle.completionScope).includes('not') && bundle.requiredCapabilities !== undefined);
   const targetIdentityDispositionValid = inventoryBundles.filter((bundle) => bundle.family === 'uniswap-v3-position-manager').every((bundle) => object(bundle.identityMapping).status === 'canonical-product-target-evidence' && object(bundle.identityMapping).sourceId === '2198')
     && inventoryBundles.filter((bundle) => bundle.family === 'morpho-blue').every((bundle) => object(bundle.identityMapping).status === 'lineage-only-unverified-market-crosswalk' && object(bundle.identityMapping).rawSourceMappingClaim === false);
@@ -977,7 +977,6 @@ export function independentAudit(inputs: AuditInputs): Readonly<{ report: JsonOb
     && fixtureProvenance.sourceBytesSha256 === V3_PROFILE_SOURCE_BYTES_SHA256
     && profiles.allNineLiteralProfilesValid === true;
   const v4 = catalogVersion === 'v4' ? verifyCurrentV4(inputs, functions) : null;
-  const crosswalk = inputs.m2Identity;
   const unknownProxy = Number(activity.unresolvedProxyRowsIncludingPartial);
   const canonicalProductCount = Number(activity.canonicalMappings);
   const goal = evaluateGoalClosure({

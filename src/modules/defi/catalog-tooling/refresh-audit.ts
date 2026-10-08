@@ -52,9 +52,7 @@ function identity(fn: DefiFunctionPolicy): Record<string, unknown> {
 }
 
 function metadata(fn: DefiFunctionPolicy): Record<string, unknown> {
-  const { capabilityId: _id, type: _type, chainId: _chain, contract: _contract, functionName: _name,
-    signature: _signature, abi: _abi, abiHash: _hash, status: _status, executionScope: _scope, ...copy } = fn;
-  return copy;
+  return Object.fromEntries(Object.entries(fn).filter(([key]) => !['capabilityId', 'type', 'chainId', 'contract', 'functionName', 'signature', 'abi', 'abiHash', 'status', 'executionScope'].includes(key)));
 }
 
 function sourceEvidenceChanged(a: DefiFunctionPolicy, b: DefiFunctionPolicy): boolean {

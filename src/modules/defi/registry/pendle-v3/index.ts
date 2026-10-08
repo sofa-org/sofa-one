@@ -1,4 +1,4 @@
-import { toFunctionSelector, type AbiFunction } from 'viem';
+import type { AbiFunction } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../../defi.types';
 import type { DefiRegistryFragment } from '../defi-manifest.types';
 
@@ -19,7 +19,6 @@ const specs: readonly { contract: string; name: string; operation: string; mutab
 const functions: DefiFunctionPolicy[] = specs.map((spec) => {
   const abi: AbiFunction = { type: 'function', name: spec.name, stateMutability: spec.mutability, inputs: [...spec.inputs], outputs: [...spec.outputs] };
   const signature = `${spec.name}(${spec.inputs.map(({ type }) => type).join(',')})`;
-  const selector = toFunctionSelector(signature);
   const warning = [
     'This source-qualified fixture is not a production admission, current facet/runtime verification, funded-execution proof, or a claim of complete Pendle coverage.',
     'Receiver, market/YT/token, amounts, minimum outputs, and SY internal-balance choice remain caller-controlled ABI arguments; no financial limits or asset/market allowlist are implied.',

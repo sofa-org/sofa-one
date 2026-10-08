@@ -5,10 +5,8 @@ import {
   Logger,
   NotFoundException,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { encodeAbiParameters, hashMessage, hashTypedData, type Hex } from 'viem';
 
 // ── viem mock ──────────────────────────────────────────────────────────────────
 // Must be declared before any imports that pull in viem transitively.
@@ -99,15 +97,6 @@ const API_KEY_CONTEXT = {
   canUseEoaExecution: false,
 };
 const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
-const WRAPPED_SIGNATURE = encodeAbiParameters(
-  [
-    { name: 'keyHash', type: 'bytes32' },
-    { name: 'signature', type: 'bytes' },
-    { name: 'hookData', type: 'bytes' },
-  ],
-  [WALLET.agentKeyHash as Hex, RAW_SIGNATURE, '0x'],
-);
-
 // ── test suite ─────────────────────────────────────────────────────────────────
 
 describe('WalletService.withdraw()', () => {

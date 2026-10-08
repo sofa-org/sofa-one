@@ -117,7 +117,7 @@ describe('Aave V3 setUserEMode five-chain ordinary additions', () => {
   });
 
   it('rechecks removed grants, pause, API-key state, SQL lock order, and final per-chain bindings', async () => {
-    for (const [index, fn] of functions.entries()) {
+    for (const fn of functions) {
       const policy = policyFixture();
       const interaction = call(fn, 0);
       const authorization = await policy.authorizeContractCalls([interaction], context(fn));

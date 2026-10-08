@@ -2,6 +2,7 @@
 import { randomUUID } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Client as Pg } from 'pg';
 import { encodeFunctionData, type Hex } from 'viem';
 jest.mock('../src/core/openfort/openfort.service', () => ({ OpenfortService: class OpenfortService {} }));
 import { applyBillingE2eDatabaseUrl, assertBillingE2eDatabaseIdentity, queryBillingE2eIdentityWithPrisma, resolveBillingE2eDatabaseTarget } from './billing-e2e-database';
@@ -14,8 +15,6 @@ const DEST = '0x2222222222222222222222222222222222222222';
 const LOCK = (userId: string) => `withdrawal_dest:${userId}`;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-type PgClient = { connect(): Promise<void>; end(): Promise<void>; query(sql: string, params?: unknown[]): Promise<{ rows: any[] }> };
-const Pg = (require('pg') as { Client: new (options: { connectionString: string }) => PgClient }).Client;
 
 describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
   jest.setTimeout(90_000);
