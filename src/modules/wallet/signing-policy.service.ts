@@ -28,6 +28,8 @@ export type SigningPolicyContext = {
   executionMode: 'session_key' | 'eoa';
   apiKeyId?: string;
   apiKeyPrefix?: string;
+  /** Caller will persist its own allowed audit atomically at acceptance. */
+  deferAllowedAudit?: boolean;
 };
 
 @Injectable()
@@ -164,13 +166,15 @@ export class SigningPolicyService {
       ...(typeof domainName === 'string' ? { typedDataDomainName: domainName } : {}),
     };
 
-    await this.recordAllowedEvent('signing.typed_data_allowed', context, {
-      type: 'typed_data',
-      primaryType,
-      verifyingContract:
-        typeof verifyingContract === 'string' ? verifyingContract : undefined,
-      domainName: typeof domainName === 'string' ? domainName : undefined,
-    });
+    if (!context.deferAllowedAudit) {
+      await this.recordAllowedEvent('signing.typed_data_allowed', context, {
+        type: 'typed_data',
+        primaryType,
+        verifyingContract:
+          typeof verifyingContract === 'string' ? verifyingContract : undefined,
+        domainName: typeof domainName === 'string' ? domainName : undefined,
+      });
+    }
 
     return result;
   }

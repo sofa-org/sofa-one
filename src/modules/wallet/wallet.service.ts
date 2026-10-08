@@ -189,6 +189,9 @@ export class WalletService {
     }
     const apiKey = apiKeyRecord!;
     this.assertPermission(apiKey.canSign, 'API key is not allowed to sign messages');
+    if (params.type !== 'typed_data') {
+      throw new ForbiddenException('API-key signing is limited to Polymarket ClobAuth typed data');
+    }
 
     const resolvedChainId = this.resolveSigningChainId(params);
     if (resolvedChainId === undefined) {
@@ -204,6 +207,7 @@ export class WalletService {
       executionMode,
       apiKeyId: apiKey.id,
       apiKeyPrefix: apiKey.keyPrefix,
+      deferAllowedAudit: true,
     };
 
     // BILL-016 root preflight: after API-key permission, before EOA / SigningPolicy /
@@ -223,13 +227,19 @@ export class WalletService {
       });
     }
 
-    const selectedForPolicy = await this.selectWallet(userId, params.walletId);
+    const selected = await this.selectWallet(userId, params.walletId);
+    const selectedForPolicy = await this.prisma.userWallet.findFirst({ where: { id: selected.id, userId }, include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } } });
+    if (!selectedForPolicy) throw new NotFoundException('Wallet not found');
+    this.assertWalletNotFrozen(selectedForPolicy);
+    if (selectedForPolicy.status !== 'active' || !selectedForPolicy.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${selectedForPolicy.status})`);
+    let signingAuthorization: Awaited<ReturnType<DefiPolicyService['authorizeSigning']>>;
     try {
-      this.defiPolicy.authorizeSigning({ type: params.type, typedData: params.typedData }, {
+      signingAuthorization = await this.defiPolicy.authorizeSigning(params.typedData, {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: selectedForPolicy.id, chainId, executionMode,
         executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,
         allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [],
+        walletAddress: selectedForPolicy.walletAddress!, agentWalletAddress: selectedForPolicy.agentWalletAddress!, agentOpenfortAccountId: selectedForPolicy.agentOpenfortAccountId!,
       });
     } catch (error) {
       if (error instanceof DefiPolicyDenial) {
@@ -260,30 +270,14 @@ export class WalletService {
     }
 
     // Apply signing policy checks
-    let typedDataSummary:
-      | {
-          typedDataPrimaryType?: string;
-          typedDataVerifyingContract?: string;
-          typedDataDomainName?: string;
-        }
-      | undefined = undefined;
-    if (params.type === 'message') {
-      await this.signingPolicy?.assertMessageSigningPolicy(params.message!, policyContext);
-    } else if (params.type === 'typed_data') {
-      typedDataSummary = await this.signingPolicy?.assertTypedDataSigningPolicy(
-        params.typedData!,
-        policyContext,
-      );
-    }
+    if (!this.signingPolicy) throw new ForbiddenException('Signing policy is not available');
+    const typedDataSummary = await this.signingPolicy.assertTypedDataSigningPolicy(
+      signingAuthorization.payload as any,
+      policyContext,
+    );
 
     // Evaluate multi-factor risk before proceeding
-    const selectedWallet = await this.selectWallet(userId, params.walletId);
-    const wallet = await this.prisma.userWallet.findFirst({
-      where: { id: selectedWallet.id, userId },
-      include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-    const activeWallet = wallet!;
+    const activeWallet = selectedForPolicy;
     this.assertWalletNotFrozen(activeWallet);
     if (activeWallet.status !== 'active' || !activeWallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${activeWallet.status})`);
     const riskAssessment = await this.riskEvaluation?.evaluateRisk({
@@ -321,19 +315,7 @@ export class WalletService {
     const signingWalletAddress =
       executionMode === 'eoa' ? activeWallet.agentWalletAddress! : activeWallet.walletAddress!;
 
-    let data: string;
-    switch (params.type) {
-      case 'message':
-        // Compute EIP-191 personal message hash → raw ECDSA sign
-        data = this.hashSignMessage(params.message!);
-        break;
-      case 'typed_data': {
-        // Compute EIP-712 struct hash → raw ECDSA sign
-        const { domain, types, primaryType, message } = params.typedData!;
-        data = hashTypedData({ domain, types, primaryType, message } as any);
-        break;
-      }
-    }
+    const data = signingAuthorization.typedDataDigest;
 
     // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
     // policy mutations. Final requireAddressAllowlist read + SigningRequest.create
@@ -350,6 +332,7 @@ export class WalletService {
       executionMode,
     };
     let signingRequest: { id: string };
+    let allowedEvent: unknown;
     try {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
@@ -360,6 +343,12 @@ export class WalletService {
             signingBlockedAudit,
           );
         }
+        await this.defiPolicy.assertSigningStillAuthorized(txClient, signingAuthorization, {
+          userId, apiKeyId: apiKey.id!, chainId, executionMode, type: params.type,
+          digest: data, walletId: activeWallet.id, walletAddress: activeWallet.walletAddress!,
+          agentWalletAddress: activeWallet.agentWalletAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
+        });
+        allowedEvent = await this.defiPolicy.recordSigningAllowedInTx(txClient, signingAuthorization);
         return txClient.signingRequest.create({
           data: {
             userId,
@@ -381,15 +370,20 @@ export class WalletService {
             status: 'submitting',
           },
         });
-      });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
     } catch (error) {
       // After TX rollback: destination advisory released — safe to audit once.
       if (error instanceof DeferredSigningDestinationProtectionDenial) {
         await this.recordSigningBlockedByDestinationProtection(error.audit);
         throw error.httpException;
       }
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* denial audit must not mask policy result */ }
+        throw error.httpException;
+      }
       throw error;
     }
+    if (allowedEvent) await this.defiPolicy.exportSigningAllowed(allowedEvent);
 
     this.logger.log(
       this.logContext({
@@ -446,6 +440,7 @@ export class WalletService {
     return {
       signature,
       walletAddress: signingWalletAddress,
+      ...(executionMode === 'eoa' ? { agentWalletAddress: signingWalletAddress } : {}),
       type: params.type,
       executionMode,
     };

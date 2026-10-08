@@ -57,13 +57,7 @@ info:
         }]
       }'
 
-    # 2. 签名一条消息
-    curl -X POST https://api.example.com/v1/wallets/sign \
-      -H "X-API-Key: sk_your_key_here" \
-      -H "Content-Type: application/json" \
-      -d '{"type": "message", "chainId": 84532, "message": "Hello from SOFA ONE"}'
-
-    # 3. 查询交易状态
+    # 2. 查询交易状态
     curl https://api.example.com/v1/transactions/b2c3d4e5-f6a7-8901-bcde-f12345678901 \
       -H "X-API-Key: sk_your_key_here" \
       -H "User-Agent: my-service/1.0"
@@ -83,7 +77,7 @@ servers:
 
 tags:
   - name: Signing
-    description: 数据签名 — 支持 EIP-191 / EIP-712；原始哈希签名已禁用
+    description: 仅限显式授权的 Polymarket ClobAuth EIP-712 bootstrap；不支持通用消息/typed-data/hash 签名
   - name: Transactions
     description: 交易 — 提交原始交易
 
@@ -95,9 +89,11 @@ paths:
   /v1/wallets/sign:
     post:
       tags: [Signing]
-      summary: API-key signing (disabled in MVP)
+      summary: API-key signing (Polymarket ClobAuth bootstrap only)
       description: |
-        MVP disabled: this API-key endpoint always denies message and typed-data signing with `DEFI_FUNCTION_NOT_ALLOWED`. There is no legacy unrestricted signing path. Request validation and API-key authentication still apply; denial occurs before hashing, signing audit success, signing-row creation, or Openfort. Raw hash signing is also unavailable.
+        The only signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
+
+        Requires API-key permission `canSign` and `canUseEoaExecution` and explicit grant `polymarket:137:clob-auth:v1`; grants are never automatic and omitted grants remain `[]`. All other message/typed-data signing is denied; no raw-hash, order, Permit, arbitrary typed-data, or session-key signing is supported. EOA isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No deployment or live Polymarket outcome is guaranteed.
 
         Dashboard-only withdrawal and payment execution are separate flows and are not affected.
 
@@ -116,29 +112,39 @@ paths:
               $ref: '#/components/schemas/SignRequest'
             examples:
               message:
-                summary: 签名纯文本消息
+                summary: Unsupported example — message signing is denied
                 value:
                   type: message
                   chainId: 84532
                   executionMode: session_key
                   message: "Hello, SOFA ONE!"
               typedData:
-                summary: 签名 EIP-712 结构化数据
+                summary: Polymarket CLOB ClobAuth bootstrap only
                 value:
                   type: typed_data
+                  executionMode: eoa
+                  chainId: 137
                   typedData:
                     domain:
-                      name: "MyDApp"
+                      name: ClobAuthDomain
                       version: "1"
-                      chainId: 84532
+                      chainId: 137
                     types:
-                      Person:
-                        - { name: "name", type: "string" }
-                        - { name: "wallet", type: "address" }
-                    primaryType: "Person"
+                      EIP712Domain:
+                        - { name: name, type: string }
+                        - { name: version, type: string }
+                        - { name: chainId, type: uint256 }
+                      ClobAuth:
+                        - { name: address, type: address }
+                        - { name: timestamp, type: string }
+                        - { name: nonce, type: uint256 }
+                        - { name: message, type: string }
+                    primaryType: ClobAuth
                     message:
-                      name: "Alice"
-                      wallet: "0x1234567890abcdef1234567890abcdef12345678"
+                      address: "<selected wallet agentWalletAddress>"
+                      timestamp: "<current Unix seconds as canonical decimal string>"
+                      nonce: 0
+                      message: "This message attests that I control the given wallet"
       responses:
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -161,18 +167,24 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '403':
           description: |
-            Signing is disabled (`DEFI_FUNCTION_NOT_ALLOWED`). Destination-protection denials can occur earlier.
+            Invalid or unsupported signing requests are denied; only the narrowly specified ClobAuth bootstrap with the explicit grant and permissions is eligible. Destination-protection denials can occur earlier.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 statusCode: 403
-                code: DEFI_FUNCTION_NOT_ALLOWED
+                code: DEFI_CAPABILITY_NOT_GRANTED
                 message: "DeFi policy denied"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/wallets/sign"
+        '200':
+          description: Successful ClobAuth bootstrap signature (raw EOA signature; signing is not an order submission).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignResponse'
         '503':
           description: |
             无法安全读取提现地址保护策略，因此拒绝签名（fail closed）。
@@ -385,43 +397,28 @@ components:
           description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
         type:
           type: string
-          enum: [message, typed_data]
+          enum: [typed_data]
           description: |
             签名类型：
-            - `message` — 纯文本消息（EIP-191）
-            - `typed_data` — 结构化数据（EIP-712）
+            - `message` — schema shape only; unsupported by this endpoint
+            - `typed_data` — only the ClobAuth shape specified on the operation is eligible
         executionMode:
           type: string
-          enum: [session_key, eoa]
-          default: session_key
+          enum: [eoa]
           description: |
             签名执行身份：
-            - `session_key` — 默认，Backend Agent Signer 签名并返回 Calibur wrapped signature
-            - `eoa` — 服务端 backend wallet 直接签名，返回普通 EOA signature
-        message:
-          oneOf:
-            - type: string
-              minLength: 1
-              description: 非空纯文本消息
-            - type: object
-              required: [raw]
-              additionalProperties: false
-              properties:
-                raw:
-                  type: string
-                  pattern: '^0x([a-fA-F0-9]{2})*$'
-                  description: 0x 前缀、偶数长度的原始字节 hex 数据
-          description: 纯文本消息或原始字节（`type=message` 时必填）
+            - `session_key` — schema shape only; not permitted for this endpoint
+            - `eoa` — required for the ClobAuth exception; raw EOA signature
         chainId:
           type: integer
           minimum: 1
-          description: 链上下文。`message` 签名必填；`typed_data` 可省略并从 `typedData.domain.chainId` 推导。如两者同时存在，必须一致。`session_key` 模式要求该链必须已在开发者钱包中完成 API access authorization。
+          description: ClobAuth exception requires chainId 137. Other request shapes are not authorized.
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:
       type: object
       required: [domain, types, primaryType, message]
-      description: EIP-712 结构化数据（`type=typed_data` 时必填）
+      description: Typed data; only exact ClobAuth shape described on the operation is eligible.
       properties:
         domain:
           type: object
@@ -455,21 +452,25 @@ components:
 
     SignResponse:
       type: object
-      required: [signature, walletAddress, type]
+      required: [signature, walletAddress, agentWalletAddress, type, executionMode]
       properties:
         signature:
           type: string
-          description: 当 `executionMode=session_key` 时为 Calibur wrapped signature，ABI 编码为 `(bytes32 keyHash, bytes signature, bytes hookData)`；当 `executionMode=eoa` 时为普通 EOA signature。
+          description: Raw EOA signature for the only permitted ClobAuth bootstrap signing mode.
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 实际签名地址。`session_key` 为用户 EIP-7702 delegated EOA 地址；`eoa` 为服务端 backend wallet 地址。
+          description: Actual address used for signing; for the permitted EOA ClobAuth mode this is the selected wallet's agentWalletAddress.
+        agentWalletAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: Present for EOA signing; equals walletAddress and identifies the selected agent wallet signer.
         type:
           type: string
-          enum: [message, typed_data]
+          enum: [typed_data]
         executionMode:
           type: string
-          enum: [session_key, eoa]
+          enum: [eoa]
 
     # ──────────── Transactions ────────────
     SendTransactionRequest:

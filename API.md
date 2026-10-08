@@ -28,7 +28,7 @@ Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` 
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/wallets/sign` | Reserved signing route; signing is disabled in the DeFi-policy MVP and requests are denied |
+| `POST` | `/v1/wallets/sign` | API-key signing; only the explicitly granted Polymarket CLOB `ClobAuth` EIP-712 bootstrap on Polygon is eligible |
 | `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 
@@ -56,9 +56,27 @@ Do not accept Openfort IAM-only auth on these routes.
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
 
-Signing remains present in the public spec as a reserved API-key route, but is disabled
-for every key in the DeFi-policy MVP. Valid message and typed-data requests are denied;
-raw-hash signing has no unrestricted legacy path.
+`POST /v1/wallets/sign` remains API-key-only (`canSign`). Its sole typed-data exception is
+the Polymarket CLOB `ClobAuth` bootstrap: `type: typed_data`, `executionMode: eoa`, chain
+137, exact domain (`ClobAuthDomain`, version `1`, chainId `137`, no verifying contract or
+salt), exact `ClobAuth` primary type and ordered fields (`address`, `timestamp`, `nonce`,
+`message`), and the fixed message `This message attests that I control the given wallet`.
+`message.address` must equal the selected wallet's agentWalletAddress (not its embedded
+`walletAddress` or funder address); timestamp is canonical decimal Unix seconds within
+±300 seconds; nonce is a uint256 supplied as a safe integer or decimal string (zero is
+valid). The EIP712Domain type
+declaration, if supplied, must be exactly `name:string`, `version:string`, `chainId:uint256`.
+
+The API key must have the dedicated explicit `polymarket:137:clob-auth:v1` capability
+grant and both `canSign` and `canUseEoaExecution`; catalog presence does not grant it,
+there is no automatic grant, and omitted grants remain `[]`. EOA isolation policy (including
+IP/TTL/rate controls), destination allowlist/protection, risk/signing-policy and frozen/live
+state checks remain in force; destination protection may deny signing. The final live-state
+read does not serialize against concurrent freeze writers; do not treat it as a race-free
+freeze exclusion. PostgreSQL race behavior and actual Openfort/Polymarket outcomes have not
+been verified. This signature is
+only for CLOB authentication bootstrap, never orders, Permit, arbitrary typed data/messages,
+hashes, or session-key signing. No deployment or live Polymarket outcome is guaranteed.
 
 ## 4. Error contract
 
@@ -101,11 +119,11 @@ contract's behavior and independent generic transaction, destination, billing, s
 and user-configured key-spend policies. ERC-20 `approve` is an independent function grant:
 it permits any spender and any `uint256` amount, including unlimited approval, and is not
 automatically added with an action or automatically cleaned up. Catalog admission does not
-grant a capability. Message and typed-data signing are disabled for all API keys in this
-MVP, including keys created before the capability policy; there is no legacy unrestricted
-signing path. Otherwise valid API-key signing requests are denied with
-`DEFI_FUNCTION_NOT_ALLOWED`; destination protection may deny earlier. Dedicated dashboard
-withdrawal and payment flows remain separate.
+grant a capability. Generic message and typed-data signing are denied for all API keys,
+except the exact Polymarket CLOB `ClobAuth` bootstrap described above; there is no legacy
+unrestricted signing path. The bootstrap requires explicit `polymarket:137:clob-auth:v1`,
+`canSign`, and `canUseEoaExecution`, plus all signing isolation and destination controls.
+Dedicated dashboard withdrawal and payment flows remain separate.
 
 ## 5. Public transaction example
 

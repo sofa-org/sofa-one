@@ -6,6 +6,7 @@ import { DefiPolicyService, buildDefiRequestCommitment } from './defi-policy.ser
 import { buildReviewedManifest } from './registry/defi-manifest';
 import { DefiChainPolicy, DefiExecutionContext, DefiInteraction, DefiPolicyDenial } from './defi.types';
 import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY, POLYMARKET_PUSD_WRAP_SCOPE } from './execution/pusd-identity';
+import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, POLYMARKET_CLOB_AUTH_ATTESTATION } from './signing/polymarket-clob-auth';
 
 const ABI = parseAbi(['function touch(address owner, uint256 amount)', 'function deposit(address owner, uint256 amount) payable']);
 const ADDRESS = '0x0000000000000000000000000000000000000001';
@@ -65,11 +66,49 @@ describe('DefiPolicyService', () => {
     await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: deposit(), value: (1n << 256n) - 1n }], ctx)).resolves.toBeDefined();
   });
 
-  it('always denies signing and rejects empty batches and invalid owners', async () => {
-    expect(() => makePolicy().policy.authorizeSigning({}, ctx)).toThrow(DefiPolicyDenial);
+  it('denies unrelated signing and rejects empty batches and invalid owners', async () => {
+    await expect(makePolicy().policy.authorizeSigning({}, ctx as any)).rejects.toBeInstanceOf(DefiPolicyDenial);
     const { policy } = makePolicy();
     await expect(policy.authorizeContractCalls([], ctx)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
     await expect(policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, executionOwner: 'not-an-address' })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+  });
+
+  it('rechecks exact live signing permission, grant, pause, wallet bindings, and timestamp after locks', async () => {
+    const { policy } = makePolicy();
+    const agent = '0x2222222222222222222222222222222222222222';
+    const payload = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
+    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const auth = await policy.authorizeSigning(payload, context);
+    const key = { userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
+    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
+    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, revoked: true });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, expiresAt: new Date(Date.now() - 1000) });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue(key);
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, allowedCapabilityIds: [] });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, canUseEoaExecution: false });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue(key);
+    tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`] });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+    tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
+    tx.userWallet.findFirst.mockResolvedValue({ ...wallet, frozenAt: new Date() });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.userWallet.findFirst.mockResolvedValue(wallet);
+    for (const mismatch of [{ userId: 'someone-else' }, { apiKeyId: 'other-key' }, { chainId: 1 }, { executionMode: 'session_key' }, { type: 'message' }]) {
+      await expect(policy.assertSigningStillAuthorized(tx, auth, { ...actual, ...mismatch })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    }
+    await expect(policy.assertSigningStillAuthorized(tx, auth, { ...actual, agentOpenfortAccountId: 'other' })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, { ...actual, digest: '0x' + '0'.repeat(64) })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 301_000);
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toBeInstanceOf(DefiPolicyDenial);
+    clock.mockRestore();
   });
 
   it('fails closed when pause state is absent', async () => {

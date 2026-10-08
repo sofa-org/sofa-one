@@ -91,6 +91,22 @@ export type DefiAuthorization = Readonly<{
   executionPlan: readonly DefiExecutionPlanNode[];
 }>;
 
+/** Separate non-contract signing authority; deliberately has no contract/ABI fields. */
+export type DefiSigningAuthorization = Readonly<{
+  context: DefiExecutionContext;
+  requiredPermission: 'canSign';
+  capabilityId: string;
+  chainId: 137;
+  executionMode: 'eoa';
+  policyHash: `0x${string}`;
+  typedDataDigest: `0x${string}`;
+  payload: Readonly<Record<string, unknown>>;
+  bindingCommitment: `0x${string}`;
+  walletAddress: string;
+  agentWalletAddress: string;
+  agentOpenfortAccountId: string;
+}>;
+
 export type DefiDeniedAudit = Readonly<{
   context?: DefiExecutionContext;
   code: string;

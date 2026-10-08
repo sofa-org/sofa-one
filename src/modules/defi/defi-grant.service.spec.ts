@@ -3,6 +3,7 @@ import { DefiGrantService } from './defi-grant.service';
 import { buildReviewedManifest } from './registry/defi-manifest';
 import { DefiChainPolicy } from './defi.types';
 import { parseAbi } from 'viem';
+import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from './signing/polymarket-clob-auth';
 
 const address = '0x0000000000000000000000000000000000000001';
 const activeCatalog: DefiChainPolicy[] = [{ chainId: 1, status: 'active', contracts: [{ address, status: 'active', functions: [{
@@ -33,6 +34,14 @@ describe('DefiGrantService', () => {
     await expect(active.assertGrantableInTx(tx as never, ['cap:active'])).resolves.toEqual(['cap:active']);
     tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['chain:1'] });
     await expect(active.assertGrantableInTx(tx as never, ['cap:active'])).rejects.toThrow();
+  });
+  it('grants the dedicated signing capability separately and honors global/chain/capability pauses', async () => {
+    const tx = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+    await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_CLOB_AUTH_CAPABILITY_ID])).resolves.toEqual([POLYMARKET_CLOB_AUTH_CAPABILITY_ID]);
+    for (const scope of ['global', 'chain:137', `capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`]) {
+      tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [scope] });
+      await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_CLOB_AUTH_CAPABILITY_ID])).rejects.toThrow();
+    }
   });
   it('fails closed with a stable unavailable code when the singleton is missing', async () => {
     const tx = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue(null) } };

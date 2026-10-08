@@ -288,6 +288,12 @@ describe('SigningPolicyService', () => {
       );
     });
 
+    it('defers successful audit when caller commits its acceptance audit atomically', async () => {
+      mockRecord.mockClear();
+      await service.assertTypedDataSigningPolicy(createTypedData({ chainId: 84532 }), { ...typedDataContext, deferAllowedAudit: true });
+      expect(mockRecord).not.toHaveBeenCalled();
+    });
+
     it('allows typed data without verifyingContract', async () => {
       const typedData = createTypedData({ chainId: 84532 });
 

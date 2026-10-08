@@ -142,7 +142,8 @@ Browser → Openfort IAM → POST /auth/session
 
 Client → POST /v1/wallets/sign (X-API-Key only)
   → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
-  → DefiPolicyService denies all message/typed-data requests with DEFI_FUNCTION_NOT_ALLOWED before hashing, SigningRequest creation, or Openfort; typed-data signing is not enabled
+   → Only exact Polymarket CLOB ClobAuth typed-data bootstrap on Polygon (137), EOA mode, with explicit polymarket:137:clob-auth:v1 grant is eligible; all other message/typed-data signing remains denied
+   → EOA isolation, destination allowlist/protection, risk/signing-policy and frozen-state checks remain enforced; grant, pause, live-key and bound-digest acceptance are rechecked at atomic SigningRequest creation before Openfort
 
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction

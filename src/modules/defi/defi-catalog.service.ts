@@ -4,6 +4,7 @@ import { DefiCatalog, DefiChainPolicy, DefiFunctionPolicy, defiPauseScopeKeysFor
 import { DEFI_MANIFEST, buildReviewedManifest, cloneDefiValue, deepFreeze, reviewedManifestHashValid } from './registry/defi-manifest';
 import type { ReviewedManifest } from './registry/defi-manifest.types';
 import { executionScopeHash } from './execution/scope';
+import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from './signing/polymarket-clob-auth';
 
 export const DEFI_CATALOG = Symbol('DEFI_CATALOG');
 
@@ -15,6 +16,7 @@ export class DefiCatalogService {
   constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService, @Inject(DEFI_MANIFEST) manifest: ReviewedManifest) {
     if (!reviewedManifestHashValid(manifest)) throw new Error('Invalid reviewed DeFi manifest hash');
     const copiedSource = deepFreeze(cloneDefiValue(source));
+    if (copiedSource.some((chain) => chain.contracts.some((contract) => contract.functions.some((fn) => fn.capabilityId === POLYMARKET_CLOB_AUTH_CAPABILITY_ID)))) throw new Error('DeFi signing capability collides with contract catalog identity');
     const sourceManifest = buildReviewedManifest([{ chains: copiedSource }]);
     const nestedManifest = buildReviewedManifest([{ chains: manifest.chains }]);
     if (sourceManifest.manifestHash !== manifest.manifestHash || nestedManifest.manifestHash !== manifest.manifestHash) throw new Error('DeFi catalog/manifest identity mismatch');
@@ -28,7 +30,7 @@ export class DefiCatalogService {
     catch { throw unavailable(); }
     if (!state) throw unavailable();
     const paused = new Set(state.pausedScopeKeys);
-    const capabilities = this.catalog.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => {
+    const capabilities: Array<Record<string, unknown>> = this.catalog.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => {
       const active = chain.status === 'active' && contract.status === 'active' && fn.status === 'active' && fn.type === 'contract_call';
       const scopeKeys = defiPauseScopeKeysForCapability(fn);
       return {
@@ -49,8 +51,11 @@ export class DefiCatalogService {
         ...(fn.executionScope ? { executionScope: { kind: fn.executionScope.kind, hash: executionScopeHash(fn.executionScope), ...(fn.executionScope.kind === 'same-target-multicall-v1' ? { allowedChildren: fn.executionScope.allowedChildren.map((child) => ({ ...child })) } : {}) } } : {}),
       };
     })));
+    capabilities.push({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, type: 'typed_data_sign', chainId: 137, label: 'Polymarket CLOB authentication', description: 'Strict ClobAuth EIP-712 attestation', protocol: 'Polymarket', operation: 'clob_auth', status: paused.has('global') || paused.has('chain:137') || paused.has(`capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`) ? 'paused' : 'active' });
     return { capabilities };
   }
+
+  signingCapability(id: string) { return id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID && !this.functionForCapability(id) ? Object.freeze({ capabilityId: id, type: 'typed_data_sign' as const, chainId: 137 as const }) : undefined; }
 
   chains(): readonly DefiChainPolicy[] { return this.catalog; }
   manifest(): ReviewedManifest { return this.reviewedManifest; }

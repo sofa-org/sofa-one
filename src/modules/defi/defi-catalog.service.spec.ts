@@ -44,9 +44,9 @@ describe('DefiCatalogService', () => {
   });
 
   it('returns authoritative paused metadata and fails closed on missing state', async () => {
-    await expect(makeService(makeCatalog(), { id: 'global', pausedScopeKeys: ['contract:1:0x0000000000000000000000000000000000000001'] }).listMetadata()).resolves.toMatchObject({ capabilities: [{ status: 'paused' }] });
+    await expect(makeService(makeCatalog(), { id: 'global', pausedScopeKeys: ['contract:1:0x0000000000000000000000000000000000000001'] }).listMetadata()).resolves.toMatchObject({ capabilities: expect.arrayContaining([expect.objectContaining({ capabilityId: fn.capabilityId, status: 'paused' }), expect.objectContaining({ capabilityId: 'polymarket:137:clob-auth:v1', type: 'typed_data_sign' })]) });
     await expect(makeService(makeCatalog(), null).listMetadata()).rejects.toMatchObject({ response: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const inactive = [{ ...makeCatalog()[0], contracts: [{ ...makeCatalog()[0].contracts[0], status: 'inactive' as const, functions: [{ ...fn, status: 'inactive' as const }] }] }];
-    await expect(makeService(inactive, { id: 'global', pausedScopeKeys: ['global'] }).listMetadata()).resolves.toMatchObject({ capabilities: [{ status: 'inactive' }] });
+    await expect(makeService(inactive, { id: 'global', pausedScopeKeys: ['global'] }).listMetadata()).resolves.toMatchObject({ capabilities: expect.arrayContaining([expect.objectContaining({ capabilityId: fn.capabilityId, status: 'inactive' }), expect.objectContaining({ capabilityId: 'polymarket:137:clob-auth:v1', status: 'paused' })]) });
   });
 });

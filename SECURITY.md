@@ -62,9 +62,21 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
-- API-key message and typed-data signing are disabled in the DeFi-policy MVP. Do not
-  re-enable signing without an explicitly reviewed signing-capability policy; no legacy
-  unrestricted key path is permitted.
+- API-key signing permits only Polymarket CLOB `ClobAuth` bootstrap typed data: EOA mode,
+  Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),
+  exact ordered `ClobAuth` fields and fixed message, selected agentWalletAddress (never the
+  embedded wallet address or funder), canonical decimal Unix timestamp within ±300 seconds,
+  and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
+  name:string, version:string, chainId:uint256. This is not order, Permit, arbitrary
+  typed/message/hash, or session-key signing.
+- The API key needs explicit `polymarket:137:clob-auth:v1` grant plus `canSign` and
+  `canUseEoaExecution`; no automatic grant exists and omission remains `[]`. Preserve EOA
+  isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live
+  key and final grant/pause/digest acceptance checks. The final live-state read does not
+  serialize against concurrent freeze writers; do not promise race-free freeze exclusion.
+  PostgreSQL race behavior and live Openfort/Polymarket outcomes remain unverified.
+  Destination protection blocks signing.
+  The exception does not imply deployment or successful live Polymarket authentication.
 - Generic API-key transaction sends require active, granted DeFi capability matches for
   every contract call. Unknown/paused/ungranted capabilities fail closed. Capability/pause
   state is revalidated in the acceptance transaction; do not make RPC/Openfort/HTTP calls

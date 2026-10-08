@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { decodeFunctionData, encodeFunctionData, isAddress, keccak256, stringToHex, toFunctionSelector } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, defiPauseScopeKeysForCapability } from './defi.types';
+import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, DefiSigningAuthorization, defiPauseScopeKeysForCapability } from './defi.types';
 import { DefiCatalogService } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
@@ -12,6 +12,7 @@ import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRo
 import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
 import { decodePusdWrapCall, isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from './execution/pusd-identity';
+import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, signingPayloadDigest, validatePolymarketClobAuth } from './signing/polymarket-clob-auth';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -64,9 +65,59 @@ export class DefiPolicyService {
     });
   }
 
-  authorizeSigning(_input: unknown, context: DefiExecutionContext): never {
-    this.deny('DEFI_FUNCTION_NOT_ALLOWED', context);
+  async authorizeSigning(input: unknown, context: DefiExecutionContext & { agentOpenfortAccountId: string; walletAddress: string; agentWalletAddress: string }): Promise<DefiSigningAuthorization> {
+    try {
+      if (context.chainId !== 137 || context.executionMode !== 'eoa' || !context.allowedCapabilityIds.includes(POLYMARKET_CLOB_AUTH_CAPABILITY_ID)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
+      const payload = validatePolymarketClobAuth(input, context.agentWalletAddress);
+      let state;
+      try { state = await this.prisma.defiPolicyState.findUnique({ where: { id: 'global' } }); }
+      catch { this.deny('DEFI_POLICY_UNAVAILABLE', context); }
+      if (!state) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
+      const policyHash = keccak256(stringToHex('polymarket-clob-auth-policy:v1'));
+      const typedDataDigest = signingPayloadDigest(payload);
+      const snapshotContext = freezeClone({ ...context, executionOwner: context.agentWalletAddress.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() }) as DefiExecutionContext;
+      const bindings = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: context.agentWalletAddress.toLowerCase(), walletAddress: context.walletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId };
+      return deepFreeze({ context: snapshotContext, requiredPermission: 'canSign' as const, capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137 as const, executionMode: 'eoa' as const, policyHash, typedDataDigest, payload, bindingCommitment: keccak256(stringToHex(JSON.stringify(bindings))), walletAddress: context.walletAddress.toLowerCase(), agentWalletAddress: context.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) throw error;
+      this.deny('DEFI_INVALID_PARAMETERS', context);
+    }
   }
+
+  async assertSigningStillAuthorized(tx: DefiDbClient, auth: DefiSigningAuthorization, actual: { userId: string; apiKeyId: string; chainId: number; executionMode: string; type: string; digest: string; walletId: string; walletAddress: string; agentWalletAddress: string; agentOpenfortAccountId: string }): Promise<void> {
+    const context = auth?.context;
+    try {
+      if (!context || !Object.isFrozen(auth) || !Object.isFrozen(auth.payload) || !Object.isFrozen(context) || !Object.isFrozen(context.allowedCapabilityIds) || auth.requiredPermission !== 'canSign' || auth.capabilityId !== POLYMARKET_CLOB_AUTH_CAPABILITY_ID || auth.chainId !== 137 || auth.executionMode !== 'eoa' || context.chainId !== 137 || context.executionMode !== 'eoa' || context.executionOwner.toLowerCase() !== auth.agentWalletAddress.toLowerCase() || !context.allowedCapabilityIds.includes(auth.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      if (actual.type !== 'typed_data' || actual.userId !== context.userId || actual.apiKeyId !== context.apiKeyId || actual.chainId !== auth.chainId || actual.executionMode !== auth.executionMode) this.deny('DEFI_INVALID_PARAMETERS', context);
+      const typed = validatePolymarketClobAuth(auth.payload, auth.agentWalletAddress);
+      const expectedDigest = signingPayloadDigest(typed);
+      const binds = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: auth.agentWalletAddress.toLowerCase(), walletAddress: auth.walletAddress.toLowerCase(), agentOpenfortAccountId: auth.agentOpenfortAccountId };
+      if (expectedDigest !== auth.typedDataDigest || auth.bindingCommitment !== keccak256(stringToHex(JSON.stringify(binds)))) this.deny('DEFI_INVALID_PARAMETERS', context);
+      await tx.$queryRaw`SELECT id FROM defi_policy_state WHERE id = 'global' FOR SHARE`;
+      await tx.$queryRaw`SELECT id FROM api_keys WHERE id = ${context.apiKeyId}::uuid FOR UPDATE`;
+      const [state, key, wallet, user] = await Promise.all([
+        tx.defiPolicyState.findUnique({ where: { id: 'global' } }),
+        tx.apiKey.findUnique({ where: { id: context.apiKeyId } }),
+        tx.userWallet.findFirst({ where: { id: context.walletId, userId: context.userId }, select: { id: true, userId: true, status: true, frozenAt: true, walletAddress: true, agentWalletAddress: true, agentOpenfortAccountId: true } }),
+        tx.user.findUnique({ where: { id: context.userId }, select: { id: true, frozenAt: true } }),
+      ]);
+      if (actual.digest !== auth.typedDataDigest || actual.walletId !== context.walletId || actual.walletAddress.toLowerCase() !== auth.walletAddress || actual.agentWalletAddress.toLowerCase() !== auth.agentWalletAddress || actual.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_INVALID_PARAMETERS', context);
+      if (!state || !key || key.userId !== context.userId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSign || !key.canUseEoaExecution || !Array.isArray(key.allowedCapabilityIds) || !key.allowedCapabilityIds.includes(auth.capabilityId) || !wallet || wallet.status !== 'active' || wallet.frozenAt || !user || user.frozenAt || wallet.walletAddress?.toLowerCase() !== auth.walletAddress || wallet.agentWalletAddress?.toLowerCase() !== auth.agentWalletAddress || wallet.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${auth.capabilityId}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
+      const descriptor = this.catalog.signingCapability(auth.capabilityId);
+      if (!descriptor || descriptor.type !== 'typed_data_sign' || descriptor.chainId !== auth.chainId || auth.policyHash !== keccak256(stringToHex('polymarket-clob-auth-policy:v1'))) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      validatePolymarketClobAuth(auth.payload, wallet.agentWalletAddress!, Date.now());
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) throw error;
+      this.deny('DEFI_POLICY_UNAVAILABLE', context);
+    }
+  }
+
+  async recordSigningAllowedInTx(tx: DefiDbClient, auth: DefiSigningAuthorization) {
+    return this.events.record({ actorType: 'api_key', eventType: 'defi.signing_capability_allowed', userId: auth.context.userId, apiKeyId: auth.context.apiKeyId, walletId: auth.context.walletId, result: 'allowed', metadata: { capabilityId: auth.capabilityId, chainId: auth.chainId, executionMode: auth.executionMode } as Prisma.InputJsonValue }, tx, { deferExport: true });
+  }
+  async exportSigningAllowed(event: unknown) { await this.events.exportCommitted(event); }
 
   /** Final READ COMMITTED acceptance check. Caller owns transaction isolation and rollback behavior. */
   async assertStillAuthorized(tx: DefiDbClient, authorization: DefiAuthorization): Promise<void> {

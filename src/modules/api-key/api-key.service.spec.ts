@@ -168,6 +168,20 @@ describe('ApiKeyService', () => {
     );
   });
 
+  it('accepts ClobAuth only through explicit create/replace grants and leaves rotation empty', async () => {
+    const capability = 'polymarket:137:clob-auth:v1';
+    const service = createService();
+    await service.createApiKey('user-1', { name: 'Clob', allowedCapabilityIds: [capability] } as any);
+    expect(grants.assertGrantableInTx).toHaveBeenCalledWith(prisma, [capability]);
+    prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
+    prisma.apiKey.update.mockResolvedValue({ id: 'key-1', allowedCapabilityIds: [capability] });
+    await service.replaceCapabilities('key-1', 'user-1', [capability]);
+    expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, [capability]);
+    prisma.apiKey.findMany.mockResolvedValue([]);
+    await service.rotateApiKey('user-1', 'Rotated');
+    expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, []);
+  });
+
   it('rejects blank API key names', async () => {
     const service = createService();
 
