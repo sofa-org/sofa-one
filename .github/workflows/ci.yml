@@ -35,6 +35,8 @@ jobs:
         run: npx eslint "{src,apps,libs,test}/**/*.ts" --max-warnings=0
 
       - name: Run unit tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run test -- --runInBand
 
       - name: Build backend
