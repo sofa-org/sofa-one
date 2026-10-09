@@ -21,6 +21,7 @@ import {
   http,
   type Hex,
   type PublicClient,
+  recoverAddress,
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
@@ -42,6 +43,10 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
 import { DefiPolicyService, DefiPolicyDenial } from '../defi';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, validatePolymarketClobOrder, polymarketDepositWalletAddress, polymarketOrderDigest, polymarketWrapperDigest, type ValidatedPolymarketOrder } from '../defi/signing/polymarket-clob-order';
+import { buildPolymarketPoly1271Envelope } from '../defi/signing/polymarket-poly1271-envelope';
+import { PolymarketDepositWalletVerifierService, type DepositWalletEvidence } from './polymarket-deposit-wallet-verifier.service';
+import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -123,6 +128,8 @@ export class WalletService {
      */
     @Optional()
     private readonly securityEvents?: SecurityEventService,
+    @Optional() private readonly polymarketVerifier?: PolymarketDepositWalletVerifierService,
+    @Optional() private readonly polymarketBudget?: PolymarketSigningBudgetService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -201,6 +208,9 @@ export class WalletService {
     const chainId: number = resolvedChainId;
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(params.executionMode);
+    const isPolymarketOrder = params.typedData?.primaryType === 'TypedDataSign';
+    if (isPolymarketOrder && (chainId !== 137 || executionMode !== 'eoa')) throw new ForbiddenException('Polymarket order signing requires EOA mode on Polygon');
+    const orderPayload: ValidatedPolymarketOrder | undefined = isPolymarketOrder ? validatePolymarketClobOrder(params.typedData) : undefined;
     const policyContext = {
       userId,
       chainId,
@@ -235,7 +245,7 @@ export class WalletService {
     if (selectedForPolicy.status !== 'active' || !selectedForPolicy.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${selectedForPolicy.status})`);
     let signingAuthorization: Awaited<ReturnType<DefiPolicyService['authorizeSigning']>>;
     try {
-      signingAuthorization = await this.defiPolicy.authorizeSigning(params.typedData, {
+      signingAuthorization = await this.defiPolicy.authorizeSigning(orderPayload ?? params.typedData, {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: selectedForPolicy.id, chainId, executionMode,
         executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,
@@ -255,11 +265,12 @@ export class WalletService {
         apiKey.canUseEoaExecution,
         'API key is not allowed to use EOA execution',
       );
-      await this.assertEoaExecutionAllowed(userId, apiKey, {
-        operation: 'sign',
-        chainId,
-        metadata: { type: params.type },
-      });
+      if (isPolymarketOrder) {
+        if (!this.eoaExecutionPolicy) throw new ForbiddenException('EOA execution policy is not available');
+        await this.eoaExecutionPolicy.assertPolymarketOrderPrerequisites({ operation: 'polymarket_order_sign', userId, apiKeyId: apiKey.id, apiKeyPrefix: apiKey.keyPrefix, allowedIps: apiKey.allowedIps, clientIp: this.requestContext?.getClientIp(), expiresAt: apiKey.expiresAt, chainId: 137, metadata: { type: 'typed_data' } });
+      } else {
+        await this.assertEoaExecutionAllowed(userId, apiKey, { operation: 'sign', chainId, metadata: { type: params.type } });
+      }
       this.logSecurityWarning({
         message: 'Privileged EOA signing requested',
         userId,
@@ -317,6 +328,11 @@ export class WalletService {
       executionMode === 'eoa' ? activeWallet.agentWalletAddress! : activeWallet.walletAddress!;
 
     const data = signingAuthorization.typedDataDigest;
+    let depositEvidence: DepositWalletEvidence | undefined;
+    if (isPolymarketOrder) {
+      if (!this.polymarketVerifier || !this.polymarketBudget || !orderPayload) throw new ServiceUnavailableException('Polymarket order signing is unavailable');
+      depositEvidence = await this.polymarketVerifier.verify(activeWallet.agentWalletAddress!, orderPayload);
+    }
 
     // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
     // policy mutations. Final requireAddressAllowlist read + SigningRequest.create
@@ -337,6 +353,8 @@ export class WalletService {
     try {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        if (isPolymarketOrder) await this.polymarketBudget!.acquireWalletLock(txClient, activeWallet.id);
+        if (isPolymarketOrder) this.polymarketVerifier!.assertFresh(depositEvidence!, activeWallet.agentWalletAddress!, orderPayload!);
         const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
         if (protectionOn) {
           throw new DeferredSigningDestinationProtectionDenial(
@@ -349,7 +367,9 @@ export class WalletService {
           digest: data, walletId: activeWallet.id, walletAddress: activeWallet.walletAddress!,
           agentWalletAddress: activeWallet.agentWalletAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
         });
-        allowedEvent = await this.defiPolicy.recordSigningAllowedInTx(txClient, signingAuthorization);
+        allowedEvent = isPolymarketOrder
+          ? await this.polymarketBudget!.recordAcceptedInTransaction(txClient, { walletId: activeWallet.id, userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix })
+          : await this.defiPolicy.recordSigningAllowedInTx(txClient, signingAuthorization);
         return txClient.signingRequest.create({
           data: {
             userId,
@@ -384,7 +404,10 @@ export class WalletService {
       }
       throw error;
     }
-    if (allowedEvent) await this.defiPolicy.exportSigningAllowed(allowedEvent);
+    if (allowedEvent) {
+      if (isPolymarketOrder) await this.polymarketBudget!.exportAccepted(allowedEvent);
+      else await this.defiPolicy.exportSigningAllowed(allowedEvent);
+    }
 
     this.logger.log(
       this.logContext({
@@ -394,7 +417,7 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
-        ...(typedDataSummary ?? {}),
+        ...(!isPolymarketOrder ? typedDataSummary ?? {} : {}),
         apiKeyPrefix: apiKey.keyPrefix,
       }),
     );
@@ -403,10 +426,22 @@ export class WalletService {
     try {
       const accountId = activeWallet.agentOpenfortAccountId!;
       const rawSignature = await this.openfort.signData(accountId, data);
+      if (isPolymarketOrder) {
+        if (!orderPayload || !depositEvidence) throw new Error('order evidence unavailable');
+        const recovered = await recoverAddress({ hash: polymarketWrapperDigest(orderPayload), signature: rawSignature as Hex });
+        if (recovered.toLowerCase() !== activeWallet.agentWalletAddress!.toLowerCase()) throw new Error('signer mismatch');
+        const envelope = buildPolymarketPoly1271Envelope(orderPayload, rawSignature as Hex);
+        this.polymarketVerifier!.assertFresh(depositEvidence, activeWallet.agentWalletAddress!, orderPayload);
+        const finalEvidence = await this.polymarketVerifier!.verify(activeWallet.agentWalletAddress!, orderPayload);
+        if (finalEvidence.codeHash.toLowerCase() !== depositEvidence.codeHash.toLowerCase()) throw new Error('deposit wallet code changed');
+        await this.polymarketVerifier!.verify1271(orderPayload, polymarketOrderDigest(orderPayload), envelope);
+        signature = rawSignature;
+      } else {
       signature =
         executionMode === 'session_key'
           ? this.wrapCaliburSignature(activeWallet.agentKeyHash!, rawSignature)
           : rawSignature;
+      }
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -418,9 +453,12 @@ export class WalletService {
           executionMode,
           apiKeyPrefix: apiKey.keyPrefix,
         }),
-        err instanceof Error ? err.stack : undefined,
+        isPolymarketOrder ? undefined : err instanceof Error ? err.stack : undefined,
       );
       await this.updateSigningRequestStatus(signingRequest.id, 'failed');
+      if (isPolymarketOrder) {
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket order signing could not be verified' });
+      }
       throw err;
     }
 

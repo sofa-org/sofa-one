@@ -62,12 +62,12 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
-- API-key signing permits only Polymarket CLOB `ClobAuth` bootstrap typed data: EOA mode,
+- API-key signing permits the exact Polymarket CLOB `ClobAuth` bootstrap typed data and the separately scoped V2 order exception below: EOA mode,
   Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),
   exact ordered `ClobAuth` fields and fixed message, selected agentWalletAddress (never the
   embedded wallet address or funder), canonical decimal Unix timestamp within ±300 seconds,
   and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
-  name:string, version:string, chainId:uint256. This is not order, Permit, arbitrary
+  name:string, version:string, chainId:uint256. ClobAuth itself is not order, Permit, arbitrary
   typed/message/hash, or session-key signing.
 - ClobAuth eligibility requires `canSign`, `canUseEoaExecution`, and either `capabilityMode: all`
   or `capabilityMode: custom` containing `polymarket:137:clob-auth:v1`. `all` dynamically
@@ -93,6 +93,10 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - Existing grant IDs intentionally gain the simplified function-level scope without a schema
   migration. Owners should review existing grants and revoke/re-grant if the broader
   authority is not intended.
+
+### Polymarket CLOB V2 order-signing safeguards
+
+The separate order exception requires explicit custom grant `polymarket:137:clob-order:v2` (`all` never grants it), EOA mode and permissions, exact `TypedDataSign`/11-field V2 Order and six-field wrapper, fixed ordinary (`0xE111180000d2663C0091e4f400237545B87B996B`) or neg-risk (`0xe2222d279d744050d28e00520010520000310F59`) exchange, and DepositWallet `signatureType:3` (POLY_1271). Reject V1/V3, types 0/1/2, arbitrary typed data, messages, and permits. Existing permission and EOA safeguards remain; strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity are required. These checks do not prove official-wallet ownership or automatically recognize an official factory. Wallet-scoped rolling 60-second limit: at most 60 accepted orders across keys, atomically reserved; failures consume reservations. This does not alter general EOA enabled/permission/IP/TTL controls or the shared original 1/60s ClobAuth/send limit. Amounts must be positive and structure valid, but there are no economic/market/price/quantity limits. ±300000ms is service signing freshness, not exchange expiry. Freeze/pause/revocation cannot revoke signed orders; failure may mean TEE signing occurred without returning the signature. Real-client/CLOB/DepositWallet end-to-end acceptance remains unverified.
 
 ## 7. Logging rules
 

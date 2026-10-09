@@ -15,7 +15,8 @@ type EoaPolicyPrismaClient = {
   };
 };
 
-export type EoaExecutionOperation = 'sign' | 'send_transaction';
+export type EoaExecutionOperation = 'sign' | 'send_transaction' | 'polymarket_order_sign';
+export type EoaPrerequisiteOperation = 'polymarket_order_sign';
 
 export type EoaExecutionPolicyContext = {
   operation: EoaExecutionOperation;
@@ -39,6 +40,37 @@ export class EoaExecutionPolicyService {
   ) {}
 
   async assertAllowed(context: EoaExecutionPolicyContext): Promise<void> {
+    await this.assertPrerequisites(context);
+
+    const recentAllowedCount = await (this.prisma as unknown as EoaPolicyPrismaClient).securityEvent.count({
+      where: {
+        apiKeyId: context.apiKeyId ?? undefined,
+        eventType: 'eoa_execution_allowed',
+        createdAt: { gt: new Date(Date.now() - EOA_EXECUTION_RATE_LIMIT_WINDOW_MS) },
+      },
+    });
+    if (recentAllowedCount >= EOA_EXECUTION_RATE_LIMIT_COUNT) {
+      await this.recordDecision(context, 'denied', 'eoa_execution_rate_limited');
+      throw new ForbiddenException('EOA execution rate limit exceeded');
+    }
+
+    await this.recordDecision(context, 'allowed', 'eoa_execution_allowed');
+  }
+
+  /**
+   * Validate EOA opt-in, IP allowlisting and short TTL without consuming the
+   * generic one-per-minute EOA budget. Only the wallet Polymarket-order path
+   * should call this method; it deliberately does not record an allowed event.
+   */
+  async assertPolymarketOrderPrerequisites(
+    context: Omit<EoaExecutionPolicyContext, 'operation'> & { operation: EoaPrerequisiteOperation },
+  ): Promise<void> {
+    await this.assertPrerequisites(context);
+  }
+
+  private async assertPrerequisites(
+    context: EoaExecutionPolicyContext,
+  ): Promise<void> {
     if (!this.isGloballyEnabled()) {
       await this.recordDecision(context, 'denied', 'eoa_execution_disabled');
       throw new ForbiddenException('EOA execution is disabled');
@@ -73,19 +105,6 @@ export class EoaExecutionPolicyService {
       throw new ForbiddenException('EOA execution requires an API key TTL of 30 days or less');
     }
 
-    const recentAllowedCount = await (this.prisma as unknown as EoaPolicyPrismaClient).securityEvent.count({
-      where: {
-        apiKeyId: context.apiKeyId ?? undefined,
-        eventType: 'eoa_execution_allowed',
-        createdAt: { gt: new Date(Date.now() - EOA_EXECUTION_RATE_LIMIT_WINDOW_MS) },
-      },
-    });
-    if (recentAllowedCount >= EOA_EXECUTION_RATE_LIMIT_COUNT) {
-      await this.recordDecision(context, 'denied', 'eoa_execution_rate_limited');
-      throw new ForbiddenException('EOA execution rate limit exceeded');
-    }
-
-    await this.recordDecision(context, 'allowed', 'eoa_execution_allowed');
   }
 
   private isGloballyEnabled(): boolean {

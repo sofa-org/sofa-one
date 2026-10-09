@@ -28,7 +28,7 @@ Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` 
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/wallets/sign` | API-key signing; only the explicitly granted Polymarket CLOB `ClobAuth` EIP-712 bootstrap on Polygon is eligible |
+| `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth bootstrap or explicitly granted CLOB V2 DepositWallet order typed data |
 | `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 
@@ -74,7 +74,7 @@ Neither mode implies signing or sending permissions. ClobAuth eligibility requir
 `polymarket:137:clob-auth:v1`; independent EOA, chain, payload, pause, destination and risk
 policies still apply.
 
-`POST /v1/wallets/sign` remains API-key-only (`canSign`). Its sole typed-data exception is
+`POST /v1/wallets/sign` remains API-key-only (`canSign`). Its ClobAuth typed-data exception is
 the Polymarket CLOB `ClobAuth` bootstrap: `type: typed_data`, `executionMode: eoa`, chain
 137, exact domain (`ClobAuthDomain`, version `1`, chainId `137`, no verifying contract or
 salt), exact `ClobAuth` primary type and ordered fields (`address`, `timestamp`, `nonce`,
@@ -94,8 +94,17 @@ state checks remain in force; destination protection may deny signing. The final
 read does not serialize against concurrent freeze writers; do not treat it as a race-free
 freeze exclusion. PostgreSQL race behavior and actual Openfort/Polymarket outcomes have not
 been verified. This signature is
-only for CLOB authentication bootstrap, never orders, Permit, arbitrary typed data/messages,
-hashes, or session-key signing. No deployment or live Polymarket outcome is guaranteed.
+only for CLOB authentication bootstrap, not orders, Permit, arbitrary typed data/messages,
+hashes, or session-key signing. The separate explicitly granted V2 order lane is described
+below. No deployment or live Polymarket outcome is guaranteed.
+
+### Polymarket CLOB V2 single-order signing
+
+The endpoint also supports continuous signing of individual Polygon (137) CLOB V2 orders; this is not a batch API. Orders require EOA mode, `canSign`, `canUseEoaExecution`, and `polymarket:137:clob-order:v2` explicitly listed under `capabilityMode: custom`. `all` does not authorize orders. Existing ClobAuth behavior remains unchanged. Only `TypedDataSign` wrapping the official V2 `Order` shape is accepted, with `signatureType: 3` (POLY_1271 / DepositWallet); V1, V3, types 0/1/2, arbitrary typed data, messages, and permits are rejected. Exchange contracts are fixed to `0xE111180000d2663C0091e4f400237545B87B996B` (ordinary) and `0xe2222d279d744050d28e00520010520000310F59` (neg-risk).
+
+The explicit custom grant and existing permissions/EOA safeguards gate orders. Strict protocol validation, Polygon chain 137 and runtime-code presence/stability checks, agent-signature recovery, and ERC-1271 validity are also required; these checks do not prove official-wallet ownership. Clients wrap the returned raw 65-byte signature according to the official SDK 1.2.0 layout before CLOB submission; no SDK installation is required and no envelope is returned. Existing deployments' `POLYMARKET_DEPOSIT_WALLET_BINDINGS` setting no longer has effect.
+
+The wallet-level rolling 60-second limit is 60 accepted orders, shared across API keys and reserved atomically at acceptance; later failures still consume a slot. There is no per-order 60-second delay. General EOA enabled/canSign/canUseEoa/IP/TTL safeguards remain unchanged; ClobAuth and transaction send retain their original shared 1-per-60-second EOA limit. The validator checks positive integer amounts, side, and structure but imposes no economic/market/price/quantity limits: explicit authorization allows every structurally valid order. Timestamp ±300,000 ms is service signing freshness, not exchange order expiry. Freeze, pause, or key revocation cannot revoke an already signed order. A failed response may mean a TEE signature was generated but not returned. Real-client/CLOB/DepositWallet end-to-end acceptance has not been verified.
 
 ## 4. Error contract
 
@@ -130,6 +139,7 @@ Common public API codes include:
 - `DEFI_CAPABILITY_PAUSED`
 - `DEFI_INVALID_PARAMETERS`
 - `DEFI_POLICY_UNAVAILABLE`
+- `POLYMARKET_SIGN_RATE_LIMITED` (includes `retryAfterSeconds`)
 
 Generic transaction sends are admitted only when every contract call matches a cataloged
 function capability explicitly granted to the API key; unknown and ungranted calls are
@@ -139,9 +149,11 @@ and user-configured key-spend policies. ERC-20 `approve` is an independent funct
 it permits any spender and any `uint256` amount, including unlimited approval, and is not
 automatically added with an action or automatically cleaned up. Catalog admission does not
 grant a capability. Generic message and typed-data signing are denied for all API keys,
-except the exact Polymarket CLOB `ClobAuth` bootstrap described above; there is no legacy
-unrestricted signing path. The bootstrap requires explicit `polymarket:137:clob-auth:v1`,
-`canSign`, and `canUseEoaExecution`, plus all signing isolation and destination controls.
+except the exact Polymarket CLOB `ClobAuth` bootstrap and separately granted V2 single-order
+signing described above; there is no legacy unrestricted signing path. The bootstrap requires
+explicit `polymarket:137:clob-auth:v1`; orders require explicit custom
+`polymarket:137:clob-order:v2`, `canSign`, and `canUseEoaExecution`, plus signing isolation and
+destination controls.
 Dedicated dashboard withdrawal and payment flows remain separate.
 
 ## 5. Public transaction example

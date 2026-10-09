@@ -10,6 +10,8 @@ import { SessionKeyModule } from '../session-key/session-key.module';
 import { BillingModule } from '../billing/billing.module';
 import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawal-destination.module';
 import { DefiModule } from '../defi/defi.module';
+import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wallet-verifier.service';
+import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 
 @Module({
   imports: [
@@ -23,6 +25,6 @@ import { DefiModule } from '../defi/defi.module';
     DefiModule,
   ],
   controllers: [WalletController],
-  providers: [WalletService, WithdrawalPolicyService, SigningPolicyService],
+  providers: [WalletService, WithdrawalPolicyService, SigningPolicyService, PolymarketDepositWalletVerifierService, PolymarketSigningBudgetService],
 })
 export class WalletModule {}

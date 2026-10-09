@@ -23,6 +23,8 @@ export type RecordSecurityEventInput = {
   result?: SecurityEventResult | null;
   reason?: string | null;
   metadata?: Prisma.InputJsonValue;
+  /** Trusted persistence timestamp (e.g. sourced from PostgreSQL clock_timestamp()). */
+  createdAt?: Date;
 };
 
 type SecurityEventClient = {
@@ -67,6 +69,7 @@ export class SecurityEventService {
         result: input.result ?? null,
         reason: input.reason ?? null,
         metadata: input.metadata ?? Prisma.JsonNull,
+        ...(input.createdAt ? { createdAt: input.createdAt } : {}),
       },
     });
 

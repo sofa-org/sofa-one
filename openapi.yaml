@@ -23,6 +23,8 @@ info:
 
     Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
+    Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires explicit custom capability `polymarket:137:clob-order:v2`; `all` does not grant it. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
+
     ## 支持的链
 
     | Chain ID | 网络 |
@@ -77,7 +79,7 @@ servers:
 
 tags:
   - name: Signing
-    description: 仅限显式授权的 Polymarket ClobAuth EIP-712 bootstrap；不支持通用消息/typed-data/hash 签名
+    description: 仅限显式授权的 Polymarket ClobAuth bootstrap 或 CLOB V2 单订单 EIP-712；不支持通用消息/typed-data/hash 签名
   - name: Transactions
     description: 交易 — 提交原始交易
 
@@ -89,11 +91,11 @@ paths:
   /v1/wallets/sign:
     post:
       tags: [Signing]
-      summary: API-key signing (Polymarket ClobAuth bootstrap only)
+      summary: API-key signing (Polymarket ClobAuth or explicitly granted CLOB V2 single order)
       description: |
-        The only signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
+        One signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
 
-        Requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. All other message/typed-data signing is denied; no raw-hash, order, Permit, arbitrary typed-data, or session-key signing is supported. EOA isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No deployment or live Polymarket outcome is guaranteed.
+        ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring the explicit custom `polymarket:137:clob-order:v2` grant; `all` does not grant it. See the order example and API.md for budget and validation constraints. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data, or session-key signing is supported. EOA isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No deployment or live Polymarket outcome is guaranteed.
 
         Dashboard-only withdrawal and payment execution are separate flows and are not affected.
 
@@ -119,7 +121,7 @@ paths:
                   executionMode: session_key
                   message: "Hello, SOFA ONE!"
               typedData:
-                summary: Polymarket CLOB ClobAuth bootstrap only
+                summary: Polymarket CLOB ClobAuth bootstrap
                 value:
                   type: typed_data
                   executionMode: eoa
@@ -145,6 +147,57 @@ paths:
                       timestamp: "<current Unix seconds as canonical decimal string>"
                       nonce: 0
                       message: "This message attests that I control the given wallet"
+              polymarketOrder:
+                summary: Single Polygon CLOB V2 DepositWallet order (explicit custom grant required)
+                value:
+                  type: typed_data
+                  executionMode: eoa
+                  chainId: 137
+                  typedData:
+                    domain:
+                      name: Polymarket CTF Exchange
+                      version: "2"
+                      chainId: 137
+                      verifyingContract: "0xE111180000d2663C0091e4f400237545B87B996B"
+                    types:
+                      Order:
+                        - { name: salt, type: uint256 }
+                        - { name: maker, type: address }
+                        - { name: signer, type: address }
+                        - { name: tokenId, type: uint256 }
+                        - { name: makerAmount, type: uint256 }
+                        - { name: takerAmount, type: uint256 }
+                        - { name: side, type: uint8 }
+                        - { name: signatureType, type: uint8 }
+                        - { name: timestamp, type: uint256 }
+                        - { name: metadata, type: bytes32 }
+                        - { name: builder, type: bytes32 }
+                      TypedDataSign:
+                        - { name: contents, type: Order }
+                        - { name: name, type: string }
+                        - { name: version, type: string }
+                        - { name: chainId, type: uint256 }
+                        - { name: verifyingContract, type: address }
+                        - { name: salt, type: bytes32 }
+                    primaryType: TypedDataSign
+                    message:
+                      contents:
+                        salt: "1"
+                        maker: "0x1111111111111111111111111111111111111111"
+                        signer: "0x1111111111111111111111111111111111111111"
+                        tokenId: "2"
+                        makerAmount: "3"
+                        takerAmount: "4"
+                        side: 0
+                        signatureType: 3
+                        timestamp: "1791547200000"
+                        metadata: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        builder: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                      name: DepositWallet
+                      version: "1"
+                      chainId: 137
+                      verifyingContract: "0x1111111111111111111111111111111111111111"
+                      salt: "0x0000000000000000000000000000000000000000000000000000000000000000"
       responses:
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -167,7 +220,7 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '403':
           description: |
-            Invalid or unsupported signing requests are denied; only the narrowly specified ClobAuth bootstrap with the explicit grant and permissions is eligible. Destination-protection denials can occur earlier.
+            Invalid or unsupported signing requests are denied; only the narrowly specified ClobAuth bootstrap or separately granted V2 single-order operation with its permissions is eligible. Destination-protection denials can occur earlier.
           content:
             application/json:
               schema:
@@ -180,11 +233,31 @@ paths:
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/wallets/sign"
         '200':
-          description: Successful ClobAuth bootstrap signature (raw EOA signature; signing is not an order submission).
+          description: Successful ClobAuth or single-order signature; raw 65-byte EOA signature only (not an order submission).
+          content:
+            application/json:
+            schema:
+              $ref: '#/components/schemas/SignResponse'
+        '429':
+          description: Wallet-level Polymarket order signing rate limit exceeded; retry after the indicated delay.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SignResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      retryAfterSeconds:
+                        type: integer
+                        minimum: 1
+              example:
+                statusCode: 429
+                code: POLYMARKET_SIGN_RATE_LIMITED
+                message: "Polymarket order signing rate limit exceeded"
+                retryAfterSeconds: 12
+                requestId: "req_..."
+                timestamp: "2026-10-09T10:00:00.000Z"
+                path: "/v1/wallets/sign"
         '503':
           description: |
             无法安全读取提现地址保护策略，因此拒绝签名（fail closed）。
@@ -401,7 +474,7 @@ components:
           description: |
             签名类型：
             - `message` — schema shape only; unsupported by this endpoint
-            - `typed_data` — only the ClobAuth shape specified on the operation is eligible
+            - `typed_data` — only the ClobAuth or separately specified V2 single-order shapes are eligible
         executionMode:
           type: string
           enum: [eoa]
@@ -418,7 +491,7 @@ components:
     EIP712TypedData:
       type: object
       required: [domain, types, primaryType, message]
-      description: Typed data; only exact ClobAuth shape described on the operation is eligible.
+      description: Typed data; only exact ClobAuth or separately specified V2 single-order shapes are eligible.
       properties:
         domain:
           type: object
@@ -456,7 +529,7 @@ components:
       properties:
         signature:
           type: string
-          description: Raw EOA signature for the only permitted ClobAuth bootstrap signing mode.
+          description: Raw EOA signature for an eligible ClobAuth bootstrap or separately granted V2 single order.
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'

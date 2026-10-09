@@ -1,7 +1,7 @@
 # Code Map for /src/modules/defi
 
 ## Responsibility
-Function-level DeFi capability catalog, API-key capability modes (`all` or `custom` exact IDs), transaction-call binding, persistent pause state, and safe audit. `all` dynamically permits active, unpaused reviewed capabilities; `custom` permits only configured IDs, with `[]` denying catalog capabilities. Neither mode bypasses permissions or other independent policies. Users accept the risks of arguments inside an authorized fixed ABI function; this layer does not impose financial amount, recipient, deadline, slippage, asset, or spender restrictions. No arbitrary calldata or automatic dependencies are authorized. Generic signing is denied; the separate Polymarket ClobAuth bootstrap requires either `all` mode or custom membership of its exact capability ID, plus signer-policy checks.
+Function-level DeFi capability catalog, API-key capability modes (`all` or `custom` exact IDs), transaction-call binding, persistent pause state, and safe audit. `all` dynamically permits active, unpaused reviewed capabilities; `custom` permits only configured IDs, with `[]` denying catalog capabilities. Neither mode bypasses permissions or other independent policies. Users accept the risks of arguments inside an authorized fixed ABI function; this layer does not impose financial amount, recipient, deadline, slippage, asset, or spender restrictions. No arbitrary calldata or automatic dependencies are authorized. Generic signing is denied except exact Polymarket ClobAuth and CLOB V2 order signing; order signing requires its exact custom grant and never follows from `all`.
 
 ## Files and flow
 - `defi.types.ts`: immutable execution, capability, match, authorization, denial, database and pause types.

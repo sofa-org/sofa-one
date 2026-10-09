@@ -9,13 +9,14 @@ Global HTTP exception formatting for the NestJS app: converts any thrown excepti
 ## Key Symbols
 - `HttpExceptionFilter` — `@Catch()` (catch-all) `ExceptionFilter<unknown>`, instantiated as a global filter in `main.ts` (line 79: `app.useGlobalFilters(new HttpExceptionFilter())`) and in e2e test bootstrap.
 - `catch(exception: unknown, host: ArgumentsHost)` — entry point called by NestJS for every uncaught exception. Reads the Express `Response`/`Request`, derives status (via `exception.getStatus()` for `HttpException`, else `500`), builds the payload, logs 5xx failures, and writes the JSON body.
-- `toPayload(status: number, exceptionResponse: string | object)` — private; normalizes the exception body into `{ code, message, details? }`.
-- `ExceptionResponse` — local type for the shape of an `HttpException` body (`code?`, `error?`, `message?: string | string[]`).
+- `toPayload(status: number, exceptionResponse: string | object)` — private; normalizes the exception body into `{ code, message, details?, retryAfterSeconds? }`.
+- `ExceptionResponse` — local type for the shape of an `HttpException` body (`code?`, `error?`, `message?: string | string[]`, optional rate-limit retry metadata).
 
 ## Inputs / Outputs
 - Input: any `exception` thrown by route handlers/guards/services plus the `ArgumentsHost` for the current request; reads `request.requestId` (set by `src/common/middleware/request-id.middleware.ts`) and `request.method`/`request.url`.
 - Output: HTTP response `{ statusCode, code, message, details? (only for validation errors), requestId, timestamp, path }`.
-  - `message` is always `sanitizeErrorMessage(...)`-cleaned; array messages collapse to `'Validation failed'` with the raw array preserved in `details`.
+- `message` is always `sanitizeErrorMessage(...)`-cleaned; array messages collapse to `'Validation failed'` with the raw array preserved in `details`.
+- Only 429 responses preserve a finite positive integer `retryAfterSeconds`; the filter writes the same value to the `Retry-After` header. Other statuses and invalid values omit it.
 - `code` resolution order: explicit `code` on the exception body → `resolveApiErrorCode(status, message)` from `src/common/errors/api-error-codes.ts` (keyword/status matching, array messages → `VALIDATION_ERROR`).
 
 ## Design/Patterns

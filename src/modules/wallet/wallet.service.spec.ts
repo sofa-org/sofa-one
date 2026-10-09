@@ -12,11 +12,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 // Must be declared before any imports that pull in viem transitively.
 const mockReadContract = jest.fn();
 const mockGetBalance = jest.fn();
+const mockRecoverAddress = jest.fn();
 
 jest.mock('viem', () => {
   const actual = jest.requireActual<typeof import('viem')>('viem');
   return {
     ...actual,
+    recoverAddress: mockRecoverAddress,
     createPublicClient: jest.fn(() => ({
       readContract: mockReadContract,
       getBalance: mockGetBalance,
@@ -49,6 +51,8 @@ import { hashTypedData } from 'viem';
 import { POLYMARKET_CLOB_AUTH_ATTESTATION, POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from '../defi/signing/polymarket-clob-auth';
 import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { buildReviewedManifest } from '../defi/registry/defi-manifest';
+import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wallet-verifier.service';
+import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -778,6 +782,12 @@ describe('WalletService.sign()', () => {
   const mockDefiAssertSigningStillAuthorized = jest.fn();
   const mockDefiRecordSigningAllowed = jest.fn();
   const mockDefiExportSigningAllowed = jest.fn();
+  const mockVerifyDepositWallet = jest.fn();
+  const mockVerify1271 = jest.fn();
+  const mockAssertEvidenceFresh = jest.fn();
+  const mockBudgetAcquire = jest.fn();
+  const mockBudgetAccept = jest.fn();
+  const mockBudgetExport = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -812,6 +822,12 @@ describe('WalletService.sign()', () => {
     mockDefiAssertSigningStillAuthorized.mockResolvedValue(undefined);
     mockDefiRecordSigningAllowed.mockResolvedValue({ id: 'allowed-event' });
     mockDefiExportSigningAllowed.mockResolvedValue(undefined);
+    mockVerifyDepositWallet.mockResolvedValue({ agent: WALLET.agentWalletAddress.toLowerCase(), deposit: WALLET.walletAddress.toLowerCase(), codeHash: `0x${'1'.repeat(64)}`, checkedAt: Date.now(), rpcFingerprint: `0x${'2'.repeat(64)}` });
+    mockVerify1271.mockResolvedValue(undefined);
+    mockAssertEvidenceFresh.mockImplementation(() => undefined);
+    mockBudgetAcquire.mockResolvedValue(undefined);
+    mockBudgetAccept.mockResolvedValue({ id: 'order-accepted' });
+    mockBudgetExport.mockResolvedValue(undefined);
     mockTransaction.mockImplementation(async (callback) =>
       callback({
         signingRequest: { create: mockSigningRequestCreate },
@@ -845,7 +861,7 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: EoaExecutionPolicyService,
-          useValue: { assertAllowed: mockAssertEoaExecutionAllowed },
+          useValue: { assertAllowed: mockAssertEoaExecutionAllowed, assertPolymarketOrderPrerequisites: jest.fn().mockResolvedValue(undefined) },
         },
         {
           provide: SessionKeyPolicyService,
@@ -870,6 +886,8 @@ describe('WalletService.sign()', () => {
           useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
         { provide: DefiPolicyService, useValue: { authorizeSigning: mockDefiAuthorizeSigning, recordDenied: mockDefiRecordDenied, assertSigningStillAuthorized: mockDefiAssertSigningStillAuthorized, recordSigningAllowedInTx: mockDefiRecordSigningAllowed, exportSigningAllowed: mockDefiExportSigningAllowed } },
+        { provide: PolymarketDepositWalletVerifierService, useValue: { verify: mockVerifyDepositWallet, assertFresh: mockAssertEvidenceFresh, verify1271: mockVerify1271 } },
+        { provide: PolymarketSigningBudgetService, useValue: { acquireWalletLock: mockBudgetAcquire, recordAcceptedInTransaction: mockBudgetAccept, exportAccepted: mockBudgetExport } },
         SigningPolicyService,
       ],
     }).compile();
@@ -944,6 +962,45 @@ describe('WalletService.sign()', () => {
     expect(result).toMatchObject({ signature: RAW_SIGNATURE, agentWalletAddress: WALLET.agentWalletAddress, executionMode: 'eoa' });
     expect(mockDefiRecordSigningAllowed).toHaveBeenCalledTimes(1);
     expect(mockDefiExportSigningAllowed).toHaveBeenCalledWith({ id: 'allowed-event' });
+  });
+
+  it('sanitizes an order-provider error containing signature/envelope material before HTTP propagation or logging', async () => {
+    const maker = WALLET.walletAddress.toLowerCase();
+    const types = {
+      Order: [{ name:'salt',type:'uint256' },{ name:'maker',type:'address' },{ name:'signer',type:'address' },{ name:'tokenId',type:'uint256' },{ name:'makerAmount',type:'uint256' },{ name:'takerAmount',type:'uint256' },{ name:'side',type:'uint8' },{ name:'signatureType',type:'uint8' },{ name:'timestamp',type:'uint256' },{ name:'metadata',type:'bytes32' },{ name:'builder',type:'bytes32' }],
+      TypedDataSign: [{ name:'contents',type:'Order' },{ name:'name',type:'string' },{ name:'version',type:'string' },{ name:'chainId',type:'uint256' },{ name:'verifyingContract',type:'address' },{ name:'salt',type:'bytes32' }],
+    };
+    const order = { salt:'1', maker, signer:maker, tokenId:'2', makerAmount:'3', takerAmount:'4', side:0, signatureType:3, timestamp:String(Date.now()), metadata:`0x${'00'.repeat(32)}`, builder:`0x${'00'.repeat(32)}` };
+    const typedData = { domain:{ name:'Polymarket CTF Exchange', version:'2', chainId:137, verifyingContract:'0xE111180000d2663C0091e4f400237545B87B996B' }, types, primaryType:'TypedDataSign', message:{ contents:order, name:'DepositWallet', version:'1', chainId:137, verifyingContract:maker, salt:`0x${'00'.repeat(32)}` } };
+    const digest = hashTypedData(typedData as any);
+    mockDefiAuthorizeSigning.mockResolvedValue({ context:{ userId:'user-1', apiKeyId:'api-key-1', walletId:'wallet-1', chainId:137, executionMode:'eoa', executionOwner:WALLET.agentWalletAddress, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'] }, requiredPermission:'canSign', capabilityId:'polymarket:137:clob-order:v2', chainId:137, executionMode:'eoa', typedDataDigest:digest, payload:typedData, walletAddress:maker.toLowerCase(), agentWalletAddress:WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId:WALLET.agentOpenfortAccountId });
+    const sentinel = 'SENTINEL_SECRET_RAW_SIGNATURE_OR_ENVELOPE';
+    mockSignData.mockRejectedValueOnce(new Error(`provider failed ${sentinel}`));
+    let thrown: any;
+    try { await service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true }); }
+    catch (error) { thrown = error; }
+    expect(thrown).toMatchObject({ status:503, response:{ code:'POLYMARKET_SIGNING_FAILED', message:'Polymarket order signing could not be verified' } });
+    expect(JSON.stringify(thrown.getResponse())).not.toContain(sentinel);
+    expect(JSON.stringify(loggerErrorSpy.mock.calls)).not.toContain(sentinel);
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({ data:expect.objectContaining({ status:'failed' }) }));
+    expect(mockAssertEvidenceFresh.mock.invocationCallOrder[0]).toBeGreaterThan(mockBudgetAcquire.mock.invocationCallOrder[0]);
+    expect(mockAssertEvidenceFresh.mock.invocationCallOrder[0]).toBeLessThan(mockDefiAssertSigningStillAuthorized.mock.invocationCallOrder.at(-1)!);
+
+    mockSignData.mockClear(); mockSigningRequestCreate.mockClear(); mockBudgetAccept.mockClear();
+    mockAssertEvidenceFresh.mockImplementationOnce(() => { throw new ServiceUnavailableException('expired'); });
+    await expect(service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true })).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(mockBudgetAccept).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+
+    mockVerifyDepositWallet.mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'1'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` })
+      .mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'3'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` });
+    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockSignData.mockResolvedValueOnce(RAW_SIGNATURE);
+    mockSigningRequestCreate.mockResolvedValue({ id:'signing-request-code-change' });
+    await expect(service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true })).rejects.toMatchObject({ response:{ code:'POLYMARKET_SIGNING_FAILED' } });
+    expect(mockVerify1271).not.toHaveBeenCalled();
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({ where:{ id:'signing-request-code-change' }, data:expect.objectContaining({ status:'failed' }) }));
   });
 
   it('wires real signing authorization through wallet acceptance and denies changed live key/pause state before persistence/provider', async () => {

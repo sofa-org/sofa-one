@@ -16,6 +16,7 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 - Uses a structural type `EoaPolicyPrismaClient` to narrow `PrismaService` to only the `securityEvent.count` query needed for rate limiting, avoiding a full Prisma client dependency surface in the service.
 - IP enforcement is delegated to the shared `IpAllowlistService` (from `SecurityEventModule`), which centralizes CIDR matching and records `api_key.ip_rejected` security events on mismatch.
 - Rate limiting counts only prior `eoa_execution_allowed` events, so denied attempts do not consume the per-key budget; the current request's `allowed` event is recorded after the count check.
+- Polymarket CLOB order acceptance uses a separate wallet-scoped rolling 60-second limit of 60, shared across API keys with atomic acceptance reservation; it does not replace or relax this general EOA gate or the existing ClobAuth/send 1-per-60-second limit.
 
 ## Flow
 - Callers: `WalletService.sign` (operation `sign`) and `TransactionsService.send` (operation `send_transaction`), both invoked only when `executionMode === 'eoa'` and after `assertPermission(apiKeyRecord.canUseEoaExecution, ...)`.

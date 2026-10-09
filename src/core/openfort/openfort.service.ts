@@ -696,7 +696,11 @@ export class OpenfortService {
         'signData',
       );
     } catch (error: any) {
-      this.logOpenfortError('signData', error);
+      this.logger.error(this.logContext({
+        message: 'Openfort signing failed',
+        operation: 'signData',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

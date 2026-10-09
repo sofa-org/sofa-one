@@ -142,7 +142,7 @@ Browser → Openfort IAM → POST /auth/session
 
 Client → POST /v1/wallets/sign (X-API-Key only)
   → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
-    → Only exact Polymarket CLOB ClobAuth typed-data bootstrap on Polygon (137), EOA mode, with canSign/canUseEoaExecution and either all capability mode or custom mode containing polymarket:137:clob-auth:v1 is eligible; all other message/typed-data signing remains denied
+    → Exact ClobAuth bootstrap retains prior authorization; single CLOB V2 order signing separately requires custom polymarket:137:clob-order:v2 (never all), exact DepositWallet envelope and Polygon chain/runtime-code/signature/ERC-1271 checks; other message/typed-data signing remains denied
    → EOA isolation, destination allowlist/protection, risk/signing-policy and frozen-state checks remain enforced; grant, pause, live-key and bound-digest acceptance are rechecked at atomic SigningRequest creation before Openfort
 
 Client → POST /v1/transactions/send (X-API-Key only)

@@ -5,6 +5,7 @@ import { DEFI_MANIFEST, buildReviewedManifest, cloneDefiValue, deepFreeze, revie
 import type { ReviewedManifest } from './registry/defi-manifest.types';
 import { executionScopeHash } from './execution/scope';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from './signing/polymarket-clob-auth';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID } from './signing/polymarket-clob-order';
 
 export const DEFI_CATALOG = Symbol('DEFI_CATALOG');
 
@@ -16,7 +17,7 @@ export class DefiCatalogService {
   constructor(@Inject(DEFI_CATALOG) source: DefiCatalog, private readonly prisma: PrismaService, @Inject(DEFI_MANIFEST) manifest: ReviewedManifest) {
     if (!reviewedManifestHashValid(manifest)) throw new Error('Invalid reviewed DeFi manifest hash');
     const copiedSource = deepFreeze(cloneDefiValue(source));
-    if (copiedSource.some((chain) => chain.contracts.some((contract) => contract.functions.some((fn) => fn.capabilityId === POLYMARKET_CLOB_AUTH_CAPABILITY_ID)))) throw new Error('DeFi signing capability collides with contract catalog identity');
+    if (copiedSource.some((chain) => chain.contracts.some((contract) => contract.functions.some((fn) => [POLYMARKET_CLOB_AUTH_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_CAPABILITY_ID].includes(fn.capabilityId))))) throw new Error('DeFi signing capability collides with contract catalog identity');
     const sourceManifest = buildReviewedManifest([{ chains: copiedSource }]);
     const nestedManifest = buildReviewedManifest([{ chains: manifest.chains }]);
     if (sourceManifest.manifestHash !== manifest.manifestHash || nestedManifest.manifestHash !== manifest.manifestHash) throw new Error('DeFi catalog/manifest identity mismatch');
@@ -52,10 +53,11 @@ export class DefiCatalogService {
       };
     })));
     capabilities.push({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, type: 'typed_data_sign', chainId: 137, label: 'Polymarket CLOB authentication', description: 'Strict ClobAuth EIP-712 attestation', protocol: 'Polymarket', operation: 'clob_auth', status: paused.has('global') || paused.has('chain:137') || paused.has(`capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`) ? 'paused' : 'active' });
+    capabilities.push({ capabilityId: POLYMARKET_CLOB_ORDER_CAPABILITY_ID, type: 'typed_data_sign', chainId: 137, label: 'Polymarket CLOB order signing', description: 'Explicitly grantable DepositWallet POLY1271 order signing; broad economic authority. Pausing does not revoke signatures already accepted.', protocol: 'Polymarket', operation: 'clob_order', warnings: ['Broad economic authority; grant explicitly. Not automatically enabled by all mode.', 'Pause does not revoke signatures already accepted.'], status: paused.has('global') || paused.has('chain:137') || paused.has(`capability:${POLYMARKET_CLOB_ORDER_CAPABILITY_ID}`) ? 'paused' : 'active' });
     return { capabilities };
   }
 
-  signingCapability(id: string) { return id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID && !this.functionForCapability(id) ? Object.freeze({ capabilityId: id, type: 'typed_data_sign' as const, chainId: 137 as const }) : undefined; }
+  signingCapability(id: string) { return (id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID || id === POLYMARKET_CLOB_ORDER_CAPABILITY_ID) && !this.functionForCapability(id) ? Object.freeze({ capabilityId: id, type: 'typed_data_sign' as const, chainId: 137 as const }) : undefined; }
 
   chains(): readonly DefiChainPolicy[] { return this.catalog; }
   manifest(): ReviewedManifest { return this.reviewedManifest; }
