@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { randomBytes } from 'crypto';
 import { Client as Pg } from 'pg';
+type PgClient = Pg;
 import { encodeFunctionData, parseAbi } from 'viem';
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
@@ -10,6 +11,7 @@ jest.mock('../src/core/openfort/openfort.service', () => ({
 
 import { TransactionsService } from '../src/modules/transactions/transactions.service';
 import { TransactionPolicyService } from '../src/modules/transactions/transaction-policy.service';
+import { extractDirectTransferIntents, uniqueDirectTransferDestinations } from '../src/modules/transactions/direct-transfer-intents';
 import {
   applyBillingE2eDatabaseUrl,
   assertBillingE2eDatabaseIdentity,
@@ -177,6 +179,9 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
       destinationPolicy as never, policyService,
       events as never,
     );
+    const extraction = extractDirectTransferIntents(authorization.interactions as any, authorization.context.executionOwner);
+    if (!extraction.ok) throw new Error('Invalid destination fixture');
+    const directDestinations = uniqueDirectTransferDestinations(extraction.intents);
     return (idempotencyKey = randomBytes(12).toString('hex')) =>
       (service as any).createPendingOrReturnExisting(userId, {
         apiKeyId: keyId,
@@ -193,15 +198,18 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
         details: { interactionCount: 1, nativeValueWei: authorization.interactions.reduce((sum, interaction) => sum + BigInt(interaction.value ?? '0'), 0n).toString(), walletId, executionMode: authorization.context.executionMode },
         destinationGate: {
           userId,
-          destinations: ['0x2222222222222222222222222222222222222222'],
-          intents: [],
-          fullyProvenDirectEgress: true,
-          notProven: [],
+          destinations: directDestinations,
+          directDestinations,
+          wrapRecipients: [],
+          intents: extraction.intents,
+          fullyProvenDirectEgress: authorization.interactions.length > 0 && extraction.notProven.length === 0 && extraction.intents.length === authorization.interactions.length,
+          notProven: extraction.notProven,
           chainId: authorization.context.chainId,
           walletId,
           apiKeyId: keyId,
           apiKeyPrefix: `sk_${suiteId.padEnd(24, 'a').slice(0, 24)}`,
           executionMode: 'session_key',
+          restrictedWrap: false,
         },
         defiAuthorization: authorization,
       });

@@ -1810,7 +1810,11 @@ describe('TransactionsService', () => {
         POLYMARKET_PUSD_WRAP_IDENTITY.asset as Hex, recipient as Hex, 10n,
       ] }), value: '0',
     });
-    const wrapDto = (recipient: string, key: string) => ({ ...dto, chainId: 137, interactions: [wrapCall(recipient)], idempotencyKey: key });
+    const wrapDto = (recipient: string, key: string, interactions: any[] = [wrapCall(recipient)]) => ({ ...dto, chainId: 137, interactions, idempotencyKey: key });
+
+    beforeEach(() => {
+      destinationPolicy.assertDestinationsAllowed.mockReset().mockResolvedValue(undefined);
+    });
 
     it('protection off and missing policy preserve arbitrary recipient behavior', async () => {
       prisma.withdrawalPolicy.findUnique.mockResolvedValueOnce(null);
@@ -1825,6 +1829,36 @@ describe('TransactionsService', () => {
       await service.send('user-1', wrapDto(EXTERNAL, 'pusd-on-1') as any, apiKeyContext);
       expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase()], expect.any(Object));
       expect(prisma.transaction.create).toHaveBeenCalled();
+    });
+
+    it.each([false, true])('checks all destinations for a wrap plus a direct transfer (wrap first: %s)', async (wrapFirst) => {
+      enableDestinationProtection();
+      const directRecipient = '0x2222222222222222222222222222222222222222';
+      const direct = { to: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', data: encodeFunctionData({ abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] }], functionName: 'transfer', args: [directRecipient as Hex, 1n] }), value: '0' };
+      const interactions = wrapFirst ? [wrapCall(EXTERNAL), direct] : [direct, wrapCall(EXTERNAL)];
+      await service.send('user-1', wrapDto(EXTERNAL, `pusd-mixed-${wrapFirst}`, interactions) as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [directRecipient, EXTERNAL.toLowerCase()], expect.any(Object));
+    });
+
+    it('does not let a wrap whitelist an unrelated unknown call when protection is enabled', async () => {
+      enableDestinationProtection();
+      const unrelated = { to: POLYMARKET_PUSD_WRAP_IDENTITY.contract, data: '0x12345678' as Hex, value: '0' };
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-mixed-unproven', [wrapCall(EXTERNAL), unrelated]) as any, apiKeyContext)).rejects.toThrow(/Unproven asset outflow/);
+      expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    });
+
+    it('checks every recipient for multiple top-level wraps and rejects incomplete final recipient metadata', async () => {
+      enableDestinationProtection();
+      const second = '0x3333333333333333333333333333333333333333';
+      const interactions = [wrapCall(EXTERNAL), wrapCall(second)];
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-multi-wrap', interactions) as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase(), second], expect.any(Object));
+
+      const original = (service as any).createPendingOrReturnExisting.bind(service);
+      jest.spyOn(service as any, 'createPendingOrReturnExisting').mockImplementation((userId: string, params: any) =>
+        original(userId, { ...params, destinationGate: { ...params.destinationGate, wrapRecipients: [EXTERNAL.toLowerCase()], destinations: [EXTERNAL.toLowerCase()] } }));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-omitted-recipient', interactions) as any, apiKeyContext))
+        .rejects.toThrow(/Destination classification is inconsistent/);
     });
 
     it('protection on denies unavailable, absent, or cooling destinations, including self, before insert/broadcast', async () => {
@@ -1861,7 +1895,7 @@ describe('TransactionsService', () => {
           return original(userId, { ...params, destinationGate: forged });
         });
         await expect(service.send('user-1', wrapDto(EXTERNAL, `pusd-forged-${mutation}`) as any, apiKeyContext))
-          .rejects.toThrow(/Restricted wrap destination classification is inconsistent/);
+          .rejects.toThrow(/Destination classification is inconsistent/);
         expect(prisma.transaction.create).not.toHaveBeenCalled();
         expect(openfort.sendUserOperation).not.toHaveBeenCalled();
       },

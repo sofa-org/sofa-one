@@ -66,11 +66,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       value: '0',
     };
     const gate: any = {
-      userId: user.id, destinations: [DEST], intents: [], fullyProvenDirectEgress: false, notProven: [],
+      userId: user.id, destinations: [DEST], directDestinations: [], wrapRecipients: [DEST], intents: [], fullyProvenDirectEgress: true, notProven: [],
       chainId: 137, walletId: 'wallet-unused', apiKeyId: key.id, apiKeyPrefix: key.keyPrefix,
       executionMode: 'session_key', restrictedWrap: true,
     };
-    const authorization: any = { interactions: [interaction] };
+    const authorization: any = { interactions: [interaction], context: { executionOwner: '0x1111111111111111111111111111111111111111' } };
     const createParams: any = {
       apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, operationType: 'send', idempotencyKey: `pusd-${suffix}`,
       chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: 'wallet-unused',
@@ -155,9 +155,9 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: 'wallet-unused',
       walletAddress: '0x1111111111111111111111111111111111111111', executionMode: 'session_key',
       details: { type: 'send', walletId: 'wallet-unused', executionMode: 'session_key' },
-      destinationGate: { userId: user.id, destinations: [DEST], intents: [], fullyProvenDirectEgress: false, notProven: [], chainId: 137,
+      destinationGate: { userId: user.id, destinations: [DEST], directDestinations: [], wrapRecipients: [DEST], intents: [], fullyProvenDirectEgress: true, notProven: [], chainId: 137,
         walletId: 'wallet-unused', apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, executionMode: 'session_key', restrictedWrap: true },
-      defiAuthorization: { interactions: [interaction] }, nativeValueWei: '0',
+      defiAuthorization: { interactions: [interaction], context: { executionOwner: '0x1111111111111111111111111111111111111111' } }, nativeValueWei: '0',
     };
     const lockKey = LOCK(user.id);
     try {

@@ -53,7 +53,7 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
-import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization, type DefiInteraction } from '../defi';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { decodePusdWrapCall } from '../defi/execution/pusd-identity';
 
@@ -115,6 +115,8 @@ type ApiKeyTransactionContext = {
 type DestinationGateContext = {
   userId: string;
   destinations: string[];
+  directDestinations: string[];
+  wrapRecipients: string[];
   intents: DirectTransferIntent[];
   /**
    * BILL-016 conservative: every interaction is a proven direct-egress intent.
@@ -130,6 +132,32 @@ type DestinationGateContext = {
   executionMode: ExecutionMode;
   restrictedWrap: boolean;
 };
+
+function classifyDestinations(interactions: readonly { to: string; data: string; value?: string | number | bigint }[], owner: string, chainId: number) {
+  const extracted = extractDirectTransferIntents(interactions as any, owner);
+  if (!extracted.ok) throw new BadRequestException(extracted.message);
+  const wraps: { index: number; recipient: string }[] = [];
+  interactions.forEach((interaction, index) => {
+    try {
+      const wrap = decodePusdWrapCall(chainId, interaction);
+      if (wrap) wraps.push({ index, recipient: wrap.recipient.toLowerCase() });
+    } catch { throw new BadRequestException('Invalid restricted wrap call'); }
+  });
+  const wrappedIndexes = new Set(wraps.map(({ index }) => index));
+  const notProven = extracted.notProven.filter(({ interactionIndex }) => !wrappedIndexes.has(interactionIndex));
+  const directDestinations = uniqueDirectTransferDestinations(extracted.intents);
+  const wrapRecipients = [...new Set(wraps.map(({ recipient }) => recipient))];
+  const destinations = [...new Set([...directDestinations, ...wrapRecipients])];
+  return {
+    intents: extracted.intents,
+    notProven,
+    directDestinations,
+    wrapRecipients,
+    destinations,
+    restrictedWrap: wraps.length > 0,
+    fullyProvenDirectEgress: interactions.length > 0 && notProven.length === 0 && extracted.intents.length + wraps.length === interactions.length,
+  };
+}
 
 function sameDefiInteractions(
   requested: readonly { to: string; data: string; value?: string | number | bigint }[],
@@ -344,36 +372,15 @@ export class TransactionsService {
     // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
     // Completeness is per-interaction: notProven entries are never dropped.
     // Self-transfers / non-owner transferFrom / empty / unknown are not proven.
-    const destinationExtract = extractDirectTransferIntents(
-      authorizedInteractions,
-      assetFlowOwnerAddress,
-    );
-    if (!destinationExtract.ok) {
-      throw new BadRequestException(destinationExtract.message);
-    }
-    const destinations = uniqueDirectTransferDestinations(destinationExtract.intents);
-    let restrictedWrap = false;
-    if (authorizedInteractions.length === 1) {
-      try {
-        const wrap = decodePusdWrapCall(chainId, authorizedInteractions[0]);
-        if (wrap) {
-          restrictedWrap = true;
-          destinations.splice(0, destinations.length, wrap.recipient);
-        }
-      } catch { throw new BadRequestException('Invalid restricted wrap call'); }
-    }
+    const classified = classifyDestinations(authorizedInteractions, assetFlowOwnerAddress, chainId);
     const destinationGate: DestinationGateContext = {
       userId,
-      destinations,
-      intents: destinationExtract.intents,
-      fullyProvenDirectEgress: destinationExtract.fullyProvenDirectEgress,
-      notProven: destinationExtract.notProven,
+      ...classified,
       chainId,
       walletId: wallet.id,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
       executionMode,
-      restrictedWrap,
     };
 
     // Destination protection (requireAddressAllowlist) only tightens the generic
@@ -381,7 +388,7 @@ export class TransactionsService {
     // When disabled: preserve legacy product semantics (only gate proven destinations).
     const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
     if (destinationProtectionEnabled) {
-      if (!destinationGate.fullyProvenDirectEgress && !destinationGate.restrictedWrap) {
+      if (!classified.fullyProvenDirectEgress) {
         await this.throwUnprovenAssetOutflowBlocked(destinationGate);
       }
       this.assertDirectEgressReauthorized(apiKeyRecord);
@@ -393,9 +400,9 @@ export class TransactionsService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
         executionMode,
       });
-    } else if (!destinationGate.restrictedWrap && destinationGate.destinations.length > 0) {
+    } else if (classified.directDestinations.length > 0) {
       this.assertDirectEgressReauthorized(apiKeyRecord);
-      await this.destinationPolicy.assertDestinationsAllowed(userId, destinationGate.destinations, {
+      await this.destinationPolicy.assertDestinationsAllowed(userId, classified.directDestinations, {
         actorType: 'api_key',
         chainId,
         walletId: wallet.id,
@@ -938,23 +945,17 @@ export class TransactionsService {
           return { tx: existingInTx, created: false };
         }
 
-        // Recompute restricted-wrap identity before consulting the optional
-        // destination gate. A missing/stale/forged outer classification must
-        // never bypass the final destination policy.
         const authorized = params.defiAuthorization?.interactions;
-        let finalWrapRecipient: string | undefined;
-        if (authorized?.length === 1) {
-          try { finalWrapRecipient = decodePusdWrapCall(params.chainId, authorized[0])?.recipient; }
-          catch { throw new BadRequestException('Invalid restricted wrap call'); }
-        }
-        if (finalWrapRecipient && (!params.destinationGate || !params.destinationGate.restrictedWrap
-          || params.destinationGate.destinations.length !== 1
-          || params.destinationGate.destinations[0].toLowerCase() !== finalWrapRecipient)) {
-          throw new BadRequestException('Restricted wrap destination classification is inconsistent');
-        }
-        if (params.destinationGate?.restrictedWrap && !finalWrapRecipient) {
-          throw new BadRequestException('Restricted wrap destination classification is inconsistent');
-        }
+        if (!authorized || !params.defiAuthorization?.context?.executionOwner || !params.destinationGate) throw new BadRequestException('Destination classification is inconsistent');
+        const finalClassification = classifyDestinations(authorized, params.defiAuthorization.context.executionOwner, params.chainId);
+        const gate = params.destinationGate;
+        const equivalent = ['destinations', 'directDestinations', 'wrapRecipients', 'intents', 'notProven'].every((key) => JSON.stringify((gate as any)[key]) === JSON.stringify((finalClassification as any)[key]))
+          && gate.restrictedWrap === finalClassification.restrictedWrap
+          && gate.fullyProvenDirectEgress === finalClassification.fullyProvenDirectEgress
+          && gate.userId === userId && gate.chainId === params.chainId
+          && gate.walletId === params.walletId && gate.apiKeyId === params.apiKeyId
+          && gate.executionMode === params.executionMode;
+        if (!equivalent) throw new BadRequestException('Destination classification is inconsistent');
 
         // BILL-016: user-scoped destination lock + live protection/reauth +
         // destination re-assert before insert. Never trust the HTTP-auth snapshot
@@ -964,15 +965,11 @@ export class TransactionsService {
         let needsDirectEgressKeyState = false;
         if (params.destinationGate) {
           const gate = params.destinationGate;
-          // Derive the specialized recipient from the exact live authorization
-          // snapshot at acceptance; never trust a cached outer classification.
-          const wrapRecipient = finalWrapRecipient;
-          const destinations = wrapRecipient ? [wrapRecipient] : gate.destinations;
-          const fullyProven = wrapRecipient ? true : gate.fullyProvenDirectEgress;
+          const destinations = finalClassification.destinations;
           await this.destinationPolicy.acquireUserDestinationLock(userId, txClient);
           const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
           if (protectionOn) {
-            if (!fullyProven) {
+            if (!finalClassification.fullyProvenDirectEgress) {
               await this.throwUnprovenAssetOutflowBlocked(gate, { deferAudit: true });
             }
             needsDirectEgressKeyState = true;
@@ -991,11 +988,11 @@ export class TransactionsService {
               },
               { prisma: txClient, deferAudit: true },
             );
-          } else if (!wrapRecipient && destinations.length > 0) {
+          } else if (finalClassification.directDestinations.length > 0) {
             needsDirectEgressKeyState = true;
             await this.destinationPolicy.assertDestinationsAllowed(
               userId,
-              destinations,
+              finalClassification.directDestinations,
               {
                 actorType: 'api_key',
                 chainId: gate.chainId,

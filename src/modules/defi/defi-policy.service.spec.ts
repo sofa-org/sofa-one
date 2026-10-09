@@ -237,9 +237,13 @@ describe('DefiPolicyService', () => {
       policy: { ref: 'fixture', version: 1 }, status: 'active',
       provenance: { sourceRef: 'fixture verified ABI', verifiedAt: '2026-01-01', status: 'verified' },
     };
-    const chain: DefiChainPolicy[] = [{ chainId: 137, status: 'active', contracts: [{ address: wrapFn.contract, status: 'active', functions: [wrapFn] }] }];
+    const otherFn: any = { ...catalog[0].contracts[0].functions[0], chainId: 137 };
+    const chain: DefiChainPolicy[] = [{ chainId: 137, status: 'active', contracts: [
+      { address: wrapFn.contract, status: 'active', functions: [wrapFn] },
+      { address: otherFn.contract, status: 'active', functions: [otherFn] },
+    ] }];
     const wrapManifest = buildReviewedManifest([{ chains: chain }]);
-    const wrapContext: DefiExecutionContext = { ...ctx, chainId: 137, allowedCapabilityIds: [wrapFn.capabilityId] };
+    const wrapContext: DefiExecutionContext = { ...ctx, chainId: 137, allowedCapabilityIds: [wrapFn.capabilityId, otherFn.capabilityId] };
     const call = (asset: string = POLYMARKET_PUSD_WRAP_IDENTITY.asset, recipient: string = OTHER, amount = 9n, value?: string): DefiInteraction => ({
       to: wrapFn.contract,
       data: encodeFunctionData({ abi: POLYMARKET_PUSD_WRAP_ABI, functionName: 'wrap', args: [asset as `0x${string}`, recipient as `0x${string}`, amount] }),
@@ -266,9 +270,15 @@ describe('DefiPolicyService', () => {
         .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
     });
 
-    it('rejects mixed top-level calls and wrap hidden inside a scope', async () => {
-      await expect(makeWrapPolicy().authorizeContractCalls([call(), { to: ADDRESS, data: touch() }], wrapContext))
-        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    it('authorizes mixed top-level calls independently in both orders; missing grant or pause on either call denies', async () => {
+      const otherCall = { to: otherFn.contract, data: touch() };
+      for (const interactions of [[call(), otherCall], [otherCall, call()]] as const) {
+        await expect(makeWrapPolicy().authorizeContractCalls(interactions, wrapContext)).resolves.toMatchObject({ matches: expect.arrayContaining([expect.objectContaining({ capabilityId: wrapFn.capabilityId }), expect.objectContaining({ capabilityId: otherFn.capabilityId })]) });
+      }
+      await expect(makeWrapPolicy().authorizeContractCalls([call(), otherCall], { ...wrapContext, allowedCapabilityIds: [wrapFn.capabilityId] }))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(makeWrapPolicy([`capability:${otherFn.capabilityId}`]).authorizeContractCalls([call(), otherCall], wrapContext))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
       const scoped: any = { ...wrapFn, executionScope: { kind: 'empty-callback-data-v1', bytesArgIndex: 0 } };
       const badChain: DefiChainPolicy[] = [{ chainId: 137, status: 'active', contracts: [{ address: scoped.contract, status: 'active', functions: [scoped] }] }];
       expect(() => buildReviewedManifest([{ chains: badChain }])).toThrow(/Invalid Polymarket pUSD wrap identity/);
