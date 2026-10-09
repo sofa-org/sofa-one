@@ -23,6 +23,10 @@ info:
 
     Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
+    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/me/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。Wallet 列表只返回当前 key 所属用户的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
+
+    Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires explicit custom capability `polymarket:137:clob-order:v2`; `all` does not grant it. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
+
     ## 支持的链
 
     | Chain ID | 网络 |
@@ -57,13 +61,7 @@ info:
         }]
       }'
 
-    # 2. 签名一条消息
-    curl -X POST https://api.example.com/v1/wallets/sign \
-      -H "X-API-Key: sk_your_key_here" \
-      -H "Content-Type: application/json" \
-      -d '{"type": "message", "chainId": 84532, "message": "Hello from SOFA ONE"}'
-
-    # 3. 查询交易状态
+    # 2. 查询交易状态
     curl https://api.example.com/v1/transactions/b2c3d4e5-f6a7-8901-bcde-f12345678901 \
       -H "X-API-Key: sk_your_key_here" \
       -H "User-Agent: my-service/1.0"
@@ -83,7 +81,7 @@ servers:
 
 tags:
   - name: Signing
-    description: 数据签名 — 支持 EIP-191 / EIP-712；原始哈希签名已禁用
+    description: 仅限显式授权的 Polymarket ClobAuth bootstrap 或 CLOB V2 单订单 EIP-712；不支持通用消息/typed-data/hash 签名
   - name: Transactions
     description: 交易 — 提交原始交易
 
@@ -91,28 +89,93 @@ security:
   - ApiKeyAuth: []
 
 paths:
+  /v1/permissions:
+    get:
+      tags: [API key]
+      summary: 查看 API key 的配置权限与约束
+      description: |
+        只读配置快照，不执行权限判定，也不保证签名、交易或其他操作实际可执行。此端点仅需有效 `X-API-Key`，不要求任何 `can*` permission；API-key auth 现有冻结、IP allowlist、计费等 guard 仍照常执行。`capabilities.mode=all` 表示动态适用当前可用 catalog capabilities；`custom` 使用精确配置的 ID，空 `allowedIds` 不授予 catalog capabilities。Capabilities 仅为配置，不替代独立 permissions 或安全策略。
+      operationId: getApiKeyPermissions
+      responses:
+        '200':
+          description: 当前 API key 的配置快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyPermissionsResponse'
+              example:
+                snapshotAt: '2026-10-09T10:00:00.000Z'
+                evaluation: configured
+                permissions: { canSign: false, canSendTransaction: false, canReadTransactionStatus: true, canUseEoaExecution: false }
+                capabilities: { mode: all, allowedIds: [] }
+                constraints: { expiresAt: null, allowedIps: [], spendLimits: { daily: null, monthly: null } }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/capabilities:
+    get:
+      tags: [API key]
+      summary: 按 ID 查询 catalog capability 定义
+      description: |
+        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。该路由返回定义而非授权，不会给 API key 授予 capability。`ids` 必填，为逗号分隔的 1–100 个 ID；每项 trim 后不得为空、不得重复，且最多 256 个字符。整个 query 最长为 25700 个字符。未知 ID 不报错，返回 HTTP 200，并按请求顺序分别列入 `unknownIds`；已知 capabilities 也按请求 ID 顺序返回。
+      operationId: getCapabilitiesById
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: 1–100 个逗号分隔的 capability ID；trim 后非空且唯一，每项最多 256 字符。
+          schema:
+            type: string
+            maxLength: 25700
+          example: id1,id2
+      responses:
+        '200':
+          description: 查询结果；未知 ID 保留在 unknownIds 中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesLookupResponse'
+        '400':
+          description: ids 缺失、数量越界、ID 空/重复/过长或 query 超长
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/me/wallets:
+    get:
+      tags: [API key]
+      summary: 列出当前 API-key 用户的钱包
+      description: |
+        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。只返回当前 key 所属用户的钱包安全元数据及链授权信息，不返回 Openfort 内部 ID；不包含余额，也不执行链上实时验证。
+      operationId: getMyWallets
+      responses:
+        '200':
+          description: 当前用户的钱包安全元数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyWalletsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   # ──────────────────────────── Signing ────────────────────────────
   /v1/wallets/sign:
     post:
       tags: [Signing]
-      summary: 签名数据
+      summary: API-key signing (Polymarket ClobAuth or explicitly granted CLOB V2 single order)
       description: |
-        使用用户的 backend wallet 对数据进行离线签名（不广播交易）。此端点只接受 `X-API-Key`，不接受 Openfort IAM Bearer token。
+        One signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
 
-        `executionMode` 可选：默认 `session_key`，使用已授权的 Backend Agent Signer，并返回面向用户 EIP-7702 delegated EOA 的 Calibur wrapped signature；`eoa` 使用服务端 backend wallet 直接签名，返回普通 EOA signature。
+        ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring the explicit custom `polymarket:137:clob-order:v2` grant; `all` does not grant it. See the order example and API.md for budget and validation constraints. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data, or session-key signing is supported. EOA isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No deployment or live Polymarket outcome is guaranteed.
 
-        支持两种签名类型。出于安全原因，原始 hash 签名不开放：
+        Dashboard-only withdrawal and payment execution are separate flows and are not affected.
 
         | type | 说明 | 必填字段 |
         |------|------|----------|
         | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
         | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData`；如同时传 `chainId` 必须一致 |
 
-        当用户启用提现地址保护（`WithdrawalPolicy.requireAddressAllowlist=true`）时，本端点对所有 `message`/`typed_data` 与 `session_key`/`eoa` 组合 fail-closed 拒绝（`SIGNING_BLOCKED_BY_DESTINATION_PROTECTION`）。
-        空 allowlist、已放行合约、冷却中地址或 reauth 状态均不能绕过。策略查询失败返回 503。
-        启用保护前已受理并进入 Openfort 的签名不在撤销范围内。
-
-        `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
+        Destination-protection preflight is preserved and may deny earlier. A `walletId` may be supplied as normal request context.
       operationId: signData
       requestBody:
         required: true
@@ -122,41 +185,91 @@ paths:
               $ref: '#/components/schemas/SignRequest'
             examples:
               message:
-                summary: 签名纯文本消息
+                summary: Unsupported example — message signing is denied
                 value:
                   type: message
                   chainId: 84532
                   executionMode: session_key
                   message: "Hello, SOFA ONE!"
               typedData:
-                summary: 签名 EIP-712 结构化数据
+                summary: Polymarket CLOB ClobAuth bootstrap
                 value:
                   type: typed_data
+                  executionMode: eoa
+                  chainId: 137
                   typedData:
                     domain:
-                      name: "MyDApp"
+                      name: ClobAuthDomain
                       version: "1"
-                      chainId: 84532
+                      chainId: 137
                     types:
-                      Person:
-                        - { name: "name", type: "string" }
-                        - { name: "wallet", type: "address" }
-                    primaryType: "Person"
+                      EIP712Domain:
+                        - { name: name, type: string }
+                        - { name: version, type: string }
+                        - { name: chainId, type: uint256 }
+                      ClobAuth:
+                        - { name: address, type: address }
+                        - { name: timestamp, type: string }
+                        - { name: nonce, type: uint256 }
+                        - { name: message, type: string }
+                    primaryType: ClobAuth
                     message:
-                      name: "Alice"
-                      wallet: "0x1234567890abcdef1234567890abcdef12345678"
+                      address: "<selected wallet agentWalletAddress>"
+                      timestamp: "<current Unix seconds as canonical decimal string>"
+                      nonce: 0
+                      message: "This message attests that I control the given wallet"
+              polymarketOrder:
+                summary: Single Polygon CLOB V2 DepositWallet order (explicit custom grant required)
+                value:
+                  type: typed_data
+                  executionMode: eoa
+                  chainId: 137
+                  typedData:
+                    domain:
+                      name: Polymarket CTF Exchange
+                      version: "2"
+                      chainId: 137
+                      verifyingContract: "0xE111180000d2663C0091e4f400237545B87B996B"
+                    types:
+                      Order:
+                        - { name: salt, type: uint256 }
+                        - { name: maker, type: address }
+                        - { name: signer, type: address }
+                        - { name: tokenId, type: uint256 }
+                        - { name: makerAmount, type: uint256 }
+                        - { name: takerAmount, type: uint256 }
+                        - { name: side, type: uint8 }
+                        - { name: signatureType, type: uint8 }
+                        - { name: timestamp, type: uint256 }
+                        - { name: metadata, type: bytes32 }
+                        - { name: builder, type: bytes32 }
+                      TypedDataSign:
+                        - { name: contents, type: Order }
+                        - { name: name, type: string }
+                        - { name: version, type: string }
+                        - { name: chainId, type: uint256 }
+                        - { name: verifyingContract, type: address }
+                        - { name: salt, type: bytes32 }
+                    primaryType: TypedDataSign
+                    message:
+                      contents:
+                        salt: "1"
+                        maker: "0x1111111111111111111111111111111111111111"
+                        signer: "0x1111111111111111111111111111111111111111"
+                        tokenId: "2"
+                        makerAmount: "3"
+                        takerAmount: "4"
+                        side: 0
+                        signatureType: 3
+                        timestamp: "1791547200000"
+                        metadata: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        builder: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                      name: DepositWallet
+                      version: "1"
+                      chainId: 137
+                      verifyingContract: "0x1111111111111111111111111111111111111111"
+                      salt: "0x0000000000000000000000000000000000000000000000000000000000000000"
       responses:
-        '200':
-          description: 签名成功。`session_key` 返回 Calibur wrapped signature；`eoa` 返回普通 EOA signature。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SignResponse'
-              example:
-                signature: "0x1a2b3c4d5e6f..."
-                walletAddress: "0x1234567890abcdef1234567890abcdef12345678"
-                type: "message"
-                executionMode: "session_key"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -178,18 +291,43 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '403':
           description: |
-            提现地址保护已启用时拒绝 API-key 离线签名，或其它策略拒绝。
-            稳定码 `SIGNING_BLOCKED_BY_DESTINATION_PROTECTION`：`requireAddressAllowlist=true` 时对 message/typed_data × session_key/eoa 一律拒绝（无 SigningRequest、无 Openfort signData）。
+            Invalid or unsupported signing requests are denied; only the narrowly specified ClobAuth bootstrap or separately granted V2 single-order operation with its permissions is eligible. Destination-protection denials can occur earlier.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 statusCode: 403
-                code: SIGNING_BLOCKED_BY_DESTINATION_PROTECTION
-                message: "API-key signing is not allowed while destination protection is enabled"
+                code: DEFI_CAPABILITY_NOT_GRANTED
+                message: "DeFi policy denied"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
+                path: "/v1/wallets/sign"
+        '200':
+          description: Successful ClobAuth or single-order signature; raw 65-byte EOA signature only (not an order submission).
+          content:
+            application/json:
+            schema:
+              $ref: '#/components/schemas/SignResponse'
+        '429':
+          description: Wallet-level Polymarket order signing rate limit exceeded; retry after the indicated delay.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      retryAfterSeconds:
+                        type: integer
+                        minimum: 1
+              example:
+                statusCode: 429
+                code: POLYMARKET_SIGN_RATE_LIMITED
+                message: "Polymarket order signing rate limit exceeded"
+                retryAfterSeconds: 12
+                requestId: "req_..."
+                timestamp: "2026-10-09T10:00:00.000Z"
                 path: "/v1/wallets/sign"
         '503':
           description: |
@@ -225,14 +363,14 @@ paths:
 
         `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
 
+        DeFi capability authorization is mandatory for generic contract-call sends: every interaction must match a catalog function capability explicitly granted to the API key, and grant/pause state is rechecked atomically before acceptance. Unknown and ungranted calls are denied. Caller controls ABI arguments and payable native value, subject to protocol behavior and independent generic transaction, destination, billing, simulation, and user-configured key-spend policies. ERC-20 approval is an independent explicit grant permitting any spender and uint256 amount, including unlimited approval; it is not automatically added or cleaned up. Catalog admission does not itself grant authority. Dashboard-only capability management is intentionally omitted from this public API spec.
+
         欠费期资产流向规则（用户存在未结清账单：`BillingInvoice.status=finalized` 且 `paidAt=null`）：
-        - 静态分类为明确外部转移（`external_transfer`）的请求直接拒绝（`BILLING_OUTBOUND_BLOCKED`）。
-        - 协议品牌本身不是白名单：不能仅因目标是 Aave/Uniswap 等合约地址或 selector 而放行；所有放行均基于 calldata/selector/ABI 静态可证，且目标地址与参数必须与链级 registry 严格匹配。
-        - 静态分类器在目标/参数严格匹配时可识别的扩展 retained 场景包括：官方 WETH `deposit()` wrap / `withdraw(uint256)` unwrap；`approve(spender,0)` 与 `setApprovalForAll(operator,false)` 且 spender/operator 属于 trusted-spender 白名单；注册 ERC-4626 vault 上 `deposit`/`mint`/`redeem`/`withdraw` 且 receiver（及 redeem/withdraw 的 owner）等于执行 owner；Aave V3 官方 Pool 上 `setUserUseReserveAsCollateral(..., false)`（仅撤销抵押）。
-        - 其余请求（含静态 `unknown` 或未匹配上述规则）必须在同链、完整有序 interaction plan 上完成资产证据模拟与验证；仅当验证结果为 `verified` 且 `simulationMode=calibur_atomic`（同链同原子执行 plan 的绑定证明）时才允许继续。
-        - 生产 `eth_simulateV1` 非原子模拟、`unknown`、coverage/权限/relation 不完整、RPC 缺失、证据绑定失败或静态规则未匹配一律 fail-closed（`BILLING_ASSET_FLOW_UNVERIFIABLE`）。
-        - 账单债务查询失败时拒绝创建新交易（`BILLING_DEBT_CHECK_UNAVAILABLE`，503）。
-        无欠费时不启用上述证据门槛（仍受既有 policy/simulation 约束）。
+         DeFi function authorization does not guarantee that a call is financially safe or
+         successful. Existing destination-protection and billing-debt policies may still
+         reject otherwise granted DeFi calls; ordinary DeFi is not exempted from those gates.
+         Protocol contract revert semantics are unchanged. Dashboard-only capability routes
+         remain intentionally absent from this public API spec.
       operationId: sendTransaction
       requestBody:
         required: true
@@ -308,7 +446,7 @@ paths:
                 path: "/v1/transactions/send"
 
         '403':
-          description: 欠款下检测到外部资产转移，或无法验证资产流向
+          description: DeFi capability denial, destination/risk policy denial, or billing asset-flow denial. DeFi codes include `DEFI_CAPABILITY_NOT_FOUND`, `DEFI_CONTRACT_NOT_ALLOWED`, `DEFI_FUNCTION_NOT_ALLOWED`, `DEFI_CAPABILITY_NOT_GRANTED`, `DEFI_CAPABILITY_PAUSED`, `DEFI_INVALID_PARAMETERS`, and `DEFI_POLICY_UNAVAILABLE`.
           content:
             application/json:
               schema:
@@ -392,6 +530,74 @@ components:
         在 Dashboard API Keys 页面创建，原文只返回一次。公开 API 使用 `X-API-Key`。可选 `User-Agent` 可能被记录/保存用于安全审计和异常检测，并与此前上下文逐字比较；它可伪造且不是身份认证。高风险 key 权限/风险判定下，单次 UA/IP context change 可能触发告警或冻结。稳定设置并审慎处理变更，但不要依赖 UA 保密，也不要把它视为必填项。冻结后通过 Dashboard 创建新 key、更新后端 secret、撤销旧 key，并按现有流程恢复；切勿泄露 key。
 
   schemas:
+    ApiKeyPermissionsResponse:
+      type: object
+      required: [snapshotAt, evaluation, permissions, capabilities, constraints]
+      properties:
+        snapshotAt: { type: string, format: date-time }
+        evaluation: { type: string, enum: [configured] }
+        permissions:
+          type: object
+          required: [canSign, canSendTransaction, canReadTransactionStatus, canUseEoaExecution]
+          properties:
+            canSign: { type: boolean }
+            canSendTransaction: { type: boolean }
+            canReadTransactionStatus: { type: boolean }
+            canUseEoaExecution: { type: boolean }
+        capabilities:
+          type: object
+          required: [mode, allowedIds]
+          properties:
+            mode: { type: string, enum: [all, custom] }
+            allowedIds: { type: array, items: { type: string } }
+        constraints:
+          type: object
+          required: [expiresAt, allowedIps, spendLimits]
+          properties:
+            expiresAt: { type: string, format: date-time, nullable: true }
+            allowedIps: { type: array, items: { type: string } }
+            spendLimits:
+              type: object
+              required: [daily, monthly]
+              properties:
+                daily: { type: string, nullable: true }
+                monthly: { type: string, nullable: true }
+    CapabilitiesLookupResponse:
+      type: object
+      required: [capabilities, unknownIds]
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: object
+            description: Catalog capability metadata; returned fields are catalog-defined.
+            additionalProperties: true
+        unknownIds:
+          type: array
+          items: { type: string }
+    MyWalletsResponse:
+      type: object
+      required: [wallets]
+      properties:
+        wallets:
+          type: array
+          items:
+            type: object
+            required: [id, walletAddress, status, isFrozen, chainAuthorizations]
+            properties:
+              id: { type: string, format: uuid }
+              walletAddress: { type: string }
+              status: { type: string }
+              isFrozen: { type: boolean }
+              chainAuthorizations:
+                type: array
+                items:
+                  type: object
+                  required: [chainId, status, expiresAt]
+                  properties:
+                    chainId: { type: integer }
+                    status: { type: string }
+                    expiresAt: { type: string, format: date-time, nullable: true }
     # ──────────── Signing ────────────
     SignRequest:
       type: object
@@ -403,43 +609,28 @@ components:
           description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
         type:
           type: string
-          enum: [message, typed_data]
+          enum: [typed_data]
           description: |
             签名类型：
-            - `message` — 纯文本消息（EIP-191）
-            - `typed_data` — 结构化数据（EIP-712）
+            - `message` — schema shape only; unsupported by this endpoint
+            - `typed_data` — only the ClobAuth or separately specified V2 single-order shapes are eligible
         executionMode:
           type: string
-          enum: [session_key, eoa]
-          default: session_key
+          enum: [eoa]
           description: |
             签名执行身份：
-            - `session_key` — 默认，Backend Agent Signer 签名并返回 Calibur wrapped signature
-            - `eoa` — 服务端 backend wallet 直接签名，返回普通 EOA signature
-        message:
-          oneOf:
-            - type: string
-              minLength: 1
-              description: 非空纯文本消息
-            - type: object
-              required: [raw]
-              additionalProperties: false
-              properties:
-                raw:
-                  type: string
-                  pattern: '^0x([a-fA-F0-9]{2})*$'
-                  description: 0x 前缀、偶数长度的原始字节 hex 数据
-          description: 纯文本消息或原始字节（`type=message` 时必填）
+            - `session_key` — schema shape only; not permitted for this endpoint
+            - `eoa` — required for the ClobAuth exception; raw EOA signature
         chainId:
           type: integer
           minimum: 1
-          description: 链上下文。`message` 签名必填；`typed_data` 可省略并从 `typedData.domain.chainId` 推导。如两者同时存在，必须一致。`session_key` 模式要求该链必须已在开发者钱包中完成 API access authorization。
+          description: ClobAuth exception requires chainId 137. Other request shapes are not authorized.
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:
       type: object
       required: [domain, types, primaryType, message]
-      description: EIP-712 结构化数据（`type=typed_data` 时必填）
+      description: Typed data; only exact ClobAuth or separately specified V2 single-order shapes are eligible.
       properties:
         domain:
           type: object
@@ -473,21 +664,25 @@ components:
 
     SignResponse:
       type: object
-      required: [signature, walletAddress, type]
+      required: [signature, walletAddress, agentWalletAddress, type, executionMode]
       properties:
         signature:
           type: string
-          description: 当 `executionMode=session_key` 时为 Calibur wrapped signature，ABI 编码为 `(bytes32 keyHash, bytes signature, bytes hookData)`；当 `executionMode=eoa` 时为普通 EOA signature。
+          description: Raw EOA signature for an eligible ClobAuth bootstrap or separately granted V2 single order.
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: 实际签名地址。`session_key` 为用户 EIP-7702 delegated EOA 地址；`eoa` 为服务端 backend wallet 地址。
+          description: Actual address used for signing; for the permitted EOA ClobAuth mode this is the selected wallet's agentWalletAddress.
+        agentWalletAddress:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: Present for EOA signing; equals walletAddress and identifies the selected agent wallet signer.
         type:
           type: string
-          enum: [message, typed_data]
+          enum: [typed_data]
         executionMode:
           type: string
-          enum: [session_key, eoa]
+          enum: [eoa]
 
     # ──────────── Transactions ────────────
     SendTransactionRequest:

@@ -1,0 +1,19 @@
+# Spark spETH Vault V2 ordinary update
+
+This update adds exactly four unscoped ordinary Ethereum bindings to the spETH user-facing Spark Vault V2 target `0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f`: `deposit(uint256,address)`, `mint(uint256,address)`, `withdraw(uint256,address,address)`, and `redeem(uint256,address,address)`. It excludes native-ETH helpers/wrapping, referral overloads, permits, admin, route/strategy and cross-chain methods. In particular, the spETH product name does not make these vault methods payable or imply that they wrap ETH.
+
+The inactive source snapshot and exact plan are in `data/defi-catalog/updates/spark-speth-v2/`. Family/version is `spark-vault-v2` / `v1.0.1@0a686ba2`; IDs end in `deposit`, `mint`, `withdraw`, and `redeem`. The immutable baseline is the accepted spUSDT/spPYUSD catalog, raw SHA-256 `9ff2fa04ff4eb0f8d35ac15f3a0198739ef91f45e20a88aef8532ee1153063cf`, manifest hash `0xe5002e4ea10a4ffa0a24de0dce3b5a37b8b369ffb0d1fa6933d0d20d905166a1`. The new source snapshot canonical SHA-256 is `34523454cd30652956aa1cd5daa44f58fa709b77d25abe0e60287789d24ab544`.
+
+## Product role and implementation evidence
+
+The pinned official Ethereum address registry at commit `98091964e0ef9f74bb2b6da3646f8e6d16448588` lists `SPARK_VAULT_V2_SPETH` at this target as a user proxy, and lists shared implementation constant `0x1b992302652a92611dcd5090d1cb388c6377f455` with the comment `SparkVault.sol@0a686ba` / v1.0.1. Official Spark Savings product documentation describes the product's balance-sheet/insurance and Liquidity Layer context; these are product descriptions, not a financial guarantee.
+
+The shared implementation source and four full ABI entries are the previously inspected and reviewed SparkVault v1.0.1 at pinned `spark-vaults-v2` commit `0a686ba2fcf874bc1542171a323779ba73ac2dc5`. Retained carrier hashes: source `f34765be4b67b953131b0b8f1ad562a485a73474ba7400786fb0b497140c873d`, ABI `b8d1cc2f3af24c6daa2dfc3495c3f65093a038c0d3352021ecd719baa0ab09c9`, and the earlier inspection's carrier HTML `80264d8b3a89fd54e4e53f8a2b14b6ce444af9471897d777cc0d1cecee5be101`. The registry role was inspected 2026-10-06; the pinned implementation/carrier was inspected earlier (2026-10-05). Their shared version correspondence is not proof that this proxy currently uses the implementation.
+
+All four functions are nonpayable and use built-in Solidity types: deposit `(assets:uint256, receiver:address) -> shares:uint256`; mint `(shares:uint256, receiver:address) -> assets:uint256`; withdraw `(assets:uint256, receiver:address, owner:address) -> shares:uint256`; redeem `(shares:uint256, receiver:address, owner:address) -> assets:uint256`. Selectors are `0x6e553f65`, `0x94bf804d`, `0xb460af94`, and `0xba087652`; the plan binds each exact full ABI identity.
+
+## Ordinary call behavior and limits
+
+The fixed implementation converts through its exchange-rate path. Deposit/mint check receiver, taker roles and protocol cap, pull the configured ERC-20 asset from `msg.sender`, and mint shares. Withdraw/redeem burn the selected owner's shares, check/spend existing share allowance if the owner differs from caller, and push the configured ERC-20 asset to the selected receiver subject to liquidity. Protocol cap/roles, zero-address restrictions, balances, allowances and liquidity can reject calls.
+
+The platform adds no financial caps, owner/recipient equality rules, balance/feed gates, automatic grants or approval pairing. Asset approval and third-party share allowance remain independent prerequisites. The implementation initializer accepts an ERC-20 asset parameter; neither the product name nor dated registry/source evidence establishes the target's initialized asset value or current runtime/proxy configuration. There is no native-ETH wrapping implication. This is not proof of funding, live liquidity, execution success, or financial safety.

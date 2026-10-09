@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "origin-woeth",
+      "familyVersion": "woeth@696221b4",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xdcee70654261af21c44c093c300ed3bb97b78192",
+          "status": "inactive",
+          "contractName": "Origin Wrapped OETH (WOETH)",
+          "sourceRefs": [
+            "origin-woeth-source-inheritance",
+            "origin-woeth-address-bound-source",
+            "origin-woeth-full-abi",
+            "origin-woeth-proxy-deployment",
+            "origin-woeth-implementation-deployment"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                { "internalType": "uint256", "name": "assets", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" }
+              ],
+              "name": "deposit",
+              "outputs": [
+                { "internalType": "uint256", "name": "", "type": "uint256" }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "origin-woeth-source-inheritance",
+                "origin-woeth-address-bound-source",
+                "origin-woeth-full-abi",
+                "origin-woeth-proxy-deployment",
+                "origin-woeth-implementation-deployment"
+              ]
+            },
+            {
+              "inputs": [
+                { "internalType": "uint256", "name": "shares", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" }
+              ],
+              "name": "mint",
+              "outputs": [
+                { "internalType": "uint256", "name": "", "type": "uint256" }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "origin-woeth-source-inheritance",
+                "origin-woeth-address-bound-source",
+                "origin-woeth-full-abi",
+                "origin-woeth-proxy-deployment",
+                "origin-woeth-implementation-deployment"
+              ]
+            },
+            {
+              "inputs": [
+                { "internalType": "uint256", "name": "assets", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" },
+                { "internalType": "address", "name": "owner", "type": "address" }
+              ],
+              "name": "withdraw",
+              "outputs": [
+                { "internalType": "uint256", "name": "", "type": "uint256" }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "origin-woeth-source-inheritance",
+                "origin-woeth-address-bound-source",
+                "origin-woeth-full-abi",
+                "origin-woeth-proxy-deployment",
+                "origin-woeth-implementation-deployment"
+              ]
+            },
+            {
+              "inputs": [
+                { "internalType": "uint256", "name": "shares", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" },
+                { "internalType": "address", "name": "owner", "type": "address" }
+              ],
+              "name": "redeem",
+              "outputs": [
+                { "internalType": "uint256", "name": "", "type": "uint256" }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "origin-woeth-source-inheritance",
+                "origin-woeth-address-bound-source",
+                "origin-woeth-full-abi",
+                "origin-woeth-proxy-deployment",
+                "origin-woeth-implementation-deployment"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "origin-woeth-source-inheritance",
+      "url": "https://github.com/OriginProtocol/origin-dollar/tree/1d7e1dcb5681327b8037c3df991c27fd7583c643",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned OriginProtocol/origin-dollar commit 1d7e1dcb5681327b8037c3df991c27fd7583c643 (published 2026-09-30). Address-bound WOETH.sol verified carrier SHA-256 696221b444af596e14c5aa3186a6a929bb1cbd388fc2b926ef2f79a15c848285 declares `contract WOETH is ERC4626, Governable, Initializable`, has a constructor fixing the ERC4626 asset, and does not override deposit, mint, withdraw, or redeem. Its conversions and totalAssets use rebasing credits and `adjuster`, so totalAssets is protocol-derived rather than raw OETH balance. The selected methods resolve to the retained ERC4626 verified source carrier SHA-256 f380e4c6ea3cb59714e71d57800bdaa9c35fcb4cf43aebb02c971e064411ae9e. Constructor/initialize/deployment declaration evidence is historical, not current proxy storage or live configuration proof."
+    },
+    {
+      "sourceId": "origin-woeth-address-bound-source",
+      "url": "https://etherscan.io/address/0xdcee70654261af21c44c093c300ed3bb97b78192#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Retained dated Etherscan proxy page carrier WOETH-proxy.html SHA-256 7344f8f3025a481221a0db85234e5abb37ae3675f2340314c98d7fa17d2c1a2d and implementation page WOETH-implementation.html SHA-256 716636afe773af812d967dd4962ac6edef5283a1a01bee7ce78e9173afa45e53 associate the Ethereum WOETH target with implementation 0x388782b21275f75255f3ee08e23bd3991d4eb830 for this dated observation. The verified WOETH body SHA-256 is 696221b444af596e14c5aa3186a6a929bb1cbd388fc2b926ef2f79a15c848285. This does not prove present proxy implementation, storage, runtime identity, initialization state, or asset configuration."
+    },
+    {
+      "sourceId": "origin-woeth-full-abi",
+      "url": "https://etherscan.io/address/0xdcee70654261af21c44c093c300ed3bb97b78192#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Retained full implementation ABI carrier SHA-256 82acdd39925c990bd373648db57fbb0e8e773944fa04013c88faae8ac0379569 includes the four selected ERC4626 functions. Independent selected ABI carriers are deposit 5e11f364d577ed672e03d483321fc7272140f95cfe7825d4dbb7d6c5c3e0d3d5, mint bca69ddeaed14218430f5450bc740d0c2df0743e40b062886bf7ebcb981d3d09, withdraw 7b4c3a66a26704c6cf38766614995c6b0c560757d9d5dd264000602176b92640, and redeem 4f39f79b30bc405a21fd7c413d2068b12434887941215accaba005fb1b7c9356. Each deep-matches its full ABI entry including parameter names/types, output uint256 with empty name, and nonpayable mutability."
+    },
+    {
+      "sourceId": "origin-woeth-proxy-deployment",
+      "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/deployments/mainnet/WOETHProxy.json",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned mainnet deployment record WOETHProxy.json carrier SHA-256 6bc13b76f5a501286b86ef32838bb6d6e809ec4ab75134db6a7b41c0a093a75c contains address 0xDcEe70654261AF21C44c093C300eD3Bb97b78192. It is dated deployment-role evidence, not proof of current proxy state."
+    },
+    {
+      "sourceId": "origin-woeth-implementation-deployment",
+      "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/deployments/mainnet/WOETH.json",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned mainnet implementation deployment record WOETH.json carrier SHA-256 906e8e4bb2334f6d5977fe1a49732edeaa6c3368da3d892d3e29e774ba2ff788 contains address 0x388782b21275F75255f3ee08e23Bd3991d4eB830. It is dated deployment/source association evidence, not proof of current proxy implementation or storage."
+    }
+  ],
+  "unresolved": []
+}

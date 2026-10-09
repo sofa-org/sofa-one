@@ -5,20 +5,20 @@ import {
   Logger,
   NotFoundException,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { encodeAbiParameters, hashMessage, hashTypedData, type Hex } from 'viem';
 
 // ── viem mock ──────────────────────────────────────────────────────────────────
 // Must be declared before any imports that pull in viem transitively.
 const mockReadContract = jest.fn();
 const mockGetBalance = jest.fn();
+const mockRecoverAddress = jest.fn();
 
 jest.mock('viem', () => {
   const actual = jest.requireActual<typeof import('viem')>('viem');
   return {
     ...actual,
+    recoverAddress: mockRecoverAddress,
     createPublicClient: jest.fn(() => ({
       readContract: mockReadContract,
       getBalance: mockGetBalance,
@@ -45,6 +45,14 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
+import { DefiPolicyService } from '../defi/defi-policy.service';
+import { DefiPolicyDenial } from '../defi/defi.types';
+import { hashTypedData } from 'viem';
+import { POLYMARKET_CLOB_AUTH_ATTESTATION, POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from '../defi/signing/polymarket-clob-auth';
+import { DefiCatalogService } from '../defi/defi-catalog.service';
+import { buildReviewedManifest } from '../defi/registry/defi-manifest';
+import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wallet-verifier.service';
+import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -95,19 +103,8 @@ const API_KEY_CONTEXT = {
   expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   canSign: true,
   canUseEoaExecution: false,
-  allowedContracts: undefined,
-  allowedFunctionSelectors: undefined,
 };
 const RAW_SIGNATURE = `0x${'11'.repeat(32)}${'22'.repeat(32)}1b` as const;
-const WRAPPED_SIGNATURE = encodeAbiParameters(
-  [
-    { name: 'keyHash', type: 'bytes32' },
-    { name: 'signature', type: 'bytes' },
-    { name: 'hookData', type: 'bytes' },
-  ],
-  [WALLET.agentKeyHash as Hex, RAW_SIGNATURE, '0x'],
-);
-
 // ── test suite ─────────────────────────────────────────────────────────────────
 
 describe('WalletService.withdraw()', () => {
@@ -218,6 +215,7 @@ describe('WalletService.withdraw()', () => {
           provide: BillingDebtService,
           useValue: { getDebt: mockGetDebt },
         },
+        { provide: DefiPolicyService, useValue: { authorizeSigning: jest.fn().mockImplementation(() => { throw new ForbiddenException({ code: 'DEFI_FUNCTION_NOT_ALLOWED' }); }), recordDenied: jest.fn() } },
         {
           provide: RiskEvaluationService,
           useValue: { evaluateRisk: mockEvaluateRisk, enforceRiskAction: mockEnforceRiskAction },
@@ -779,6 +777,17 @@ describe('WalletService.sign()', () => {
   const mockTransaction = jest.fn();
   const mockAcquireUserDestinationLock = jest.fn();
   const mockSecurityEventRecord = jest.fn();
+  const mockDefiAuthorizeSigning = jest.fn();
+  const mockDefiRecordDenied = jest.fn();
+  const mockDefiAssertSigningStillAuthorized = jest.fn();
+  const mockDefiRecordSigningAllowed = jest.fn();
+  const mockDefiExportSigningAllowed = jest.fn();
+  const mockVerifyDepositWallet = jest.fn();
+  const mockVerify1271 = jest.fn();
+  const mockAssertEvidenceFresh = jest.fn();
+  const mockBudgetAcquire = jest.fn();
+  const mockBudgetAccept = jest.fn();
+  const mockBudgetExport = jest.fn();
   let loggerErrorSpy: jest.SpyInstance;
   let loggerWarnSpy: jest.SpyInstance;
 
@@ -806,10 +815,28 @@ describe('WalletService.sign()', () => {
     mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
     mockAcquireUserDestinationLock.mockResolvedValue(undefined);
     mockSecurityEventRecord.mockResolvedValue({});
+    mockDefiAuthorizeSigning.mockImplementation(() => {
+      throw new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_FUNCTION_NOT_ALLOWED' }), { code: 'DEFI_FUNCTION_NOT_ALLOWED' });
+    });
+    mockDefiRecordDenied.mockResolvedValue(undefined);
+    mockDefiAssertSigningStillAuthorized.mockResolvedValue(undefined);
+    mockDefiRecordSigningAllowed.mockResolvedValue({ id: 'allowed-event' });
+    mockDefiExportSigningAllowed.mockResolvedValue(undefined);
+    mockVerifyDepositWallet.mockResolvedValue({ agent: WALLET.agentWalletAddress.toLowerCase(), deposit: WALLET.walletAddress.toLowerCase(), codeHash: `0x${'1'.repeat(64)}`, checkedAt: Date.now(), rpcFingerprint: `0x${'2'.repeat(64)}` });
+    mockVerify1271.mockResolvedValue(undefined);
+    mockAssertEvidenceFresh.mockImplementation(() => undefined);
+    mockBudgetAcquire.mockResolvedValue(undefined);
+    mockBudgetAccept.mockResolvedValue({ id: 'order-accepted' });
+    mockBudgetExport.mockResolvedValue(undefined);
     mockTransaction.mockImplementation(async (callback) =>
       callback({
         signingRequest: { create: mockSigningRequestCreate },
         withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique },
+        $queryRaw: jest.fn(),
+        defiPolicyState: { findUnique: jest.fn() },
+        apiKey: { findUnique: jest.fn() },
+        userWallet: { findFirst: jest.fn() },
+        user: { findUnique: jest.fn() },
       }),
     );
 
@@ -834,7 +861,7 @@ describe('WalletService.sign()', () => {
         },
         {
           provide: EoaExecutionPolicyService,
-          useValue: { assertAllowed: mockAssertEoaExecutionAllowed },
+          useValue: { assertAllowed: mockAssertEoaExecutionAllowed, assertPolymarketOrderPrerequisites: jest.fn().mockResolvedValue(undefined) },
         },
         {
           provide: SessionKeyPolicyService,
@@ -858,6 +885,9 @@ describe('WalletService.sign()', () => {
           provide: BillingDebtService,
           useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
+        { provide: DefiPolicyService, useValue: { authorizeSigning: mockDefiAuthorizeSigning, recordDenied: mockDefiRecordDenied, assertSigningStillAuthorized: mockDefiAssertSigningStillAuthorized, recordSigningAllowedInTx: mockDefiRecordSigningAllowed, exportSigningAllowed: mockDefiExportSigningAllowed } },
+        { provide: PolymarketDepositWalletVerifierService, useValue: { verify: mockVerifyDepositWallet, assertFresh: mockAssertEvidenceFresh, verify1271: mockVerify1271 } },
+        { provide: PolymarketSigningBudgetService, useValue: { acquireWalletLock: mockBudgetAcquire, recordAcceptedInTransaction: mockBudgetAccept, exportAccepted: mockBudgetExport } },
         SigningPolicyService,
       ],
     }).compile();
@@ -892,7 +922,7 @@ describe('WalletService.sign()', () => {
       { ...WALLET },
       { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
     ]);
-    await expect(service.sign('user-1', { type: 'message', message: 'hello', chainId: 84532 } as any, API_KEY_CONTEXT))
+    await expect(service.sign('user-1', { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any, API_KEY_CONTEXT))
       .rejects.toBeInstanceOf(ConflictException);
     expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(mockSignData).not.toHaveBeenCalled();
@@ -901,542 +931,227 @@ describe('WalletService.sign()', () => {
   it('rejects a forged wallet ID not present in the authenticated owner wallet set', async () => {
     mockWalletFindMany.mockResolvedValue([{ ...WALLET }]);
     await expect(service.sign('user-1', {
-      type: 'message', message: 'hello', chainId: 84532, walletId: 'wallet-for-another-user',
+      type: 'typed_data', typedData: createTypedData(137), chainId: 137, walletId: 'wallet-for-another-user',
     } as any, API_KEY_CONTEXT)).rejects.toThrow(NotFoundException);
     expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
-  it('uses the selected owned wallet account when signing', async () => {
-    const selected = { ...WALLET, id: 'wallet-2', agentOpenfortAccountId: 'agent-acc-2' };
-    mockWalletFindMany.mockResolvedValue([{ ...WALLET }, selected]);
-    mockWalletFindFirst.mockResolvedValue(selected);
-    await service.sign('user-1', {
-      type: 'message', message: 'hello', chainId: 84532, walletId: selected.id,
-    } as any, API_KEY_CONTEXT);
-    expect(mockWalletFindFirst).toHaveBeenCalledWith({
-      where: { id: selected.id, userId: 'user-1' },
-      include: { chainAuthorizations: { where: { chainId: BigInt(84532) } } },
-    });
-    expect(mockSignData).toHaveBeenCalledWith('agent-acc-2', expect.any(String));
-  });
-
-  it('uses EIP-191 hash for message signing', async () => {
-    const result = await service.sign(
-      'user-1',
-      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockSignData).toHaveBeenCalledWith(
-      WALLET.agentOpenfortAccountId,
-      hashMessage('Hello, SOFA ONE!'),
-    );
-    expect(mockAssertSessionKeyAllowed).toHaveBeenCalledWith({
-      userId: 'user-1',
-      walletId: WALLET.id,
-      apiKeyId: 'api-key-1',
-      apiKeyPrefix: API_KEY_PREFIX,
-      chainId: 84532,
-      accountAddress: WALLET.walletAddress,
-      keyHash: WALLET.agentKeyHash,
-      operation: 'sign',
-      allowedContracts: API_KEY_CONTEXT.allowedContracts,
-      allowedFunctionSelectors: API_KEY_CONTEXT.allowedFunctionSelectors,
-      apiKeyExpiresAt: API_KEY_CONTEXT.expiresAt,
-    });
-    expect(result).toEqual({
-      signature: WRAPPED_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
-      type: 'message',
-      executionMode: 'session_key',
-    });
-  });
-
-  it('rejects frozen wallets before creating signing request', async () => {
-    mockFindUnique.mockResolvedValue({
-      ...WALLET,
-      frozenAt: new Date('2026-05-28T00:00:00.000Z'),
-      frozenReason: 'wallet_compromise',
-    });
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow(ForbiddenException);
+  it.each([
+    ['message', { type: 'message', message: 'Hello', chainId: 84532 }],
+    ['typed_data', { type: 'typed_data', chainId: 84532, typedData: { domain: { chainId: 84532 }, types: {}, primaryType: 'Mail', message: {} } }],
+  ])('denies %s signing before success audit, hash persistence, or Openfort', async (_name, dto) => {
+    await expect(service.sign('user-1', dto as any, API_KEY_CONTEXT)).rejects.toThrow(ForbiddenException);
+    const typed = (dto as any).type === 'typed_data';
+    expect(mockDefiAuthorizeSigning).toHaveBeenCalledTimes(typed ? 1 : 0);
+    expect(mockDefiRecordDenied).toHaveBeenCalledTimes(typed ? 1 : 0);
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
+    expect(mockSecurityEventRecord).not.toHaveBeenCalled();
   });
 
-  it('uses the backend wallet raw signature and skips agent verification for eoa execution mode', async () => {
-    const result = await service.sign(
-      'user-1',
-      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532, executionMode: 'eoa' } as any,
-      { ...API_KEY_CONTEXT, canUseEoaExecution: true },
-    );
-
-    expect(mockSignData).toHaveBeenCalledWith(
-      WALLET.agentOpenfortAccountId,
-      hashMessage('Hello, SOFA ONE!'),
-    );
-    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
-    expect(mockAssertEoaExecutionAllowed).toHaveBeenCalledWith({
-      operation: 'sign',
-      userId: 'user-1',
-      apiKeyId: 'api-key-1',
-      apiKeyPrefix: API_KEY_PREFIX,
-      allowedIps: ['203.0.113.10'],
-      expiresAt: expect.any(Date),
-      chainId: 84532,
-      metadata: { type: 'message' },
-    });
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: 'security',
-        message: 'Privileged EOA signing requested',
-        userId: 'user-1',
-        chainId: 84532,
-        type: 'message',
-        executionMode: 'eoa',
-        apiKeyPrefix: API_KEY_PREFIX,
-      }),
-    );
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ walletAddress: WALLET.agentWalletAddress }),
-    });
-    expect(result).toEqual({
-      signature: RAW_SIGNATURE,
-      walletAddress: WALLET.agentWalletAddress,
-      type: 'message',
-      executionMode: 'eoa',
-    });
+  it('accepts only the bound EOA ClobAuth payload and signs/persists the same digest', async () => {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const payload = Object.freeze({ domain: Object.freeze({ name: 'ClobAuthDomain', version: '1', chainId: 137 }), types: Object.freeze({ ClobAuth: Object.freeze([{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }]) }), primaryType: 'ClobAuth', message: Object.freeze({ address: WALLET.agentWalletAddress, timestamp, nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION }) });
+    const digest = hashTypedData(payload as any);
+    mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({ context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] }), requiredPermission: 'canSign', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137, executionMode: 'eoa', policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`, walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
+    const result = await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: payload } as any, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
+    expect(mockDefiAssertSigningStillAuthorized).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ typedDataDigest: digest }), expect.objectContaining({ digest, agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest }) }));
+    expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, digest);
+    expect(result).toMatchObject({ signature: RAW_SIGNATURE, agentWalletAddress: WALLET.agentWalletAddress, executionMode: 'eoa' });
+    expect(mockDefiRecordSigningAllowed).toHaveBeenCalledTimes(1);
+    expect(mockDefiExportSigningAllowed).toHaveBeenCalledWith({ id: 'allowed-event' });
   });
 
-  it('rejects signing when the API key lacks sign permission', async () => {
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-        {
-          ...API_KEY_CONTEXT,
-          canSign: false,
-        },
-      ),
-    ).rejects.toThrow(ForbiddenException);
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('rejects typed data signing when the API key lacks sign permission', async () => {
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'typed_data', typedData: createTypedData(84532), chainId: 84532 } as any,
-        { ...API_KEY_CONTEXT, canSign: false },
-      ),
-    ).rejects.toThrow(ForbiddenException);
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('rejects eoa signing when the API key lacks eoa permission', async () => {
-    await expect(
-      service.sign(
-        'user-1',
-        {
-          type: 'message',
-          message: 'Hello, SOFA ONE!',
-          chainId: 84532,
-          executionMode: 'eoa',
-        } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow(ForbiddenException);
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockAssertEoaExecutionAllowed).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('rejects eoa signing when the EOA isolation policy denies the request', async () => {
-    mockAssertEoaExecutionAllowed.mockRejectedValueOnce(
-      new ForbiddenException('EOA execution is disabled'),
-    );
-
-    await expect(
-      service.sign(
-        'user-1',
-        {
-          type: 'message',
-          message: 'Hello, SOFA ONE!',
-          chainId: 84532,
-          executionMode: 'eoa',
-        } as any,
-        { ...API_KEY_CONTEXT, canUseEoaExecution: true },
-      ),
-    ).rejects.toThrow('EOA execution is disabled');
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('rejects typed data eoa signing when the API key lacks eoa permission', async () => {
-    await expect(
-      service.sign(
-        'user-1',
-        {
-          type: 'typed_data',
-          typedData: createTypedData(84532),
-          chainId: 84532,
-          executionMode: 'eoa',
-        } as any,
-        { ...API_KEY_CONTEXT, canUseEoaExecution: false },
-      ),
-    ).rejects.toThrow(ForbiddenException);
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('audits a successful signing request without storing the plaintext message', async () => {
-    await service.sign(
-      'user-1',
-      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId: 'user-1',
-        apiKeyId: 'api-key-1',
-        authMethod: 'api_key',
-        apiKeyPrefix: API_KEY_PREFIX,
-        apiKeyName: 'Production key',
-        type: 'message',
-        chainId: BigInt(84532),
-        walletAddress: WALLET.walletAddress,
-        digest: hashMessage('Hello, SOFA ONE!'),
-        status: 'submitting',
-      }),
-    });
-    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(
-      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
-        typeof value === 'bigint' ? value.toString() : value,
-      ),
-    ).not.toContain('Hello, SOFA ONE!');
-    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
-      where: { id: 'signing-request-1' },
-      data: { status: 'signed', completedAt: expect.any(Date) },
-    });
-  });
-
-  it('rejects bearer-token signing before loading the wallet or creating an audit record', async () => {
-    await expect(
-      service.sign('user-1', { type: 'message', message: 'Hello, SOFA ONE!' } as any),
-    ).rejects.toThrow(UnauthorizedException);
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
-    expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('rejects signing when the agent key is not registered on-chain before creating an audit record', async () => {
-    mockAssertSessionKeyAllowed.mockRejectedValueOnce(
-      new BadRequestException('Agent key is not ready'),
-    );
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('Agent key is not ready');
-
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('marks the signing request failed when Openfort signing fails', async () => {
-    mockSignData.mockRejectedValue(new Error('Openfort down'));
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('Openfort down');
-
-    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
-      where: { id: 'signing-request-1' },
-      data: { status: 'failed', completedAt: expect.any(Date) },
-    });
-  });
-
-  it('returns the signature when the post-sign audit update fails', async () => {
-    mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
-
-    const result = await service.sign(
-      'user-1',
-      { type: 'message', message: 'Hello', chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(result).toEqual({
-      signature: WRAPPED_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
-      type: 'message',
-      executionMode: 'session_key',
-    });
-    expect(mockSigningRequestUpdate).toHaveBeenCalledWith({
-      where: { id: 'signing-request-1' },
-      data: { status: 'signed', completedAt: expect.any(Date) },
-    });
-  });
-
-  it('preserves the Openfort error when the failed audit update also fails', async () => {
-    mockSignData.mockRejectedValue(new Error('Openfort down'));
-    mockSigningRequestUpdate.mockRejectedValue(new Error('DB update failed'));
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('Openfort down');
-  });
-
-  it('uses EIP-191 hash for raw hex message data', async () => {
-    const raw = '0x68656c6c6f20776f726c64';
-    const result = await service.sign(
-      'user-1',
-      { type: 'message', message: { raw }, chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, hashMessage({ raw }));
-    expect(result).toEqual({
-      signature: WRAPPED_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
-      type: 'message',
-      executionMode: 'session_key',
-    });
-  });
-
-  it('rejects API-key hash signing before creating an audit record', async () => {
-    const hash = '0x'.padEnd(66, '1');
-
-    await expect(
-      service.sign('user-1', { type: 'hash', hash, chainId: 84532 } as any, API_KEY_CONTEXT),
-    ).rejects.toThrow('hash signing is not allowed');
-
-    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
-    expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('infers chainId from typedData.domain.chainId for API-key typed data signing', async () => {
-    const typedData = createTypedData(84532);
-
-    const result = await service.sign(
-      'user-1',
-      { type: 'typed_data', typedData } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockWalletFindFirst).toHaveBeenCalledWith({
-      where: { id: WALLET.id, userId: 'user-1' },
-      include: {
-        chainAuthorizations: { where: { chainId: BigInt(84532) } },
-      },
-    });
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        type: 'typed_data',
-        chainId: BigInt(84532),
-      }),
-    });
-    expect(result).toEqual({
-      signature: WRAPPED_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
-      type: 'typed_data',
-      executionMode: 'session_key',
-    });
-  });
-
-  it('requires typedData.domain.chainId for API-key typed data signing', async () => {
-    const typedData = createTypedData(undefined);
-
-    await expect(
-      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
-        id: API_KEY_CONTEXT.id,
-        canSign: true,
-      }),
-    ).rejects.toThrow(
-      'typedData.domain.chainId is required when signing typed data with an API key',
-    );
-  });
-
-  it('requires typedData.domain.chainId to match chainId for API-key typed data signing', async () => {
-    const typedData = createTypedData(84531);
-
-    await expect(
-      service.sign('user-1', { type: 'typed_data', typedData, chainId: 84532 } as any, {
-        id: API_KEY_CONTEXT.id,
-        canSign: true,
-      }),
-    ).rejects.toThrow('typedData.domain.chainId must match chainId');
-  });
-
-  it('rejects Permit typed data signing before loading the wallet', async () => {
-    const typedData = {
-      ...createTypedData(84532),
-      primaryType: 'Permit',
-      types: {
-        Permit: [
-          { name: 'owner', type: 'address' },
-          { name: 'spender', type: 'address' },
-          { name: 'value', type: 'uint256' },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'deadline', type: 'uint256' },
-        ],
-      },
-      message: {
-        owner: WALLET.walletAddress,
-        spender: '0x1111111111111111111111111111111111111111',
-        value: '1',
-        nonce: 0,
-        deadline: 9999999999,
-      },
+  it('sanitizes an order-provider error containing signature/envelope material before HTTP propagation or logging', async () => {
+    const maker = WALLET.walletAddress.toLowerCase();
+    const types = {
+      Order: [{ name:'salt',type:'uint256' },{ name:'maker',type:'address' },{ name:'signer',type:'address' },{ name:'tokenId',type:'uint256' },{ name:'makerAmount',type:'uint256' },{ name:'takerAmount',type:'uint256' },{ name:'side',type:'uint8' },{ name:'signatureType',type:'uint8' },{ name:'timestamp',type:'uint256' },{ name:'metadata',type:'bytes32' },{ name:'builder',type:'bytes32' }],
+      TypedDataSign: [{ name:'contents',type:'Order' },{ name:'name',type:'string' },{ name:'version',type:'string' },{ name:'chainId',type:'uint256' },{ name:'verifyingContract',type:'address' },{ name:'salt',type:'bytes32' }],
     };
+    const order = { salt:'1', maker, signer:maker, tokenId:'2', makerAmount:'3', takerAmount:'4', side:0, signatureType:3, timestamp:String(Date.now()), metadata:`0x${'00'.repeat(32)}`, builder:`0x${'00'.repeat(32)}` };
+    const typedData = { domain:{ name:'Polymarket CTF Exchange', version:'2', chainId:137, verifyingContract:'0xE111180000d2663C0091e4f400237545B87B996B' }, types, primaryType:'TypedDataSign', message:{ contents:order, name:'DepositWallet', version:'1', chainId:137, verifyingContract:maker, salt:`0x${'00'.repeat(32)}` } };
+    const digest = hashTypedData(typedData as any);
+    mockDefiAuthorizeSigning.mockResolvedValue({ context:{ userId:'user-1', apiKeyId:'api-key-1', walletId:'wallet-1', chainId:137, executionMode:'eoa', executionOwner:WALLET.agentWalletAddress, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'] }, requiredPermission:'canSign', capabilityId:'polymarket:137:clob-order:v2', chainId:137, executionMode:'eoa', typedDataDigest:digest, payload:typedData, walletAddress:maker.toLowerCase(), agentWalletAddress:WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId:WALLET.agentOpenfortAccountId });
+    const sentinel = 'SENTINEL_SECRET_RAW_SIGNATURE_OR_ENVELOPE';
+    mockSignData.mockRejectedValueOnce(new Error(`provider failed ${sentinel}`));
+    let thrown: any;
+    try { await service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true }); }
+    catch (error) { thrown = error; }
+    expect(thrown).toMatchObject({ status:503, response:{ code:'POLYMARKET_SIGNING_FAILED', message:'Polymarket order signing could not be verified' } });
+    expect(JSON.stringify(thrown.getResponse())).not.toContain(sentinel);
+    expect(JSON.stringify(loggerErrorSpy.mock.calls)).not.toContain(sentinel);
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({ data:expect.objectContaining({ status:'failed' }) }));
+    expect(mockAssertEvidenceFresh.mock.invocationCallOrder[0]).toBeGreaterThan(mockBudgetAcquire.mock.invocationCallOrder[0]);
+    expect(mockAssertEvidenceFresh.mock.invocationCallOrder[0]).toBeLessThan(mockDefiAssertSigningStillAuthorized.mock.invocationCallOrder.at(-1)!);
 
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'typed_data', typedData, chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('Permit typed data signing is not allowed');
+    mockSignData.mockClear(); mockSigningRequestCreate.mockClear(); mockBudgetAccept.mockClear();
+    mockAssertEvidenceFresh.mockImplementationOnce(() => { throw new ServiceUnavailableException('expired'); });
+    await expect(service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true })).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(mockBudgetAccept).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
 
-    expect(mockFindUnique).not.toHaveBeenCalled();
+    mockVerifyDepositWallet.mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'1'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` })
+      .mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'3'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` });
+    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockSignData.mockResolvedValueOnce(RAW_SIGNATURE);
+    mockSigningRequestCreate.mockResolvedValue({ id:'signing-request-code-change' });
+    await expect(service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true })).rejects.toMatchObject({ response:{ code:'POLYMARKET_SIGNING_FAILED' } });
+    expect(mockVerify1271).not.toHaveBeenCalled();
+    expect(mockSigningRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({ where:{ id:'signing-request-code-change' }, data:expect.objectContaining({ status:'failed' }) }));
+  });
+
+  it('wires real signing authorization through wallet acceptance and denies changed live key/pause state before persistence/provider', async () => {
+    const prisma = (service as any).prisma;
+    let pauseKeys: string[] = [];
+    const rootPauseKeysObserved: string[][] = [];
+    prisma.defiPolicyState = { findUnique: jest.fn().mockImplementation(async () => { rootPauseKeysObserved.push([...pauseKeys]); return { id: 'global', pausedScopeKeys: pauseKeys }; }) };
+    const catalog = new DefiCatalogService([], prisma, buildReviewedManifest());
+    const realPolicy = new DefiPolicyService(prisma, { record: mockSecurityEventRecord, exportCommitted: mockDefiExportSigningAllowed } as any, catalog);
+    const preflightSpy = jest.spyOn(realPolicy, 'authorizeSigning');
+    const finalAcceptanceSpy = jest.spyOn(realPolicy, 'assertSigningStillAuthorized');
+    (service as any).defiPolicy = realPolicy;
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const typedData = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: WALLET.agentWalletAddress, timestamp, nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
+    const acceptedKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
+    let liveKey: any = acceptedKey;
+    let finalPauseKeys: string[] = [];
+    let failCommit = false;
+    let txOpen = false;
+    let finalLockQueries: unknown[][] = [];
+    let lockOrder: string[] = [];
+    let liveKeyReadCount = 0;
+    mockAcquireUserDestinationLock.mockImplementation(async () => { lockOrder.push('destination'); });
+    mockSecurityEventRecord.mockImplementation(async (event: any) => {
+      if (event.eventType === 'defi.policy_denied') expect(txOpen).toBe(false);
+      if (event.eventType === 'defi.signing_capability_allowed') expect(txOpen).toBe(true);
+      return { id: `event-${event.eventType}`, eventType: event.eventType };
+    });
+    mockTransaction.mockImplementation(async (callback) => {
+      txOpen = true;
+      finalLockQueries = [];
+      lockOrder = [];
+      liveKeyReadCount = 0;
+      try {
+      const result = await callback({
+        signingRequest: { create: mockSigningRequestCreate }, withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique }, $queryRaw: jest.fn((...args: unknown[]) => { finalLockQueries.push(args); const sql = Array.isArray(args[0]) ? args[0].join(' ') : String(args[0]); lockOrder.push(sql.includes('defi_policy_state') ? 'policy-share' : 'key-update'); }),
+        defiPolicyState: { findUnique: jest.fn().mockImplementation(async () => ({ id: 'global', pausedScopeKeys: finalPauseKeys })) },
+        apiKey: { findUnique: jest.fn().mockImplementation(async () => { liveKeyReadCount++; lockOrder.push('live-key-read'); return liveKey; }) },
+        userWallet: { findFirst: jest.fn().mockResolvedValue({ ...WALLET, frozenAt: null }) },
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'user-1', frozenAt: null }) },
+      });
+      if (failCommit) { failCommit = false; throw new Error('commit failed'); }
+      return result;
+      } finally { txOpen = false; }
+    });
+    const key = { ...API_KEY_CONTEXT, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
+    for (const failure of [
+      { key: { ...acceptedKey, capabilityMode: 'custom', allowedCapabilityIds: [] }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, capabilityMode: 'custom', allowedCapabilityIds: ['another:capability:v1'] }, rootPause: [], finalPause: [] },
+      { key: acceptedKey, rootPause: [], finalPause: ['global'] },
+      { key: { ...acceptedKey, revoked: true }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, canSign: false }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, canUseEoaExecution: false }, rootPause: [], finalPause: [] },
+    ]) {
+      mockSigningRequestCreate.mockClear(); mockSignData.mockClear(); mockSecurityEventRecord.mockClear(); mockDefiExportSigningAllowed.mockClear();
+      liveKey = failure.key; pauseKeys = failure.rootPause; finalPauseKeys = failure.finalPause;
+      rootPauseKeysObserved.length = 0;
+      const signing = service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData } as any, key);
+      if (failure.finalPause.length) {
+        await expect(signing).rejects.toMatchObject({ response: { code: 'DEFI_CAPABILITY_PAUSED' } });
+        expect(rootPauseKeysObserved).toEqual([[]]);
+        expect(finalLockQueries).toHaveLength(2);
+      } else await expect(signing).rejects.toThrow();
+      expect(finalAcceptanceSpy).toHaveBeenCalled();
+      expect(liveKeyReadCount).toBe(1);
+      expect(lockOrder).toEqual(['destination', 'policy-share', 'key-update', 'live-key-read']);
+      expect(finalLockQueries).toHaveLength(2);
+      expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+      expect(mockSignData).not.toHaveBeenCalled();
+      expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+      expect(mockSecurityEventRecord).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.policy_denied', result: 'denied' }));
+      const denialEvent = mockSecurityEventRecord.mock.calls.find(([event]) => event.eventType === 'defi.policy_denied')?.[0];
+      expect(denialEvent?.metadata).not.toHaveProperty('digest');
+      expect(denialEvent?.metadata).not.toHaveProperty('typedData');
+    }
+    await expect(preflightSpy.mock.results[0].value).resolves.toMatchObject({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, context: { capabilityMode: 'all', allowedCapabilityIds: [] } });
+    pauseKeys = []; finalPauseKeys = []; liveKey = acceptedKey;
+    mockSigningRequestCreate.mockClear(); mockSignData.mockClear(); mockDefiExportSigningAllowed.mockClear();
+    await expect(service.sign('user-1', { type: 'message', message: 'x', chainId: 137, typedData } as any, key)).rejects.toThrow(ForbiddenException);
+    expect(mockDefiAuthorizeSigning).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+
+    // Destination policy turned on after preflight but before the atomic acceptance check.
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
+    await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData } as any, key)).rejects.toThrow(ForbiddenException);
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled(); expect(mockSignData).not.toHaveBeenCalled(); expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
+
+    // Advance time on the second final-transaction lock (api_keys UPDATE), after the
+    // pre-lock authorization-payload validation has already completed.
+    let postLockClock: jest.SpyInstance | undefined;
+    let queryCount = 0;
+    mockTransaction.mockImplementationOnce(async (callback) => {
+      txOpen = true;
+      finalLockQueries = [];
+      try {
+        const tx = {
+          signingRequest: { create: mockSigningRequestCreate }, withdrawalPolicy: { findUnique: mockTxWithdrawalPolicyFindUnique },
+          $queryRaw: jest.fn((...args: unknown[]) => {
+            finalLockQueries.push(args);
+            queryCount++;
+            if (queryCount === 2) postLockClock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 301_000);
+          }),
+          defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+          apiKey: { findUnique: jest.fn().mockResolvedValue(acceptedKey) },
+          userWallet: { findFirst: jest.fn().mockResolvedValue({ ...WALLET, frozenAt: null }) },
+          user: { findUnique: jest.fn().mockResolvedValue({ id: 'user-1', frozenAt: null }) },
+        };
+        return await callback(tx);
+      } finally { txOpen = false; }
+    });
+    mockSigningRequestCreate.mockClear(); mockSignData.mockClear(); mockDefiExportSigningAllowed.mockClear();
+    await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData } as any, key)).rejects.toThrow();
+    postLockClock?.mockRestore();
+    expect(queryCount).toBe(2);
+    expect(finalLockQueries).toHaveLength(2);
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled(); expect(mockSignData).not.toHaveBeenCalled(); expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+
+    // Mutating the source DTO after authorization cannot change canonical payload digest.
+    const frozenPayload = { ...typedData, message: { ...typedData.message } };
+    const expected = hashTypedData(frozenPayload as any);
+    mockAcquireUserDestinationLock.mockImplementationOnce(async () => { (typedData.message as any).nonce = 9; });
+    await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData } as any, key);
+    expect(mockSignData).toHaveBeenLastCalledWith(WALLET.agentOpenfortAccountId, expected);
+    expect(mockSigningRequestCreate).toHaveBeenLastCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest: expected }) }));
+    mockSignData.mockClear(); mockDefiExportSigningAllowed.mockClear();
+    mockSigningRequestCreate.mockRejectedValueOnce(new Error('create failed'));
+    await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: frozenPayload } as any, key)).rejects.toThrow('create failed');
+    expect(mockSignData).not.toHaveBeenCalled();
+    expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+    mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-committed' });
+    mockSignData.mockClear(); mockDefiExportSigningAllowed.mockClear(); failCommit = true;
+    await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: frozenPayload } as any, key)).rejects.toThrow('commit failed');
+    expect(mockSignData).not.toHaveBeenCalled();
+    expect(mockDefiExportSigningAllowed).not.toHaveBeenCalled();
+  });
+
+  it('preserves stable signing denial if audit recording fails', async () => {
+    mockDefiRecordDenied.mockRejectedValueOnce(new Error('audit unavailable'));
+    await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: createTypedData(137) } as any, { ...API_KEY_CONTEXT, canUseEoaExecution: true }))
+      .rejects.toMatchObject({ response: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
-  it('allows non-permit typed data signing and records safe typed data metadata', async () => {
-    const typedData = createTypedData(84532, '0x1111111111111111111111111111111111111111');
-
-    await service.sign(
-      'user-1',
-      { type: 'typed_data', typedData, chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockWalletFindFirst).toHaveBeenCalledTimes(1);
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        type: 'typed_data',
-        chainId: BigInt(84532),
-        walletAddress: WALLET.walletAddress,
-      }),
-    });
-    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(
-      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
-        typeof value === 'bigint' ? value.toString() : value,
-      ),
-    ).not.toContain('Hello');
-  });
-
-  it('rejects invalid typedData.domain.verifyingContract before loading the wallet', async () => {
-    const typedData = createTypedData(84532, 'not-an-address');
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'typed_data', typedData, chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('typedData.domain.verifyingContract must be a valid address');
-
-    expect(mockFindUnique).not.toHaveBeenCalled();
+  it('keeps raw-hash signing disabled without invoking DeFi signing authorization', async () => {
+    await expect(service.sign('user-1', { type: 'hash', hash: `0x${'11'.repeat(32)}`, chainId: 84532 } as any, API_KEY_CONTEXT)).rejects.toThrow();
+    expect(mockDefiAuthorizeSigning).not.toHaveBeenCalled();
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
-  });
-
-  it('includes safe typed data metadata in the audit request hash', async () => {
-    const typedData = createTypedData(84532, '0x1111111111111111111111111111111111111111');
-
-    await service.sign(
-      'user-1',
-      { type: 'typed_data', typedData, chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    const expectedDigest = hashTypedData(typedData as any);
-    const expectedRequestHash = hashRequest({
-      type: 'typed_data',
-      chainId: 84532,
-      digest: expectedDigest,
-      executionMode: 'session_key',
-      typedData: {
-        typedDataPrimaryType: 'Mail',
-        typedDataVerifyingContract: '0x1111111111111111111111111111111111111111',
-        typedDataDomainName: 'SOFA ONE',
-      },
-    });
-
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        type: 'typed_data',
-        chainId: BigInt(84532),
-        requestHash: expectedRequestHash,
-        digest: expectedDigest,
-      }),
-    });
-    expect(mockSigningRequestCreate.mock.calls[0][0].data.requestHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(
-      JSON.stringify(mockSigningRequestCreate.mock.calls[0][0], (_, value) =>
-        typeof value === 'bigint' ? value.toString() : value,
-      ),
-    ).not.toContain('Hello');
-  });
-
-  it('allows API-key typed data signing when explicit chainId matches and is allowed', async () => {
-    const typedData = createTypedData(84532);
-
-    const result = await service.sign(
-      'user-1',
-      { type: 'typed_data', typedData, chainId: 84532 } as any,
-      {
-        id: API_KEY_CONTEXT.id,
-        canSign: true,
-      },
-    );
-
-    expect(mockSignData).toHaveBeenCalledWith(
-      WALLET.agentOpenfortAccountId,
-      expect.stringMatching(/^0x[a-f0-9]{64}$/),
-    );
-    expect(result).toEqual({
-      signature: WRAPPED_SIGNATURE,
-      walletAddress: WALLET.walletAddress,
-      type: 'typed_data',
-      executionMode: 'session_key',
-    });
   });
 
   it('throws NotFoundException when wallet not found', async () => {
@@ -1445,7 +1160,7 @@ describe('WalletService.sign()', () => {
     await expect(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello', chainId: 84532 } as any,
+        { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
         API_KEY_CONTEXT,
       ),
     ).rejects.toThrow(NotFoundException);
@@ -1475,37 +1190,37 @@ describe('WalletService.sign()', () => {
 
   it.each([
     {
-      name: 'message × session_key',
-      dto: { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 },
-      apiKey: API_KEY_CONTEXT,
-    },
-    {
-      name: 'message × eoa',
-      dto: {
-        type: 'message',
-        message: 'Hello, SOFA ONE!',
-        chainId: 84532,
-        executionMode: 'eoa',
-      },
-      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
-    },
-    {
       name: 'typed_data × session_key',
-      dto: { type: 'typed_data', typedData: createTypedData(84532), chainId: 84532 },
+      dto: { type: 'typed_data', typedData: createTypedData(137), chainId: 137 },
       apiKey: API_KEY_CONTEXT,
     },
     {
       name: 'typed_data × eoa',
       dto: {
         type: 'typed_data',
-        typedData: createTypedData(84532),
-        chainId: 84532,
+        typedData: createTypedData(137),
+        chainId: 137,
+        executionMode: 'eoa',
+      },
+      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
+    },
+    {
+      name: 'typed_data × session_key',
+      dto: { type: 'typed_data', typedData: createTypedData(137), chainId: 137 },
+      apiKey: API_KEY_CONTEXT,
+    },
+    {
+      name: 'typed_data × eoa',
+      dto: {
+        type: 'typed_data',
+        typedData: createTypedData(137),
+        chainId: 137,
         executionMode: 'eoa',
       },
       apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
     },
   ])(
-    'blocks all sign types when requireAddressAllowlist=true ($name)',
+    'blocks typed-data signing when requireAddressAllowlist=true ($name)',
     async ({ dto, apiKey }) => {
       mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
 
@@ -1525,7 +1240,7 @@ describe('WalletService.sign()', () => {
           metadata: expect.objectContaining({
             code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
             type: dto.type,
-            chainId: 84532,
+            chainId: 137,
             executionMode: (dto as any).executionMode ?? 'session_key',
             apiKeyPrefix: API_KEY_PREFIX,
           }),
@@ -1542,7 +1257,7 @@ describe('WalletService.sign()', () => {
     await expectSigningBlocked(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
         API_KEY_CONTEXT,
       ),
     );
@@ -1552,20 +1267,18 @@ describe('WalletService.sign()', () => {
   it.each([
     { label: 'null policy', policy: null },
     { label: 'requireAddressAllowlist false', policy: { requireAddressAllowlist: false } },
-  ])('allows sign when destination protection is off ($label)', async ({ policy }) => {
+  ])('still denies signing when destination protection is off ($label)', async ({ policy }) => {
     mockWithdrawalPolicyFindUnique.mockResolvedValue(policy);
     mockTxWithdrawalPolicyFindUnique.mockResolvedValue(policy);
 
-    const result = await service.sign(
+    await expect(service.sign(
       'user-1',
-      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+      { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
       API_KEY_CONTEXT,
-    );
-
-    expect(result.signature).toBe(WRAPPED_SIGNATURE);
-    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
-    expect(mockSigningRequestCreate).toHaveBeenCalled();
-    expect(mockSignData).toHaveBeenCalled();
+    )).rejects.toThrow(ForbiddenException);
+    expect(mockAcquireUserDestinationLock).not.toHaveBeenCalled();
+    expect(mockSigningRequestCreate).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
     expect(mockSecurityEventRecord).not.toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({
@@ -1575,50 +1288,13 @@ describe('WalletService.sign()', () => {
     );
   });
 
-  it('preserves SigningPolicy denial when protection is off', async () => {
-    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
-    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
-
-    const typedData = {
-      ...createTypedData(84532),
-      primaryType: 'Permit',
-      types: {
-        Permit: [
-          { name: 'owner', type: 'address' },
-          { name: 'spender', type: 'address' },
-          { name: 'value', type: 'uint256' },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'deadline', type: 'uint256' },
-        ],
-      },
-      message: {
-        owner: WALLET.walletAddress,
-        spender: '0x1111111111111111111111111111111111111111',
-        value: '1',
-        nonce: 0,
-        deadline: 9999999999,
-      },
-    };
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'typed_data', typedData, chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('Permit typed data signing is not allowed');
-
-    expectNoSignSideEffects();
-    expect(mockTransaction).not.toHaveBeenCalled();
-  });
-
   it('returns 503 and no side effects when preflight policy lookup fails', async () => {
     mockWithdrawalPolicyFindUnique.mockRejectedValue(new Error('db down'));
 
     await expect(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
         API_KEY_CONTEXT,
       ),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
@@ -1626,7 +1302,7 @@ describe('WalletService.sign()', () => {
     try {
       await service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
         API_KEY_CONTEXT,
       );
     } catch (err) {
@@ -1641,69 +1317,6 @@ describe('WalletService.sign()', () => {
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 
-  it('rejects false→true race under lock with zero create/signData', async () => {
-    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
-    mockTxWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
-
-    await expectSigningBlocked(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    );
-
-    expect(mockAcquireUserDestinationLock).toHaveBeenCalledWith('user-1', expect.anything());
-    expect(mockTransaction).toHaveBeenCalled();
-    // SigningPolicy may have recorded an allow event before the final gate; denial is once.
-    const blockedAudits = mockSecurityEventRecord.mock.calls.filter(
-      ([payload]) =>
-        payload?.eventType === 'signing.policy_denied' &&
-        payload?.metadata?.code === API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
-    );
-    expect(blockedAudits).toHaveLength(1);
-    expect(blockedAudits[0][0]).toEqual(
-      expect.objectContaining({
-        eventType: 'signing.policy_denied',
-        metadata: expect.objectContaining({
-          code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
-          walletId: WALLET.id,
-        }),
-      }),
-    );
-  });
-
-  it('returns 503 and no side effects when final policy lookup fails under lock', async () => {
-    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
-    mockTxWithdrawalPolicyFindUnique.mockRejectedValue(new Error('tx db down'));
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
-
-    expectNoSignSideEffects();
-    expect(mockAcquireUserDestinationLock).toHaveBeenCalled();
-  });
-
-  it('returns lock/transaction failure with no create/signData side effects', async () => {
-    mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: false });
-    mockAcquireUserDestinationLock.mockRejectedValue(new Error('lock failed'));
-
-    await expect(
-      service.sign(
-        'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-        API_KEY_CONTEXT,
-      ),
-    ).rejects.toThrow('lock failed');
-
-    expectNoSignSideEffects();
-  });
-
   it('still returns 403 when destination-protection audit recording fails', async () => {
     mockWithdrawalPolicyFindUnique.mockResolvedValue({ requireAddressAllowlist: true });
     mockSecurityEventRecord.mockRejectedValue(new Error('audit down'));
@@ -1711,7 +1324,7 @@ describe('WalletService.sign()', () => {
     await expectSigningBlocked(
       service.sign(
         'user-1',
-        { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
+        { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any,
         API_KEY_CONTEXT,
       ),
     );
@@ -1720,98 +1333,15 @@ describe('WalletService.sign()', () => {
     expect(loggerErrorSpy).toHaveBeenCalled();
   });
 
-  it('creates SigningRequest only inside the interactive TX after lock when protection is off', async () => {
-    mockWithdrawalPolicyFindUnique.mockResolvedValue(null);
-    mockTxWithdrawalPolicyFindUnique.mockResolvedValue(null);
-
-    let createOrder = 0;
-    let lockOrder = 0;
-    let finalCheckOrder = 0;
-    mockAcquireUserDestinationLock.mockImplementation(async () => {
-      lockOrder = ++createOrder;
-    });
-    mockTxWithdrawalPolicyFindUnique.mockImplementation(async () => {
-      finalCheckOrder = ++createOrder;
-      return null;
-    });
-    mockSigningRequestCreate.mockImplementation(async () => {
-      expect(lockOrder).toBeGreaterThan(0);
-      expect(finalCheckOrder).toBeGreaterThan(lockOrder);
-      return { id: 'signing-request-1' };
-    });
-
-    await service.sign(
-      'user-1',
-      { type: 'message', message: 'Hello, SOFA ONE!', chainId: 84532 } as any,
-      API_KEY_CONTEXT,
-    );
-
-    expect(mockSignData).toHaveBeenCalled();
-    // Openfort must run after TX (create already completed via $transaction).
-    expect(mockTransaction.mock.invocationCallOrder[0]).toBeLessThan(
-      mockSignData.mock.invocationCallOrder[0],
-    );
-  });
-});
-
-describe('WalletService.getBalances()', () => {
-  let service: WalletService;
-
-  const mockFindUnique = jest.fn();
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    mockFindUnique.mockResolvedValue({ ...WALLET });
-    mockGetBalance.mockResolvedValue(BigInt('1000000000000000000'));
-    mockReadContract.mockResolvedValue(BigInt('2500000'));
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WalletService,
-        {
-          provide: PrismaService,
-          useValue: {
-            userWallet: { findUnique: mockFindUnique, findMany: jest.fn(async () => { const wallet = await mockFindUnique(); return wallet ? [wallet] : []; }), findFirst: jest.fn(() => mockFindUnique()) },
-          },
-        },
-        {
-          provide: OpenfortService,
-          useValue: {},
-        },
-        {
-          provide: WithdrawalPolicyService,
-          useValue: {
-            assertWithdrawalAllowed: jest.fn().mockResolvedValue(undefined),
-            listWithdrawalAddresses: jest.fn(),
-            addWithdrawalAddress: jest.fn(),
-            removeWithdrawalAddress: jest.fn(),
-          },
-        },
-        {
-          provide: BillingDebtService,
-          useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
-        },
-      ],
-    }).compile();
-
-    service = module.get<WalletService>(WalletService);
-  });
-
   it('returns display balances without raw values or token contracts', async () => {
     const result = await service.getBalances('user-1', 8453);
 
-    expect(result).toEqual({
-      chains: [
-        expect.objectContaining({
-          chainId: 8453,
-          balances: [
-            { token: expect.any(String), formatted: '1' },
-            { token: 'USDC', formatted: '2.5' },
-            { token: 'USDT', formatted: '2.5' },
-          ],
-        }),
-      ],
-    });
+    expect(result.chains[0]).toEqual(expect.objectContaining({ chainId: 8453, chainName: 'Base' }));
+    expect(result.chains[0].balances).toEqual([
+      { token: 'ETH', formatted: '0.2' },
+      { token: 'USDC', formatted: '2' },
+      { token: 'USDT', formatted: '2' },
+    ]);
     expect(result).not.toHaveProperty('walletAddress');
     expect(result.chains[0].balances[0]).not.toHaveProperty('raw');
     expect(result.chains[0].balances[1]).not.toHaveProperty('contractAddress');
@@ -1880,6 +1410,7 @@ describe('WalletService.getDepositInfo()', () => {
           provide: BillingDebtService,
           useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
+        { provide: DefiPolicyService, useValue: { authorizeSigning: jest.fn(), recordDenied: jest.fn() } },
       ],
     }).compile();
 

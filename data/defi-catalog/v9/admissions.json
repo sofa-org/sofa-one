@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "snapshots": [
+    {
+      "sourcePath": "data/defi-catalog/v9/sources/sdai-savings.json",
+      "canonicalSha256": "c1ca1ed92e19a6958b7b5824cf340d82f127605ce0e9e2d531c43dd61258c862",
+      "bindings": [
+        {
+          "familyId": "sdai-savings",
+          "chainId": 1,
+          "contract": "0x83f20f44975d03b1b09e64809b757c47f942beea",
+          "signature": "deposit(uint256,address)",
+          "selector": "0x6e553f65",
+          "abiHash": "0xd9aa3738e0f53bd8105b8c7e2517c7338d49553e906e80abf32af4c3a38f5997",
+          "capabilityId": "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:deposit",
+          "executionScope": null,
+          "executionScopeHash": null
+        },
+        {
+          "familyId": "sdai-savings",
+          "chainId": 1,
+          "contract": "0x83f20f44975d03b1b09e64809b757c47f942beea",
+          "signature": "mint(uint256,address)",
+          "selector": "0x94bf804d",
+          "abiHash": "0xb8f77e58b52fad3ac88bf14cb752b27c8e41983c8c149319e73db4c84f21e352",
+          "capabilityId": "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:mint",
+          "executionScope": null,
+          "executionScopeHash": null
+        },
+        {
+          "familyId": "sdai-savings",
+          "chainId": 1,
+          "contract": "0x83f20f44975d03b1b09e64809b757c47f942beea",
+          "signature": "withdraw(uint256,address,address)",
+          "selector": "0xb460af94",
+          "abiHash": "0x59b31bf3102e98ba6650eb9794b53143fd4c1b90166242569843084f9d8df901",
+          "capabilityId": "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:withdraw",
+          "executionScope": null,
+          "executionScopeHash": null
+        },
+        {
+          "familyId": "sdai-savings",
+          "chainId": 1,
+          "contract": "0x83f20f44975d03b1b09e64809b757c47f942beea",
+          "signature": "redeem(uint256,address,address)",
+          "selector": "0xba087652",
+          "abiHash": "0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e",
+          "capabilityId": "sdai-savings:no-referral-v1:1:0x83f20f44975d03b1b09e64809b757c47f942beea:redeem",
+          "executionScope": null,
+          "executionScopeHash": null
+        }
+      ]
+    }
+  ]
+}

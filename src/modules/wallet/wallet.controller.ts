@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Query, Req, Param, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, Req, Res, Param, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
@@ -110,5 +110,18 @@ export class WalletController {
   @Throttle({ short: { limit: 3, ttl: 60000 }, medium: { limit: 10, ttl: 3600000 } })
   async withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto, @Req() req: any) {
     return this.walletService.withdraw(userId, dto, { stepUpVerified: req.stepUpVerified === true });
+  }
+}
+
+/** API-key owner-scoped wallet metadata; intentionally separate from IAM routes. */
+@Controller('v1/me/wallets')
+@UseGuards(ApiKeyAuthGuard)
+export class ApiKeyWalletController {
+  constructor(private readonly walletService: WalletService) {}
+
+  @Get()
+  async list(@Req() req: any, @Res({ passthrough: true }) response: any) {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.walletService.listApiKeyWallets(req.user.id);
   }
 }

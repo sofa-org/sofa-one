@@ -22,6 +22,7 @@ import { RequestContextService } from '../../common/request-context/request-cont
 import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
+import { TransactionSpendBudgetDenial } from './transaction-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 import {
@@ -52,6 +53,9 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization, type DefiInteraction } from '../defi';
+import { SecurityEventService } from '../security-events/security-event.service';
+import { decodePusdWrapCall } from '../defi/execution/pusd-identity';
 
 class DeferredUnprovenAssetOutflowDenial extends Error {
   readonly name = 'DeferredUnprovenAssetOutflowDenial';
@@ -100,8 +104,8 @@ type ApiKeyTransactionContext = {
   canSendTransaction?: boolean;
   canReadTransactionStatus?: boolean;
   canUseEoaExecution?: boolean;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
   /** BILL-016: null/undefined = not authorized for new direct-egress sends. */
@@ -111,6 +115,8 @@ type ApiKeyTransactionContext = {
 type DestinationGateContext = {
   userId: string;
   destinations: string[];
+  directDestinations: string[];
+  wrapRecipients: string[];
   intents: DirectTransferIntent[];
   /**
    * BILL-016 conservative: every interaction is a proven direct-egress intent.
@@ -124,7 +130,46 @@ type DestinationGateContext = {
   apiKeyId?: string;
   apiKeyPrefix?: string;
   executionMode: ExecutionMode;
+  restrictedWrap: boolean;
 };
+
+function classifyDestinations(interactions: readonly { to: string; data: string; value?: string | number | bigint }[], owner: string, chainId: number) {
+  const extracted = extractDirectTransferIntents(interactions as any, owner);
+  if (!extracted.ok) throw new BadRequestException(extracted.message);
+  const wraps: { index: number; recipient: string }[] = [];
+  interactions.forEach((interaction, index) => {
+    try {
+      const wrap = decodePusdWrapCall(chainId, interaction);
+      if (wrap) wraps.push({ index, recipient: wrap.recipient.toLowerCase() });
+    } catch { throw new BadRequestException('Invalid restricted wrap call'); }
+  });
+  const wrappedIndexes = new Set(wraps.map(({ index }) => index));
+  const notProven = extracted.notProven.filter(({ interactionIndex }) => !wrappedIndexes.has(interactionIndex));
+  const directDestinations = uniqueDirectTransferDestinations(extracted.intents);
+  const wrapRecipients = [...new Set(wraps.map(({ recipient }) => recipient))];
+  const destinations = [...new Set([...directDestinations, ...wrapRecipients])];
+  return {
+    intents: extracted.intents,
+    notProven,
+    directDestinations,
+    wrapRecipients,
+    destinations,
+    restrictedWrap: wraps.length > 0,
+    fullyProvenDirectEgress: interactions.length > 0 && notProven.length === 0 && extracted.intents.length + wraps.length === interactions.length,
+  };
+}
+
+function sameDefiInteractions(
+  requested: readonly { to: string; data: string; value?: string | number | bigint }[],
+  authorized: readonly { to: string; data: string; value?: string | number | bigint }[],
+): boolean {
+  return requested.length === authorized.length && requested.every((interaction, index) => {
+    const accepted = authorized[index];
+    return !!accepted && interaction.to.toLowerCase() === accepted.to.toLowerCase() &&
+      interaction.data.toLowerCase() === accepted.data.toLowerCase() &&
+      String(interaction.value ?? 0) === String(accepted.value ?? 0);
+  });
+}
 
 @Injectable()
 export class TransactionsService {
@@ -137,6 +182,8 @@ export class TransactionsService {
     private readonly billingDebt: BillingDebtService,
     private readonly config: ConfigService,
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
+    private readonly defiPolicy: DefiPolicyService,
+    private readonly securityEvents: SecurityEventService,
     @Optional()
     private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
     @Optional()
@@ -187,8 +234,6 @@ export class TransactionsService {
       executionMode,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
-      allowedContracts: apiKeyRecord.allowedContracts,
-      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
       dailySpendLimit: apiKeyRecord.dailySpendLimit,
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
@@ -249,8 +294,6 @@ export class TransactionsService {
         accountAddress,
         keyHash: wallet.agentKeyHash!,
         operation: 'send_transaction',
-        allowedContracts: apiKeyRecord.allowedContracts,
-        allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
         dailySpendLimit: apiKeyRecord.dailySpendLimit,
         monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
         apiKeyExpiresAt: apiKeyRecord.expiresAt,
@@ -261,17 +304,18 @@ export class TransactionsService {
     const transactionWalletAddress =
       executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
 
+    const requestInteractions = Object.freeze(dto.interactions.map((interaction) => Object.freeze({ ...interaction })));
     const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
     const legacyRequestHash = hashRequest({
       operationType: 'send',
       chainId,
       executionMode,
       ...(sponsorship ? { sponsorship } : {}),
-      interactions: dto.interactions,
+      interactions: requestInteractions,
     });
     const requestHash = hashRequest({
       operationType: 'send', chainId, walletId: wallet.id, walletAddress: wallet.walletAddress,
-      executionMode, ...(sponsorship ? { sponsorship } : {}), interactions: dto.interactions,
+      executionMode, ...(sponsorship ? { sponsorship } : {}), interactions: requestInteractions,
     });
     const existingTransaction = await this.findExistingTransactionRequest(userId, {
       operationType: 'send',
@@ -289,6 +333,37 @@ export class TransactionsService {
       return this.toSendResponse(existingTransaction);
     }
 
+    const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.agentWalletAddress!;
+    let defiAuthorization: DefiAuthorization;
+    try {
+      defiAuthorization = await this.defiPolicy.authorizeContractCalls([...requestInteractions], {
+        userId, apiKeyId: apiKeyRecord.id!, apiKeyPrefix: apiKeyRecord.keyPrefix,
+        walletId: wallet.id, chainId, executionMode, executionOwner,
+        allowedCapabilityIds: apiKeyRecord.allowedCapabilityIds ?? [],
+        capabilityMode: apiKeyRecord.capabilityMode,
+      });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      throw error;
+    }
+
+    if (!sameDefiInteractions(requestInteractions, defiAuthorization.interactions)) {
+      const denial = new DefiPolicyDenial(
+        new ForbiddenException({ code: 'DEFI_INVALID_PARAMETERS', message: 'DeFi policy denied' }),
+        { context: defiAuthorization.context, code: 'DEFI_INVALID_PARAMETERS' },
+      );
+      try { await this.defiPolicy.recordDenied(denial); } catch { /* audit must not mask stable denial */ }
+      throw denial.httpException;
+    }
+    const authorizedInteractions = [...defiAuthorization.interactions] as SendTransactionDto['interactions'];
+    const nativeValueWei = authorizedInteractions.reduce(
+      (sum, interaction) => sum + BigInt(interaction.value ?? '0'),
+      0n,
+    ).toString();
+
     // Owner for asset-flow classification + destination policy + evidence binding:
     // session_key executes as the user wallet; eoa executes as the agent backend wallet.
     const assetFlowOwnerAddress =
@@ -297,20 +372,10 @@ export class TransactionsService {
     // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
     // Completeness is per-interaction: notProven entries are never dropped.
     // Self-transfers / non-owner transferFrom / empty / unknown are not proven.
-    const destinationExtract = extractDirectTransferIntents(
-      dto.interactions,
-      assetFlowOwnerAddress,
-    );
-    if (!destinationExtract.ok) {
-      throw new BadRequestException(destinationExtract.message);
-    }
-    const destinations = uniqueDirectTransferDestinations(destinationExtract.intents);
+    const classified = classifyDestinations(authorizedInteractions, assetFlowOwnerAddress, chainId);
     const destinationGate: DestinationGateContext = {
       userId,
-      destinations,
-      intents: destinationExtract.intents,
-      fullyProvenDirectEgress: destinationExtract.fullyProvenDirectEgress,
-      notProven: destinationExtract.notProven,
+      ...classified,
       chainId,
       walletId: wallet.id,
       apiKeyId: apiKeyRecord.id,
@@ -323,7 +388,7 @@ export class TransactionsService {
     // When disabled: preserve legacy product semantics (only gate proven destinations).
     const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
     if (destinationProtectionEnabled) {
-      if (!destinationGate.fullyProvenDirectEgress) {
+      if (!classified.fullyProvenDirectEgress) {
         await this.throwUnprovenAssetOutflowBlocked(destinationGate);
       }
       this.assertDirectEgressReauthorized(apiKeyRecord);
@@ -335,9 +400,9 @@ export class TransactionsService {
         apiKeyPrefix: apiKeyRecord.keyPrefix,
         executionMode,
       });
-    } else if (destinationGate.destinations.length > 0) {
+    } else if (classified.directDestinations.length > 0) {
       this.assertDirectEgressReauthorized(apiKeyRecord);
-      await this.destinationPolicy.assertDestinationsAllowed(userId, destinationGate.destinations, {
+      await this.destinationPolicy.assertDestinationsAllowed(userId, classified.directDestinations, {
         actorType: 'api_key',
         chainId,
         walletId: wallet.id,
@@ -348,7 +413,7 @@ export class TransactionsService {
     }
 
     const assetFlow = classifyTransactionAssetFlow({
-      interactions: dto.interactions,
+      interactions: authorizedInteractions,
       ownerAddress: assetFlowOwnerAddress,
       chainId,
     });
@@ -358,12 +423,12 @@ export class TransactionsService {
       walletId: wallet.id,
       executionMode,
       ownerAddress: assetFlowOwnerAddress,
-      interactions: dto.interactions,
+      interactions: authorizedInteractions,
       assetFlow,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
     });
 
-    await this.assertTransactionSimulatable(userId, dto, apiKeyRecord, {
+    await this.assertTransactionSimulatable(userId, { ...dto, interactions: authorizedInteractions }, apiKeyRecord, {
       chainId,
       executionMode,
       from: transactionWalletAddress,
@@ -383,11 +448,12 @@ export class TransactionsService {
       executionMode,
       details: {
         type: 'send',
+        nativeValueWei,
         walletId: wallet.id,
         execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
         executionMode,
         ...(sponsorship ? { sponsorship } : {}),
-        interactionCount: dto.interactions.length,
+        interactionCount: authorizedInteractions.length,
         agentWalletAddress: wallet.agentWalletAddress,
         agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
@@ -398,12 +464,14 @@ export class TransactionsService {
         walletId: wallet.id,
         executionMode,
         ownerAddress: assetFlowOwnerAddress,
-        interactions: dto.interactions,
+        interactions: authorizedInteractions,
         assetFlow,
         apiKeyPrefix: apiKeyRecord.keyPrefix,
         verification: boundVerification,
       },
       destinationGate,
+      defiAuthorization,
+      nativeValueWei,
     });
 
     if (!created || tx.txHash || tx.status !== 'submitting') {
@@ -429,14 +497,14 @@ export class TransactionsService {
           transactionId: tx.id,
           chainId,
           executionMode,
-          interactionCount: dto.interactions.length,
+          interactionCount: authorizedInteractions.length,
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
       let submission = await this.submitTransaction(executionMode, {
         accountAddress,
         chainId,
-        interactions: dto.interactions,
+        interactions: [...defiAuthorization.interactions] as SendTransactionDto['interactions'],
         agentOpenfortAccountId: wallet.agentOpenfortAccountId!,
         agentKeyHash: wallet.agentKeyHash!,
         sponsorship,
@@ -848,14 +916,17 @@ export class TransactionsService {
       details: Record<string, unknown>;
       billingGate?: BillingAssetFlowGateContext;
       destinationGate?: DestinationGateContext;
+      defiAuthorization?: DefiAuthorization;
+      nativeValueWei: string;
     },
   ) {
     // Interactive transaction: inner idempotency + destination lock/recheck +
     // debt recheck (no RPC) + create only.
     // On unique-key race (P2002) the interactive tx aborts — never re-query on the
     // failed txClient. Recover outside with the root PrismaService after rollback.
+    let deferredDefiEvent: unknown;
     try {
-      return await this.prisma.$transaction(async (txClient) => {
+      const result = await this.prisma.$transaction(async (txClient) => {
         const existingInTx = await this.findExistingTransactionRequest(
           userId,
           {
@@ -874,25 +945,39 @@ export class TransactionsService {
           return { tx: existingInTx, created: false };
         }
 
+        const authorized = params.defiAuthorization?.interactions;
+        if (!authorized || !params.defiAuthorization?.context?.executionOwner || !params.destinationGate) throw new BadRequestException('Destination classification is inconsistent');
+        const finalClassification = classifyDestinations(authorized, params.defiAuthorization.context.executionOwner, params.chainId);
+        const gate = params.destinationGate;
+        const equivalent = ['destinations', 'directDestinations', 'wrapRecipients', 'intents', 'notProven'].every((key) => JSON.stringify((gate as any)[key]) === JSON.stringify((finalClassification as any)[key]))
+          && gate.restrictedWrap === finalClassification.restrictedWrap
+          && gate.fullyProvenDirectEgress === finalClassification.fullyProvenDirectEgress
+          && gate.userId === userId && gate.chainId === params.chainId
+          && gate.walletId === params.walletId && gate.apiKeyId === params.apiKeyId
+          && gate.executionMode === params.executionMode;
+        if (!equivalent) throw new BadRequestException('Destination classification is inconsistent');
+
         // BILL-016: user-scoped destination lock + live protection/reauth +
         // destination re-assert before insert. Never trust the HTTP-auth snapshot
         // alone. Lock first so allowlist/protection mutations cannot race
         // acceptance. No RPC here. Unproven batches re-check protection under
         // lock so enablement after outer preflight cannot slip through.
+        let needsDirectEgressKeyState = false;
         if (params.destinationGate) {
           const gate = params.destinationGate;
+          const destinations = finalClassification.destinations;
           await this.destinationPolicy.acquireUserDestinationLock(userId, txClient);
           const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
           if (protectionOn) {
-            if (!gate.fullyProvenDirectEgress) {
+            if (!finalClassification.fullyProvenDirectEgress) {
               await this.throwUnprovenAssetOutflowBlocked(gate, { deferAudit: true });
             }
-            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+            needsDirectEgressKeyState = true;
             // deferAudit: never write security_events under ApiKey FOR UPDATE
             // (FK key-share would deadlock). Caller records after rollback.
             await this.destinationPolicy.assertDestinationsAllowed(
               userId,
-              gate.destinations,
+              destinations,
               {
                 actorType: 'api_key',
                 chainId: gate.chainId,
@@ -903,11 +988,11 @@ export class TransactionsService {
               },
               { prisma: txClient, deferAudit: true },
             );
-          } else if (gate.destinations.length > 0) {
-            await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+          } else if (finalClassification.directDestinations.length > 0) {
+            needsDirectEgressKeyState = true;
             await this.destinationPolicy.assertDestinationsAllowed(
               userId,
-              gate.destinations,
+              finalClassification.directDestinations,
               {
                 actorType: 'api_key',
                 chainId: gate.chainId,
@@ -921,6 +1006,27 @@ export class TransactionsService {
           }
         }
 
+        if (params.defiAuthorization) {
+          await this.defiPolicy.assertStillAuthorized(txClient, params.defiAuthorization);
+        }
+
+        // DeFi final authorization takes the pause FOR SHARE lock before the API-key
+        // FOR UPDATE lock. Keep direct-egress key revalidation after it so all send
+        // paths preserve the global destination -> pause -> API-key lock order.
+        if (needsDirectEgressKeyState) {
+          await this.assertDirectEgressKeyStateInTx(userId, params.apiKeyId, txClient);
+        }
+
+        const acceptedAt = new Date();
+        if (params.apiKeyId) {
+          await this.transactionPolicy.assertSpendAllowedInTx(txClient, {
+            userId,
+            apiKeyId: params.apiKeyId,
+            nativeValueWei: params.nativeValueWei,
+            acceptedAt,
+          });
+        }
+
         if (params.billingGate) {
           await this.assertInnerBillingAssetFlowGate(
             params.billingGate.userId,
@@ -932,7 +1038,11 @@ export class TransactionsService {
           );
         }
 
-        const createdAt = new Date();
+        if (params.defiAuthorization) {
+          deferredDefiEvent = await this.defiPolicy.recordAllowedInTx(txClient, params.defiAuthorization);
+        }
+
+        const createdAt = acceptedAt;
         const billingPeriodStart = new Date(
           Date.UTC(createdAt.getUTCFullYear(), createdAt.getUTCMonth(), 1),
         );
@@ -955,8 +1065,18 @@ export class TransactionsService {
           },
         });
         return { tx, created: true };
-      });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+      if (deferredDefiEvent) await this.securityEvents.exportCommitted(deferredDefiEvent);
+      return result;
     } catch (error: any) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      if (error instanceof TransactionSpendBudgetDenial) {
+        await this.transactionPolicy.recordSpendBudgetDenial(error);
+        throw error;
+      }
       // After TX rollback: locks released — safe to audit deferred destination denials.
       if (error instanceof DeferredUnprovenAssetOutflowDenial) {
         await this.destinationPolicy.recordUnprovenAssetOutflowDenial(error.audit);

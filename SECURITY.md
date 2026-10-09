@@ -62,6 +62,41 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
+- API-key signing permits the exact Polymarket CLOB `ClobAuth` bootstrap typed data and the separately scoped V2 order exception below: EOA mode,
+  Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),
+  exact ordered `ClobAuth` fields and fixed message, selected agentWalletAddress (never the
+  embedded wallet address or funder), canonical decimal Unix timestamp within ±300 seconds,
+  and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
+  name:string, version:string, chainId:uint256. ClobAuth itself is not order, Permit, arbitrary
+  typed/message/hash, or session-key signing.
+- ClobAuth eligibility requires `canSign`, `canUseEoaExecution`, and either `capabilityMode: all`
+  or `capabilityMode: custom` containing `polymarket:137:clob-auth:v1`. `all` dynamically
+  includes active, unpaused reviewed capabilities, but never bypasses permissions, chain,
+  schema, scope, freeze, pause, destination, or other independent controls. `custom` grants
+  only exact IDs; `[]` denies catalog capabilities. Preserve EOA
+  isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live
+  key and final grant/pause/digest acceptance checks. The final live-state read does not
+  serialize against concurrent freeze writers; do not promise race-free freeze exclusion.
+  PostgreSQL race behavior and live Openfort/Polymarket outcomes remain unverified.
+  Destination protection blocks signing.
+  The exception does not imply deployment or successful live Polymarket authentication.
+- Generic API-key transaction sends require active, granted DeFi capability matches for
+  every contract call. Unknown/paused/ungranted capabilities fail closed. Capability/pause
+  state is revalidated in the acceptance transaction; do not make RPC/Openfort/HTTP calls
+  while policy locks are held.
+- DeFi grants authorize exact catalog functions, not safe financial outcomes: callers control
+  ABI arguments and payable value. ERC-20 approval is an independent explicit grant allowing
+  any spender and any uint256 amount, including unlimited approval; never auto-grant or
+  automatically clean it up. Catalog admission does not grant authority. Preserve the
+  independent identity, permission, freeze, session/EOA, destination, billing, simulation,
+  idempotency, and user-configured key-spend controls.
+- Existing grant IDs intentionally gain the simplified function-level scope without a schema
+  migration. Owners should review existing grants and revoke/re-grant if the broader
+  authority is not intended.
+
+### Polymarket CLOB V2 order-signing safeguards
+
+The separate order exception requires explicit custom grant `polymarket:137:clob-order:v2` (`all` never grants it), EOA mode and permissions, exact `TypedDataSign`/11-field V2 Order and six-field wrapper, fixed ordinary (`0xE111180000d2663C0091e4f400237545B87B996B`) or neg-risk (`0xe2222d279d744050d28e00520010520000310F59`) exchange, and DepositWallet `signatureType:3` (POLY_1271). Reject V1/V3, types 0/1/2, arbitrary typed data, messages, and permits. Existing permission and EOA safeguards remain; strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity are required. These checks do not prove official-wallet ownership or automatically recognize an official factory. Wallet-scoped rolling 60-second limit: at most 60 accepted orders across keys, atomically reserved; failures consume reservations. This does not alter general EOA enabled/permission/IP/TTL controls or the shared original 1/60s ClobAuth/send limit. Amounts must be positive and structure valid, but there are no economic/market/price/quantity limits. ±300000ms is service signing freshness, not exchange expiry. Freeze/pause/revocation cannot revoke signed orders; failure may mean TEE signing occurred without returning the signature. Real-client/CLOB/DepositWallet end-to-end acceptance remains unverified.
 
 ## 7. Logging rules
 

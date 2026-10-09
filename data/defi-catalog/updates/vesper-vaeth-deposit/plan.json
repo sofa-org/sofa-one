@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/liquid-collective-deposit/catalog.json",
+    "rawSha256": "96048c4fc6032d7744691949c3d6e134781a886ea02a6e142e370208c24a36e7",
+    "manifestHash": "0x4a9bb327547983d832b5f2e190a563cf70bd212d86fbac4bda87d0ef1acdbac7"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/vesper-vaeth-deposit/sources/vesper-vaeth.json",
+      "canonicalSha256": "887c9e06179b6600a8e21b7791ea2ed7776da4421993b075a854362fa19732a4"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/vesper-vaeth-deposit/sources/vesper-vaeth.json",
+      "familyId": "vesper-vaeth",
+      "familyVersion": "veth@60b621ea",
+      "chainId": 1,
+      "contract": "0xd1c117319b3595fbc39b471ab1fd485629eb05f2",
+      "signature": "deposit()",
+      "selector": "0xd0e30db0",
+      "abiHash": "0x843bc76e9b37f6f244f6c3fb4e28e3326df5c9f744f45f159a9eed920b284b1a",
+      "capabilityId": "vesper-vaeth:v1:1:0xd1c117319b3595fbc39b471ab1fd485629eb05f2:deposit",
+      "sourceRefs": [
+        "vesper-metadata",
+        "vesper-contracts-pinned-deployment",
+        "vaeth-proxy-descriptor",
+        "vaeth-verified-implementation",
+        "vpool-verified-inherited-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "vesper-metadata",
+          "vesper-contracts-pinned-deployment",
+          "vaeth-proxy-descriptor",
+          "vaeth-verified-implementation",
+          "vpool-verified-inherited-source"
+        ],
+        "evidence": "The sole selected overload is payable deposit() with no inputs/outputs. VETH.deposit() is whenNotPaused and nonReentrant; it updates rewards for msg.sender, then _depositETH calculates mintage from msg.value, wraps ETH through the pool's fixed configured WETH token, mints shares to msg.sender, and emits Deposit. Inherited reward updates call the fixed configured poolRewards module when nonzero; mintage depends on configured accountant and share-valuation state. Fixed protocol configuration and dependencies are trusted as protocol behavior, not arbitrary wallet-selected targets or calldata. Pause, reentrancy, protocol rates, supply/strategy liquidity, valuation, governance and reward-module conditions may revert. No new platform value restriction is added: payable root value (including zero) remains unconstrained by the platform and protocol may reject it. Caller-only share minting is protocol behavior, not a platform recipient restriction. This admits only exact payable deposit(); deposit(uint256), withdrawETH, claim-reward methods, receive/fallback, admin and all other functions are excluded. Dated source/proxy associations do not establish current implementation, initialized storage, runtime identity, funding, liquidity, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

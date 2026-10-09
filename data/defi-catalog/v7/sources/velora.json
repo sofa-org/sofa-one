@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "velora",
+      "familyVersion": "augustus-rfq@a36949e4",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xe92b586627ccA7a83dC919cc7127196d70f55a06",
+          "status": "inactive",
+          "contractName": "Velora Ethereum Augustus RFQ",
+          "sourceRefs": [
+            "velora-augustus-rfq-mainnet-role",
+            "velora-augustus-rfq-pinned-abi",
+            "velora-augustus-rfq-etherscan-source"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "fillOrder",
+              "inputs": [
+                {
+                  "components": [
+                    { "internalType": "uint256", "name": "nonceAndMeta", "type": "uint256" },
+                    { "internalType": "uint128", "name": "expiry", "type": "uint128" },
+                    { "internalType": "address", "name": "makerAsset", "type": "address" },
+                    { "internalType": "address", "name": "takerAsset", "type": "address" },
+                    { "internalType": "address", "name": "maker", "type": "address" },
+                    { "internalType": "address", "name": "taker", "type": "address" },
+                    { "internalType": "uint256", "name": "makerAmount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "takerAmount", "type": "uint256" }
+                  ],
+                  "internalType": "struct AugustusRFQ.Order",
+                  "name": "order",
+                  "type": "tuple"
+                },
+                { "internalType": "bytes", "name": "signature", "type": "bytes" }
+              ],
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "sourceId": "velora-augustus-rfq-pinned-abi"
+            },
+            {
+              "type": "function",
+              "name": "partialFillOrder",
+              "inputs": [
+                {
+                  "components": [
+                    { "internalType": "uint256", "name": "nonceAndMeta", "type": "uint256" },
+                    { "internalType": "uint128", "name": "expiry", "type": "uint128" },
+                    { "internalType": "address", "name": "makerAsset", "type": "address" },
+                    { "internalType": "address", "name": "takerAsset", "type": "address" },
+                    { "internalType": "address", "name": "maker", "type": "address" },
+                    { "internalType": "address", "name": "taker", "type": "address" },
+                    { "internalType": "uint256", "name": "makerAmount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "takerAmount", "type": "uint256" }
+                  ],
+                  "internalType": "struct AugustusRFQ.Order",
+                  "name": "order",
+                  "type": "tuple"
+                },
+                { "internalType": "bytes", "name": "signature", "type": "bytes" },
+                { "internalType": "uint256", "name": "takerTokenFillAmount", "type": "uint256" }
+              ],
+              "outputs": [
+                { "internalType": "uint256", "name": "makerTokenFilledAmount", "type": "uint256" }
+              ],
+              "stateMutability": "nonpayable",
+              "sourceId": "velora-augustus-rfq-pinned-abi"
+            },
+            {
+              "inputs": [
+                { "internalType": "bytes32", "name": "orderHash", "type": "bytes32" }
+              ],
+              "name": "cancelOrder",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "velora-augustus-rfq-pinned-abi"
+            },
+            {
+              "inputs": [
+                { "internalType": "bytes32[]", "name": "orderHashes", "type": "bytes32[]" }
+              ],
+              "name": "cancelOrders",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "velora-augustus-rfq-pinned-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "velora-augustus-rfq-mainnet-role",
+      "url": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/dex/augustus-rfq.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official VeloraDEX/paraswap-dex-lib commit a36949e4d7fcc47c39083ca61622e48cb5be0e6b (2026-10-01) maps Network.MAINNET Augustus RFQ to 0xe92b586627ccA7a83dC919cc7127196d70f55a06. The address map is dated role evidence, not current runtime identity or an assertion that this is the entire Augustus/Velora surface."
+    },
+    {
+      "sourceId": "velora-augustus-rfq-pinned-abi",
+      "url": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "The pinned repository ABI file SHA-256 is f506c534b5ad5e3de08249cef66f3eb2cad31dfdd6e69557b65493241cc9f0a3. The four selected nonpayable declarations are copied as full ABI objects, retaining tuple components, outputs, names and internalTypes: fillOrder(Order,bytes), partialFillOrder(Order,bytes,uint256), cancelOrder(bytes32), and cancelOrders(bytes32[]). Selectors are 0x98f9b46b, 0xc88ae6dc, 0x7489ec23, and 0x21c77c96 respectively. Other batch, NFT, target-recipient and permit-bearing declarations in the full ABI are not selected."
+    },
+    {
+      "sourceId": "velora-augustus-rfq-etherscan-source",
+      "url": "https://etherscan.io/address/0xe92b586627ccA7a83dC919cc7127196d70f55a06#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Oracle reviewed the verified Etherscan source/ABI bundle for this address and found the selected ABI to match the pinned repository ABI byte-for-byte (ABI SHA-256 f506c534b5ad5e3de08249cef66f3eb2cad31dfdd6e69557b65493241cc9f0a3). The verified AugustusRFQ.sol source bundle SHA-256 is 55152e064eac6b36c1b6f3501e3d6074aae12b067059c4bec85937ceab20ffb9. Source findings: fill paths use a fixed token settlement path with msg.sender as taker and the fixed order recipient; maker-to-recipient and taker-from-msg.sender transfers use token transferFrom. Order checks include signature validation through SignatureChecker (including ERC-1271 staticcall semantics); cancellation follows caller/order state. The selected four functions expose no arbitrary execution child or permit parameter. These implementation observations do not prove present runtime code, current state, liquidity, funds, complete workflow, or all of Velora/Augustus v6."
+    }
+  ]
+}

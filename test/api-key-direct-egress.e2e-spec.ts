@@ -17,11 +17,14 @@ import { getStorageToken } from '@nestjs/throttler';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as request from 'supertest';
-import { getAddress } from 'viem';
+import { getAddress, keccak256, stringToHex } from 'viem';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
 import { TransactionSimulationService } from '../src/modules/transactions/transaction-simulation.service';
+import { DefiPolicyService } from '../src/modules/defi/defi-policy.service';
+import { BillingWalletLifecycleService } from '../src/modules/billing/billing-wallet-lifecycle.service';
+import { BillingService } from '../src/modules/billing/billing.service';
 import { StepUpGuard } from '../src/common/guards/step-up.guard';
 import { API_ERROR_CODES } from '../src/common/errors/api-error-codes';
 import { AgentStatus } from '../src/common/agent/agent-status';
@@ -177,6 +180,16 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
             timeToBlockExpire: 0,
           }),
         })
+        .overrideProvider(BillingWalletLifecycleService)
+        .useValue({
+          withWalletAccountLock: jest.fn(),
+          assertWalletReservationAllowed: jest.fn(),
+          recordWalletActivation: jest.fn(),
+          initializeWalletCount: jest.fn(),
+          prepareWalletUsageThroughCurrentMonth: jest.fn(),
+        })
+        .overrideProvider(BillingService)
+        .useValue({ assertAndRecordApiCall: jest.fn().mockResolvedValue(undefined) })
         .overrideProvider(SessionKeyPolicyService)
         .useValue({ assertSessionKeyAllowed: jest.fn().mockResolvedValue(undefined) })
         .overrideProvider(TransactionSimulationService)
@@ -185,6 +198,25 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
           // createPendingOrReturnExisting (advisory + ApiKey FOR UPDATE + inner deferAudit).
           assertSimulatable: assertSimulatableMock,
           simulateAssetFlowEvidence: jest.fn().mockResolvedValue(null),
+        })
+        // This is a destination-policy suite: isolate the independent DeFi
+        // boundary here; composed pause/grant serialization uses the real PG
+        // execution test rather than this suite's generic destinations.
+        .overrideProvider(DefiPolicyService)
+        .useValue({
+          authorizeContractCalls: jest.fn(async (interactions: any[], context: any) => {
+            const manifestHash = `0x${'a'.repeat(64)}`;
+            const requestCommitment = keccak256(stringToHex(JSON.stringify({ interactions, userId: context.userId, apiKeyId: context.apiKeyId })));
+            return {
+              context: Object.freeze({ ...context, allowedCapabilityIds: Object.freeze([...context.allowedCapabilityIds]) }),
+              requiredPermission: 'canSendTransaction', matches: Object.freeze([]),
+              interactions: Object.freeze(interactions.map((item) => Object.freeze({ ...item }))),
+              manifestHash, requestCommitment,
+            };
+          }),
+          assertStillAuthorized: jest.fn().mockResolvedValue(undefined),
+          recordAllowedInTx: jest.fn().mockResolvedValue(null),
+          recordDenied: jest.fn().mockResolvedValue(undefined),
         })
         // Step-up is required on authorize-direct-egress; this suite evidences
         // endpoint wiring + CAS, not TOTP crypto. Real Openfort IAM is mocked.
@@ -1056,8 +1088,6 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
         name: opts.name,
         expiresAt: opts.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         allowedIps: ['127.0.0.1', '::1', '::ffff:127.0.0.1'],
-        allowedContracts: [],
-        allowedFunctionSelectors: [],
         canSendTransaction: opts.canSendTransaction,
         canSign: opts.canSign,
         canReadTransactionStatus: opts.canReadTransactionStatus,

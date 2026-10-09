@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "polymarket-pusd",
+      "familyVersion": "collateral-onramp@27700089",
+      "contracts": [
+        {
+          "chainId": 137,
+          "address": "0x93070a847efEf7F70739046A929D47a521F5B8ee",
+          "status": "inactive",
+          "contractName": "Polymarket CollateralOnramp",
+          "sourceRefs": ["polymarket-pusd-address-bound-source", "polymarket-pusd-full-abi", "polymarket-pusd-contract-response"],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "wrap",
+              "inputs": [
+                {"name": "_asset", "type": "address", "internalType": "address"},
+                {"name": "_to", "type": "address", "internalType": "address"},
+                {"name": "_amount", "type": "uint256", "internalType": "uint256"}
+              ],
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "status": "inactive",
+              "sourceRefs": ["polymarket-pusd-address-bound-source", "polymarket-pusd-full-abi", "polymarket-pusd-contract-response"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {"sourceId":"polymarket-pusd-address-bound-source","url":"https://sourcify.dev/server/v2/contract/137/0x93070a847efEf7F70739046A929D47a521F5B8ee?fields=sources,metadata","retrievedAtUtc":"2026-10-07","evidence":"Kind: exact-address source+metadata response. Full response SHA-256 e3876528e867debfbbb196905c6d2de4d81400333e1e1a104783fdfb7c2c12f6; address-bound CollateralOnramp.sol carrier SHA-256 98be3707c2bf77b3ad576443fe226a67bc7b9a2db716699ce77ea2463cb344af. Sourcify exact-address full match, matchId 27700089, chain 137; verifiedAt 2026-04-07T11:35:27Z. Body checks onlyUnpaused(_asset), transfers caller-selected _asset from msg.sender to immutable COLLATERAL_TOKEN, then calls collateral.wrap with that same caller-selected asset, _to and _amount and zero callback/empty data. Source accepts any caller-chosen asset; fixed USDC.e is imposed only by the exact mandatory catalog scope. Paused/unsupported assets or token behavior may revert."},
+    {"sourceId":"polymarket-pusd-full-abi","url":"https://sourcify.dev/server/v2/contract/137/0x93070a847efEf7F70739046A929D47a521F5B8ee?fields=abi","retrievedAtUtc":"2026-10-07","evidence":"Kind: exact-address complete ABI response. Response SHA-256 0a829eeda0754ded1d1e0a0c2fb5f9ae089e56ec173488c1da22c409cb1e45df; retained full ABI carrier SHA-256 418bc6e41b0339b3f6bb842fe36a96bfac4aeaf75ed2da0e5afbb3f029761d95. Exact ABI entry is wrap(address _asset,address _to,uint256 _amount), nonpayable, no outputs. Correct canonical selector independently computes to 0x62355638. Full ABI also contains admin/pause functions, none admitted."},
+    {"sourceId":"polymarket-pusd-contract-response","url":"https://sourcify.dev/server/v2/contract/137/0x93070a847efEf7F70739046A929D47a521F5B8ee?fields=all","retrievedAtUtc":"2026-10-07","evidence":"Kind: exact-address all-fields full-match response. Response SHA-256 76aab17564b7a07a841ebaa56f2e562e2443b519a98fa50bb1691dc2e1f205f9. Match metadata reports chainId 137, matchId 27700089 and verifiedAt 2026-04-07T11:35:27Z. This dated verification does not establish current runtime identity, immutable COLLATERAL_TOKEN value, current pause state, liquidity, successful execution, or financial safety."}
+  ],
+  "unresolved": []
+}

@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/spark-spusdc-v2/catalog.json",
+    "rawSha256": "715f091d6ffddf09e5ee0e0cb786689347f9b9516d5467a4b816bf4e6d95d033",
+    "manifestHash": "0xd95f5cc6b4821d0696bc6f067598416c56aa481ee925c0aac0c16ee70098d2cf"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "canonicalSha256": "135bdeadc374dac8064a72f8b49835644fb4b1ac572fa2accf3795c1949d6588"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0x80128dbb9f07b93dde62a6daeadb69ed14a7d354",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xd9aa3738e0f53bd8105b8c7e2517c7338d49553e906e80abf32af4c3a38f5997",
+      "capabilityId": "spark-vault-v2:v2:1:0x80128dbb9f07b93dde62a6daeadb69ed14a7d354:deposit",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Uses the fixed implementation exchange-rate conversion and mint path, validates receiver (not zero or vault), taker roles and protocol deposit cap, then pulls the configured asset from msg.sender and mints shares. Amount and receiver are caller-selected; there is no platform financial cap or receiver/owner/balance/feed equality gate. Protocol cap, roles, configured asset behavior and a separate token approval may reject execution; no approval is automatically granted or paired. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0x80128dbb9f07b93dde62a6daeadb69ed14a7d354",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0xb8f77e58b52fad3ac88bf14cb752b27c8e41983c8c149319e73db4c84f21e352",
+      "capabilityId": "spark-vault-v2:v2:1:0x80128dbb9f07b93dde62a6daeadb69ed14a7d354:mint",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected shares using the fixed implementation exchange-rate path, then follows the same receiver/taker/deposit-cap checks, configured-asset transferFrom from msg.sender, and share mint. Amount and receiver remain caller-selected without platform financial/recipient/balance/feed gates. Protocol checks and separate token approval may reject execution; no approval is automatically granted or paired. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0x80128dbb9f07b93dde62a6daeadb69ed14a7d354",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x59b31bf3102e98ba6650eb9794b53143fd4c1b90166242569843084f9d8df901",
+      "capabilityId": "spark-vault-v2:v2:1:0x80128dbb9f07b93dde62a6daeadb69ed14a7d354:withdraw",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected assets to shares and burns selected owner shares; if owner differs from msg.sender, existing share allowance is checked and spent. The configured asset is pushed to caller-selected receiver subject to vault liquidity. Amount, receiver and owner remain caller-selected without platform equality or financial gates; protocol balance, allowance and liquidity conditions may reject. No automatic share approval or completion guarantee. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0x80128dbb9f07b93dde62a6daeadb69ed14a7d354",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e",
+      "capabilityId": "spark-vault-v2:v2:1:0x80128dbb9f07b93dde62a6daeadb69ed14a7d354:redeem",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected shares to assets and burns selected owner shares; if owner differs from msg.sender, existing share allowance is checked and spent. The configured asset is pushed to caller-selected receiver subject to vault liquidity. Amount, receiver and owner remain caller-selected without platform equality or financial gates; protocol balance, allowance and liquidity conditions may reject. No automatic share approval or completion guarantee. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xe2e7a17dff93280dec073c995595155283e3c372",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xd9aa3738e0f53bd8105b8c7e2517c7338d49553e906e80abf32af4c3a38f5997",
+      "capabilityId": "spark-vault-v2:v2:1:0xe2e7a17dff93280dec073c995595155283e3c372:deposit",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Uses the fixed implementation exchange-rate conversion and mint path, validates receiver (not zero or vault), taker roles and protocol deposit cap, then pulls the configured asset from msg.sender and mints shares. Amount and receiver are caller-selected; there is no platform financial cap or receiver/owner/balance/feed equality gate. Protocol cap, roles, configured asset behavior and a separate token approval may reject execution; no approval is automatically granted or paired. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xe2e7a17dff93280dec073c995595155283e3c372",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0xb8f77e58b52fad3ac88bf14cb752b27c8e41983c8c149319e73db4c84f21e352",
+      "capabilityId": "spark-vault-v2:v2:1:0xe2e7a17dff93280dec073c995595155283e3c372:mint",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected shares using the fixed implementation exchange-rate path, then follows the same receiver/taker/deposit-cap checks, configured-asset transferFrom from msg.sender, and share mint. Amount and receiver remain caller-selected without platform financial/recipient/balance/feed gates. Protocol checks and separate token approval may reject execution; no approval is automatically granted or paired. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xe2e7a17dff93280dec073c995595155283e3c372",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x59b31bf3102e98ba6650eb9794b53143fd4c1b90166242569843084f9d8df901",
+      "capabilityId": "spark-vault-v2:v2:1:0xe2e7a17dff93280dec073c995595155283e3c372:withdraw",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected assets to shares and burns selected owner shares; if owner differs from msg.sender, existing share allowance is checked and spent. The configured asset is pushed to caller-selected receiver subject to vault liquidity. Amount, receiver and owner remain caller-selected without platform equality or financial gates; protocol balance, allowance and liquidity conditions may reject. No automatic share approval or completion guarantee. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/spark-spusdt-sppyusd-v2/sources/spark-vault-v2.json",
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "chainId": 1,
+      "contract": "0xe2e7a17dff93280dec073c995595155283e3c372",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e",
+      "capabilityId": "spark-vault-v2:v2:1:0xe2e7a17dff93280dec073c995595155283e3c372:redeem",
+      "sourceRefs": [
+        "spark-official-savings-docs",
+        "spark-official-address-registry",
+        "spark-vault-v2-verified-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "spark-official-savings-docs",
+          "spark-official-address-registry",
+          "spark-vault-v2-verified-source"
+        ],
+        "evidence": "Converts caller-selected shares to assets and burns selected owner shares; if owner differs from msg.sender, existing share allowance is checked and spent. The configured asset is pushed to caller-selected receiver subject to vault liquidity. Amount, receiver and owner remain caller-selected without platform equality or financial gates; protocol balance, allowance and liquidity conditions may reject. No automatic share approval or completion guarantee. The dated registry/product/source version correspondence does not establish current target proxy/runtime or initialized asset storage, funding, live liquidity, execution success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

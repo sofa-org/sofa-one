@@ -12,11 +12,10 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidateNested,
+  ValidateIf,
 } from 'class-validator';
 import { isIpOrCidr } from '../../../common/utils/ip-cidr';
 
-const ETHEREUM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
-const FUNCTION_SELECTOR_RE = /^0x[0-9a-fA-F]{8}$/;
 const WEI_AMOUNT_RE = /^\d+$/;
 
 @ValidatorConstraint({ name: 'isIpOrCidr', async: false })
@@ -30,25 +29,39 @@ class IsIpOrCidrConstraint implements ValidatorConstraintInterface {
   }
 }
 
-@ValidatorConstraint({ name: 'isEthereumAddress', async: false })
-class IsEthereumAddressConstraint implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'isCapabilityIdList', async: false })
+class IsCapabilityIdListConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    return typeof value === 'string' && ETHEREUM_ADDRESS_RE.test(value);
+    return Array.isArray(value) && value.every((id) =>
+      typeof id === 'string' && id.length > 0 && id.length <= 160 && id.trim() === id,
+    ) && new Set(value).size === value.length;
   }
+  defaultMessage(): string { return 'allowedCapabilityIds must contain unique non-empty IDs of at most 160 characters'; }
+}
 
-  defaultMessage(): string {
-    return 'Each entry must be a valid Ethereum address (0x-prefixed, 40 hex chars)';
+@ValidatorConstraint({ name: 'isCapabilityMode', async: false })
+class IsCapabilityModeConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean { return value === 'all' || value === 'custom'; }
+}
+
+@ValidatorConstraint({ name: 'hasCapabilityPatchFields', async: false })
+class HasCapabilityPatchFieldsConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args?: import('class-validator').ValidationArguments): boolean {
+    const object = args?.object as Record<string, unknown> | undefined;
+    return object?.allowedCapabilityIds !== undefined || object?.capabilityMode !== undefined;
   }
 }
 
-@ValidatorConstraint({ name: 'isFunctionSelector', async: false })
-class IsFunctionSelectorConstraint implements ValidatorConstraintInterface {
-  validate(value: unknown): boolean {
-    return typeof value === 'string' && FUNCTION_SELECTOR_RE.test(value);
-  }
-
-  defaultMessage(): string {
-    return 'Each entry must be a valid 4-byte function selector (0x-prefixed, 8 hex chars, e.g. 0xa9059cbb)';
+@ValidatorConstraint({ name: 'validCapabilityModePair', async: false })
+class ValidCapabilityModePairConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args?: import('class-validator').ValidationArguments): boolean {
+    const object = args?.object as Record<string, unknown> | undefined;
+    if (!object) return false;
+    const mode = object.capabilityMode;
+    const ids = object.allowedCapabilityIds;
+    if (mode === undefined) return true; // ids-only means custom; neither means all.
+    if (mode === 'all') return ids === undefined || (Array.isArray(ids) && ids.length === 0);
+    return mode === 'custom' && Array.isArray(ids);
   }
 }
 
@@ -110,17 +123,15 @@ export class CreateApiKeyDto {
   @Validate(IsIpOrCidrConstraint, { each: true })
   allowedIps?: string[];
 
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
-  @IsString({ each: true })
-  @Validate(IsEthereumAddressConstraint, { each: true })
-  allowedContracts?: string[];
+  @Validate(IsCapabilityIdListConstraint)
+  allowedCapabilityIds?: string[];
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  @Validate(IsFunctionSelectorConstraint, { each: true })
-  allowedFunctionSelectors?: string[];
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @Validate(IsCapabilityModeConstraint)
+  capabilityMode?: 'all' | 'custom';
 
   @IsOptional()
   @IsObject()
@@ -133,4 +144,25 @@ export class CreateApiKeyDto {
   @ValidateNested()
   @Type(() => ApiKeyPermissionsDto)
   permissions?: ApiKeyPermissionsDto;
+
+  @Validate(ValidCapabilityModePairConstraint)
+  private readonly validCapabilityModePair?: true;
+}
+
+export class PatchApiKeyCapabilitiesDto {
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsArray()
+  @Validate(IsCapabilityIdListConstraint)
+  allowedCapabilityIds?: string[];
+
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString()
+  @Validate(IsCapabilityModeConstraint)
+  capabilityMode?: 'all' | 'custom';
+
+  @Validate(HasCapabilityPatchFieldsConstraint)
+  private readonly atLeastOneField?: true;
+
+  @Validate(ValidCapabilityModePairConstraint)
+  private readonly validCapabilityModePair?: true;
 }

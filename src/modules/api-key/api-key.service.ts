@@ -11,6 +11,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { getApiKeyPrefix } from '../../common/api-key/api-key-prefix';
 import { SecurityEventService } from '../security-events/security-event.service';
+import { DefiGrantService } from '../defi/defi-grant.service';
+import { DefiPolicyService } from '../defi/defi-policy.service';
+import { DefiPolicyDenial } from '../defi/defi.types';
 
 const MAX_ACTIVE_API_KEYS = 10;
 const DEFAULT_API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000;
@@ -38,8 +41,8 @@ type ApiKeyCreateOptions = {
   name: string;
   expiresAt?: string | Date;
   allowedIps?: string[];
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   spendLimits?: { daily?: string; monthly?: string };
   permissions?: Partial<ApiKeyPermissions>;
 };
@@ -70,6 +73,8 @@ export class ApiKeyService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly securityEvents: SecurityEventService,
+    private readonly defiGrants: DefiGrantService,
+    private readonly defiPolicy: DefiPolicyService,
   ) {}
 
   /**
@@ -78,10 +83,14 @@ export class ApiKeyService {
    */
   async createApiKey(userId: string, options: ApiKeyCreateOptions) {
     const normalized = this.normalizeCreateOptions(options);
+    const capabilities = this.normalizeCapabilityOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
 
-    const createdKey = await this.prisma.$transaction(async (tx) => {
+    const events: Array<{ eventType?: string }> = [];
+    let createdKey: any;
+    try { createdKey = await this.prisma.$transaction(async (tx) => {
       await this.assertCanCreateKey(tx, userId, normalized.name);
+      await this.defiGrants.assertGrantableInTx(tx, capabilities.allowedCapabilityIds);
 
       const created = await tx.apiKey.create({
         data: {
@@ -91,26 +100,33 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: normalized.allowedIps,
-          allowedContracts: normalized.allowedContracts,
-          allowedFunctionSelectors: normalized.allowedFunctionSelectors,
+          ...capabilities,
           dailySpendLimit: normalized.dailySpendLimit,
           monthlySpendLimit: normalized.monthlySpendLimit,
           ...normalized.permissions,
         },
       });
 
-      await this.audit(tx, userId, created.id, 'api_key.created', {
+      const event = await this.audit(tx, userId, created.id, 'api_key.created', {
         keyPrefix: created.keyPrefix,
         keyName: created.name,
         metadata: {
           allowedIps: created.allowedIps,
           expiresAt: created.expiresAt?.toISOString() ?? null,
           permissions: this.toPermissions(created),
+          allowedCapabilityIds: created.allowedCapabilityIds,
+          capabilityMode: created.capabilityMode,
         },
-      });
+      }, true);
+      events.push(event);
 
       return created;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) { await this.defiPolicy.recordDenied(error); throw error.httpException; }
+      throw error;
+    }
+    await this.exportEvents(events);
 
     return {
       rawKey: keyMaterial.rawKey,
@@ -120,12 +136,15 @@ export class ApiKeyService {
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
+      allowedCapabilityIds: createdKey.allowedCapabilityIds,
+      capabilityMode: createdKey.capabilityMode,
     };
   }
 
   /** Revoke a single API key owned by the user. */
   async revokeApiKey(keyId: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const events: Array<{ eventType?: string }> = [];
+    const result = await this.prisma.$transaction(async (tx) => {
       // BILL-016: FOR UPDATE serializes with direct-egress send acceptance which
       // locks the same api_keys row before reading live reauth/revoke state.
       const locked = await tx.$queryRaw<
@@ -148,18 +167,21 @@ export class ApiKeyService {
         data: { revoked: true },
       });
 
-      await this.audit(tx, userId, existing.id, 'api_key.revoked', {
+      events.push(await this.audit(tx, userId, existing.id, 'api_key.revoked', {
         keyPrefix: existing.key_prefix,
         keyName: existing.name,
-      });
+      }, true));
 
       return result;
     });
+    await this.exportEvents(events);
+    return result;
   }
 
   /** Revoke every active key for a user (used during key refresh). */
   async revokeAllKeys(userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const events: Array<{ eventType?: string }> = [];
+    const result = await this.prisma.$transaction(async (tx) => {
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -170,15 +192,17 @@ export class ApiKeyService {
       });
 
       for (const key of activeKeys) {
-        await this.audit(tx, userId, key.id, 'api_key.revoked', {
+        events.push(await this.audit(tx, userId, key.id, 'api_key.revoked', {
           keyPrefix: key.keyPrefix,
           keyName: key.name,
           metadata: { reason: 'bulk_revoke' },
-        });
+        }, true));
       }
 
       return result;
     });
+    await this.exportEvents(events);
+    return result;
   }
 
   /** Atomically revoke all active keys and issue a replacement key. */
@@ -186,7 +210,9 @@ export class ApiKeyService {
     const normalized = this.normalizeCreateOptions({ name });
     const keyMaterial = await this.generateKeyMaterial();
 
+    const events: Array<{ eventType?: string }> = [];
     const createdKey = await this.prisma.$transaction(async (tx) => {
+      await this.defiGrants.assertGrantableInTx(tx, []);
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -198,11 +224,11 @@ export class ApiKeyService {
       });
 
       for (const key of activeKeys) {
-        await this.audit(tx, userId, key.id, 'api_key.revoked', {
+        events.push(await this.audit(tx, userId, key.id, 'api_key.revoked', {
           keyPrefix: key.keyPrefix,
           keyName: key.name,
           metadata: { reason: 'rotation' },
-        });
+        }, true));
       }
 
       const created = await tx.apiKey.create({
@@ -213,22 +239,27 @@ export class ApiKeyService {
           name: normalized.name,
           expiresAt: normalized.expiresAt,
           allowedIps: [],
+          allowedCapabilityIds: [],
+          capabilityMode: 'all',
           ...normalized.permissions,
         },
       });
 
-      await this.audit(tx, userId, created.id, 'api_key.rotated', {
+      events.push(await this.audit(tx, userId, created.id, 'api_key.rotated', {
         keyPrefix: created.keyPrefix,
         keyName: created.name,
         metadata: {
           revokedKeyCount: activeKeys.length,
           expiresAt: created.expiresAt?.toISOString() ?? null,
           permissions: this.toPermissions(created),
+          allowedCapabilityIds: created.allowedCapabilityIds,
+          capabilityMode: created.capabilityMode,
         },
-      });
+      }, true));
 
       return created;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+    await this.exportEvents(events);
 
     return {
       rawKey: keyMaterial.rawKey,
@@ -238,6 +269,8 @@ export class ApiKeyService {
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
+      allowedCapabilityIds: createdKey.allowedCapabilityIds,
+      capabilityMode: createdKey.capabilityMode,
     };
   }
 
@@ -262,8 +295,8 @@ export class ApiKeyService {
         canReadTransactionStatus: true,
         canUseEoaExecution: true,
         allowedIps: true,
-        allowedContracts: true,
-        allowedFunctionSelectors: true,
+        allowedCapabilityIds: true,
+        capabilityMode: true,
         dailySpendLimit: true,
         monthlySpendLimit: true,
         directEgressPolicyAcceptedAt: true,
@@ -285,12 +318,47 @@ export class ApiKeyService {
       lastUsedUserAgent: key.lastUsedUserAgent,
       permissions: this.toPermissions(key),
       allowedIps: key.allowedIps,
-      allowedContracts: key.allowedContracts,
-      allowedFunctionSelectors: key.allowedFunctionSelectors,
+      allowedCapabilityIds: key.allowedCapabilityIds,
+      capabilityMode: key.capabilityMode,
       dailySpendLimit: key.dailySpendLimit,
       monthlySpendLimit: key.monthlySpendLimit,
       directEgressPolicyAcceptedAt: key.directEgressPolicyAcceptedAt,
     }));
+  }
+
+  async replaceCapabilities(keyId: string, userId: string, input: { allowedCapabilityIds?: string[] | null; capabilityMode?: 'all' | 'custom' | null } | string[]) {
+    if (Array.isArray(input)) input = { allowedCapabilityIds: input };
+    if (input.allowedCapabilityIds === null || input.capabilityMode === null) throw new BadRequestException('Invalid capability replacement');
+    if (input.allowedCapabilityIds === undefined && input.capabilityMode === undefined) throw new BadRequestException('At least one capability field is required');
+    const capabilities = this.normalizeCapabilityOptions(input);
+    const { allowedCapabilityIds, capabilityMode } = capabilities;
+    const pendingEvents: Array<{ eventType?: string }> = [];
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        await this.defiGrants.assertGrantableInTx(tx, allowedCapabilityIds);
+        const rows = await tx.$queryRaw<Array<{ id: string; key_prefix: string; name: string | null; revoked: boolean; frozen_at: Date | null; expires_at: Date | null; allowed_capability_ids: string[]; capability_mode: 'all' | 'custom' }>>`
+          SELECT "id", "key_prefix", "name", "revoked", "frozen_at", "expires_at", "allowed_capability_ids", "capability_mode"
+          FROM "api_keys" WHERE "id" = ${keyId}::uuid AND "user_id" = ${userId}::uuid FOR UPDATE`;
+        const key = rows[0];
+        if (!key) throw new NotFoundException('API key not found');
+        if (key.revoked || key.frozen_at || (key.expires_at && key.expires_at <= new Date())) throw new ForbiddenException('API key is not active');
+        const old = [...key.allowed_capability_ids].sort();
+        if (key.capability_mode === capabilityMode && old.length === allowedCapabilityIds.length && old.every((id, i) => id === allowedCapabilityIds[i])) return { id: key.id, capabilityMode, allowedCapabilityIds: old };
+        const updated = await tx.apiKey.update({ where: { id: key.id }, data: capabilities });
+        const event = await this.audit(tx, userId, key.id, 'api_key.permission_changed', { keyPrefix: key.key_prefix, keyName: key.name, metadata: { capabilityMode, allowedCapabilityIds, previousCapabilityMode: key.capability_mode, previousAllowedCapabilityIds: old } }, true);
+        const grantEvent = await this.securityEvents.record({ actorType: 'user', userId, apiKeyId: key.id, eventType: 'defi.grants_updated', riskLevel: 'low', result: 'allowed', metadata: { previousCapabilityMode: key.capability_mode, previousAllowedCapabilityIds: old, capabilityMode, allowedCapabilityIds } }, tx as any, { deferExport: true });
+        pendingEvents.push(event, grantEvent as any);
+        return { id: updated.id, capabilityMode: updated.capabilityMode, allowedCapabilityIds: updated.allowedCapabilityIds };
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+      await this.exportEvents(pendingEvents);
+      return result;
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        await this.defiPolicy.recordDenied(error);
+        throw error.httpException;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -299,7 +367,8 @@ export class ApiKeyService {
    * keys return success without rewriting. Never auto-set on create/rotate.
    */
   async authorizeDirectEgress(keyId: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const events: Array<{ eventType?: string }> = [];
+    const result = await this.prisma.$transaction(async (tx) => {
       // Same row FOR UPDATE as send acceptance / revoke so state transitions serialize.
       type LockedKey = {
         id: string;
@@ -380,13 +449,13 @@ export class ApiKeyService {
         throw new ForbiddenException('API key cannot authorize direct egress in its current state');
       }
 
-      await this.audit(tx, userId, existing.id, 'api_key.direct_egress_authorized', {
+      events.push(await this.audit(tx, userId, existing.id, 'api_key.direct_egress_authorized', {
         keyPrefix: existing.key_prefix,
         keyName: existing.name,
         metadata: {
           directEgressPolicyAcceptedAt: acceptedAt.toISOString(),
         },
-      });
+      }, true));
 
       return {
         id: existing.id,
@@ -394,6 +463,8 @@ export class ApiKeyService {
         outcome: 'authorized' as const,
       };
     });
+    await this.exportEvents(events);
+    return result;
   }
 
   private normalizeCreateOptions(options: ApiKeyCreateOptions) {
@@ -404,8 +475,6 @@ export class ApiKeyService {
 
     const permissions = this.normalizePermissions(options.permissions);
     const allowedIps = options.allowedIps ?? [];
-    const allowedContracts = this.normalizeAddresses(options.allowedContracts);
-    const allowedFunctionSelectors = this.normalizeSelectors(options.allowedFunctionSelectors);
     const { dailySpendLimit, monthlySpendLimit } = this.normalizeSpendLimits(options.spendLimits);
 
     this.assertIpAllowlistForHighRiskPermissions(permissions, allowedIps);
@@ -416,12 +485,21 @@ export class ApiKeyService {
       name,
       expiresAt,
       allowedIps,
-      allowedContracts,
-      allowedFunctionSelectors,
       dailySpendLimit,
       monthlySpendLimit,
       permissions,
     };
+  }
+
+  private normalizeCapabilityOptions(options: { allowedCapabilityIds?: string[] | null; capabilityMode?: 'all' | 'custom' | null }) {
+    if (options.allowedCapabilityIds === null || options.capabilityMode === null) throw new BadRequestException('Invalid capability mode or IDs');
+    const hasIds = options.allowedCapabilityIds !== undefined;
+    const capabilityMode = options.capabilityMode ?? (hasIds ? 'custom' : 'all');
+    if (capabilityMode !== 'all' && capabilityMode !== 'custom') throw new BadRequestException('capabilityMode must be all or custom');
+    if (capabilityMode === 'custom' && !hasIds) throw new BadRequestException('custom capability mode requires allowedCapabilityIds');
+    const allowedCapabilityIds = this.defiGrants.normalizeIds(options.allowedCapabilityIds ?? []);
+    if (capabilityMode === 'all' && allowedCapabilityIds.length > 0) throw new BadRequestException('all capability mode requires an empty allowedCapabilityIds list');
+    return { capabilityMode, allowedCapabilityIds };
   }
 
   private normalizePermissions(permissions?: Partial<ApiKeyPermissions>): ApiKeyPermissions {
@@ -429,18 +507,6 @@ export class ApiKeyService {
       ...DEFAULT_API_KEY_PERMISSIONS,
       ...(permissions ?? {}),
     };
-  }
-
-  /** Normalize and lowercase Ethereum addresses for contract allowlist. */
-  private normalizeAddresses(addresses?: string[]): string[] {
-    if (!addresses || addresses.length === 0) return [];
-    return addresses.map((addr) => addr.toLowerCase());
-  }
-
-  /** Normalize and lowercase function selectors (0x + 8 hex chars). */
-  private normalizeSelectors(selectors?: string[]): string[] {
-    if (!selectors || selectors.length === 0) return [];
-    return selectors.map((s) => s.toLowerCase());
   }
 
   /** Validate and normalize spend limits. Returns null for absent limits. */
@@ -565,6 +631,7 @@ export class ApiKeyService {
       keyName?: string | null;
       metadata?: Prisma.InputJsonValue;
     } = {},
+    deferExport = false,
   ) {
     return Promise.all([
       tx.apiKeyEvent.create({
@@ -592,7 +659,12 @@ export class ApiKeyService {
           },
         },
         tx as unknown as Parameters<SecurityEventService['record']>[1],
+        ...(deferExport ? [{ deferExport: true }] as const : []),
       ),
-    ]);
+    ]).then(([, event]) => event as { eventType?: string });
+  }
+
+  private async exportEvents(events: Array<{ eventType?: string }>) {
+    for (const event of events) await this.securityEvents.exportCommitted(event);
   }
 }

@@ -495,7 +495,11 @@ describe('UsdcPaymentPanel — fail-closed recovery (B5)', () => {
     vi.mocked(getUsdcPaymentStatusAuth).mockResolvedValueOnce(reserved);
 
     renderPanel();
-    fireEvent.click(await screen.findByRole('button', { name: /Get quote/i }));
+    const getQuoteButton = await screen.findByRole('button', { name: /Get quote/i });
+    // The quote control can render before the mount-time invoice status read completes.
+    // Wait for that authoritative read so the click cannot be ignored while disabled.
+    await waitFor(() => expect(getQuoteButton).toBeEnabled());
+    fireEvent.click(getQuoteButton);
     expect(await screen.findByText(/Submitting payment/i)).toBeInTheDocument();
     expect(payFromWalletButton()).toBeDisabled();
 

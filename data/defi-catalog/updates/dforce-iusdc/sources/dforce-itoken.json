@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "dforce-itoken",
+      "familyVersion": "itoken-v2-blp@126c6d83",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45",
+          "status": "inactive",
+          "contractName": "dForce iUSDC iTokenV2BLP",
+          "sourceRefs": [
+            "dforce-inherited-token-market-sources",
+            "dforce-iusdc-address-bound-source",
+            "dforce-iusdc-full-abi",
+            "dforce-iusdc-proxy-role",
+            "dforce-official-deployed-addresses"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                { "internalType": "address", "name": "_recipient", "type": "address" },
+                { "internalType": "uint256", "name": "_mintAmount", "type": "uint256" }
+              ],
+              "name": "mint",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dforce-inherited-token-market-sources",
+                "dforce-iusdc-address-bound-source",
+                "dforce-iusdc-full-abi",
+                "dforce-iusdc-proxy-role",
+                "dforce-official-deployed-addresses"
+              ]
+            },
+            {
+              "inputs": [
+                { "internalType": "address", "name": "_from", "type": "address" },
+                { "internalType": "uint256", "name": "_redeemiToken", "type": "uint256" }
+              ],
+              "name": "redeem",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dforce-inherited-token-market-sources",
+                "dforce-iusdc-address-bound-source",
+                "dforce-iusdc-full-abi",
+                "dforce-iusdc-proxy-role",
+                "dforce-official-deployed-addresses"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "dforce-inherited-token-market-sources",
+      "url": "https://etherscan.io/address/0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "The address-bound implementation declares iTokenV2BLP is iTokenV2 (concrete source SHA-256 126c6d8338877992423529ba26b3616e0bc4b7bb4f2b0d7eec628c4c9c056d61), which inherits iToken (62a3088259e4d3227a67acd6657b6c962bb82fae5e7ae7655fec65ab93875095) and TokenBase/Base (0850740c98ee04aa50cc0dd68eee837d73e1c95f55f4dbe499f5d70fc03d0d2a and a36ca37f123152d1af3f463da6bb3f4ea70a6715c3070118668569e4c2e084a4). Relevant retained body dependencies include TokenERC20 (5a85273fd5d2ac404ab43b2bd940e1c040a79ca12c40506776fb276ac153ee56), TokenStorage (578213b7ee250b22a6a979c48a0faa2c6fa8a8c7c19bf4bc94e7551d61d5e32f), InterestUnit (e26ea0b360f4049e5d04bc7290d551321a6db7130ee6d79acbbde77efb888daf), TokenAdmin (d7c76a1d4b99800c79f9fd0977161d429920b99a4c9def607388643be527f749), TokenEvent (60f4f4c26a2aa5991718666362433985b2abe81b206d23a2e9d732b44fd220fb), ERC20 (072925fa829f78db173d643056e5827e903533f8cd3857494ac99238fc9118db), and SafeRatioMath (b1a00d610c877c2ce8bd6ce98b6190b9e1c4ac8fdf6f0524d9902e9063e0105e). Verified IController and IInterestRateModel interfaces are retained as well. These dated source carriers are not a whole-repository build equivalence or live proxy/storage proof. The concrete BLP also exposes separate three-argument bool refreshEligibility overloads; they are not the selected two-argument methods and are not admitted."
+    },
+    {
+      "sourceId": "dforce-iusdc-address-bound-source",
+      "url": "https://etherscan.io/address/0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "The retained address-bound proxy/implementation page carriers (iUSDC-proxy.html SHA-256 b0d377033a8f04783fbc8f945f3d84370d59a3997c6b3e97aed697c399161c1d; iUSDC-implementation.html SHA-256 ca159060c551a5f958e890016b5df506f7868b51b43451dd4c5c26405baf519e) identify the concrete implementation 0x792254876bdd3eae31bd56a6dc71fa18f778bcf9 for this dated observation. The source body and imports are in retained verified carriers; concrete implementation SHA-256 is 126c6d8338877992423529ba26b3616e0bc4b7bb4f2b0d7eec628c4c9c056d61. This does not establish current implementation, proxy storage, market configuration, or runtime identity."
+    },
+    {
+      "sourceId": "dforce-iusdc-full-abi",
+      "url": "https://etherscan.io/address/0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Full ABI carrier SHA-256 8b62fa4539dbc455f34e9566be72c101488089db00a896c06eea8312a8a19c2a contains exactly one two-input mint(address,uint256) and one two-input redeem(address,uint256), both nonpayable with empty outputs. The independent mint ABI carrier SHA-256 dc20af7711496d0a69d46aa2907b92c9dc0170bc11bcb598ccb11712575d70bc and redeem ABI carrier SHA-256 b4f125e1d221ecfca8ac179556ec0be79e2c5ac9134601dae04c24bedfd1066a each deep-match their sole corresponding full-ABI entry, including input names and internal types. The similarly named concrete three-input bool overloads are different ABI functions and excluded."
+    },
+    {
+      "sourceId": "dforce-iusdc-proxy-role",
+      "url": "https://etherscan.io/address/0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "The dated proxy and implementation page carriers are bound to mainnet iUSDC address 0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45 and implementation 0x792254876bdd3eae31bd56a6dc71fa18f778bcf9. This is a historical source association only, not a present proxy-state or storage assertion."
+    },
+    {
+      "sourceId": "dforce-official-deployed-addresses",
+      "url": "https://github.com/dforce-network/LendingContractsV2/blob/55da73310d196849213da2e2357572afdb6d663a/DeployedAddresses.md",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned dforce-network/LendingContractsV2 commit 55da73310d196849213da2e2357572afdb6d663a (2021-08-16); retained DeployedAddresses.md SHA-256 89b4d7f12043287b5f10ebd4c54ae4e1417e15cee1cff602fc25e4f9b0b5ac0c records mainnet USDC 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 and iUSDC 0x2f956b2f801c6dad74e87e7f45c94f6283BF0f45. This is a dated role mapping, not evidence that current underlying storage remains USDC."
+    }
+  ],
+  "unresolved": []
+}

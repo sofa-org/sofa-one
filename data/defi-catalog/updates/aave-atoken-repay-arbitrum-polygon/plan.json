@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/aave-atoken-repay/catalog.json",
+    "rawSha256": "1bd0ca75b04faecd07bd8c3bd3c170e4e63a2f676b5bcbe019c7f501bef538ce",
+    "manifestHash": "0xb4c8ba209ecc683c806643a7daac1a4c6596322d7f4000aac5fa0ba780219347"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/aave-atoken-repay-arbitrum-polygon/sources/aave-v3.json",
+      "canonicalSha256": "a63b2148a1b593b42bac14a2bd672ea4dabbee58a2783127fa459dc16587b5eb"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-atoken-repay-arbitrum-polygon/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 137,
+      "contract": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "signature": "repayWithATokens(address,uint256,uint256)",
+      "selector": "0x2dad97d4",
+      "abiHash": "0x71271224f317a07c84a48e0f3a9604bcfc9c0045f99457edfea937c25ae0cada",
+      "capabilityId": "aave-v3:v3-origin:137:0x794a61358d6845594f94dc1db02a252b5b4814ad:repay-with-a-tokens",
+      "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-polygon-pool", "aave-v3-pool-implementation"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-polygon-pool", "aave-v3-pool-implementation"],
+        "evidence": "Pinned Aave V3 Origin IPool declares the exact nonpayable repayWithATokens ABI with unnamed uint256 return; Pool delegates to fixed BorrowLogic with caller as both user and onBehalfOf and useATokens=true. This is the Polygon main Pool role from the pinned address book. The ABI has no platform amount/rate bounds; protocol validation remains. Dated source roles do not establish live runtime identity, transaction success, balance, liquidity, or safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/aave-atoken-repay-arbitrum-polygon/sources/aave-v3.json",
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "chainId": 42161,
+      "contract": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "signature": "repayWithATokens(address,uint256,uint256)",
+      "selector": "0x2dad97d4",
+      "abiHash": "0x71271224f317a07c84a48e0f3a9604bcfc9c0045f99457edfea937c25ae0cada",
+      "capabilityId": "aave-v3:v3-origin:42161:0x794a61358d6845594f94dc1db02a252b5b4814ad:repay-with-a-tokens",
+      "sourceRefs": ["aave-v3-arbitrum-pool", "aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-implementation"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["aave-v3-arbitrum-pool", "aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-implementation"],
+        "evidence": "Pinned Aave V3 Origin IPool declares the exact nonpayable repayWithATokens ABI with unnamed uint256 return; Pool delegates to fixed BorrowLogic with caller as both user and onBehalfOf and useATokens=true. This is the Arbitrum main Pool role from the pinned address book. The ABI has no platform amount/rate bounds; protocol validation remains. Dated source roles do not establish live runtime identity, transaction success, balance, liquidity, or safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

@@ -1,0 +1,5 @@
+# sDAI Savings candidate registry fixture
+
+`index.ts` exposes an isolated active test fragment for the four explicitly bounded Ethereum no-referral operations on the dated SavingsDai role. The builder is not imported by production registry wiring. Its exact IDs and declared full-ABI identities derive from the pinned no-referral Maker implementation; the independent raw candidate snapshot remains inactive at `data/defi-catalog/v9/sources/sdai-savings.json`.
+
+Each selected function is an ordinary, individually grantable ABI call with no execution scope, child calls, approval pairing, or automatic grant. Caller-selected ABI-valid financial and address arguments remain unrestricted by this layer. This source qualification does not prove present runtime/code identity, current conversion/reward conditions, liquidity, funded execution, or a complete savings workflow. `index.spec.ts` binds candidate IDs, selectors, ABI hashes, provenance, baseline absence, canonical policy authorization, and final authorization rechecks.

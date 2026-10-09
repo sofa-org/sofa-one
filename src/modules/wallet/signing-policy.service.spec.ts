@@ -288,6 +288,12 @@ describe('SigningPolicyService', () => {
       );
     });
 
+    it('defers successful audit when caller commits its acceptance audit atomically', async () => {
+      mockRecord.mockClear();
+      await service.assertTypedDataSigningPolicy(createTypedData({ chainId: 84532 }), { ...typedDataContext, deferAllowedAudit: true });
+      expect(mockRecord).not.toHaveBeenCalled();
+    });
+
     it('allows typed data without verifyingContract', async () => {
       const typedData = createTypedData({ chainId: 84532 });
 
@@ -525,71 +531,5 @@ describe('SigningPolicyService', () => {
       loggerWarnSpy.mockRestore();
     });
 
-    // ── Contract allowlist ──────────────────────────────────────────────
-
-    it('allows typed data signing when verifyingContract is in allowedContracts', async () => {
-      const contract = '0x0000000000000000000000000000000000000000';
-      const typedData = createTypedData({ chainId: 84532, verifyingContract: contract });
-      const contextWithAllowlist = {
-        ...typedDataContext,
-        allowedContracts: [contract],
-      };
-      const result = await service.assertTypedDataSigningPolicy(typedData, contextWithAllowlist);
-      expect(result.typedDataVerifyingContract).toBe(contract);
-    });
-
-    it('rejects typed data signing when verifyingContract is not in allowedContracts', async () => {
-      const contract = '0x0000000000000000000000000000000000000000';
-      const typedData = createTypedData({ chainId: 84532, verifyingContract: contract });
-      const contextWithAllowlist = {
-        ...typedDataContext,
-        allowedContracts: ['0x1111111111111111111111111111111111111111'],
-      };
-      await expect(
-        service.assertTypedDataSigningPolicy(typedData, contextWithAllowlist),
-      ).rejects.toThrow('not in the API key allowed contracts');
-    });
-
-    it('contract allowlist is case-insensitive', async () => {
-      const contract = '0x0000000000000000000000000000000000000000';
-      const typedData = createTypedData({ chainId: 84532, verifyingContract: contract });
-      const contextWithAllowlist = {
-        ...typedDataContext,
-        allowedContracts: [contract.toUpperCase()],
-      };
-      await expect(
-        service.assertTypedDataSigningPolicy(typedData, contextWithAllowlist),
-      ).resolves.toBeDefined();
-    });
-
-    it('skips contract allowlist check when allowedContracts is empty', async () => {
-      const contract = '0x0000000000000000000000000000000000000000';
-      const typedData = createTypedData({ chainId: 84532, verifyingContract: contract });
-      const contextWithAllowlist = { ...typedDataContext, allowedContracts: [] };
-      await expect(
-        service.assertTypedDataSigningPolicy(typedData, contextWithAllowlist),
-      ).resolves.toBeDefined();
-    });
-
-    it('skips contract allowlist check when allowedContracts is undefined', async () => {
-      const contract = '0x0000000000000000000000000000000000000000';
-      const typedData = createTypedData({ chainId: 84532, verifyingContract: contract });
-      await expect(
-        service.assertTypedDataSigningPolicy(typedData, typedDataContext),
-      ).resolves.toBeDefined();
-    });
-
-    it('rejects typed data without verifyingContract when allowedContracts is set', async () => {
-      const typedData = createTypedData({ chainId: 84532 });
-      const contextWithAllowlist = {
-        ...typedDataContext,
-        allowedContracts: ['0x1111111111111111111111111111111111111111'],
-      };
-      await expect(
-        service.assertTypedDataSigningPolicy(typedData, contextWithAllowlist),
-      ).rejects.toThrow(
-        'typedData.domain.verifyingContract is required when API key allowed contracts are configured',
-      );
-    });
   });
 });

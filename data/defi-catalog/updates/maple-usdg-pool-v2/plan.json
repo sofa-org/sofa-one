@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/maple-pool-v2/catalog.json",
+    "rawSha256": "ec81f2b5f735ff0fa13c914c0f1f150fa4480f6dc7700cd638af0ce00b71d122",
+    "manifestHash": "0xa45e397aa204e9142864d23eead3156e153fac09b1db3ccd09575aaf5c5179c8"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/maple-usdg-pool-v2/sources/maple-pool-v2.json",
+      "canonicalSha256": "c6aee06979b2922ac00aa4d1fb1e1c8053dfb00434ec8702ed7a574cab469b5a"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-usdg-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@fce0fca3",
+      "chainId": 1,
+      "contract": "0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xbdb2a83ef7a315d0d0bfb11d2b460ba6aea60c52672b65d224eb7586c2d6c063",
+      "capabilityId": "maple-pool-v2:v2:1:0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a:deposit",
+      "sourceRefs": [
+        "maple-official-mainnet-docs",
+        "maple-sdk-pool-v2-abi",
+        "maple-usdg-etherscan-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-official-mainnet-docs",
+          "maple-sdk-pool-v2-abi",
+          "maple-usdg-etherscan-source"
+        ],
+        "evidence": "Fixed manager permission path then mints pool shares to caller-selected receiver and transfers the configured fixed asset from msg.sender. Amount and receiver remain caller-selected, with no platform amount/receiver/balance equality gate; manager permission, bootstrap, rounding, asset behavior and separate asset approval may affect/reject execution. Approval is not automatically granted or paired. This dated role/source and fixed ABI do not establish current runtime or constructor/manager identity, funding, liquidity, successful transaction, completed withdrawal, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-usdg-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@fce0fca3",
+      "chainId": 1,
+      "contract": "0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0x3db187758737efd13979f76f7864134fe09d7742d8c7854acfb2ac370aefde4d",
+      "capabilityId": "maple-pool-v2:v2:1:0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a:mint",
+      "sourceRefs": [
+        "maple-official-mainnet-docs",
+        "maple-sdk-pool-v2-abi",
+        "maple-usdg-etherscan-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-official-mainnet-docs",
+          "maple-sdk-pool-v2-abi",
+          "maple-usdg-etherscan-source"
+        ],
+        "evidence": "Fixed manager permission path then mints requested pool shares to caller-selected receiver and transfers the configured fixed asset from msg.sender. Amount and receiver remain caller-selected, with no platform amount/receiver/balance equality gate; manager permission, conversion, bootstrap, rounding, asset behavior and separate asset approval may affect/reject execution. Approval is not automatically granted or paired. This dated role/source and fixed ABI do not establish current runtime or constructor/manager identity, funding, liquidity, successful transaction, completed withdrawal, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-usdg-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@fce0fca3",
+      "chainId": 1,
+      "contract": "0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a",
+      "signature": "requestRedeem(uint256,address)",
+      "selector": "0x107703ab",
+      "abiHash": "0xfa07749076e3b27f9afa7bfea9952779d674a00020e5bea2befa9e85f3e9ae1c",
+      "capabilityId": "maple-pool-v2:v2:1:0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a:request-redeem",
+      "sourceRefs": [
+        "maple-official-mainnet-docs",
+        "maple-sdk-pool-v2-abi",
+        "maple-usdg-etherscan-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-official-mainnet-docs",
+          "maple-sdk-pool-v2-abi",
+          "maple-usdg-etherscan-source"
+        ],
+        "evidence": "Fixed manager escrow configuration processes caller-selected owner shares, applies relevant existing LP allowance when sender differs, transfers LP shares to configured escrow, and calls fixed manager request logic. Return value is escrowed LP shares, not underlying assets or completed redemption/withdrawal. Owner remains caller-selected without platform equality gates; manager permission, allowance, escrow and queue rules can reject. No automatic LP approval or claim/finalization is implied. This dated role/source and fixed ABI do not establish current runtime or constructor/manager identity, funding, liquidity, successful transaction, completed withdrawal, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

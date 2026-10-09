@@ -1,0 +1,17 @@
+# Maple syrupUSDG Pool V2 ordinary update
+
+This update adds exactly three Ethereum, scope-free ordinary bindings on syrupUSDG PoolV2 at `0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a`: `deposit(uint256,address)`, `mint(uint256,address)`, and `requestRedeem(uint256,address)`. It does not admit the SyrupRouter, wrapped-token target, redeem/withdraw completion methods, or helper/admin selectors.
+
+The inactive source snapshot and exact admissions are in `data/defi-catalog/updates/maple-usdg-pool-v2/`. Family identity is `maple-pool-v2@fce0fca3`; stable IDs end in `deposit`, `mint`, and `request-redeem`. The immutable baseline is `data/defi-catalog/updates/maple-pool-v2/catalog.json`, raw SHA-256 `ec81f2b5f735ff0fa13c914c0f1f150fa4480f6dc7700cd638af0ce00b71d122`, manifest hash `0xa45e397aa204e9142864d23eead3156e153fac09b1db3ccd09575aaf5c5179c8`. This source snapshot's canonical SHA-256 is `c6aee06979b2922ac00aa4d1fb1e1c8053dfb00434ec8702ed7a574cab469b5a`.
+
+## Evidence and ABI
+
+The official Maple Ethereum mainnet integration page identifies the exact syrupUSDG PoolV2 role; its SyrupRouter and wrapped-token entries are different roles/targets. The pinned `maple-labs/maple-js` PoolV2 ABI corroborates the full selected ABI objects. The exact-target Etherscan page returned HTTP 200 on 2026-10-05 15:01:08 UTC (HTML SHA-256 `b6333d1f7d499ba60f6ef2de41db48ab5708573b3735381081a5fcda9fdf3f95`). Its verified flattened source carrier SHA-256 is `fce0fca3805680be1d1e0230234f84e4e8c0b856715071bc7bca0005feedca85`; the flattened file differs from the earlier PoolV2 carrier outside the `MaplePool` contract class, whose class body matches the accepted implementation. Source inspection does not prove current runtime, constructor/storage/manager configuration, or deployment state.
+
+ABI entries are nonpayable and preserve exact names/types: deposit inputs `assets_: uint256`, `receiver_: address`, output `shares_: uint256`; mint inputs `shares_: uint256`, `receiver_: address`, output `assets_: uint256`; requestRedeem inputs `shares_: uint256`, `owner_: address`, output `escrowedShares_: uint256`. Selectors and ABI hashes are deposit `0x6e553f65` / `0xbdb2a83ef7a315d0d0bfb11d2b460ba6aea60c52672b65d224eb7586c2d6c063`, mint `0x94bf804d` / `0x3db187758737efd13979f76f7864134fe09d7742d8c7854acfb2ac370aefde4d`, requestRedeem `0x107703ab` / `0xfa07749076e3b27f9afa7bfea9952779d674a00020e5bea2befa9e85f3e9ae1c`.
+
+## Limits
+
+The fixed manager permission/configuration path, configured asset transfer, and configured escrow behavior are protocol dependencies. Underlying-asset approval for deposits and LP-share allowance for third-party exit requests remain independent prerequisites; neither is automatically granted or paired. `requestRedeem` returns escrowed LP shares, not underlying assets or an exit-completion result. Queue/claim/finalization and `redeem`/`withdraw` are not admitted.
+
+Arguments remain caller-selected: the platform adds no amount caps, recipient/owner equality rules, feed checks, or additional financial gates. Zero and maximum uint256 values and arbitrary receiver/owner values remain permitted by catalog policy where ABI-valid, subject to protocol behavior. No grant, profile, scope, or approval pairing is created. This is not proof of current runtime/constructor/manager identity, permission state, funding, liquidity, successful execution, withdrawal completion, or financial safety.

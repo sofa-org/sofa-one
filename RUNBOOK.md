@@ -79,6 +79,26 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
 - Confirm the key is not revoked or expired.
 - Check IP allowlist against `request.ip` with trust-proxy configured correctly.
 - Remember raw API keys are shown only once; regenerate if lost.
+- Generic contract-call sends may also fail with `DEFI_*` errors when the call is
+  unlisted, the key lacks a grant, the capability is paused, or policy state is unavailable.
+  Review the capability catalog and key grants in the dashboard; do not retry using an
+  unrestricted legacy key.
+- Generic API-key message/typed-data signing is denied except the exact Polymarket CLOB
+  ClobAuth bootstrap. It requires `canSign`, `canUseEoaExecution`, and either `all` capability
+  mode or custom mode explicitly containing `polymarket:137:clob-auth:v1`; independent
+  EOA/destination/risk controls still apply. Other denials can have different policy error
+  codes; destination protection may deny earlier. Dashboard withdrawals/payments are separate.
+
+### Capability mode or grant confusion
+
+- Inspect the key's configured `capabilityMode` and `allowedCapabilityIds` in dashboard
+  metadata; these are configuration, not an expanded effective-ID list.
+- `all` dynamically follows active, unpaused reviewed catalog capabilities. `custom` allows
+  only exact IDs, and `[]` denies all catalog capabilities. Neither mode overrides API-key
+  permissions or independent authorization and safety checks.
+- Capability create/edit/rotation routes are IAM/frontend-only; PATCH requires step-up and
+  replaces the complete configuration. These routes are intentionally absent from
+  `openapi.yaml`.
 
 ### Dashboard route fails with frontend-only error
 
@@ -142,6 +162,13 @@ This is intentional. Public status responses are safe by design and must not exp
 - Run migrations before deploying code that expects schema changes; this includes the
   additive `BillingWorkerHeartbeat` migration before enabling the billing worker in
   production.
+- Capability-mode rollout is a coordinated application/database migration: schedule a
+  controlled maintenance window with all API writers stopped, apply the new migration, then
+  start only the new application version. Do not run mixed old/new writers; old versions do
+  not maintain the new mode invariant. The one-time migration maps existing empty grant lists
+  to `all` and nonempty lists to `custom` without changing IDs. This deliberately treats old
+  empty lists as approval of `all`; there is no recurring repair/backfill. Follow the actual
+  migration's deployment instructions and do not apply it ad hoc.
 - Update documentation alongside behavior changes.
 - Treat `BILLING_WORKER_ENABLED=true` as an explicit production opt-in; verify its startup
   log line after each deployment that changes billing behavior.

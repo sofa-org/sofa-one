@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/ankr-eth-staking/catalog.json",
+    "rawSha256": "e5baf29f70c6183a20f26717d35d5601c13e9cd049bf2e1700c4ee1221e58138",
+    "manifestHash": "0xee6afb400468e92f8752cd60982a1886bdb3079a90d9c4bd6693d11337cd9b27"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/mantle-meth-staking/sources/mantle-meth-staking.json",
+      "canonicalSha256": "595974ae7f4ef98cd937aa6c87ad81172c615a133456ef4d3efebb6203abb6a8"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/mantle-meth-staking/sources/mantle-meth-staking.json",
+      "familyId": "mantle-meth-staking",
+      "familyVersion": "staking@b3698f2d",
+      "chainId": 1,
+      "contract": "0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f",
+      "signature": "stake(uint256)",
+      "selector": "0xa694fc3a",
+      "abiHash": "0xd857f8e77b2a09ddb4af1db1478231b84d33c94d8edf2a6c98b7da3ec9d19b76",
+      "capabilityId": "mantle-meth-staking:v1:1:0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f:stake",
+      "sourceRefs": [
+        "mantle-meth-official-docs",
+        "mantle-meth-official-deployment",
+        "mantle-meth-verified-proxy",
+        "mantle-meth-verified-implementation"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "mantle-meth-official-docs",
+          "mantle-meth-official-deployment",
+          "mantle-meth-verified-proxy",
+          "mantle-meth-verified-implementation"
+        ],
+        "evidence": "The address-bound verified Staking.sol stake(uint256 minMETHAmount) body is payable and checks protocol pause and (when enabled) protocol staking allowlist, then its configured minimumStakeBound. It computes mETHMintAmount with ethToMETH(msg.value), checks configured maximum supply and caller-provided minMETHAmount, accounts msg.value as unallocatedETH, then calls the fixed configured mETH.mint(msg.sender, mETHMintAmount). This ordinary fixed-protocol call has no arbitrary target/callback/calldata and no recipient argument; caller-only minting is protocol behavior, not a new platform recipient restriction. Protocol pause/allowlist/minimum, fee/oracle/accounting, supply, and governance conditions may revert. The official repository source differs from the address-bound verified source and is not asserted equivalent. Dated proxy implementation association does not prove current implementation/storage/configuration. The initializer's 0.1 ETH value is not a verified live bound. The platform adds no value/category/allowlist/minimum-output cap, price feed, or balance gate; minMETHAmount and native value remain ordinary ABI/root transaction arguments. No funding, execution outcome, current-runtime, or financial-safety claim is made. Other initial-subset functions including unstake requests, permit, queue/withdraw, admin, token and helpers are excluded."
+      }
+    }
+  ],
+  "deactivations": []
+}

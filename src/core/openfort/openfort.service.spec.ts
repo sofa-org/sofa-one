@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 
 const backendCreate = jest.fn();
+const backendSign = jest.fn();
 const iamGetSession = jest.fn();
 const accountsList = jest.fn();
 const mockHasCaliburDelegation = jest.fn();
@@ -28,7 +29,7 @@ jest.mock('@openfort/openfort-node', () => ({
           create: backendCreate,
           get: jest.fn(),
           sendTransaction: jest.fn(),
-          sign: jest.fn(),
+          sign: backendSign,
         },
       },
     },
@@ -61,6 +62,7 @@ import { RequestContextService } from '../../common/request-context/request-cont
 describe('OpenfortService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    backendSign.mockReset();
     (globalThis as any).fetch = mockFetch;
     mockFetch.mockResolvedValue({
       ok: true,
@@ -99,6 +101,21 @@ describe('OpenfortService', () => {
     jest.advanceTimersByTime(25);
 
     await expect(promise).rejects.toThrow(BadGatewayException);
+  });
+
+  it('does not log SDK message or stack when backend signing fails', async () => {
+    const secret = 'SIGNATURE_ENVELOPE_SENTINEL';
+    const providerError = new Error(`provider rejected ${secret}`);
+    providerError.stack = `Error: ${secret}\n at provider (${secret})`;
+    backendSign.mockRejectedValue(providerError);
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const service = new OpenfortService({ getOrThrow: jest.fn(() => 'secret'), get: jest.fn(() => 25) } as any);
+
+    await expect(service.signData('account-id', `0x${'11'.repeat(32)}`)).rejects.toThrow(BadGatewayException);
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.objectContaining({ operation: 'signData', failureCategory: 'provider_error' }));
+    expect(JSON.stringify(loggerErrorSpy.mock.calls)).not.toContain(secret);
+    loggerErrorSpy.mockRestore();
   });
 
   it('logs Openfort failures with requestId and operation context', async () => {

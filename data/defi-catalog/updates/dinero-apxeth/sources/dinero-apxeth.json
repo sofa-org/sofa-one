@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "dinero-apxeth",
+      "familyVersion": "auto-px-eth@b5cb20da",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
+          "status": "inactive",
+          "contractName": "AutoPxEth",
+          "sourceRefs": [
+            "dinero-official-deployed-contracts",
+            "dinero-apx-eth-address-source"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "name": "deposit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dinero-official-deployed-contracts",
+                "dinero-apx-eth-address-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "name": "mint",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dinero-official-deployed-contracts",
+                "dinero-apx-eth-address-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "name": "withdraw",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dinero-official-deployed-contracts",
+                "dinero-apx-eth-address-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "dinero-official-deployed-contracts",
+                "dinero-apx-eth-address-source"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "dinero-official-deployed-contracts",
+      "url": "https://dinero.xyz/docs/deployed-contracts",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official Dinero deployed-contracts documentation identifies the AutoPxEth product/target role; the px-eth overview describes the auto-compounding product. Product role does not establish current code, constructor configuration, asset value, funding, liquidity, or financial safety."
+    },
+    {
+      "sourceId": "dinero-apx-eth-address-source",
+      "url": "https://etherscan.io/address/0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan code/ABI carrier inspected 2026-10-06 UTC. AutoPxEth.sol SHA-256 b5cb20da70ffe8afeb3b213dbbe98159a96cf102b184d2b829f166e3d2cc8569; bundled Solmate ERC4626 SHA-256 df4de56264ef6dde295799e72b02fb4e900f603fa98d0b190b445d15e3672f8f; full ABI SHA-256 cc26b8b15642d93c312afe0fc0d0a6904140131ec661b9f330b6e146dfd61dbe; Etherscan HTML SHA-256 36d73c766de9ddc880bc81fe5c3daf5c92fbed93ac123140a618d1e2f219d2d8. No official source commit was identified; no compiler-output or live constructor/runtime claim is made."
+    }
+  ],
+  "unresolved": []
+}

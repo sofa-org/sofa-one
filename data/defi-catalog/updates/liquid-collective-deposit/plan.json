@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/mantle-meth-staking/catalog.json",
+    "rawSha256": "dc5919d42bf959483e596fdfcf015154bf2349bb6263e2731a65b4069e411840",
+    "manifestHash": "0x92159c13419082c3b3f89105855720a6f3c89fd0c1db96a00d53b3ff7839e440"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/liquid-collective-deposit/sources/liquid-collective-river.json",
+      "canonicalSha256": "d49d960b15aa5d656434302dd65a6c805f8a922952e0713955a26d9df1b1da9d"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/liquid-collective-deposit/sources/liquid-collective-river.json",
+      "familyId": "liquid-collective-river",
+      "familyVersion": "river-v1@eda01404",
+      "chainId": 1,
+      "contract": "0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549",
+      "signature": "deposit()",
+      "selector": "0xd0e30db0",
+      "abiHash": "0x843bc76e9b37f6f244f6c3fb4e28e3326df5c9f744f45f159a9eed920b284b1a",
+      "capabilityId": "liquid-collective-river:v1:1:0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549:deposit",
+      "sourceRefs": [
+        "liquid-collective-official-docs",
+        "liquid-collective-pinned-deployment",
+        "liquid-collective-river-proxy-abi",
+        "liquid-collective-river-verified-source",
+        "liquid-collective-user-deposit-manager",
+        "liquid-collective-user-deposit-interface",
+        "liquid-collective-shares-manager",
+        "liquid-collective-allowlist-mask"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "liquid-collective-official-docs",
+          "liquid-collective-pinned-deployment",
+          "liquid-collective-river-proxy-abi",
+          "liquid-collective-river-verified-source",
+          "liquid-collective-user-deposit-manager",
+          "liquid-collective-user-deposit-interface",
+          "liquid-collective-shares-manager",
+          "liquid-collective-allowlist-mask"
+        ],
+        "evidence": "The selected payable zero-argument deposit() is inherited from UserDepositManager: it calls _deposit(msg.sender), which rejects zero msg.value, accounts the incoming ETH, and calls River's fixed _onDeposit. River's override applies the protocol slashing-containment guard before forwarding to the inherited accounting path. _onDeposit calls SharesManagerV1._mintShares(msg.sender, msg.value), then invokes the protocol allowlist's onlyAllowed(caller, DEPOSIT_MASK). Because the selected method sets _recipient == _depositor == msg.sender, the recipient-denial/transfer branch is not entered; the fixed share accounting mints/credits the caller. This admits only the source-qualified fixed protocol call, not arbitrary target/callback/calldata. Protocol allowlist/compliance, pause/slashing mode, zero ETH, share accounting/exchange, and governance conditions may revert. The pinned repository River source differs from address-bound verified River source; no equivalence is asserted. Dated deployment and Etherscan association do not establish current proxy storage/runtime, liquidity, funding, or outcome. No platform amount, caller allowlist, receiver, feed, balance, or financial-safety gate is added; caller-only share minting is protocol behavior, not a platform recipient restriction. depositAndTransfer, receive/fallback, validator, withdrawal queue, admin, and all other initial-snapshot methods are excluded."
+      }
+    }
+  ],
+  "deactivations": []
+}

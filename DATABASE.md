@@ -45,7 +45,13 @@ API-key credential metadata:
 - optional `expiresAt`
 - `revoked`
 - `allowedIps`
+- `capabilityMode` (`all` or `custom`)
+- `allowedCapabilityIds` (configured exact IDs; not a materialized effective list)
 - `lastUsedAt`
+
+`all` dynamically includes currently and subsequently active, unpaused reviewed catalog
+capabilities; `custom` includes only its listed IDs, with `[]` denying catalog capabilities.
+This mode is independent of API-key permissions and other authorization controls.
 
 Invariants:
 
@@ -103,6 +109,13 @@ For production/deployment migrations:
 ```bash
 npm run prisma:migrate:deploy
 ```
+
+The capability-mode migration is a one-time data migration: existing empty arrays map to
+`all` and nonempty arrays map to `custom` unchanged. Because old binaries do not preserve the
+new mode invariant, deploy it only in a coordinated maintenance window with all old API
+instances/writers stopped: apply migrations before starting the new application version.
+Do not run mixed-version writers or an ad hoc/recurring repair. The empty-to-all mapping
+includes formerly deliberate empty selections, which the prior schema cannot distinguish.
 
 ## 4. Schema-change checklist
 

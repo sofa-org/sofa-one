@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "stakewise",
+      "familyVersion": "v3-genesis",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xAC0F906E433d58FA868F936E8A43230473652885",
+          "status": "inactive",
+          "contractName": "StakeWise Ethereum Genesis Vault",
+          "sourceRefs": ["stakewise-mainnet-deployments", "stakewise-vault-eth-staking-interface", "stakewise-vault-enter-exit-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [{ "name": "receiver", "type": "address", "internalType": "address" }, { "name": "referrer", "type": "address", "internalType": "address" }], "outputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }] },
+            { "type": "function", "name": "enterExitQueue", "stateMutability": "nonpayable", "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }], "outputs": [{ "name": "positionTicket", "type": "uint256", "internalType": "uint256" }] },
+            { "type": "function", "name": "claimExitedAssets", "stateMutability": "nonpayable", "inputs": [{ "name": "positionTicket", "type": "uint256", "internalType": "uint256" }, { "name": "timestamp", "type": "uint256", "internalType": "uint256" }, { "name": "exitQueueIndex", "type": "uint256", "internalType": "uint256" }], "outputs": [] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "stakewise-mainnet-deployments", "url": "https://github.com/stakewise/v3-core/blob/fc70cbe1b3d41bc5f78434830d837aa270ca33bc/deployments/mainnet.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official deployment record identifies the canonical Ethereum Genesis Vault at this address. This is a deployment-role record, not proxy implementation/runtime verification." },
+    { "sourceId": "stakewise-vault-eth-staking-interface", "url": "https://github.com/stakewise/v3-core/blob/fc70cbe1b3d41bc5f78434830d837aa270ca33bc/contracts/interfaces/IVaultEthStaking.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declares deposit(address receiver,address referrer) payable returning uint256 shares." },
+    { "sourceId": "stakewise-vault-enter-exit-interface", "url": "https://github.com/stakewise/v3-core/blob/fc70cbe1b3d41bc5f78434830d837aa270ca33bc/contracts/interfaces/IVaultEnterExit.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declarations for enterExitQueue(uint256 shares,address receiver) returning uint256 positionTicket and claimExitedAssets(uint256 positionTicket,uint256 timestamp,uint256 exitQueueIndex), with no outputs." }
+  ]
+}

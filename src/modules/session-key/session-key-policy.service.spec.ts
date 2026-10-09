@@ -186,40 +186,6 @@ describe('SessionKeyPolicyService', () => {
       expect(mismatchCalls).toHaveLength(0);
     });
 
-    it('records policy drift when backend has allowedContracts', async () => {
-      await service.assertSessionKeyAllowed({
-        ...baseContext,
-        allowedContracts: ['0x1234567890123456789012345678901234567890'],
-      });
-
-      expect(securityEvents.record).toHaveBeenCalledWith(
-        expect.objectContaining({
-          eventType: 'session_key.policy_drift',
-          reason: 'session_key_policy_drift',
-          walletId: 'wallet-1',
-          metadata: expect.objectContaining({
-            drifts: ['allowedContracts_not_enforced_on_chain'],
-          }),
-        }),
-      );
-    });
-
-    it('records policy drift when backend has allowedFunctionSelectors', async () => {
-      await service.assertSessionKeyAllowed({
-        ...baseContext,
-        allowedFunctionSelectors: ['0xa9059cbb'],
-      });
-
-      expect(securityEvents.record).toHaveBeenCalledWith(
-        expect.objectContaining({
-          reason: 'session_key_policy_drift',
-          metadata: expect.objectContaining({
-            drifts: ['allowedFunctionSelectors_not_enforced_on_chain'],
-          }),
-        }),
-      );
-    });
-
     it('records policy drift when backend has spend limits', async () => {
       await service.assertSessionKeyAllowed({
         ...baseContext,
@@ -237,11 +203,9 @@ describe('SessionKeyPolicyService', () => {
       );
     });
 
-    it('records multiple drifts when backend has multiple restrictions', async () => {
+    it('records spend-limit drift when the backend has spend limits', async () => {
       await service.assertSessionKeyAllowed({
         ...baseContext,
-        allowedContracts: ['0x1234567890123456789012345678901234567890'],
-        allowedFunctionSelectors: ['0xa9059cbb'],
         dailySpendLimit: '1000000',
       });
 
@@ -250,8 +214,6 @@ describe('SessionKeyPolicyService', () => {
           reason: 'session_key_policy_drift',
           metadata: expect.objectContaining({
             drifts: [
-              'allowedContracts_not_enforced_on_chain',
-              'allowedFunctionSelectors_not_enforced_on_chain',
               'spend_limits_not_enforced_on_chain',
             ],
           }),
@@ -270,17 +232,13 @@ describe('SessionKeyPolicyService', () => {
 
       await service.assertSessionKeyAllowed({
         ...baseContext,
-        allowedContracts: ['0x1234567890123456789012345678901234567890'],
         apiKeyExpiresAt: apiKeyExpiration,
       });
 
-      // Should have both drift and mismatch events, plus the final allowed event
-      expect(securityEvents.record).toHaveBeenCalledTimes(3);
+      // Should have expiration mismatch and final allowed events only.
+      expect(securityEvents.record).toHaveBeenCalledTimes(2);
       expect(securityEvents.record).toHaveBeenCalledWith(
         expect.objectContaining({ reason: 'session_key_expiration_mismatch' }),
-      );
-      expect(securityEvents.record).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: 'session_key_policy_drift' }),
       );
       expect(securityEvents.record).toHaveBeenCalledWith(
         expect.objectContaining({ reason: 'session_key_allowed' }),
@@ -405,30 +363,6 @@ describe('SessionKeyPolicyService', () => {
       expect(result).toEqual({ hasDrift: false, drifts: [] });
     });
 
-    it('detects allowedContracts drift', () => {
-      const result = service.detectPolicyDrift({
-        ...baseContext,
-        allowedContracts: ['0x1234567890123456789012345678901234567890'],
-      });
-
-      expect(result).toEqual({
-        hasDrift: true,
-        drifts: ['allowedContracts_not_enforced_on_chain'],
-      });
-    });
-
-    it('detects allowedFunctionSelectors drift', () => {
-      const result = service.detectPolicyDrift({
-        ...baseContext,
-        allowedFunctionSelectors: ['0xa9059cbb'],
-      });
-
-      expect(result).toEqual({
-        hasDrift: true,
-        drifts: ['allowedFunctionSelectors_not_enforced_on_chain'],
-      });
-    });
-
     it('detects spend limits drift', () => {
       const result = service.detectPolicyDrift({
         ...baseContext,
@@ -453,27 +387,21 @@ describe('SessionKeyPolicyService', () => {
       });
     });
 
-    it('detects multiple drifts', () => {
+    it('detects spend-limit drift', () => {
       const result = service.detectPolicyDrift({
         ...baseContext,
-        allowedContracts: ['0x1234567890123456789012345678901234567890'],
-        allowedFunctionSelectors: ['0xa9059cbb'],
         dailySpendLimit: '1000000',
         monthlySpendLimit: '10000000',
       });
 
       expect(result.hasDrift).toBe(true);
-      expect(result.drifts).toHaveLength(3);
-      expect(result.drifts).toContain('allowedContracts_not_enforced_on_chain');
-      expect(result.drifts).toContain('allowedFunctionSelectors_not_enforced_on_chain');
+      expect(result.drifts).toHaveLength(1);
       expect(result.drifts).toContain('spend_limits_not_enforced_on_chain');
     });
 
     it('does not detect drift for empty arrays', () => {
       const result = service.detectPolicyDrift({
         ...baseContext,
-        allowedContracts: [],
-        allowedFunctionSelectors: [],
       });
 
       expect(result).toEqual({ hasDrift: false, drifts: [] });

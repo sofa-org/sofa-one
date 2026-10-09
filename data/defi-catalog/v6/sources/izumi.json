@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "izumi",
+      "familyVersion": "periphery@69d6e509",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x2db0AFD0045F3518c77eC6591a542e326Befd3D7",
+          "status": "inactive",
+          "contractName": "iZUMi Ethereum Swap",
+          "sourceRefs": [
+            "izumi-ethereum-deployment-config",
+            "izumi-swap-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "swapAmount",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple",
+                  "internalType": "struct ISwap.SwapAmountParams",
+                  "components": [
+                    {
+                      "name": "path",
+                      "type": "bytes",
+                      "internalType": "bytes"
+                    },
+                    {
+                      "name": "recipient",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "amount",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "minAcquired",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "deadline",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "cost",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "acquire",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "izumi-swap-interface"
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x19b683A2F45012318d9B2aE1280d68d3eC54D663",
+          "status": "inactive",
+          "contractName": "iZUMi Ethereum LiquidityManager",
+          "sourceRefs": [
+            "izumi-ethereum-deployment-config",
+            "izumi-liquidity-manager-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "mintParam",
+                  "type": "tuple",
+                  "internalType": "struct ILiquidityManager.MintParam",
+                  "components": [
+                    {
+                      "name": "miner",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "tokenX",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "tokenY",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "fee",
+                      "type": "uint24",
+                      "internalType": "uint24"
+                    },
+                    {
+                      "name": "pl",
+                      "type": "int24",
+                      "internalType": "int24"
+                    },
+                    {
+                      "name": "pr",
+                      "type": "int24",
+                      "internalType": "int24"
+                    },
+                    {
+                      "name": "xLim",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "yLim",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "amountXMin",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "amountYMin",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "deadline",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "lid",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "liquidity",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "amountX",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountY",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "izumi-liquidity-manager-interface"
+            },
+            {
+              "type": "function",
+              "name": "addLiquidity",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "addLiquidityParam",
+                  "type": "tuple",
+                  "internalType": "struct ILiquidityManager.AddLiquidityParam",
+                  "components": [
+                    {
+                      "name": "lid",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "xLim",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "yLim",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "amountXMin",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "amountYMin",
+                      "type": "uint128",
+                      "internalType": "uint128"
+                    },
+                    {
+                      "name": "deadline",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "liquidityDelta",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "amountX",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountY",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "izumi-liquidity-manager-interface"
+            },
+            {
+              "type": "function",
+              "name": "decLiquidity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "lid",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "liquidDelta",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "amountXMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountYMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountX",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountY",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "izumi-liquidity-manager-interface"
+            },
+            {
+              "type": "function",
+              "name": "collect",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "recipient",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "lid",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountXLim",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "amountYLim",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountX",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountY",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "izumi-liquidity-manager-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "izumi-ethereum-deployment-config",
+      "url": "https://github.com/izumiFinance/iZiSwap-periphery/blob/69d6e509779306ecf05c878cc64e4a74b082ecd3/scripts/deployed.js",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official periphery deployment-role configuration lists Ethereum chain 1 Swap 0x2db0AFD0045F3518c77eC6591a542e326Befd3D7 and LiquidityManager 0x19b683A2F45012318d9B2aE1280d68d3eC54D663. The script provides no deployment block or timestamp; this identifies pinned official source configuration, not present runtime identity or funded execution."
+    },
+    {
+      "sourceId": "izumi-swap-interface",
+      "url": "https://github.com/izumiFinance/iZiSwap-periphery/blob/69d6e509779306ecf05c878cc64e4a74b082ecd3/contracts/interfaces/ISwap.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned ISwap.sol declares payable swapAmount(SwapAmountParams calldata params), returning uint256 cost and acquire. The entire named SwapAmountParams tuple is retained. It does not create generic wallet-execution authority."
+    },
+    {
+      "sourceId": "izumi-liquidity-manager-interface",
+      "url": "https://github.com/izumiFinance/iZiSwap-periphery/blob/69d6e509779306ecf05c878cc64e4a74b082ecd3/contracts/interfaces/ILiquidityManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned ILiquidityManager.sol declares mint, addLiquidity, decLiquidity, and collect with the exact selected tuple/argument types, payability, and named return values. Other management, NFT, permit, callback, or generic execution methods are excluded."
+    }
+  ]
+}

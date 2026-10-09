@@ -1,0 +1,21 @@
+# M2 identity and activity reconciliation
+
+Snapshot capture: `2026-10-03T19:11:22Z`; the v2 source universe is the frozen M1 `protocolUniverse` of 8,476 source rows (canonical SHA-256 `7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24`). This is a source-row universe, not 8,476 distinct canonical products. The complete row-by-row disposition ledger and seven unmatched metric rows are retained in [`identity-crosswalk.json`](../../data/defi-coverage/v2/identity-crosswalk.json). No rows are excluded by TVL, activity zero, unsupported chain, or label similarity.
+
+## Explicit bridges
+
+| Raw provider ID | Product bridge | Scope and remaining boundary |
+|---|---|---|
+| `2198` | Uniswap V3, exact provider ID + `uniswap-v3` adapter + independently linked per-chain NPM deployment sources | Seven network deployments; five NPM LP methods are source-backed. Core funding, asset population, workflow completeness, and complete instance enumeration remain unresolved. See [`dex.json`](../../data/defi-catalog/v2/sources/dex.json) and official [Uniswap V3 deployment records](https://developers.uniswap.org/docs/protocols/v3/deployments/v3-ethereum-deployments.md). |
+| `119` | SushiSwap Classic V2, exact provider ID + `sushiswap-classic` adapter + pinned official cpAMM deployment/interface records | Six explicitly configured router networks. Monad is deferred for absence of an explicit V2 registry entry; this is not a blanket nonexistence claim. LP-token and underlying-asset population/funding are incomplete. See [pinned source record](expansion-2-sushi-provenance.md). |
+| `2611` | Balancer V2, exact provider ID + `balancer-v2` adapter + per-network Vault records | Five measured adapter chains and six deployment outputs; BNB deployment has no matching measured adapter row, while Monad output 404 is unknown. Pool/asset population and funding feasibility remain incomplete. See [`dex.json`](../../data/defi-catalog/v2/sources/dex.json). |
+| `114` | Compound V2 Ethereum, exact provider ID + `compound-v2` adapter + Unitroller/market source mapping | Identity remains bridged, but activity is unresolved. The captured 30-day fee value is 86,839 USD and its source row is labeled `BORROW_INTEREST`; the pinned fees adapter queries `financialsDailySnapshot.dailyTotalRevenueUSD`. No captured execution link establishes that `helpers/compoundV2.ts` event computation supplies this adapter output, so the value is not promoted to user activity. Four known cTokens do not establish complete market population; workflow/instance bindings remain unresolved. |
+| `194` | PancakeSwap AMM V2 partial bridge | Only the BNB factory has the independent source correspondence recorded in this lane. Other expected-chain mappings remain unknown; the raw provider row remains an unresolved proxy and is not promoted to a canonical coverage unit. |
+
+The v2 product/source link is not inferred from `parentProtocol`, `linkedProtocols`, display name, or slug alone. Identical contract addresses or function names do not establish product identity or deployment continuity.
+
+## Activity interpretation and remaining unknowns
+
+The frozen DEX volume measure is positive usage evidence for activity occurrence within the enclosing 90-day window; it is a 30-day value, not a 90-day total. A zero or missing 30-day value does not mean inactive. Compound V2's captured fee row is retained as provider financial data only: the `BORROW_INTEREST` label and a separate helper implementation do not prove an execution link or user activity. The value is not promoted to borrowing activity. Other lending fee totals (Aave, Spark, Venus, Morpho Blue) are likewise not promoted to user activity without a qualified method. Compound V3's borrow-rate × total-borrow estimate is not realized event/index evidence.
+
+The normalized input records exact chain, category, metric definition, unit, window, and source separately. It retains all non-canonical/partial source IDs as conservative proxy rows, all seven unmatched metric IDs, and explicit unresolved product workflows and chain/instance inventories. Reports may show observed activity progress but cannot claim the 90% objective while unknown identities or incomplete populations remain. No financial caps, recipient restrictions, approval coupling, runtime safety, liquidity, or funded-execution claims are introduced.

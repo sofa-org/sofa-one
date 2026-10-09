@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "idle",
+      "familyVersion": "v3-1@70b31e6e",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x493C57C4763932315A328269E1ADaD09653B9081",
+          "status": "inactive",
+          "contractName": "Idle Ethereum iDAI",
+          "sourceRefs": ["idle-contracts-repository", "idle-ethereum-addresses", "idle-token-interface", "idle-token-governance"],
+          "abiFunctions": [
+            { "type": "function", "name": "mintIdleToken", "stateMutability": "nonpayable", "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }, { "name": "_skipRebalance", "type": "bool", "internalType": "bool" }, { "name": "_referral", "type": "address", "internalType": "address" }], "outputs": [{ "name": "mintedTokens", "type": "uint256", "internalType": "uint256" }], "sourceId": "idle-token-interface" },
+            { "type": "function", "name": "redeemIdleToken", "stateMutability": "nonpayable", "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "redeemedTokens", "type": "uint256", "internalType": "uint256" }], "sourceId": "idle-token-interface" }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    { "sourceId": "idle-contracts-repository", "url": "https://github.com/Idle-Labs/idle-contracts/tree/70b31e6ef4724e2f6e501ebb49dcc9c759ee2ea6", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Idle-Labs/idle-contracts source commit 70b31e6ef4724e2f6e501ebb49dcc9c759ee2ea6; source pin alone is not current runtime-code, liquidity, or funded-execution certification." },
+    { "sourceId": "idle-ethereum-addresses", "url": "https://github.com/Idle-Labs/idle-contracts/blob/70b31e6ef4724e2f6e501ebb49dcc9c759ee2ea6/migrations/addresses.js", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned migrations/addresses.js identifies Ethereum iDAI live/proxy target 0x493C57C4763932315A328269E1ADaD09653B9081 and underlying DAI 0x6B175474E89094C44Da98b954EedeAC495271d0F." },
+    { "sourceId": "idle-token-interface", "url": "https://github.com/Idle-Labs/idle-contracts/blob/70b31e6ef4724e2f6e501ebb49dcc9c759ee2ea6/contracts/interfaces/IIdleTokenV3_1.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned IIdleTokenV3_1 declares ordinary nonpayable mintIdleToken(uint256 _amount,bool _skipRebalance,address _referral) returning uint256 mintedTokens and redeemIdleToken(uint256 _amount) returning uint256 redeemedTokens. Interface parameter names are retained in this ABI declaration." },
+    { "sourceId": "idle-token-governance", "url": "https://github.com/Idle-Labs/idle-contracts/blob/70b31e6ef4724e2f6e501ebb49dcc9c759ee2ea6/contracts/IdleTokenGovernance.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned implementation pulls underlying and mints to caller in mintIdleToken; redemption burns caller tokens, transfers underlying and invokes rewards redemption. Its second mint bool is unnamed/unused in the implementation, unlike the named interface parameter; no compiled ABI identity is inferred from this difference. Protocol pause, allowance and liquidity remain intrinsic conditions. Other administrative, emergency and rebalance methods are excluded." }
+  ]
+}

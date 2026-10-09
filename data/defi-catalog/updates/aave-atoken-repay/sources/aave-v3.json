@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+          "status": "inactive",
+          "contractName": "Aave V3 Ethereum Pool",
+          "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayWithATokens",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "asset", "type": "address", "internalType": "address" },
+                { "name": "amount", "type": "uint256", "internalType": "uint256" },
+                { "name": "interestRateMode", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation"]
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "status": "inactive",
+          "contractName": "Aave V3 Optimism Pool",
+          "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayWithATokens",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "asset", "type": "address", "internalType": "address" },
+                { "name": "amount", "type": "uint256", "internalType": "uint256" },
+                { "name": "interestRateMode", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism"]
+            }
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0xa238dd80c259a72e81d7e4664a9801593f98d1c5",
+          "status": "inactive",
+          "contractName": "Aave V3 Base Pool",
+          "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayWithATokens",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "asset", "type": "address", "internalType": "address" },
+                { "name": "amount", "type": "uint256", "internalType": "uint256" },
+                { "name": "interestRateMode", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["aave-v3-borrow-logic", "aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "aave-v3-ipool-interface",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/interfaces/IPool.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned Aave V3 Origin interface at commit 8305565ae342f1773c42cd2e4593f175fe5968a0. IPool.sol lines 325–329 declare repayWithATokens(address asset,uint256 amount,uint256 interestRateMode) external returns (uint256) with an unnamed return. ABI output name remains empty; this is a declaration model, not compiler output."
+    },
+    {
+      "sourceId": "aave-v3-pool-implementation",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/protocol/pool/Pool.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned Aave V3 Origin implementation at commit 8305565ae342f1773c42cd2e4593f175fe5968a0. Pool.sol lines 304–327 forward _msgSender() as both user and onBehalfOf and set useATokens=true for repayWithATokens; the call uses the fixed BorrowLogic repayment path, not arbitrary calldata, callback, recipient, or execution target."
+    },
+    {
+      "sourceId": "aave-v3-borrow-logic",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/protocol/libraries/logic/BorrowLogic.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned Aave V3 Origin BorrowLogic at commit 8305565ae342f1773c42cd2e4593f175fe5968a0. BorrowLogic.sol lines 133–169 validate reserve/debt state, rate mode, caps and amount; lines 183–212 burn the caller-owned aTokens in the useATokens branch without underlying transferFrom; lines 214–222 return actual payback amount. Collateral configuration and protocol validation can affect outcomes."
+    },
+    {
+      "sourceId": "aave-v3-pool-ethereum",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Ethereum.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official Aave address-book role AaveV3Ethereum.POOL at commit 17567521ae51088c85e01a6d8240f18b383bac2f identifies Ethereum Pool 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2. Dated source role is not live proxy/runtime identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-optimism",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Optimism.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official Aave address-book role AaveV3Optimism.POOL at commit 17567521ae51088c85e01a6d8240f18b383bac2f identifies Optimism Pool 0x794a61358D6845594F94dc1DB02A252b5b4814aD. Dated source role is not live proxy/runtime identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-base",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Base.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official Aave address-book role AaveV3Base.POOL at commit 17567521ae51088c85e01a6d8240f18b383bac2f identifies Base Pool 0xA238Dd80C259a72e81d7e4664a9801593F98d1c5. Dated source role is not live proxy/runtime identity."
+    }
+  ],
+  "unresolved": []
+}

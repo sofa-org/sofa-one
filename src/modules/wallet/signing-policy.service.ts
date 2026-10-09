@@ -28,8 +28,8 @@ export type SigningPolicyContext = {
   executionMode: 'session_key' | 'eoa';
   apiKeyId?: string;
   apiKeyPrefix?: string;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  /** Caller will persist its own allowed audit atomically at acceptance. */
+  deferAllowedAudit?: boolean;
 };
 
 @Injectable()
@@ -158,33 +158,6 @@ export class SigningPolicyService {
       );
     }
 
-    // Contract allowlist: if the API key defines allowedContracts, the
-    // verifyingContract must be in the list.
-    if (context.allowedContracts && context.allowedContracts.length > 0) {
-      if (typeof verifyingContract !== 'string') {
-        await this.reject(
-          'typedData.domain.verifyingContract is required when API key allowed contracts are configured',
-          context,
-          {
-            typedDataPrimaryType: primaryType,
-            allowedContractCount: context.allowedContracts.length,
-          },
-        );
-      }
-      const normalizedContract = (verifyingContract as string).toLowerCase();
-      if (!context.allowedContracts.some((c) => c.toLowerCase() === normalizedContract)) {
-        await this.reject(
-          'typedData.domain.verifyingContract is not in the API key allowed contracts',
-          context,
-          {
-            typedDataPrimaryType: primaryType,
-            verifyingContract: normalizedContract,
-            allowedContractCount: context.allowedContracts.length,
-          },
-        );
-      }
-    }
-
     const result: SigningPolicyResult = {
       typedDataPrimaryType: primaryType,
       ...(typeof verifyingContract === 'string'
@@ -193,13 +166,15 @@ export class SigningPolicyService {
       ...(typeof domainName === 'string' ? { typedDataDomainName: domainName } : {}),
     };
 
-    await this.recordAllowedEvent('signing.typed_data_allowed', context, {
-      type: 'typed_data',
-      primaryType,
-      verifyingContract:
-        typeof verifyingContract === 'string' ? verifyingContract : undefined,
-      domainName: typeof domainName === 'string' ? domainName : undefined,
-    });
+    if (!context.deferAllowedAudit) {
+      await this.recordAllowedEvent('signing.typed_data_allowed', context, {
+        type: 'typed_data',
+        primaryType,
+        verifyingContract:
+          typeof verifyingContract === 'string' ? verifyingContract : undefined,
+        domainName: typeof domainName === 'string' ? domainName : undefined,
+      });
+    }
 
     return result;
   }

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/dforce-iusdt-idai/catalog.json",
+    "rawSha256": "d7af21238f2c03584a98b35fddf4481851e475267b78aa4d841b7da5afdb141e",
+    "manifestHash": "0x46a8d57af5e94bf70b94c752d2babee68d289be186afafd437988bedb7d7d155"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/origin-woeth/sources/origin-woeth.json",
+      "canonicalSha256": "0a3596fdff338cf12d199de108af2b56e26c4c65c5362260d44a07b43b88af24"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-woeth/sources/origin-woeth.json",
+      "familyId": "origin-woeth",
+      "familyVersion": "woeth@696221b4",
+      "chainId": 1,
+      "contract": "0xdcee70654261af21c44c093c300ed3bb97b78192",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xacc854348209f31ec6382ea494bded763103e2bbb72cd2578ce1b67ad42044da",
+      "capabilityId": "origin-woeth:v1:1:0xdcee70654261af21c44c093c300ed3bb97b78192:deposit",
+      "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 deposit(uint256 assets,address receiver) is admitted. Its inherited body checks assets against maxDeposit(receiver), calculates shares through WOETH's overridden preview/conversion methods, transfers the contract-configured OETH asset from msg.sender with safeTransferFrom, mints shares to caller-selected receiver, and returns shares. WOETH's conversions and totalAssets use OETH rebasing credits and its initialized adjuster; totalAssets is not raw token balance, and donated OETH is ignored by that accounting model. The configured asset, OETH rebasing-credit state, adjuster initialization, rounding/overflow, ERC20 allowance/balance, receiver validity, and token/protocol behavior can affect or revert execution. Policy adds no amount, receiver/owner equality, balance, oracle, or financial gate; zero, arbitrary receiver, and full uint256 values are ABI-policy permitted but may be rejected or revert in protocol execution. Approval is separate and not paired or granted. This admission is only deposit and does not establish an OETH-to-ETH exit workflow, current proxy/storage/asset initialization, liquidity, funded execution, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-woeth/sources/origin-woeth.json",
+      "familyId": "origin-woeth",
+      "familyVersion": "woeth@696221b4",
+      "chainId": 1,
+      "contract": "0xdcee70654261af21c44c093c300ed3bb97b78192",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0x6bba0dc0de55f693e4d005c0d24062fa3d723c34f88d39a600586539d56a58fe",
+      "capabilityId": "origin-woeth:v1:1:0xdcee70654261af21c44c093c300ed3bb97b78192:mint",
+      "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 mint(uint256 shares,address receiver) is admitted. Its body checks shares against maxMint(receiver), calculates required assets through WOETH's overridden preview/conversion methods (including inherited rounding-up behavior), safeTransferFroms the fixed configured OETH asset from msg.sender, mints exactly the requested shares to caller-selected receiver, and returns assets. WOETH's conversions and totalAssets use OETH rebasing credits and initialized adjuster, not raw OETH balance; donated OETH is ignored by the modeled accounting. Configured asset, OETH rebasing-credit state, adjuster initialization, rounding/overflow, ERC20 allowance/balance, receiver validity, and protocol/token behavior can affect or revert execution. Policy imposes no share/asset amount, receiver/owner equality, balance, oracle, or financial gate; ABI-valid zero/arbitrary receiver and uint256 values remain permitted but may fail protocol checks. Approval remains separate and is neither paired nor granted. This method alone is not a complete workflow and dated source/deployment evidence does not prove current proxy/storage/asset configuration, liquidity, funded execution, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-woeth/sources/origin-woeth.json",
+      "familyId": "origin-woeth",
+      "familyVersion": "woeth@696221b4",
+      "chainId": 1,
+      "contract": "0xdcee70654261af21c44c093c300ed3bb97b78192",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x4d73ece13f94d17f5eca74b24410ce392155416a778c2c2907a6adf6fa7d58a1",
+      "capabilityId": "origin-woeth:v1:1:0xdcee70654261af21c44c093c300ed3bb97b78192:withdraw",
+      "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 withdraw(uint256 assets,address receiver,address owner) is admitted. Its body checks assets against maxWithdraw(owner), derives required shares via previewWithdraw and WOETH's rebasing-credit/adjuster conversions, spends ERC20 allowance when msg.sender differs from caller-selected owner (unless allowance is uint256 max), burns the shares from owner, and transfers the fixed configured OETH asset to caller-selected receiver. It returns shares burned. Configured OETH/adjuster/accounting, owner share balance and allowance, receiver validity, token behavior and protocol conditions can revert execution. The platform does not require owner to equal execution owner/caller and adds no asset amount, receiver, balance, oracle or financial gate; ABI-valid zero/arbitrary owners/receivers and full uint256 values are policy-permitted but protocol validation applies. No approval is paired or granted. Withdrawal returns OETH, not native ETH, and this method does not promise liquidity or a complete workflow. Dated evidence does not establish current proxy/storage, asset configuration, initialization, funded execution or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-woeth/sources/origin-woeth.json",
+      "familyId": "origin-woeth",
+      "familyVersion": "woeth@696221b4",
+      "chainId": 1,
+      "contract": "0xdcee70654261af21c44c093c300ed3bb97b78192",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x4e30a5bc7aad2410da25c5cb80c93570e3d36436daa197a7b41c656fbad2d3dd",
+      "capabilityId": "origin-woeth:v1:1:0xdcee70654261af21c44c093c300ed3bb97b78192:redeem",
+      "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-woeth-source-inheritance", "origin-woeth-address-bound-source", "origin-woeth-full-abi", "origin-woeth-proxy-deployment", "origin-woeth-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 redeem(uint256 shares,address receiver,address owner) is admitted. Its body checks shares against maxRedeem(owner), calculates OETH through WOETH's rebasing-credit/adjuster conversion, spends ERC20 allowance when msg.sender differs from caller-selected owner (unless allowance is uint256 max), burns shares from owner, and transfers the fixed configured OETH asset to caller-selected receiver. It returns OETH assets. Configured asset/OETH rebasing-credit state/adjuster accounting, owner share balance and allowance, receiver validity, token behavior and protocol conditions may affect or revert execution. Policy does not require owner to equal caller/execution owner and adds no share/asset amount, receiver, balance, oracle or financial gate; ABI-valid zero/arbitrary owner/receiver values and full uint256 values remain permitted but protocol logic may reject them. No approval is paired or granted. Redemption is for OETH, not native ETH, and is not a complete workflow or liquidity guarantee. Dated evidence does not establish current proxy/storage/configuration, funded execution or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

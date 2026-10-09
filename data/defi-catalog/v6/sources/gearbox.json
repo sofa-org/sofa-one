@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "gearbox-pool",
+      "familyVersion": "v3-10",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xC155444481854c60e7a29f4150373f479988F32D",
+          "status": "inactive",
+          "contractName": "Gearbox V3.10 USDC Pool",
+          "sourceRefs": ["gearbox-sdk-pool-test", "gearbox-sdk-pool-abi", "gearbox-core-pool-interface"],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "internalType": "uint256", "type": "uint256" },
+                { "name": "receiver", "internalType": "address", "type": "address" }
+              ],
+              "outputs": [{ "name": "shares", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "gearbox-sdk-pool-abi"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "internalType": "uint256", "type": "uint256" },
+                { "name": "receiver", "internalType": "address", "type": "address" }
+              ],
+              "outputs": [{ "name": "assets", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "gearbox-sdk-pool-abi"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "internalType": "uint256", "type": "uint256" },
+                { "name": "receiver", "internalType": "address", "type": "address" },
+                { "name": "owner", "internalType": "address", "type": "address" }
+              ],
+              "outputs": [{ "name": "shares", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "gearbox-sdk-pool-abi"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "internalType": "uint256", "type": "uint256" },
+                { "name": "receiver", "internalType": "address", "type": "address" },
+                { "name": "owner", "internalType": "address", "type": "address" }
+              ],
+              "outputs": [{ "name": "assets", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "gearbox-sdk-pool-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "gearbox-sdk-pool-test",
+      "url": "https://github.com/Gearbox-protocol/sdk/blob/5255ab4449555b6ffbecc50b53b701611600b733/src/e2e/tests/pool-deposit-withdraw.test.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official SDK test identifies the Ethereum chain-1 USDC user pool at 0xC155444481854c60e7a29f4150373f479988F32D and exercises direct deposit/withdraw behavior. Its fixture is associated with block 24736900 and underlying USDC 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48. This is published source-test evidence, not a test executed for this change, a current liquidity/block observation, or funded-execution certification; no zapper is needed for this selected direct flow."
+    },
+    {
+      "sourceId": "gearbox-sdk-pool-abi",
+      "url": "https://github.com/Gearbox-protocol/sdk/blob/5255ab4449555b6ffbecc50b53b701611600b733/src/abi/310/generated.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official SDK generated iPoolV310Abi supplies the exact deposit(uint256 assets,address receiver), mint(uint256 shares,address receiver), withdraw(uint256 assets,address receiver,address owner), and redeem(uint256 shares,address receiver,address owner) function ABI objects. The SDK version selector maps pool versions 3.10 through 3.19 to PoolV310. Exact input/output metadata and nonpayable mutability are preserved; unrelated pool, credit-manager, approval, permit, and administrative methods are excluded."
+    },
+    {
+      "sourceId": "gearbox-core-pool-interface",
+      "url": "https://github.com/Gearbox-protocol/core-v3/blob/a53223a54f19a46a5cffd8104d622ac69f49c311/contracts/pool/PoolV3.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned Gearbox core-v3 PoolV3.sol identifies version 3.10 and links the pool implementation family to IPoolV3/IERC4626. This supports the pool role and intended interface alongside the pinned SDK-generated ABI; it is not live code-hash, proxy-slot, liquidity, or funded-execution evidence."
+    }
+  ]
+}

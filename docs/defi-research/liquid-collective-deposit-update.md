@@ -1,0 +1,21 @@
+# Liquid Collective River deposit update
+
+This ordinary update adds exactly one unscoped payable Ethereum binding: `deposit()` on the documented Liquid Collective River proxy at `0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549`. Stable ID: `liquid-collective-river:v1:1:0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549:deposit`. Only the no-argument caller deposit is admitted. `depositAndTransfer`, `receive`/fallback, validators, withdrawal queue, admin, and all other initial-snapshot methods are excluded.
+
+The inactive source snapshot and exact plan are in `data/defi-catalog/updates/liquid-collective-deposit/`. Family/version is `liquid-collective-river` / `river-v1@eda01404`. The immutable baseline is the accepted Mantle mETH catalog: raw SHA-256 `dc5919d42bf959483e596fdfcf015154bf2349bb6263e2731a65b4069e411840`; manifest hash `0x92159c13419082c3b3f89105855720a6f3c89fd0c1db96a00d53b3ff7839e440`. Source canonical SHA-256 `b3561fb2b0cbdfb119c04416e695c7ef3e5ceba1c969d3e319ca6a4a6d6d4e71`.
+
+## Role, source, and ABI evidence
+
+The official Liquid Collective repository is pinned to `afee50fbc504b47ae3d6abade77eea13d55acb5a` (2026-08-27); `deployments/mainnet/deployment.mainnet.json` and `River_Proxy.json` identify the River role. The recorded deployment file is a dated deployment snapshot, not proof of current proxy storage. The pinned repository `River.1.sol` carrier SHA-256 is `f99fcd8945ad1c6019902ca4debab2917799f01da2b3c3542b1aa75288b4b065`, and it differs from address-bound verified `River.1.sol` SHA-256 `eda014044494c5db8c8b46ba8c1abf8ab499ee219cab5d8c4937f96d1a334519`; no source equivalence is asserted.
+
+The retained address-bound Etherscan proxy page associates target `0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549` with implementation `0x0056f9ed62daa4dc3f972340c92326accddd1a9d` as a dated observation, not current implementation/storage/runtime proof. Carrier hashes: deployment record `9e59bb1b819241e9707ea4882ed3809730a3550e119d02830c628773d0d4db5a`; proxy descriptor `c6946aaf78e8a169d23161e943e02279f5f39523647584c378bf861137d97af0`; official docs overview `1a626f6718586477b4c875ae02dcdb6df4c4520043db43cbc4232e99567461d7`; proxy HTML `64841132aef52d12d1fea8ec611dc38bca64a4f814db179e01b2445d8ef149b9`; implementation HTML `85a9650c98040ee461f1032ca5432ac5474f9da4252c1805b9f71efcf185cc36`; implementation ABI `09b9bc97766044b893f96957fd19ca442286feb5b7cf67e5ed2f2992375432ad`; selected `deposit()` ABI `70242815c0c25e83d2a6dcdd06c8fe75a2f263f401d64a164cd2eb1991653dd9`.
+
+Inherited and helper source carrier hashes: `UserDepositManager.1.sol.etherscan.sol` `585be68ad71c53427112721133fbe6e881fbef4b0afe58812deee056a25b3b59`; `IUserDepositManager.1.sol.etherscan.sol` `91db5d9887f5dd0d04e10f05338252cefcb1006db0296fe505d9eb9198709832`; `SharesManager.1.sol.etherscan.sol` `a47d72e171dfeff51dbf805a518fb928d83a9f9d36a6504399bb8947449fc3d9`; `LibAllowlistMasks.sol.etherscan.sol` `e4be8949c8b0cc08dfc6f567e6832da1bbbcb2a80049fcc96d647e28853f2739`. These source carriers do not establish current deployed implementation or helper identity.
+
+Exact ABI: `{"type":"function","name":"deposit","stateMutability":"payable","inputs":[],"outputs":[]}`. Selector `0xd0e30db0`; ABI identity hash `0x843bc76e9b37f6f244f6c3fb4e28e3326df5c9f744f45f159a9eed920b284b1a`.
+
+## Inspected call behavior and limits
+
+Inherited `UserDepositManager.deposit()` calls `_deposit(msg.sender)`. That path rejects zero ETH, updates deposit accounting, and invokes River's fixed `_onDeposit`; River's override applies the protocol slashing-containment guard. `_onDeposit` mints shares through `SharesManagerV1._mintShares(msg.sender, msg.value)`, then performs the protocol `onlyAllowed(caller, DEPOSIT_MASK)` check. Since this overload sets recipient equal to caller, the source's alternative-recipient deny/transfer branch is not reached. Caller-only share minting is protocol behavior, not a platform recipient restriction.
+
+Protocol allowlist/compliance, pause/slashing, empty-value, share-conversion/accounting, or governance state may revert. No platform amount, caller-allowlist, recipient, feed, or balance gate is added; caller-supplied native value remains the ordinary payable root value. Dated role, ABI, and source evidence do not prove current proxy/storage/runtime, funding, liquidity, successful execution, or financial safety.

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/origin-wousd/catalog.json",
+    "rawSha256": "9904b7afa14973d23421db676e84943b4963852b71970c180048dce158b31b8f",
+    "manifestHash": "0xcfe1e519a2ef9fb92b838d488e87a05d90bc235bfe5072293b327e64702171a2"
+  },
+  "sources": [{
+    "path": "data/defi-catalog/updates/polymarket-pusd/sources/polymarket-pusd.json",
+    "canonicalSha256": "08acf3612d90a61a3ec4f22022ca063a849a0dba6fd332f1382d1d8ef90cdc81"
+  }],
+  "admissions": [{
+    "sourcePath": "data/defi-catalog/updates/polymarket-pusd/sources/polymarket-pusd.json",
+    "familyId": "polymarket-pusd",
+    "familyVersion": "collateral-onramp@27700089",
+    "chainId": 137,
+    "contract": "0x93070a847efef7f70739046a929d47a521f5b8ee",
+    "signature": "wrap(address,address,uint256)",
+    "selector": "0x62355638",
+    "abiHash": "0x81dc7d5ac39b2555f3745adaf504e4a36d889896f2ce7ea8f38eb85f91596109",
+    "capabilityId": "polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap",
+    "sourceRefs": ["polymarket-pusd-address-bound-source", "polymarket-pusd-contract-response", "polymarket-pusd-full-abi"],
+    "executionScope": {
+      "kind": "polymarket-pusd-wrap-v1",
+      "asset": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+      "recipientPolicy": "withdrawal-allowlist-v1"
+    },
+    "executionScopeHash": "0x221d9be90b18108cdbd0e2494ac4f70be9ce425c072c890ded66c21fd239431b",
+    "authorityReview": {
+      "classification": "polymarket-pusd-restricted",
+      "sourceRefs": ["polymarket-pusd-address-bound-source", "polymarket-pusd-contract-response", "polymarket-pusd-full-abi"],
+      "evidence": "This is the closed pUSD-specific restricted admission, not an ordinary-direct capability. The ABI-valid `_asset` argument is enforced by mandatory execution scope to equal Polygon USDC.e 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174; `_to` is enforced by the existing optional withdrawal allowlist switch (off/missing allows; enabled requires membership and cooldown eligibility). Amount remains caller-controlled and uncapped. Source transfers USDC.e from caller to immutable COLLATERAL_TOKEN then invokes collateral wrap with the same asset, recipient and amount; callbacks are disabled. There is no unwrap, nested/mixed wrapping, admin, pause, or approval capability. USDC.e approval is a separate grant/action and is never paired or automatically supplied. If recipient whitelist is enabled, generic approval sends are blocked by recipient policy, so any required allowance may need to exist already. Token balance/allowance, pause, target state, pUSD implementation/configuration and token behavior can affect or revert execution. Sourcify full match (chain 137, matchId 27700089, verified 2026-04-07) and decoded constructor evidence are dated; no live runtime/configuration, liquidity, funded execution, complete workflow or financial safety is asserted."
+    }
+  }],
+  "deactivations": []
+}

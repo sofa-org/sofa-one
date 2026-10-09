@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "baselinePath": "data/defi-catalog/v6/catalog.json",
+  "sourcePaths": [
+    "data/defi-catalog/v7/sources/bebop.json",
+    "data/defi-catalog/v7/sources/one-inch.json",
+    "data/defi-catalog/v7/sources/open-ocean.json",
+    "data/defi-catalog/v7/sources/velora.json",
+    "data/defi-catalog/v7/sources/zero-x.json"
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/compound-v2-repay-behalf/catalog.json",
+    "rawSha256": "897cc250972bf653f04dd2bf212b7807dcfcccceb96db1c14287c90336f1a947",
+    "manifestHash": "0x3a07fe42c4c3c9cfffffdaa2f8723c68e7f8f4a17125c2bd3aa0c96abbad08ef"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "canonicalSha256": "12e758300b4e29b637eb3d3cf398c6e19d7c2f6bfccd94a4c6ed74d5ea5425b7"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xbdb2a83ef7a315d0d0bfb11d2b460ba6aea60c52672b65d224eb7586c2d6c063",
+      "capabilityId": "maple-pool-v2:v2:1:0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b:deposit",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation calls the fixed pool manager permission check, then mints shares to caller-selected receiver and transfers the configured fixed asset from msg.sender. Zero/MAX uint256 and arbitrary receiver remain unbounded caller arguments; rounding, bootstrap and protocol checks may revert. Approval is independent and not auto-paired. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0x3db187758737efd13979f76f7864134fe09d7742d8c7854acfb2ac370aefde4d",
+      "capabilityId": "maple-pool-v2:v2:1:0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b:mint",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation calls the fixed pool manager permission check, then mints requested shares to caller-selected receiver and transfers computed configured fixed asset from msg.sender. Zero/MAX uint256 and arbitrary receiver remain unbounded caller arguments; conversion, rounding, bootstrap and protocol checks may revert. Approval is independent and not auto-paired. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b",
+      "signature": "requestRedeem(uint256,address)",
+      "selector": "0x107703ab",
+      "abiHash": "0xfa07749076e3b27f9afa7bfea9952779d674a00020e5bea2befa9e85f3e9ae1c",
+      "capabilityId": "maple-pool-v2:v2:1:0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b:request-redeem",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation uses fixed manager escrow configuration, owner LP shares and caller-selected sender, decreases third-party allowance when applicable, transfers LP shares to configured escrow, and requests redemption through fixed manager. Output is escrowed LP shares, not withdrawn assets or completed redemption. Manager permission, allowance and queue conditions may reject; no automatic approval or completion claim. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xbdb2a83ef7a315d0d0bfb11d2b460ba6aea60c52672b65d224eb7586c2d6c063",
+      "capabilityId": "maple-pool-v2:v2:1:0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d:deposit",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation calls the fixed pool manager permission check, then mints shares to caller-selected receiver and transfers the configured fixed asset from msg.sender. Zero/MAX uint256 and arbitrary receiver remain unbounded caller arguments; rounding, bootstrap and protocol checks may revert. Approval is independent and not auto-paired. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0x3db187758737efd13979f76f7864134fe09d7742d8c7854acfb2ac370aefde4d",
+      "capabilityId": "maple-pool-v2:v2:1:0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d:mint",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation calls the fixed pool manager permission check, then mints requested shares to caller-selected receiver and transfers computed configured fixed asset from msg.sender. Zero/MAX uint256 and arbitrary receiver remain unbounded caller arguments; conversion, rounding, bootstrap and protocol checks may revert. Approval is independent and not auto-paired. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/maple-pool-v2/sources/maple-pool-v2.json",
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "chainId": 1,
+      "contract": "0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d",
+      "signature": "requestRedeem(uint256,address)",
+      "selector": "0x107703ab",
+      "abiHash": "0xfa07749076e3b27f9afa7bfea9952779d674a00020e5bea2befa9e85f3e9ae1c",
+      "capabilityId": "maple-pool-v2:v2:1:0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d:request-redeem",
+      "sourceRefs": [
+        "maple-etherscan-usdc",
+        "maple-etherscan-usdt",
+        "maple-official-pool-map",
+        "maple-official-sdk-abi"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "maple-etherscan-usdc",
+          "maple-etherscan-usdt",
+          "maple-official-pool-map",
+          "maple-official-sdk-abi"
+        ],
+        "evidence": "The implementation uses fixed manager escrow configuration, owner LP shares and caller-selected sender, decreases third-party allowance when applicable, transfers LP shares to configured escrow, and requests redemption through fixed manager. Output is escrowed LP shares, not withdrawn assets or completed redemption. Manager permission, allowance and queue conditions may reject; no automatic approval or completion claim. Caller-selected amounts and receiver/owner are not constrained by platform financial gates; protocol asset/manager/allowance/queue conditions remain. Dated verified source and official role/ABI evidence do not prove current runtime identity, funding, liquidity, transaction success, withdrawal completion, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

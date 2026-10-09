@@ -11,7 +11,7 @@ Defines the validated request shape for API-key creation (`POST /v1/api-keys`). 
 ### Exported classes
 | Symbol | Kind | Purpose |
 |--------|------|---------|
-| `CreateApiKeyDto` | DTO (root) | Request body for API-key creation. Fields: `name` (required, trimmed, ≤100 chars), `expiresAt` (optional ISO-8601 string), `allowedIps` (optional `string[]`), `allowedContracts` (optional `string[]`), `allowedFunctionSelectors` (optional `string[]`), `spendLimits` (optional nested `ApiKeySpendLimitsDto`), `permissions` (optional nested `ApiKeyPermissionsDto`). |
+| `CreateApiKeyDto` | DTO (root) | Request body for API-key creation; capability mode (`all`/`custom`) and optional configured IDs (maximum 100 unique nonempty IDs ≤160 chars), plus name, expiry, IPs, spend limits, and permissions. |
 | `ApiKeyPermissionsDto` | DTO (nested) | Optional boolean flags: `canSign`, `canSendTransaction`, `canReadTransactionStatus`, `canUseEoaExecution`. All optional; absence means "not granted". |
 | `ApiKeySpendLimitsDto` | DTO (nested) | Optional wei-amount strings: `daily`, `monthly`. Validated as non-negative integer strings via `IsWeiAmountConstraint`. |
 
@@ -19,8 +19,6 @@ Defines the validated request shape for API-key creation (`POST /v1/api-keys`). 
 | Symbol | Kind | Rule |
 |--------|------|------|
 | `IsIpOrCidrConstraint` | `ValidatorConstraint` (`isIpOrCidr`, sync) | Delegates to `isIpOrCidr()` from `src/common/utils/ip-cidr`; used with `{ each: true }` on `allowedIps`. |
-| `IsEthereumAddressConstraint` | `ValidatorConstraint` (`isEthereumAddress`, sync) | Regex `^0x[0-9a-fA-F]{40}$`; used with `{ each: true }` on `allowedContracts`. |
-| `IsFunctionSelectorConstraint` | `ValidatorConstraint` (`isFunctionSelector`, sync) | Regex `^0x[0-9a-fA-F]{8}$` (4-byte selector); used with `{ each: true }` on `allowedFunctionSelectors`. |
 | `IsWeiAmountConstraint` | `ValidatorConstraint` (`isWeiAmount`, sync) | Regex `^\d+$`; used on `ApiKeySpendLimitsDto.daily`/`monthly`. |
 
 ## Inputs / Outputs

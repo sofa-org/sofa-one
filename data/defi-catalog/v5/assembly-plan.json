@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "baselinePath": "data/defi-catalog/v4/catalog.json",
+  "sourcePaths": [
+    "data/defi-catalog/v5/sources/ambient.json",
+    "data/defi-catalog/v5/sources/aura.json",
+    "data/defi-catalog/v5/sources/beefy.json",
+    "data/defi-catalog/v5/sources/camelot.json",
+    "data/defi-catalog/v5/sources/convex.json",
+    "data/defi-catalog/v5/sources/dodo.json",
+    "data/defi-catalog/v5/sources/dolomite.json",
+    "data/defi-catalog/v5/sources/etherfi.json",
+    "data/defi-catalog/v5/sources/euler.json",
+    "data/defi-catalog/v5/sources/fluid.json",
+    "data/defi-catalog/v5/sources/kelp.json",
+    "data/defi-catalog/v5/sources/lfj.json",
+    "data/defi-catalog/v5/sources/maverick.json",
+    "data/defi-catalog/v5/sources/moonwell.json",
+    "data/defi-catalog/v5/sources/pendle.json",
+    "data/defi-catalog/v5/sources/quickswap.json",
+    "data/defi-catalog/v5/sources/renzo.json",
+    "data/defi-catalog/v5/sources/rocket-pool.json",
+    "data/defi-catalog/v5/sources/silo.json",
+    "data/defi-catalog/v5/sources/stakewise.json"
+  ]
+}

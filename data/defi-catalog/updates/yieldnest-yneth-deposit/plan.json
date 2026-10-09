@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/vesper-vusdc-prod/catalog.json",
+    "rawSha256": "f08c47da9454d20269bb496e6c3bbf52a502dd2cadd168f881b4428cefcbc866",
+    "manifestHash": "0xa188584486a9eab5ebf4cd2ff576ebfac32a400a66553e82221e625a87c57708"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/yieldnest-yneth-deposit/sources/yieldnest-yneth.json",
+      "canonicalSha256": "451bf39f10bc18375007f3817019c5670410b1857964f4dc28a09978b1ab50c9"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/yieldnest-yneth-deposit/sources/yieldnest-yneth.json",
+      "familyId": "yieldnest-yneth",
+      "familyVersion": "yneth@54093dda",
+      "chainId": 1,
+      "contract": "0x09db87a538bd693e9d08544577d5ccfaa6373a48",
+      "signature": "depositETH(address)",
+      "selector": "0x2d2da806",
+      "abiHash": "0x6a1d580b4b90de967b8917e88ef6867c2b4234d2ad9508a5362c221324be25d4",
+      "capabilityId": "yieldnest-yneth:v1:1:0x09db87a538bd693e9d08544577d5ccfaa6373a48:deposit-eth",
+      "sourceRefs": [
+        "yieldnest-inherited-base-and-interface-sources",
+        "yieldnest-official-mainnet-deployments",
+        "yneth-address-bound-abi",
+        "yneth-address-bound-implementation-source"
+      ],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": [
+          "yieldnest-inherited-base-and-interface-sources",
+          "yieldnest-official-mainnet-deployments",
+          "yneth-address-bound-abi",
+          "yneth-address-bound-implementation-source"
+        ],
+        "evidence": "Only payable depositETH(address receiver) is admitted on the exact Ethereum ynETH proxy address. The address-bound verified implementation body checks depositsPaused, rejects msg.value == 0, computes shares with previewDeposit(msg.value), rejects zero shares, mints to the caller-selected receiver, updates totalDepositedInPool, and emits Deposit. previewDeposit uses _convertToShares: initial supply is 1:1; otherwise Math.mulDiv uses totalSupply and totalAssets. totalAssets combines totalDepositedInPool with totalDeposited() queried from the configured StakingNodesManager, so share conversion depends on that protocol accounting and external configured manager. Protocol pause, conversion, zero-share, receiver/mint, and dependency conditions may revert. The platform continues to allow the full uint256 native-value range, including zero, and any ABI receiver including zero or an address distinct from executionOwner; it adds no value cap, receiver/owner restriction, balance, manager, oracle, or financial gate. Positive ETH value is protocol-required by this source, but zero is not blocked by the platform. The source receive() explicitly reverts on direct ETH; withdrawETH(uint256) is restricted to the configured StakingNodesManager. No receive, withdrawal, administrative, manager, zap, permit, router, batch, or restaking-management method is admitted. The selected deposit alone is not a complete exit workflow. This dated source association does not prove current proxy implementation/storage, initialization, runtime identity, funds, liquidity, transaction success, or financial safety."
+      }
+    }
+  ],
+  "deactivations": []
+}

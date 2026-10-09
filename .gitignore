@@ -25,6 +25,9 @@ coverage/
 !docs/
 !docs/archive/
 !docs/archive/legacy-design.md
+!docs/defi-research/
+!docs/defi-research/*.md
+!docs/defi-capability-matrix.md
 !codemap.md
 /.agent-shell/
 .slim/

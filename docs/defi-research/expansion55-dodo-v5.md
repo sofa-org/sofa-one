@@ -1,0 +1,7 @@
+# DODO V2 Base source fixture (v5 expansion)
+
+Scope is one official Base DODOV2Proxy at `0x4CAD0052524648A7Fa2cfE279997b00239295F33` and three direct swap methods. The official deployment record is `https://docs.dodoex.io/en/developer/contracts/dodo-v1-v2/contracts-address/base`. Address-specific Sourcify ABI record: `https://sourcify.dev/server/v2/contract/8453/0x4CAD0052524648A7Fa2cfE279997b00239295F33?fields=abi`; observed HTTP 200 on 2026-10-04, exact creation/runtime match, verified timestamp `2024-08-08T10:34:27Z`.
+
+Only `dodoSwapV2TokenToToken`, `dodoSwapV2ETHToToken`, and `dodoSwapV2TokenToETH` are represented. ABI is retained exactly including internalType and the unnamed bool. No arbitrary external target, bytes payload, generic swap/flashloan/admin call is added. Pair addresses are caller-selected financial counterparties, not whitelisted pools. Amounts, direction bits, minimum return, deadline, bool and value have no platform financial bounds; their protocol semantics were not independently reviewed. The ABI establishes structural payability only (ETH-input function payable); it does not establish a platform equality rule for native value.
+
+`data/defi-catalog/v5/sources/dodo.json` remains an inactive candidate. `buildDodoV2Registry()` is an explicit test fixture only, not production wiring or a user grant. No funded execution, liquidity, pool eligibility, approval path, or protocol-safety claim is made; token approvals are independent capabilities.

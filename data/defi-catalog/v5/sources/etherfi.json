@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "etherfi",
+      "familyVersion": "v1",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x308861A430be4cce5502d0A12724771Fc6DaF216",
+          "status": "inactive",
+          "contractName": "Ether.fi Liquidity Pool (Mainnet proxy)",
+          "sourceRefs": ["etherfi-deployed-contracts", "etherfi-liquidity-pool-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [], "outputs": [{ "name": "", "type": "uint256" }] },
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [{ "name": "_referral", "type": "address" }], "outputs": [{ "name": "", "type": "uint256" }] },
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [{ "name": "_user", "type": "address" }, { "name": "_referral", "type": "address" }], "outputs": [{ "name": "", "type": "uint256" }] },
+            { "type": "function", "name": "requestWithdraw", "stateMutability": "nonpayable", "inputs": [{ "name": "recipient", "type": "address" }, { "name": "amount", "type": "uint256" }], "outputs": [{ "name": "", "type": "uint256" }] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
+          "status": "inactive",
+          "contractName": "Ether.fi weETH (Mainnet proxy)",
+          "sourceRefs": ["etherfi-deployed-contracts", "etherfi-weeth-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "wrap", "stateMutability": "nonpayable", "inputs": [{ "name": "_eETHAmount", "type": "uint256" }], "outputs": [{ "name": "", "type": "uint256" }] },
+            { "type": "function", "name": "unwrap", "stateMutability": "nonpayable", "inputs": [{ "name": "_weETHAmount", "type": "uint256" }], "outputs": [{ "name": "", "type": "uint256" }] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x7d5706f6ef3F89B3951E23e557CDFBC3239D4E2c",
+          "status": "inactive",
+          "contractName": "Ether.fi Withdraw Request NFT (Mainnet proxy)",
+          "sourceRefs": ["etherfi-deployed-contracts", "etherfi-withdraw-request-nft-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "claimWithdraw", "stateMutability": "nonpayable", "inputs": [{ "name": "tokenId", "type": "uint256" }], "outputs": [] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "etherfi-deployed-contracts", "url": "https://etherfi.gitbook.io/etherfi/developers/contracts-and-integrations/deployed-contracts.md", "retrievedAtUtc": "2026-10-04", "evidence": "Official deployment documentation identifies the three Ethereum Mainnet proxy targets. The document identifies proxy roles; this entry does not assert current implementation resolution." },
+    { "sourceId": "etherfi-liquidity-pool-interface", "url": "https://github.com/etherfi-protocol/smart-contracts/blob/15ff96d4d5e8e6a19a472cd40a7bcb858c9e7a88/src/core/interfaces/ILiquidityPool.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declarations for three payable deposit overloads and requestWithdraw(address,uint256)." },
+    { "sourceId": "etherfi-weeth-interface", "url": "https://github.com/etherfi-protocol/smart-contracts/blob/15ff96d4d5e8e6a19a472cd40a7bcb858c9e7a88/src/core/interfaces/IWeETH.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declarations for wrap(uint256) and unwrap(uint256)." },
+    { "sourceId": "etherfi-withdraw-request-nft-interface", "url": "https://github.com/etherfi-protocol/smart-contracts/blob/15ff96d4d5e8e6a19a472cd40a7bcb858c9e7a88/src/withdrawals/interfaces/IWithdrawRequestNFT.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declaration for claimWithdraw(uint256); no NFT request/approval/transfer methods are included." }
+  ]
+}

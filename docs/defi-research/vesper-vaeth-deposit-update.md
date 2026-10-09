@@ -1,0 +1,21 @@
+# Vesper vaETH payable deposit update
+
+This ordinary update admits exactly one Ethereum capability: payable, zero-argument `deposit()` at the vaETH pool target `0xd1c117319b3595fbc39b471ab1fd485629eb05f2`. Capability ID: `vesper-vaeth:v1:1:0xd1c117319b3595fbc39b471ab1fd485629eb05f2:deposit`. The inactive source snapshot and explicit admission are in `data/defi-catalog/updates/vesper-vaeth-deposit/`. Family/version is `vesper-vaeth` / `veth@60b621ea`.
+
+The immutable baseline is the accepted Liquid Collective catalog, containing 729 definitions; its raw SHA-256 is `96048c4fc6032d7744691949c3d6e134781a886ea02a6e142e370208c24a36e7`. Source canonical SHA-256 is `887c9e06179b6600a8e21b7791ea2ed7776da4421993b075a854362fa19732a4`.
+
+## Role, source and ABI evidence
+
+The official VesperFi metadata snapshot is pinned to commit `7334bb44adcce9de3e318e0322218197c932fee0` (2024-12-04). Its retained `vesper-metadata.json` carrier SHA-256 is `8f2b548013e944bb5c91a692e3cd49d0bfd36d54a1db6778bf0588f8ccc774f1`; it identifies the Ethereum vaETH Grow pool and WETH collateral. The official VesperFi/vesper-contracts source is pinned to commit `5f23bd54f8408cdf5ed5251faa70b4888e03c5d3` (2025-08-13). Its retained `vaeth/VETH_Proxy.json` carrier SHA-256 is `ba458f6af115a5ba65c6fed366753bb195a8b8e47c4fae4dcd4702571c217cfb`, and `vaeth/VETH.json` carrier SHA-256 is `0f226a39b3989098b8610feeaee23dc36b7b79e81d4a691b2ec26a64a8283748`; the target and vaETH VETH pool role match.
+
+The address-bound proxy page associates the target with implementation `0xf296b1113cc49ae4c6890e7b5dd3bed780407487` as a dated observation. This association is not live proxy, current storage, initializer, or runtime proof. Address-bound verified-source carriers inspected 2026-10-06: `VETH.sol` SHA-256 `60b621ea6db021c05af19a0790dd47a866e06e207798466da6e74d131a960a8d`; full implementation ABI carrier SHA-256 `f0a40173d2fe8be4b662b7787de376e9bc7e45b5b9bf62394bfe2ff873c7d757`; selected zero-argument payable `deposit()` ABI carrier SHA-256 `ef2d429e5db20d17df022d627c0d078f6f4d3d9b85e325396868e9dfb1f9e704`; inherited `VPool.sol` SHA-256 `991a4702b502de8c2a24507808a4af72a49cffcb26211a805face0560e2b8923`. Verification pages and source inspection are not compiler proof.
+
+The selected ABI is exactly `{"type":"function","name":"deposit","stateMutability":"payable","inputs":[],"outputs":[]}`; selector `0xd0e30db0`; catalog ABI identity hash `0x843bc76e9b37f6f244f6c3fb4e28e3326df5c9f744f45f159a9eed920b284b1a`. The implementation ABI also contains a distinct nonpayable `deposit(uint256)` overload, and the proxy ABI exposes administration and receive/fallback entries. None of those aliases or methods is admitted.
+
+## Inspected call behavior and limits
+
+Verified `VETH.deposit()` is `whenNotPaused` and `nonReentrant`. It calls `_updateRewards(msg.sender)` then `_depositETH()`. The inherited reward helper calls the pool's fixed configured `poolRewards.updateReward(msg.sender)` when nonzero. `_depositETH()` calculates shares from `msg.value`, wraps the received ETH through the pool's configured WETH token, mints shares to `msg.sender`, and emits `Deposit`. The inherited share calculation depends on the configured accountant and valuation strategy. These are fixed protocol configuration/dependencies; this capability does not authorize arbitrary wallet-selected targets or calldata.
+
+Protocol pause, rates/accounting, supply/strategy liquidity, governance, valuation, and reward-module conditions may revert. The function is payable, so platform authorization leaves its native value unrestricted by this update, including zero; protocol behavior may still reject a particular value. Caller-only share minting is protocol behavior, not a new platform recipient restriction. No platform financial, recipient, owner, feed, balance, or approval-pairing gate is introduced. This update excludes `deposit(uint256)`, `withdrawETH`, reward claims, `receive`/fallback, admin, and every other method.
+
+The dated metadata, deployment role, proxy association and verified source do not establish current implementation/storage, initialization, runtime identity, configuration, funding, liquidity, execution success, or financial safety. SQL lock assertions in the focused policy test are mocked and do not prove DB concurrency. No funded or live execution was performed.

@@ -1,12 +1,12 @@
 # Code Map for /src/modules/api-key
 
 ## Responsibility
-Dashboard-only API-key lifecycle management for programmatic access to public signing/transaction endpoints. Creates API keys (Argon2id-hashed, raw key returned exactly once), lists non-sensitive metadata, revokes single/all keys, and atomically rotates keys. Enforces the permission model, spend limits, IP/contract/selector allowlists, bounded expiry, and dual audit (legacy `ApiKeyEvent` rows + unified `SecurityEvent`). All mutations require Openfort IAM auth, frontend-origin checks, and TOTP step-up; the module never stores, logs, or returns the raw key after creation.
+Dashboard-only API-key lifecycle management for programmatic access to public signing/transaction endpoints. Capability configuration uses `capabilityMode: all|custom`: `all` dynamically includes active, unpaused reviewed capabilities; `custom` permits only exact `allowedCapabilityIds` (`[]` denies all). Neither mode bypasses independent permissions or safety policies. Mutations require Openfort IAM, frontend-origin checks, and TOTP step-up.
 
 ## Files
-- `api-key.controller.ts` — routes for create/list/revoke-all/revoke-one under `v1/api-keys`.
+- `api-key.controller.ts` — create/list/revoke-all/revoke-one and step-up-protected full-replacement `PATCH /v1/api-keys/:id/capabilities`; IAM catalog `GET /v1/defi-capabilities` returns async `{ capabilities }` metadata.
 - `api-key.service.ts` — all lifecycle business logic, hashing, normalization, constraints, and audit writes.
-- `api-key.module.ts` — NestJS wiring; imports `StepUpModule` + `SecurityEventModule`, exports `ApiKeyService`.
+- `api-key.module.ts` — NestJS wiring; imports `StepUpModule`, `SecurityEventModule`, and leaf `DefiModule`; exports `ApiKeyService`.
 - `dto/create-api-key.dto.ts` — validated request shape for creation (see `dto/codemap.md`; not duplicated here).
 
 ## Key Symbols
@@ -19,6 +19,7 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 | `revokeApiKey(keyId, userId)` | Revoke one owned key; 404 if not found, no-op if already revoked; audit `api_key.revoked`. |
 | `revokeAllKeys(userId)` | Revoke every active key; audit `api_key.revoked` per key with `reason: 'bulk_revoke'`. |
 | `rotateApiKey(userId, name)` | Atomically revoke all active keys and create a replacement; audit `api_key.revoked` (reason `rotation`) + `api_key.rotated`; return raw key once. |
+| `updateApiKeyCapabilities(keyId, userId, capabilityMode, allowedCapabilityIds)` | Step-up protected complete configuration replacement; audits lifecycle change. |
 | `authorizeDirectEgress(keyId, userId)` | BILL-016: step-up owned-key CAS set of `directEgressPolicyAcceptedAt`; rejects revoked/expired/frozen/non-send keys; idempotent when already set. |
 
 ### Types / constants
@@ -37,7 +38,8 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 - **Deny-by-default permissions**: omitted permissions default to `false`; only read-status is granted by default.
 - **Permission-based TTL caps**: the most restrictive granted high-risk permission caps `expiresAt` (30/90/365 days); absent `expiresAt` defaults to 90d (min'd with the cap).
 - **High-risk hardening**: `canSign`/`canSendTransaction`/`canUseEoaExecution` require a non-empty IP allowlist (`assertIpAllowlistForHighRiskPermissions`).
-- **Normalization**: names trimmed; contract addresses and function selectors lowercased; spend limits validated as non-negative wei strings via `BigInt`.
+- **Capability modes**: `all` with omitted or empty ID list is valid; `custom` requires an ID list and `[]` denies all. IDs alone select custom. `all` rejects nonempty/null IDs; neither mode overrides permissions, chain/schema/scope, freeze, pause or other independent checks.
+- **Normalization**: names trimmed; capability IDs validated exactly and normalized uniquely; spend limits validated as non-negative wei strings via `BigInt`.
 - **Step-up + throttling**: mutations require `@RequireStepUp()`/`StepUpGuard` (TOTP proof via `X-Step-Up-Token`); create throttled 5/60s + 20/1h, revoke-all 3/60s + 10/1h.
 - **Freeze state is read-only here**: `frozenAt`/`frozenReason` are surfaced in list output but set by `ApiKeyAuthGuard` at runtime (suspicious-use auto-freeze), not by this module.
 
@@ -45,13 +47,16 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 
 ### Create (`POST /v1/api-keys`)
 1. `ApiKeyController.create` — `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard`; DTO validated by global `ValidationPipe` (whitelist, forbid non-whitelisted, transform).
-2. `normalizeCreateOptions`: trim/require name; merge permissions over defaults; lowercase addresses/selectors; validate spend limits; assert IP allowlist for high-risk permissions; compute `expiresAt` within the permission TTL cap.
+2. `normalizeCreateOptions`: trim/require name; merge permissions over defaults; omitted mode+IDs become all/empty; IDs alone become custom; explicit all allows omitted/empty IDs; custom requires IDs and all rejects nonempty/null IDs. Validate IDs, spend limits, high-risk IP allowlist, and TTL.
 3. `generateKeyMaterial`: `sk_` + 64-hex secret → 27-char prefix → Argon2id hash.
-4. Transaction: `assertCanCreateKey` (≤10 active keys; unique non-empty active name, case-insensitive) → create `ApiKey` row (hash, prefix, name, expiry, allowlists, spend limits, permissions) → audit `api_key.created` (prefix, name, metadata: allowlists/expiry/permissions).
+4. Transaction: `assertCanCreateKey` (≤10 active keys; unique non-empty active name, case-insensitive) → create `ApiKey` row (hash, prefix, name, expiry, IP allowlist, mode and configured IDs, spend limits, permissions) → audit `api_key.created` (prefix, name, metadata: expiry/permissions/capability configuration).
 5. Return `{ rawKey, id, displayPrefix, name, expiresAt, createdAt, permissions }` — raw key is shown exactly once.
 
 ### List (`GET /v1/api-keys`)
-- `findMany` metadata only (no hash): prefix, name, revoked, freeze state, expiry, timestamps, last-used IP/UA, permissions, allowlists, spend limits; ordered `createdAt desc`; `displayPrefix` = first 11 chars + `...`.
+- `findMany` metadata only (no hash): prefix, name, revoked, freeze state, expiry, timestamps, last-used IP/UA, permissions, IP allowlist, configured capability mode and IDs (not expanded effective IDs), spend limits; ordered `createdAt desc`; `displayPrefix` = first 11 chars + `...`.
+
+### Capability grants (`PATCH /v1/api-keys/:id/capabilities`)
+- Openfort IAM + `FrontendOnlyGuard` + `StepUpGuard`; body replaces complete mode/configuration: `{ capabilityMode: "all" }` resets; `{ capabilityMode: "custom", allowedCapabilityIds: [...] }` sets exact IDs including empty; IDs-only remains custom; `{}` is invalid. Catalog is separate read-only `GET /v1/defi-capabilities`; both dashboard routes remain outside public OpenAPI.
 
 ### Revoke one (`DELETE /v1/api-keys/:id`)
 - Transaction: `findFirst` by `{ id, userId }` (404 if absent; no-op if already revoked) → `updateMany` `revoked: true` → audit `api_key.revoked`.
@@ -60,14 +65,14 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 - Transaction: collect active keys → `updateMany` `revoked: true` → audit `api_key.revoked` per key with `reason: 'bulk_revoke'`.
 
 ### Rotate (`ApiKeyService.rotateApiKey`, called by `AuthService.refreshApiKey`)
-- Transaction: revoke all active keys (audit `api_key.revoked`, `reason: 'rotation'`) → create replacement (empty `allowedIps`, normalized permissions, default expiry) → audit `api_key.rotated` with `revokedKeyCount` → return raw key once.
+- Transaction: revoke all active keys (audit `api_key.revoked`, `reason: 'rotation'`) → create replacement with `capabilityMode: all`, empty configured IDs, and prior permission/IP/TTL defaults → audit `api_key.rotated` with `revokedKeyCount` → return raw key once.
 
 ### Runtime consumption (outside this module)
 - `ApiKeyAuthGuard` (public routes): prefix lookup → Argon2 verify every candidate → reject frozen key/user → IP allowlist check → usage-anomaly detection (context change may auto-freeze high-risk keys and emit `api_key_suspicious_use`/`api_key_frozen`) → `api_key.first_used` event → fire-and-forget `lastUsedAt`/`lastUsedIp`/`lastUsedUserAgent` update → billing metering.
 - `ApiKeyPermissionGuard`: requires the route-declared permission flag (`canSign`, `canSendTransaction`, `canReadTransactionStatus`, `canUseEoaExecution`) to be `true` on the resolved key record.
 
 ## Integration
-- **Imports**: `StepUpModule` (provides `StepUpGuard`/`StepUpService` for TOTP proof validation) and `SecurityEventModule` (provides `SecurityEventService.record`, callable with a Prisma transaction client for atomic audit).
+- **Imports**: `StepUpModule`, `SecurityEventModule`, and leaf `DefiModule` (grant validation/catalog access); `SecurityEventService.record` is callable with a Prisma transaction client for atomic audit.
 - **Guards/decorators**: `OpenfortUserGuard` + `FrontendOnlyGuard` (class-level), `StepUpGuard` + `@RequireStepUp()` (mutations), `@CurrentUser('id')`, `@Throttle`.
 - **Persistence**: `PrismaService`; `ApiKey` and `ApiKeyEvent` models in `prisma/schema.prisma` (`api_keys` / `api_key_events` tables). `ApiKey` carries permission booleans, allowlists, spend limits, freeze state, and last-used fields; indexed on `keyPrefix` and `[userId, revoked]`.
 - **Shared helper**: `getApiKeyPrefix` from `src/common/api-key/api-key-prefix` (27-char prefix; legacy 11-char handled at lookup time).

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "path": "data/defi-catalog/updates/origin-woeth/catalog.json",
+    "rawSha256": "0da3b5044f81d70fad3cf0387883193e65472e8adda2b9ab7cc76de12bcb22d1",
+    "manifestHash": "0xca0b4a73c3b583cb3aa7c2033eaf34296fef39ffaf945f3a6df8c005bd98986f"
+  },
+  "sources": [
+    {
+      "path": "data/defi-catalog/updates/origin-wousd/sources/origin-wousd.json",
+      "canonicalSha256": "c7c911371fbd3c1b77deaf6e8e3de3fb009e149d67aea089a6ccfab54d6f5140"
+    }
+  ],
+  "admissions": [
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-wousd/sources/origin-wousd.json",
+      "familyId": "origin-wousd",
+      "familyVersion": "wrapped-ousd@6277dd68",
+      "chainId": 1,
+      "contract": "0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62",
+      "signature": "deposit(uint256,address)",
+      "selector": "0x6e553f65",
+      "abiHash": "0xacc854348209f31ec6382ea494bded763103e2bbb72cd2578ce1b67ad42044da",
+      "capabilityId": "origin-wousd:v1:1:0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62:deposit",
+      "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 deposit(uint256 assets,address receiver) is admitted. WrappedOusd extends WOETH and changes only name/symbol; WOETH passes its constructor-configured asset to ERC4626 and does not override deposit. The inherited body max-checks, previews shares, safeTransferFroms the fixed configured asset from caller, mints shares to caller-selected receiver, and returns shares. WOETH conversion/accounting uses rebasing credits and adjuster rather than raw asset balance. Underlying asset configuration, rebasing-credit/adjuster state, conversion rounding/overflow, caller balance/allowance, receiver/token/protocol constraints and governance/upgrades can affect or revert execution. Policy adds no amount, receiver/owner, balance, feed or financial gate; ABI-valid zero/arbitrary receiver and uint256 values remain policy-permitted. Approval is separate, not paired or granted. No current proxy/storage/underlying configuration, liquidity, funded execution, successful transaction, full workflow, or financial safety is established; wrapping produces this vault share, not an issuer redemption or native ETH exit guarantee."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-wousd/sources/origin-wousd.json",
+      "familyId": "origin-wousd",
+      "familyVersion": "wrapped-ousd@6277dd68",
+      "chainId": 1,
+      "contract": "0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62",
+      "signature": "mint(uint256,address)",
+      "selector": "0x94bf804d",
+      "abiHash": "0x6bba0dc0de55f693e4d005c0d24062fa3d723c34f88d39a600586539d56a58fe",
+      "capabilityId": "origin-wousd:v1:1:0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62:mint",
+      "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 mint(uint256 shares,address receiver) is admitted. The inherited body checks maxMint, rounds previewed required assets according to protocol conversion, transfers the fixed constructor-configured asset from caller, mints requested shares to caller-selected receiver, and returns assets. WrappedOusd only overrides name/symbol; WOETH's conversion model uses rebasing credits/adjuster. Asset configuration, rebasing-credit state, adjuster, rounding/overflow, caller balance/allowance, receiver validity, governance/upgrades and token/protocol behavior may affect or revert execution. No platform amount, receiver/owner equality, balance, feed or financial gate is added; zero/arbitrary receiver and full uint256 values are policy-permitted subject to contract checks. Approval is separate and not paired/granted. Dated evidence does not prove current proxy/storage/asset configuration, liquidity, funded execution, complete exit, issuer redemption or financial safety."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-wousd/sources/origin-wousd.json",
+      "familyId": "origin-wousd",
+      "familyVersion": "wrapped-ousd@6277dd68",
+      "chainId": 1,
+      "contract": "0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62",
+      "signature": "withdraw(uint256,address,address)",
+      "selector": "0xb460af94",
+      "abiHash": "0x4d73ece13f94d17f5eca74b24410ce392155416a778c2c2907a6adf6fa7d58a1",
+      "capabilityId": "origin-wousd:v1:1:0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62:withdraw",
+      "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 withdraw(uint256 assets,address receiver,address owner) is admitted. It max-checks/preview-converts, spends ERC20 allowance when caller differs from owner except unlimited allowance, burns owner shares, transfers the constructor-configured underlying token to the caller-selected receiver, and returns shares burned. WrappedOusd only overrides name/symbol; underlying is fixed by the WOETH constructor argument, not caller calldata. No platform owner-equals-caller, amount, receiver, balance, feed or financial gate is imposed; zero/arbitrary receiver/owner and uint256 values remain policy-permitted subject to protocol checks. Asset/rebase/adjuster/accounting, owner balance/allowance, rounding, governance/upgrades, and underlying-token behavior/availability can cause revert. Approval is not paired or granted. Returned asset is not guaranteed USD/USDC/native ETH or an issuer redemption; no live configuration, liquidity, funded execution, full workflow or financial safety is claimed."
+      }
+    },
+    {
+      "sourcePath": "data/defi-catalog/updates/origin-wousd/sources/origin-wousd.json",
+      "familyId": "origin-wousd",
+      "familyVersion": "wrapped-ousd@6277dd68",
+      "chainId": 1,
+      "contract": "0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62",
+      "signature": "redeem(uint256,address,address)",
+      "selector": "0xba087652",
+      "abiHash": "0x4e30a5bc7aad2410da25c5cb80c93570e3d36436daa197a7b41c656fbad2d3dd",
+      "capabilityId": "origin-wousd:v1:1:0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62:redeem",
+      "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+      "executionScope": null,
+      "executionScopeHash": null,
+      "authorityReview": {
+        "classification": "ordinary-direct",
+        "sourceRefs": ["origin-wousd-source-inheritance", "origin-wousd-address-bound-source", "origin-wousd-full-abi", "origin-wousd-proxy-deployment", "origin-wousd-implementation-deployment"],
+        "evidence": "Only inherited nonpayable ERC4626 redeem(uint256 shares,address receiver,address owner) is admitted. It max-checks/preview-converts shares, spends owner allowance when caller differs from owner except unlimited allowance, burns owner shares, transfers computed constructor-configured underlying assets to caller-selected receiver, and returns assets. WrappedOusd only overrides name/symbol and inherits this implementation through WOETH. Policy imposes no owner-equals-caller, amount, receiver, balance, feed or financial gate; zero/arbitrary owner/receiver and full uint256 values are policy-permitted subject to contract checks. Underlying asset configuration, rebasing-credit/adjuster state, owner balance/allowance, conversion rounding, governance/upgrades, token behavior and asset availability can affect or revert execution. No approval is paired/granted. Redeem does not promise USD/USDC/native ETH, issuer redemption, liquidity, successful transaction, complete workflow or financial safety; dated source/deployment observations do not establish current proxy/storage/configuration."
+      }
+    }
+  ],
+  "deactivations": []
+}

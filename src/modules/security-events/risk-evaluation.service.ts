@@ -65,6 +65,7 @@ const API_KEY_OPERATIONS: RiskEvaluationContext['operationType'][] = [
 /** Event types that indicate a policy denial. */
 const POLICY_DENIED_EVENT_TYPES = [
   'transaction.policy_denied',
+  'defi.policy_denied',
   'withdrawal.policy_denied',
   'signing.policy_denied',
   'eoa_execution_denied',

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "ethena",
+      "familyVersion": "staked-usde-v2",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x9d39a5de30e57443bff2a8307a4256c8797a3497",
+          "status": "inactive",
+          "contractName": "Ethena Staked USDe V2",
+          "sourceRefs": ["ethena-key-addresses", "ethena-staking-usde", "ethena-sourcify-staked-usde-v2"],
+          "abiFunctions": [
+            {
+              "type": "function", "name": "deposit", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "mint", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "cooldownAssets", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }],
+              "outputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "cooldownShares", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }],
+              "outputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "unstake", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "receiver", "type": "address", "internalType": "address" }],
+              "outputs": [],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "withdraw", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }, { "name": "_owner", "type": "address", "internalType": "address" }],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            },
+            {
+              "type": "function", "name": "redeem", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }, { "name": "_owner", "type": "address", "internalType": "address" }],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "ethena-sourcify-staked-usde-v2"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "ethena-key-addresses",
+      "url": "https://docs.ethena.fi/technical-design/key-addresses",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Ethena key-address documentation identifies Ethereum sUSDe at 0x9d39a5de30e57443bff2a8307a4256c8797a3497 and USDe at 0x4c9edd5852cd905f086c759e8383e09bff1e68b3. This is documentation identity evidence, not a current runtime or liquidity observation."
+    },
+    {
+      "sourceId": "ethena-staking-usde",
+      "url": "https://docs.ethena.fi/solution-design/staking-usde",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Ethena staking-USDe documentation describes the sUSDe staking and cooldown/unstaking user flow. Workflow availability depends on the contract's cooldown mode and protocol timing; this documentation is not a current duration/state observation or funded-execution proof."
+    },
+    {
+      "sourceId": "ethena-sourcify-staked-usde-v2",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x9d39a5de30e57443bff2a8307a4256c8797a3497?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify full record reports exact_match for Ethereum address 0x9d39a5de30e57443bff2a8307a4256c8797a3497, verified 2024-08-08, compilation StakedUSDeV2 (Solidity 0.8.19). The seven selected nonpayable functions and their complete ABI metadata are copied from that record; it exposes the inherited OpenZeppelin ERC-4626 deposit/mint/withdraw/redeem ABI. The exact verified record has no claimed upstream Git commit; no commit is inferred. Its source shows positive cooldown duration enables cooldownAssets/cooldownShares and disables withdraw/redeem, while zero duration does the inverse. Constructor initializes duration to 90 days and admin may change it: this is source semantics, not a claim about current duration."
+    }
+  ]
+}

@@ -19,6 +19,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
 - API-key management is dashboard-only (Openfort IAM) with lifecycle limits: maximum 10 active keys, unique non-empty active names, supported chains only, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit for create/revoke/rotate/first-use/suspicious-use/freeze events.
+- API-key capability configuration uses `capabilityMode: all|custom`: all dynamically permits active, unpaused reviewed capabilities; custom permits exact `allowedCapabilityIds` (`[]` denies all). Neither bypasses independent permissions or safety policies. The versioned package/catalog default remains the accepted v9 snapshot: 673 definitions (650 actions, 23 independent approvals), 16 scopes, and 69 profiles / 399 IDs. The generated production registry has 747 definitions (724 actions, 23 approvals), with the same 16 scopes and 69 profiles / 399 IDs, including the Vesper vaETH and vUSDC admissions, YieldNest ynETH payable deposit, dForce iUSDC/iUSDT/iDAI mint/redeem, and Origin WOETH/WOUSD ERC4626 deposit/mint/withdraw/redeem admissions. Exact plan-bound admissions add no profile, scope, grant, delegation, financial-argument limits, or approval pairing. Dated qualification/catalog inclusion proves neither current runtime identity nor funding, liquidity, complete workflows, PostgreSQL concurrency, or financial safety. See the [Origin WOUSD update](docs/defi-research/origin-wousd-update.md), [Origin WOETH update](docs/defi-research/origin-woeth-update.md), [dForce iUSDT/iDAI update](docs/defi-research/dforce-iusdt-idai-update.md), [dForce iUSDC update](docs/defi-research/dforce-iusdc-update.md), [YieldNest ynETH deposit update](docs/defi-research/yieldnest-yneth-deposit-update.md), [Vesper production vUSDC update](docs/defi-research/vesper-vusdc-prod-update.md), [Vesper vaETH update](docs/defi-research/vesper-vaeth-deposit-update.md), [Maple Pool V2 update](docs/defi-research/maple-pool-v2-update.md), [syrupUSDG update](docs/defi-research/maple-usdg-pool-v2-update.md), [Spark spUSDC update](docs/defi-research/spark-spusdc-v2-update.md), [Spark spUSDT/spPYUSD update](docs/defi-research/spark-spusdt-sppyusd-v2-update.md), [Spark spETH update](docs/defi-research/spark-speth-v2-update.md), [Dinero AutoPxEth update](docs/defi-research/dinero-apxeth-update.md), [Stader ETHx update](docs/defi-research/stader-ethx-update.md), [Ankr ETH staking update](docs/defi-research/ankr-eth-staking-update.md), [Mantle mETH staking update](docs/defi-research/mantle-meth-staking-update.md), and [Liquid Collective River deposit update](docs/defi-research/liquid-collective-deposit-update.md).
 - User, API-key, and wallet freeze state is modeled explicitly; frozen users are rejected by dashboard and API-key auth, frozen API keys are rejected by `ApiKeyAuthGuard`, and frozen wallets cannot sign, send, withdraw, expose deposit info, or fetch balances.
 - User-facing security alerts are derived from selected `SecurityEvent` rows into dashboard-only `SecurityNotification` records; an optional SIEM webhook exports every persisted security event as a redacted JSON payload.
 - Dashboard withdrawals are checked by a dedicated withdrawal policy service before balance checks or Openfort submission; policy denies, high-value withdrawal requests, and withdrawal-address changes are written to `SecurityEvent`.
@@ -63,6 +64,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/wallet-provisioning-recovery/` | Operator-only support for binding an already-created provider account to its matching provisioning intent; no HTTP route or automatic create retry/reset | [View Map](src/modules/wallet-provisioning-recovery/codemap.md) |
 | `src/modules/wallet/dto/` | Input DTOs for signing and withdrawal requests with Ethereum address validation | [View Map](src/modules/wallet/dto/codemap.md) |
 | `src/modules/transactions/` | Public transaction submission service and controller for Openfort-backed sends | [View Map](src/modules/transactions/codemap.md) |
+| `src/modules/defi/` | Exact function-level DeFi catalog, explicit grants, pause overlay, finite scoped execution, offline compiler and versioned profiles; accepted v9 snapshot has 673 definitions, while current production has 743 definitions (720 actions, 23 approvals), 16 scopes, and 69 profiles / 399 IDs | [View Map](src/modules/defi/codemap.md) |
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
 | `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
 | `src/modules/security-notifications/` | Dashboard security notifications generated from user-attributed security events | [View Map](src/modules/security-notifications/codemap.md) |
@@ -139,22 +141,23 @@ Browser → Openfort IAM → POST /auth/session
   → Returns { userId, wallet }
 
 Client → POST /v1/wallets/sign (X-API-Key only)
-  → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSign
-  → EOA execution requests are denied unless explicitly enabled, short-lived, IP-allowlisted, independently rate-limited, and security-event audited
-  → WalletService hashes message/typedData input as needed; raw hash signing is disabled
-  → SigningRequest audit row records API-key attribution snapshot
-  → OpenfortService.signData signs with TEE-managed backend wallet
-  → Returns { signature, walletAddress, type }
+  → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
+    → Exact ClobAuth bootstrap retains prior authorization; single CLOB V2 order signing separately requires custom polymarket:137:clob-order:v2 (never all), exact DepositWallet envelope and Polygon chain/runtime-code/signature/ERC-1271 checks; other message/typed-data signing remains denied
+   → EOA isolation, destination allowlist/protection, risk/signing-policy and frozen-state checks remain enforced; grant, pause, live-key and bound-digest acceptance are rechecked at atomic SigningRequest creation before Openfort
 
 Client → POST /v1/transactions/send (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
-  → TransactionPolicyService rejects native value, blocked permit selectors, infinite approvals, NFT operator approvals, oversized calldata, excessive target fanout, and too many/malformed interactions; policy denies are written as `SecurityEvent`
+   → TransactionPolicyService enforces generic limits independently; DefiPolicyService checks catalog function/grant and canonical ABI
   → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
-  → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction before creating a new idempotency row or submitting to Openfort; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
+  → After outer idempotency miss, DeFi authorization runs before destination protection, billing, simulation, Transaction creation, and Openfort
+  → In the final create transaction, destination → pause SHARE → API-key UPDATE locks recheck live state at READ COMMITTED
+  → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
   → OpenfortService.sendUserOperation/sendBackendTransaction submits interactions
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
+
+  Capability mode and IDs are configuration metadata, not expanded effective IDs. Create omission defaults to all with empty IDs; rotation resets to all with empty IDs; PATCH replaces full configuration (IDs-only means custom), while custom `[]` denies catalog capabilities. The one-time migration maps prior empty lists to all and nonempty lists to custom unchanged. Pause is an overlay that mode cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
 
 Dashboard → POST /v1/wallets/withdraw (Openfort IAM + FrontendOnly + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`
