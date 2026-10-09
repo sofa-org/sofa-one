@@ -57,6 +57,12 @@ export class DefiCatalogService {
     return { capabilities };
   }
 
+  async listMetadataByIds(ids: string[]) {
+    const metadata = (await this.listMetadata()).capabilities;
+    const byId = new Map(metadata.map((item) => [item.capabilityId as string, item]));
+    return { capabilities: ids.flatMap((id) => byId.has(id) ? [byId.get(id)] : []), unknownIds: ids.filter((id) => !byId.has(id)) };
+  }
+
   signingCapability(id: string) { return (id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID || id === POLYMARKET_CLOB_ORDER_CAPABILITY_ID) && !this.functionForCapability(id) ? Object.freeze({ capabilityId: id, type: 'typed_data_sign' as const, chainId: 137 as const }) : undefined; }
 
   chains(): readonly DefiChainPolicy[] { return this.catalog; }

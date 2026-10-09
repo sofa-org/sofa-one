@@ -77,6 +77,9 @@ Public API-key endpoints:
 - `POST /v1/wallets/sign`
 - `POST /v1/transactions/send`
 - `GET /v1/transactions/:id`
+- `GET /v1/permissions`
+- `GET /v1/capabilities?ids=id1,id2`
+- `GET /v1/me/wallets`
 
 Frontend-only endpoints require an Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks:
 

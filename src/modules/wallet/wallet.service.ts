@@ -511,6 +511,37 @@ export class WalletService {
     };
   }
 
+  /** Read safe wallet and chain-authorization metadata for the authenticated owner. */
+  async listApiKeyWallets(userId: string) {
+    const wallets = await this.prisma.userWallet.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        walletAddress: true,
+        status: true,
+        frozenAt: true,
+        chainAuthorizations: {
+          select: { chainId: true, status: true, expiresAt: true },
+          orderBy: { chainId: 'asc' },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+    return {
+      wallets: wallets.map(({ id, walletAddress, status, frozenAt, chainAuthorizations }) => ({
+        id,
+        walletAddress,
+        status,
+        isFrozen: frozenAt !== null,
+        chainAuthorizations: chainAuthorizations.map(({ chainId, status: authorizationStatus, expiresAt }) => ({
+          chainId: Number(chainId),
+          status: authorizationStatus,
+          expiresAt: expiresAt?.toISOString() ?? null,
+        })),
+      })),
+    };
+  }
+
   /** List signing requests for a user with optional filtering and pagination. */
   async listSigningRequests(userId: string, query: ListSigningRequestsQueryDto) {
     const page = query.page ?? 1;

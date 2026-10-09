@@ -31,8 +31,11 @@ Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` 
 | `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth bootstrap or explicitly granted CLOB V2 DepositWallet order typed data |
 | `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
+| `GET` | `/v1/permissions` | Return the key's configured permissions, capability mode/IDs, and constraints; configuration is not an execution guarantee |
+| `GET` | `/v1/capabilities?ids=id1,id2` | Look up 1–100 catalog capability definitions; definitions do not grant capabilities |
+| `GET` | `/v1/me/wallets` | List the key owner's safe wallet metadata and chain authorizations (no balances or Openfort internal IDs) |
 
-Do not accept Openfort IAM-only auth on these routes.
+All public routes use `X-API-Key`; these three read routes require no `can*` permission. Existing API-key freeze, IP and billing guards still apply. For capability lookup, `ids` is required; comma-separated values are trimmed, non-empty, unique, and at most 256 characters each (query max 25,700 chars). Invalid input returns 400; unknown IDs are returned in `unknownIds` with 200, preserving request order. `all` mode dynamically includes catalog capabilities; `custom` with `[]` grants none. Wallet listing is owner-scoped, is not a balance or live on-chain check, and omits Openfort internal IDs. Do not accept Openfort IAM-only auth on these routes.
 
 ## 3. Dashboard/frontend-only endpoints
 

@@ -19,6 +19,36 @@ const makeService = (catalog: DefiChainPolicy[], state: unknown = { id: 'global'
 };
 
 describe('DefiCatalogService', () => {
+  it('filters requested metadata in order, preserves paused states, and returns unknown IDs', async () => {
+    const pausedFn = {
+      ...fn,
+      capabilityId: 'fixture:paused:v1',
+      signature: 'touchPaused(address,uint256)',
+      functionName: 'touchPaused',
+      abi: parseAbi(['function touchPaused(address owner, uint256 amount)'])[0],
+    };
+    const service = makeService(makeCatalog([fn, pausedFn]), {
+      id: 'global',
+      pausedScopeKeys: ['capability:fixture:paused:v1'],
+    });
+    const response = await service.listMetadataByIds([
+      'fixture:paused:v1',
+      'unknown',
+      'fixture:touch:v1',
+    ]);
+    expect(response.capabilities.map((item) => item?.capabilityId)).toEqual([
+      'fixture:paused:v1',
+      'fixture:touch:v1',
+    ]);
+    expect(response.capabilities[0]?.status).toBe('paused');
+    expect(response.unknownIds).toEqual(['unknown']);
+  });
+
+  it('fails closed when metadata state is unavailable for a filtered query', async () => {
+    const service = makeService(makeCatalog(), null);
+    await expect(service.listMetadataByIds(['fixture:touch:v1'])).rejects.toThrow();
+  });
+
   it('rejects duplicate capability IDs and per-contract selectors at construction', () => {
     expect(() => makeService(makeCatalog([fn, { ...fn }]))).toThrow(/Duplicate DeFi capability identity/);
     expect(() => makeService(makeCatalog([fn, { ...fn, capabilityId: 'fixture:other:v1' }]))).toThrow(/Ambiguous DeFi selector/);

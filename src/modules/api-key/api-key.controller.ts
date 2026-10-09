@@ -8,7 +8,7 @@ import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './dto/create-api-key.dto';
-import { DefiCatalogService } from '../defi';
+import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { DefiBundleService } from '../defi/bundles/bundle.service';
 
 @Controller('v1/api-keys')

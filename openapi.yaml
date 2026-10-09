@@ -23,6 +23,8 @@ info:
 
     Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
+    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/me/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。Wallet 列表只返回当前 key 所属用户的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
+
     Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires explicit custom capability `polymarket:137:clob-order:v2`; `all` does not grant it. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
 
     ## 支持的链
@@ -87,6 +89,75 @@ security:
   - ApiKeyAuth: []
 
 paths:
+  /v1/permissions:
+    get:
+      tags: [API key]
+      summary: 查看 API key 的配置权限与约束
+      description: |
+        只读配置快照，不执行权限判定，也不保证签名、交易或其他操作实际可执行。此端点仅需有效 `X-API-Key`，不要求任何 `can*` permission；API-key auth 现有冻结、IP allowlist、计费等 guard 仍照常执行。`capabilities.mode=all` 表示动态适用当前可用 catalog capabilities；`custom` 使用精确配置的 ID，空 `allowedIds` 不授予 catalog capabilities。Capabilities 仅为配置，不替代独立 permissions 或安全策略。
+      operationId: getApiKeyPermissions
+      responses:
+        '200':
+          description: 当前 API key 的配置快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyPermissionsResponse'
+              example:
+                snapshotAt: '2026-10-09T10:00:00.000Z'
+                evaluation: configured
+                permissions: { canSign: false, canSendTransaction: false, canReadTransactionStatus: true, canUseEoaExecution: false }
+                capabilities: { mode: all, allowedIds: [] }
+                constraints: { expiresAt: null, allowedIps: [], spendLimits: { daily: null, monthly: null } }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/capabilities:
+    get:
+      tags: [API key]
+      summary: 按 ID 查询 catalog capability 定义
+      description: |
+        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。该路由返回定义而非授权，不会给 API key 授予 capability。`ids` 必填，为逗号分隔的 1–100 个 ID；每项 trim 后不得为空、不得重复，且最多 256 个字符。整个 query 最长为 25700 个字符。未知 ID 不报错，返回 HTTP 200，并按请求顺序分别列入 `unknownIds`；已知 capabilities 也按请求 ID 顺序返回。
+      operationId: getCapabilitiesById
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: 1–100 个逗号分隔的 capability ID；trim 后非空且唯一，每项最多 256 字符。
+          schema:
+            type: string
+            maxLength: 25700
+          example: id1,id2
+      responses:
+        '200':
+          description: 查询结果；未知 ID 保留在 unknownIds 中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesLookupResponse'
+        '400':
+          description: ids 缺失、数量越界、ID 空/重复/过长或 query 超长
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/me/wallets:
+    get:
+      tags: [API key]
+      summary: 列出当前 API-key 用户的钱包
+      description: |
+        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。只返回当前 key 所属用户的钱包安全元数据及链授权信息，不返回 Openfort 内部 ID；不包含余额，也不执行链上实时验证。
+      operationId: getMyWallets
+      responses:
+        '200':
+          description: 当前用户的钱包安全元数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyWalletsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   # ──────────────────────────── Signing ────────────────────────────
   /v1/wallets/sign:
     post:
@@ -459,6 +530,74 @@ components:
         在 Dashboard API Keys 页面创建，原文只返回一次。公开 API 使用 `X-API-Key`。可选 `User-Agent` 可能被记录/保存用于安全审计和异常检测，并与此前上下文逐字比较；它可伪造且不是身份认证。高风险 key 权限/风险判定下，单次 UA/IP context change 可能触发告警或冻结。稳定设置并审慎处理变更，但不要依赖 UA 保密，也不要把它视为必填项。冻结后通过 Dashboard 创建新 key、更新后端 secret、撤销旧 key，并按现有流程恢复；切勿泄露 key。
 
   schemas:
+    ApiKeyPermissionsResponse:
+      type: object
+      required: [snapshotAt, evaluation, permissions, capabilities, constraints]
+      properties:
+        snapshotAt: { type: string, format: date-time }
+        evaluation: { type: string, enum: [configured] }
+        permissions:
+          type: object
+          required: [canSign, canSendTransaction, canReadTransactionStatus, canUseEoaExecution]
+          properties:
+            canSign: { type: boolean }
+            canSendTransaction: { type: boolean }
+            canReadTransactionStatus: { type: boolean }
+            canUseEoaExecution: { type: boolean }
+        capabilities:
+          type: object
+          required: [mode, allowedIds]
+          properties:
+            mode: { type: string, enum: [all, custom] }
+            allowedIds: { type: array, items: { type: string } }
+        constraints:
+          type: object
+          required: [expiresAt, allowedIps, spendLimits]
+          properties:
+            expiresAt: { type: string, format: date-time, nullable: true }
+            allowedIps: { type: array, items: { type: string } }
+            spendLimits:
+              type: object
+              required: [daily, monthly]
+              properties:
+                daily: { type: string, nullable: true }
+                monthly: { type: string, nullable: true }
+    CapabilitiesLookupResponse:
+      type: object
+      required: [capabilities, unknownIds]
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: object
+            description: Catalog capability metadata; returned fields are catalog-defined.
+            additionalProperties: true
+        unknownIds:
+          type: array
+          items: { type: string }
+    MyWalletsResponse:
+      type: object
+      required: [wallets]
+      properties:
+        wallets:
+          type: array
+          items:
+            type: object
+            required: [id, walletAddress, status, isFrozen, chainAuthorizations]
+            properties:
+              id: { type: string, format: uuid }
+              walletAddress: { type: string }
+              status: { type: string }
+              isFrozen: { type: boolean }
+              chainAuthorizations:
+                type: array
+                items:
+                  type: object
+                  required: [chainId, status, expiresAt]
+                  properties:
+                    chainId: { type: integer }
+                    status: { type: string }
+                    expiresAt: { type: string, format: date-time, nullable: true }
     # ──────────── Signing ────────────
     SignRequest:
       type: object
