@@ -491,7 +491,10 @@ function PricingShell({
         >
           SOFA ONE
         </Link>
-        <div className="flex items-center gap-4">
+        <nav aria-label="Main navigation" className="flex items-center gap-4">
+          <Link to="/protocols" className="text-sm font-medium text-brand-muted transition-colors hover:text-brand-text">
+            Protocols
+          </Link>
           {fromBilling && (
             <button
               type="button"
@@ -504,7 +507,7 @@ function PricingShell({
             </button>
           )}
           {headerAction}
-        </div>
+        </nav>
       </header>
 
       <main className="mx-auto max-w-7xl px-6 pb-20">

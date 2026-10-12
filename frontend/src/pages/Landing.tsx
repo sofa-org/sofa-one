@@ -22,11 +22,19 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 selection:bg-brand-accent selection:text-white">
       <div className="w-full max-w-3xl text-center">
-        <div className="mb-16">
-          <span className="font-serif text-3xl font-medium tracking-tight text-brand-text">
+        <header className="mb-16 flex items-center justify-between">
+          <Link to="/" className="font-serif text-3xl font-medium tracking-tight text-brand-text">
             SOFA ONE
-          </span>
-        </div>
+          </Link>
+          <nav aria-label="Main navigation" className="flex items-center gap-5 text-sm">
+            <Link to="/protocols" className="font-medium text-brand-muted transition-colors hover:text-brand-text">
+              Protocols
+            </Link>
+            <Link to="/pricing" className="font-medium text-brand-muted transition-colors hover:text-brand-text">
+              Pricing
+            </Link>
+          </nav>
+        </header>
 
         <h1 className="mb-6 font-serif text-5xl font-normal leading-tight tracking-tight text-brand-text md:text-6xl">
           Automated Blockchain Signing <br className="hidden md:block" />

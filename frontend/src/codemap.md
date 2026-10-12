@@ -30,7 +30,7 @@ Top-level responsibilities in this directory:
 | --- | --- |
 | `components/` | Reusable/shared components: provider stacks (`AuthProviders`, `OpenfortAuthProvider`), route guards (`ProtectedRoute`, `PublicOnlyRoute`), MFA step-up gate (`DashboardStepUpGate`), `ErrorBoundary`, `OpenfortConfigError`, `CopyButton`, `AuthFormPanel`. No business logic; composes `@openfort/react`, Router, and `lib/api`. |
 | `lib/` | Browser-side helper layer: `api.ts` (two typed fetch transports `authFetch`/`apiFetch`, per-route wrappers, `ApiError` normalization, `DEFAULT_CHAIN_ID`), `calibur.ts` (Calibur key hashing/settings/calldata encoders + EIP-7702 EntryPoint v0.8 smart-account factory), `chains.ts` (14-chain static registry + explorer/faucet helpers). |
-| `pages/` | Public routes: `Landing.tsx`, `SignIn.tsx` (split-layout auth shell that lazy-loads `AuthFormPanel`), `EmailOtpForm.tsx`. |
+| `pages/` | Public routes: `Landing.tsx`, `Protocols.tsx` (directory backed by `supported-protocols.ts`), `Pricing.tsx`, `SignIn.tsx` (split-layout auth shell that lazy-loads `AuthFormPanel`), `EmailOtpForm.tsx`. |
 | `pages/dashboard/` | All authenticated screens under `/dashboard/*` plus the `DashboardLayout` shell, wallet-setup sub-forms, presentational helpers, step-up helpers (`step-up.ts`, `step-up-session.ts`), and the `notification-events.ts` window-event bus. |
 | `types/` | Empty (unused; request/response types are exported from `lib/api.ts`). |
 | `main.tsx`, `App.tsx`, `index.css` | Entry, routing/provider composition, global styling. |
@@ -51,7 +51,7 @@ Top-level responsibilities in this directory:
 
 ## Flow
 1. **Boot**: `main.tsx` renders `ErrorBoundary` → `BrowserRouter` → `App`; `App` shows a `Suspense` fallback while lazy chunks load.
-2. **Public routes**: `/` → `LandingPage`; `/sign-in/*` → `SignInPage` → `AuthFormPanel` (`OpenfortAuthProvider` validates `VITE_OPENFORT_PUBLISHABLE_KEY`, renders `OpenfortConfigError` if missing; `PublicOnlyRoute` bounces authenticated users to `/dashboard`). `/sign-up/*` → redirect to `/sign-in`; `*` → `/`.
+2. **Public routes**: `/` → `LandingPage`; `/protocols` → lazy-loaded, unauthenticated `ProtocolsPage`; `/pricing` → `PricingPage`; `/sign-in/*` → `SignInPage` → `AuthFormPanel` (`OpenfortAuthProvider` validates `VITE_OPENFORT_PUBLISHABLE_KEY`, renders `OpenfortConfigError` if missing; `PublicOnlyRoute` bounces authenticated users to `/dashboard`). `/sign-up/*` → redirect to `/sign-in`; `*` → `/`.
 3. **Dashboard**: `/dashboard` mounts `AuthProviders → ProtectedRoute → DashboardStepUpGate → DashboardLayout` with index (`WalletPage`) and child routes `api-keys`, `transactions`, `notifications`, `billing`, `docs`. `DashboardStepUpGate` runs `syncSession` → `getMfaStatusAuth` and holds the tree until a valid TOTP proof exists (setup QR or verify form).
 4. **Data flow**: pages fetch `getToken` from Openfort `useUser`, then call `lib/api` `*Auth` helpers (bearer token) against the backend via `VITE_API_URL` or the `/api` Vite proxy. Wallet setup additionally uses `lib/calibur` encoders + viem/wagmi to build and submit a Calibur registration UserOp through Openfort/Pimlico. Mutations that need MFA go through the step-up proof flow (client sessionStorage → `X-Step-Up-Token` header → backend validation).
 5. **Billing**: Stripe card checkout redirects to `checkoutUrl` and returns via `?success`/`?canceled` search params; USDC payment runs inline in `UsdcPaymentPanel` (quote → pay-from-wallet with step-up / status poll, or manual claim → silent invoice refresh only when server reports paid).
