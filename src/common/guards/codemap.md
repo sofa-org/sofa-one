@@ -85,6 +85,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 - **Dependencies**: `Reflector`, `StepUpService` (`../../modules/step-up/step-up.service`), `STEP_UP_KEY` (`../decorators/step-up.decorator`). Validates with purpose `'totp_mfa'`.
 
 ## Design/Patterns
+- **Wallet binding**: API-key authentication requires a bound wallet relation whose ID and owner match the key; null or foreign bindings fail closed after every lookup-prefix candidate is hash verified.
 - **NestJS `CanActivate` guards** composed per-route via `@UseGuards()`; metadata-driven activation via `Reflector.getAllAndOverride` against handler + class.
 - **Three auth models kept separate**: `OpenfortUserGuard` (dashboard, IAM-only), `ApiKeyAuthGuard` (public, API-key-only), `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers). Public API routes must never accept IAM tokens; dashboard routes must never accept API keys.
 - **Prefix-candidate + Argon2 verification**: API keys are stored as Argon2id hashes; lookup uses 27-char and legacy 11-char prefixes as a non-unique hint, then verifies every candidate hash to avoid prefix collisions and legacy false negatives.

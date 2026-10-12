@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   ForbiddenException,
   Logger,
@@ -97,6 +96,7 @@ type BillingAssetFlowGateContext = {
 
 type ApiKeyTransactionContext = {
   id?: string;
+  walletId?: string | null;
   keyPrefix?: string;
   name?: string | null;
   allowedIps?: string[] | null;
@@ -205,6 +205,9 @@ export class TransactionsService {
       apiKeyRecord.canSendTransaction,
       'API key is not allowed to send transactions',
     );
+    if (!apiKeyRecord.walletId || (dto.walletId && dto.walletId !== apiKeyRecord.walletId)) {
+      throw new ForbiddenException('API key is not bound to the selected wallet');
+    }
 
     const chainId = dto.chainId;
     getSupportedChain(chainId);
@@ -238,33 +241,13 @@ export class TransactionsService {
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
     const wallets = await this.prisma.userWallet.findMany({
-      where: dto.walletId ? { id: dto.walletId, userId } : { userId },
+      where: { id: apiKeyRecord.walletId, userId },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(chainId) } },
       },
     });
-    if (dto.walletId && wallets.length === 0) throw new NotFoundException('Wallet not found');
-    const wallet = dto.walletId
-      ? wallets[0]
-      : (() => {
-          const eligible = wallets.filter(
-            (candidate) =>
-              candidate.status === 'active' &&
-              Boolean(candidate.walletAddress) &&
-              !candidate.frozenAt,
-          );
-          if (eligible.length === 0) {
-            // Preserve the readiness/freeze error for a user's sole wallet.
-            if (wallets.length === 1 && (wallets[0].status !== 'active' || wallets[0].frozenAt)) {
-              return wallets[0];
-            }
-            throw new NotFoundException('Wallet not found');
-          }
-          if (eligible.length > 1) {
-            throw new ConflictException('walletId is required when multiple active wallets exist');
-          }
-          return eligible[0];
-        })();
+    const wallet = wallets.find((candidate) => candidate.id === apiKeyRecord.walletId);
+    if (!wallet) throw new NotFoundException('Wallet not found');
 
     this.assertWalletNotFrozen(wallet);
     this.assertWalletReady(wallet);
@@ -887,12 +870,16 @@ export class TransactionsService {
       apiKeyRecord.canReadTransactionStatus,
       'API key is not allowed to read transaction status',
     );
+    if (!apiKeyRecord.walletId) throw new UnauthorizedException('Invalid API key');
 
     const tx = await this.prisma.transaction.findFirst({
       where: { id: transactionId, userId, operationType: 'send', authMethod: 'api_key' },
     });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.operationType !== 'send' || tx.authMethod !== 'api_key') {
+      throw new NotFoundException('Transaction not found');
+    }
+    if (!(await this.transactionBelongsToBoundWallet(tx, userId, apiKeyRecord.walletId))) {
       throw new NotFoundException('Transaction not found');
     }
 
@@ -1282,9 +1269,8 @@ export class TransactionsService {
     const details = existing.details && typeof existing.details === 'object' && !Array.isArray(existing.details)
       ? existing.details as Record<string, unknown>
       : {};
-    const identityMatches =
-      existing.authMethod === 'api_key' &&
-      (!params.walletId || details.walletId === params.walletId || existing.walletAddress === params.walletAddress) &&
+    const identityMatches = existing.authMethod === 'api_key' &&
+      (!params.walletId || await this.transactionBelongsToBoundWallet(existing, userId, params.walletId)) &&
       (!params.walletAddress || existing.walletAddress?.toLowerCase() === params.walletAddress.toLowerCase()) &&
       (!params.executionMode || details.executionMode === params.executionMode);
     const hashMatches = existing.requestHash === params.requestHash ||
@@ -1304,6 +1290,34 @@ export class TransactionsService {
     }
 
     return existing;
+  }
+
+  /** A persisted wallet id is authoritative. Legacy attribution is accepted only
+   * when both account and agent addresses identify exactly the key-bound wallet. */
+  private async transactionBelongsToBoundWallet(
+    transaction: { userId: string; walletAddress: string; details: unknown },
+    userId: string,
+    walletId: string,
+  ): Promise<boolean> {
+    if (transaction.userId && transaction.userId !== userId) return false;
+    const details = transaction.details && typeof transaction.details === 'object' && !Array.isArray(transaction.details)
+      ? transaction.details as Record<string, unknown>
+      : {};
+    if (typeof details.walletId === 'string') return details.walletId === walletId;
+
+    if (typeof details.agentWalletAddress !== 'string') return false;
+    const candidates = await this.prisma.userWallet.findMany({
+      where: { userId },
+      select: { id: true, walletAddress: true, agentWalletAddress: true },
+    });
+    const transactionAddress = transaction.walletAddress.toLowerCase();
+    const legacyAgent = details.agentWalletAddress.toLowerCase();
+    const matching = candidates.filter((candidate) =>
+      candidate.walletAddress && candidate.agentWalletAddress &&
+      candidate.agentWalletAddress.toLowerCase() === legacyAgent &&
+      (candidate.walletAddress.toLowerCase() === transactionAddress || candidate.agentWalletAddress.toLowerCase() === transactionAddress),
+    );
+    return matching.length === 1 && matching[0].id === walletId;
   }
 
   /**
@@ -1805,6 +1819,7 @@ export class TransactionsService {
       status: tx.status,
       txHash: tx.txHash,
       chainId: Number(tx.chainId),
+      walletId: typeof tx.details?.walletId === 'string' ? tx.details.walletId : null,
       walletAddress: tx.walletAddress,
       operationType: tx.operationType,
       apiKeyPrefix: tx.apiKeyPrefix,
@@ -1821,6 +1836,7 @@ export class TransactionsService {
       transactionHash: tx.txHash,
       status: tx.status,
       chainId: Number(tx.chainId),
+      walletId: typeof tx.details?.walletId === 'string' ? tx.details.walletId : null,
       walletAddress: tx.walletAddress,
       failureReason: tx.failureReason ? 'Transaction failed' : null,
       createdAt: tx.createdAt,

@@ -40,7 +40,7 @@ const make = () => {
   return { service, prisma };
 };
 const root = (children: `0x${string}`[], value = '0') => ({ to: target, data: encodeFunctionData({ abi: [wrapperAbi], functionName: 'multicall', args: [children] }), value });
-const mockTx = (grants: readonly string[]) => ({ $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'u', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) } });
+const mockTx = (grants: readonly string[]) => ({ $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) }, apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'u', walletId: 'w', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) } });
 
 describe('scoped execution runtime', () => {
   it('plans one canonical root and its child, preserving ordered frozen paths and safe audit data', async () => {
@@ -87,7 +87,7 @@ describe('scoped execution runtime', () => {
     paused.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['capability:npm:child:5'] });
     await expect(service.assertStillAuthorized(paused as never, auth)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
     const revoked = mockTx(context.allowedCapabilityIds);
-    revoked.apiKey.findUnique.mockResolvedValue({ userId: 'u', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: context.allowedCapabilityIds });
+    revoked.apiKey.findUnique.mockResolvedValue({ userId: 'u', walletId: 'w', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: context.allowedCapabilityIds });
     await expect(service.assertStillAuthorized(revoked as never, auth)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     await expect(service.assertStillAuthorized(tx as never, { ...auth, requestCommitment: `0x${'0'.repeat(64)}` } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     await expect(service.assertStillAuthorized(tx as never, { ...auth, context: { ...auth.context, executionOwner: '0x3333333333333333333333333333333333333333' } } as never)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
@@ -99,7 +99,7 @@ describe('scoped execution runtime', () => {
       { userId: 'someone-else' },
     ]) {
       const invalid = mockTx(context.allowedCapabilityIds);
-      invalid.apiKey.findUnique.mockResolvedValue({ userId: 'u', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: context.allowedCapabilityIds, ...changedKey });
+      invalid.apiKey.findUnique.mockResolvedValue({ userId: 'u', walletId: 'w', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: context.allowedCapabilityIds, ...changedKey });
       await expect(service.assertStillAuthorized(invalid as never, auth)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     }
   });

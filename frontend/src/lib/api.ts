@@ -67,6 +67,7 @@ export interface AuthSessionResponse {
 
 export interface RefreshApiKeyResponse {
   apiKey: string;
+  walletId: string;
 }
 
 export interface BalanceEntry {
@@ -182,6 +183,8 @@ export interface TransactionStatusResponse extends SendTransactionResponse {
 
 export interface ApiKeyRecord {
   id: string;
+  /** Immutable wallet binding; null is reserved for unbound legacy keys. */
+  walletId: string | null;
   displayPrefix: string;
   name: string | null;
   revoked: boolean;
@@ -319,6 +322,7 @@ export interface ApiKeyPermissions {
 export interface CreateApiKeyResponse {
   rawKey: string;
   id: string;
+  walletId: string;
   displayPrefix: string;
   name: string;
   expiresAt: string;
@@ -334,6 +338,7 @@ export interface ApiKeySpendLimits {
 }
 
 export interface CreateApiKeyRequest {
+  walletId: string;
   name: string;
   allowedIps?: string[];
   capabilityMode?: ApiKeyCapabilityMode;
@@ -852,10 +857,15 @@ export async function getMe(getToken: () => Promise<string | null>, signal?: Abo
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
-export async function refreshApiKey(getToken: () => Promise<string | null>, stepUpToken: string) {
+export async function refreshApiKey(
+  getToken: () => Promise<string | null>,
+  stepUpToken: string,
+  walletId: string,
+) {
   return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
     method: 'POST',
     headers: { 'X-Step-Up-Token': stepUpToken },
+    body: JSON.stringify({ walletId }),
   });
 }
 

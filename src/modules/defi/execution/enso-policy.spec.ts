@@ -57,7 +57,8 @@ function finalTx(grants = allGrants, pausedScopeKeys: string[] = []) {
   return {
     $queryRaw: jest.fn(),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) },
-    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
+    userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
   };
 }
 
@@ -172,19 +173,19 @@ describe('Enso static Weiroll policy integration', () => {
       expect(fn).toBeDefined();
     }
     const revoked = finalTx();
-    revoked.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
+    revoked.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: 'wallet', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
     await expect(policy.assertStillAuthorized(revoked as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const frozen = finalTx();
-    frozen.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: false, frozenAt: new Date(), expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
+    frozen.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: 'wallet', revoked: false, frozenAt: new Date(), expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
     await expect(policy.assertStillAuthorized(frozen as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const expired = finalTx();
-    expired.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: new Date(0), canSendTransaction: true, allowedCapabilityIds: allGrants });
+    expired.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: new Date(0), canSendTransaction: true, allowedCapabilityIds: allGrants });
     await expect(policy.assertStillAuthorized(expired as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const wrongOwner = finalTx();
-    wrongOwner.apiKey.findUnique.mockResolvedValue({ userId: 'other', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
+    wrongOwner.apiKey.findUnique.mockResolvedValue({ userId: 'other', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: allGrants });
     await expect(policy.assertStillAuthorized(wrongOwner as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const noSend = finalTx();
-    noSend.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: false, allowedCapabilityIds: allGrants });
+    noSend.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: false, allowedCapabilityIds: allGrants });
     await expect(policy.assertStillAuthorized(noSend as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     await expect(policy.assertStillAuthorized(tx as never, { ...authorization, executionPlan: authorization.executionPlan.slice(0, -1) })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const grantNativeValue = async (childIndex: number) => {

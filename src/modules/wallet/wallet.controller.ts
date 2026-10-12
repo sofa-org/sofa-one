@@ -122,6 +122,6 @@ export class ApiKeyWalletController {
   @Get()
   async list(@Req() req: any, @Res({ passthrough: true }) response: any) {
     response.setHeader('Cache-Control', 'no-store');
-    return this.walletService.listApiKeyWallets(req.user.id);
+    return this.walletService.listApiKeyWallets(req.user.id, req.apiKeyRecord.walletId);
   }
 }

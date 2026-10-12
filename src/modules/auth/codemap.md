@@ -20,7 +20,7 @@ Openfort IAM authentication and onboarding: sync Openfort email-OTP sessions int
 - `POST /auth/embedded-wallet/authorize` verifies provider account identity, reserves immutable wallet identity/quota, then performs single-dispatch durable TEE provisioning and separately locked activation. A dispatched/uncertain intent is review-only.
 - Registration routes resolve an owned wallet ID (required when multiple wallets exist). Transaction/result updates CAS expected status and hash; stale receipt checks cannot overwrite newer registration state.
 - `GET /auth/me` → `getMe`: read-only DB lookup; `selfHealAgentRegistrations` reconciles `pending_registration` rows — missing tx hash reverts to `registration_required`, reverted receipts become `registration_failed`, successful receipts are verified against Calibur and marked `registered` (verification failures stay pending and are logged).
-- `POST /auth/refresh-api-key` → `refreshApiKey`: calls `ApiKeyService.rotateApiKey(userId, 'Refreshed')`, which atomically revokes all active keys and issues a replacement; returns the raw key exactly once.
+- `POST /auth/refresh-api-key` → `refreshApiKey`: accepts an owned wallet ID and rotates keys atomically; returns the raw key exactly once.
 
 ## Integration
 - Module imports: `ApiKeyModule` (rotate), `SecurityEventModule` (login-IP events), `StepUpModule` (TOTP proof validation), `BillingModule` (wallet activation quota).

@@ -38,6 +38,7 @@ const HIGH_RISK_PERMISSIONS: (keyof ApiKeyPermissions)[] = [
 ];
 
 type ApiKeyCreateOptions = {
+  walletId?: string;
   name: string;
   expiresAt?: string | Date;
   allowedIps?: string[];
@@ -82,6 +83,9 @@ export class ApiKeyService {
    * Returns the raw key **once** — it cannot be recovered after this call.
    */
   async createApiKey(userId: string, options: ApiKeyCreateOptions) {
+    if (typeof options.walletId !== 'string' || options.walletId.trim().length === 0) {
+      throw new BadRequestException('walletId is required');
+    }
     const normalized = this.normalizeCreateOptions(options);
     const capabilities = this.normalizeCapabilityOptions(options);
     const keyMaterial = await this.generateKeyMaterial();
@@ -89,12 +93,16 @@ export class ApiKeyService {
     const events: Array<{ eventType?: string }> = [];
     let createdKey: any;
     try { createdKey = await this.prisma.$transaction(async (tx) => {
+      await this.lockUserKeyLifecycle(tx, userId);
+      const wallet = options.walletId ? await tx.userWallet.findFirst({ where: { id: options.walletId, userId }, select: { id: true } }) : null;
+      if (!wallet) throw new NotFoundException('Wallet not found');
       await this.assertCanCreateKey(tx, userId, normalized.name);
       await this.defiGrants.assertGrantableInTx(tx, capabilities.allowedCapabilityIds);
 
       const created = await tx.apiKey.create({
         data: {
           userId,
+          walletId: wallet.id,
           apiKeyHash: keyMaterial.hash,
           keyPrefix: keyMaterial.keyPrefix,
           name: normalized.name,
@@ -116,6 +124,7 @@ export class ApiKeyService {
           permissions: this.toPermissions(created),
           allowedCapabilityIds: created.allowedCapabilityIds,
           capabilityMode: created.capabilityMode,
+          walletId: created.walletId,
         },
       }, true);
       events.push(event);
@@ -136,6 +145,7 @@ export class ApiKeyService {
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
+      walletId: createdKey.walletId,
       allowedCapabilityIds: createdKey.allowedCapabilityIds,
       capabilityMode: createdKey.capabilityMode,
     };
@@ -182,6 +192,7 @@ export class ApiKeyService {
   async revokeAllKeys(userId: string) {
     const events: Array<{ eventType?: string }> = [];
     const result = await this.prisma.$transaction(async (tx) => {
+      await this.lockUserKeyLifecycle(tx, userId);
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
         select: { id: true, keyPrefix: true, name: true },
@@ -206,12 +217,18 @@ export class ApiKeyService {
   }
 
   /** Atomically revoke all active keys and issue a replacement key. */
-  async rotateApiKey(userId: string, name: string) {
+  async rotateApiKey(userId: string, name: string, walletId: string) {
+    if (typeof walletId !== 'string' || walletId.trim().length === 0) {
+      throw new BadRequestException('walletId is required');
+    }
     const normalized = this.normalizeCreateOptions({ name });
     const keyMaterial = await this.generateKeyMaterial();
 
     const events: Array<{ eventType?: string }> = [];
     const createdKey = await this.prisma.$transaction(async (tx) => {
+      await this.lockUserKeyLifecycle(tx, userId);
+      const wallet = await tx.userWallet.findFirst({ where: { id: walletId, userId }, select: { id: true } });
+      if (!wallet) throw new NotFoundException('Wallet not found');
       await this.defiGrants.assertGrantableInTx(tx, []);
       const activeKeys = await tx.apiKey.findMany({
         where: { userId, revoked: false },
@@ -234,6 +251,7 @@ export class ApiKeyService {
       const created = await tx.apiKey.create({
         data: {
           userId,
+          walletId: wallet.id,
           apiKeyHash: keyMaterial.hash,
           keyPrefix: keyMaterial.keyPrefix,
           name: normalized.name,
@@ -254,6 +272,7 @@ export class ApiKeyService {
           permissions: this.toPermissions(created),
           allowedCapabilityIds: created.allowedCapabilityIds,
           capabilityMode: created.capabilityMode,
+          walletId: created.walletId,
         },
       }, true));
 
@@ -269,6 +288,7 @@ export class ApiKeyService {
       expiresAt: createdKey.expiresAt,
       createdAt: createdKey.createdAt,
       permissions: this.toPermissions(createdKey),
+      walletId: createdKey.walletId,
       allowedCapabilityIds: createdKey.allowedCapabilityIds,
       capabilityMode: createdKey.capabilityMode,
     };
@@ -280,6 +300,7 @@ export class ApiKeyService {
       where: { userId },
       select: {
         id: true,
+        walletId: true,
         keyPrefix: true,
         name: true,
         revoked: true,
@@ -306,6 +327,7 @@ export class ApiKeyService {
 
     return keys.map((key) => ({
       id: key.id,
+      walletId: key.walletId,
       displayPrefix: this.toDisplayPrefix(key.keyPrefix),
       name: key.name,
       revoked: key.revoked,
@@ -588,6 +610,14 @@ export class ApiKeyService {
     if (permissions.canSendTransaction) return PERMISSION_MAX_TTL_MS.canSendTransaction;
     if (permissions.canSign) return PERMISSION_MAX_TTL_MS.canSign;
     return PERMISSION_MAX_TTL_MS.canReadTransactionStatus;
+  }
+
+  private async lockUserKeyLifecycle(tx: PrismaTransaction, userId: string) {
+    // A stable per-user mutex prevents concurrent create/rotate/revoke-all operations
+    // from observing stale active-key counts under READ COMMITTED.
+    const users = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "users" WHERE "id" = ${userId}::uuid FOR NO KEY UPDATE`;
+    if (!users.length) throw new NotFoundException('User not found');
   }
 
   private async assertCanCreateKey(tx: PrismaTransaction, userId: string, name: string) {

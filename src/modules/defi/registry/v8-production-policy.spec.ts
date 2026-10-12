@@ -75,7 +75,8 @@ function finalTx(grants: string[] = allGrants, pausedScopeKeys: string[] = []) {
   return {
     $queryRaw: jest.fn().mockResolvedValue([]),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) },
-    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: baseContext.userId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
+    userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: baseContext.userId, walletId: baseContext.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
   };
 }
 

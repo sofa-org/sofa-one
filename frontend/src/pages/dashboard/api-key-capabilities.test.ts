@@ -9,7 +9,7 @@ import {
 } from './api-key-capabilities';
 
 const key: ApiKeyRecord = {
-  id: 'key-1', displayPrefix: 'sk_test', name: 'backend', revoked: false, frozenAt: null,
+  id: 'key-1', walletId: null, displayPrefix: 'sk_test', name: 'backend', revoked: false, frozenAt: null,
   frozenReason: null, expiresAt: null, createdAt: '2026-01-01T00:00:00Z', lastUsedAt: null,
   lastUsedIp: null, lastUsedUserAgent: null,
   permissions: { canSign: true, canSendTransaction: true, canReadTransactionStatus: false, canUseEoaExecution: true },

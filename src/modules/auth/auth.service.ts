@@ -618,13 +618,13 @@ export class AuthService {
   /**
    * Revoke all existing keys and issue a fresh one.
    */
-  async refreshApiKey(openfortUserId: string) {
+  async refreshApiKey(openfortUserId: string, walletId: string) {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed');
+    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed', walletId);
 
     return { apiKey: result.rawKey };
   }

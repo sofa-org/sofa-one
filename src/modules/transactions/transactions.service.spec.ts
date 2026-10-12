@@ -149,6 +149,7 @@ describe('TransactionsService', () => {
 
   const apiKeyContext = {
     id: 'api-key-1',
+    walletId: 'wallet-1',
     keyPrefix: apiKeyPrefix,
     name: 'Production key',
     allowedIps: ['203.0.113.10'],
@@ -178,7 +179,7 @@ describe('TransactionsService', () => {
   const txApiKeyLockRows = jest.fn();
 
   const prisma = {
-    userWallet: { findUnique: jest.fn(), findMany: jest.fn() },
+    userWallet: { findUnique: jest.fn(), findMany: jest.fn(), findFirst: jest.fn() },
     apiKey: { findUnique: jest.fn() },
     // BILL-016: destination protection = requireAddressAllowlist === true.
     withdrawalPolicy: { findUnique: jest.fn() },
@@ -313,6 +314,7 @@ describe('TransactionsService', () => {
     }));
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
+    prisma.userWallet.findFirst.mockResolvedValue(wallet);
     prisma.userWallet.findMany.mockImplementation(async ({ where }: any) => {
       if (where?.userId && where.userId !== 'user-1') return [];
       if (where?.id && where.id !== wallet.id) return [];
@@ -460,10 +462,12 @@ describe('TransactionsService', () => {
 
     let order: string[] = [];
     let liveKeyReadCount = 0;
-    const liveKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null,
+    let omitFinalWalletDelegate = false;
+    const liveKey = { userId: 'user-1', walletId: wallet.id, revoked: false, frozenAt: null, expiresAt: null,
       canSendTransaction: true, capabilityMode: 'custom', allowedCapabilityIds: liveIds };
     destinationPolicy.acquireUserDestinationLock.mockImplementation(async () => { order.push('destination'); });
-    prisma.$transaction.mockImplementation(async (callback: any) => callback({
+    prisma.$transaction.mockImplementation(async (callback: any) => {
+      const txClient: any = {
       $executeRaw: jest.fn().mockResolvedValue(undefined),
       $queryRaw: jest.fn((strings: TemplateStringsArray) => {
         const sql = strings.join(' ');
@@ -475,7 +479,10 @@ describe('TransactionsService', () => {
       withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
       transaction: { findFirst: txFindFirst, findMany: prisma.transaction.findMany,
         create: prisma.transaction.create, update: prisma.transaction.update, updateMany: prisma.transaction.updateMany },
-    }));
+      };
+      if (!omitFinalWalletDelegate) txClient.userWallet = { findFirst: jest.fn().mockResolvedValue({ id: wallet.id, userId: 'user-1' }) };
+      return callback(txClient);
+    });
     prisma.transaction.create.mockClear();
     openfort.submitUserOperation.mockClear(); openfort.sendBackendTransaction.mockClear();
     openfort.getTransactionReceipt.mockClear(); openfort.waitForUserOperationReceipt.mockClear();
@@ -507,6 +514,17 @@ describe('TransactionsService', () => {
     const denial = securityEvents.record.mock.calls.find(([event]: any[]) => event.eventType === 'defi.policy_denied')?.[0];
     expect(denial?.metadata).not.toHaveProperty('calldata');
     expect(denial?.metadata).not.toHaveProperty('interactions');
+
+    // Final acceptance must fail closed if the owned-wallet delegate is absent,
+    // before transaction creation or any provider call.
+    liveKey.capabilityMode = 'all';
+    liveKey.allowedCapabilityIds = [];
+    omitFinalWalletDelegate = true;
+    await expect(service.send('user-1', request as any, { ...apiKeyContext, canUseEoaExecution: true }))
+      .rejects.toMatchObject({ response: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
@@ -577,27 +595,22 @@ describe('TransactionsService', () => {
     expect(securityEvents.exportCommitted).toHaveBeenCalledWith({ id: 'event-1' });
   });
 
-  it('rejects a forged wallet ID owned by another user', async () => {
+  it('rejects a wallet selector outside the binding before wallet lookup or submission', async () => {
     await expect(
       service.send('user-1', { ...dto, walletId: 'wallet-other' } as any, apiKeyContext),
-    ).rejects.toThrow(NotFoundException);
-    expect(prisma.userWallet.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'wallet-other', userId: 'user-1' } }),
-    );
+    ).rejects.toThrow('API key is not bound to the selected wallet');
+    expect(prisma.userWallet.findMany).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
-  it('requires walletId when multiple active owned wallets exist', async () => {
+  it('uses the key-bound wallet when multiple owned wallets exist', async () => {
     prisma.userWallet.findMany.mockResolvedValueOnce([
       wallet,
       { ...wallet, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
     ]);
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
-      ConflictException,
-    );
-    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
-    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toBeDefined();
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({ accountAddress: wallet.walletAddress }));
   });
 
   it('ignores frozen and addressless wallets when implicitly selecting an eligible wallet', async () => {
@@ -622,7 +635,8 @@ describe('TransactionsService', () => {
       { ...wallet, chainAuthorizations: [] },
       { ...wallet, id: 'alternate', walletAddress: '0x4444444444444444444444444444444444444444' },
     ] as any);
-    await expect(service.send('user-1', { ...dto, walletId: wallet.id } as any, apiKeyContext))
+    prisma.userWallet.findMany.mockResolvedValueOnce([{ ...wallet, chainAuthorizations: [] }] as any);
+    await expect(service.send('user-1', dto as any, apiKeyContext))
       .rejects.toThrow('API access is not authorized for this chain');
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
@@ -633,16 +647,9 @@ describe('TransactionsService', () => {
       id: 'wallet-2',
       walletAddress: '0x4444444444444444444444444444444444444444',
     };
-    prisma.userWallet.findMany.mockResolvedValueOnce([second]);
-    prisma.transaction.findFirst.mockResolvedValueOnce({
-      id: 'tx-existing',
-      status: 'pending',
-      txHash: null,
-      requestHash: 'hash-for-wallet-1',
-    });
     await expect(
       service.send('user-1', { ...dto, walletId: second.id } as any, apiKeyContext),
-    ).rejects.toThrow('Idempotency key was already used for a different request');
+    ).rejects.toThrow('API key is not bound to the selected wallet');
     expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
@@ -1254,6 +1261,21 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
+  it('rejects matching-fingerprint P2002 recovery rows attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      ...existingSendIdentity, id: 'tx-other-wallet', status: 'submitting', txHash: null,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    txFindFirst.mockResolvedValue(null);
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(prisma.transaction.findFirst).toHaveBeenCalledTimes(2);
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
   it('uses a persisted fingerprint for nullable-hash rows found inside the transaction', async () => {
     prisma.transaction.findFirst.mockResolvedValue(null);
     txFindFirst.mockResolvedValue({
@@ -1271,6 +1293,20 @@ describe('TransactionsService', () => {
     });
     prisma.transaction.findFirst.mockResolvedValue(null);
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects matching-fingerprint inner idempotency hits attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue(null);
+    txFindFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-other-wallet', status: 'pending', txHash: null,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
@@ -1462,6 +1498,7 @@ describe('TransactionsService', () => {
       walletAddress: wallet.walletAddress,
       operationType: 'send',
       authMethod: 'api_key',
+      details: { walletId: wallet.id },
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: new Date('2026-04-28T00:01:00.000Z'),
@@ -1472,6 +1509,7 @@ describe('TransactionsService', () => {
       transactionHash: '0xhash',
       status: 'confirmed',
       chainId: 8453,
+      walletId: wallet.id,
       walletAddress: wallet.walletAddress,
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
@@ -1496,6 +1534,8 @@ describe('TransactionsService', () => {
       walletAddress: wallet.walletAddress,
       operationType: 'send',
       authMethod: 'api_key',
+      userId: 'user-1',
+      details: { walletId: wallet.id },
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: null,
@@ -1504,6 +1544,65 @@ describe('TransactionsService', () => {
     await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).resolves.toEqual(
       expect.objectContaining({ status: 'pending', transactionHash: null }),
     );
+  });
+
+  it('hides transaction status for a different wallet binding', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-other', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress,
+      operationType: 'send', authMethod: 'api_key', details: { walletId: 'wallet-other' },
+    });
+    await expect(service.getStatus('user-1', 'tx-other', apiKeyContext)).rejects.toThrow(NotFoundException);
+  });
+
+  it('allows status access from another key bound to the same wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-same-wallet', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress,
+      operationType: 'send', authMethod: 'api_key', details: { walletId: wallet.id },
+    });
+    await expect(service.getStatus('user-1', 'tx-same-wallet', { ...apiKeyContext, id: 'api-key-2' }))
+      .resolves.toMatchObject({ transactionId: 'tx-same-wallet', walletId: wallet.id });
+  });
+
+  it('accepts legacy status attribution only for the unique case-insensitive account+agent pair', async () => {
+    prisma.userWallet.findMany.mockResolvedValue([wallet] as any);
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+    });
+    await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).resolves.toMatchObject({ walletId: null });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy-eoa', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.agentWalletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase(), executionMode: 'eoa' },
+    });
+    await expect(service.getStatus('user-1', 'tx-legacy-eoa', apiKeyContext)).resolves.toMatchObject({ walletId: null });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+    });
+    prisma.userWallet.findMany.mockResolvedValue([wallet, { ...wallet, id: 'wallet-duplicate' }] as any);
+    await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an idempotency hit attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-other', status: 'pending', txHash: null,
+      walletAddress: wallet.walletAddress,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects status lookups for non-send operations', async () => {

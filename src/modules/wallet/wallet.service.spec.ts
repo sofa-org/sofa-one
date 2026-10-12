@@ -97,6 +97,7 @@ const SUFFICIENT_BALANCE = BigInt('2000000');
 const API_KEY_PREFIX = 'sk_1234567890abcdef12345678';
 const API_KEY_CONTEXT = {
   id: 'api-key-1',
+  walletId: 'wallet-1',
   keyPrefix: API_KEY_PREFIX,
   name: 'Production key',
   allowedIps: ['203.0.113.10'],
@@ -917,13 +918,13 @@ describe('WalletService.sign()', () => {
     loggerWarnSpy.mockRestore();
   });
 
-  it('conflicts when walletId is omitted and multiple active owner wallets exist', async () => {
+  it('does not infer another wallet for a bound signing key', async () => {
     mockWalletFindMany.mockResolvedValue([
       { ...WALLET },
       { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
     ]);
     await expect(service.sign('user-1', { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any, API_KEY_CONTEXT))
-      .rejects.toBeInstanceOf(ConflictException);
+      .rejects.toBeInstanceOf(ForbiddenException);
     expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(mockSignData).not.toHaveBeenCalled();
   });
@@ -932,8 +933,16 @@ describe('WalletService.sign()', () => {
     mockWalletFindMany.mockResolvedValue([{ ...WALLET }]);
     await expect(service.sign('user-1', {
       type: 'typed_data', typedData: createTypedData(137), chainId: 137, walletId: 'wallet-for-another-user',
-    } as any, API_KEY_CONTEXT)).rejects.toThrow(NotFoundException);
-    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    } as any, API_KEY_CONTEXT)).rejects.toThrow(ForbiddenException);
+    expect(mockWalletFindMany).not.toHaveBeenCalled();
+    expect(mockSignData).not.toHaveBeenCalled();
+  });
+
+  it('rejects an explicit wallet selector that differs from the key binding before wallet lookup', async () => {
+    await expect(service.sign('user-1', {
+      type: 'typed_data', typedData: createTypedData(137), chainId: 137, walletId: 'other-wallet',
+    } as any, API_KEY_CONTEXT)).rejects.toThrow('API key is not bound to the selected wallet');
+    expect(mockWalletFindMany).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
   });
 
@@ -955,7 +964,9 @@ describe('WalletService.sign()', () => {
     const payload = Object.freeze({ domain: Object.freeze({ name: 'ClobAuthDomain', version: '1', chainId: 137 }), types: Object.freeze({ ClobAuth: Object.freeze([{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }]) }), primaryType: 'ClobAuth', message: Object.freeze({ address: WALLET.agentWalletAddress, timestamp, nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION }) });
     const digest = hashTypedData(payload as any);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({ context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] }), requiredPermission: 'canSign', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137, executionMode: 'eoa', policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`, walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
+    mockWalletFindMany.mockResolvedValue([WALLET, { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' }]);
     const result = await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: payload } as any, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
+    expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ walletId: 'wallet-1', walletAddress: WALLET.walletAddress }));
     expect(mockDefiAssertSigningStillAuthorized).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ typedDataDigest: digest }), expect.objectContaining({ digest, agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
     expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest }) }));
     expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, digest);
@@ -1015,7 +1026,7 @@ describe('WalletService.sign()', () => {
     (service as any).defiPolicy = realPolicy;
     const timestamp = String(Math.floor(Date.now() / 1000));
     const typedData = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: WALLET.agentWalletAddress, timestamp, nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
-    const acceptedKey = { userId: 'user-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
+    const acceptedKey = { userId: 'user-1', walletId: 'wallet-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
     let liveKey: any = acceptedKey;
     let finalPauseKeys: string[] = [];
     let failCommit = false;
@@ -1053,6 +1064,7 @@ describe('WalletService.sign()', () => {
       { key: acceptedKey, rootPause: [], finalPause: ['global'] },
       { key: { ...acceptedKey, revoked: true }, rootPause: [], finalPause: [] },
       { key: { ...acceptedKey, canSign: false }, rootPause: [], finalPause: [] },
+      { key: { ...acceptedKey, walletId: 'another-wallet' }, rootPause: [], finalPause: [] },
       { key: { ...acceptedKey, canUseEoaExecution: false }, rootPause: [], finalPause: [] },
     ]) {
       mockSigningRequestCreate.mockClear(); mockSignData.mockClear(); mockSecurityEventRecord.mockClear(); mockDefiExportSigningAllowed.mockClear();

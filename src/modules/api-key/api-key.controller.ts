@@ -24,6 +24,7 @@ export class ApiKeyController {
   @Post()
   async create(@CurrentUser('id') userId: string, @Body() dto: CreateApiKeyDto) {
     return this.apiKeyService.createApiKey(userId, {
+      walletId: dto.walletId,
       name: dto.name,
       expiresAt: dto.expiresAt,
       allowedIps: dto.allowedIps,

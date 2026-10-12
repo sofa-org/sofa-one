@@ -37,7 +37,8 @@ function fixture() {
   const transaction = (grants: readonly string[]) => ({
     $queryRaw: jest.fn().mockResolvedValue([]),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
-    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'v7-policy-test', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [...grants] }) },
+    userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'v7-policy-test', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [...grants] }) },
   });
   return { policy, context, transaction };
 }
@@ -112,7 +113,7 @@ describe('v7 and v8 historical bindings in current v9 production policy', () => 
       const interaction = { to: fn.contract, data, value: '0' };
       const authorization = await policy.authorizeContractCalls([interaction], context(fn));
       await expect(policy.assertStillAuthorized(transaction([]) as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
-      const revoked = transaction([fn.capabilityId]); revoked.apiKey.findUnique.mockResolvedValue({ userId: 'v7-policy-test', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [fn.capabilityId] });
+      const revoked = transaction([fn.capabilityId]); revoked.apiKey.findUnique.mockResolvedValue({ userId: 'v7-policy-test', walletId: 'wallet', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [fn.capabilityId] });
       await expect(policy.assertStillAuthorized(revoked as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
       const paused = transaction([fn.capabilityId]); paused.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`capability:${fn.capabilityId}`] });
       await expect(policy.assertStillAuthorized(paused as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });

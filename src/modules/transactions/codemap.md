@@ -20,6 +20,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 ## Design/Patterns
 
 ### Access-control split
+- API-key send and public status are scoped to the authenticated key's bound wallet; explicit send wallet selectors may only repeat that binding. Idempotency and legacy attribution must prove that same wallet before returning an existing row.
 - `POST /v1/transactions/send` and `GET /v1/transactions/:id` are public API-key routes: `ApiKeyAuthGuard` (resolves the API key, rejects frozen users/keys) + `ApiKeyPermissionGuard` with `canSendTransaction` / `canReadTransactionStatus`. The service re-asserts the permission from `req.apiKeyRecord` so it never trusts the guard alone.
 - `GET /v1/transactions` and `GET /v1/transactions/:id/detail` are dashboard-only: `OpenfortUserGuard` + `FrontendOnlyGuard` (origin/referer allowlist). These routes are intentionally omitted from `openapi.yaml`.
 - Route-level throttling: send is tight (5/60s + 20/3600s); read routes are 20/60s + 100/3600s.

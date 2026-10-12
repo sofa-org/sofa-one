@@ -36,7 +36,7 @@ describe('ApiKeyAuthGuard', () => {
   function createGuard(keyRecords: any[], billing?: any, billingDebt?: any) {
     const prisma = {
       apiKey: {
-        findMany: jest.fn().mockResolvedValue(keyRecords),
+        findMany: jest.fn().mockResolvedValue(keyRecords.map((key) => ({ walletId: 'wallet-1', userId: 'user-1', wallet: { id: 'wallet-1', userId: 'user-1' }, ...key }))),
         update: jest.fn().mockResolvedValue({}),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
@@ -162,7 +162,7 @@ describe('ApiKeyAuthGuard', () => {
     ).resolves.toBe(true);
 
     expect(request.user).toEqual({ id: 'user-1' });
-    expect(request.apiKeyRecord).toBe(keyRecord);
+    expect(request.apiKeyRecord).toEqual(expect.objectContaining(keyRecord));
     expect(prisma.apiKey.update).toHaveBeenCalledWith({
       where: { id: 'key-1' },
       data: {
@@ -173,11 +173,45 @@ describe('ApiKeyAuthGuard', () => {
     });
   });
 
+  it.each([
+    ['null walletId', { walletId: null, wallet: { id: 'wallet-1', userId: 'user-1' } }],
+    ['missing wallet relation', { walletId: 'wallet-1', wallet: null }],
+    ['relation id mismatch', { walletId: 'wallet-1', wallet: { id: 'other-wallet', userId: 'user-1' } }],
+    ['foreign-owner relation', { walletId: 'wallet-1', wallet: { id: 'wallet-1', userId: 'other-user' } }],
+  ])('rejects a key with %s before attaching context or recording usage', async (_label, binding) => {
+    const keyRecord = {
+      id: 'key-invalid-binding',
+      apiKeyHash: 'hash-1',
+      allowedIps: [],
+      userId: 'user-1',
+      user: { id: 'user-1' },
+      ...binding,
+    };
+    const { guard, prisma, securityEvents, billing } = createGuard([keyRecord]);
+    const request: any = { headers: { 'x-api-key': rawKey }, ip: '203.0.113.10' };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate({
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).rejects.toThrow(UnauthorizedException);
+
+    expect(request.user).toBeUndefined();
+    expect(request.apiKeyRecord).toBeUndefined();
+    expect(prisma.apiKey.update).not.toHaveBeenCalled();
+    expect(securityEvents.record).not.toHaveBeenCalled();
+    expect(billing.assertAndRecordApiCall).not.toHaveBeenCalled();
+  });
+
   it('records first use when a valid API key has never been used', async () => {
     const keyRecord = {
       id: 'key-1',
       apiKeyHash: 'hash-1',
       allowedIps: [],
+      walletId: 'wallet-1',
+      userId: 'user-1',
+      wallet: { id: 'wallet-1', userId: 'user-1' },
       lastUsedAt: null,
       user: { id: 'user-1' },
     };
@@ -641,7 +675,7 @@ describe('ApiKeyAuthGuard', () => {
     };
     const prisma = {
       apiKey: {
-        findMany: jest.fn().mockResolvedValue([keyRecord]),
+        findMany: jest.fn().mockResolvedValue([{ ...keyRecord, walletId: 'wallet-1', userId: 'user-1', wallet: { id: 'wallet-1', userId: 'user-1' } }]),
         update: jest.fn().mockResolvedValue({}),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },

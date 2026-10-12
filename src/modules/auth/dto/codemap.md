@@ -1,7 +1,7 @@
 # Code Map for /src/modules/auth/dto
 
 ## Responsibility
-Validated request-body shapes for the embedded-wallet authorization and Calibur agent-key registration endpoints of the auth module. These DTOs define the contract between the frontend dashboard and the `POST /auth/embedded-wallet/*` routes.
+Validated request-body shapes for embedded-wallet authorization, agent-key registration, and API-key refresh routes.
 
 ## Design/Patterns
 - Plain NestJS DTO classes annotated with `class-validator` decorators; no inheritance or shared base class.
@@ -17,6 +17,7 @@ Validated request-body shapes for the embedded-wallet authorization and Calibur 
   - `agentExpiresAt` (optional) bounds the backend agent key lifetime.
 - `POST /auth/embedded-wallet/registration-transaction` → body validated into `AgentRegistrationTransactionDto` → fields destructured and passed to `AuthService.markAgentRegistrationTransaction(openfortUserId, chainId, txHash)`, which flips the `WalletChainAuthorization` status to `PendingRegistration` and stores `registrationTxHash`.
 - `POST /auth/embedded-wallet/registration-result` → body validated into `AgentRegistrationResultDto` → fields destructured and passed to `AuthService.markAgentRegistrationResult(openfortUserId, chainId, status, txHash)`, which (for `registered`) verifies the agent key on-chain via Openfort before persisting the final `Registered`/`RegistrationFailed` status.
+- `POST /auth/refresh-api-key` → `RefreshApiKeyDto` validates the required wallet UUID before key rotation.
 
 ## Integration
 - Consumed exclusively by `AuthController` (`src/modules/auth/auth.controller.ts`) as `@Body()` parameters on the three `POST /auth/embedded-wallet/*` routes, all guarded by `OpenfortAuthGuard` (Bearer Openfort IAM token) with route-level throttling.

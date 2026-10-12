@@ -3,6 +3,7 @@
 ## Responsibility
 Wallet operations for the SOFA ONE dashboard and public API:
 - Read-only wallet queries: deposit info, native/stablecoin balances, signing-request history, with owner-scoped wallet selection.
+- API-key wallet metadata (`GET /v1/me/wallets`) is restricted to the authenticated key's immutable wallet binding; unbound legacy keys fail closed.
 - API-key signing route with exact Polymarket CLOB `ClobAuth` bootstrap and explicitly granted CLOB V2 DepositWallet single-order EIP-712 exceptions; general message/typed-data signing remains denied.
 - Withdrawal-address allowlist management and withdrawal policy enforcement (single/daily limits, step-up, address allowlist + cooldown).
 - Withdrawal submission as a Calibur agent user operation through Openfort, with idempotency and on-chain balance pre-checks.

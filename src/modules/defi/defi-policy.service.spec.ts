@@ -112,7 +112,7 @@ describe('DefiPolicyService', () => {
     const payload = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
     const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], capabilityMode: 'custom', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
     const auth = await policy.authorizeSigning(payload, context);
-    const key = { userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
+    const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
     const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
     const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
@@ -171,7 +171,7 @@ describe('DefiPolicyService', () => {
     expect(auth.agentWalletAddress).toBe(agent.toLowerCase());
     expect((auth.payload.message as { verifyingContract: string }).verifyingContract).toBe(DEPOSIT_WALLET);
     expect(auth.typedDataDigest).toBe(polymarketWrapperDigest(auth.payload as any));
-    const key = { userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID] };
+    const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID] };
     const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
     const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
@@ -222,24 +222,44 @@ describe('DefiPolicyService', () => {
     const tx = {
       $queryRaw: jest.fn(),
       defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
-      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities }) },
+      userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities }) },
     };
     await expect(policy.assertStillAuthorized(tx as never, authorization)).resolves.toBeUndefined();
     expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: 'foreign-wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
+    await expect(policy.assertStillAuthorized(tx as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
     tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['global'] });
     await expect(policy.assertStillAuthorized(tx as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
     tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
-    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [] });
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [] });
     await expect(policy.assertStillAuthorized(tx as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
-    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
     await expect(policy.assertStillAuthorized(tx as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
-    tx.apiKey.findUnique.mockResolvedValue({ userId: 'somebody-else', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'somebody-else', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
     await expect(policy.assertStillAuthorized(tx as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
-    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
+    tx.apiKey.findUnique.mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: capabilities });
     await expect(policy.assertStillAuthorized(tx as never, { ...authorization, requestCommitment: `0x${'0'.repeat(64)}` })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     const tamperedMatch = { ...authorization, matches: [{ ...authorization.matches[0], abiHash: `0x${'0'.repeat(64)}` as `0x${string}` }, authorization.matches[1]] };
     await expect(policy.assertStillAuthorized(tx as never, tamperedMatch)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
-    expect(tx.$queryRaw).toHaveBeenCalledTimes(14);
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(16);
+  });
+
+  it('fails closed when final acceptance cannot verify the selected owned wallet', async () => {
+    const { policy } = makePolicy();
+    const authorization = await policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], ctx);
+    const baseTx = {
+      $queryRaw: jest.fn(),
+      defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode: 'custom', allowedCapabilityIds: capabilities }) },
+    };
+    await expect(policy.assertStillAuthorized(baseTx as never, authorization))
+      .rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    await expect(policy.assertStillAuthorized({
+      ...baseTx,
+      userWallet: { findFirst: jest.fn().mockResolvedValue(null) },
+    } as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
   });
 
   it('rechecks snapshot and live all/custom capability modes at final transaction acceptance', async () => {
@@ -247,7 +267,8 @@ describe('DefiPolicyService', () => {
     const makeTx = (capabilityMode: string, allowedCapabilityIds: string[]) => ({
       $queryRaw: jest.fn(),
       defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
-      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode, allowedCapabilityIds }) },
+      userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+      apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode, allowedCapabilityIds }) },
     });
     const all = await policy.authorizeContractCalls([{ to: ADDRESS, data: touch() }], { ...ctx, capabilityMode: 'all', allowedCapabilityIds: [] });
     await expect(policy.assertStillAuthorized(makeTx('all', []) as never, all)).resolves.toBeUndefined();
@@ -358,7 +379,8 @@ describe('DefiPolicyService', () => {
       const tx: any = {
         $queryRaw: jest.fn(),
         defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
-        apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [wrapFn.capabilityId] }) },
+        userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+        apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: 'user', walletId: ctx.walletId, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: [wrapFn.capabilityId] }) },
       };
       await expect(policy.assertStillAuthorized(tx, authorization)).resolves.toBeUndefined();
       tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['global'] });

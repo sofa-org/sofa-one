@@ -14,11 +14,11 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 ### `ApiKeyService` (exported, injectable)
 | Method | Purpose |
 |--------|---------|
-| `createApiKey(userId, options)` | Generate key material, validate/normalize options, persist hash + prefix, audit `api_key.created`, return raw key **once** plus metadata. |
+| `createApiKey(userId, options)` | Validate owned wallet and serialize the per-user lifecycle before quota checks; persist immutable wallet binding and audit. |
 | `listApiKeys(userId)` | Return metadata only (no hash/secret) for all keys, newest first. |
 | `revokeApiKey(keyId, userId)` | Revoke one owned key; 404 if not found, no-op if already revoked; audit `api_key.revoked`. |
 | `revokeAllKeys(userId)` | Revoke every active key; audit `api_key.revoked` per key with `reason: 'bulk_revoke'`. |
-| `rotateApiKey(userId, name)` | Atomically revoke all active keys and create a replacement; audit `api_key.revoked` (reason `rotation`) + `api_key.rotated`; return raw key once. |
+| `rotateApiKey(userId, name, walletId)` | Validate ownership before revocation in the transaction, then revoke/create atomically under the per-user lifecycle lock. |
 | `updateApiKeyCapabilities(keyId, userId, capabilityMode, allowedCapabilityIds)` | Step-up protected complete configuration replacement; audits lifecycle change. |
 | `authorizeDirectEgress(keyId, userId)` | BILL-016: step-up owned-key CAS set of `directEgressPolicyAcceptedAt`; rejects revoked/expired/frozen/non-send keys; idempotent when already set. |
 

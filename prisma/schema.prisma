@@ -173,11 +173,13 @@ model UserWallet {
 
   user                User                       @relation(fields: [userId], references: [id])
   chainAuthorizations WalletChainAuthorization[]
+  apiKeys             ApiKey[]
   securityEvents      SecurityEvent[]
   provisioningIntent  WalletProvisioningIntent?
 
   @@index([userId, frozenAt])
   @@index([userId])
+  @@unique([id, userId])
   @@map("user_wallets")
 }
 
@@ -198,6 +200,7 @@ model WalletChainAuthorization {
 model ApiKey {
   id                           String    @id @default(uuid()) @db.Uuid
   userId                       String    @map("user_id") @db.Uuid
+  walletId                     String?   @map("wallet_id") @db.Uuid
   apiKeyHash                   String    @map("api_key_hash") @db.Text
   keyPrefix                    String    @map("key_prefix") @db.VarChar(32)
   name                         String?   @db.VarChar(100)
@@ -224,6 +227,7 @@ model ApiKey {
   lastUsedUserAgent            String?   @map("last_used_user_agent") @db.VarChar(255)
 
   user            User             @relation(fields: [userId], references: [id])
+  wallet          UserWallet?      @relation(fields: [walletId, userId], references: [id, userId], onDelete: Restrict)
   signingRequests SigningRequest[]
   transactions    Transaction[]
   events          ApiKeyEvent[]

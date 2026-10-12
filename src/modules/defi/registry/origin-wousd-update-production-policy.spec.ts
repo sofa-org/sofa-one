@@ -137,9 +137,11 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
   return {
     $queryRaw: jest.fn().mockResolvedValue([]),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) },
+    userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
     apiKey: {
       findUnique: jest.fn().mockResolvedValue({
         userId: USER,
+        walletId: 'wallet',
         revoked: false,
         frozenAt: null,
         expiresAt: null,

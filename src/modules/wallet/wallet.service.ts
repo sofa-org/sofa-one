@@ -90,6 +90,7 @@ const ERC20_BALANCE_ABI = [
 
 type ApiKeySigningContext = {
   id?: string;
+  walletId?: string | null;
   keyPrefix?: string;
   name?: string | null;
   allowedIps?: string[] | null;
@@ -196,6 +197,7 @@ export class WalletService {
       throw new UnauthorizedException('API key is required for signing');
     }
     const apiKey = apiKeyRecord!;
+    if (!apiKey.walletId || (params.walletId && params.walletId !== apiKey.walletId)) throw new ForbiddenException('API key is not bound to the selected wallet');
     this.assertPermission(apiKey.canSign, 'API key is not allowed to sign messages');
     if (params.type !== 'typed_data') {
       throw new ForbiddenException('API-key signing is limited to Polymarket ClobAuth typed data');
@@ -238,7 +240,7 @@ export class WalletService {
       });
     }
 
-    const selected = await this.selectWallet(userId, params.walletId);
+    const selected = await this.selectWallet(userId, apiKey.walletId);
     const selectedForPolicy = await this.prisma.userWallet.findFirst({ where: { id: selected.id, userId }, include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } } });
     if (!selectedForPolicy) throw new NotFoundException('Wallet not found');
     this.assertWalletNotFrozen(selectedForPolicy);
@@ -512,9 +514,10 @@ export class WalletService {
   }
 
   /** Read safe wallet and chain-authorization metadata for the authenticated owner. */
-  async listApiKeyWallets(userId: string) {
+  async listApiKeyWallets(userId: string, walletId: string | null | undefined) {
+    if (!walletId) throw new UnauthorizedException('Invalid API key');
     const wallets = await this.prisma.userWallet.findMany({
-      where: { userId },
+      where: { userId, id: walletId },
       select: {
         id: true,
         walletAddress: true,

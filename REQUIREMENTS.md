@@ -27,6 +27,8 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 - New keys must store a 27-character lookup prefix (`sk_` + 24 hex chars); legacy shorter prefixes must remain verifiable.
 - Lookup must verify every matching prefix candidate to tolerate prefix collisions.
 - A user may have at most 10 active keys.
+- Every newly created API key must be immutably bound to one wallet owned by its user; a wallet may have multiple keys, while the 10-active-key limit remains per user across wallets.
+- Dashboard key creation requires an owned wallet UUID. Refresh requires `{ "walletId": "<wallet UUID>" }`, revokes all active keys across all of that user's wallets, and creates one replacement bound to that wallet; no existing key can be rebound.
 - Active key names must be non-empty and unique per user.
 - Optional expiry must be bounded to a future date within 365 days.
 - Optional IP allowlists must compare against `request.ip` after Express trust-proxy handling.
@@ -35,6 +37,7 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 ### 3.3 Public signing API
 
 - `POST /v1/wallets/sign` must require `X-API-Key` and reject dashboard IAM-only requests.
+- Signing and sending must resolve the wallet from the API key's immutable binding. An optional send `walletId` must match that binding or be rejected.
 - Signing must use the user's Openfort-managed wallet/agent context; private keys must never leave Openfort.
 - Signing requests must be audited with API-key attribution snapshots.
 - Raw hash signing is disabled; supported inputs must be validated DTOs such as messages or typed data.
@@ -44,7 +47,7 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 - `POST /v1/transactions/send` must require `X-API-Key`.
 - Requests must validate chain ID, interactions, value fields, and idempotency keys.
 - The service must persist transaction records with request hashes and API-key attribution snapshots for audit/idempotency.
-- `GET /v1/transactions/:id` must return only safe status fields for the owning API-key user.
+- `GET /v1/transactions/:id` must return only safe status fields when the key is bound to the transaction's wallet; another key for that wallet may read it, but a key bound to another wallet may not.
 - Public status responses must not include calldata, `requestHash`, or `interactionsHash`.
 
 ### 3.5 Frontend-only wallet operations

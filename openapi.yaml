@@ -23,7 +23,9 @@ info:
 
     Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
 
-    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/me/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。Wallet 列表只返回当前 key 所属用户的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
+    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/me/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。`GET /v1/me/wallets` 仅返回当前 key 绑定的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
+
+    每个新 API key 都不可变地绑定到一个钱包；一个钱包可以有多个 key，最多 10 个 active keys 的限制仍按用户跨钱包计算。公开签名和交易发送仅使用 key 绑定的钱包。发送请求可带 `walletId`，但必须与该绑定一致，否则拒绝。交易状态只可由绑定到该交易同一钱包的 key 查询；绑定其他钱包的 key 无法读取。`walletId` 仅对被迁移撤销、且用户无法唯一确定钱包的旧 key 为空。
 
     Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires explicit custom capability `polymarket:137:clob-order:v2`; `all` does not grant it. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
 
@@ -147,11 +149,11 @@ paths:
       tags: [API key]
       summary: 列出当前 API-key 用户的钱包
       description: |
-        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。只返回当前 key 所属用户的钱包安全元数据及链授权信息，不返回 Openfort 内部 ID；不包含余额，也不执行链上实时验证。
+        仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。仅返回当前 API key 不可变绑定的钱包安全元数据及链授权信息，不列出该用户的其他钱包，也不返回 Openfort 内部 ID；不包含余额，也不执行链上实时验证。
       operationId: getMyWallets
       responses:
         '200':
-          description: 当前用户的钱包安全元数据
+          description: 当前 API key 绑定钱包的安全元数据
           content:
             application/json:
               schema:
@@ -175,7 +177,7 @@ paths:
         | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
         | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData`；如同时传 `chainId` 必须一致 |
 
-        Destination-protection preflight is preserved and may deny earlier. A `walletId` may be supplied as normal request context.
+        Destination-protection preflight is preserved and may deny earlier. The key's immutable wallet binding selects the signing wallet; callers cannot select another wallet.
       operationId: signData
       requestBody:
         required: true
@@ -275,15 +277,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: 未传 `walletId` 且用户有多个 active wallet，无法确定要使用的钱包
+          description: 传入的 `walletId` 与 API key 绑定的钱包不一致。
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 statusCode: 409
-                code: WALLET_SELECTION_REQUIRED
-                message: "Specify walletId when multiple active wallets exist"
+                code: WALLET_MISMATCH
+                message: "walletId must match the API key's bound wallet"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/wallets/sign"
@@ -361,7 +363,7 @@ paths:
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
         必填 `chainId` 指定执行链；`session_key` 还要求该链必须已在开发者钱包中完成 API access authorization。必填 `idempotencyKey` 用于防止重复提交。
 
-        `walletId` 可选。省略时仅当 API key 用户恰有一个 active wallet 才能确定钱包；拥有多个钱包时必须传入属于该用户的 wallet UUID，否则返回 409。
+        交易使用 API key 不可变绑定的钱包。可选 `walletId` 仅作为一致性校验，必须等于 key 绑定的钱包 UUID；不匹配时拒绝。调用方不能选择另一个钱包。
 
         DeFi capability authorization is mandatory for generic contract-call sends: every interaction must match a catalog function capability explicitly granted to the API key, and grant/pause state is rechecked atomically before acceptance. Unknown and ungranted calls are denied. Caller controls ABI arguments and payable native value, subject to protocol behavior and independent generic transaction, destination, billing, simulation, and user-configured key-spend policies. ERC-20 approval is an independent explicit grant permitting any spender and uint256 amount, including unlimited approval; it is not automatically added or cleaned up. Catalog admission does not itself grant authority. Dashboard-only capability management is intentionally omitted from this public API spec.
 
@@ -406,15 +408,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: 未传 `walletId` 且用户有多个 active wallet，无法确定要使用的钱包
+          description: 传入的 `walletId` 与 API key 绑定的钱包不一致。
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 statusCode: 409
-                code: WALLET_SELECTION_REQUIRED
-                message: "Specify walletId when multiple active wallets exist"
+                code: WALLET_MISMATCH
+                message: "walletId must match the API key's bound wallet"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/transactions/send"
@@ -577,6 +579,7 @@ components:
           items: { type: string }
     MyWalletsResponse:
       type: object
+      description: Contains only the wallet immutably bound to the authenticating API key.
       required: [wallets]
       properties:
         wallets:
@@ -606,7 +609,7 @@ components:
         walletId:
           type: string
           format: uuid
-          description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
+          description: Optional consistency assertion; if supplied, must match the API key's immutable wallet binding.
         type:
           type: string
           enum: [typed_data]
@@ -692,7 +695,7 @@ components:
         walletId:
           type: string
           format: uuid
-          description: 可选的钱包 UUID；必须属于当前 API key 用户。省略时仅在用户恰有一个 active wallet 时可用；多钱包用户必须显式指定。
+          description: Optional consistency assertion; if supplied, must match the API key's immutable wallet binding.
         chainId:
           type: integer
           minimum: 1
@@ -823,7 +826,7 @@ components:
             - BILLING_DEBT_CHECK_UNAVAILABLE
             - RAW_HASH_SIGNING_DISABLED
             - WALLET_NOT_ACTIVE
-            - WALLET_SELECTION_REQUIRED
+            - WALLET_MISMATCH
             - INTERNAL_ERROR
             - BAD_REQUEST
             - NOT_FOUND

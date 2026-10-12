@@ -7,6 +7,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   Validate,
   ValidatorConstraint,
@@ -107,6 +108,9 @@ export class ApiKeySpendLimitsDto {
 }
 
 export class CreateApiKeyDto {
+  @IsUUID()
+  walletId!: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)

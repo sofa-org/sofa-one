@@ -51,7 +51,8 @@ function finalTx(grants = candidateIds, pausedScopeKeys: string[] = []) {
   return {
     $queryRaw: jest.fn(),
     defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) },
-    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: USER, revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
+    userWallet: { findFirst: jest.fn().mockImplementation(async ({ where }) => ({ id: where.id, userId: where.userId })) },
+    apiKey: { findUnique: jest.fn().mockResolvedValue({ userId: USER, walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: grants }) },
   };
 }
 
@@ -204,10 +205,10 @@ describe('sDAI explicit-grant policy fixture', () => {
       await expect(policy.assertStillAuthorized(finalTx(['unrelated:grant']) as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
       await expect(policy.assertStillAuthorized(finalTx(candidateIds, [`capability:${fn.capabilityId}`]) as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
       const revoked = finalTx();
-      revoked.apiKey.findUnique.mockResolvedValue({ userId: USER, revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: candidateIds });
+      revoked.apiKey.findUnique.mockResolvedValue({ userId: USER, walletId: 'wallet', revoked: true, frozenAt: null, expiresAt: null, canSendTransaction: true, allowedCapabilityIds: candidateIds });
       await expect(policy.assertStillAuthorized(revoked as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
       const frozen = finalTx();
-      frozen.apiKey.findUnique.mockResolvedValue({ userId: USER, revoked: false, frozenAt: new Date(), expiresAt: null, canSendTransaction: true, allowedCapabilityIds: candidateIds });
+      frozen.apiKey.findUnique.mockResolvedValue({ userId: USER, walletId: 'wallet', revoked: false, frozenAt: new Date(), expiresAt: null, canSendTransaction: true, allowedCapabilityIds: candidateIds });
       await expect(policy.assertStillAuthorized(frozen as never, authorization)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
       await expect(policy.assertStillAuthorized(validTx as never, { ...authorization, requestCommitment: `0x${'00'.repeat(32)}` })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
       await expect(policy.assertStillAuthorized(validTx as never, { ...authorization, executionPlan: [{ ...authorization.executionPlan[0], data: '0xdeadbeef' as Hex }] })).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });

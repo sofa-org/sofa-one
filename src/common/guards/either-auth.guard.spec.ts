@@ -37,7 +37,7 @@ describe('EitherAuthGuard API key authentication', () => {
   function createGuard(keyRecords: any[]) {
     const prisma = {
       apiKey: {
-        findMany: jest.fn().mockResolvedValue(keyRecords),
+        findMany: jest.fn().mockResolvedValue(keyRecords.map((key) => ({ walletId: 'wallet-1', userId: 'user-1', wallet: { id: 'wallet-1', userId: 'user-1' }, ...key }))),
         update: jest.fn().mockResolvedValue({}),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
@@ -98,6 +98,31 @@ describe('EitherAuthGuard API key authentication', () => {
       }),
     );
     expect(argon2.verify).toHaveBeenCalledWith('hash-1', rawKey);
+  });
+
+  it.each([
+    ['null walletId', { walletId: null, wallet: { id: 'wallet-1', userId: 'user-1' } }],
+    ['missing wallet relation', { walletId: 'wallet-1', wallet: null }],
+    ['relation id mismatch', { walletId: 'wallet-1', wallet: { id: 'other-wallet', userId: 'user-1' } }],
+    ['foreign-owner relation', { walletId: 'wallet-1', wallet: { id: 'wallet-1', userId: 'other-user' } }],
+  ])('rejects a key with %s before attaching context or recording usage', async (_label, binding) => {
+    const { guard, prisma, securityEvents } = createGuard([{
+      id: 'key-invalid-binding', apiKeyHash: 'hash-1', allowedIps: [],
+      userId: 'user-1', user: { id: 'user-1' }, ...binding,
+    }]);
+    const request: any = { headers: { 'x-api-key': rawKey }, ip: '127.0.0.1' };
+    jest.mocked(argon2.verify).mockResolvedValue(true as never);
+
+    await expect(guard.canActivate({
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any)).rejects.toThrow(UnauthorizedException);
+
+    expect(request.user).toBeUndefined();
+    expect(request.apiKeyRecord).toBeUndefined();
+    expect(prisma.apiKey.update).not.toHaveBeenCalled();
+    expect(securityEvents.record).not.toHaveBeenCalled();
   });
 
   it('succeeds with a valid bearer session and does not invoke API-key fallback', async () => {

@@ -44,7 +44,7 @@ All public routes use `X-API-Key`; these three read routes require no `can*` per
 | `POST` | `/auth/session` | Sync current Openfort IAM session to local user/wallet state |
 | `POST` | `/auth/social` | Compatibility alias for session sync |
 | `GET` | `/auth/me` | Return current user wallet/authorization state |
-| `POST` | `/auth/refresh-api-key` | Revoke active keys and issue a replacement |
+| `POST` | `/auth/refresh-api-key` | Revoke all active keys across the user's wallets and issue one replacement bound to the selected wallet |
 | `POST` | `/auth/embedded-wallet/authorize` | Bind embedded EOA and return agent registration details |
 | `POST` | `/auth/embedded-wallet/registration-transaction` | Persist submitted Calibur registration tx hash |
 | `POST` | `/auth/embedded-wallet/registration-result` | Persist final registration status |
@@ -58,6 +58,26 @@ All public routes use `X-API-Key`; these three read routes require no `can*` per
 | `PATCH` | `/v1/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
+
+### Wallet-bound API keys
+
+Each new API key is immutably bound to exactly one of its owner's wallets. A wallet may
+have multiple keys; the existing maximum of 10 active keys is per user across all wallets.
+Dashboard `POST /v1/api-keys` creation requires `walletId` as a wallet UUID owned by the
+authenticated user. The dashboard-only `POST /auth/refresh-api-key` likewise requires
+`{ "walletId": "<wallet UUID>" }`: it revokes **all** of that user's active keys across
+all wallets and creates one replacement bound to the selected wallet. It does not move or
+rebind a surviving key. Both routes remain IAM/frontend-only, and refresh keeps its
+step-up requirement.
+
+Public `POST /v1/wallets/sign` and `POST /v1/transactions/send` always resolve the
+execution wallet from the authenticated key's binding, not from caller selection. Send's
+optional `walletId` is accepted only if it equals that binding; a different wallet is
+rejected. Transaction status remains scoped to the key's bound wallet: another key bound
+to that same wallet can read it, but a key bound to a different wallet cannot. Key
+metadata exposes `walletId`; it is nullable only for legacy keys that the migration
+revoked because their owner did not have exactly one wallet row (including non-active
+rows). Legacy keys are never rebound in place.
 
 API-key capability configuration has `capabilityMode: "all" | "custom"` and
 `allowedCapabilityIds`. `all` dynamically allows all currently and subsequently active,

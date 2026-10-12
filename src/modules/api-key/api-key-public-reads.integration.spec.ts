@@ -29,6 +29,8 @@ const user = { id: 'owner-id', frozenAt: null };
 const record = {
   id: 'key-id',
   userId: user.id,
+  walletId: '00000000-0000-4000-8000-000000000001',
+  wallet: { id: '00000000-0000-4000-8000-000000000001', userId: user.id },
   apiKeyHash: 'hash',
   keyPrefix: key.slice(0, 27),
   user,
@@ -137,7 +139,7 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
       .get('/v1/me/wallets?userId=attacker')
       .set('X-API-Key', key)
       .expect(200);
-    expect(walletService.listApiKeyWallets).toHaveBeenCalledWith(user.id);
+    expect(walletService.listApiKeyWallets).toHaveBeenCalledWith(user.id, record.walletId);
     expect(JSON.stringify(response.body)).not.toMatch(/openfortAccountId|apiKeyHash/);
   });
 

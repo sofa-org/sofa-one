@@ -4,10 +4,11 @@ import { validate } from 'class-validator';
 import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './create-api-key.dto';
 
 describe('CreateApiKeyDto', () => {
-  const validateDto = (input: Record<string, unknown>) => validate(plainToInstance(CreateApiKeyDto, input));
+  const walletId = '00000000-0000-4000-8000-000000000001';
+  const validateDto = (input: Record<string, unknown>) => validate(plainToInstance(CreateApiKeyDto, { walletId, ...input }));
 
   it('trims name and accepts it after trim', async () => {
-    const dto = plainToInstance(CreateApiKeyDto, { name: '  My API Key  ' });
+    const dto = plainToInstance(CreateApiKeyDto, { walletId, name: '  My API Key  ' });
 
     expect(dto.name).toBe('My API Key');
 
@@ -90,6 +91,17 @@ describe('CreateApiKeyDto', () => {
       { name: 'a', capabilityMode: 'custom' }, { name: 'a', capabilityMode: 'all', allowedCapabilityIds: ['x'] },
       { name: 'a', allowedCapabilityIds: null },
     ]) expect(await validateDto(input as any)).not.toHaveLength(0);
+  });
+
+  it('requires a non-empty wallet UUID', async () => {
+    for (const input of [
+      { name: 'missing' },
+      { walletId: null, name: 'null' },
+      { walletId: '', name: 'empty' },
+      { walletId: 'not-a-uuid', name: 'invalid' },
+    ]) {
+      expect((await validate(plainToInstance(CreateApiKeyDto, input as any))).some((error) => error.property === 'walletId')).toBe(true);
+    }
   });
 
   it('validates PATCH full-replacement semantics and requires at least one field', async () => {

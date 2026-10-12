@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
@@ -18,9 +19,9 @@ describe('WalletService.listApiKeyWallets', () => {
 
   it('returns an empty array and uses explicit owner-scoped safe selection', async () => {
     findMany.mockResolvedValue([]);
-    await expect(service.listApiKeyWallets('owner')).resolves.toEqual({ wallets: [] });
+    await expect(service.listApiKeyWallets('owner', 'bound-wallet')).resolves.toEqual({ wallets: [] });
     expect(findMany).toHaveBeenCalledWith({
-      where: { userId: 'owner' },
+      where: { userId: 'owner', id: 'bound-wallet' },
       select: {
         id: true,
         walletAddress: true,
@@ -35,7 +36,7 @@ describe('WalletService.listApiKeyWallets', () => {
     });
   });
 
-  it('projects multiple wallets, frozen metadata and authorizations without internal fields', async () => {
+  it('projects only the bound wallet without leaking internal metadata', async () => {
     findMany.mockResolvedValue([
       {
         id: 'wallet-a',
@@ -48,15 +49,8 @@ describe('WalletService.listApiKeyWallets', () => {
           { chainId: 10n, status: 'active', expiresAt: null, registrationTxHash: 'must-not-leak' },
         ],
       },
-      {
-        id: 'wallet-b',
-        walletAddress: null,
-        status: 'pending',
-        frozenAt: null,
-        chainAuthorizations: [],
-      },
     ]);
-    const result = await service.listApiKeyWallets('owner');
+    const result = await service.listApiKeyWallets('owner', 'wallet-a');
     expect(result).toEqual({
       wallets: [
         {
@@ -66,15 +60,14 @@ describe('WalletService.listApiKeyWallets', () => {
           isFrozen: true,
           chainAuthorizations: [{ chainId: 10, status: 'active', expiresAt: null }],
         },
-        {
-          id: 'wallet-b',
-          walletAddress: null,
-          status: 'pending',
-          isFrozen: false,
-          chainAuthorizations: [],
-        },
       ],
     });
     expect(JSON.stringify(result)).not.toContain('must-not-leak');
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'owner', id: 'wallet-a' } }));
+  });
+
+  it('rejects unbound API keys without querying wallet metadata', async () => {
+    await expect(service.listApiKeyWallets('owner', null)).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(findMany).not.toHaveBeenCalled();
   });
 });

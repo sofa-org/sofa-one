@@ -10,6 +10,7 @@ import { RequireStepUp } from '../../common/decorators/step-up.decorator';
 import { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 import { AgentRegistrationResultDto } from './dto/agent-registration-result.dto';
 import { AgentRegistrationTransactionDto } from './dto/agent-registration-transaction.dto';
+import { RefreshApiKeyDto } from './dto/refresh-api-key.dto';
 
 @Controller('auth')
 @UseGuards(OpenfortAuthGuard)
@@ -59,8 +60,8 @@ export class AuthController {
   @RequireStepUp()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
   @Post('refresh-api-key')
-  async refreshApiKey(@Req() req: any) {
-    return this.authService.refreshApiKey(req.user.socialId);
+  async refreshApiKey(@Req() req: any, @Body() body: RefreshApiKeyDto) {
+    return this.authService.refreshApiKey(req.user.socialId, body.walletId);
   }
 
   /**

@@ -13,6 +13,7 @@ import {
   revokeApiKeyAuth,
   revokeAllApiKeysAuth,
   refreshApiKey as refreshApiKeyApi,
+  getMe,
   getApiErrorMessage,
   getApiBaseUrlForDisplay,
   formatApiKeyFrozenReason,
@@ -27,6 +28,7 @@ import {
   type ApiKeyCapabilityMode,
   type DefiCapability,
   type DefiCapabilityBundle,
+  type WalletInfo,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
 import { getDashboardStepUpToken } from './step-up-session';
@@ -157,6 +159,13 @@ function truncateUsageValue(value: string, maxLength = 36) {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
 }
 
+function walletLabel(wallet: WalletInfo) {
+  const address = wallet.walletAddress
+    ? `${wallet.walletAddress.slice(0, 6)}…${wallet.walletAddress.slice(-4)}`
+    : 'Address not available';
+  return `${wallet.isDefault ? 'Default wallet · ' : ''}${address}`;
+}
+
 export default function ApiKeysPage() {
   const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
   const getToken = useCallback(async () => {
@@ -167,6 +176,9 @@ export default function ApiKeysPage() {
     return token;
   }, [getAccessToken]);
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
+  const [wallets, setWallets] = useState<WalletInfo[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(true);
+  const [selectedWalletId, setSelectedWalletId] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
   const [capabilities, setCapabilities] = useState<DefiCapability[]>([]);
@@ -268,6 +280,25 @@ export default function ApiKeysPage() {
     }
   }, [getToken]);
 
+  const fetchWallets = useCallback(async () => {
+    setWalletsLoading(true);
+    try {
+      const session = await getMe(getToken);
+      const availableWallets = session.wallets?.length ? session.wallets : session.wallet ? [session.wallet] : [];
+      setWallets(availableWallets);
+      setSelectedWalletId((current) =>
+        current && availableWallets.some((wallet) => wallet.id === current)
+          ? current
+          : availableWallets.length === 1 ? availableWallets[0].id : '',
+      );
+    } catch (err: unknown) {
+      setWallets([]);
+      setActionError(`Could not load your wallets: ${getApiErrorMessage(err)}`);
+    } finally {
+      setWalletsLoading(false);
+    }
+  }, [getToken]);
+
   const fetchCapabilities = useCallback(async () => {
     setCapabilitiesLoading(true);
     setCapabilitiesError(null);
@@ -303,9 +334,10 @@ export default function ApiKeysPage() {
       return;
     }
     fetchKeys();
+    fetchWallets();
     fetchCapabilities();
     fetchBundles();
-  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, isAuthenticated, user]);
+  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, fetchWallets, isAuthenticated, user]);
 
   function startBundlePreview(mode: 'add' | 'replace', target: string, ids: string[]) {
     const bundle = bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey);
@@ -355,6 +387,10 @@ export default function ApiKeysPage() {
   }, [capabilitySearch, capabilityChainFilter, capabilityGroupFilter, capabilitySelectedOnly]);
 
   async function handleCreate() {
+    if (!selectedWalletId || !wallets.some((wallet) => wallet.id === selectedWalletId)) {
+      setActionError('Choose a wallet for this API key.');
+      return;
+    }
     if (hasReachedKeyLimit) {
       setActionError('Revoke a non-revoked API key before creating another one.');
       return;
@@ -382,6 +418,7 @@ export default function ApiKeysPage() {
       const result = await createApiKeyAuth(
         getToken,
         {
+          walletId: selectedWalletId,
           name: trimmedName,
           ...(allowedIps.length > 0 ? { allowedIps } : {}),
           ...capabilityFieldsForMode(newKeyCapabilityMode, newKeyAllowedCapabilityIds),
@@ -431,9 +468,13 @@ export default function ApiKeysPage() {
   }
 
   async function handleRefresh() {
+    if (!selectedWalletId || !wallets.some((wallet) => wallet.id === selectedWalletId)) {
+      setActionError('Choose a wallet for the replacement key.');
+      return;
+    }
     if (
       !confirm(
-        `Rotate ${occupiedKeySlots} non-revoked API key${occupiedKeySlots === 1 ? '' : 's'}? This revokes every non-revoked key (including frozen or expired), creates one replacement, and shows the new raw key only once. Frozen keys cannot be restored — save the new key securely.`,
+        `Rotate ${occupiedKeySlots} non-revoked API key${occupiedKeySlots === 1 ? '' : 's'} across ALL of your wallets? This revokes every non-revoked key (including frozen or expired), then creates one replacement bound to ${walletLabel(wallets.find((wallet) => wallet.id === selectedWalletId)!)}. This cannot be undone. The new raw key is shown only once.`,
       )
     ) {
       return;
@@ -442,7 +483,7 @@ export default function ApiKeysPage() {
     setActionError(null);
     try {
       const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      const result = await refreshApiKeyApi(getToken, stepUpToken);
+      const result = await refreshApiKeyApi(getToken, stepUpToken, selectedWalletId);
       setNewRawKey(result.apiKey);
       await fetchKeys();
     } catch (err: unknown) {
@@ -699,6 +740,18 @@ export default function ApiKeysPage() {
               Use a unique active name. The key is shown once after creation; store it in your backend secret store.
             </p>
           </div>
+          <div className="space-y-2">
+            <label htmlFor="api-key-wallet" className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Bound wallet</label>
+            {walletsLoading ? <p className="rounded-lg border border-brand-border bg-brand-bg px-4 py-2.5 text-sm text-brand-muted">Loading your wallets…</p> : wallets.length === 0 ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">No wallet is available yet. Finish wallet setup before creating or rotating an API key.</div>
+            ) : (
+              <select id="api-key-wallet" value={selectedWalletId} onChange={(event) => setSelectedWalletId(event.target.value)} className="w-full rounded-lg border border-brand-border bg-white px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent">
+                {wallets.length !== 1 && <option value="">Choose a wallet</option>}
+                {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{walletLabel(wallet)}{wallet.status ? ` · ${wallet.status}` : ''}</option>)}
+              </select>
+            )}
+            <p className="text-xs leading-5 text-brand-muted">This key will always use this wallet. Its wallet cannot be changed later.</p>
+          </div>
           <details className="space-y-2 md:col-span-2 rounded-lg border border-brand-border bg-brand-bg/50 p-3">
             <summary className="cursor-pointer text-sm font-semibold text-brand-text">Restrict by IP <span className="font-normal text-brand-muted">· optional</span></summary>
             <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
@@ -796,7 +849,7 @@ export default function ApiKeysPage() {
           <div>
             <button
               onClick={handleCreate}
-              disabled={loading || actionLoading || !newKeyName.trim() || hasReachedKeyLimit}
+              disabled={loading || walletsLoading || wallets.length === 0 || !selectedWalletId || actionLoading || !newKeyName.trim() || hasReachedKeyLimit}
               className="flex items-center justify-center gap-2 w-full rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 lg:w-auto"
             >
               <Plus className="h-4 w-4" />
@@ -976,11 +1029,14 @@ export default function ApiKeysPage() {
                     <span
                       className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${getApiKeyLifecycleBadgeClass(lifecycleStatus)}`}
                     >
-                      {statusLabel}
+                      {statusLabel}{!key.walletId ? ' · unbound' : ''}
                     </span>
-                    <span className="min-w-0 truncate text-sm text-brand-muted">
-                      <span className="font-semibold text-brand-text xl:hidden">Name: </span>
-                      {key.name || '—'}
+                    <span className="min-w-0 text-sm text-brand-muted">
+                      <span className="block truncate"><span className="font-semibold text-brand-text xl:hidden">Name: </span>{key.name || '—'}</span>
+                      {key.walletId ? (() => {
+                        const boundWallet = wallets.find((wallet) => wallet.id === key.walletId);
+                        return <span className="mt-1 block truncate text-[11px]" title={boundWallet?.walletAddress ?? key.walletId}>Wallet: {boundWallet ? walletLabel(boundWallet) : `Wallet ${key.walletId.slice(0, 8)}`}{boundWallet?.status ? ` · ${boundWallet.status}` : ''}</span>;
+                      })() : <span className="mt-1 block text-[11px] font-semibold text-amber-800">Unbound legacy key · revoked</span>}
                     </span>
                     <span className="flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[11px] font-semibold text-brand-muted sm:col-span-2 xl:col-span-1">
                       <span className="shrink-0 font-semibold text-brand-text xl:hidden">Permissions: </span>
@@ -1112,22 +1168,29 @@ export default function ApiKeysPage() {
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl space-y-2 text-sm text-red-800">
             <p>
-              Rotate all keys only if you believe existing keys were exposed or frozen. This revokes every non-revoked
-              key (including frozen or expired) and creates one replacement. Frozen keys cannot be restored.
+              Rotation revokes every non-revoked key across all of your wallets, including frozen or expired keys,
+              and creates one replacement bound to the wallet selected below. Frozen keys cannot be restored.
             </p>
             <p>
               The replacement raw key is shown once. Copy it into your backend secret store before deploying, then
               remove the old keys from every environment.
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={actionLoading}
-            className="flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-5 py-2 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Rotate All Keys
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:w-64">
+            <label htmlFor="rotate-key-wallet" className="text-[11px] font-bold uppercase tracking-widest text-red-800">Replacement wallet</label>
+            <select id="rotate-key-wallet" value={selectedWalletId} onChange={(event) => setSelectedWalletId(event.target.value)} disabled={walletsLoading || wallets.length === 0} className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-brand-text disabled:opacity-50">
+              {wallets.length !== 1 && <option value="">Choose a wallet</option>}
+              {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{walletLabel(wallet)}</option>)}
+            </select>
+            <button
+              onClick={handleRefresh}
+              disabled={actionLoading || walletsLoading || wallets.length === 0 || !selectedWalletId}
+              className="flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-5 py-2 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Rotate All Keys
+            </button>
+          </div>
         </div>
       </details>
     </DashboardPage>

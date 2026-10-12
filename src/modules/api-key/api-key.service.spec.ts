@@ -68,8 +68,11 @@ describe('ApiKeyService', () => {
     prisma.apiKey.updateMany.mockResolvedValue({ count: 1 });
     prisma.apiKeyEvent.create.mockResolvedValue({ id: 'event-1' });
     securityEvents.record.mockResolvedValue({ id: 'security-event-1' });
-    // Default FOR UPDATE lock rows empty unless a test sets them.
-    prisma.$queryRaw.mockResolvedValue([]);
+    // Default lifecycle-lock rows empty unless a test sets them.
+    prisma.$queryRaw.mockImplementation((strings: TemplateStringsArray) =>
+      strings.join('').includes('FROM "users"') ? [{ id: 'user-1' }] : [],
+    );
+    (prisma as any).userWallet = { findFirst: jest.fn().mockResolvedValue({ id: 'wallet-1' }) };
     jest.mocked(argon2.hash).mockResolvedValue('argon2-hash' as never);
   });
 
@@ -108,7 +111,7 @@ describe('ApiKeyService', () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
     const service = createService();
 
-    const result = await service.createApiKey('user-1', { name: 'Production key' });
+    const result = await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Production key' });
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
     expect(result).toEqual({
@@ -119,6 +122,7 @@ describe('ApiKeyService', () => {
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
+      walletId: 'wallet-1',
       allowedCapabilityIds: [],
       capabilityMode: 'all',
     });
@@ -162,6 +166,7 @@ describe('ApiKeyService', () => {
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
             capabilityMode: 'all',
+            walletId: 'wallet-1',
           }),
         }),
       }),
@@ -173,23 +178,23 @@ describe('ApiKeyService', () => {
   it('accepts ClobAuth only through explicit create/replace grants and leaves rotation empty', async () => {
     const capability = 'polymarket:137:clob-auth:v1';
     const service = createService();
-    await service.createApiKey('user-1', { name: 'Clob', allowedCapabilityIds: [capability] } as any);
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Clob', allowedCapabilityIds: [capability] } as any);
     expect(grants.assertGrantableInTx).toHaveBeenCalledWith(prisma, [capability]);
     prisma.$queryRaw.mockResolvedValue([{ id: 'key-1', key_prefix: 'sk_abc', name: 'Key', revoked: false, frozen_at: null, expires_at: null, allowed_capability_ids: [] }]);
     prisma.apiKey.update.mockResolvedValue({ id: 'key-1', allowedCapabilityIds: [capability] });
     await service.replaceCapabilities('key-1', 'user-1', [capability]);
     expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, [capability]);
     prisma.apiKey.findMany.mockResolvedValue([]);
-    await service.rotateApiKey('user-1', 'Rotated');
+    await service.rotateApiKey('user-1', 'Rotated', 'wallet-1');
     expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, []);
   });
 
   it('normalizes dynamic all/custom capability semantics and rejects invalid combinations', async () => {
     const service = createService();
-    await service.createApiKey('user-1', { name: 'Default all' });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Default all' });
     expect(prisma.apiKey.create.mock.calls.at(-1)[0].data).toEqual(expect.objectContaining({ capabilityMode: 'all', allowedCapabilityIds: [] }));
-    await service.createApiKey('user-1', { name: 'Explicit all', capabilityMode: 'all', allowedCapabilityIds: [] });
-    await service.createApiKey('user-1', { name: 'Empty custom', allowedCapabilityIds: [] });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Explicit all', capabilityMode: 'all', allowedCapabilityIds: [] });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Empty custom', allowedCapabilityIds: [] });
     expect(prisma.apiKey.create.mock.calls.at(-1)[0].data).toEqual(expect.objectContaining({ capabilityMode: 'custom', allowedCapabilityIds: [] }));
     for (const options of [
       { name: 'Bad null mode', capabilityMode: null },
@@ -216,7 +221,7 @@ describe('ApiKeyService', () => {
   it('rejects blank API key names', async () => {
     const service = createService();
 
-    await expect(service.createApiKey('user-1', { name: '   ' })).rejects.toBeInstanceOf(
+    await expect(service.createApiKey('user-1', { walletId: 'wallet-1', name: '   ' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
@@ -226,7 +231,7 @@ describe('ApiKeyService', () => {
     prisma.apiKey.findFirst.mockResolvedValue({ id: 'existing-key' });
     const service = createService();
 
-    await expect(service.createApiKey('user-1', { name: 'Production key' })).rejects.toBeInstanceOf(
+    await expect(service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Production key' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(prisma.apiKey.findFirst).toHaveBeenCalledWith(
@@ -244,7 +249,7 @@ describe('ApiKeyService', () => {
   it('trims names before duplicate checks and persistence', async () => {
     const service = createService();
 
-    await service.createApiKey('user-1', { name: '  Production key  ' });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: '  Production key  ' });
 
     expect(prisma.apiKey.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -266,7 +271,7 @@ describe('ApiKeyService', () => {
     prisma.apiKey.count.mockResolvedValue(10);
     const service = createService();
 
-    await expect(service.createApiKey('user-1', { name: 'Overflow key' })).rejects.toBeInstanceOf(
+    await expect(service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Overflow key' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
@@ -276,7 +281,7 @@ describe('ApiKeyService', () => {
     prisma.apiKey.count.mockResolvedValue(9);
     const service = createService();
 
-    await service.createApiKey('user-1', { name: 'Fresh key' });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Fresh key' });
 
     expect(prisma.apiKey.count).toHaveBeenCalledWith({
       where: { userId: 'user-1', revoked: false },
@@ -297,10 +302,10 @@ describe('ApiKeyService', () => {
     const service = createService();
 
     await expect(
-      service.createApiKey('user-1', { name: 'Past key', expiresAt: new Date(Date.now() - 1000) }),
+      service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Past key', expiresAt: new Date(Date.now() - 1000) }),
     ).rejects.toBeInstanceOf(BadRequestException);
     await expect(
-      service.createApiKey('user-1', {
+      service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Too long key',
         expiresAt: new Date(Date.now() + 366 * 24 * 60 * 60 * 1000),
       }),
@@ -311,7 +316,7 @@ describe('ApiKeyService', () => {
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const service = createService();
 
-    await service.createApiKey('user-1', { name: 'Short lived key', expiresAt });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Short lived key', expiresAt });
 
     expect(prisma.apiKey.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -323,7 +328,7 @@ describe('ApiKeyService', () => {
   it('stores explicit API key permissions with IP allowlist for high-risk permissions', async () => {
     const service = createService();
 
-    await service.createApiKey('user-1', {
+    await service.createApiKey('user-1', { walletId: 'wallet-1',
       name: 'Signer key',
       permissions: { canSign: true, canUseEoaExecution: true },
       allowedIps: ['203.0.113.0/24'],
@@ -519,7 +524,7 @@ describe('ApiKeyService', () => {
     ]);
     const service = createService();
 
-    const result = await service.rotateApiKey('user-1', 'Refreshed');
+    const result = await service.rotateApiKey('user-1', 'Refreshed', 'wallet-1');
 
     expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
     expect(result).toEqual({
@@ -530,6 +535,7 @@ describe('ApiKeyService', () => {
       expiresAt: new Date('2026-07-26T00:00:00.000Z'),
       createdAt: new Date('2026-04-27T00:00:00.000Z'),
       permissions: defaultPermissions,
+      walletId: 'wallet-1',
       allowedCapabilityIds: [],
       capabilityMode: 'all',
     });
@@ -567,6 +573,7 @@ describe('ApiKeyService', () => {
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
             capabilityMode: 'all',
+            walletId: 'wallet-1',
           },
         }),
       }),
@@ -592,10 +599,48 @@ describe('ApiKeyService', () => {
             permissions: defaultPermissions,
             allowedCapabilityIds: [],
             capabilityMode: 'all',
+            walletId: 'wallet-1',
           },
         }),
       }),
     );
+  });
+
+  it('rejects null or foreign wallet bindings without creating keys or revoking on rotation', async () => {
+    const service = createService();
+    (prisma as any).userWallet.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    await expect(service.createApiKey('user-1', { name: 'No wallet' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.createApiKey('user-1', { walletId: 'foreign-wallet', name: 'Foreign' })).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.rotateApiKey('user-1', 'Refreshed', 'foreign-wallet')).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, null, '', '   '])('rejects missing/empty walletId %p before any database work', async (walletId) => {
+    const service = createService();
+    await expect(service.createApiKey('user-1', { walletId, name: 'No binding' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.rotateApiKey('user-1', 'Refresh', walletId as any)).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.userWallet.findFirst).not.toHaveBeenCalled();
+    expect(prisma.apiKey.findMany).not.toHaveBeenCalled();
+    expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('uses FOR NO KEY UPDATE for the per-user lifecycle mutex', async () => {
+    const service = createService();
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Lifecycle lock' });
+    const queryCall = prisma.$queryRaw.mock.calls.find(([strings]: [TemplateStringsArray]) => strings.join('').includes('FROM "users"'));
+    expect(queryCall?.[0].join('')).toContain('FOR NO KEY UPDATE');
+    expect(queryCall?.[0].join('')).not.toContain('FOR UPDATE');
+  });
+
+  it('allows multiple API keys to bind to the same owned wallet', async () => {
+    const service = createService();
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'First key' });
+    await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Second key' });
+    expect(prisma.apiKey.create).toHaveBeenCalledTimes(2);
+    expect(prisma.apiKey.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ walletId: 'wallet-1' }) }));
+    expect(prisma.apiKey.create).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ walletId: 'wallet-1' }) }));
   });
 
   it('does not create a replacement key if rotation auditing fails', async () => {
@@ -607,7 +652,7 @@ describe('ApiKeyService', () => {
     });
     const service = createService();
 
-    await expect(service.rotateApiKey('user-1', 'Refreshed')).rejects.toThrow(
+    await expect(service.rotateApiKey('user-1', 'Refreshed', 'wallet-1')).rejects.toThrow(
       'rotation audit failed',
     );
     expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
@@ -779,7 +824,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'Signer key',
           permissions: { canSign: true },
         }),
@@ -792,7 +837,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'Tx key',
           permissions: { canSendTransaction: true },
         }),
@@ -805,7 +850,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'EOA key',
           permissions: { canUseEoaExecution: true },
         }),
@@ -817,7 +862,7 @@ describe('ApiKeyService', () => {
     it('allows read-only keys without IP allowlist', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Read-only key',
         permissions: { canReadTransactionStatus: true },
       });
@@ -828,7 +873,7 @@ describe('ApiKeyService', () => {
     it('allows default-permission keys without IP allowlist', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', { name: 'Default key' });
+      await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Default key' });
 
       expect(prisma.apiKey.create).toHaveBeenCalled();
     });
@@ -836,7 +881,7 @@ describe('ApiKeyService', () => {
     it('allows high-risk permissions when IP allowlist is provided', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Signer key',
         permissions: { canSign: true },
         allowedIps: ['203.0.113.10'],
@@ -855,7 +900,7 @@ describe('ApiKeyService', () => {
     it('allows high-risk permissions with CIDR IP allowlist', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Tx key',
         permissions: { canSendTransaction: true },
         allowedIps: ['10.0.0.0/8', '2001:db8::/32'],
@@ -879,7 +924,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'EOA key',
           permissions: { canUseEoaExecution: true },
           allowedIps: ['203.0.113.10'],
@@ -893,7 +938,7 @@ describe('ApiKeyService', () => {
     it('accepts canUseEoaExecution key with TTL within 30 days', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'EOA key',
         permissions: { canUseEoaExecution: true },
         allowedIps: ['203.0.113.10'],
@@ -907,7 +952,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'Signer key',
           permissions: { canSign: true },
           allowedIps: ['203.0.113.10'],
@@ -921,7 +966,7 @@ describe('ApiKeyService', () => {
     it('accepts canSign key with TTL within 90 days', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Signer key',
         permissions: { canSign: true },
         allowedIps: ['203.0.113.10'],
@@ -935,7 +980,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'Tx key',
           permissions: { canSendTransaction: true },
           allowedIps: ['203.0.113.10'],
@@ -949,7 +994,7 @@ describe('ApiKeyService', () => {
     it('accepts read-only key with TTL up to 365 days', async () => {
       const service = createService();
 
-      await service.createApiKey('user-1', {
+      await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'Read-only key',
         permissions: { canReadTransactionStatus: true },
         expiresAt: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000),
@@ -963,7 +1008,7 @@ describe('ApiKeyService', () => {
 
       // canSign + canUseEoaExecution → max TTL is 30 days (most restrictive)
       await expect(
-        service.createApiKey('user-1', {
+        service.createApiKey('user-1', { walletId: 'wallet-1',
           name: 'Combined key',
           permissions: { canSign: true, canUseEoaExecution: true },
           allowedIps: ['203.0.113.10'],
@@ -979,7 +1024,7 @@ describe('ApiKeyService', () => {
       const service = createService();
 
       // Default TTL is 90 days, but EOA max is 30 days → should get 30-day expiry
-      const result = await service.createApiKey('user-1', {
+      const result = await service.createApiKey('user-1', { walletId: 'wallet-1',
         name: 'EOA key',
         permissions: { canUseEoaExecution: true },
         allowedIps: ['203.0.113.10'],
@@ -993,7 +1038,7 @@ describe('ApiKeyService', () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
       const service = createService();
 
-      const result = await service.createApiKey('user-1', { name: 'Read-only key' });
+      const result = await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Read-only key' });
 
       // Default TTL for read-only is min(90 days, 365 days) = 90 days
       expect(result.expiresAt).toEqual(new Date('2026-07-26T00:00:00.000Z'));
