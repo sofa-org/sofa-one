@@ -586,10 +586,11 @@ components:
           type: array
           items:
             type: object
-            required: [id, walletAddress, status, isFrozen, chainAuthorizations]
+            required: [id, walletAddress, agentWalletAddress, status, isFrozen, chainAuthorizations]
             properties:
               id: { type: string, format: uuid }
               walletAddress: { type: string }
+              agentWalletAddress: { type: string, nullable: true, description: Signer wallet address; null when not configured. }
               status: { type: string }
               isFrozen: { type: boolean }
               chainAuthorizations:

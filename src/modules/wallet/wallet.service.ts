@@ -521,6 +521,7 @@ export class WalletService {
       select: {
         id: true,
         walletAddress: true,
+        agentWalletAddress: true,
         status: true,
         frozenAt: true,
         chainAuthorizations: {
@@ -531,9 +532,10 @@ export class WalletService {
       orderBy: { id: 'asc' },
     });
     return {
-      wallets: wallets.map(({ id, walletAddress, status, frozenAt, chainAuthorizations }) => ({
+      wallets: wallets.map(({ id, walletAddress, agentWalletAddress, status, frozenAt, chainAuthorizations }) => ({
         id,
         walletAddress,
+        agentWalletAddress: agentWalletAddress ?? null,
         status,
         isFrozen: frozenAt !== null,
         chainAuthorizations: chainAuthorizations.map(({ chainId, status: authorizationStatus, expiresAt }) => ({
