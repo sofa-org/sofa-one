@@ -41,7 +41,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 - **WithdrawalPolicy** (`withdrawal_policies`): 1:1 per user — single/daily withdrawal limits (decimal strings), `requireAddressAllowlist`, `newAddressCooldownHours` (default 24), `requireStepUp` (default true).
 - **WithdrawalAddress** (`withdrawal_addresses`): allowlisted destinations with `availableAt` cooldown; unique `(userId, address)`.
 - **UserKnownIp** (`user_known_ips`): per-user known IPs for context-change detection; unique `(userId, ip)`.
-- **StepUpChallenge** (`step_up_challenges`): hashed challenge code, `proofToken` (indexed), `verified`, `attempts`, `expiresAt`; cascade-deletes with user.
+- **StepUpChallenge** (`step_up_challenges`): random `proofToken` (indexed), `verified`, `expiresAt`; cascade-deletes with user. Unused challenge-code hash and attempt-count columns were removed; validation still only accepts verified, unexpired proofs bound to the requested user and type.
 - **UserMfaTotpCredential** (`user_mfa_totp_credentials`): 1:1 per user — `encryptedSecret`, `status` (`pending`/enabled/disabled lifecycle), `enabledAt`/`disabledAt`.
 - **UserMfaTotpRecoveryCode** (`user_mfa_totp_recovery_codes`): hashed recovery codes with `usedAt`; cascade-deletes with credential.
 

@@ -28,7 +28,7 @@ Browser-side API and blockchain helper layer for the SOFA ONE dashboard. Three m
 - **Lookup helpers**: `formatChainName`, `getExplorerAddressUrl`, `getExplorerTransactionUrl`, `getChainGasHelpUrl`, `getNativeCurrencySymbol`, `isMonadChain` (Monad chains use a different native-token/faucet flow).
 
 ## Flow
-- **Auth session**: `syncSession` (`POST /auth/session`) and `getMe` (`GET /auth/me`) return `AuthSessionResponse` (`userId`, `wallet`, optional `apiKey`). `socialLogin` is a deprecated alias of `syncSession`.
+- **Auth session**: `syncSession` (`POST /auth/session`) and `getMe` (`GET /auth/me`) return `AuthSessionResponse` (`userId`, `wallet`, optional `apiKey`).
 - **Wallet provisioning**: `authorizeEmbeddedWallet` (`POST /auth/embedded-wallet/authorize`) links an embedded wallet; `markAgentRegistrationResult` / `markAgentRegistrationTransaction` report Calibur agent-key registration outcomes.
 - **API-key refresh**: `refreshApiKey` (`POST /auth/refresh-api-key`) requires `{ walletId }` and an `X-Step-Up-Token`; replacement key is bound to that wallet. API-key create likewise requires a wallet ID, and key records expose immutable `walletId` (`null` only for unbound legacy keys).
 - **MFA/TOTP**: `getMfaStatusAuth`, `setupTotpAuth`, `enableTotpAuth`, `verifyTotpAuth`, `disableTotpAuth` under `/v1/auth/mfa/*`; verify/enable return a `proofToken` used as the step-up token for sensitive mutations.

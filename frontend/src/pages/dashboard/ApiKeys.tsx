@@ -31,13 +31,13 @@ import {
   type WalletInfo,
 } from '@/lib/api';
 import { requestStepUpToken } from './step-up';
+import { RAW_KEY_NOTICE_TTL_MS } from './wallet-helpers';
 import { getDashboardStepUpToken } from './step-up-session';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
 import { createBundlePreview, getBundlePreviewDiff, validateBundlePreview, type BundlePreviewSnapshot } from './capability-bundle-preview';
 import { capabilityCategory, capabilityGroupsForChain, validCapabilityGroupForChain } from './capability-groups';
 import { applyCapabilityUpdate, capabilityFieldsForMode, capabilityUpdateForMode, getCapabilityTechnicalLabel, previewForCapabilityModeChange } from './api-key-capabilities';
 
-const RAW_KEY_NOTICE_TTL_MS = 2 * 60 * 1000;
 const MAX_ACTIVE_API_KEYS = 10;
 const API_KEY_EXPIRY_SOON_MS = 14 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;

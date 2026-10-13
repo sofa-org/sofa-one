@@ -37,7 +37,7 @@ Unified security-event persistence, deterministic rule-based risk scoring, multi
 ## Integration
 - Imported by `AppModule`, `ApiKeyModule` (lifecycle events, passes its Prisma tx into `record()`), `AuthModule` (login/step-up events), `EoaExecutionModule` (EOA allow/deny audit), `TransactionsModule` (policy denies, simulation allow/deny, risk evaluation), `WalletModule` (withdrawal policy/high-value, signing policy, risk evaluation), and `SessionKeyModule` (session-key allow/deny/policy-drift events).
 - `RiskEvaluationService` is `@Optional()` in `TransactionsService` and `WalletService`; when absent, risk evaluation is skipped (graceful degradation). `SecurityEventService` is `@Optional()` in signing/withdrawal/session-key policy services and in `IpAllowlistService`.
-- Common guards consume events: `ApiKeyAuthGuard`, `EitherAuthGuard`, and `IpAllowlistService` (the latter is provided/exported by this module) record auth/allowlist outcomes.
+- Common guards consume events: `ApiKeyAuthGuard` and `IpAllowlistService` (the latter is provided/exported by this module) record auth/allowlist outcomes.
 - Imports `SecurityNotificationModule` so user-facing dashboard alerts can be derived from selected security events.
 - Optional SIEM integration uses `SECURITY_EVENTS_SIEM_WEBHOOK_URL` (validated as an HTTPS URL in `env.validation.ts`) and optional `SECURITY_EVENTS_SIEM_WEBHOOK_SECRET` (sent as `Authorization: Bearer ...`).
 - Prisma model `SecurityEvent` maps to `security_events` with indexes on `(userId, createdAt)`, `(apiKeyId, createdAt)`, `(walletId, createdAt)`, `(eventType, createdAt)`, `(riskLevel, createdAt)`; relations to `User`, `ApiKey`, `UserWallet` (`onDelete: SetNull`) and `SecurityNotification[]`.

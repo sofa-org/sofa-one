@@ -850,9 +850,6 @@ export async function syncSession(getToken: () => Promise<string | null>, signal
   return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
 }
 
-/** @deprecated Use syncSession. */
-export const socialLogin = syncSession;
-
 export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }

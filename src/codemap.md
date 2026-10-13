@@ -60,7 +60,7 @@ formatting, throttling, request correlation) globally.
 - **Three distinct auth models** (in `common/guards`): `OpenfortUserGuard` (dashboard, IAM
   bearer only), `ApiKeyAuthGuard` (public, `X-API-Key` only, with Argon2id prefix-candidate
   verification, freeze/IP-allowlist/suspicious-use checks, and durable billing metering),
-  and `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers).
+  with separate IAM-only and API-key-only boundaries.
   Public routes never accept IAM tokens; dashboard routes never accept API keys.
 - **Metadata-driven access control.** Thin decorators (`@Public()`, `@FrontendOnly()`,
   `@RequireStepUp()`, `@RequireApiKeyPermission()`, `@CurrentUser()`) stamp metadata that

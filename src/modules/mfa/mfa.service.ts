@@ -78,9 +78,14 @@ export class MfaService {
   }
 
   async verifyTotp(userId: string, code: string) {
+    await this.verifyFactor(userId, code);
+    return this.issueProof(userId);
+  }
+
+  private async verifyFactor(userId: string, code: string) {
     const credential = await this.getEnabledCredential(userId);
     const secret = this.decrypt(credential.encryptedSecret);
-    if (authenticator.check(code, secret)) return this.issueProof(userId);
+    if (authenticator.check(code, secret)) return;
 
     const recoveryCodes = await this.prisma.userMfaTotpRecoveryCode.findMany({
       where: { credentialId: credential.id, usedAt: null },
@@ -92,7 +97,7 @@ export class MfaService {
           where: { id: recovery.id },
           data: { usedAt: new Date() },
         });
-        return this.issueProof(userId);
+        return;
       }
     }
 
@@ -100,7 +105,7 @@ export class MfaService {
   }
 
   async disableTotp(userId: string, code: string) {
-    await this.verifyTotp(userId, code);
+    await this.verifyFactor(userId, code);
     await this.prisma.$transaction(async (tx) => {
       const credential = await tx.userMfaTotpCredential.findUniqueOrThrow({ where: { userId } });
       await tx.userMfaTotpRecoveryCode.deleteMany({ where: { credentialId: credential.id } });

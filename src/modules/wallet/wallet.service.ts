@@ -16,7 +16,6 @@ import {
   encodeFunctionData,
   formatEther,
   formatUnits,
-  hashMessage,
   http,
   type Hex,
   type PublicClient,
@@ -29,7 +28,7 @@ import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
-import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
+import type { ExecutionMode, SignDto } from './dto/sign.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
@@ -1493,13 +1492,5 @@ export class WalletService {
       throw new BadRequestException('chainId is required when signing with an API key');
     }
     return chainId;
-  }
-
-  private hashSignMessage(message: SignMessage): string {
-    if (typeof message === 'string') {
-      return hashMessage(message);
-    }
-
-    return hashMessage({ raw: message.raw });
   }
 }

@@ -435,10 +435,8 @@ model StepUpChallenge {
   id                String    @id @default(uuid()) @db.Uuid
   userId            String    @map("user_id") @db.Uuid
   type              String    @db.VarChar(20)
-  challengeCodeHash String    @map("challenge_code_hash") @db.Text
   proofToken        String?   @map("proof_token") @db.VarChar(64)
   verified          Boolean   @default(false)
-  attempts          Int       @default(0)
   expiresAt         DateTime  @map("expires_at") @db.Timestamptz()
   verifiedAt        DateTime? @map("verified_at") @db.Timestamptz()
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()

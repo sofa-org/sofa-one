@@ -6,9 +6,6 @@ jest.mock('./wallet.service', () => ({
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
-jest.mock('../../common/guards/either-auth.guard', () => ({
-  EitherAuthGuard: class EitherAuthGuard {},
-}));
 jest.mock('../../common/guards/api-key-auth.guard', () => ({
   ApiKeyAuthGuard: class ApiKeyAuthGuard {},
 }));

@@ -52,9 +52,11 @@ IAM session, then hand the caller a short-lived proof token that downstream sens
 - **Verification order**: TOTP code checked first; if it fails, recovery codes are tried (each
   normalized via `trim().toUpperCase()` before Argon2 verify). A matched recovery code is marked
   used inside the same request before a proof is issued.
-- **Proof issuance**: successful verification delegates to `StepUpService.createProof(userId,
+- **Proof issuance**: successful `verifyTotp` delegates to `StepUpService.createProof(userId,
   'totp_mfa')`, which persists a `StepUpChallenge` (verified: true, 15-minute TTL) and returns a
-  random 64-hex `proofToken`. MFA never validates proofs itself — that is `StepUpGuard`'s job.
+  random 64-hex `proofToken`. Verification of the factor (including one-time recovery-code
+  consumption) is private and shared with `disableTotp`; disable verifies without issuing a proof.
+  MFA never validates proofs itself — that is `StepUpGuard`'s job.
 - **Atomicity**: `enableTotp` and `disableTotp` wrap credential update + recovery-code
   delete/create in a single Prisma `$transaction`.
 - **DTO reuse**: `TotpCodeDto` is the body type for enable/verify/disable; the regex accepts either
@@ -75,12 +77,12 @@ IAM session, then hand the caller a short-lived proof token that downstream sens
      inserts 10 new Argon2id-hashed recovery codes.
    - Returns the plaintext `recoveryCodes` (shown once to the user).
 4. **Verify** — `POST /v1/auth/mfa/totp/verify` with a TOTP or recovery code:
-   - TOTP match → `issueProof` directly.
-   - Else iterate unused recovery codes; on Argon2 match, mark `usedAt` and `issueProof`.
+   - TOTP match → issue proof.
+   - Else iterate unused recovery codes; on Argon2 match, mark `usedAt`, then issue proof.
    - No match → `BadRequestException('Invalid TOTP or recovery code')`.
    - `issueProof` returns `{ proofToken, expiresAt }` from `StepUpService`.
 5. **Disable** — `POST /v1/auth/mfa/totp/disable`:
-   - Re-verifies the code (full `verifyTotp` path, which also issues a proof that is discarded).
+   - Re-verifies the code (including consuming a matched recovery code), without issuing a proof.
    - In one transaction: deletes recovery codes, sets status `disabled` + `disabledAt`.
    - The credential row is retained (not deleted) so the user can re-setup later.
 

@@ -7,7 +7,7 @@ Step-up authentication proofs: issue short-lived proof tokens after a successful
 - Single `StepUpService` (stateless, injects `PrismaService`) with three methods: `createProof`, `validateProof`, `cleanupExpiredChallenges`.
 - Proof tokens are `randomBytes(32).toString('hex')` (64 hex chars, matching `StepUpChallenge.proofToken VarChar(64)`).
 - Proof lifetime is fixed at `PROOF_TTL_MS = 15 * 60 * 1000` (15 minutes).
-- Each proof is persisted as a `StepUpChallenge` row (`step_up_challenges` table) with `verified: true` and `verifiedAt` set at creation time. A `challengeCodeHash` (Argon2id of a random 16-byte hex value) is stored but is never verified anywhere in this module — it is a placeholder/defense-in-depth field; the `attempts` counter is also never incremented here.
+- Each proof is persisted as a `StepUpChallenge` row (`step_up_challenges` table) with `verified: true` and `verifiedAt` set at creation time. Proof records contain no unused challenge-code hash or attempt counter. Validation requires an exact proof token/type match, `verified: true`, an unexpired row, and the requested user ID; historical unverified rows remain invalid.
 - Proofs are NOT single-use: `validateProof` only finds a matching unexpired row and does not consume/delete it, so the same token stays valid until `expiresAt`.
 - `cleanupExpiredChallenges` bulk-deletes expired rows; the code comment says it "should be called periodically (e.g., via cron job)", but no scheduler/cron wiring exists in the codebase.
 

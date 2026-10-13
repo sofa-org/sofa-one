@@ -31,7 +31,7 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 ## Design/Patterns
 
 - **Metadata-driven access control.** Decorators only stamp metadata (`SetMetadata(KEY, value)`); guards read it at request time via `Reflector.getAllAndOverride(KEY, [handler, class])`. Enforcement is always delegated to guards/services — decorators carry no business logic. Metadata keys are exported constants to avoid string duplication.
-- **Three distinct auth models kept separate.** `OpenfortUserGuard` (dashboard, IAM-bearer only), `ApiKeyAuthGuard` (public API-key routes, `X-API-Key` only), and `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers). Public routes must never accept IAM tokens; dashboard routes must never accept API keys.
+- **Two auth models kept separate.** `OpenfortUserGuard` (dashboard, IAM-bearer only) and `ApiKeyAuthGuard` (public API-key routes, `X-API-Key` only). Public routes must never accept IAM tokens; dashboard routes must never accept API keys.
 - **Prefix-candidate + Argon2 verification.** API keys are stored as Argon2id hashes; lookup uses the 27-char (and legacy 11-char) prefix as a *non-unique hint*, then verifies **every** candidate hash to avoid prefix collisions and legacy false negatives.
 - **Defense in depth.** Permissions are enforced at the guard layer *and* re-checked in services; step-up state is marked on the request (`request.stepUpVerified`) so downstream services can enforce per-user policy; error messages are sanitized at multiple boundaries.
 - **Fail-closed everywhere.** Unknown chains throw `BadRequestException`; unparseable IPs/CIDRs return `false`; Redis throttling falls back to in-memory (never fail-open); billing metering blocks the request (503) if it cannot persist.
@@ -67,4 +67,3 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 - **High-blast-radius registries.** Adding a chain to `chains/` immediately makes it valid for env/DTO validation and all downstream services — changes must be reviewed against every consumer.
 - **Do not add `FrontendOnlyGuard` to public API routes**, and do not make API-key management callable by API keys.
 - **Leaf modules must stay pure** — introducing DI/I/O into `agent`, `api-key`, `chains`, `errors`, `utils`, or `calibur` would break their import-anywhere property.
-- **`EitherAuthGuard` and `ApiKeyOnlyGuard` are currently unused in production controllers** (referenced only by specs); retained for compatibility.

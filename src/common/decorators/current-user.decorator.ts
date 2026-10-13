@@ -1,7 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 /**
- * Extracts the authenticated user (attached by EitherAuthGuard) from the request.
+ * Extracts the authenticated user attached by the route's authentication guard.
  * Usage: @CurrentUser() user  or  @CurrentUser('id') userId
  */
 export const CurrentUser = createParamDecorator(

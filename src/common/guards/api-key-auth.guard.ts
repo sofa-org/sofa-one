@@ -55,7 +55,7 @@ type ApiKeyAuthRecord = {
  *
  * This guard intentionally does not accept Bearer tokens. Dashboard/human routes
  * should use OpenfortUserGuard, while public programmatic routes should use this
- * guard directly instead of EitherAuthGuard + ApiKeyOnlyGuard.
+ * guard directly; public routes never use a combined-auth flow.
  */
 @Injectable()
 export class ApiKeyAuthGuard implements CanActivate {
