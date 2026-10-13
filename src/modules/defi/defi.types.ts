@@ -98,6 +98,7 @@ export type DefiSigningAuthorization = Readonly<{
   context: DefiExecutionContext;
   requiredPermission: 'canSign';
   capabilityId: string;
+  signingKind: 'clob_auth' | 'clob_order' | 'deposit_batch';
   chainId: 137;
   executionMode: 'eoa';
   policyHash: `0x${string}`;
@@ -107,6 +108,7 @@ export type DefiSigningAuthorization = Readonly<{
   walletAddress: string;
   agentWalletAddress: string;
   agentOpenfortAccountId: string;
+  executionWalletAddress?: string;
 }>;
 
 export type DefiDeniedAudit = Readonly<{

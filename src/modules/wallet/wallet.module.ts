@@ -14,6 +14,7 @@ import { WithdrawalDestinationModule } from '../withdrawal-destination/withdrawa
 import { DefiModule } from '../defi/defi.module';
 import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wallet-verifier.service';
 import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
+import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batch-verifier.service';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { PolymarketSigningBudgetService } from './polymarket-signing-budget.serv
     DefiModule,
   ],
   controllers: [WalletController, ApiKeyWalletController],
-  providers: [WalletService, WithdrawalPolicyService, SigningPolicyService, PolymarketDepositWalletVerifierService, PolymarketSigningBudgetService, ApiKeyAuthGuard, IpAllowlistService],
+  providers: [WalletService, WithdrawalPolicyService, SigningPolicyService, PolymarketDepositWalletVerifierService, PolymarketDepositBatchVerifierService, PolymarketSigningBudgetService, ApiKeyAuthGuard, IpAllowlistService],
 })
 export class WalletModule {}

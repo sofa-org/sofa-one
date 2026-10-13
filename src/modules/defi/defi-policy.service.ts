@@ -4,7 +4,7 @@ import { decodeFunctionData, encodeFunctionData, isAddress, keccak256, stringToH
 import { PrismaService } from '../../core/database/prisma.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, DefiSigningAuthorization, defiPauseScopeKeysForCapability } from './defi.types';
-import { DefiCatalogService } from './defi-catalog.service';
+import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
 import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
 import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
@@ -13,10 +13,15 @@ import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
 import { decodePusdWrapCall, isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from './execution/pusd-identity';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, signingPayloadDigest, validatePolymarketClobAuth } from './signing/polymarket-clob-auth';
-import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, polymarketDepositWalletAddress, polymarketWrapperDigest, validatePolymarketClobOrder } from './signing/polymarket-clob-order';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_EXCHANGES, polymarketDepositWalletAddress, polymarketWrapperDigest, validatePolymarketClobOrder } from './signing/polymarket-clob-order';
+import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type ValidatedPolymarketDepositBatch } from './signing/polymarket-deposit-batch';
 import { assertCapabilityConfiguration, hasCapability, normalizeCapabilityMode } from './capability-grants';
 
 const MAX_UINT256 = (1n << 256n) - 1n;
+
+function signingPolicyName(kind: DefiSigningAuthorization['signingKind']): string {
+  return kind === 'clob_order' ? 'polymarket-clob-order-policy:v2' : kind === 'deposit_batch' ? 'polymarket-deposit-batch-policy:v1' : 'polymarket-clob-auth-policy:v1';
+}
 
 @Injectable()
 export class DefiPolicyService {
@@ -68,21 +73,25 @@ export class DefiPolicyService {
     try {
       if ((context.capabilityMode !== undefined && context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (context.chainId !== 137 || context.executionMode !== 'eoa') this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
-      const isOrder = !!input && typeof input === 'object' && (input as { primaryType?: unknown }).primaryType === 'TypedDataSign';
-      const capabilityId = isOrder ? POLYMARKET_CLOB_ORDER_CAPABILITY_ID : POLYMARKET_CLOB_AUTH_CAPABILITY_ID;
-      if (isOrder ? context.capabilityMode !== 'custom' || !context.allowedCapabilityIds.includes(capabilityId) : !hasCapability(context.capabilityMode, context.allowedCapabilityIds, capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
-      const payload = isOrder ? validatePolymarketClobOrder(input) : validatePolymarketClobAuth(input, context.agentWalletAddress);
+      const primaryType = !!input && typeof input === 'object' ? (input as { primaryType?: unknown }).primaryType : undefined;
+      const isOrder = primaryType === 'TypedDataSign';
+      const isBatch = primaryType === 'Batch';
+      const signingKind: DefiSigningAuthorization['signingKind'] = isOrder ? 'clob_order' : isBatch ? 'deposit_batch' : 'clob_auth';
+      const capabilityId = isOrder ? POLYMARKET_CLOB_ORDER_CAPABILITY_ID : isBatch ? POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID : POLYMARKET_CLOB_AUTH_CAPABILITY_ID;
+      if (!hasCapability(context.capabilityMode, context.allowedCapabilityIds, capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context);
+      const payload = isOrder ? validatePolymarketClobOrder(input) : isBatch ? validatePolymarketDepositBatch(input) : validatePolymarketClobAuth(input, context.agentWalletAddress);
       const depositWalletAddress = isOrder ? polymarketDepositWalletAddress(payload as ReturnType<typeof validatePolymarketClobOrder>).toLowerCase() : null;
+      const executionWalletAddress = isBatch ? (payload as ValidatedPolymarketDepositBatch).message.wallet.toLowerCase() : depositWalletAddress;
       let state;
       try { state = await this.prisma.defiPolicyState.findUnique({ where: { id: 'global' } }); }
       catch { this.deny('DEFI_POLICY_UNAVAILABLE', context); }
       if (!state) this.deny('DEFI_POLICY_UNAVAILABLE', context);
-      if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${capabilityId}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
-      const policyHash = keccak256(stringToHex(isOrder ? 'polymarket-clob-order-policy:v2' : 'polymarket-clob-auth-policy:v1'));
-      const typedDataDigest = isOrder ? polymarketWrapperDigest(payload as ReturnType<typeof validatePolymarketClobOrder>) : signingPayloadDigest(payload as ReturnType<typeof validatePolymarketClobAuth>);
+      if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${capabilityId}`) || isBatch && (payload as ValidatedPolymarketDepositBatch).message.calls.some((call) => state.pausedScopeKeys.includes(`contract:137:${call.target.toLowerCase()}`))) this.deny('DEFI_CAPABILITY_PAUSED', context);
+      const policyHash = keccak256(stringToHex(signingPolicyName(signingKind)));
+      const typedDataDigest = isOrder ? polymarketWrapperDigest(payload as ReturnType<typeof validatePolymarketClobOrder>) : isBatch ? polymarketDepositBatchDigest(payload as ValidatedPolymarketDepositBatch) : signingPayloadDigest(payload as ReturnType<typeof validatePolymarketClobAuth>);
       const snapshotContext = freezeClone({ ...context, capabilityMode: normalizeCapabilityMode(context.capabilityMode), executionOwner: context.agentWalletAddress.toLowerCase(), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() }) as DefiExecutionContext;
-      const bindings = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: context.agentWalletAddress.toLowerCase(), walletAddress: context.walletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId, depositWalletAddress, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
-      return deepFreeze({ context: snapshotContext, requiredPermission: 'canSign' as const, capabilityId, chainId: 137 as const, executionMode: 'eoa' as const, policyHash, typedDataDigest, payload, bindingCommitment: keccak256(stringToHex(JSON.stringify(bindings))), walletAddress: context.walletAddress.toLowerCase(), agentWalletAddress: context.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId });
+      const bindings = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', signingKind, owner: context.agentWalletAddress.toLowerCase(), walletAddress: context.walletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId, depositWalletAddress, executionWalletAddress, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
+      return deepFreeze({ context: snapshotContext, requiredPermission: 'canSign' as const, capabilityId, signingKind, chainId: 137 as const, executionMode: 'eoa' as const, policyHash, typedDataDigest, payload, bindingCommitment: keccak256(stringToHex(JSON.stringify(bindings))), walletAddress: context.walletAddress.toLowerCase(), agentWalletAddress: context.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: context.agentOpenfortAccountId, ...(executionWalletAddress ? { executionWalletAddress } : {}) });
     } catch (error) {
       if (error instanceof DefiPolicyDenial) throw error;
       this.deny('DEFI_INVALID_PARAMETERS', context);
@@ -93,13 +102,16 @@ export class DefiPolicyService {
     const context = auth?.context;
     try {
       const isOrder = auth?.capabilityId === POLYMARKET_CLOB_ORDER_CAPABILITY_ID;
-      if (!context || !Object.isFrozen(auth) || !Object.isFrozen(auth.payload) || !Object.isFrozen(context) || !Object.isFrozen(context.allowedCapabilityIds) || (context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0) || auth.requiredPermission !== 'canSign' || ![POLYMARKET_CLOB_AUTH_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_CAPABILITY_ID].includes(auth.capabilityId) || auth.chainId !== 137 || auth.executionMode !== 'eoa' || context.chainId !== 137 || context.executionMode !== 'eoa' || context.executionOwner.toLowerCase() !== auth.agentWalletAddress.toLowerCase() || (isOrder ? context.capabilityMode !== 'custom' || !context.allowedCapabilityIds.includes(auth.capabilityId) : !hasCapability(context.capabilityMode, context.allowedCapabilityIds, auth.capabilityId))) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+      const isBatch = auth?.capabilityId === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID;
+      const signingKind: DefiSigningAuthorization['signingKind'] = isOrder ? 'clob_order' : isBatch ? 'deposit_batch' : 'clob_auth';
+      if (!context || !Object.isFrozen(auth) || !Object.isFrozen(auth.payload) || !Object.isFrozen(context) || !Object.isFrozen(context.allowedCapabilityIds) || (context.capabilityMode !== 'all' && context.capabilityMode !== 'custom') || (context.capabilityMode === 'all' && context.allowedCapabilityIds.length !== 0) || auth.requiredPermission !== 'canSign' || auth.signingKind !== signingKind || ![POLYMARKET_CLOB_AUTH_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_CAPABILITY_ID, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID].includes(auth.capabilityId) || auth.chainId !== 137 || auth.executionMode !== 'eoa' || context.chainId !== 137 || context.executionMode !== 'eoa' || context.executionOwner.toLowerCase() !== auth.agentWalletAddress.toLowerCase() || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, auth.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context);
       if (actual.type !== 'typed_data' || actual.userId !== context.userId || actual.apiKeyId !== context.apiKeyId || actual.chainId !== auth.chainId || actual.executionMode !== auth.executionMode) this.deny('DEFI_INVALID_PARAMETERS', context);
-        const typed = isOrder ? validatePolymarketClobOrder(auth.payload) : validatePolymarketClobAuth(auth.payload, auth.agentWalletAddress);
-        const expectedDigest = isOrder ? polymarketWrapperDigest(typed as ReturnType<typeof validatePolymarketClobOrder>) : signingPayloadDigest(typed as ReturnType<typeof validatePolymarketClobAuth>);
-       const depositWalletAddress = isOrder ? polymarketDepositWalletAddress(typed as ReturnType<typeof validatePolymarketClobOrder>).toLowerCase() : null;
-       const binds = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', owner: auth.agentWalletAddress.toLowerCase(), walletAddress: auth.walletAddress.toLowerCase(), agentOpenfortAccountId: auth.agentOpenfortAccountId, depositWalletAddress, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
-      if (expectedDigest !== auth.typedDataDigest || auth.bindingCommitment !== keccak256(stringToHex(JSON.stringify(binds)))) this.deny('DEFI_INVALID_PARAMETERS', context);
+      const typed = isOrder ? validatePolymarketClobOrder(auth.payload) : isBatch ? validatePolymarketDepositBatch(auth.payload) : validatePolymarketClobAuth(auth.payload, auth.agentWalletAddress);
+      const expectedDigest = isOrder ? polymarketWrapperDigest(typed as ReturnType<typeof validatePolymarketClobOrder>) : isBatch ? polymarketDepositBatchDigest(typed as ValidatedPolymarketDepositBatch) : signingPayloadDigest(typed as ReturnType<typeof validatePolymarketClobAuth>);
+        const depositWalletAddress = isOrder ? polymarketDepositWalletAddress(typed as ReturnType<typeof validatePolymarketClobOrder>).toLowerCase() : null;
+      const executionWalletAddress = isBatch ? (typed as ValidatedPolymarketDepositBatch).message.wallet.toLowerCase() : depositWalletAddress;
+      const binds = { userId: context.userId, apiKeyId: context.apiKeyId, walletId: context.walletId, chainId: 137, executionMode: 'eoa', signingKind, owner: auth.agentWalletAddress.toLowerCase(), walletAddress: auth.walletAddress.toLowerCase(), agentOpenfortAccountId: auth.agentOpenfortAccountId, depositWalletAddress, executionWalletAddress, capabilityMode: normalizeCapabilityMode(context.capabilityMode), allowedCapabilityIds: [...context.allowedCapabilityIds].sort() };
+      if (expectedDigest !== auth.typedDataDigest || isBatch && auth.executionWalletAddress?.toLowerCase() !== executionWalletAddress || auth.policyHash !== keccak256(stringToHex(signingPolicyName(signingKind))) || auth.bindingCommitment !== keccak256(stringToHex(JSON.stringify(binds)))) this.deny('DEFI_INVALID_PARAMETERS', context);
       await tx.$queryRaw`SELECT id FROM defi_policy_state WHERE id = 'global' FOR SHARE`;
       await tx.$queryRaw`SELECT id FROM api_keys WHERE id = ${context.apiKeyId}::uuid FOR UPDATE`;
       const [state, key, wallet, user] = await Promise.all([
@@ -110,11 +122,12 @@ export class DefiPolicyService {
       ]);
       if (actual.digest !== auth.typedDataDigest || actual.walletId !== context.walletId || actual.walletAddress.toLowerCase() !== auth.walletAddress || actual.agentWalletAddress.toLowerCase() !== auth.agentWalletAddress || actual.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_INVALID_PARAMETERS', context);
        const liveMode = key?.capabilityMode ?? 'custom';
-         if (!state || !key || key.userId !== context.userId || key.walletId !== context.walletId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSign || !key.canUseEoaExecution || !Array.isArray(key.allowedCapabilityIds) || !['all', 'custom'].includes(liveMode) || (liveMode === 'all' && key.allowedCapabilityIds.length !== 0) || (isOrder ? liveMode !== 'custom' || !key.allowedCapabilityIds.includes(auth.capabilityId) : !hasCapability(liveMode, key.allowedCapabilityIds, auth.capabilityId)) || !wallet || wallet.userId !== context.userId || wallet.status !== 'active' || wallet.frozenAt || !user || user.frozenAt || wallet.walletAddress?.toLowerCase() !== auth.walletAddress || wallet.agentWalletAddress?.toLowerCase() !== auth.agentWalletAddress || wallet.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
-      if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${auth.capabilityId}`)) this.deny('DEFI_CAPABILITY_PAUSED', context);
-      const descriptor = this.catalog.signingCapability(auth.capabilityId);
-       if (!descriptor || descriptor.type !== 'typed_data_sign' || descriptor.chainId !== auth.chainId || auth.policyHash !== keccak256(stringToHex(isOrder ? 'polymarket-clob-order-policy:v2' : 'polymarket-clob-auth-policy:v1'))) this.deny('DEFI_POLICY_UNAVAILABLE', context);
-        if (isOrder) validatePolymarketClobOrder(auth.payload, Date.now());
+          if (!state || !key || key.userId !== context.userId || key.walletId !== context.walletId || key.revoked || key.frozenAt || (key.expiresAt && key.expiresAt <= new Date()) || !key.canSign || !key.canUseEoaExecution || !Array.isArray(key.allowedCapabilityIds) || !['all', 'custom'].includes(liveMode) || (liveMode === 'all' && key.allowedCapabilityIds.length !== 0) || !hasCapability(liveMode, key.allowedCapabilityIds, auth.capabilityId) || !wallet || wallet.userId !== context.userId || wallet.status !== 'active' || wallet.frozenAt || !user || user.frozenAt || wallet.walletAddress?.toLowerCase() !== auth.walletAddress || wallet.agentWalletAddress?.toLowerCase() !== auth.agentWalletAddress || wallet.agentOpenfortAccountId !== auth.agentOpenfortAccountId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+        if (state.pausedScopeKeys.some((key) => key === 'global' || key === 'chain:137' || key === `capability:${auth.capabilityId}`) || isBatch && (typed as ValidatedPolymarketDepositBatch).message.calls.some((call) => state.pausedScopeKeys.includes(`contract:137:${call.target.toLowerCase()}`))) this.deny('DEFI_CAPABILITY_PAUSED', context);
+       const descriptor = this.catalog.signingCapability(auth.capabilityId);
+       if (!descriptor || descriptor.type !== 'typed_data_sign' || descriptor.chainId !== auth.chainId) this.deny('DEFI_POLICY_UNAVAILABLE', context);
+       if (isOrder) validatePolymarketClobOrder(auth.payload, Date.now());
+       else if (isBatch) validatePolymarketDepositBatch(auth.payload, Date.now());
        else validatePolymarketClobAuth(auth.payload, wallet.agentWalletAddress!, Date.now());
     } catch (error) {
       if (error instanceof DefiPolicyDenial) throw error;

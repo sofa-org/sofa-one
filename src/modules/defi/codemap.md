@@ -1,7 +1,7 @@
 # Code Map for /src/modules/defi
 
 ## Responsibility
-Function-level DeFi capability catalog, API-key capability modes (`all` or `custom` exact IDs), transaction-call binding, persistent pause state, and safe audit. `all` dynamically permits active, unpaused reviewed capabilities; `custom` permits only configured IDs, with `[]` denying catalog capabilities. Neither mode bypasses permissions or other independent policies. Users accept the risks of arguments inside an authorized fixed ABI function; this layer does not impose financial amount, recipient, deadline, slippage, asset, or spender restrictions. No arbitrary calldata or automatic dependencies are authorized. Generic signing is denied except exact Polymarket ClobAuth and CLOB V2 order signing; order signing requires its exact custom grant and never follows from `all`.
+Function-level DeFi catalog and API-key capability modes plus authorization of ClobAuth, CLOB V2 order and Polymarket DepositWallet Batch signing. The legacy `polymarket:137:deposit-wallet-setup:v1` ID remains for existing custom grants but allows arbitrary well-formed Batch calldata under strict typed-data bounds and zero native value; it is high privilege and can transfer assets or alter permissions. Batch call-target pauses are checked at preflight and atomic acceptance; global/chain/capability scopes pause the grant itself.
 
 ## Files and flow
 - `defi.types.ts`: immutable execution, capability, match, authorization, denial, database and pause types.
@@ -12,7 +12,7 @@ Function-level DeFi capability catalog, API-key capability modes (`all` or `cust
 - `catalog-tooling/codemap.md`, `coverage-tooling/codemap.md`: offline implementation maps for deterministic catalog generation and independent normalized coverage calculation. Neither tooling directory participates in runtime authorization.
 - `defi-catalog.service.ts`: injected catalog/manifest identity consistency, immutable copies, pause-aware metadata, and chain/capability lookup.
 - `defi-grant.service.ts`: capability-mode-aware membership validation and transactional active/unpaused capability checks under the global shared pause lock.
-- `defi-policy.service.ts`: chain/contract-local selector lookup, mode-aware membership and pause checks, canonical ABI decode/re-encode, uint256/payability validation, request commitment, final live-key/catalog/mode/grant/pause checks, and safe audit.
+- `defi-policy.service.ts`: chain/contract-local selector lookup for generic DeFi execution, mode-aware membership and pause checks, canonical ABI validation there, request commitment, final live-key/catalog/mode/grant/pause checks, and safe audit. DepositWallet Batch authorization separately validates exact typed-data shape, bounded calls/data, zero value, and per-call target pauses without decoding or allowlisting calldata.
 - `defi-pause.service.ts`: structured scope keys, validated operator evidence, shared/exclusive global row locks, no-op suppression, READ COMMITTED atomic audit and after-commit export.
 - `defi.module.ts`: catalog, grant, pause, policy and security-event providers; no DeFi evidence/RPC provider.
 - `defi-catalog.service.spec.ts`, `defi-policy.service.spec.ts`, `defi-grant.service.spec.ts`, `defi-pause.service.spec.ts`, `defi-pause.concurrent.pg.spec.ts`: focused contracts and database concurrency coverage.

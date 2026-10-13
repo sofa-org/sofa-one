@@ -142,7 +142,7 @@ Browser → Openfort IAM → POST /auth/session
 
 Client → POST /v1/wallets/sign (X-API-Key only)
   → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
-    → Exact ClobAuth bootstrap retains prior authorization; single CLOB V2 order signing separately requires custom polymarket:137:clob-order:v2 (never all), exact DepositWallet envelope and Polygon chain/runtime-code/signature/ERC-1271 checks; other message/typed-data signing remains denied
+    → Exact ClobAuth bootstrap and single CLOB V2 order signing retain separate policies; high-privilege DepositWallet Batch signing retains legacy polymarket:137:deposit-wallet-setup:v1 grants, accepts any bounded zero-value calls, and checks each target's pause at preflight/acceptance; deployment verification is fail-closed and this route never broadcasts
    → EOA isolation, destination allowlist/protection, risk/signing-policy and frozen-state checks remain enforced; grant, pause, live-key and bound-digest acceptance are rechecked at atomic SigningRequest creation before Openfort
 
 Client → POST /v1/transactions/send (X-API-Key only)

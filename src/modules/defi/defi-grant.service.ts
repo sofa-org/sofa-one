@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { DefiCatalogService } from './defi-catalog.service';
+import { DefiCatalogService, isPolymarketDepositWalletSetupPaused, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
 import { DefiDbClient, defiPauseScopeKeysForCapability } from './defi.types';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from './signing/polymarket-clob-auth';
 import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID } from './signing/polymarket-clob-order';
@@ -25,9 +25,10 @@ export class DefiGrantService {
     const paused = new Set<string>(state.pausedScopeKeys);
     for (const id of normalized) {
       const fn = this.catalog.functionForCapability(id);
-      if (id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID || id === POLYMARKET_CLOB_ORDER_CAPABILITY_ID) {
+      if (id === POLYMARKET_CLOB_AUTH_CAPABILITY_ID || id === POLYMARKET_CLOB_ORDER_CAPABILITY_ID || id === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID) {
         if (!this.catalog.signingCapability(id)) throw new BadRequestException({ code: 'DEFI_CAPABILITY_NOT_FOUND', message: 'Capability is not grantable' });
-        if (paused.has('global') || paused.has('chain:137') || paused.has(`capability:${id}`)) throw new BadRequestException({ code: 'DEFI_CAPABILITY_PAUSED', message: 'Capability is not grantable while paused' });
+        const setupPaused = id === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID && isPolymarketDepositWalletSetupPaused(state.pausedScopeKeys);
+        if (setupPaused || paused.has('global') || paused.has('chain:137') || paused.has(`capability:${id}`)) throw new BadRequestException({ code: 'DEFI_CAPABILITY_PAUSED', message: 'Capability is not grantable while paused' });
         continue;
       }
       if (!fn || fn.type !== 'contract_call' || fn.status !== 'active') throw new BadRequestException({ code: 'DEFI_CAPABILITY_NOT_FOUND', message: 'Capability is not grantable' });

@@ -28,7 +28,7 @@ Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` 
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth bootstrap or explicitly granted CLOB V2 DepositWallet order typed data |
+| `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth, capability-authorized CLOB V2 order, or verified DepositWallet Batch typed data |
 | `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 | `GET` | `/v1/permissions` | Return the key's configured permissions, capability mode/IDs, and constraints; configuration is not an execution guarantee |
@@ -118,16 +118,50 @@ read does not serialize against concurrent freeze writers; do not treat it as a 
 freeze exclusion. PostgreSQL race behavior and actual Openfort/Polymarket outcomes have not
 been verified. This signature is
 only for CLOB authentication bootstrap, not orders, Permit, arbitrary typed data/messages,
-hashes, or session-key signing. The separate explicitly granted V2 order lane is described
-below. No deployment or live Polymarket outcome is guaranteed.
+hashes, or session-key signing. The separate capability-authorized V2 order lane and the
+verifier-gated DepositWallet Batch lane are described below. No deployment or live
+Polymarket outcome is guaranteed.
 
 ### Polymarket CLOB V2 single-order signing
 
-The endpoint also supports continuous signing of individual Polygon (137) CLOB V2 orders; this is not a batch API. Orders require EOA mode, `canSign`, `canUseEoaExecution`, and `polymarket:137:clob-order:v2` explicitly listed under `capabilityMode: custom`. `all` does not authorize orders. Existing ClobAuth behavior remains unchanged. Only `TypedDataSign` wrapping the official V2 `Order` shape is accepted, with `signatureType: 3` (POLY_1271 / DepositWallet); V1, V3, types 0/1/2, arbitrary typed data, messages, and permits are rejected. Exchange contracts are fixed to `0xE111180000d2663C0091e4f400237545B87B996B` (ordinary) and `0xe2222d279d744050d28e00520010520000310F59` (neg-risk).
+The endpoint also supports continuous signing of individual Polygon (137) CLOB V2 orders; this is not a batch API. Orders require EOA mode, `canSign`, `canUseEoaExecution`, and an active, unpaused `polymarket:137:clob-order:v2` capability. `all` mode includes it dynamically; `custom` mode requires that exact ID in `allowedCapabilityIds`. Existing ClobAuth behavior remains unchanged. Only `TypedDataSign` wrapping the official V2 `Order` shape is accepted, with `signatureType: 3` (POLY_1271 / DepositWallet); V1, V3, types 0/1/2, arbitrary typed data, messages, and permits are rejected. Exchange contracts are fixed to `0xE111180000d2663C0091e4f400237545B87B996B` (ordinary) and `0xe2222d279d744050d28e00520010520000310F59` (neg-risk).
 
-The explicit custom grant and existing permissions/EOA safeguards gate orders. Strict protocol validation, Polygon chain 137 and runtime-code presence/stability checks, agent-signature recovery, and ERC-1271 validity are also required; these checks do not prove official-wallet ownership. Clients wrap the returned raw 65-byte signature according to the official SDK 1.2.0 layout before CLOB submission; no SDK installation is required and no envelope is returned. Existing deployments' `POLYMARKET_DEPOSIT_WALLET_BINDINGS` setting no longer has effect.
+The capability mode's active grant and existing permissions/EOA safeguards gate orders. Strict protocol validation, Polygon chain 137 and runtime-code presence/stability checks, agent-signature recovery, and ERC-1271 validity are also required; these checks do not prove official-wallet ownership. Clients wrap the returned raw 65-byte signature according to the official SDK 1.2.0 layout before CLOB submission; no SDK installation is required and no envelope is returned. Existing deployments' `POLYMARKET_DEPOSIT_WALLET_BINDINGS` setting no longer has effect.
 
 The wallet-level rolling 60-second limit is 60 accepted orders, shared across API keys and reserved atomically at acceptance; later failures still consume a slot. There is no per-order 60-second delay. General EOA enabled/canSign/canUseEoa/IP/TTL safeguards remain unchanged; ClobAuth and transaction send retain their original shared 1-per-60-second EOA limit. The validator checks positive integer amounts, side, and structure but imposes no economic/market/price/quantity limits: explicit authorization allows every structurally valid order. Timestamp ±300,000 ms is service signing freshness, not exchange order expiry. Freeze, pause, or key revocation cannot revoke an already signed order. A failed response may mean a TEE signature was generated but not returned. Real-client/CLOB/DepositWallet end-to-end acceptance has not been verified.
+
+### Polymarket DepositWallet Batch signing (legacy capability ID)
+
+`POST /v1/wallets/sign` recognizes the exact Polygon 137 DepositWallet EIP-712 `Batch`
+schema for signing only. It requires `canSign`, `canUseEoaExecution`, EOA mode, and the
+active/unpaused `polymarket:137:deposit-wallet-setup:v1` capability (`all` includes it;
+`custom` must list that exact ID). The capability ID is retained for compatibility with
+existing keys, although it now authorizes general Batch calls rather than setup-only calls.
+It does not require `canSendTransaction`, send a transaction, or submit the returned raw
+signature. An external client submits any eventual signed payload.
+
+The exact Batch schema accepts 1–32 calls, no more than 8 KiB calldata per call or 32 KiB
+total. Every call must have a valid nonzero target, even-length hexadecimal calldata (which
+may be empty), and exactly zero native value. There is no target, selector, ABI-canonicality,
+spender, or operator allowlist. Arbitrary calldata can transfer tokens, grant unlimited
+approvals, or change wallet permissions; the capability is high privilege and should only
+be granted to trusted automation. A target's own contract pause still denies that call at
+preflight and atomic acceptance. Pausing an exchange that is not a call target does not
+implicitly infer or block a spender/operator relationship.
+
+Normal EOA isolation, destination protection, risk, freeze, pause, live grant/permission,
+deadline and digest rechecks remain in force; order-only rate/budget policy is not applied.
+The verifier uses `SIMULATION_RPC_URLS__137` and fails closed if it is unavailable or
+verification fails. It pins all deployment reads to one Polygon block and retains the full
+factory/Beacon/implementation/wallet identity snapshot, including runtime hashes, proxy
+slots, predicted address, signer/id/owner, current nonce and paused state. Local evidence is
+bound to the complete typed-data digest, deadline, signer and RPC fingerprint, with a
+15-second maximum age. After TEE signing it re-probes current deployment identity and nonce,
+then calls the exact `wallet.execute` path with `eth_call` from the factory address; this is
+not an operator-gated call or a broadcast. Simulation checks whether this call would
+currently execute, but does not prove any effects were mined or will persist. This is
+signing authorization only, not a batch-send API. No real Openfort or live client
+end-to-end result is claimed.
 
 ## 4. Error contract
 
@@ -174,8 +208,9 @@ automatically added with an action or automatically cleaned up. Catalog admissio
 grant a capability. Generic message and typed-data signing are denied for all API keys,
 except the exact Polymarket CLOB `ClobAuth` bootstrap and separately granted V2 single-order
 signing described above; there is no legacy unrestricted signing path. The bootstrap requires
-explicit `polymarket:137:clob-auth:v1`; orders require explicit custom
-`polymarket:137:clob-order:v2`, `canSign`, and `canUseEoaExecution`, plus signing isolation and
+explicit `polymarket:137:clob-auth:v1`; orders require active, unpaused
+`polymarket:137:clob-order:v2` (all mode includes it; custom mode requires the exact ID),
+`canSign`, and `canUseEoaExecution`, plus signing isolation and
 destination controls.
 Dedicated dashboard withdrawal and payment flows remain separate.
 

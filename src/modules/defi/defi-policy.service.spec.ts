@@ -1,13 +1,13 @@
 import { encodeFunctionData, parseAbi } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { DefiCatalogService } from './defi-catalog.service';
+import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
 import { DefiPolicyService, buildDefiRequestCommitment } from './defi-policy.service';
 import { buildReviewedManifest } from './registry/defi-manifest';
 import { DefiChainPolicy, DefiExecutionContext, DefiInteraction, DefiPolicyDenial } from './defi.types';
 import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY, POLYMARKET_PUSD_WRAP_SCOPE } from './execution/pusd-identity';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, POLYMARKET_CLOB_AUTH_ATTESTATION } from './signing/polymarket-clob-auth';
-import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, polymarketWrapperDigest } from './signing/polymarket-clob-order';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_EXCHANGES, polymarketWrapperDigest } from './signing/polymarket-clob-order';
 
 const ABI = parseAbi(['function touch(address owner, uint256 amount)', 'function deposit(address owner, uint256 amount) payable']);
 const ADDRESS = '0x0000000000000000000000000000000000000001';
@@ -25,6 +25,22 @@ const ctx: DefiExecutionContext = { userId: 'user', apiKeyId: '00000000-0000-400
 const touch = (owner: `0x${string}` = OWNER as `0x${string}`, amount = 7n) => encodeFunctionData({ abi: ABI, functionName: 'touch', args: [owner, amount] });
 const deposit = (owner: `0x${string}` = OWNER as `0x${string}`, amount = 7n) => encodeFunctionData({ abi: ABI, functionName: 'deposit', args: [owner, amount] });
 const orderPayload = (timestamp = Date.now()) => ({ domain: { name: 'Polymarket CTF Exchange', version: '2', chainId: 137, verifyingContract: '0xe111180000d2663c0091e4f400237545b87b996b' }, types: { Order: [{ name: 'salt', type: 'uint256' }, { name: 'maker', type: 'address' }, { name: 'signer', type: 'address' }, { name: 'tokenId', type: 'uint256' }, { name: 'makerAmount', type: 'uint256' }, { name: 'takerAmount', type: 'uint256' }, { name: 'side', type: 'uint8' }, { name: 'signatureType', type: 'uint8' }, { name: 'timestamp', type: 'uint256' }, { name: 'metadata', type: 'bytes32' }, { name: 'builder', type: 'bytes32' }], TypedDataSign: [{ name: 'contents', type: 'Order' }, { name: 'name', type: 'string' }, { name: 'version', type: 'string' }, { name: 'chainId', type: 'uint256' }, { name: 'verifyingContract', type: 'address' }, { name: 'salt', type: 'bytes32' }] }, primaryType: 'TypedDataSign', message: { contents: { salt: '1', maker: DEPOSIT_WALLET, signer: DEPOSIT_WALLET, tokenId: '123', makerAmount: '200', takerAmount: '100', side: 0, signatureType: 3, timestamp: String(timestamp), metadata: `0x${'11'.repeat(32)}`, builder: `0x${'22'.repeat(32)}` }, name: 'DepositWallet', version: '1', chainId: 137, verifyingContract: DEPOSIT_WALLET, salt: `0x${'00'.repeat(32)}` } });
+const batchPayload = (deadline = Math.floor(Date.now() / 1000) + 120) => ({
+  domain: { name: 'DepositWallet', version: '1', chainId: 137, verifyingContract: OWNER },
+  types: { Call: [{ name: 'target', type: 'address' }, { name: 'value', type: 'uint256' }, { name: 'data', type: 'bytes' }], Batch: [{ name: 'wallet', type: 'address' }, { name: 'nonce', type: 'uint256' }, { name: 'deadline', type: 'uint256' }, { name: 'calls', type: 'Call[]' }] },
+  primaryType: 'Batch',
+  message: { wallet: OWNER, nonce: '7', deadline: String(deadline), calls: [
+    { target: '0x2222222222222222222222222222222222222222', value: '0', data: '0xdeadbeef' },
+    { target: '0x3333333333333333333333333333333333333333', value: '0', data: '0x' },
+  ] },
+});
+const freezeTestValue = <T>(value: T): T => {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.values(value as object).forEach(freezeTestValue);
+  }
+  return value;
+};
 const manifest = buildReviewedManifest([{ chains: catalog }]);
 const makePolicy = (pausedScopeKeys: string[] = []) => {
   const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) } };
@@ -134,6 +150,8 @@ describe('DefiPolicyService', () => {
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     tx.apiKey.findUnique.mockResolvedValue({ ...key, canUseEoaExecution: false });
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    tx.apiKey.findUnique.mockResolvedValue({ ...key, canSign: false });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
     tx.apiKey.findUnique.mockResolvedValue(key);
     tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`] });
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
@@ -160,7 +178,7 @@ describe('DefiPolicyService', () => {
     await expect(policy.authorizeSigning(input, { ...base, capabilityMode: 'custom' } as any)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
   });
 
-  it('authorizes only explicitly granted CLOB orders and binds the full TypedDataSign wrapper digest', async () => {
+  it('authorizes CLOB orders in all mode or by exact custom grant and binds the full TypedDataSign wrapper digest', async () => {
     const { policy, prisma } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
     const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID], agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
@@ -176,7 +194,11 @@ describe('DefiPolicyService', () => {
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
     const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
-    await expect(policy.authorizeSigning(payload, { ...context, capabilityMode: 'all', allowedCapabilityIds: [] })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    const allContext = { ...context, capabilityMode: 'all', allowedCapabilityIds: [] };
+    const allAuth = await policy.authorizeSigning(payload, allContext);
+    const allKey = { ...key, capabilityMode: 'all', allowedCapabilityIds: [] };
+    tx.apiKey.findUnique.mockResolvedValue(allKey);
+    await expect(policy.assertSigningStillAuthorized(tx, allAuth, actual)).resolves.toBeUndefined();
     await expect(policy.authorizeSigning(payload, { ...context, allowedCapabilityIds: [] })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
     const altered = JSON.parse(JSON.stringify(auth));
     altered.payload.message.contents.takerAmount = '101';
@@ -193,7 +215,7 @@ describe('DefiPolicyService', () => {
     altered.bindingCommitment = `0x${'00'.repeat(32)}`;
     await expect(policy.assertSigningStillAuthorized(tx, altered, actual)).rejects.toBeInstanceOf(DefiPolicyDenial);
     await expect(policy.assertSigningStillAuthorized(tx, auth, { ...actual, agentOpenfortAccountId: 'other' })).rejects.toBeInstanceOf(DefiPolicyDenial);
-    for (const liveKey of [{ ...key, capabilityMode: 'all', allowedCapabilityIds: [] }, { ...key, revoked: true }, { ...key, frozenAt: new Date() }]) {
+    for (const liveKey of [{ ...key, capabilityMode: 'custom', allowedCapabilityIds: [] }, { ...key, revoked: true }, { ...key, frozenAt: new Date() }]) {
       tx.apiKey.findUnique.mockResolvedValue(liveKey);
       await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toBeInstanceOf(DefiPolicyDenial);
     }
@@ -205,6 +227,84 @@ describe('DefiPolicyService', () => {
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toBeInstanceOf(DefiPolicyDenial);
     clock.mockRestore();
     expect(prisma.defiPolicyState.findUnique).toHaveBeenCalled();
+  });
+
+  it('authorizes arbitrary well-formed zero-value Batch calls under all or the exact legacy capability', async () => {
+    const { policy, prisma } = makePolicy();
+    prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
+    const agent = '0x2222222222222222222222222222222222222222';
+    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const payload = batchPayload();
+    payload.message.calls[0].target = OTHER;
+    const all = await policy.authorizeSigning(payload, base);
+    expect(all).toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', executionWalletAddress: OWNER.toLowerCase() });
+    const custom = await policy.authorizeSigning(payload, { ...base, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID] });
+    expect(custom.typedDataDigest).toBe(all.typedDataDigest);
+    await expect(policy.authorizeSigning(payload, { ...base, capabilityMode: 'custom' })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    for (const exchange of POLYMARKET_CLOB_ORDER_EXCHANGES) {
+      prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`contract:137:${exchange}`] });
+      await expect(policy.authorizeSigning(payload, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+    }
+    prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
+
+    const transfer = batchPayload();
+    transfer.message.calls = [{ target: OTHER, value: '0', data: encodeFunctionData({ abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'transfer', args: [OWNER, 10n] }) }];
+    await expect(policy.authorizeSigning(transfer, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+
+    const unrestrictedApproval = batchPayload();
+    unrestrictedApproval.message.calls = [{ target: OTHER, value: '0', data: encodeFunctionData({ abi: [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'value', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'approve', args: [OWNER, (1n << 256n) - 1n] }) }];
+    await expect(policy.authorizeSigning(unrestrictedApproval, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+
+    const nonCanonicalAbi = batchPayload();
+    const approval = encodeFunctionData({ abi: [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'value', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'approve', args: [OWNER, 1n] });
+    nonCanonicalAbi.message.calls = [{ target: OTHER, value: '0', data: `${approval}00` }];
+    await expect(policy.authorizeSigning(nonCanonicalAbi, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+
+    const positiveValue = batchPayload();
+    positiveValue.message.calls[0].value = '1';
+    await expect(policy.authorizeSigning(positiveValue, base)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+
+    const arbitraryPausedTarget = batchPayload();
+    arbitraryPausedTarget.message.calls[0].target = OTHER;
+    prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`contract:137:${OTHER}`] });
+    await expect(policy.authorizeSigning(arbitraryPausedTarget, base)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+  });
+
+  it('atomically rechecks batch deadline, live permissions, capability mode, key state, digest and target contract pauses', async () => {
+    const { policy } = makePolicy();
+    const agent = '0x2222222222222222222222222222222222222222';
+    const setupContext = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const payload = batchPayload();
+    payload.message.calls[0].target = OTHER;
+    const auth = await policy.authorizeSigning(payload, setupContext);
+    const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all', allowedCapabilityIds: [] };
+    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
+    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
+    for (const liveKey of [
+      { ...key, canSign: false },
+      { ...key, canUseEoaExecution: false },
+      { ...key, capabilityMode: 'custom', allowedCapabilityIds: [] },
+      { ...key, frozenAt: new Date() },
+      { ...key, revoked: true },
+      { ...key, expiresAt: new Date(Date.now() - 1_000) },
+    ]) {
+      tx.apiKey.findUnique.mockResolvedValue(liveKey);
+      await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    }
+    tx.apiKey.findUnique.mockResolvedValue(key);
+    tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`contract:137:${OTHER}`] });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_PAUSED' } });
+    tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
+    const tamperedPayload = JSON.parse(JSON.stringify(auth.payload));
+    tamperedPayload.message.calls[0].data = '0x1234567890';
+    const tamperedAuth = Object.freeze({ ...auth, payload: freezeTestValue(tamperedPayload) }) as any;
+    await expect(policy.assertSigningStillAuthorized(tx, tamperedAuth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    await expect(policy.assertSigningStillAuthorized(tx, auth, { ...actual, digest: `0x${'00'.repeat(32)}` })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 300_000);
+    await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).rejects.toMatchObject({ audit: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    clock.mockRestore();
   });
 
   it('fails closed when pause state is absent', async () => {

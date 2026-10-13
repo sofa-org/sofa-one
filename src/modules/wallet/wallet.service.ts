@@ -44,8 +44,11 @@ import { BillingDebtService } from '../billing/billing-debt.service';
 import { DefiPolicyService, DefiPolicyDenial } from '../defi';
 import { validatePolymarketClobOrder, polymarketOrderDigest, polymarketWrapperDigest, type ValidatedPolymarketOrder } from '../defi/signing/polymarket-clob-order';
 import { buildPolymarketPoly1271Envelope } from '../defi/signing/polymarket-poly1271-envelope';
+import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type ValidatedPolymarketDepositBatch } from '../defi/signing/polymarket-deposit-batch';
 import { PolymarketDepositWalletVerifierService, type DepositWalletEvidence } from './polymarket-deposit-wallet-verifier.service';
 import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
+import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batch-verifier.service';
+import type { PolymarketDepositBatchEvidence } from './polymarket-deposit-batch-verifier.types';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -130,6 +133,7 @@ export class WalletService {
     private readonly securityEvents?: SecurityEventService,
     @Optional() private readonly polymarketVerifier?: PolymarketDepositWalletVerifierService,
     @Optional() private readonly polymarketBudget?: PolymarketSigningBudgetService,
+    @Optional() private readonly polymarketBatchVerifier?: PolymarketDepositBatchVerifierService,
   ) {}
 
   private getPublicClient(chainId: number): PublicClient {
@@ -199,7 +203,7 @@ export class WalletService {
     if (!apiKey.walletId || (params.walletId && params.walletId !== apiKey.walletId)) throw new ForbiddenException('API key is not bound to the selected wallet');
     this.assertPermission(apiKey.canSign, 'API key is not allowed to sign messages');
     if (params.type !== 'typed_data') {
-      throw new ForbiddenException('API-key signing is limited to Polymarket ClobAuth typed data');
+      throw new ForbiddenException('API-key signing is limited to Polymarket ClobAuth typed data, V2 orders, and verifier-approved setup Batch typed data');
     }
 
     const resolvedChainId = this.resolveSigningChainId(params);
@@ -210,8 +214,11 @@ export class WalletService {
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(params.executionMode);
     const isPolymarketOrder = params.typedData?.primaryType === 'TypedDataSign';
+    const isPolymarketDepositBatch = params.typedData?.primaryType === 'Batch';
     if (isPolymarketOrder && (chainId !== 137 || executionMode !== 'eoa')) throw new ForbiddenException('Polymarket order signing requires EOA mode on Polygon');
+    if (isPolymarketDepositBatch && (chainId !== 137 || executionMode !== 'eoa')) throw new ForbiddenException('Polymarket DepositWallet Batch signing requires EOA mode on Polygon');
     const orderPayload: ValidatedPolymarketOrder | undefined = isPolymarketOrder ? validatePolymarketClobOrder(params.typedData) : undefined;
+    const batchPayload: ValidatedPolymarketDepositBatch | undefined = isPolymarketDepositBatch ? validatePolymarketDepositBatch(params.typedData) : undefined;
     const policyContext = {
       userId,
       chainId,
@@ -246,7 +253,7 @@ export class WalletService {
     if (selectedForPolicy.status !== 'active' || !selectedForPolicy.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${selectedForPolicy.status})`);
     let signingAuthorization: Awaited<ReturnType<DefiPolicyService['authorizeSigning']>>;
     try {
-      signingAuthorization = await this.defiPolicy.authorizeSigning(orderPayload ?? params.typedData, {
+      signingAuthorization = await this.defiPolicy.authorizeSigning(batchPayload ?? orderPayload ?? params.typedData, {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: selectedForPolicy.id, chainId, executionMode,
         executionOwner: executionMode === 'session_key' ? selectedForPolicy.walletAddress! : selectedForPolicy.agentWalletAddress!,
@@ -330,9 +337,14 @@ export class WalletService {
 
     const data = signingAuthorization.typedDataDigest;
     let depositEvidence: DepositWalletEvidence | undefined;
+    let batchEvidence: PolymarketDepositBatchEvidence | undefined;
     if (isPolymarketOrder) {
       if (!this.polymarketVerifier || !this.polymarketBudget || !orderPayload) throw new ServiceUnavailableException('Polymarket order signing is unavailable');
       depositEvidence = await this.polymarketVerifier.verify(activeWallet.agentWalletAddress!, orderPayload);
+    }
+    if (isPolymarketDepositBatch) {
+      if (!this.polymarketBatchVerifier || !batchPayload) throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
+      batchEvidence = await this.polymarketBatchVerifier.verify(batchPayload, activeWallet.agentWalletAddress!);
     }
 
     // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
@@ -356,6 +368,7 @@ export class WalletService {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
         if (isPolymarketOrder) await this.polymarketBudget!.acquireWalletLock(txClient, activeWallet.id);
         if (isPolymarketOrder) this.polymarketVerifier!.assertFresh(depositEvidence!, activeWallet.agentWalletAddress!, orderPayload!);
+        if (isPolymarketDepositBatch) this.polymarketBatchVerifier!.assertFresh(batchEvidence!, batchPayload!, activeWallet.agentWalletAddress!);
         const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
         if (protectionOn) {
           throw new DeferredSigningDestinationProtectionDenial(
@@ -437,6 +450,14 @@ export class WalletService {
         if (finalEvidence.codeHash.toLowerCase() !== depositEvidence.codeHash.toLowerCase()) throw new Error('deposit wallet code changed');
         await this.polymarketVerifier!.verify1271(orderPayload, polymarketOrderDigest(orderPayload), envelope);
         signature = rawSignature;
+      } else if (isPolymarketDepositBatch) {
+        if (!batchPayload || !batchEvidence) throw new Error('batch evidence unavailable');
+        const recovered = await recoverAddress({ hash: polymarketDepositBatchDigest(batchPayload), signature: rawSignature as Hex });
+        if (recovered.toLowerCase() !== activeWallet.agentWalletAddress!.toLowerCase()) throw new Error('signer mismatch');
+        await this.polymarketBatchVerifier!.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
+        await this.polymarketBatchVerifier!.verifySignature(batchPayload, activeWallet.agentWalletAddress!, rawSignature as Hex, batchEvidence);
+        this.polymarketBatchVerifier!.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
+        signature = rawSignature;
       } else {
       signature =
         executionMode === 'session_key'
@@ -454,16 +475,28 @@ export class WalletService {
           executionMode,
           apiKeyPrefix: apiKey.keyPrefix,
         }),
-        isPolymarketOrder ? undefined : err instanceof Error ? err.stack : undefined,
+        isPolymarketOrder || isPolymarketDepositBatch ? undefined : err instanceof Error ? err.stack : undefined,
       );
       await this.updateSigningRequestStatus(signingRequest.id, 'failed');
       if (isPolymarketOrder) {
         throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket order signing could not be verified' });
       }
+      if (isPolymarketDepositBatch) {
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
+      }
       throw err;
     }
 
     await this.updateSigningRequestStatus(signingRequest.id, 'signed');
+
+    if (isPolymarketDepositBatch && batchPayload && batchEvidence) {
+      try {
+        this.polymarketBatchVerifier!.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
+      } catch {
+        await this.updateSigningRequestStatus(signingRequest.id, 'failed');
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
+      }
+    }
 
     this.logger.log(
       this.logContext({

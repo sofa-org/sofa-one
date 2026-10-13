@@ -27,7 +27,7 @@ info:
 
     每个新 API key 都不可变地绑定到一个钱包；一个钱包可以有多个 key，最多 10 个 active keys 的限制仍按用户跨钱包计算。公开签名和交易发送仅使用 key 绑定的钱包。发送请求可带 `walletId`，但必须与该绑定一致，否则拒绝。交易状态只可由绑定到该交易同一钱包的 key 查询；绑定其他钱包的 key 无法读取。`walletId` 仅对被迁移撤销、且用户无法唯一确定钱包的旧 key 为空。
 
-    Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires explicit custom capability `polymarket:137:clob-order:v2`; `all` does not grant it. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
+    Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires active, unpaused capability `polymarket:137:clob-order:v2`: `all` includes it dynamically, while `custom` requires the exact ID. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
 
     ## 支持的链
 
@@ -83,7 +83,7 @@ servers:
 
 tags:
   - name: Signing
-    description: 仅限显式授权的 Polymarket ClobAuth bootstrap 或 CLOB V2 单订单 EIP-712；不支持通用消息/typed-data/hash 签名
+    description: 仅限精确 Polymarket ClobAuth、CLOB V2 单订单或 verifier-gated DepositWallet Batch EIP-712 签名；不支持通用消息/typed-data/hash 签名或通过该路由发送交易
   - name: Transactions
     description: 交易 — 提交原始交易
 
@@ -164,11 +164,11 @@ paths:
   /v1/wallets/sign:
     post:
       tags: [Signing]
-      summary: API-key signing (Polymarket ClobAuth or explicitly granted CLOB V2 single order)
+      summary: API-key signing (Polymarket ClobAuth, CLOB V2 single order, or verifier-gated DepositWallet Batch)
       description: |
         One signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
 
-        ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring the explicit custom `polymarket:137:clob-order:v2` grant; `all` does not grant it. See the order example and API.md for budget and validation constraints. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data, or session-key signing is supported. EOA isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No deployment or live Polymarket outcome is guaranteed.
+        ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring active, unpaused `polymarket:137:clob-order:v2`: `all` includes it dynamically and `custom` requires the exact ID. DepositWallet Batch signing retains the legacy `polymarket:137:deposit-wallet-setup:v1` capability ID for compatibility (`all` includes it; `custom` requires the exact ID), plus `canSign`, `canUseEoaExecution`, and EOA mode; it never sends transactions or requires `canSendTransaction`. It accepts any well-formed call target and calldata within the exact Batch schema/size bounds, but every call's native value must be zero. There is no target/function/ABI-canonicality/spender/operator allowlist; this high-privilege signature can transfer tokens, grant approvals, or change wallet permissions. Pauses on actual call targets are checked before signing and at atomic acceptance; unrelated spender/operator pauses are not inferred. Its verifier uses configured `SIMULATION_RPC_URLS__137`, binds full block-pinned deployment identity evidence to digest/deadline/signer/RPC fingerprint, re-probes current nonce and pause state, then performs non-broadcast `wallet.execute` eth_call from the factory after TEE signer recovery. Missing RPC or failed verification is rejected. Simulation is not proof that effects were mined or will persist. See API.md for scope and limitations. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data outside these exact lanes, or session-key signing is supported. EOA isolation, destination protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No live Openfort/client end-to-end outcome is claimed.
 
         Dashboard-only withdrawal and payment execution are separate flows and are not affected.
 
@@ -221,7 +221,7 @@ paths:
                       nonce: 0
                       message: "This message attests that I control the given wallet"
               polymarketOrder:
-                summary: Single Polygon CLOB V2 DepositWallet order (explicit custom grant required)
+                summary: Single Polygon CLOB V2 DepositWallet order (active capability required)
                 value:
                   type: typed_data
                   executionMode: eoa
@@ -306,7 +306,7 @@ paths:
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/wallets/sign"
         '200':
-          description: Successful ClobAuth or single-order signature; raw 65-byte EOA signature only (not an order submission).
+          description: Successful verifier-approved signing; raw 65-byte EOA signature only (no transaction/order submission).
           content:
             application/json:
             schema:
@@ -334,7 +334,8 @@ paths:
         '503':
           description: |
             无法安全读取提现地址保护策略，因此拒绝签名（fail closed）。
-            稳定码 `WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE`。
+            DepositWallet Batch 配置的 Polygon RPC 不可用或部署/签名验证失败时也会 fail closed。
+            稳定码包括 `WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE` 和 `POLYMARKET_SIGNING_FAILED`。
           content:
             application/json:
               schema:
