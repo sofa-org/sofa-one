@@ -134,7 +134,7 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
     userId = user.id;
     const wallet = await prismaA.userWallet.create({ data: { userId, walletAddress: `0x${suiteId.padEnd(40, '1').slice(0, 40)}`, status: 'active' } });
     walletId = wallet.id;
-    const key = await prismaA.apiKey.create({ data: { userId, apiKeyHash: 'test-hash', keyPrefix: `sk_${suiteId.padEnd(24, 'a').slice(0, 24)}`, name: 'DeFi PG test', allowedIps: [], canSendTransaction: true, allowedCapabilityIds: [capabilityId], directEgressPolicyAcceptedAt: new Date(), expiresAt: new Date(Date.now() + 86_400_000) } });
+    const key = await prismaA.apiKey.create({ data: { userId, walletId: wallet.id, apiKeyHash: 'test-hash', keyPrefix: `sk_${suiteId.padEnd(24, 'a').slice(0, 24)}`, name: 'DeFi PG test', allowedIps: [], canSendTransaction: true, capabilityMode: 'custom', allowedCapabilityIds: [capabilityId], directEgressPolicyAcceptedAt: new Date(), expiresAt: new Date(Date.now() + 86_400_000) } });
     keyId = key.id;
     const context = { userId, apiKeyId: keyId, walletId, chainId: 8453, executionMode: 'session_key', executionOwner: address, allowedCapabilityIds: [capabilityId] };
     const interactions = [Object.freeze({ to: address, data: encodeFunctionData({ abi: [abi], functionName: 'ping', args: [1n] }) as `0x${string}`, value: '0' })];
@@ -281,7 +281,7 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
     }
     await settled;
     if (replacingError) throw replacingError;
-    expect(replacingResult).toEqual({ id: keyId, allowedCapabilityIds: [] });
+    expect(replacingResult).toEqual({ id: keyId, capabilityMode: 'custom', allowedCapabilityIds: [] });
     await expect(prismaA.$transaction((tx) => policy.assertStillAuthorized(tx, auth), { isolationLevel: 'ReadCommitted' })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
   });
 
@@ -336,7 +336,7 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
       const replacement = await replacementOutcome;
       if ('error' in replacement) throw replacement.error;
       expect(result.created).toBe(true);
-      expect(replacement.value).toEqual({ id: keyId, allowedCapabilityIds: [] });
+      expect(replacement.value).toEqual({ id: keyId, capabilityMode: 'custom', allowedCapabilityIds: [] });
       await expect(accept()).rejects.toMatchObject({ response: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
     } finally {
       releaseAcceptance.resolve();

@@ -31,8 +31,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
   it('waits on the actual destination advisory lock and denies after concurrent recipient removal', async () => {
     const suffix = randomUUID().replace(/-/g, '');
     const user = await prisma.user.create({ data: { socialProvider: 'google', socialId: `pusd_race_${suffix}`, email: `pusd_${suffix}@example.test` } });
+    const wallet = await prisma.userWallet.create({ data: {
+      userId: user.id, walletAddress: `0x${suffix.padEnd(40, 'a').slice(0, 40)}`, status: 'active',
+    } });
     const key = await prisma.apiKey.create({ data: {
-      userId: user.id, apiKeyHash: 'test-hash-not-used', keyPrefix: `sk_${suffix.slice(0, 24)}`,
+      userId: user.id, walletId: wallet.id, apiKeyHash: 'test-hash-not-used', keyPrefix: `sk_${suffix.slice(0, 24)}`,
       canSendTransaction: true, canSign: false, canReadTransactionStatus: true, canUseEoaExecution: false,
       allowedIps: [], directEgressPolicyAcceptedAt: new Date(), expiresAt: new Date(Date.now() + 60_000),
     } });
@@ -67,15 +70,15 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
     };
     const gate: any = {
       userId: user.id, destinations: [DEST], directDestinations: [], wrapRecipients: [DEST], intents: [], fullyProvenDirectEgress: true, notProven: [],
-      chainId: 137, walletId: 'wallet-unused', apiKeyId: key.id, apiKeyPrefix: key.keyPrefix,
+      chainId: 137, walletId: wallet.id, apiKeyId: key.id, apiKeyPrefix: key.keyPrefix,
       executionMode: 'session_key', restrictedWrap: true,
     };
     const authorization: any = { interactions: [interaction], context: { executionOwner: '0x1111111111111111111111111111111111111111' } };
     const createParams: any = {
       apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, operationType: 'send', idempotencyKey: `pusd-${suffix}`,
-      chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: 'wallet-unused',
-      walletAddress: '0x1111111111111111111111111111111111111111', executionMode: 'session_key',
-      details: { type: 'send', walletId: 'wallet-unused', executionMode: 'session_key' }, destinationGate: gate,
+      chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: wallet.id,
+      walletAddress: wallet.walletAddress, executionMode: 'session_key',
+      details: { type: 'send', walletId: wallet.id, executionMode: 'session_key' }, destinationGate: gate,
       defiAuthorization: authorization, nativeValueWei: '0',
     };
 
@@ -109,6 +112,7 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       await prisma.withdrawalAddress.deleteMany({ where: { userId: user.id } });
       await prisma.withdrawalPolicy.deleteMany({ where: { userId: user.id } });
       await prisma.apiKey.deleteMany({ where: { id: key.id } });
+      await prisma.userWallet.deleteMany({ where: { id: wallet.id } });
       await prisma.user.delete({ where: { id: user.id } });
     }
   });
@@ -116,8 +120,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
   it('holds the acceptance lock through insert so a concurrent destination mutation waits until commit', async () => {
     const suffix = randomUUID().replace(/-/g, '');
     const user = await prisma.user.create({ data: { socialProvider: 'google', socialId: `pusd_hold_${suffix}`, email: `pusd_hold_${suffix}@example.test` } });
+    const wallet = await prisma.userWallet.create({ data: {
+      userId: user.id, walletAddress: `0x${suffix.padEnd(40, 'a').slice(0, 40)}`, status: 'active',
+    } });
     const key = await prisma.apiKey.create({ data: {
-      userId: user.id, apiKeyHash: 'test-hash-not-used', keyPrefix: `sk_${suffix.slice(0, 24)}`,
+      userId: user.id, walletId: wallet.id, apiKeyHash: 'test-hash-not-used', keyPrefix: `sk_${suffix.slice(0, 24)}`,
       canSendTransaction: true, canSign: false, canReadTransactionStatus: true, canUseEoaExecution: false,
       allowedIps: [], directEgressPolicyAcceptedAt: new Date(), expiresAt: new Date(Date.now() + 60_000),
     } });
@@ -152,11 +159,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
     const idempotencyKey = `pusd-held-${suffix}`;
     const createParams: any = {
       apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, operationType: 'send', idempotencyKey,
-      chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: 'wallet-unused',
-      walletAddress: '0x1111111111111111111111111111111111111111', executionMode: 'session_key',
-      details: { type: 'send', walletId: 'wallet-unused', executionMode: 'session_key' },
+      chainId: 137, requestHash: `req-${suffix}`, legacyRequestHash: `legacy-${suffix}`, walletId: wallet.id,
+      walletAddress: wallet.walletAddress, executionMode: 'session_key',
+      details: { type: 'send', walletId: wallet.id, executionMode: 'session_key' },
       destinationGate: { userId: user.id, destinations: [DEST], directDestinations: [], wrapRecipients: [DEST], intents: [], fullyProvenDirectEgress: true, notProven: [], chainId: 137,
-        walletId: 'wallet-unused', apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, executionMode: 'session_key', restrictedWrap: true },
+        walletId: wallet.id, apiKeyId: key.id, apiKeyPrefix: key.keyPrefix, executionMode: 'session_key', restrictedWrap: true },
       defiAuthorization: { interactions: [interaction], context: { executionOwner: '0x1111111111111111111111111111111111111111' } }, nativeValueWei: '0',
     };
     const lockKey = LOCK(user.id);
@@ -189,6 +196,7 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       await prisma.withdrawalAddress.deleteMany({ where: { userId: user.id } });
       await prisma.withdrawalPolicy.deleteMany({ where: { userId: user.id } });
       await prisma.apiKey.deleteMany({ where: { id: key.id } });
+      await prisma.userWallet.deleteMany({ where: { id: wallet.id } });
       await prisma.user.delete({ where: { id: user.id } });
     }
   });

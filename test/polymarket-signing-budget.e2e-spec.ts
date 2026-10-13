@@ -22,7 +22,7 @@ async function fixture(label: string) {
     openfortAccountId: `embedded-${suffix}`, agentWalletAddress: `0x${address}`,
   } });
   const keys = await Promise.all([0, 1].map((n) => prisma.apiKey.create({ data: {
-    userId: user.id, apiKeyHash: `unused-${suffix}-${n}`, keyPrefix: `sk_${suffix.slice(0, 20)}${n}`,
+    userId: user.id, walletId: wallet.id, apiKeyHash: `unused-${suffix}-${n}`, keyPrefix: `sk_${suffix.slice(0, 20)}${n}`,
     canSign: true, canUseEoaExecution: true, allowedIps: [], expiresAt: new Date(Date.now() + 60_000),
   } })));
   return { user, wallet, keys };

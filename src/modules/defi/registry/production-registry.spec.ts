@@ -1,13 +1,18 @@
 jest.mock('../../security-events/security-event.module', () => ({ SecurityEventModule: class SecurityEventModule {} }));
+jest.mock('../../../core/openfort/openfort.service', () => ({ OpenfortService: class OpenfortService {} }));
 import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST, PRODUCTION_DEFI_APPROVALS } from './production-registry';
 import { loadCurrentProductionExpectations } from './__fixtures__/current-production-expectations';
 import { DefiCatalogService } from '../defi-catalog.service';
 import { Test } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { DefiModule } from '../defi.module';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { DefiGrantService } from '../defi-grant.service';
 import { DefiPauseService } from '../defi-pause.service';
 import { DefiPolicyService } from '../defi-policy.service';
+import { SecurityEventService } from '../../security-events/security-event.service';
+import { BillingReconciliationService } from '../../billing/billing-reconciliation.service';
+import { OpenfortService } from '../../../core/openfort/openfort.service';
 import { Global, Module } from '@nestjs/common';
 import { buildDexRegistry } from './dex';
 import { buildLendingRegistry } from './lending';
@@ -33,7 +38,7 @@ import { executionScopeHash } from '../execution/scope';
 import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
-@Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }], exports: [PrismaService] }) class MockDatabaseModule {}
+@Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }, { provide: SecurityEventService, useValue: {} }, { provide: OpenfortService, useValue: {} }], exports: [PrismaService, SecurityEventService, OpenfortService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
   it('assembles the selected catalog as exact, source-verified function capabilities', () => {
@@ -450,7 +455,8 @@ describe('production DeFi registry assembly', () => {
   });
 
   it('resolves the wired catalog providers with mocked database dependencies', async () => {
-    const module = await Test.createTestingModule({ imports: [MockDatabaseModule, DefiModule] })
+    const module = await Test.createTestingModule({ imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), MockDatabaseModule, DefiModule] })
+      .overrideProvider(BillingReconciliationService).useValue({})
       .overrideProvider(DefiGrantService).useValue({})
       .overrideProvider(DefiPauseService).useValue({})
       .overrideProvider(DefiPolicyService).useValue({})

@@ -65,10 +65,10 @@ run('multi-wallet execution PostgreSQL', () => {
   });
   afterAll(async () => { await prisma?.$disconnect(); });
 
-  it('scopes explicit foreign wallet ids to owner and rejects implicit selection with multiple active wallets', async () => {
+  it('rejects explicit foreign wallet ids for a wallet-bound API key', async () => {
     const owner = await fixture('owner');
     const other = await fixture('other');
-    const key = { id: randomUUID(), userId: owner.user.id, keyPrefix: 'sk_test', canSign: true, canSendTransaction: true, allowedCapabilityIds: [] };
+    const key = { id: randomUUID(), userId: owner.user.id, walletId: owner.wallets[0].id, keyPrefix: 'sk_test', canSign: true, canSendTransaction: true, allowedCapabilityIds: [] };
     const sideEffect = jest.fn();
     const walletService = new WalletService(prisma as never, { signData: sideEffect } as never, {} as never, {} as never, { authorizeSigning: () => { throw new Error('unused'); }, recordDenied: jest.fn() } as never);
     const transactionService = new TransactionsService(
@@ -81,24 +81,20 @@ run('multi-wallet execution PostgreSQL', () => {
     try {
       await expect(walletService.sign(owner.user.id, {
         walletId: other.wallets[0].id, type: 'message', message: 'test', chainId,
-      }, key as never)).rejects.toThrow(/wallet not found/i);
+      }, key as never)).rejects.toThrow(/API key is not bound to the selected wallet/i);
       await expect(transactionService.send(owner.user.id, {
         walletId: other.wallets[0].id, chainId, idempotencyKey: randomUUID(),
         interactions: [{ to: `0x${'a'.repeat(40)}`, data: '0x12345678', value: '0' }],
-      } as never, key as never)).rejects.toThrow(/wallet not found/i);
-      await expect(transactionService.send(owner.user.id, {
-        chainId, idempotencyKey: randomUUID(),
-        interactions: [{ to: `0x${'a'.repeat(40)}`, data: '0x12345678', value: '0' }],
-      } as never, key as never)).rejects.toThrow(/walletId is required/i);
+      } as never, key as never)).rejects.toThrow(/API key is not bound to the selected wallet/i);
       expect(sideEffect).not.toHaveBeenCalled();
     } finally { await clean(owner.user.id); await clean(other.user.id); }
   });
 
   it('denies API-key signing before Openfort in the MVP', async () => {
     const owner = await fixture('sign-owner');
-    const key = { id: randomUUID(), userId: owner.user.id, keyPrefix: 'sk_test', canSign: true, canSendTransaction: true, allowedCapabilityIds: [] };
+    const key = { id: randomUUID(), userId: owner.user.id, walletId: owner.wallets[0].id, keyPrefix: 'sk_test', canSign: true, canSendTransaction: true, allowedCapabilityIds: [] };
     await prisma!.apiKey.create({ data: {
-      id: key.id, userId: owner.user.id, apiKeyHash: 'isolated-test-only',
+      id: key.id, userId: owner.user.id, walletId: owner.wallets[0].id, apiKeyHash: 'isolated-test-only',
       keyPrefix: 'sk_test', allowedIps: [],
     } });
     const signData = jest.fn().mockResolvedValue(`0x${'a'.repeat(130)}`);
@@ -110,8 +106,8 @@ run('multi-wallet execution PostgreSQL', () => {
     );
     try {
       await expect(walletService.sign(owner.user.id, {
-        walletId: owner.wallets[1].id, type: 'message', message: 'integration', chainId,
-      }, key as never)).rejects.toMatchObject({ response: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
+        walletId: owner.wallets[0].id, type: 'message', message: 'integration', chainId,
+      }, key as never)).rejects.toThrow(/limited to Polymarket ClobAuth typed data/i);
       expect(signData).not.toHaveBeenCalled();
     } finally { await clean(owner.user.id); }
   });

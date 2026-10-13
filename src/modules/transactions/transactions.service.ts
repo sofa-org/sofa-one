@@ -52,7 +52,7 @@ import {
   type DirectTransferIntent,
   type DirectTransferNotProven,
 } from './direct-transfer-intents';
-import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization, type DefiInteraction } from '../defi';
+import { DefiPolicyService, DefiPolicyDenial, type DefiAuthorization } from '../defi';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { decodePusdWrapCall } from '../defi/execution/pusd-identity';
 

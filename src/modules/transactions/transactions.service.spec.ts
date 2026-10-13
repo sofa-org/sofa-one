@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -460,7 +459,7 @@ describe('TransactionsService', () => {
     const final = jest.spyOn(realPolicy, 'assertStillAuthorized');
     (service as any).defiPolicy = realPolicy;
 
-    let order: string[] = [];
+    const order: string[] = [];
     let liveKeyReadCount = 0;
     let omitFinalWalletDelegate = false;
     const liveKey = { userId: 'user-1', walletId: wallet.id, revoked: false, frozenAt: null, expiresAt: null,

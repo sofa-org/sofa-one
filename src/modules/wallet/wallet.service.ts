@@ -17,7 +17,6 @@ import {
   formatEther,
   formatUnits,
   hashMessage,
-  hashTypedData,
   http,
   type Hex,
   type PublicClient,
@@ -43,7 +42,7 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
 import { DefiPolicyService, DefiPolicyDenial } from '../defi';
-import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, validatePolymarketClobOrder, polymarketDepositWalletAddress, polymarketOrderDigest, polymarketWrapperDigest, type ValidatedPolymarketOrder } from '../defi/signing/polymarket-clob-order';
+import { validatePolymarketClobOrder, polymarketOrderDigest, polymarketWrapperDigest, type ValidatedPolymarketOrder } from '../defi/signing/polymarket-clob-order';
 import { buildPolymarketPoly1271Envelope } from '../defi/signing/polymarket-poly1271-envelope';
 import { PolymarketDepositWalletVerifierService, type DepositWalletEvidence } from './polymarket-deposit-wallet-verifier.service';
 import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';

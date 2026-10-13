@@ -148,6 +148,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
   let dbIdentityVerified = false;
 
   let userId: string;
+  let walletId: string;
   let authorizedKeyId: string;
   let rawKey: string;
   let keyUnauthorized: string;
@@ -263,6 +264,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     iamSessions.clear();
     const seeded = await seedFixtures();
     userId = seeded.userId;
+    walletId = seeded.walletId;
     authorizedKeyId = seeded.keyId;
     rawKey = seeded.rawKey;
     keyUnauthorized = seeded.keyUnauthorized;
@@ -719,8 +721,8 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     // EoaExecutionPolicyService rate-limits per apiKeyId (1 allowed event / window).
     // Use two independent EOA keys on the same user/agent wallet so the second
     // request is not blocked by the first key's allowed-event stamp.
-    const eoaSelfKey = await seedEoaKey(userId, 'self');
-    const eoaPlatKey = await seedEoaKey(userId, 'plat');
+    const eoaSelfKey = await seedEoaKey(userId, walletId, 'self');
+    const eoaPlatKey = await seedEoaKey(userId, walletId, 'plat');
 
     // To agent (execution owner) → self-transfer, not destination policy.
     const selfRes = await withDestinationProtection(false, () => sendTx(eoaSelfKey.rawKey, {
@@ -821,7 +823,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
         interactions = [{ to: TOKEN, data: unknownCalldata(), value: '0' }];
         break;
       case 'eoa-self': {
-        const eoaKey = await seedEoaKey(userId, 'protected-self');
+        const eoaKey = await seedEoaKey(userId, walletId, 'protected-self');
         apiKey = eoaKey.rawKey;
         apiKeyId = eoaKey.id;
         executionMode = 'eoa';
@@ -982,7 +984,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
     // Authorized send key (reauth set via fixture for most cases; authorize HTTP
     // path is covered separately without relying only on this stamp).
-    const authorized = await createApiKeyRow(user.id, {
+    const authorized = await createApiKeyRow(user.id, wallet.id, {
       name: `authorized-${SUITE_ID}`,
       canSendTransaction: true,
       canSign: true,
@@ -992,7 +994,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     });
 
     // Send-capable key without reauth (authorize-direct-egress HTTP tests this).
-    const unauthorized = await createApiKeyRow(user.id, {
+    const unauthorized = await createApiKeyRow(user.id, wallet.id, {
       name: `unauthorized-${SUITE_ID}`,
       canSendTransaction: true,
       canSign: true,
@@ -1035,8 +1037,8 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     }
   }
 
-  async function seedEoaKey(uid: string, label = 'eoa') {
-    return createApiKeyRow(uid, {
+  async function seedEoaKey(uid: string, walletId: string, label = 'eoa') {
+    return createApiKeyRow(uid, walletId, {
       name: `eoa-${label}-${SUITE_ID}-${randomUUID().slice(0, 8)}`,
       canSendTransaction: true,
       canSign: false,
@@ -1054,6 +1056,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
    */
   async function createApiKeyRow(
     uid: string,
+    walletId: string,
     opts: {
       name: string;
       canSendTransaction: boolean;
@@ -1083,6 +1086,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     const row = await prisma!.apiKey.create({
       data: {
         userId: uid,
+        walletId,
         apiKeyHash: hash,
         keyPrefix,
         name: opts.name,
