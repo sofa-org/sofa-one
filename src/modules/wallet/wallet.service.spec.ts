@@ -46,7 +46,7 @@ import { SessionKeyPolicyService } from '../session-key/session-key-policy.servi
 import { BillingDebtService } from '../billing/billing-debt.service';
 import { DefiPolicyService } from '../defi/defi-policy.service';
 import { DefiPolicyDenial } from '../defi/defi.types';
-import { encodeFunctionData, hashTypedData } from 'viem';
+import { hashTypedData } from 'viem';
 import { POLYMARKET_CLOB_AUTH_ATTESTATION, POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from '../defi/signing/polymarket-clob-auth';
 import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { buildReviewedManifest } from '../defi/registry/defi-manifest';

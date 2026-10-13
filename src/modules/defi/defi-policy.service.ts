@@ -13,7 +13,7 @@ import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
 import { decodePusdWrapCall, isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from './execution/pusd-identity';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, signingPayloadDigest, validatePolymarketClobAuth } from './signing/polymarket-clob-auth';
-import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, POLYMARKET_CLOB_ORDER_EXCHANGES, polymarketDepositWalletAddress, polymarketWrapperDigest, validatePolymarketClobOrder } from './signing/polymarket-clob-order';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, polymarketDepositWalletAddress, polymarketWrapperDigest, validatePolymarketClobOrder } from './signing/polymarket-clob-order';
 import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type ValidatedPolymarketDepositBatch } from './signing/polymarket-deposit-batch';
 import { assertCapabilityConfiguration, hasCapability, normalizeCapabilityMode } from './capability-grants';
 

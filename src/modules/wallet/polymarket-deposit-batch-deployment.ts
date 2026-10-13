@@ -215,6 +215,8 @@ function addressFromSlot(slot: Hex | undefined): Address | null {
 function isCanonicalZeroSlot(slot: Hex | undefined): boolean { return typeof slot === 'string' && /^0x0{64}$/i.test(slot); }
 function identityDigest(value: Omit<PolymarketDepositBatchDeploymentSnapshot, 'identityDigest'> | PolymarketDepositBatchDeploymentSnapshot): Hex {
   const { checkedAt: _checkedAt, identityDigest: _digest, ...identity } = value as PolymarketDepositBatchDeploymentSnapshot;
+  void _checkedAt;
+  void _digest;
   return keccak256(stringToHex(JSON.stringify(identity, (_, item) => typeof item === 'bigint' ? item.toString() : item)));
 }
 function unavailable(): ServiceUnavailableException { return new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' }); }
