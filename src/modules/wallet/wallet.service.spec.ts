@@ -54,7 +54,7 @@ import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wal
 import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batch-verifier.service';
 import { polymarketDepositBatchDigest, validatePolymarketDepositBatch } from '../defi/signing/polymarket-deposit-batch';
-import { POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from '../defi/defi-catalog.service';
+import { POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from '../defi/defi-catalog.service';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -1001,7 +1001,7 @@ describe('WalletService.sign()', () => {
 
   it.each([
     ['all', [] as string[]],
-    ['custom', [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID]],
+    ['custom', [POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID]],
   ])('signs only the validated raw DepositWallet Batch for %s capability mode', async (capabilityMode, allowedCapabilityIds) => {
     const input = depositBatch();
     const payload = validatePolymarketDepositBatch(input);
@@ -1009,7 +1009,7 @@ describe('WalletService.sign()', () => {
     const signer = WALLET.agentWalletAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode, allowedCapabilityIds }),
-      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
+      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
       walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
@@ -1033,7 +1033,7 @@ describe('WalletService.sign()', () => {
     const signer = WALLET.agentWalletAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode: 'all', allowedCapabilityIds: [] }),
-      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
+      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
       walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
@@ -1053,7 +1053,7 @@ describe('WalletService.sign()', () => {
     const digest = polymarketDepositBatchDigest(payload);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
-      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
+      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
       walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
@@ -1075,7 +1075,7 @@ describe('WalletService.sign()', () => {
     const digest = polymarketDepositBatchDigest(payload);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
-      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
+      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
       walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
@@ -1100,7 +1100,7 @@ describe('WalletService.sign()', () => {
     const signer = WALLET.agentWalletAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode: 'all', allowedCapabilityIds: [] }),
-      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
+      requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
       walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));

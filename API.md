@@ -130,13 +130,12 @@ The capability mode's active grant and existing permissions/EOA safeguards gate 
 
 The wallet-level rolling 60-second limit is 60 accepted orders, shared across API keys and reserved atomically at acceptance; later failures still consume a slot. There is no per-order 60-second delay. General EOA enabled/canSign/canUseEoa/IP/TTL safeguards remain unchanged; ClobAuth and transaction send retain their original shared 1-per-60-second EOA limit. The validator checks positive integer amounts, side, and structure but imposes no economic/market/price/quantity limits: explicit authorization allows every structurally valid order. Timestamp ±300,000 ms is service signing freshness, not exchange order expiry. Freeze, pause, or key revocation cannot revoke an already signed order. A failed response may mean a TEE signature was generated but not returned. Real-client/CLOB/DepositWallet end-to-end acceptance has not been verified.
 
-### Polymarket DepositWallet Batch signing (legacy capability ID)
+### Polymarket DepositWallet Batch signing
 
 `POST /v1/wallets/sign` recognizes the exact Polygon 137 DepositWallet EIP-712 `Batch`
 schema for signing only. It requires `canSign`, `canUseEoaExecution`, EOA mode, and the
-active/unpaused `polymarket:137:deposit-wallet-setup:v1` capability (`all` includes it;
-`custom` must list that exact ID). The capability ID is retained for compatibility with
-existing keys, although it now authorizes general Batch calls rather than setup-only calls.
+active/unpaused `polymarket:137:deposit-wallet-batch-sign:v1` capability (`all` includes it;
+`custom` must list that exact ID). This capability authorizes general Batch calls.
 It does not require `canSendTransaction`, send a transaction, or submit the returned raw
 signature. An external client submits any eventual signed payload.
 

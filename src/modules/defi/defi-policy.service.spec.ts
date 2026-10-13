@@ -1,7 +1,7 @@
 import { encodeFunctionData, parseAbi } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
+import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from './defi-catalog.service';
 import { DefiPolicyService, buildDefiRequestCommitment } from './defi-policy.service';
 import { buildReviewedManifest } from './registry/defi-manifest';
 import { DefiChainPolicy, DefiExecutionContext, DefiInteraction, DefiPolicyDenial } from './defi.types';
@@ -229,7 +229,7 @@ describe('DefiPolicyService', () => {
     expect(prisma.defiPolicyState.findUnique).toHaveBeenCalled();
   });
 
-  it('authorizes arbitrary well-formed zero-value Batch calls under all or the exact legacy capability', async () => {
+  it('authorizes arbitrary well-formed zero-value Batch calls under all or the exact capability', async () => {
     const { policy, prisma } = makePolicy();
     prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
     const agent = '0x2222222222222222222222222222222222222222';
@@ -237,28 +237,28 @@ describe('DefiPolicyService', () => {
     const payload = batchPayload();
     payload.message.calls[0].target = OTHER;
     const all = await policy.authorizeSigning(payload, base);
-    expect(all).toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID, signingKind: 'deposit_batch', executionWalletAddress: OWNER.toLowerCase() });
-    const custom = await policy.authorizeSigning(payload, { ...base, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID] });
+    expect(all).toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', executionWalletAddress: OWNER.toLowerCase() });
+    const custom = await policy.authorizeSigning(payload, { ...base, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID] });
     expect(custom.typedDataDigest).toBe(all.typedDataDigest);
     await expect(policy.authorizeSigning(payload, { ...base, capabilityMode: 'custom' })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
     for (const exchange of POLYMARKET_CLOB_ORDER_EXCHANGES) {
       prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [`contract:137:${exchange}`] });
-      await expect(policy.authorizeSigning(payload, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+      await expect(policy.authorizeSigning(payload, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID });
     }
     prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
 
     const transfer = batchPayload();
     transfer.message.calls = [{ target: OTHER, value: '0', data: encodeFunctionData({ abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'transfer', args: [OWNER, 10n] }) }];
-    await expect(policy.authorizeSigning(transfer, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+    await expect(policy.authorizeSigning(transfer, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID });
 
     const unrestrictedApproval = batchPayload();
     unrestrictedApproval.message.calls = [{ target: OTHER, value: '0', data: encodeFunctionData({ abi: [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'value', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'approve', args: [OWNER, (1n << 256n) - 1n] }) }];
-    await expect(policy.authorizeSigning(unrestrictedApproval, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+    await expect(policy.authorizeSigning(unrestrictedApproval, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID });
 
     const nonCanonicalAbi = batchPayload();
     const approval = encodeFunctionData({ abi: [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'value', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }] as const, functionName: 'approve', args: [OWNER, 1n] });
     nonCanonicalAbi.message.calls = [{ target: OTHER, value: '0', data: `${approval}00` }];
-    await expect(policy.authorizeSigning(nonCanonicalAbi, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID });
+    await expect(policy.authorizeSigning(nonCanonicalAbi, base)).resolves.toMatchObject({ capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID });
 
     const positiveValue = batchPayload();
     positiveValue.message.calls[0].value = '1';
@@ -273,10 +273,10 @@ describe('DefiPolicyService', () => {
   it('atomically rechecks batch deadline, live permissions, capability mode, key state, digest and target contract pauses', async () => {
     const { policy } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
-    const setupContext = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const batchSignContext = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
     const payload = batchPayload();
     payload.message.calls[0].target = OTHER;
-    const auth = await policy.authorizeSigning(payload, setupContext);
+    const auth = await policy.authorizeSigning(payload, batchSignContext);
     const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all', allowedCapabilityIds: [] };
     const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };

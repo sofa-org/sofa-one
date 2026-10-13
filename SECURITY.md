@@ -98,15 +98,14 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 
 The separate order exception requires an active, unpaused `polymarket:137:clob-order:v2` capability (`all` includes it dynamically; `custom` requires the exact ID), EOA mode and permissions, exact `TypedDataSign`/11-field V2 Order and six-field wrapper, fixed ordinary (`0xE111180000d2663C0091e4f400237545B87B996B`) or neg-risk (`0xe2222d279d744050d28e00520010520000310F59`) exchange, and DepositWallet `signatureType:3` (POLY_1271). Reject V1/V3, types 0/1/2, arbitrary typed data, messages, and permits. Existing permission and EOA safeguards remain; strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity are required. These checks do not prove official-wallet ownership or automatically recognize an official factory. Wallet-scoped rolling 60-second limit: at most 60 accepted orders across keys, atomically reserved; failures consume reservations. This does not alter general EOA enabled/permission/IP/TTL controls or the shared original 1/60s ClobAuth/send limit. Amounts must be positive and structure valid, but there are no economic/market/price/quantity limits. ±300000ms is service signing freshness, not exchange expiry. Freeze/pause/revocation cannot revoke signed orders; failure may mean TEE signing occurred without returning the signature. Real-client/CLOB/DepositWallet end-to-end acceptance remains unverified.
 
-### Polymarket DepositWallet Batch signing (legacy capability ID)
+### Polymarket DepositWallet Batch signing
 
-The `polymarket:137:deposit-wallet-setup:v1` capability authorizes only EIP-712 signing,
+The `polymarket:137:deposit-wallet-batch-sign:v1` capability authorizes only EIP-712 signing,
 not a broadcast or send. It uses `all`/`custom` capability semantics but still requires
 `canSign`, `canUseEoaExecution`, EOA mode, ordinary EOA isolation, destination/risk checks,
 and atomic live permission/grant/pause/deadline/digest acceptance. It does not use the
-order-specific wallet budget. The historical `polymarket:137:deposit-wallet-setup:v1` ID
-is intentionally retained so existing custom grants do not break, but now authorizes the
-exact Batch envelope with 1–32 calls, ≤8 KiB calldata per call and ≤32 KiB total. Each call
+order-specific wallet budget. This capability authorizes the exact Batch envelope with
+1–32 calls, ≤8 KiB calldata per call and ≤32 KiB total. Each call
 requires a valid nonzero target, well-formed even-length hex data (possibly empty), and
 exactly zero native value. No target/function/ABI-canonicality/spender/operator allowlist
 applies. This is high privilege: arbitrary calldata may transfer tokens, create unlimited

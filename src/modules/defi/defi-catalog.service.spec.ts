@@ -1,6 +1,6 @@
 import { parseAbi } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
-import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
+import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from './defi-catalog.service';
 import { POLYMARKET_CLOB_ORDER_EXCHANGES } from './signing/polymarket-clob-order';
 import { DefiChainPolicy, DefiFunctionPolicy } from './defi.types';
 import { buildReviewedManifest } from './registry/defi-manifest';
@@ -89,23 +89,22 @@ describe('DefiCatalogService', () => {
     expect(order?.description).toContain('Broad economic authority');
     expect(order?.warnings).toEqual(expect.arrayContaining([expect.stringContaining('custom mode must explicitly select this ID')]));
   });
-  it('publishes the compatibility DepositWallet Batch capability as high-privilege signing authority', async () => {
-    const setup = (await makeService(makeCatalog()).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID);
-    expect(setup).toMatchObject({ type: 'typed_data_sign', chainId: 137, operation: 'deposit_wallet_batch', status: 'active' });
-    expect(setup?.description).toContain('Compatibility capability ID');
-    expect(setup?.description).toContain('arbitrary calldata can transfer tokens');
-    expect(setup?.warnings).toEqual(expect.arrayContaining([expect.stringContaining('not target/function restricted')]));
+  it('publishes the DepositWallet Batch-signing capability as high-privilege signing authority', async () => {
+    const batchSignCapability = (await makeService(makeCatalog()).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID);
+    expect(batchSignCapability).toMatchObject({ type: 'typed_data_sign', chainId: 137, operation: 'deposit_wallet_batch', status: 'active' });
+    expect(batchSignCapability?.description).toContain('arbitrary calldata can transfer tokens');
+    expect(batchSignCapability?.warnings).toEqual(expect.arrayContaining([expect.stringContaining('not target/function restricted')]));
   });
   it('exposes Batch capability pause state only from global, chain or capability scopes', async () => {
     for (const contract of [...POLYMARKET_CLOB_ORDER_EXCHANGES, '0x2222222222222222222222222222222222222222']) {
       const state = { id: 'global', pausedScopeKeys: [`contract:137:${contract}`] };
-      const setup = (await makeService(makeCatalog(), state).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID);
-      expect(setup?.status).toBe('active');
+      const batchSignCapability = (await makeService(makeCatalog(), state).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID);
+      expect(batchSignCapability?.status).toBe('active');
     }
-    for (const scope of ['global', 'chain:137', `capability:${POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID}`]) {
+    for (const scope of ['global', 'chain:137', `capability:${POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID}`]) {
       const state = { id: 'global', pausedScopeKeys: [scope] };
-      const setup = (await makeService(makeCatalog(), state).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID);
-      expect(setup?.status).toBe('paused');
+      const batchSignCapability = (await makeService(makeCatalog(), state).listMetadata()).capabilities.find((item) => item.capabilityId === POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID);
+      expect(batchSignCapability?.status).toBe('paused');
     }
   });
 });

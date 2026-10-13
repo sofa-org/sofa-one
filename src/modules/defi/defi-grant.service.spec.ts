@@ -5,7 +5,7 @@ import { DefiChainPolicy } from './defi.types';
 import { parseAbi } from 'viem';
 import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from './signing/polymarket-clob-auth';
 import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID } from './signing/polymarket-clob-order';
-import { POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID } from './defi-catalog.service';
+import { POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from './defi-catalog.service';
 
 const address = '0x0000000000000000000000000000000000000001';
 const activeCatalog: DefiChainPolicy[] = [{ chainId: 1, status: 'active', contracts: [{ address, status: 'active', functions: [{
@@ -53,14 +53,14 @@ describe('DefiGrantService', () => {
       await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_CLOB_ORDER_CAPABILITY_ID])).rejects.toThrow();
     }
   });
-  it('allows the legacy setup capability when a contract is paused; only global/chain/capability pause scopes block grants', async () => {
+  it('allows the batch-sign capability when a contract is paused; only global/chain/capability pause scopes block grants', async () => {
     const tx = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
-    await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID])).resolves.toEqual([POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID]);
+    await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID])).resolves.toEqual([POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID]);
     tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: ['contract:137:0x2222222222222222222222222222222222222222'] });
-    await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID])).resolves.toEqual([POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID]);
-    for (const scope of ['global', 'chain:137', `capability:${POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID}`]) {
+    await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID])).resolves.toEqual([POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID]);
+    for (const scope of ['global', 'chain:137', `capability:${POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID}`]) {
       tx.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [scope] });
-      await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_SETUP_CAPABILITY_ID])).rejects.toMatchObject({ response: { code: 'DEFI_CAPABILITY_PAUSED' } });
+      await expect(service.assertGrantableInTx(tx as never, [POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID])).rejects.toMatchObject({ response: { code: 'DEFI_CAPABILITY_PAUSED' } });
     }
   });
   it('fails closed with a stable unavailable code when the singleton is missing', async () => {

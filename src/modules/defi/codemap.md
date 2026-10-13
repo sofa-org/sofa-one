@@ -1,7 +1,7 @@
 # Code Map for /src/modules/defi
 
 ## Responsibility
-Function-level DeFi catalog and API-key capability modes plus authorization of ClobAuth, CLOB V2 order and Polymarket DepositWallet Batch signing. The legacy `polymarket:137:deposit-wallet-setup:v1` ID remains for existing custom grants but allows arbitrary well-formed Batch calldata under strict typed-data bounds and zero native value; it is high privilege and can transfer assets or alter permissions. Batch call-target pauses are checked at preflight and atomic acceptance; global/chain/capability scopes pause the grant itself.
+Function-level DeFi catalog and API-key capability modes plus authorization of ClobAuth, CLOB V2 order and Polymarket DepositWallet Batch signing. The `polymarket:137:deposit-wallet-batch-sign:v1` capability allows arbitrary well-formed Batch calldata under strict typed-data bounds and zero native value; it is high privilege and can transfer assets or alter permissions. Batch call-target pauses are checked at preflight and atomic acceptance; global/chain/capability scopes pause the grant itself.
 
 ## Files and flow
 - `defi.types.ts`: immutable execution, capability, match, authorization, denial, database and pause types.
