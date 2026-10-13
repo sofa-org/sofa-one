@@ -39,13 +39,6 @@ describe('BillingEntitlementService', () => {
   const walletFindFirst = jest.fn();
   const walletCount = jest.fn();
 
-  const buildTx = () =>
-    ({
-      billingAccount: { findUnique: accountFindUnique },
-      billingPlanAssignment: { findMany: assignmentFindMany },
-      userWallet: { findFirst: walletFindFirst, count: walletCount },
-    }) as any;
-
   beforeEach(async () => {
     jest.resetAllMocks();
 
