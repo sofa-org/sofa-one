@@ -108,6 +108,18 @@ describe('EoaExecutionPolicyService', () => {
     );
   });
 
+  it('checks Polymarket order prerequisites without consuming the generic EOA budget', async () => {
+    await service.assertPolymarketOrderPrerequisites({
+      ...baseContext,
+      operation: 'polymarket_order_sign',
+      chainId: 137,
+    });
+
+    expect(ipAllowlist.assertIpAllowed).toHaveBeenCalled();
+    expect(prisma.securityEvent.count).not.toHaveBeenCalled();
+    expect(securityEvents.record).not.toHaveBeenCalled();
+  });
+
   describe('IP allowlist validation', () => {
     it('allows when clientIp is in the allowlist', async () => {
       await expect(

@@ -28,9 +28,6 @@ export type SessionKeyPolicyContext = {
   accountAddress: string;
   keyHash: string;
   operation: 'sign' | 'send_transaction';
-  /** Backend policy constraints for drift detection */
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
   apiKeyExpiresAt?: Date | string | null;
@@ -189,24 +186,13 @@ export class SessionKeyPolicyService {
   /**
    * Detect drift between backend policy and on-chain capabilities.
    *
-   * Backend policy can be MORE restrictive than on-chain (which is fine —
-   * defense in depth), but we flag when backend restrictions have NO on-chain
-   * enforcement, since a compromised backend API key could bypass those
-   * restrictions by interacting with the chain directly.
+    * Spend limits remain backend-only and are flagged as a defense-in-depth drift;
+    * contract-call authorization is separately owned by the DeFi capability policy.
    */
   detectPolicyDrift(context: SessionKeyPolicyContext): PolicyDriftAssessment {
     const drifts: string[] = [];
 
-    // Calibur doesn't enforce contract/selector/spend restrictions on-chain
-    // If backend has these restrictions, they're backend-only (defense in depth)
-    if (context.allowedContracts?.length) {
-      drifts.push('allowedContracts_not_enforced_on_chain');
-    }
-
-    if (context.allowedFunctionSelectors?.length) {
-      drifts.push('allowedFunctionSelectors_not_enforced_on_chain');
-    }
-
+    // Calibur doesn't enforce spend limits; contract authorization is not session-key drift.
     if (context.dailySpendLimit || context.monthlySpendLimit) {
       drifts.push('spend_limits_not_enforced_on_chain');
     }

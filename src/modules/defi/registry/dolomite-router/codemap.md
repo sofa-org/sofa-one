@@ -1,0 +1,3 @@
+# Dolomite router fixture registry
+
+This is an explicit source-qualified test fixture for six fixed deposit/withdraw methods on the official Arbitrum One DepositWithdrawalRouter. The raw v5 source remains inactive and the fixture is not wired into production. The selected interface is not generic DolomiteMargin.operate and excludes unreviewed router methods. Account, market, amount and enum arguments remain caller-controlled; whole-balance withdrawals may create debt and do not promise liquidity. No implementation/runtime proof, financial cap, token-approval coupling, or funded execution is claimed.

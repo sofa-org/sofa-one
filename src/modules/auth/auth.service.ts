@@ -18,7 +18,6 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { ApiKeyService } from '../api-key/api-key.service';
-import { BillingEntitlementService } from '../billing/billing-entitlement.service';
 import { BillingWalletLifecycleService } from '../billing/billing-wallet-lifecycle.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
@@ -53,7 +52,6 @@ export class AuthService {
     private readonly openfort: OpenfortService,
     private readonly apiKeyService: ApiKeyService,
     private readonly configService: ConfigService,
-    private readonly billingEntitlements: BillingEntitlementService,
     private readonly walletLifecycle: BillingWalletLifecycleService,
     @Optional()
     private readonly requestContext?: RequestContextService,
@@ -618,13 +616,13 @@ export class AuthService {
   /**
    * Revoke all existing keys and issue a fresh one.
    */
-  async refreshApiKey(openfortUserId: string) {
+  async refreshApiKey(openfortUserId: string, walletId: string) {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed');
+    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed', walletId);
 
     return { apiKey: result.rawKey };
   }

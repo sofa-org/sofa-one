@@ -174,7 +174,7 @@ describe('API-key public security flow (e2e)', () => {
       });
 
       const created = await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
@@ -247,14 +247,14 @@ describe('API-key public security flow (e2e)', () => {
       expect(audit.digest).not.toContain('hello secret message');
     });
 
-    it('POST /v1/transactions/send submits transaction and stores hashes without calldata', async () => {
+    it('POST /v1/transactions submits transaction and stores hashes without calldata', async () => {
       // Non-egress unknown selector (not a canonical transfer). A truncated
       // 0xa9059cbb payload is now a malformed direct-transfer 400 (BILL-016);
       // this suite is not the direct-egress runtime evidence path.
       const calldata = '0xdeadbeef000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd';
 
       const res = await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
@@ -291,7 +291,7 @@ describe('API-key public security flow (e2e)', () => {
       expect(JSON.stringify(tx.details)).not.toContain(calldata);
     });
 
-    it('POST /v1/transactions/send returns the existing transaction for duplicate idempotent requests', async () => {
+    it('POST /v1/transactions returns the existing transaction for duplicate idempotent requests', async () => {
       const payload = {
         chainId: TEST_CHAIN_ID,
         idempotencyKey: 'duplicate-order-123',
@@ -299,13 +299,13 @@ describe('API-key public security flow (e2e)', () => {
       };
 
       const first = await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send(payload)
         .expect(201);
 
       const second = await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send(payload)
         .expect(201);
@@ -327,7 +327,7 @@ describe('API-key public security flow (e2e)', () => {
       const calldata = '0xdeadbeefcafebabefeedface';
 
       const created = await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
@@ -370,19 +370,24 @@ describe('API-key public security flow (e2e)', () => {
 
     it('does not allow an API key to manage API keys or call frontend-only wallet routes', async () => {
       await request(app.getHttpServer())
-        .get('/v1/api-keys')
+        .get('/api-keys')
         .set('X-API-Key', testApiKey)
         .expect(401);
       await request(app.getHttpServer())
-        .post('/v1/api-keys')
+        .post('/api-keys')
         .set('X-API-Key', testApiKey)
         .send({ name: 'Illegitimate child key' })
         .expect(401);
       await request(app.getHttpServer())
-        .post('/v1/wallets/deposit-info')
+        .get('/wallets/deposits')
+        .set('X-API-Key', testApiKey)
+        .query({ chainId: TEST_CHAIN_ID })
+        .expect(401);
+      await request(app.getHttpServer())
+        .post('/wallets/deposits')
         .set('X-API-Key', testApiKey)
         .send({ chainId: TEST_CHAIN_ID })
-        .expect(401);
+        .expect(404);
     });
 
     it('rejects fabricated, wrong-secret, revoked, and expired API keys', async () => {
@@ -442,7 +447,7 @@ describe('API-key public security flow (e2e)', () => {
 
     it('rejects idempotency-key reuse with a different request', async () => {
       await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
@@ -452,7 +457,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect(201);
 
       await request(app.getHttpServer())
-        .post('/v1/transactions/send')
+        .post('/v1/transactions')
         .set('X-API-Key', testApiKey)
         .send({
           chainId: TEST_CHAIN_ID,
@@ -461,7 +466,7 @@ describe('API-key public security flow (e2e)', () => {
         })
         .expect(400)
         .expect((res) =>
-          expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions/send'),
+          expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions'),
         );
       expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
     });

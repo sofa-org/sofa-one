@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -9,7 +8,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { encodeFunctionData, getAddress, type Hex } from 'viem';
+import { encodeFunctionData, getAddress, parseAbi, type Hex } from 'viem';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -28,7 +27,7 @@ jest.mock('./transaction-asset-flow.verifier', () => {
 });
 
 import { TransactionsService } from './transactions.service';
-import { TransactionPolicyService } from './transaction-policy.service';
+import { TransactionPolicyService, TransactionSpendBudgetDenial } from './transaction-policy.service';
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import {
   computeAssetFlowPlanDigest,
@@ -36,6 +35,12 @@ import {
 } from './transaction-asset-flow.verifier';
 import { AssetFlowSimulationUnavailableError } from './transaction-simulation.service';
 import { hashRequest } from '../../common/utils/request-hash';
+import { DefiPolicyDenial } from '../defi/defi.types';
+import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY } from '../defi/execution/pusd-identity';
+import { DefiPolicyService } from '../defi/defi-policy.service';
+import { DefiCatalogService } from '../defi/defi-catalog.service';
+import { buildReviewedManifest, functionAbiHash } from '../defi/registry/defi-manifest';
+import type { DefiChainPolicy } from '../defi/defi.types';
 
 function erc20TransferData(to: string, amount: bigint = 1n): string {
   return encodeFunctionData({
@@ -143,6 +148,7 @@ describe('TransactionsService', () => {
 
   const apiKeyContext = {
     id: 'api-key-1',
+    walletId: 'wallet-1',
     keyPrefix: apiKeyPrefix,
     name: 'Production key',
     allowedIps: ['203.0.113.10'],
@@ -150,8 +156,8 @@ describe('TransactionsService', () => {
     canSendTransaction: true,
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
-    allowedContracts: undefined,
-    allowedFunctionSelectors: undefined,
+    capabilityMode: 'all' as const,
+    allowedCapabilityIds: [] as string[],
     dailySpendLimit: undefined,
     monthlySpendLimit: undefined,
     // BILL-016: unit fixtures assume destination-policy reauth already completed.
@@ -172,7 +178,7 @@ describe('TransactionsService', () => {
   const txApiKeyLockRows = jest.fn();
 
   const prisma = {
-    userWallet: { findUnique: jest.fn(), findMany: jest.fn() },
+    userWallet: { findUnique: jest.fn(), findMany: jest.fn(), findFirst: jest.fn() },
     apiKey: { findUnique: jest.fn() },
     // BILL-016: destination protection = requireAddressAllowlist === true.
     withdrawalPolicy: { findUnique: jest.fn() },
@@ -207,6 +213,18 @@ describe('TransactionsService', () => {
   const transactionPolicy = new TransactionPolicyService(prisma, undefined as any);
   const mockAssertSessionKeyAllowed = jest.fn();
   const billingDebt = { getDebt: jest.fn() } as any;
+  const defiAuthorization = {
+    context: {}, requiredPermission: 'canSendTransaction', matches: [], interactions: [],
+    manifestHash: `0x${'b'.repeat(64)}`,
+    requestCommitment: `0x${'a'.repeat(64)}`,
+  } as any;
+  const defiPolicy = {
+    authorizeContractCalls: jest.fn(),
+    assertStillAuthorized: jest.fn().mockResolvedValue(undefined),
+    recordAllowedInTx: jest.fn().mockResolvedValue({ id: 'event-1' }),
+    recordDenied: jest.fn().mockResolvedValue(undefined),
+  } as any;
+  const securityEvents = { record: jest.fn().mockResolvedValue({ id: 'deferred-event' }), exportCommitted: jest.fn().mockResolvedValue(undefined) } as any;
   const SIM_RPC = 'https://rpc.example.test/base';
   const config = {
     get: jest.fn((key: string) => {
@@ -288,8 +306,14 @@ describe('TransactionsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    defiPolicy.authorizeContractCalls.mockImplementation((interactions: any[], context: any) => ({
+      ...defiAuthorization,
+      context: { ...context, allowedCapabilityIds: [...context.allowedCapabilityIds] },
+      interactions: Object.freeze(interactions.map((interaction) => Object.freeze({ ...interaction }))),
+    }));
     loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     prisma.userWallet.findUnique.mockResolvedValue(wallet);
+    prisma.userWallet.findFirst.mockResolvedValue(wallet);
     prisma.userWallet.findMany.mockImplementation(async ({ where }: any) => {
       if (where?.userId && where.userId !== 'user-1') return [];
       if (where?.id && where.id !== wallet.id) return [];
@@ -329,10 +353,14 @@ describe('TransactionsService', () => {
       callback({
         $executeRaw: jest.fn().mockResolvedValue(undefined),
         $queryRaw: txApiKeyLockRows,
-        apiKey: { findUnique: jest.fn() },
+        apiKey: { findUnique: jest.fn().mockResolvedValue({
+          userId: 'user-1', dailySpendLimit: apiKeyContext.dailySpendLimit ?? null,
+          monthlySpendLimit: apiKeyContext.monthlySpendLimit ?? null,
+        }) },
         withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
         transaction: {
           findFirst: txFindFirst,
+          findMany: prisma.transaction.findMany,
           create: prisma.transaction.create,
           update: prisma.transaction.update,
           updateMany: prisma.transaction.updateMany,
@@ -376,6 +404,8 @@ describe('TransactionsService', () => {
       billingDebt,
       config,
       destinationPolicy as any,
+      defiPolicy,
+      securityEvents,
       eoaExecutionPolicy,
       transactionSimulation,
       undefined, // riskEvaluation
@@ -385,6 +415,115 @@ describe('TransactionsService', () => {
 
   afterEach(() => {
     loggerWarnSpy.mockRestore();
+  });
+
+  it.each([
+    ['empty custom mode', [] as string[]],
+    ['custom subset excluding root', ['fixture:unrelated:v1']],
+    ['custom root without scoped child', ['fixture:multicall:v1']],
+  ])('real DeFi policy rejects a live key change to %s after transaction locks', async (_label, liveIds) => {
+    const target = '0x4444444444444444444444444444444444444444';
+    const childDefinitions = [
+      ['mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))', 'function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline) params) payable'],
+      ['increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))', 'function increaseLiquidity((uint256 tokenId,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+      ['decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))', 'function decreaseLiquidity((uint256 tokenId,uint128 liquidity,uint256 amount0Min,uint256 amount1Min,uint256 deadline) params) payable'],
+      ['collect((uint256,address,uint128,uint128))', 'function collect((uint256 tokenId,address recipient,uint128 amount0Max,uint128 amount1Max) params) payable'],
+      ['burn(uint256)', 'function burn(uint256 tokenId) payable'],
+      ['refundETH()', 'function refundETH() payable'],
+      ['unwrapWETH9(uint256,address)', 'function unwrapWETH9(uint256 amountMinimum,address recipient) payable'],
+      ['sweepToken(address,uint256,address)', 'function sweepToken(address token,uint256 amountMinimum,address recipient) payable'],
+    ] as const;
+    const childAbis = childDefinitions.map(([, signature]) => parseAbi([signature])[0]);
+    const wrapperAbi = parseAbi(['function multicall(bytes[] data) payable returns (bytes[] results)'])[0];
+    const children: any[] = childAbis.map((abi, index) => ({
+      capabilityId: `fixture:child:${index}:v1`, type: 'contract_call', chainId: 8453, contract: target,
+      signature: childDefinitions[index][0], functionName: abi.name, abi, status: 'active',
+      provenance: { sourceRef: 'transaction acceptance fixture', verifiedAt: '2026-01-01', status: 'verified' },
+    }));
+    const wrapper: any = {
+      capabilityId: 'fixture:multicall:v1', type: 'contract_call', chainId: 8453, contract: target,
+      signature: 'multicall(bytes[])', functionName: 'multicall', abi: wrapperAbi, status: 'active',
+      provenance: { sourceRef: 'transaction acceptance fixture', verifiedAt: '2026-01-01', status: 'verified' },
+      executionScope: { kind: 'same-target-multicall-v1', bytesArrayArgIndex: 0,
+        allowedChildren: children.map((child) => ({ capabilityId: child.capabilityId, signature: child.signature, abiHash: functionAbiHash(child) })) },
+    };
+    const chains: DefiChainPolicy[] = [{ chainId: 8453, status: 'active', contracts: [{ address: target, status: 'active', functions: [wrapper, ...children] }] }];
+    const manifest = buildReviewedManifest([{ chains }]);
+    const refund = children.find((child) => child.signature === 'refundETH()')!;
+    const data = encodeFunctionData({ abi: [refund.abi], functionName: 'refundETH' } as any);
+    const rootData = encodeFunctionData({ abi: [wrapperAbi], functionName: 'multicall', args: [[data]] });
+    const request = { ...dto, chainId: 8453, executionMode: 'eoa', interactions: [{ to: target, data: rootData, value: '0' }], idempotencyKey: `real-policy-${_label.replaceAll(' ', '-')}` };
+    const policyDb = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+    const realPolicy = new DefiPolicyService(policyDb as any, securityEvents, new DefiCatalogService(chains, policyDb as any, manifest));
+    const preflight = jest.spyOn(realPolicy, 'authorizeContractCalls');
+    const final = jest.spyOn(realPolicy, 'assertStillAuthorized');
+    (service as any).defiPolicy = realPolicy;
+
+    const order: string[] = [];
+    let liveKeyReadCount = 0;
+    let omitFinalWalletDelegate = false;
+    const liveKey = { userId: 'user-1', walletId: wallet.id, revoked: false, frozenAt: null, expiresAt: null,
+      canSendTransaction: true, capabilityMode: 'custom', allowedCapabilityIds: liveIds };
+    destinationPolicy.acquireUserDestinationLock.mockImplementation(async () => { order.push('destination'); });
+    prisma.$transaction.mockImplementation(async (callback: any) => {
+      const txClient: any = {
+      $executeRaw: jest.fn().mockResolvedValue(undefined),
+      $queryRaw: jest.fn((strings: TemplateStringsArray) => {
+        const sql = strings.join(' ');
+        order.push(sql.includes('defi_policy_state') ? 'policy-share' : 'key-update');
+        return Promise.resolve([]);
+      }),
+      defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) },
+      apiKey: { findUnique: jest.fn(async ({ select }: any) => { liveKeyReadCount++; order.push(select ? 'spend-key-read' : 'live-key-read'); return liveKey; }) },
+      withdrawalPolicy: { findUnique: prisma.withdrawalPolicy.findUnique },
+      transaction: { findFirst: txFindFirst, findMany: prisma.transaction.findMany,
+        create: prisma.transaction.create, update: prisma.transaction.update, updateMany: prisma.transaction.updateMany },
+      };
+      if (!omitFinalWalletDelegate) txClient.userWallet = { findFirst: jest.fn().mockResolvedValue({ id: wallet.id, userId: 'user-1' }) };
+      return callback(txClient);
+    });
+    prisma.transaction.create.mockClear();
+    openfort.submitUserOperation.mockClear(); openfort.sendBackendTransaction.mockClear();
+    openfort.getTransactionReceipt.mockClear(); openfort.waitForUserOperationReceipt.mockClear();
+    transactionSimulation.assertSimulatable.mockClear(); transactionSimulation.simulateAssetFlowEvidence.mockClear();
+    securityEvents.record.mockClear(); securityEvents.exportCommitted.mockClear();
+
+    await expect(service.send('user-1', request as any, { ...apiKeyContext, canUseEoaExecution: true })).rejects.toMatchObject({
+      response: { code: 'DEFI_CAPABILITY_NOT_GRANTED' },
+    });
+    expect(preflight).toHaveBeenCalledTimes(1);
+    await expect(preflight.mock.results[0].value).resolves.toMatchObject({
+      context: { capabilityMode: 'all', allowedCapabilityIds: [] },
+      executionPlan: [
+        { path: [0], match: { capabilityId: 'fixture:multicall:v1' } },
+        { path: [0, 0], match: { capabilityId: 'fixture:child:5:v1' } },
+      ],
+    });
+    expect(final).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['destination', 'policy-share', 'key-update', 'live-key-read']);
+    expect(liveKeyReadCount).toBe(1); // live key is fetched only after both policy locks.
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+    expect(openfort.getTransactionReceipt).not.toHaveBeenCalled();
+    expect(openfort.waitForUserOperationReceipt).not.toHaveBeenCalled();
+    expect(openfort.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
+    expect(securityEvents.record).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'defi.policy_denied', result: 'denied' }));
+    const denial = securityEvents.record.mock.calls.find(([event]: any[]) => event.eventType === 'defi.policy_denied')?.[0];
+    expect(denial?.metadata).not.toHaveProperty('calldata');
+    expect(denial?.metadata).not.toHaveProperty('interactions');
+
+    // Final acceptance must fail closed if the owned-wallet delegate is absent,
+    // before transaction creation or any provider call.
+    liveKey.capabilityMode = 'all';
+    liveKey.allowedCapabilityIds = [];
+    omitFinalWalletDelegate = true;
+    await expect(service.send('user-1', request as any, { ...apiKeyContext, canUseEoaExecution: true }))
+      .rejects.toMatchObject({ response: { code: 'DEFI_POLICY_UNAVAILABLE' } });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
   it('uses requested chainId and creates idempotency record before sending', async () => {
@@ -405,8 +544,6 @@ describe('TransactionsService', () => {
       accountAddress: wallet.walletAddress,
       keyHash: wallet.agentKeyHash,
       operation: 'send_transaction',
-      allowedContracts: apiKeyContext.allowedContracts,
-      allowedFunctionSelectors: apiKeyContext.allowedFunctionSelectors,
       dailySpendLimit: apiKeyContext.dailySpendLimit,
       monthlySpendLimit: apiKeyContext.monthlySpendLimit,
       apiKeyExpiresAt: apiKeyContext.expiresAt,
@@ -452,29 +589,27 @@ describe('TransactionsService', () => {
         sponsorship: 'none',
       }),
     );
+    expect(defiPolicy.assertStillAuthorized).toHaveBeenCalledTimes(1);
+    expect(defiPolicy.recordAllowedInTx).toHaveBeenCalledTimes(1);
+    expect(securityEvents.exportCommitted).toHaveBeenCalledWith({ id: 'event-1' });
   });
 
-  it('rejects a forged wallet ID owned by another user', async () => {
+  it('rejects a wallet selector outside the binding before wallet lookup or submission', async () => {
     await expect(
       service.send('user-1', { ...dto, walletId: 'wallet-other' } as any, apiKeyContext),
-    ).rejects.toThrow(NotFoundException);
-    expect(prisma.userWallet.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'wallet-other', userId: 'user-1' } }),
-    );
+    ).rejects.toThrow('API key is not bound to the selected wallet');
+    expect(prisma.userWallet.findMany).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
-  it('requires walletId when multiple active owned wallets exist', async () => {
+  it('uses the key-bound wallet when multiple owned wallets exist', async () => {
     prisma.userWallet.findMany.mockResolvedValueOnce([
       wallet,
       { ...wallet, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
     ]);
-    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
-      ConflictException,
-    );
-    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
-    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    await expect(service.send('user-1', dto as any, apiKeyContext)).resolves.toBeDefined();
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({ accountAddress: wallet.walletAddress }));
   });
 
   it('ignores frozen and addressless wallets when implicitly selecting an eligible wallet', async () => {
@@ -499,7 +634,8 @@ describe('TransactionsService', () => {
       { ...wallet, chainAuthorizations: [] },
       { ...wallet, id: 'alternate', walletAddress: '0x4444444444444444444444444444444444444444' },
     ] as any);
-    await expect(service.send('user-1', { ...dto, walletId: wallet.id } as any, apiKeyContext))
+    prisma.userWallet.findMany.mockResolvedValueOnce([{ ...wallet, chainAuthorizations: [] }] as any);
+    await expect(service.send('user-1', dto as any, apiKeyContext))
       .rejects.toThrow('API access is not authorized for this chain');
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
@@ -510,16 +646,10 @@ describe('TransactionsService', () => {
       id: 'wallet-2',
       walletAddress: '0x4444444444444444444444444444444444444444',
     };
-    prisma.userWallet.findMany.mockResolvedValueOnce([second]);
-    prisma.transaction.findFirst.mockResolvedValueOnce({
-      id: 'tx-existing',
-      status: 'pending',
-      txHash: null,
-      requestHash: 'hash-for-wallet-1',
-    });
     await expect(
       service.send('user-1', { ...dto, walletId: second.id } as any, apiKeyContext),
-    ).rejects.toThrow('Idempotency key was already used for a different request');
+    ).rejects.toThrow('API key is not bound to the selected wallet');
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
     expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
@@ -627,7 +757,7 @@ describe('TransactionsService', () => {
     expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
   });
 
-  it('rejects transactions with native value before loading the wallet', async () => {
+  it('allows transactions with native value through generic preflight', async () => {
     await expect(
       service.send(
         'user-1',
@@ -637,11 +767,31 @@ describe('TransactionsService', () => {
         } as any,
         apiKeyContext,
       ),
-    ).rejects.toThrow(BadRequestException);
+    ).resolves.toMatchObject({ status: 'confirmed' });
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      interactions: [expect.objectContaining({ value: '1' })],
+    }));
+  });
 
-    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
+  it('does not dispatch when the lock-held native budget check denies', async () => {
+    const denial = new TransactionSpendBudgetDenial({
+      userId: 'user-1', apiKeyId: apiKeyContext.id,
+      reason: 'Transaction would exceed daily spend limit for this API key',
+      metadata: { period: 'daily', current: '1', spent: '0', limit: '0' },
+    });
+    const budgetCheck = jest.spyOn(transactionPolicy, 'assertSpendAllowedInTx').mockRejectedValueOnce(denial);
+    const budgetAudit = jest.spyOn(transactionPolicy, 'recordSpendBudgetDenial').mockResolvedValueOnce();
+    await expect(service.send('user-1', {
+      ...dto, idempotencyKey: 'native-budget-denied',
+      interactions: [{ ...dto.interactions[0], value: '1' }],
+    } as any, apiKeyContext)).rejects.toBe(denial);
+    expect(budgetCheck).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ nativeValueWei: '1' }));
+    expect(budgetAudit).toHaveBeenCalledWith(denial);
     expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+    budgetCheck.mockRestore();
+    budgetAudit.mockRestore();
   });
 
   it('rejects transactions with too many interactions before loading the wallet', async () => {
@@ -664,7 +814,7 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('rejects infinite token approvals before loading the wallet', async () => {
+  it('allows infinite token approvals through generic preflight', async () => {
     const infiniteApprovalCalldata =
       '0x095ea7b3' +
       '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
@@ -684,24 +834,10 @@ describe('TransactionsService', () => {
         } as any,
         apiKeyContext,
       ),
-    ).rejects.toThrow(BadRequestException);
-
-    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
-    expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: 'security',
-        message: 'Transaction policy rejected request',
-        reason: 'Infinite token approvals are not allowed',
-        userId: 'user-1',
-        chainId: dto.chainId,
-        executionMode: 'session_key',
-        apiKeyPrefix,
-        interactionIndex: 0,
-        selector: '0x095ea7b3',
-      }),
-    );
+    ).resolves.toMatchObject({ status: 'confirmed' });
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      interactions: [expect.objectContaining({ data: infiniteApprovalCalldata })],
+    }));
     expect(JSON.stringify(loggerWarnSpy.mock.calls)).not.toContain(infiniteApprovalCalldata);
   });
 
@@ -775,7 +911,7 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('rejects max-uint ERC20 approvals before loading the wallet', async () => {
+  it('allows max-uint ERC20 approvals through generic preflight', async () => {
     const maxUintApprovalCalldata =
       '0x095ea7b3' +
       '000000000000000000000000e111180000d2663c0091e4f400237545b87b996b' +
@@ -790,24 +926,10 @@ describe('TransactionsService', () => {
         } as any,
         apiKeyContext,
       ),
-    ).rejects.toThrow(BadRequestException);
-
-    expect(prisma.userWallet.findUnique).not.toHaveBeenCalled();
-    expect(prisma.transaction.create).not.toHaveBeenCalled();
-    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: 'security',
-        message: 'Transaction policy rejected request',
-        reason: 'Infinite token approvals are not allowed',
-        userId: 'user-1',
-        chainId: dto.chainId,
-        executionMode: 'session_key',
-        apiKeyPrefix,
-        interactionIndex: 0,
-        selector: '0x095ea7b3',
-      }),
-    );
+    ).resolves.toMatchObject({ status: 'confirmed' });
+    expect(openfort.sendUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      interactions: [expect.objectContaining({ data: maxUintApprovalCalldata })],
+    }));
   });
 
   it('rejects NFT operator approvals before loading the wallet', async () => {
@@ -963,6 +1085,71 @@ describe('TransactionsService', () => {
     });
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+  });
+
+  it('denies an unauthorized contract call before destination, billing, simulation, and create', async () => {
+    defiPolicy.authorizeContractCalls.mockRejectedValueOnce(
+      new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_CONTRACT_NOT_ALLOWED' }), { code: 'DEFI_CONTRACT_NOT_ALLOWED' }),
+    );
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: 'DEFI_CONTRACT_NOT_ALLOWED' },
+    });
+    expect(defiPolicy.recordDenied).toHaveBeenCalledTimes(1);
+    expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(billingDebt.getDebt).not.toHaveBeenCalled();
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('rolls back acceptance when final DeFi authorization has gone stale', async () => {
+    defiPolicy.assertStillAuthorized.mockRejectedValueOnce(
+      new DefiPolicyDenial(new ForbiddenException({ code: 'DEFI_CAPABILITY_PAUSED' }), { code: 'DEFI_CAPABILITY_PAUSED' }),
+    );
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toMatchObject({
+      response: { code: 'DEFI_CAPABILITY_PAUSED' },
+    });
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    expect(defiPolicy.recordDenied).toHaveBeenCalledTimes(1);
+  });
+
+  it('orders direct-egress acceptance as destination lock, DeFi pause/key recheck, then direct-egress key lock', async () => {
+    const lockOrder: string[] = [];
+    destinationPolicy.acquireUserDestinationLock.mockImplementationOnce(async () => {
+      lockOrder.push('destination');
+    });
+    destinationPolicy.assertDestinationsAllowed.mockImplementation(async (...args: any[]) => {
+      if (args[3]?.prisma) lockOrder.push('destination-policy');
+    });
+    defiPolicy.assertStillAuthorized.mockImplementationOnce(async () => {
+      lockOrder.push('defi-pause-share-and-key-update');
+    });
+    txApiKeyLockRows.mockImplementationOnce(async () => {
+      lockOrder.push('direct-egress-key-update');
+      return [{
+        user_id: 'user-1', revoked: false, frozen_at: null, expires_at: null,
+        can_send_transaction: true, direct_egress_policy_accepted_at: new Date(),
+      }];
+    });
+
+    await service.send('user-1', {
+      ...dto,
+      idempotencyKey: 'direct-egress-lock-order',
+      interactions: [{ to: TOKEN, data: erc20TransferData(EXTERNAL), value: '0' }],
+    } as any, apiKeyContext);
+
+    expect(lockOrder).toEqual([
+      'destination',
+      'destination-policy',
+      'defi-pause-share-and-key-update',
+      'direct-egress-key-update',
+    ]);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'ReadCommitted',
+    });
+    expect(prisma.transaction.create).toHaveBeenCalledTimes(1);
   });
 
   it('accepts a pre-upgrade request fingerprint only for the same persisted wallet identity', async () => {
@@ -1073,6 +1260,21 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
+  it('rejects matching-fingerprint P2002 recovery rows attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      ...existingSendIdentity, id: 'tx-other-wallet', status: 'submitting', txHash: null,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    txFindFirst.mockResolvedValue(null);
+    prisma.transaction.create.mockRejectedValue({ code: 'P2002' });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(prisma.transaction.findFirst).toHaveBeenCalledTimes(2);
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+  });
+
   it('uses a persisted fingerprint for nullable-hash rows found inside the transaction', async () => {
     prisma.transaction.findFirst.mockResolvedValue(null);
     txFindFirst.mockResolvedValue({
@@ -1090,6 +1292,20 @@ describe('TransactionsService', () => {
     });
     prisma.transaction.findFirst.mockResolvedValue(null);
     await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects matching-fingerprint inner idempotency hits attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue(null);
+    txFindFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-other-wallet', status: 'pending', txHash: null,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects P2002 recovery when the concurrent row has a different requestHash', async () => {
@@ -1163,6 +1379,7 @@ describe('TransactionsService', () => {
       BadRequestException,
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
@@ -1280,6 +1497,7 @@ describe('TransactionsService', () => {
       walletAddress: wallet.walletAddress,
       operationType: 'send',
       authMethod: 'api_key',
+      details: { walletId: wallet.id },
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: new Date('2026-04-28T00:01:00.000Z'),
@@ -1290,6 +1508,7 @@ describe('TransactionsService', () => {
       transactionHash: '0xhash',
       status: 'confirmed',
       chainId: 8453,
+      walletId: wallet.id,
       walletAddress: wallet.walletAddress,
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
@@ -1314,6 +1533,8 @@ describe('TransactionsService', () => {
       walletAddress: wallet.walletAddress,
       operationType: 'send',
       authMethod: 'api_key',
+      userId: 'user-1',
+      details: { walletId: wallet.id },
       failureReason: null,
       createdAt: new Date('2026-04-28T00:00:00.000Z'),
       completedAt: null,
@@ -1322,6 +1543,65 @@ describe('TransactionsService', () => {
     await expect(service.getStatus('user-1', 'tx-1', apiKeyContext)).resolves.toEqual(
       expect.objectContaining({ status: 'pending', transactionHash: null }),
     );
+  });
+
+  it('hides transaction status for a different wallet binding', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-other', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress,
+      operationType: 'send', authMethod: 'api_key', details: { walletId: 'wallet-other' },
+    });
+    await expect(service.getStatus('user-1', 'tx-other', apiKeyContext)).rejects.toThrow(NotFoundException);
+  });
+
+  it('allows status access from another key bound to the same wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-same-wallet', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress,
+      operationType: 'send', authMethod: 'api_key', details: { walletId: wallet.id },
+    });
+    await expect(service.getStatus('user-1', 'tx-same-wallet', { ...apiKeyContext, id: 'api-key-2' }))
+      .resolves.toMatchObject({ transactionId: 'tx-same-wallet', walletId: wallet.id });
+  });
+
+  it('accepts legacy status attribution only for the unique case-insensitive account+agent pair', async () => {
+    prisma.userWallet.findMany.mockResolvedValue([wallet] as any);
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+    });
+    await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).resolves.toMatchObject({ walletId: null });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy-eoa', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.agentWalletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase(), executionMode: 'eoa' },
+    });
+    await expect(service.getStatus('user-1', 'tx-legacy-eoa', apiKeyContext)).resolves.toMatchObject({ walletId: null });
+    prisma.transaction.findFirst.mockResolvedValue({
+      id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
+      chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
+      operationType: 'send', authMethod: 'api_key',
+      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+    });
+    prisma.userWallet.findMany.mockResolvedValue([wallet, { ...wallet, id: 'wallet-duplicate' }] as any);
+    await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an idempotency hit attributed to another wallet', async () => {
+    prisma.transaction.findFirst.mockResolvedValue({
+      ...existingSendIdentity, id: 'tx-other', status: 'pending', txHash: null,
+      walletAddress: wallet.walletAddress,
+      details: { ...existingSendIdentity.details, walletId: 'wallet-other' },
+      requestHash: existingRequestFingerprint,
+    });
+    await expect(service.send('user-1', dto as any, apiKeyContext)).rejects.toThrow(
+      'Idempotency key was already used for a different request',
+    );
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
+    expect(openfort.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('rejects status lookups for non-send operations', async () => {
@@ -1619,6 +1899,105 @@ describe('TransactionsService', () => {
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  describe('restricted pUSD wrap destination handling', () => {
+    const wrapCall = (recipient: string) => ({
+      to: POLYMARKET_PUSD_WRAP_IDENTITY.contract,
+      data: encodeFunctionData({ abi: POLYMARKET_PUSD_WRAP_ABI, functionName: 'wrap', args: [
+        POLYMARKET_PUSD_WRAP_IDENTITY.asset as Hex, recipient as Hex, 10n,
+      ] }), value: '0',
+    });
+    const wrapDto = (recipient: string, key: string, interactions: any[] = [wrapCall(recipient)]) => ({ ...dto, chainId: 137, interactions, idempotencyKey: key });
+
+    beforeEach(() => {
+      destinationPolicy.assertDestinationsAllowed.mockReset().mockResolvedValue(undefined);
+    });
+
+    it('protection off and missing policy preserve arbitrary recipient behavior', async () => {
+      prisma.withdrawalPolicy.findUnique.mockResolvedValueOnce(null);
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-off-1') as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+      expect(prisma.transaction.create).toHaveBeenCalled();
+      expect(openfort.sendUserOperation).toHaveBeenCalled();
+    });
+
+    it('protection on sends exact decoded recipient through allowlist and permits member including self', async () => {
+      enableDestinationProtection();
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-on-1') as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase()], expect.any(Object));
+      expect(prisma.transaction.create).toHaveBeenCalled();
+    });
+
+    it.each([false, true])('checks all destinations for a wrap plus a direct transfer (wrap first: %s)', async (wrapFirst) => {
+      enableDestinationProtection();
+      const directRecipient = '0x2222222222222222222222222222222222222222';
+      const direct = { to: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', data: encodeFunctionData({ abi: [{ type: 'function', name: 'transfer', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] }], functionName: 'transfer', args: [directRecipient as Hex, 1n] }), value: '0' };
+      const interactions = wrapFirst ? [wrapCall(EXTERNAL), direct] : [direct, wrapCall(EXTERNAL)];
+      await service.send('user-1', wrapDto(EXTERNAL, `pusd-mixed-${wrapFirst}`, interactions) as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [directRecipient, EXTERNAL.toLowerCase()], expect.any(Object));
+    });
+
+    it('does not let a wrap whitelist an unrelated unknown call when protection is enabled', async () => {
+      enableDestinationProtection();
+      const unrelated = { to: POLYMARKET_PUSD_WRAP_IDENTITY.contract, data: '0x12345678' as Hex, value: '0' };
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-mixed-unproven', [wrapCall(EXTERNAL), unrelated]) as any, apiKeyContext)).rejects.toThrow(/Unproven asset outflow/);
+      expect(destinationPolicy.assertDestinationsAllowed).not.toHaveBeenCalled();
+    });
+
+    it('checks every recipient for multiple top-level wraps and rejects incomplete final recipient metadata', async () => {
+      enableDestinationProtection();
+      const second = '0x3333333333333333333333333333333333333333';
+      const interactions = [wrapCall(EXTERNAL), wrapCall(second)];
+      await service.send('user-1', wrapDto(EXTERNAL, 'pusd-multi-wrap', interactions) as any, apiKeyContext);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase(), second], expect.any(Object));
+
+      const original = (service as any).createPendingOrReturnExisting.bind(service);
+      jest.spyOn(service as any, 'createPendingOrReturnExisting').mockImplementation((userId: string, params: any) =>
+        original(userId, { ...params, destinationGate: { ...params.destinationGate, wrapRecipients: [EXTERNAL.toLowerCase()], destinations: [EXTERNAL.toLowerCase()] } }));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-omitted-recipient', interactions) as any, apiKeyContext))
+        .rejects.toThrow(/Destination classification is inconsistent/);
+    });
+
+    it('protection on denies unavailable, absent, or cooling destinations, including self, before insert/broadcast', async () => {
+      enableDestinationProtection();
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ServiceUnavailableException('db unavailable'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-db-fail') as any, apiKeyContext)).rejects.toThrow(ServiceUnavailableException);
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('not allowlisted'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-absent') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('cooldown'));
+      await expect(service.send('user-1', wrapDto(wallet.walletAddress, 'pusd-self') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    });
+
+    it('rechecks enabled protection and decoded recipient at acceptance; never trusts forged outer gate metadata', async () => {
+      prisma.withdrawalPolicy.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ requireAddressAllowlist: true });
+      destinationPolicy.assertDestinationsAllowed.mockRejectedValueOnce(new ForbiddenException('removed during flight'));
+      await expect(service.send('user-1', wrapDto(EXTERNAL, 'pusd-final-remove') as any, apiKeyContext)).rejects.toThrow(ForbiddenException);
+      expect(destinationPolicy.assertDestinationsAllowed).toHaveBeenCalledWith('user-1', [EXTERNAL.toLowerCase()], expect.any(Object), expect.objectContaining({ prisma: expect.any(Object), deferAudit: true }));
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+    });
+
+    it.each(['missing', 'wrong-recipient', 'false-classification'] as const)(
+      'rejects %s destination metadata at final creation', async (mutation) => {
+        const original = (service as any).createPendingOrReturnExisting.bind(service);
+        jest.spyOn(service as any, 'createPendingOrReturnExisting').mockImplementation((userId: string, params: any) => {
+          const gate = params.destinationGate;
+          const forged = mutation === 'missing' ? undefined : {
+            ...gate,
+            restrictedWrap: mutation === 'false-classification' ? false : true,
+            destinations: mutation === 'wrong-recipient' ? [wallet.walletAddress.toLowerCase()] : gate.destinations,
+          };
+          return original(userId, { ...params, destinationGate: forged });
+        });
+        await expect(service.send('user-1', wrapDto(EXTERNAL, `pusd-forged-${mutation}`) as any, apiKeyContext))
+          .rejects.toThrow(/Destination classification is inconsistent/);
+        expect(prisma.transaction.create).not.toHaveBeenCalled();
+        expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+      },
+    );
   });
 
   it('outer preflight pass + inner deferred deny: records audit once after TX, stable 403, no create/provider', async () => {
@@ -2037,8 +2416,31 @@ describe('TransactionsService', () => {
     expect(billingDebt.getDebt).not.toHaveBeenCalled();
     expect(transactionSimulation.simulateAssetFlowEvidence).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).not.toHaveBeenCalled();
+    expect(defiPolicy.authorizeContractCalls).not.toHaveBeenCalled();
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('submits the authorized immutable interaction snapshot despite caller-side DTO mutation', async () => {
+    const mutableInteractions = [{ ...dto.interactions[0] }];
+    const authorization = {
+      ...defiAuthorization,
+      context: { userId: 'user-1', apiKeyId: apiKeyContext.id, walletId: wallet.id, chainId: 8453, executionMode: 'session_key', executionOwner: wallet.walletAddress, allowedCapabilityIds: [] },
+      interactions: Object.freeze(mutableInteractions.map((item) => Object.freeze({ ...item }))),
+      manifestHash: `0x${'b'.repeat(64)}`,
+      requestCommitment: `0x${'a'.repeat(64)}`,
+      matches: [],
+    };
+    defiPolicy.authorizeContractCalls.mockResolvedValueOnce(authorization);
+    transactionSimulation.assertSimulatable.mockImplementationOnce(async () => {
+      mutableInteractions[0].data = '0xdeadbeef';
+    });
+
+    await service.send('user-1', { ...dto, interactions: mutableInteractions } as any, apiKeyContext);
+
+    expect(openfort.submitUserOperation).toHaveBeenCalledWith(expect.objectContaining({
+      interactions: [{ ...dto.interactions[0] }],
+    }));
   });
 
   it('inner recheck rejects when outer had no debt but inner finds debt without proof', async () => {

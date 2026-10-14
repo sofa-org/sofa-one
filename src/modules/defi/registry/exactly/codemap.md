@@ -1,0 +1,3 @@
+# Exactly OP Mainnet fixture
+
+An explicit test-only registry fragment for two documented OP Mainnet Exactly markets (USDC and WETH), ten fixed Market functions apiece, and two Auditor market-listing controls. `buildExactlyRegistry()` is active only as a policy-test fixture and is not wired to runtime production admission or automatic grants. The raw v6 source snapshot remains inactive. ABI-valid financial, maturity, recipient, ownership, borrower, and market arguments remain caller-controlled; this fixture does not impose caps, platform ownership/health checks, or approval pairing. Protocol configuration, solvency, allowances, liquidity, and successful economic outcomes are not certified. See [source review](../../../../../docs/defi-research/expansion55-exactly-v6.md).

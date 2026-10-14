@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "families": [{
+    "familyId": "ajna",
+    "familyVersion": "erc20-v1",
+    "contracts": [{
+      "chainId": 1,
+      "address": "0x9cdb48fcbd8241bb75887af04d3b1302c410f671",
+      "status": "inactive",
+      "contractName": "Ajna Ethereum rETH/DAI ERC20 Pool",
+      "sourceRefs": ["ajna-subgraph-repository", "ajna-ethereum-network-config", "ajna-erc20-pool-abi", "ajna-core-erc20-pool", "ajna-ethereum-pool-observation"],
+      "abiFunctions": [
+        { "type": "function", "name": "addQuoteToken", "stateMutability": "nonpayable", "inputs": [{ "name": "amount_", "type": "uint256", "internalType": "uint256" }, { "name": "index_", "type": "uint256", "internalType": "uint256" }, { "name": "expiry_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "bucketLP_", "type": "uint256", "internalType": "uint256" }, { "name": "addedAmount_", "type": "uint256", "internalType": "uint256" }], "sourceId": "ajna-erc20-pool-abi" },
+        { "type": "function", "name": "removeQuoteToken", "stateMutability": "nonpayable", "inputs": [{ "name": "maxAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "index_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "removedAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "redeemedLP_", "type": "uint256", "internalType": "uint256" }], "sourceId": "ajna-erc20-pool-abi" },
+        { "type": "function", "name": "addCollateral", "stateMutability": "nonpayable", "inputs": [{ "name": "amountToAdd_", "type": "uint256", "internalType": "uint256" }, { "name": "index_", "type": "uint256", "internalType": "uint256" }, { "name": "expiry_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "bucketLP_", "type": "uint256", "internalType": "uint256" }], "sourceId": "ajna-erc20-pool-abi" },
+        { "type": "function", "name": "removeCollateral", "stateMutability": "nonpayable", "inputs": [{ "name": "maxAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "index_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "removedAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "redeemedLP_", "type": "uint256", "internalType": "uint256" }], "sourceId": "ajna-erc20-pool-abi" },
+        { "type": "function", "name": "drawDebt", "stateMutability": "nonpayable", "inputs": [{ "name": "borrowerAddress_", "type": "address", "internalType": "address" }, { "name": "amountToBorrow_", "type": "uint256", "internalType": "uint256" }, { "name": "limitIndex_", "type": "uint256", "internalType": "uint256" }, { "name": "collateralToPledge_", "type": "uint256", "internalType": "uint256" }], "outputs": [], "sourceId": "ajna-erc20-pool-abi" },
+        { "type": "function", "name": "repayDebt", "stateMutability": "nonpayable", "inputs": [{ "name": "borrowerAddress_", "type": "address", "internalType": "address" }, { "name": "maxQuoteTokenAmountToRepay_", "type": "uint256", "internalType": "uint256" }, { "name": "collateralAmountToPull_", "type": "uint256", "internalType": "uint256" }, { "name": "collateralReceiver_", "type": "address", "internalType": "address" }, { "name": "limitIndex_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "amountRepaid_", "type": "uint256", "internalType": "uint256" }], "sourceId": "ajna-erc20-pool-abi" }
+      ]
+    }]
+  }],
+  "sources": [
+    { "sourceId": "ajna-subgraph-repository", "url": "https://github.com/ajna-finance/subgraph/tree/7e61fb814ae4bb63b0669f03098c0d42bc6fa79d", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Ajna Finance subgraph repository commit 7e61fb814ae4bb63b0669f03098c0d42bc6fa79d; source snapshot is not a current runtime or liquidity assertion." },
+    { "sourceId": "ajna-ethereum-network-config", "url": "https://github.com/ajna-finance/subgraph/blob/7e61fb814ae4bb63b0669f03098c0d42bc6fa79d/networks.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned mainnet configuration identifies Ethereum ERC20PoolFactory 0x6146DD43C5622bB6D12A5240ab9CF4de14eDC625. Factory identity is evidence for discovery, not an authorized call target." },
+    { "sourceId": "ajna-erc20-pool-abi", "url": "https://github.com/ajna-finance/subgraph/blob/7e61fb814ae4bb63b0669f03098c0d42bc6fa79d/abis/ERC20Pool.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned full ERC20Pool ABI snapshot supplies the exact six selected nonpayable function declarations and primitive internalTypes. The fixture preserves artifact names and outputs, including repayDebt input collateralReceiver_." },
+    { "sourceId": "ajna-core-erc20-pool", "url": "https://github.com/ajna-finance/ajna-core/blob/0f59e78031af76d62ad575c18405eb325b28849f/src/ERC20Pool.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned Ajna core ERC20Pool implementation confirms the selected operations are external user-facing calls (addCollateral, removeCollateral, drawDebt, repayDebt) and retains collateralReceiver_ in repayDebt; protocol bucket, expiry, allowance, solvency, and liquidity checks remain native behavior. This source pin is not current runtime-code or funded-execution proof." },
+    { "sourceId": "ajna-ethereum-pool-observation", "url": "https://github.com/ajna-finance/subgraph/blob/7e61fb814ae4bb63b0669f03098c0d42bc6fa79d/networks.json", "retrievedAtUtc": "2026-10-04", "evidence": "Recorded parent read-only Ethereum observation at block 0x18e8dc8, hash 0xfccbc823a2a7ef59d6db6b068c2066ea82de024075007a0ae6e49e49dd71f00: official factory reported 224 pools and index 0 was 0x9cdb48fcbd8241bb75887af04d3b1302c410f671; typed collateral/quote getters returned rETH/DAI. The bounded observation identifies this target only; it is not a whole-market, current-runtime, liquidity, or funded-execution attestation." }
+  ]
+}

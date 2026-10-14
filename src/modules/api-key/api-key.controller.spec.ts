@@ -10,10 +10,13 @@ jest.mock('../../common/guards/openfort-user.guard', () => ({
   OpenfortUserGuard: class OpenfortUserGuard {},
 }));
 
-import { ApiKeyController } from './api-key.controller';
+import { ApiKeyController, DefiCapabilityBundleController, DefiCapabilityController } from './api-key.controller';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
+import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
+import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import { THROTTLER_LIMIT, THROTTLER_TTL } from '@nestjs/throttler/dist/throttler.constants';
 
 describe('ApiKeyController', () => {
   const apiKeyService = {
@@ -22,6 +25,8 @@ describe('ApiKeyController', () => {
     revokeApiKey: jest.fn(),
     revokeAllKeys: jest.fn(),
     authorizeDirectEgress: jest.fn(),
+    replaceCapabilities: jest.fn(),
+    rotateApiKey: jest.fn(),
   };
 
   let controller: ApiKeyController;
@@ -49,8 +54,8 @@ describe('ApiKeyController', () => {
       name: 'My Key',
       expiresAt: undefined,
       allowedIps: undefined,
-      allowedContracts: undefined,
-      allowedFunctionSelectors: undefined,
+      allowedCapabilityIds: undefined,
+      capabilityMode: undefined,
       spendLimits: undefined,
       permissions: undefined,
     });
@@ -77,19 +82,24 @@ describe('ApiKeyController', () => {
 
     await controller.create('user-1', {
       name: 'Restricted',
-      allowedContracts: ['0x1111111111111111111111111111111111111111'],
-      allowedFunctionSelectors: ['0xa9059cbb'],
+      allowedCapabilityIds: ['cap:test:v1'],
       spendLimits: { daily: '1000', monthly: '5000' },
     } as any);
 
     expect(apiKeyService.createApiKey).toHaveBeenCalledWith(
       'user-1',
       expect.objectContaining({
-        allowedContracts: ['0x1111111111111111111111111111111111111111'],
-        allowedFunctionSelectors: ['0xa9059cbb'],
+        allowedCapabilityIds: ['cap:test:v1'],
         spendLimits: { daily: '1000', monthly: '5000' },
       }),
     );
+  });
+
+  it('passes complete capability mode replacements to the service', async () => {
+    apiKeyService.replaceCapabilities.mockResolvedValue({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    const dto = { capabilityMode: 'all' };
+    await expect(controller.replaceCapabilities('user-1', 'key-1', dto as any)).resolves.toEqual({ id: 'key-1', capabilityMode: 'all', allowedCapabilityIds: [] });
+    expect(apiKeyService.replaceCapabilities).toHaveBeenCalledWith('key-1', 'user-1', dto);
   });
 
   it('delegates list to apiKeyService.listApiKeys', async () => {
@@ -97,6 +107,17 @@ describe('ApiKeyController', () => {
 
     await expect(controller.list('user-1')).resolves.toEqual([{ id: 'key-1' }]);
     expect(apiKeyService.listApiKeys).toHaveBeenCalledWith('user-1');
+  });
+
+  it('rotates every user key through the step-up route using legacy refresh semantics and throttle', async () => {
+    apiKeyService.rotateApiKey.mockResolvedValue({ rawKey: 'sk_replacement' });
+    await expect(controller.rotate('user-1', { walletId: 'wallet-1' } as any)).resolves.toEqual({ apiKey: 'sk_replacement' });
+    expect(apiKeyService.rotateApiKey).toHaveBeenCalledWith('user-1', 'Refreshed', 'wallet-1');
+    expect(Reflect.getMetadata(STEP_UP_KEY, controller.rotate)).toBe(true);
+    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'short', controller.rotate)).toBe(3);
+    expect(Reflect.getMetadata(THROTTLER_TTL + 'short', controller.rotate)).toBe(60000);
+    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'medium', controller.rotate)).toBe(10);
+    expect(Reflect.getMetadata(THROTTLER_TTL + 'medium', controller.rotate)).toBe(3600000);
   });
 
   it('delegates revoke to apiKeyService.revokeApiKey', async () => {
@@ -127,5 +148,32 @@ describe('ApiKeyController', () => {
       expect.objectContaining({ id: 'key-1', outcome: 'authorized' }),
     );
     expect(apiKeyService.authorizeDirectEgress).toHaveBeenCalledWith('key-1', 'user-1');
+  });
+});
+
+describe('DefiCapabilityController', () => {
+  it('returns the async catalog response envelope directly', async () => {
+    const response = { capabilities: [{ capabilityId: 'cap:test:v1' }] };
+    const catalog = { listMetadata: jest.fn().mockResolvedValue(response) };
+    const controller = new DefiCapabilityController(catalog as any);
+    await expect(controller.list()).resolves.toBe(response);
+    expect(catalog.listMetadata).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DefiCapabilityBundleController', () => {
+  it('serves bundle metadata through the IAM/frontend-only guarded dashboard route', async () => {
+    const response = { schemaVersion: 1, currentCatalogManifestHash: '0xmanifest', bundles: [] };
+    const service = { listMetadata: jest.fn().mockResolvedValue(response) };
+    const controller = new DefiCapabilityBundleController(service as any);
+    await expect(controller.list()).resolves.toBe(response);
+    expect(service.listMetadata).toHaveBeenCalledTimes(1);
+    expect(Reflect.getMetadata(GUARDS_METADATA, DefiCapabilityBundleController)).toEqual([OpenfortUserGuard, FrontendOnlyGuard]);
+    expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, DefiCapabilityBundleController)).toBe(true);
+    const listHandler = DefiCapabilityBundleController.prototype.list;
+    expect(Reflect.getMetadata(PATH_METADATA, DefiCapabilityBundleController)).toBe('defi-capability-bundles');
+    expect(Reflect.getMetadata(PATH_METADATA, listHandler)).toBe('/');
+    expect(Reflect.getMetadata(METHOD_METADATA, listHandler)).toBe(0);
+    expect(Reflect.getMetadata(STEP_UP_KEY, listHandler)).toBeUndefined();
   });
 });

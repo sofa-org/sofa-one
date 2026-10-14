@@ -19,7 +19,7 @@
 - **门面（Facade）/ 服务封装**：`OpenfortService` 包装 Openfort SDK 客户端与 viem bundler 客户端，向调用方暴露高层领域方法。
 - **构造注入 + 配置驱动**：构造器从 `ConfigService` 读取 `openfort.apiKey`、`openfort.walletSecret`（必填）、`openfort.publishableKey`（可选）、`openfort.timeoutMs`（默认 15000）初始化 SDK 客户端。
 - **`@Optional()` 依赖**：`RequestContextService` 可选注入，用于日志上下文（`logContext`）。
-- **统一错误归一化**：所有外部失败经 `logOpenfortError` 记录，并转换为 Nest `HttpException`（多为 `BadGatewayException` / `ServiceUnavailableException` / `ForbiddenException` / `ConflictException`），携带 `API_ERROR_CODES` 业务错误码。
+- **统一错误归一化**：外部失败转换为 Nest `HttpException`；通常经 `logOpenfortError` 记录安全化上下文。`signData` 专用失败日志仅包含固定 operation 与 timeout/provider-error 分类，不记录 provider message 或 stack。
 - **超时保护**：`withTimeout<T>(op, name)` 用 `Promise.race` 包裹所有 Openfort 调用，超时抛错并映射为 `WALLET_SERVICE_UNAVAILABLE`。
 - **判别联合结果**：`TransactionReceiptResult` 区分 `success` / `reverted` / `not_found` / `error`，供调用方区分终态与可重试态。
 - **安全回执视图**：`SanitizedReceipt` / `SanitizedReceiptLog` 仅暴露计费所需字段，绝不返回 calldata、私钥、API key 或原始 provider/client。

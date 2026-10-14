@@ -28,17 +28,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npm run prisma:generate
-
-      - name: Lint without modifying files
-        run: npx eslint "{src,apps,libs,test}/**/*.ts" --max-warnings=0
-
-      - name: Run unit tests
-        run: npm run test -- --runInBand
-
-      - name: Build backend
-        run: npm run build
+      - name: Verify backend
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run verify:backend
 
   backend-billing-e2e:
     name: Backend billing E2E
@@ -171,13 +164,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint frontend
-        run: npm run lint
-
-      # P1 release-test wiring: frontend unit tests run via Vitest
-      # ("test": "vitest run") with jsdom + React Testing Library.
-      - name: Test frontend
-        run: npm test
-
-      - name: Build frontend
-        run: npm run build
+      - name: Verify frontend
+        run: npm run verify

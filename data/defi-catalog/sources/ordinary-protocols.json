@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "curve-3pool-stableswap",
+      "familyVersion": "curve-contract-574f440",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7",
+          "contractName": "Curve 3pool StableSwap",
+          "sourceRefs": [
+            "curve-3pool-pooldata-574f440",
+            "curve-3pool-stableswap-vy-574f440"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "add_liquidity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "amounts", "type": "uint256[3]" },
+                { "name": "min_mint_amount", "type": "uint256" }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "exchange",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "i", "type": "int128" },
+                { "name": "j", "type": "int128" },
+                { "name": "dx", "type": "uint256" },
+                { "name": "min_dy", "type": "uint256" }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "remove_liquidity",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_amount", "type": "uint256" },
+                { "name": "min_amounts", "type": "uint256[3]" }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "remove_liquidity_one_coin",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_token_amount", "type": "uint256" },
+                { "name": "i", "type": "int128" },
+                { "name": "min_amount", "type": "uint256" }
+              ],
+              "outputs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "familyId": "pancakeswap-v3-position-manager",
+      "familyVersion": "pancake-v3-contracts-9868479",
+      "contracts": [
+        {
+          "chainId": 56,
+          "address": "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+          "contractName": "NonfungiblePositionManager",
+          "sourceRefs": [
+            "pancake-v3-bsc-mainnet-deployments-9868479",
+            "pancake-v3-npm-interface-9868479",
+            "pancake-v3-periphery-payments-9868479",
+            "pancake-v3-multicall-base-9868479"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple",
+                  "components": [
+                    { "name": "token0", "type": "address" },
+                    { "name": "token1", "type": "address" },
+                    { "name": "fee", "type": "uint24" },
+                    { "name": "tickLower", "type": "int24" },
+                    { "name": "tickUpper", "type": "int24" },
+                    { "name": "amount0Desired", "type": "uint256" },
+                    { "name": "amount1Desired", "type": "uint256" },
+                    { "name": "amount0Min", "type": "uint256" },
+                    { "name": "amount1Min", "type": "uint256" },
+                    { "name": "recipient", "type": "address" },
+                    { "name": "deadline", "type": "uint256" }
+                  ]
+                }
+              ],
+              "outputs": [
+                { "name": "tokenId", "type": "uint256" },
+                { "name": "liquidity", "type": "uint128" },
+                { "name": "amount0", "type": "uint256" },
+                { "name": "amount1", "type": "uint256" }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "increaseLiquidity",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple",
+                  "components": [
+                    { "name": "tokenId", "type": "uint256" },
+                    { "name": "amount0Desired", "type": "uint256" },
+                    { "name": "amount1Desired", "type": "uint256" },
+                    { "name": "amount0Min", "type": "uint256" },
+                    { "name": "amount1Min", "type": "uint256" },
+                    { "name": "deadline", "type": "uint256" }
+                  ]
+                }
+              ],
+              "outputs": [
+                { "name": "liquidity", "type": "uint128" },
+                { "name": "amount0", "type": "uint256" },
+                { "name": "amount1", "type": "uint256" }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "decreaseLiquidity",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple",
+                  "components": [
+                    { "name": "tokenId", "type": "uint256" },
+                    { "name": "liquidity", "type": "uint128" },
+                    { "name": "amount0Min", "type": "uint256" },
+                    { "name": "amount1Min", "type": "uint256" },
+                    { "name": "deadline", "type": "uint256" }
+                  ]
+                }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint256" },
+                { "name": "amount1", "type": "uint256" }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "collect",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple",
+                  "components": [
+                    { "name": "tokenId", "type": "uint256" },
+                    { "name": "recipient", "type": "address" },
+                    { "name": "amount0Max", "type": "uint128" },
+                    { "name": "amount1Max", "type": "uint128" }
+                  ]
+                }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint256" },
+                { "name": "amount1", "type": "uint256" }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "burn",
+              "stateMutability": "payable",
+              "inputs": [ { "name": "tokenId", "type": "uint256" } ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "refundETH",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "unwrapWETH9",
+              "stateMutability": "payable",
+              "inputs": [
+                { "name": "amountMinimum", "type": "uint256" },
+                { "name": "recipient", "type": "address" }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "sweepToken",
+              "stateMutability": "payable",
+              "inputs": [
+                { "name": "token", "type": "address" },
+                { "name": "amountMinimum", "type": "uint256" },
+                { "name": "recipient", "type": "address" }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "multicall",
+              "stateMutability": "payable",
+              "inputs": [ { "name": "data", "type": "bytes[]" } ],
+              "outputs": [ { "name": "results", "type": "bytes[]" } ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "curve-3pool-pooldata-574f440",
+      "url": "https://raw.githubusercontent.com/curvefi/curve-contract/574f44027d089de0eac765f5a74ea5ae96aba968/contracts/pools/3pool/pooldata.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned Curve repository source at commit 574f44027d089de0eac765f5a74ea5ae96aba968; raw HTTP 200 on 2026-10-04, 922 bytes, SHA-256 cdfb2035afbd97181030637cdd60ef12ad4694832d437f7ed8ccf24cde08336f. pooldata.json names swap_address 0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7 and lists the three pool coins."
+    },
+    {
+      "sourceId": "curve-3pool-stableswap-vy-574f440",
+      "url": "https://raw.githubusercontent.com/curvefi/curve-contract/574f44027d089de0eac765f5a74ea5ae96aba968/contracts/pools/3pool/StableSwap3Pool.vy",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned Curve repository contract source at commit 574f44027d089de0eac765f5a74ea5ae96aba968; raw HTTP 200 on 2026-10-04, 25,886 bytes, SHA-256 03e0bf29ae2fe945a3629b8085062da8f9d9d25957e86001dfc3df68c895f9dc. The four admitted methods have Vyper signatures without return annotations and compile as nonpayable; other pool selectors, including remove_liquidity_imbalance, are intentionally omitted."
+    },
+    {
+      "sourceId": "pancake-v3-bsc-mainnet-deployments-9868479",
+      "url": "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/deployments/bscMainnet.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned PancakeSwap V3 repository source at commit 986847948755cba528324d41be19480731c36c2a; raw HTTP 200 on 2026-10-04, 768 bytes, SHA-256 cd72575c75643cc55e500963b2a94451e64166a84ce15a57412ce9737d48ad05. The NonfungiblePositionManager deployment entry is 0x46A15B0b27311cedF172AB29E4f4766fbE7F4364 on BNB Chain (chain 56)."
+    },
+    {
+      "sourceId": "pancake-v3-npm-interface-9868479",
+      "url": "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/projects/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned PancakeSwap V3 repository interface at commit 986847948755cba528324d41be19480731c36c2a; raw HTTP 200 on 2026-10-04, 8,608 bytes, SHA-256 4511a8f7c847648973554d371d13e7c17bbead601382336e2cb82ef745f55722. The five position methods and their tuple component names/outputs were transcribed mechanically and match the corresponding exact ABI objects in the frozen v3 Uniswap Position Manager source snapshot; this source qualifies PancakeSwap, not Uniswap."
+    },
+    {
+      "sourceId": "pancake-v3-periphery-payments-9868479",
+      "url": "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/projects/v3-periphery/contracts/interfaces/IPeripheryPayments.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned PancakeSwap V3 repository interface at commit 986847948755cba528324d41be19480731c36c2a; raw HTTP 200 on 2026-10-04, 1,506 bytes, SHA-256 7dc30ff757e09b7ae754dbe36542c7fe416abf2cbda9042b4bf14e3e3ca4caa9. The payable refundETH, unwrapWETH9 and sweepToken declarations match the three exact helper ABI objects in the frozen v3 source snapshot."
+    },
+    {
+      "sourceId": "pancake-v3-multicall-base-9868479",
+      "url": "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/projects/v3-periphery/contracts/base/Multicall.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned PancakeSwap V3 repository base implementation at commit 986847948755cba528324d41be19480731c36c2a; raw HTTP 200 on 2026-10-04, 964 bytes, SHA-256 029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c. multicall(bytes[]) uses address(this).delegatecall for each child and reverts when a child fails; the v3 source scope remains separately bound to its exact eight reviewed children, one level only."
+    }
+  ],
+  "unresolved": []
+}

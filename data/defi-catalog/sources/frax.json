@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "frax",
+      "familyVersion": "frxeth-v2@83dfe93b",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x7Bc6bad540453360F744666D625fec0ee1320cA3",
+          "status": "inactive",
+          "contractName": "Frax Ether V2 Minter",
+          "sourceRefs": ["frax-ether-mainnet-contract-docs", "frax-v2-source-constants", "frax-ether-minter-verified-abi"],
+          "abiFunctions": [
+            { "type": "function", "name": "mintFrxEth", "stateMutability": "payable", "inputs": [], "outputs": [], "sourceId": "frax-ether-minter-verified-abi" },
+            { "type": "function", "name": "mintFrxEthAndGive", "stateMutability": "payable", "inputs": [{ "name": "_recipient", "type": "address", "internalType": "address" }], "outputs": [], "sourceId": "frax-ether-minter-verified-abi" },
+            { "type": "function", "name": "submitAndDeposit", "stateMutability": "payable", "inputs": [{ "name": "_recipient", "type": "address", "internalType": "address" }], "outputs": [{ "name": "_shares", "type": "uint256", "internalType": "uint256" }], "sourceId": "frax-ether-minter-verified-abi" }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xac3E018457B222d93114458476f3E3416Abbe38F",
+          "status": "inactive",
+          "contractName": "Frax sfrxETH Vault",
+          "sourceRefs": ["frax-ether-mainnet-contract-docs", "frax-sfrxeth-verified-abi"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "nonpayable", "inputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }], "outputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }], "sourceId": "frax-sfrxeth-verified-abi" },
+            { "type": "function", "name": "mint", "stateMutability": "nonpayable", "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }], "outputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }], "sourceId": "frax-sfrxeth-verified-abi" },
+            { "type": "function", "name": "withdraw", "stateMutability": "nonpayable", "inputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }, { "name": "owner", "type": "address", "internalType": "address" }], "outputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }], "sourceId": "frax-sfrxeth-verified-abi" },
+            { "type": "function", "name": "redeem", "stateMutability": "nonpayable", "inputs": [{ "name": "shares", "type": "uint256", "internalType": "uint256" }, { "name": "receiver", "type": "address", "internalType": "address" }, { "name": "owner", "type": "address", "internalType": "address" }], "outputs": [{ "name": "assets", "type": "uint256", "internalType": "uint256" }], "sourceId": "frax-sfrxeth-verified-abi" }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "frax-ether-mainnet-contract-docs",
+      "url": "https://docs.frax.finance/frax-ether/frxeth-and-sfrxeth-token-addresses",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation lists Ethereum frxETH 0x5E8422345238F34275888049021821E8E08CAa1f and the user-facing sfrxETH vault 0xac3E018457B222d93114458476f3E3416Abbe38F. The paired v2-address page documents the user minter role. Dated documentation is not current runtime, liquidity, queue, or funded-execution proof."
+    },
+    {
+      "sourceId": "frax-v2-source-constants",
+      "url": "https://github.com/FraxFinance/frxETH-v2-public/blob/83dfe93b4a32b9ca0ab93d6e7c059fcd977320d4/src/Constants.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned FraxFinance frxETH v2 source commit 83dfe93b4a32b9ca0ab93d6e7c059fcd977320d4 MainnetFEV2Live constants identify FRAX_ETHER_MINTER 0x7Bc6bad540453360F744666D625fec0ee1320cA3, FRX_ETH_ERC20 and SFRX_ETH_ERC20 roles. The source commit is source-role evidence, not current chain state."
+    },
+    {
+      "sourceId": "frax-ether-minter-verified-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x7Bc6bad540453360F744666D625fec0ee1320cA3?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify exact match 5822557 for the Ethereum v2 minter provides the literal ABI: payable void mintFrxEth(), payable void mintFrxEthAndGive(address _recipient), and payable submitAndDeposit(address _recipient) returning uint256 _shares. Source implementation requires nonzero ETH and can pause minting; submitAndDeposit internally approves frxETH to the vault as protocol behavior, not a wallet approval grant."
+    },
+    {
+      "sourceId": "frax-sfrxeth-verified-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0xac3E018457B222d93114458476f3E3416Abbe38F?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify exact match 6695035, verified 2025-07-04, supplies the selected four-function sfrxETH vault ABI with exact argument/output names and primitive internal types: nonpayable deposit, mint, withdraw, and redeem."
+    }
+  ]
+}

@@ -82,6 +82,19 @@ npm run build
 - Set `TRUST_PROXY` to trusted proxy IP/CIDR values.
 - Use strong PostgreSQL/Redis credentials.
 - Run `npm run prisma:migrate:deploy` before starting new backend code.
+- Capability-mode migrations require coordinated maintenance: stop all old API instances and
+  other API-key writers, apply the migration, and then start the new version. Never run mixed
+  old/new writers because old binaries do not preserve the mode invariant. This one-time
+  migration maps existing empty capability arrays to `all` (including formerly deliberate
+  empty selections, which are indistinguishable) and nonempty arrays to `custom` unchanged;
+  there is no recurring repair. Use the migration actually present in the release; do not
+  infer or hardcode its name.
+- Wallet-binding migrations require the same no-mixed-version discipline: drain and stop all
+  old application instances, back up the database, run `npm run prisma:generate` and
+  `npm run prisma:migrate:deploy`, then restart with the new application version. Do not
+  claim mixed-version rollout safety. Legacy keys bind only when the owner has exactly one
+  wallet row total (all statuses count); otherwise keys are revoked and retained unbound,
+  never rebound. Do not run this migration as a documentation step.
 - Confirm `OPENFORT_API_KEY` and `OPENFORT_WALLET_SECRET` are present only in backend secret storage.
 - Set `BILLING_WORKER_ENABLED=true` (required in production) when automatic billing reconciliation/finalization, USDC claim recovery, Stripe renewal retry, and pending-Checkout recovery are required; apply the additive worker-heartbeat migration first (see section 8).
 - If Stripe is configured, point the Stripe dashboard at `POST /v1/billing/webhooks/stripe` and set `STRIPE_WEBHOOK_SECRET`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` (see section 9); both URLs must target the billing page because the backend appends the `success=1`/`canceled=1` return markers there.

@@ -16,6 +16,7 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 - Uses a structural type `EoaPolicyPrismaClient` to narrow `PrismaService` to only the `securityEvent.count` query needed for rate limiting, avoiding a full Prisma client dependency surface in the service.
 - IP enforcement is delegated to the shared `IpAllowlistService` (from `SecurityEventModule`), which centralizes CIDR matching and records `api_key.ip_rejected` security events on mismatch.
 - Rate limiting counts only prior `eoa_execution_allowed` events, so denied attempts do not consume the per-key budget; the current request's `allowed` event is recorded after the count check.
+- Polymarket CLOB order acceptance uses a separate wallet-scoped rolling 60-second limit of 60, shared across API keys with atomic acceptance reservation; it does not replace or relax this general EOA gate or the existing ClobAuth/send 1-per-60-second limit.
 
 ## Flow
 - Callers: `WalletService.sign` (operation `sign`) and `TransactionsService.send` (operation `send_transaction`), both invoked only when `executionMode === 'eoa'` and after `assertPermission(apiKeyRecord.canUseEoaExecution, ...)`.
@@ -36,4 +37,4 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 - Imported by `WalletModule` and `TransactionsModule`; both inject the policy as `@Optional()` and fail closed with `ForbiddenException` if it is absent.
 - Dependencies: `ConfigService` (env `EOA_EXECUTION_ENABLED`, validated in `src/config/env.validation.ts`, default `false` in `.env.example`), `PrismaService` (rate-limit count on `security_events`), `SecurityEventService` (audit), `IpAllowlistService` (IP enforcement).
 - Emits security events: `eoa_execution_allowed`, `eoa_execution_denied`, and `api_key.ip_rejected` (via `IpAllowlistService`).
-- Not part of the public `openapi.yaml` surface; it is an internal service-layer gate for the public `POST /v1/wallets/sign` and `POST /v1/transactions/send` routes.
+- Not part of the public `openapi.yaml` surface; it is an internal service-layer gate for the public `POST /v1/wallets/sign` and `POST /v1/transactions` routes.

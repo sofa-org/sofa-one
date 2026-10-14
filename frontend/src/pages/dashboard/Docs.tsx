@@ -50,7 +50,7 @@ const fieldRows = {
     ["idempotencyKey", "string", "Yes", "Max 64 characters: letters, numbers, _ and -."],
   ],
   status: [
-    ["transactionId", "path", "Yes", "SOFA ONE transaction UUID returned by /v1/transactions/send."],
+    ["transactionId", "path", "Yes", "SOFA ONE transaction UUID returned by /v1/transactions."],
   ],
 };
 
@@ -158,7 +158,7 @@ export default function APIDocsPage() {
     "executionMode": "session_key",
     "message": "Hello, SOFA ONE!"
   }'`;
-  const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions/send \\
+  const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -H "User-Agent: my-service/1.0" \\
@@ -215,7 +215,7 @@ export default function APIDocsPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
               <p className="mt-2 text-sm leading-6 text-brand-muted">
-                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. POST JSON requests also use <code>Content-Type: application/json</code>. Optional <code>User-Agent</code> is a spoofable signal, not authentication; it may be recorded/saved for security audit and anomaly detection and compared exactly with prior context. curl/SDK/deployment changes can change it. Keep it stable and treat changes as security events, but never rely on its secrecy. Under high-risk key permission/risk checks, a single UA/IP context change may alert or freeze a key. If frozen, never disclose the key: create a replacement in Dashboard, update your backend secret, revoke the old key, and follow the existing recovery process. UA is not required on every endpoint. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
+                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Each key is permanently bound to the wallet selected when it was created; the request cannot switch to another wallet. Create a separate key for each wallet you use. POST JSON requests also use <code>Content-Type: application/json</code>. Optional <code>User-Agent</code> is a spoofable signal, not authentication; it may be recorded/saved for security audit and anomaly detection and compared exactly with prior context. curl/SDK/deployment changes can change it. Keep it stable and treat changes as security events, but never rely on its secrecy. Under high-risk key permission/risk checks, a single UA/IP context change may alert or freeze a key. If frozen, never disclose the key: create a replacement in Dashboard, update your backend secret, revoke the old key, and follow the existing recovery process. UA is not required on every endpoint. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
               </p>
             </div>
             <CopyButton text={apiKeyHeader} className="w-fit shrink-0" />
@@ -300,7 +300,7 @@ export default function APIDocsPage() {
               Check a transaction from your backend
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">
-              After calling <span className="font-mono text-brand-text">/v1/transactions/send</span>, store the
+              After calling <span className="font-mono text-brand-text">/v1/transactions</span>, store the
               returned transaction ID and poll the safe status endpoint. The response omits calldata and request
               hashes, so it is safe for backend logs and customer support tooling.
             </p>
@@ -338,7 +338,7 @@ export default function APIDocsPage() {
           </div>
         </EndpointCard>
 
-        <EndpointCard id="send" path="/v1/transactions/send">
+        <EndpointCard id="send" path="/v1/transactions">
           <p className="text-sm leading-6 text-brand-muted">
             Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
           </p>
@@ -421,7 +421,7 @@ export default function APIDocsPage() {
   "message": "Invalid API key",
   "requestId": "req_...",
   "timestamp": "2026-04-20T10:35:00.000Z",
-  "path": "/v1/transactions/send"
+  "path": "/v1/transactions"
 }`}</CodeBlock>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">INVALID_API_KEY</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, <span className="font-mono text-brand-text">IP_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.

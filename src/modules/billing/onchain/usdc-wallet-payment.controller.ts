@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -25,16 +27,17 @@ import { UsdcWalletPayDto } from './dto/usdc-wallet-pay.dto';
  * POST requires IAM + FrontendOnly + real StepUp.
  * GET status requires IAM + FrontendOnly only (no StepUp).
  */
-@Controller('v1/billing/invoices/:id/usdc')
+@Controller('billing/invoices/:id/usdc')
 export class UsdcWalletPaymentController {
   constructor(private readonly walletPayment: UsdcWalletPaymentService) {}
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/pay-from-wallet
+   * POST /billing/invoices/:id/usdc/pay-from-wallet
    * Body: { paymentAttemptId } only.
    * Returns 202-shaped accepted/not-paid state (or idempotent existing).
    */
   @Post('pay-from-wallet')
+  @HttpCode(HttpStatus.ACCEPTED)
   @FrontendOnly()
   @RequireStepUp()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
@@ -48,7 +51,7 @@ export class UsdcWalletPaymentController {
   }
 
   /**
-   * GET /v1/billing/invoices/:id/usdc/payment-status?paymentAttemptId=
+   * GET /billing/invoices/:id/usdc/payment-status?paymentAttemptId=
    * Poll reserved wallet-payment state without StepUp.
    */
   @Get('payment-status')

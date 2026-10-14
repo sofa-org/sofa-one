@@ -75,15 +75,18 @@ npm run lint
 Public API-key endpoints:
 
 - `POST /v1/wallets/sign`
-- `POST /v1/transactions/send`
+- `POST /v1/transactions`
 - `GET /v1/transactions/:id`
+- `GET /v1/permissions`
+- `GET /v1/capabilities?ids=id1,id2`
+- `GET /v1/wallets` (only the authenticated key's bound wallet)
 
 Frontend-only endpoints require an Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks:
 
-- `GET /v1/wallets/balances`
-- `POST /v1/wallets/deposit-info`
-- `POST /v1/wallets/withdraw`
-- `GET/POST/DELETE /v1/api-keys/*`
+- `GET /wallets/balances`
+- `GET /wallets/deposits`
+- `POST /wallets/withdrawals`
+- `GET/POST/DELETE /api-keys/*`
 - selected `/auth/*` dashboard operations
 
 See [API.md](./API.md) and [openapi.yaml](./openapi.yaml).

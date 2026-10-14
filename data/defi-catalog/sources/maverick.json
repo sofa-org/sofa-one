@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "maverick-v2",
+      "familyVersion": "v2",
+      "chains": [
+        {
+          "chainId": 42161,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0x5c3b380e5Aeec389d1014Da3Eb372FA2C9e0fc76",
+              "status": "inactive",
+              "contractName": "Maverick V2 Arbitrum Router",
+              "functions": [
+                {
+                  "capabilityId": "maverick-v2:v2:42161:0x5c3b380e5aeec389d1014da3eb372fa2c9e0fc76:exact-input-single",
+                  "type": "contract_call",
+                  "chainId": 42161,
+                  "contract": "0x5c3b380e5Aeec389d1014Da3Eb372FA2C9e0fc76",
+                  "functionName": "exactInputSingle",
+                  "signature": "exactInputSingle(address,address,bool,uint256,uint256)",
+                  "abi": {
+                    "name": "exactInputSingle",
+                    "type": "function",
+                    "inputs": [
+                      {
+                        "name": "recipient",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "pool",
+                        "type": "address",
+                        "internalType": "contract IMaverickV2Pool"
+                      },
+                      {
+                        "name": "tokenAIn",
+                        "type": "bool",
+                        "internalType": "bool"
+                      },
+                      {
+                        "name": "amountIn",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "amountOutMinimum",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "amountOut",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "stateMutability": "payable"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "maverick-arbitrum-sourcify-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Maverick V2 exactInputSingle",
+                  "protocol": "Maverick V2",
+                  "operation": "exact-input-single",
+                  "warnings": [
+                    "Caller selects recipient, pool, token direction, quantities, minimum output, and native value; no pool allowlist or protocol financial limits are imposed.",
+                    "LP callback/workflow and full Maverick coverage are not established; no approval pairing, liquidity, or funded execution is assured."
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 8453,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0x5eDEd0d7E76C563FF081Ca01D9d12D6B404Df527",
+              "status": "inactive",
+              "contractName": "Maverick V2 Base Router",
+              "functions": [
+                {
+                  "capabilityId": "maverick-v2:v2:8453:0x5eded0d7e76c563ff081ca01d9d12d6b404df527:exact-input-single",
+                  "type": "contract_call",
+                  "chainId": 8453,
+                  "contract": "0x5eDEd0d7E76C563FF081Ca01D9d12D6B404Df527",
+                  "functionName": "exactInputSingle",
+                  "signature": "exactInputSingle(address,address,bool,uint256,uint256)",
+                  "abi": {
+                    "name": "exactInputSingle",
+                    "type": "function",
+                    "inputs": [
+                      {
+                        "name": "recipient",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "pool",
+                        "type": "address",
+                        "internalType": "contract IMaverickV2Pool"
+                      },
+                      {
+                        "name": "tokenAIn",
+                        "type": "bool",
+                        "internalType": "bool"
+                      },
+                      {
+                        "name": "amountIn",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "amountOutMinimum",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "name": "amountOut",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "stateMutability": "payable"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "maverick-base-sourcify-abi",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "label": "Maverick V2 exactInputSingle",
+                  "protocol": "Maverick V2",
+                  "operation": "exact-input-single",
+                  "warnings": [
+                    "Caller selects recipient, pool, token direction, quantities, minimum output, and native value; no pool allowlist or protocol financial limits are imposed.",
+                    "LP callback/workflow and full Maverick coverage are not established; no approval pairing, liquidity, or funded execution is assured."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "maverick-official-v2-deployments",
+      "url": "https://docs.mav.xyz/technical-reference/contract-addresses/v2-contract-addresses.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official v2 deployment table explicitly identifies the Arbitrum One router 0x5c3b380e5Aeec389d1014Da3Eb372FA2C9e0fc76 and Base router 0x5eDEd0d7E76C563FF081Ca01D9d12D6B404Df527. Rows remain chain-specific."
+    },
+    {
+      "sourceId": "maverick-arbitrum-sourcify-abi",
+      "url": "https://sourcify.dev/server/v2/contract/42161/0x5c3b380e5Aeec389d1014Da3Eb372FA2C9e0fc76?fields=abi",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify response matchId 5793707, match/creationMatch/runtimeMatch exact_match, verifiedAt 2024-12-15T20:15:51Z, chainId 42161 and requested address. Selected exactInputSingle ABI retained including internalType fields."
+    },
+    {
+      "sourceId": "maverick-base-sourcify-abi",
+      "url": "https://sourcify.dev/server/v2/contract/8453/0x5eDEd0d7E76C563FF081Ca01D9d12D6B404Df527?fields=abi",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify response matchId 5400874, match/creationMatch/runtimeMatch exact_match, verifiedAt 2024-09-19T14:37:34Z, chainId 8453 and requested address. Selected exactInputSingle ABI retained including internalType fields."
+    }
+  ]
+}

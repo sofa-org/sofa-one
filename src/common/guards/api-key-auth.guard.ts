@@ -39,8 +39,8 @@ type ApiKeyAuthRecord = {
   canSign?: boolean;
   canSendTransaction?: boolean;
   canUseEoaExecution?: boolean;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
   dailySpendLimit?: string | null;
   monthlySpendLimit?: string | null;
   user?: {
@@ -55,7 +55,7 @@ type ApiKeyAuthRecord = {
  *
  * This guard intentionally does not accept Bearer tokens. Dashboard/human routes
  * should use OpenfortUserGuard, while public programmatic routes should use this
- * guard directly instead of EitherAuthGuard + ApiKeyOnlyGuard.
+ * guard directly; public routes never use a combined-auth flow.
  */
 @Injectable()
 export class ApiKeyAuthGuard implements CanActivate {
@@ -100,7 +100,7 @@ export class ApiKeyAuthGuard implements CanActivate {
         revoked: false,
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
-      include: { user: true },
+      include: { user: true, wallet: { select: { id: true, userId: true } } },
     });
 
     if (keyRecords.length === 0) {
@@ -129,6 +129,8 @@ export class ApiKeyAuthGuard implements CanActivate {
       });
       throw new UnauthorizedException('Invalid API key');
     }
+
+    if (!keyRecord.walletId || !keyRecord.wallet || keyRecord.wallet.id !== keyRecord.walletId || keyRecord.wallet.userId !== keyRecord.userId) throw new UnauthorizedException('Invalid API key');
 
     if (keyRecord.frozenAt) {
       await this.recordApiKeySecurityEvent(keyRecord, 'api_key_frozen_rejected', {

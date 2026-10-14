@@ -5,7 +5,7 @@ import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { SecurityNotificationService } from './security-notification.service';
 
-@Controller('v1/security-notifications')
+@Controller('security-notifications')
 @FrontendOnly()
 @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
 export class SecurityNotificationController {

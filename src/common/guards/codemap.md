@@ -11,29 +11,12 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 ## Files
 
 ### `api-key-auth.guard.ts` — `ApiKeyAuthGuard`
-- **Role**: Authenticates public API routes with `X-API-Key` only. Intentionally does **not** accept Bearer tokens (dashboard routes use `OpenfortUserGuard`; public routes use this guard directly instead of `EitherAuthGuard` + `ApiKeyOnlyGuard`).
+- **Role**: Authenticates public API routes with `X-API-Key` only. Intentionally does **not** accept Bearer tokens (dashboard routes use `OpenfortUserGuard`; public routes use this guard directly).
 - **Key symbols**: `ApiKeyAuthGuard` (class), `ApiKeyAuthRecord` (type), constants `MAX_USER_AGENT_LENGTH = 255`, `SUSPICIOUS_USE_LOOKBACK_MS = 24h`.
 - **Inputs**: `X-API-Key` header; `request.ip` (trust-proxy processed — never raw `X-Forwarded-For`); `user-agent` header (truncated to 255 chars).
 - **Outputs**: On success sets `request.user` (Prisma `User`) and `request.apiKeyRecord` (Prisma `ApiKey` incl. `user`), returns `true`. Throws `UnauthorizedException` (missing/invalid key), `ForbiddenException` (frozen key/user, IP not allowed, suspicious-usage freeze), `ServiceUnavailableException` (billing unavailable/metering write failure), or re-throws `BillingQuotaExceededException` (→ HTTP 429).
 - **Flow**: `@Public()` bypass → key presence check → `getApiKeyLookupPrefixes()` (27-char + legacy 11-char candidates) → `prisma.apiKey.findMany` (active, non-revoked, non-expired, `include: { user }`) → Argon2-verify **every** prefix candidate (prefixes are lookup hints, not unique) → frozen key/user rejection (records `api_key_frozen_rejected` / `api_key_user_frozen_rejected`) → `IpAllowlistService.assertIpAllowed` → usage-anomaly detection (IP/UA change; high-risk keys `canSign`/`canSendTransaction`/`canUseEoaExecution` freeze immediately, others freeze on repeated suspicious use within 24h; records `api_key_suspicious_use`, `api_key_frozen`) → `api_key.first_used` event on first use → attach request context → fire-and-forget `lastUsedAt`/`lastUsedIp`/`lastUsedUserAgent` update → **durable billing metering** via `BillingService.assertAndRecordApiCall` (server-generated `sourceKey`/`requestId`, safe metadata only; must persist before handler runs).
 - **Dependencies**: `Reflector`, `PrismaService`, `SecurityEventService`, `IpAllowlistService`, `@Optional() BillingService`, `argon2`, `getApiKeyLookupPrefixes` (`../api-key/api-key-prefix`), `IS_PUBLIC_KEY` (`../decorators/public.decorator`), `BillingQuotaExceededException`.
-
-### `either-auth.guard.ts` — `EitherAuthGuard`
-- **Role**: Accepts either Openfort IAM Bearer JWT (priority) or `X-API-Key` fallback; resolves the full user record so `@CurrentUser()` works uniformly.
-- **Key symbols**: `EitherAuthGuard` (class), `ApiKeyAuthRecord` (type), constants `SUSPICIOUS_USE_LOOKBACK_MS`, `MAX_USER_AGENT_LENGTH`.
-- **Inputs**: `Authorization: Bearer <token>` or `X-API-Key` header; `request.ip`; `user-agent`.
-- **Outputs**: JWT path sets `request.user`, `request.openfortUserId`, `request.openfortSession`, `request.openfortEmail`. API-key path sets `request.user` and `request.apiKeyRecord`. Throws `UnauthorizedException` (no credentials, invalid token, user not found, invalid key) or `ForbiddenException` (frozen key/user, IP not allowed, suspicious-usage freeze).
-- **Flow**: `@Public()` bypass → Bearer token? JWT path (`openfort.verifyIamSession` → `prisma.user.findUnique({ socialId })`) → else API-key path (same prefix-candidate + Argon2 + allowlist + freeze + anomaly logic as `ApiKeyAuthGuard`, **minus billing metering** — no `BillingService` dependency).
-- **Dependencies**: `Reflector`, `PrismaService`, `OpenfortService`, `IpAllowlistService`, `SecurityEventService`, `argon2`, `getApiKeyLookupPrefixes`, `IS_PUBLIC_KEY`.
-- **Note**: Currently referenced only by spec files; no production controller imports it (public routes use `ApiKeyAuthGuard` directly). Retained for compatibility.
-
-### `api-key-only.guard.ts` — `ApiKeyOnlyGuard`
-- **Role**: Requires a successfully authenticated API key on routes that also use `EitherAuthGuard` (i.e. `request.apiKeyRecord` must be present).
-- **Key symbols**: `ApiKeyOnlyGuard` (class).
-- **Inputs**: `request.apiKeyRecord`.
-- **Outputs**: `true`, or `UnauthorizedException('API key is required')`.
-- **Dependencies**: none (no constructor).
-- **Note**: Currently referenced only by its spec file; no production controller imports it.
 
 ### `api-key-permission.guard.ts` — `ApiKeyPermissionGuard`
 - **Role**: Enforces `@RequireApiKeyPermission()` metadata on API-key routes before service code runs (services keep duplicate checks as defense in depth).
@@ -57,7 +40,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 - **Dependencies**: `Reflector`, `ConfigService`, `IS_FRONTEND_ONLY_KEY` (`../decorators/frontend-only.decorator`).
 
 ### `ip-allowlist.service.ts` — `IpAllowlistService`
-- **Role**: Centralized IP allowlist enforcement with `SecurityEvent` audit trail; replaces duplicated checks in `ApiKeyAuthGuard`, `EitherAuthGuard`, and `EoaExecutionPolicyService`.
+- **Role**: Centralized IP allowlist enforcement with `SecurityEvent` audit trail; shared by `ApiKeyAuthGuard` and `EoaExecutionPolicyService`.
 - **Key symbols**: `IpAllowlistService` (class), `IpAllowlistContext` (type: `actorType`, `apiKeyId?`, `apiKeyPrefix?`, `userId?`, `clientIp`, `userAgent?`, `allowedIpCount?`).
 - **Inputs**: `clientIp`, `allowedIps` (CIDR or exact IP entries), context.
 - **Outputs**: `assertIpAllowed` — no-op if allowlist empty; `true` if `isIpAllowed`; otherwise records `api_key.ip_rejected` SecurityEvent (risk `high`, result `denied`) and throws `ForbiddenException('IP address not allowed for this API key')`. `isIpAllowed` — non-throwing boolean check, no event recording.
@@ -85,8 +68,9 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 - **Dependencies**: `Reflector`, `StepUpService` (`../../modules/step-up/step-up.service`), `STEP_UP_KEY` (`../decorators/step-up.decorator`). Validates with purpose `'totp_mfa'`.
 
 ## Design/Patterns
+- **Wallet binding**: API-key authentication requires a bound wallet relation whose ID and owner match the key; null or foreign bindings fail closed after every lookup-prefix candidate is hash verified.
 - **NestJS `CanActivate` guards** composed per-route via `@UseGuards()`; metadata-driven activation via `Reflector.getAllAndOverride` against handler + class.
-- **Three auth models kept separate**: `OpenfortUserGuard` (dashboard, IAM-only), `ApiKeyAuthGuard` (public, API-key-only), `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers). Public API routes must never accept IAM tokens; dashboard routes must never accept API keys.
+- **Two auth models kept separate**: `OpenfortUserGuard` (dashboard, IAM-only) and `ApiKeyAuthGuard` (public, API-key-only). Public API routes must never accept IAM tokens; dashboard routes must never accept API keys.
 - **Prefix-candidate + Argon2 verification**: API keys are stored as Argon2id hashes; lookup uses 27-char and legacy 11-char prefixes as a non-unique hint, then verifies every candidate hash to avoid prefix collisions and legacy false negatives.
 - **Defense in depth**: `ApiKeyPermissionGuard` enforces permissions at the guard layer while services retain their own checks; `StepUpGuard` marks `request.stepUpVerified` so downstream services can enforce per-user step-up policies.
 - **Shared audit service**: `IpAllowlistService` centralizes allowlist checks and records `SecurityEvent` rows, avoiding duplicated logic across guards and `EoaExecutionPolicyService`.
@@ -95,7 +79,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 
 ## Flow
 1. **Global**: `ApiKeyThrottlerGuard` (APP_GUARD) rate-limits every request — key-prefix bucket for API-key auth, IP bucket otherwise.
-2. **Public API-key routes** (`POST /v1/wallets/sign`, `POST /v1/transactions/send`, `GET /v1/transactions/:id`): `ApiKeyAuthGuard` → `ApiKeyPermissionGuard`. Auth resolves the key, rejects frozen key/user, enforces IP allowlist, freezes suspicious usage, meters billing; permission guard requires `canSign` / `canSendTransaction` / `canReadTransactionStatus`.
+2. **Public API-key routes** (`POST /v1/wallets/sign`, `POST /v1/transactions`, `GET /v1/transactions/:id`): `ApiKeyAuthGuard` → `ApiKeyPermissionGuard`. Auth resolves the key, rejects frozen key/user, enforces IP allowlist, freezes suspicious usage, meters billing; permission guard requires `canSign` / `canSendTransaction` / `canReadTransactionStatus`. The separate `GET /v1/wallets` metadata route requires API-key auth but no permission flag.
 3. **Dashboard routes** (wallets, transactions status, billing, security notifications, MFA, API-key management): `OpenfortUserGuard` + `FrontendOnlyGuard`; sensitive routes (withdraw, withdrawal-addresses, API-key create/revoke, step-up challenge) add `StepUpGuard`.
 4. **Auth routes**: `OpenfortAuthGuard` at controller level (session verification only); `@Public()` bypasses auth on health and Stripe webhook routes.
 5. **Rejection paths** all record `SecurityEvent` rows (frozen rejections, IP rejections, first use, suspicious use, freeze) with safe metadata only — never raw keys, calldata, or headers.
@@ -107,7 +91,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
   - `src/modules/transactions/transactions.controller.ts` — `ApiKeyAuthGuard`+`ApiKeyPermissionGuard` on public send/status; `OpenfortUserGuard`+`FrontendOnlyGuard` on dashboard routes.
   - `src/modules/auth/auth.controller.ts` — `OpenfortAuthGuard` (controller-level).
   - `src/modules/billing/billing.controller.ts`, `src/modules/billing/onchain/usdc-payment.controller.ts`, `src/modules/security-notifications/security-notification.controller.ts`, `src/modules/mfa/mfa.controller.ts`, `src/modules/api-key/api-key.controller.ts` — `OpenfortUserGuard`+`FrontendOnlyGuard` (+`StepUpGuard` on API-key management).
-- **`IpAllowlistService`** is provided/exported by `SecurityEventModule` and consumed by `ApiKeyAuthGuard`, `EitherAuthGuard`, and `EoaExecutionPolicyService`.
+- **`IpAllowlistService`** is provided/exported by `SecurityEventModule` and consumed by `ApiKeyAuthGuard` and `EoaExecutionPolicyService`.
 - **Upstream dependencies**: `OpenfortService` (`src/core/openfort`), `PrismaService` (`src/core/database`), `SecurityEventService` (`src/modules/security-events`), `BillingService` (`src/modules/billing`), `StepUpService` (`src/modules/step-up`), `ConfigService` (`@nestjs/config`), `argon2`, `@nestjs/throttler`.
 - **Sibling helpers**: decorators `public.decorator.ts`, `api-key-permission.decorator.ts`, `frontend-only.decorator.ts`, `step-up.decorator.ts`; utils `api-key-prefix.ts` (`getApiKeyLookupPrefixes`), `ip-cidr.ts` (`isIpAllowed`).
 - **Access-control split**: public API-key routes are documented in `openapi.yaml`; frontend-only routes are intentionally omitted and require IAM bearer + origin/referer checks. API-key management is never callable by API keys.

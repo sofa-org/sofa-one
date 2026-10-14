@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "one-inch",
+      "familyVersion": "aggregation-router-v6@321b2743",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x111111125421ca6dc452d289314280a0f8842a65",
+          "status": "inactive",
+          "contractName": "1inch AggregationRouterV6",
+          "sourceRefs": [
+            "one-inch-etherscan-verified-contract",
+            "one-inch-official-sdk-abi"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswap2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex3",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswap3",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswapTo",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswapTo2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex3",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ethUnoswapTo3",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswap2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex3",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswap3",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswapTo",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswapTo2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "Address",
+                  "name": "to",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "token",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex2",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "Address",
+                  "name": "dex3",
+                  "type": "uint256"
+                }
+              ],
+              "name": "unoswapTo3",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceId": "one-inch-official-sdk-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "one-inch-etherscan-verified-contract",
+      "url": "https://etherscan.io/address/0x111111125421ca6dc452d289314280a0f8842a65#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Etherscan Exact Match contract page identifies the Ethereum AggregationRouterV6 address and verified contract source/ABI. Reviewed router dispatch bodies at source lines 5002–5217 and 5220–5243, fixed callback bodies at 5601–5608 and 5681–5704. These source lines document the described route/payment boundaries; dated source evidence only, not current runtime identity, proxy-slot state, or deployment admission."
+    },
+    {
+      "sourceId": "one-inch-official-sdk-abi",
+      "url": "https://raw.githubusercontent.com/1inch/1inch-sdk/321b27436ff7f9ca5d3990006e2d88728780eda0/constants/abi/aggregationRouterV6.abi.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official 1inch-sdk commit 321b27436ff7f9ca5d3990006e2d88728780eda0. The twelve full selected ABI objects match the verified Etherscan declaration, including every input/output name, type, internalType and mutability. In the ABI, packed route words are represented as uint256 although their internalType is Address."
+    }
+  ]
+}

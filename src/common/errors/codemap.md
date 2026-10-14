@@ -5,7 +5,7 @@ Single source of truth for machine-readable API error codes: defines the canonic
 
 ## Design/Patterns
 - Single-file module (`api-error-codes.ts`) with no runtime services or NestJS providers — plain exported constants, a type, and one pure function.
-- `API_ERROR_CODES` is declared `as const`, so both the runtime object and the derived union type (`ApiErrorCode`) come from one definition; values mirror keys to keep codes self-describing and greppable.
+- `API_ERROR_CODES` is declared `as const`, so both the runtime object and the derived union type (`ApiErrorCode`) come from one definition; values mirror keys to keep codes self-describing and greppable. DeFi policy denials have stable `DEFI_*` identifiers and generic messages.
 - Resolver is pure and side-effect-free: `(statusCode, message) => ApiErrorCode`. Input is a string or `string[]` (class-validator produces arrays); any array input short-circuits to `VALIDATION_ERROR`.
 - Ordered substring matching over a lowercased message: most-specific domain substrings (e.g. `'wallet is not active'`, `'paymaster policy'`) are checked before coarse HTTP-status fallbacks (`401 → UNAUTHORIZED`, `404 → NOT_FOUND`, `>= 500 → INTERNAL_ERROR`, else `BAD_REQUEST`).
 - Defense in depth: services may throw exceptions with an explicit `code` in the response body; `resolveApiErrorCode` is only the fallback for exceptions without one.

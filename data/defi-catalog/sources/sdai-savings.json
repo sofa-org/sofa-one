@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "sdai-savings",
+      "familyVersion": "no-referral-v1@66587976",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x83f20f44975d03b1b09e64809b757c47f942beea",
+          "status": "inactive",
+          "contractName": "SavingsDai",
+          "sourceRefs": [
+            "maker-sdai-mainnet-role-2023-11-02",
+            "maker-sdai-no-referral-implementation-66587976",
+            "maker-sdai-interface-66587976"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "internalType": "uint256", "name": "assets", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" }
+              ],
+              "outputs": [{ "internalType": "uint256", "name": "shares", "type": "uint256" }],
+              "sourceId": "maker-sdai-no-referral-implementation-66587976"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "internalType": "uint256", "name": "shares", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" }
+              ],
+              "outputs": [{ "internalType": "uint256", "name": "assets", "type": "uint256" }],
+              "sourceId": "maker-sdai-no-referral-implementation-66587976"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "internalType": "uint256", "name": "assets", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" },
+                { "internalType": "address", "name": "owner", "type": "address" }
+              ],
+              "outputs": [{ "internalType": "uint256", "name": "shares", "type": "uint256" }],
+              "sourceId": "maker-sdai-no-referral-implementation-66587976"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "internalType": "uint256", "name": "shares", "type": "uint256" },
+                { "internalType": "address", "name": "receiver", "type": "address" },
+                { "internalType": "address", "name": "owner", "type": "address" }
+              ],
+              "outputs": [{ "internalType": "uint256", "name": "assets", "type": "uint256" }],
+              "sourceId": "maker-sdai-no-referral-implementation-66587976"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "maker-sdai-mainnet-role-2023-11-02",
+      "url": "https://github.com/makerdao/sdai/blob/2b7acb95289a9eb3a8844206d5712eabfa206efc/README.md",
+      "retrievedAt": "2026-10-04",
+      "notes": "Official README publication is pinned at commit 2b7acb95289a9eb3a8844206d5712eabfa206efc (dated 2023-11-02); it identifies Mainnet SavingsDai at 0x83f20f44975d03b1b09e64809b757c47f942beea and names 665879762f8b5df5d234463f45d1d6a49bd4fbeb as the no-referral generation. This repository's cached bare Git source was inspected on 2026-10-04; the historical commit date is not the retrieval/inspection date and this is not current runtime verification."
+    },
+    {
+      "sourceId": "maker-sdai-no-referral-implementation-66587976",
+      "url": "https://github.com/makerdao/sdai/blob/665879762f8b5df5d234463f45d1d6a49bd4fbeb/src/SavingsDai.sol",
+      "retrievedAt": "2026-10-04",
+      "notes": "Official no-referral implementation commit 665879762f8b5df5d234463f45d1d6a49bd4fbeb is dated 2023-05-30. Its declarations supply the four selected named built-in ABI entries. This repository's cached bare Git source was inspected on 2026-10-04; publication/commit date is not the inspection date. Function parameter and return names follow the implementation declarations; this is not represented as a compiler-generated ABI artifact."
+    },
+    {
+      "sourceId": "maker-sdai-interface-66587976",
+      "url": "https://github.com/makerdao/sdai/blob/665879762f8b5df5d234463f45d1d6a49bd4fbeb/src/ISavingsDai.sol",
+      "retrievedAt": "2026-10-04",
+      "notes": "Pinned official interface commit 665879762f8b5df5d234463f45d1d6a49bd4fbeb is dated 2023-05-30. Its declarations were rechecked from the cached bare Git source on 2026-10-04; interface parameters/returns are unnamed, so selected ABI names follow the pinned implementation declarations rather than invented interface names."
+    }
+  ]
+}

@@ -32,7 +32,7 @@ import { AssignPlanBodyDto } from './dto/assign-plan-body.dto';
  * successful one-time Card checkout (webhook + worker) — there is no dashboard
  * subscription-checkout route.
  */
-@Controller('v1/billing')
+@Controller('billing')
 export class BillingController {
   constructor(
     private readonly billingService: BillingService,
@@ -41,7 +41,7 @@ export class BillingController {
     private readonly invoicePdfService: InvoicePdfService,
   ) {}
 
-  /** GET /v1/billing/plans — current plan + plan catalog. */
+  /** GET /billing/plans — current plan + plan catalog. */
   @Get('plans')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
@@ -50,7 +50,7 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/plan — self-service plan change. Upgrade returns
+   * POST /billing/plan — self-service plan change. Upgrade returns
    * `payment_required` with a finalized plan_charge invoice (pay via existing
    * Stripe one-time checkout or USDC quote); downgrade returns `scheduled` for
    * the next UTC month. Not part of the public API-key spec; no client
@@ -64,7 +64,7 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/plan/cancel — cancel a next-period scheduled plan
+   * POST /billing/plan/cancel — cancel a next-period scheduled plan
    * downgrade/lateral. Idempotent no-op when nothing is scheduled. Takes no
    * client-supplied plan/account/period data. Not part of the public API-key
    * spec.
@@ -77,7 +77,7 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/plan/upgrade/cancel — cancel an unpaid pending_payment
+   * POST /billing/plan/upgrade/cancel — cancel an unpaid pending_payment
    * plan upgrade (voids the plan_charge invoice, releases pending attempts).
    * Idempotent no-op when nothing is pending. Takes no client-supplied
    * plan/account/period data. Not part of the public API-key spec.
@@ -89,7 +89,7 @@ export class BillingController {
     return this.billingService.cancelPendingUpgrade(userId);
   }
 
-  /** GET /v1/billing/summary?period=YYYY-MM — monthly usage estimate. */
+  /** GET /billing/summary?period=YYYY-MM — monthly usage estimate. */
   @Get('summary')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
@@ -97,7 +97,7 @@ export class BillingController {
     return this.billingService.getSummary(userId, query.period);
   }
 
-  /** GET /v1/billing/invoices?page=&limit= — paginated invoice list. */
+  /** GET /billing/invoices?page=&limit= — paginated invoice list. */
   @Get('invoices')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
@@ -105,7 +105,7 @@ export class BillingController {
     return this.billingService.listInvoices(userId, { page: query.page, limit: query.limit });
   }
 
-  /** GET /v1/billing/invoices/:id — single invoice owned by the user. */
+  /** GET /billing/invoices/:id — single invoice owned by the user. */
   @Get('invoices/:id')
   @FrontendOnly()
   @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
@@ -117,7 +117,7 @@ export class BillingController {
   }
 
   /**
-   * GET /v1/billing/invoices/:id/payment-status — invoice-level read-only
+   * GET /billing/invoices/:id/payment-status — invoice-level read-only
    * payment recovery (BILL-018). Returns the active attempt, wallet
    * reservation, and every unresolved needs_review/reorged attempt so a
    * newer pending quote cannot hide an earlier manual review after refresh.
@@ -136,7 +136,7 @@ export class BillingController {
   }
 
   /**
-   * GET /v1/billing/invoices/:id/pdf — downloads the immutable PDF for a
+   * GET /billing/invoices/:id/pdf — downloads the immutable PDF for a
    * finalized (or paid) invoice owned by the current user. Pricing comes only
    * from the persisted snapshot/lines, never the current plan; the service
    * verifies the snapshot hash, non-negative amounts, and line sum = total and
@@ -161,7 +161,7 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/invoices/:id/checkout — creates (or reuses) a Stripe
+   * POST /billing/invoices/:id/checkout — creates (or reuses) a Stripe
    * Checkout session for a finalized, unpaid invoice owned by the user. The
    * amount, currency, and association are read server-side from the database;
    * success/cancel URLs come from server configuration only. Returns a safe
@@ -180,7 +180,7 @@ export class BillingController {
   }
 
   /**
-   * POST /v1/billing/reconcile — protected internal trigger seam that scans the
+   * POST /billing/reconcile — protected internal trigger seam that scans the
    * current user's receipt-confirmed outbound transactions and appends
    * evidence-backed posted/quarantined ledger events. Scoped to the current
    * user only; returns scan statistics and never exposes receipt logs,

@@ -1,0 +1,3 @@
+# Swell Ethereum deposit fixture
+
+An explicit test-only registry fragment for exactly two official Ethereum targets (swETH and rswETH), each with payable `deposit()` and `depositWithReferral(address)`. `buildSwellRegistry()` is active only for isolated Catalog/Policy tests; it is not imported into runtime production, admissions, or grants. The v6 raw snapshot remains inactive. Caller-selected native value and referral remain unrestricted within the fixed ABI. This is not a complete deposit/withdraw workflow or a runtime, funded, liquidity, or protocol-success certification. See [source review](../../../../../docs/defi-research/expansion55-swell-v6.md).

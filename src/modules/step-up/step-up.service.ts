@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
 
 /** Proof lifetime after verification: 15 minutes */
@@ -43,15 +42,8 @@ export class StepUpService {
       data: {
         userId,
         type,
-        challengeCodeHash: await argon2.hash(randomBytes(16).toString('hex'), {
-          type: argon2.argon2id,
-          memoryCost: 65536,
-          timeCost: 3,
-          parallelism: 1,
-        }),
         proofToken,
         verified: true,
-        attempts: 0,
         expiresAt: proofExpiresAt,
         verifiedAt: new Date(),
       },

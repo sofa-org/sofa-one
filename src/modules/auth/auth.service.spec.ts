@@ -47,7 +47,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
       withWalletAccountLock: jest.fn(async (_user: string, work: (tx: any, accountId: string, now: Date) => unknown) => work(tx, 'ba1', new Date())),
       assertWalletReservationAllowed: jest.fn(), recordWalletActivation: jest.fn(), initializeWalletCount: jest.fn(),
     };
-    service = new AuthService(prisma, openfort, {} as any, {} as any, {} as any, lifecycle, undefined, undefined);
+    service = new AuthService(prisma, openfort, {} as any, {} as any, lifecycle, undefined, undefined);
     prisma.__intent = intent;
     prisma.__tx.walletProvisioningIntent.updateMany.mockImplementation(async ({ data }: any) => {
       Object.assign(intent, data); return { count: 1 };

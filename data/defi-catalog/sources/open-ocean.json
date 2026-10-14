@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "open-ocean",
+      "familyVersion": "uniswap-routes-v1@6352a56c",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x6352a56caadc4f1e25cd6c75970fa768a3304e64",
+          "status": "inactive",
+          "contractName": "OpenOcean Exchange proxy (Ethereum)",
+          "sourceRefs": [
+            "open-ocean-implementation-abi",
+            "open-ocean-implementation-source",
+            "open-ocean-official-docs",
+            "open-ocean-proxy-association"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IERC20",
+                  "name": "srcToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32[]",
+                  "name": "pools",
+                  "type": "bytes32[]"
+                }
+              ],
+              "name": "callUniswap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "open-ocean-implementation-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IERC20",
+                  "name": "srcToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32[]",
+                  "name": "pools",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "address payable",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "callUniswapTo",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "open-ocean-implementation-abi"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address payable",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minReturn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "pools",
+                  "type": "uint256[]"
+                }
+              ],
+              "name": "uniswapV3SwapTo",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "returnAmount",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "open-ocean-implementation-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "open-ocean-implementation-abi",
+      "url": "https://etherscan.io/address/0xE29B6B6E96beFE1e9C6f948BcB5A3f71058bDA9B#code",
+      "retrievedAt": "2026-10-04T17:39:27Z",
+      "sha256": "04da840d951168f8c839f0ac16e75fa92c605350b6b18bc7769c4e28c6c506da",
+      "notes": "Exact extracted full implementation ABI; proxy-to-implementation association is dated explorer metadata and not a current storage-slot/runtime assertion. Selected function ABI identities are pinned in the research report."
+    },
+    {
+      "sourceId": "open-ocean-implementation-source",
+      "url": "https://etherscan.io/address/0xE29B6B6E96beFE1e9C6f948BcB5A3f71058bDA9B#code",
+      "retrievedAt": "2026-10-04T17:39:27Z",
+      "sha256": "839cc3eaa9d0b1777b4719dfa3648a8437342e340f06145e6f820c21d358921c",
+      "notes": "Verified implementation source captured from explorer; selected code paths are OpenOceanExchange source lines 1787-1804 and 3420-3427."
+    },
+    {
+      "sourceId": "open-ocean-official-docs",
+      "url": "https://docs.openocean.finance/docs/contracts",
+      "retrievedAt": "2026-10-04",
+      "sha256": null,
+      "notes": "Official proxy role reference, HTTP 200."
+    },
+    {
+      "sourceId": "open-ocean-proxy-association",
+      "url": "https://etherscan.io/address/0x6352a56caadc4f1e25cd6c75970fa768a3304e64#code",
+      "retrievedAt": "2026-10-04T17:39:27Z",
+      "sha256": null,
+      "notes": "Explorer dated metadata associates proxy and implementation; not asserted as current runtime verification."
+    }
+  ]
+}

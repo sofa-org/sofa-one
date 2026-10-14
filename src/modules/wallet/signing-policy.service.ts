@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
 import { isAddress } from 'viem';
-import type { SignDto, SignMessage } from './dto/sign.dto';
+import type { SignDto } from './dto/sign.dto';
 import { SecurityEventService } from '../security-events/security-event.service';
 
-const MAX_MESSAGE_LENGTH_BYTES = 10 * 1024; // 10 KB
 const BLOCKED_TYPED_DATA_PRIMARY_TYPES = new Set([
   'permit',
   'permitbatch',
@@ -12,8 +11,6 @@ const BLOCKED_TYPED_DATA_PRIMARY_TYPES = new Set([
   'permitbatchtransferfrom',
 ]);
 const MAX_DOMAIN_NAME_LENGTH = 100;
-const PRIVATE_KEY_PATTERN = /0x[0-9a-fA-F]{64}/;
-const MNEMONIC_WORD_PATTERN = /^(?:[a-z]{3,8}\s+){11,}[a-z]{3,8}$/;
 
 export type SigningPolicyResult = {
   typedDataPrimaryType?: string;
@@ -28,8 +25,8 @@ export type SigningPolicyContext = {
   executionMode: 'session_key' | 'eoa';
   apiKeyId?: string;
   apiKeyPrefix?: string;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  /** Caller will persist its own allowed audit atomically at acceptance. */
+  deferAllowedAudit?: boolean;
 };
 
 @Injectable()
@@ -39,49 +36,6 @@ export class SigningPolicyService {
   constructor(
     @Optional() private readonly securityEvents?: SecurityEventService,
   ) {}
-
-  /**
-   * Validate a message signing request against the signing policy.
-   *
-   * Checks:
-   * - Max message length (10 KB)
-   * - Dangerous patterns (private keys, mnemonics)
-   *
-   * Records a `signing.message_allowed` SecurityEvent on success.
-   * Records a `signing.policy_denied` SecurityEvent on denial and throws.
-   */
-  async assertMessageSigningPolicy(
-    message: SignMessage,
-    context: SigningPolicyContext,
-  ): Promise<SigningPolicyResult> {
-    const messageLength = this.getMessageLength(message);
-
-    if (messageLength > MAX_MESSAGE_LENGTH_BYTES) {
-      await this.reject('Message exceeds maximum allowed length', context, {
-        messageLength,
-        maxLength: MAX_MESSAGE_LENGTH_BYTES,
-      });
-    }
-
-    if (this.containsPrivateKeyPattern(message)) {
-      await this.reject('Message appears to contain a private key', context, {
-        messageLength,
-      });
-    }
-
-    if (this.containsMnemonicPattern(message)) {
-      await this.reject('Message appears to contain a mnemonic phrase', context, {
-        messageLength,
-      });
-    }
-
-    await this.recordAllowedEvent('signing.message_allowed', context, {
-      type: 'message',
-      messageLength,
-    });
-
-    return {};
-  }
 
   /**
    * Validate a typed data signing request against the signing policy.
@@ -158,33 +112,6 @@ export class SigningPolicyService {
       );
     }
 
-    // Contract allowlist: if the API key defines allowedContracts, the
-    // verifyingContract must be in the list.
-    if (context.allowedContracts && context.allowedContracts.length > 0) {
-      if (typeof verifyingContract !== 'string') {
-        await this.reject(
-          'typedData.domain.verifyingContract is required when API key allowed contracts are configured',
-          context,
-          {
-            typedDataPrimaryType: primaryType,
-            allowedContractCount: context.allowedContracts.length,
-          },
-        );
-      }
-      const normalizedContract = (verifyingContract as string).toLowerCase();
-      if (!context.allowedContracts.some((c) => c.toLowerCase() === normalizedContract)) {
-        await this.reject(
-          'typedData.domain.verifyingContract is not in the API key allowed contracts',
-          context,
-          {
-            typedDataPrimaryType: primaryType,
-            verifyingContract: normalizedContract,
-            allowedContractCount: context.allowedContracts.length,
-          },
-        );
-      }
-    }
-
     const result: SigningPolicyResult = {
       typedDataPrimaryType: primaryType,
       ...(typeof verifyingContract === 'string'
@@ -193,13 +120,15 @@ export class SigningPolicyService {
       ...(typeof domainName === 'string' ? { typedDataDomainName: domainName } : {}),
     };
 
-    await this.recordAllowedEvent('signing.typed_data_allowed', context, {
-      type: 'typed_data',
-      primaryType,
-      verifyingContract:
-        typeof verifyingContract === 'string' ? verifyingContract : undefined,
-      domainName: typeof domainName === 'string' ? domainName : undefined,
-    });
+    if (!context.deferAllowedAudit) {
+      await this.recordAllowedEvent('signing.typed_data_allowed', context, {
+        type: 'typed_data',
+        primaryType,
+        verifyingContract:
+          typeof verifyingContract === 'string' ? verifyingContract : undefined,
+        domainName: typeof domainName === 'string' ? domainName : undefined,
+      });
+    }
 
     return result;
   }
@@ -288,50 +217,6 @@ export class SigningPolicyService {
         `Failed to record signing allowed event: ${eventType}`,
         error instanceof Error ? error.stack : undefined,
       );
-    }
-  }
-
-  // ── Message Policy Helpers ────────────────────────────────────────
-
-  /**
-   * Compute the byte length of a message.
-   * For raw hex data (SignMessage with `raw`), bytes are (hex.length - 2) / 2.
-   */
-  private getMessageLength(message: SignMessage): number {
-    if (typeof message === 'string') {
-      return Buffer.byteLength(message, 'utf-8');
-    }
-    return (message.raw.length - 2) / 2;
-  }
-
-  /**
-   * Check if the message contains a hex string that looks like a private key
-   * (0x followed by exactly 64 hex characters).
-   */
-  private containsPrivateKeyPattern(message: SignMessage): boolean {
-    if (typeof message === 'string') {
-      return PRIVATE_KEY_PATTERN.test(message);
-    }
-    return false;
-  }
-
-  /**
-   * Check if the message appears to contain a mnemonic phrase
-   * (12+ consecutive lowercase words of 3-8 letters separated by spaces).
-   *
-   * For raw hex data, attempts UTF-8 decoding before checking.
-   */
-  private containsMnemonicPattern(message: SignMessage): boolean {
-    if (typeof message === 'string') {
-      return MNEMONIC_WORD_PATTERN.test(message.trim());
-    }
-    try {
-      const hex = message.raw.startsWith('0x') ? message.raw.slice(2) : message.raw;
-      const bytes = Buffer.from(hex, 'hex');
-      const decoded = bytes.toString('utf-8');
-      return MNEMONIC_WORD_PATTERN.test(decoded.trim());
-    } catch {
-      return false;
     }
   }
 

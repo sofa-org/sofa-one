@@ -4,8 +4,8 @@
 Request/query validation types for the transactions module: the public send-transaction body and the dashboard-only list-transactions query. The DTOs are the single source of truth for shape, constraints, and shared validation constants consumed by the controller, service, and transaction-policy service.
 
 ## Files
-- `send-transaction.dto.ts` — request body DTO for `POST /v1/transactions/send` plus shared interaction constants and nested `InteractionDto`.
-- `list-transactions-query.dto.ts` — query-string DTO for `GET /v1/transactions` with status filter and pagination.
+- `send-transaction.dto.ts` — request body DTO for canonical `POST /v1/transactions` plus shared interaction constants and nested `InteractionDto`.
+- `list-transactions-query.dto.ts` — query-string DTO for dashboard `GET /transactions` with status filter and pagination.
 
 ## Design/Patterns
 - Class-validator decorator-based DTOs validated by the global `ValidationPipe` (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`); unknown request fields are 400s, not silently stripped.
@@ -42,12 +42,12 @@ Request/query validation types for the transactions module: the public send-tran
   - `limit?: number = 20` — optional, `IsInt`, `Min(1)`, `Max(100)`, coerced.
 
 ## Flow
-- `POST /v1/transactions/send`: `@Body() dto: SendTransactionDto` → global ValidationPipe whitelists/transforms/validates → `TransactionsService.send(userId, dto, req.apiKeyRecord)`. Policy service additionally re-checks interaction count and calldata bytes against the DTO-exported constants before wallet/Openfort work.
-- `GET /v1/transactions`: `@Query() query: ListTransactionsQueryDto` → strings coerced to numbers where typed → `TransactionsService.list(userId, query)` for filtering + pagination.
+- `POST /v1/transactions`: `@Body() dto: SendTransactionDto` → global ValidationPipe whitelists/transforms/validates → `TransactionsService.send(userId, dto, req.apiKeyRecord)`. Policy service additionally re-checks interaction count and calldata bytes against the DTO-exported constants before wallet/Openfort work.
+- `GET /transactions`: `@Query() query: ListTransactionsQueryDto` → strings coerced to numbers where typed → `TransactionsService.list(userId, query)` for filtering + pagination.
 - Invalid fields are rejected at the pipe boundary before any service or guard-side business logic runs (except guards, which run before pipes).
 
 ## Integration
-- `transactions.controller.ts` imports both DTO classes; `send` is public API-key route (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard`, `canSendTransaction`, throttled 5/60s + 20/3600s), `list` is dashboard-only (`OpenfortUserGuard` + `FrontendOnlyGuard`, throttled 20/60s + 100/3600s).
+- `transactions.controller.ts` imports both DTO classes; `send` is public API-key route (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard`, `canSendTransaction`, throttled 5/60s + 20/3600s); dashboard list uses its separately registered IAM controller.
 - `transactions.service.ts` imports types `ExecutionMode`, `SendTransactionDto`, `ListTransactionsQueryDto`; uses `SendTransactionDto['interactions']` / `['sponsorship']` index types and `resolveExecutionMode(dto.executionMode)`.
 - `transaction-policy.service.ts` imports `MAX_INTERACTION_CALLDATA_BYTES`, `MAX_TRANSACTION_INTERACTIONS`, and types `ExecutionMode`, `SendTransactionDto`; `assertAllowed(dto, context)` validates against the DTO limits.
 - `transaction-simulation.service.ts` imports types `ExecutionMode`, `SendTransactionDto` for simulation input typing.

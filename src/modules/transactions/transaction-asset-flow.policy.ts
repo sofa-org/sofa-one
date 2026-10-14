@@ -1509,7 +1509,7 @@ function isTrustedSpender(chainId: number, address: string): boolean {
 
 /**
  * Audited, chain-scoped retained-protocol rules.
- * Do NOT treat API-key allowedContracts as a protocol whitelist.
+ * Do not infer protocol trust from API-key metadata; capability authorization is separate.
  * Order matters only for first applicable match; each rule no-ops on non-matching targets.
  */
 export const RETAINED_PROTOCOL_RULES: readonly RetainedProtocolRule[] = Object.freeze([

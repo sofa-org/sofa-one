@@ -334,12 +334,11 @@ export class OpenfortService {
       const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
       await this.assertCaliburContractAvailable(client, params.chainId);
       const gasPrice = await this.estimateUserOperationFees(rpc);
-      const bundlerTransport = http(
-        rpc.url,
-        rpc.authorizationHeader
-          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
-          : undefined,
-      );
+      const bundlerTransport = http(rpc.url, {
+        fetchOptions: {
+          ...(rpc.authorizationHeader ? { headers: { Authorization: rpc.authorizationHeader } } : {}),
+        },
+      } as any);
       const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
@@ -697,7 +696,11 @@ export class OpenfortService {
         'signData',
       );
     } catch (error: any) {
-      this.logOpenfortError('signData', error);
+      this.logger.error(this.logContext({
+        message: 'Openfort signing failed',
+        operation: 'signData',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

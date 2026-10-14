@@ -1,0 +1,3 @@
+# Silo v3 market vault fixture
+
+Test-only source-qualified fixture for two Silo vault roles returned by the official Arbitrum WETH/USDC market configuration. Each target has six fixed ISilo methods (deposit, mint, withdraw, redeem, borrow, repay); not generic ERC-4626 overloads, hooks, callbacks, flash loans, permits, or arbitrary execution. Raw source is inactive and the fixture is not production wired. Amounts, receivers, owners, borrowers, and enum values remain ABI caller-controlled without platform financial/ownership caps. Protocol collateral, hooks, solvency, allowances, and liquidity remain external prerequisites; no funded, runtime, full-market, or safety certification is implied.

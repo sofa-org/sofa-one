@@ -290,7 +290,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     withStepUp = true,
   ) {
     const req = request(app!.getHttpServer())
-      .post(`/v1/billing/invoices/${invId}/usdc/pay-from-wallet`)
+      .post(`/billing/invoices/${invId}/usdc/pay-from-wallet`)
       .set('Authorization', `Bearer ${token}`)
       .set('Origin', FRONTEND_ORIGIN);
     if (withStepUp) req.set('X-Step-Up-Token', 'e2e-step-up-proof');
@@ -299,7 +299,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
   function paymentStatus(token: string, invId: string, paymentAttemptId: string) {
     return request(app!.getHttpServer())
-      .get(`/v1/billing/invoices/${invId}/usdc/payment-status`)
+      .get(`/billing/invoices/${invId}/usdc/payment-status`)
       .query({ paymentAttemptId })
       .set('Authorization', `Bearer ${token}`)
       .set('Origin', FRONTEND_ORIGIN);
@@ -309,7 +309,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
   it('rejects API-key auth on pay-from-wallet (dashboard IAM only)', async () => {
     await request(app!.getHttpServer())
-      .post(`/v1/billing/invoices/${invoiceId}/usdc/pay-from-wallet`)
+      .post(`/billing/invoices/${invoiceId}/usdc/pay-from-wallet`)
       .set('X-API-Key', 'sk_test_not_valid')
       .set('Origin', FRONTEND_ORIGIN)
       .set('X-Step-Up-Token', 'e2e-step-up-proof')
@@ -387,9 +387,9 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   it('accepts pay-from-wallet: one binding, provider once, not paid until claim path', async () => {
     const res = await payFromWallet(iamToken, invoiceId, {
       paymentAttemptId: attemptId,
-    }).expect(201);
+    }).expect(202);
 
-    // 202-shaped: accepted/not solely from provider success.
+    // HTTP 202: acceptance does not establish payment solely from provider success.
     expect(res.body).toEqual(
       expect.objectContaining({
         invoiceId,
@@ -430,7 +430,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
       payFromWallet(iamToken, invoiceId, { paymentAttemptId: attemptId }),
       payFromWallet(iamToken, invoiceId, { paymentAttemptId: attemptId }),
     ]);
-    expect([a.status, b.status].every((s) => s === 201 || s === 409 || s === 403)).toBe(true);
+    expect([a.status, b.status].every((s) => s === 202 || s === 409 || s === 403)).toBe(true);
     // At most one UserOp submission.
     expect(mockOpenfortService.submitUserOperation.mock.calls.length).toBeLessThanOrEqual(1);
 

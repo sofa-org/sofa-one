@@ -15,9 +15,10 @@ Local identity record mapped from Openfort IAM:
 
 ### `UserWallet`
 
-One wallet record per user:
 
-- `userId` unique relation to `User`
+Wallet record owned by one user; a user may have multiple wallet records:
+
+- `userId` relation to `User`
 - `openfortAccountId` stable Openfort account foreign key
 - `walletAddress` EVM address
 - backend agent metadata: `agentOpenfortAccountId`, `agentWalletAddress`, `agentKeyHash`
@@ -41,17 +42,26 @@ API-key credential metadata:
 
 - `apiKeyHash`: Argon2id hash only
 - `keyPrefix`: lookup hint, indexed
+- `walletId`: immutable binding to one `UserWallet`; nullable only for revoked legacy keys that could not be safely assigned
 - optional `name`
 - optional `expiresAt`
 - `revoked`
 - `allowedIps`
+- `capabilityMode` (`all` or `custom`)
+- `allowedCapabilityIds` (configured exact IDs; not a materialized effective list)
 - `lastUsedAt`
+
+`all` dynamically includes currently and subsequently active, unpaused reviewed catalog
+capabilities; `custom` includes only its listed IDs, with `[]` denying catalog capabilities.
+This mode is independent of API-key permissions and other authorization controls.
 
 Invariants:
 
 - raw secrets are never stored;
 - lookup must verify every matching prefix candidate;
 - active key limits and active name uniqueness are enforced in service code.
+- each new key binds to exactly one wallet; multiple keys may bind to one wallet, and the maximum 10 active keys remains per user across all wallets.
+- keys are never rebound. Legacy migration binds keys only when the owner has exactly one wallet row total, counting every wallet status. Otherwise it revokes and retains the key with `walletId` null.
 
 ### `ApiKeyEvent`
 
@@ -103,6 +113,20 @@ For production/deployment migrations:
 ```bash
 npm run prisma:migrate:deploy
 ```
+
+The capability-mode migration is a one-time data migration: existing empty arrays map to
+`all` and nonempty arrays map to `custom` unchanged. Because old binaries do not preserve the
+new mode invariant, deploy it only in a coordinated maintenance window with all old API
+instances/writers stopped: apply migrations before starting the new application version.
+Do not run mixed-version writers or an ad hoc/recurring repair. The empty-to-all mapping
+includes formerly deliberate empty selections, which the prior schema cannot distinguish.
+
+Wallet-binding rollout also requires a coordinated maintenance window: drain/stop every
+old application instance, back up the database, generate the Prisma client and deploy the
+release migration, then start the new application version. Do not claim mixed-version
+rollout safety or run old and new app versions concurrently. The migration auto-binds
+legacy keys only for owners with exactly one wallet row across all states; it revokes and
+retains other keys without rebinding them. This documentation does not run a migration.
 
 ## 4. Schema-change checklist
 

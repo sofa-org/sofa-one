@@ -4,7 +4,9 @@
 Top-level route components for the SOFA ONE SPA. This directory owns the **public pages and auth entry points** (`Landing`, `SignIn`, `EmailOtpForm`) and is the **parent container for the authenticated `dashboard/` subtree**. Public pages are presentational and drive users into the Openfort email-OTP sign-in flow; the dashboard subtree (documented in its own `dashboard/codemap.md`) holds all authenticated, post-sign-in screens. No backend/API business logic lives at this level — pages compose React Router, `@openfort/react`, and shared components.
 
 ## Directory Map
-- `Landing.tsx` — `/` landing page; product pitch, onboarding steps, feature chips, CTAs to `/sign-in` and `/dashboard/docs`.
+- `Landing.tsx` — `/` landing page; product pitch, public navigation, onboarding steps, feature chips, CTAs to `/sign-in` and `/dashboard/docs`.
+- `Protocols.tsx` — unauthenticated `/protocols` directory with search and official-site links; `supported-protocols.ts` keeps its canonical display dataset separate from the backend registry.
+- `Pricing.tsx` — public `/pricing` page with links to the protocol directory and sign-in.
 - `SignIn.tsx` — `/sign-in/*` auth shell; responsive split layout (brand panel + form panel) that lazy-loads `AuthFormPanel`.
 - `EmailOtpForm.tsx` — the actual Openfort email-OTP form (request code → verify code → redirect); rendered inside `AuthFormPanel`'s provider/guard stack.
 - `dashboard/` — authenticated dashboard subtree (see `dashboard/codemap.md`): `DashboardLayout`, `Wallet`, `ApiKeys`, `Transactions`, `SecurityNotifications`, `Billing`, `Docs`, plus setup/step-up/helper modules. Not detailed here; see the child map.
@@ -20,7 +22,9 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 ## Flow
 
 ### Routing (`App.tsx`)
-- `/` → `LandingPage`
+- `/` → `LandingPage` (public navigation links to `/protocols` and `/pricing`)
+- `/protocols` → lazy-loaded public protocol directory; no auth provider or route guard
+- `/pricing` → `PricingPage`
 - `/sign-in/*` → `SignInPage` (renders `AuthFormPanel` → `EmailOtpForm`)
 - `/sign-up/*` → `<Navigate to="/sign-in" replace />`
 - `/dashboard` → `AuthProviders → ProtectedRoute → DashboardStepUpGate → DashboardLayout` with nested children: index (`Wallet`), `api-keys`, `transactions`, `notifications`, `billing`, `docs`

@@ -27,7 +27,8 @@ Frontend-only endpoints must use Openfort IAM bearer auth plus `FrontendOnlyGuar
 Used only for automation/client integrations:
 
 - `POST /v1/wallets/sign`
-- `POST /v1/transactions/send`
+- `GET /v1/wallets` (API-key-bound wallet metadata)
+- `POST /v1/transactions`
 - `GET /v1/transactions/:id`
 
 These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
@@ -62,6 +63,70 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
+- API-key signing permits the exact Polymarket CLOB `ClobAuth` bootstrap typed data and the separately scoped V2 order exception below: EOA mode,
+  Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),
+  exact ordered `ClobAuth` fields and fixed message, selected agentWalletAddress (never the
+  embedded wallet address or funder), canonical decimal Unix timestamp within ±300 seconds,
+  and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
+  name:string, version:string, chainId:uint256. ClobAuth itself is not order, Permit, arbitrary
+  typed/message/hash, or session-key signing.
+- ClobAuth eligibility requires `canSign`, `canUseEoaExecution`, and either `capabilityMode: all`
+  or `capabilityMode: custom` containing `polymarket:137:clob-auth:v1`. `all` dynamically
+  includes active, unpaused reviewed capabilities, but never bypasses permissions, chain,
+  schema, scope, freeze, pause, destination, or other independent controls. `custom` grants
+  only exact IDs; `[]` denies catalog capabilities. Preserve EOA
+  isolation (IP/TTL/rate), destination allowlist/protection, risk/signing-policy, frozen/live
+  key and final grant/pause/digest acceptance checks. The final live-state read does not
+  serialize against concurrent freeze writers; do not promise race-free freeze exclusion.
+  PostgreSQL race behavior and live Openfort/Polymarket outcomes remain unverified.
+  Destination protection blocks signing.
+  The exception does not imply deployment or successful live Polymarket authentication.
+- Generic API-key transaction sends require active, granted DeFi capability matches for
+  every contract call. Unknown/paused/ungranted capabilities fail closed. Capability/pause
+  state is revalidated in the acceptance transaction; do not make RPC/Openfort/HTTP calls
+  while policy locks are held.
+- DeFi grants authorize exact catalog functions, not safe financial outcomes: callers control
+  ABI arguments and payable value. ERC-20 approval is an independent explicit grant allowing
+  any spender and any uint256 amount, including unlimited approval; never auto-grant or
+  automatically clean it up. Catalog admission does not grant authority. Preserve the
+  independent identity, permission, freeze, session/EOA, destination, billing, simulation,
+  idempotency, and user-configured key-spend controls.
+- Existing grant IDs intentionally gain the simplified function-level scope without a schema
+  migration. Owners should review existing grants and revoke/re-grant if the broader
+  authority is not intended.
+
+### Polymarket CLOB V2 order-signing safeguards
+
+The separate order exception requires an active, unpaused `polymarket:137:clob-order:v2` capability (`all` includes it dynamically; `custom` requires the exact ID), EOA mode and permissions, exact `TypedDataSign`/11-field V2 Order and six-field wrapper, fixed ordinary (`0xE111180000d2663C0091e4f400237545B87B996B`) or neg-risk (`0xe2222d279d744050d28e00520010520000310F59`) exchange, and DepositWallet `signatureType:3` (POLY_1271). Reject V1/V3, types 0/1/2, arbitrary typed data, messages, and permits. Existing permission and EOA safeguards remain; strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity are required. These checks do not prove official-wallet ownership or automatically recognize an official factory. Wallet-scoped rolling 60-second limit: at most 60 accepted orders across keys, atomically reserved; failures consume reservations. This does not alter general EOA enabled/permission/IP/TTL controls or the shared original 1/60s ClobAuth/send limit. Amounts must be positive and structure valid, but there are no economic/market/price/quantity limits. ±300000ms is service signing freshness, not exchange expiry. Freeze/pause/revocation cannot revoke signed orders; failure may mean TEE signing occurred without returning the signature. Real-client/CLOB/DepositWallet end-to-end acceptance remains unverified.
+
+### Polymarket DepositWallet Batch signing
+
+The `polymarket:137:deposit-wallet-batch-sign:v1` capability authorizes only EIP-712 signing,
+not a broadcast or send. It uses `all`/`custom` capability semantics but still requires
+`canSign`, `canUseEoaExecution`, EOA mode, ordinary EOA isolation, destination/risk checks,
+and atomic live permission/grant/pause/deadline/digest acceptance. It does not use the
+order-specific wallet budget. This capability authorizes the exact Batch envelope with
+1–32 calls, ≤8 KiB calldata per call and ≤32 KiB total. Each call
+requires a valid nonzero target, well-formed even-length hex data (possibly empty), and
+exactly zero native value. No target/function/ABI-canonicality/spender/operator allowlist
+applies. This is high privilege: arbitrary calldata may transfer tokens, create unlimited
+approvals or alter wallet permissions. A paused actual call target is denied both before
+signing and during atomic acceptance; pauses on contracts not present as call targets do not
+block the Batch merely due to inferred spender/operator roles. Only global, Polygon-chain,
+or capability pause blocks the capability metadata/grant itself.
+
+The deployment verifier uses configured `SIMULATION_RPC_URLS__137` and fails closed on
+missing configuration or any verification failure. It pins deployment reads to one block
+and retains the full factory/Beacon/implementation/wallet identity (runtime hashes and proxy
+slots included), predicted wallet, owner/signer/id, current nonce and pause state. Evidence
+binds the complete typed-data digest, deadline, signer and RPC fingerprint; it is locally
+freshness-checked for at most 15 seconds while policy locks are held. After TEE signing,
+outside the transaction, it re-probes the latest pinned deployment and requires unchanged
+identity/current nonce/unpaused state, then runs exact `wallet.execute` via `eth_call` with
+`from` set to the factory. This requires no operator authorization and never broadcasts. A
+successful simulation does not establish that effects were mined or will persist. No live
+Openfort/client end-to-end verification is claimed; this path only authorizes and returns a
+signature, never sends a Batch.
 
 ## 7. Logging rules
 

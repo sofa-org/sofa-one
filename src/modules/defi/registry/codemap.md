@@ -1,0 +1,5 @@
+# DeFi registry
+
+Registry contracts are immutable fragments of nested `chain -> contract -> function` capability data. A reviewed manifest exposes `{ chains, capabilities, manifestHash }`; `buildReviewedManifest` rejects duplicate IDs/selectors and inconsistent hierarchy/ABI, validates active identity/provenance, and deep-freezes the result. The production registry is generated from the single reviewed catalog input. Catalog definitions and profile metadata do not grant capabilities. Source admission does not prove runtime code, financial safety, market eligibility, liquidity, or funded execution. See [catalog tooling](../catalog-tooling/codemap.md); versioned research reports are historical only.
+
+Registry tests follow the same domain layout: protocol-specific authorization tests live beside that protocol under `registry/<protocol>/`, cross-protocol policy integration tests live in `registry/policy-integration/`, and shared catalog/manifest test helpers live in `registry/__fixtures__/`. Test filenames describe the exercised operation or policy boundary; they do not carry temporal or release labels.

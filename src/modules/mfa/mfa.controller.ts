@@ -5,7 +5,7 @@ import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { TotpCodeDto } from './dto/totp.dto';
 import { MfaService } from './mfa.service';
 
-@Controller('v1/auth/mfa')
+@Controller('auth/mfa')
 @FrontendOnly()
 @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
 export class MfaController {

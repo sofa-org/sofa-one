@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "lista",
+      "familyVersion": "v1@9ee9a952",
+      "contracts": [
+        {
+          "chainId": 56,
+          "address": "0x1adB950d8bB3dA4bE104211D5AB038628e477fE6",
+          "status": "inactive",
+          "contractName": "Lista BSC StakeManager",
+          "sourceRefs": [
+            "lista-official-stake-manager-source",
+            "lista-stake-manager-implementation-source",
+            "lista-bsc-mainnet-fork-test"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": [],
+              "sourceId": "lista-official-stake-manager-source"
+            },
+            {
+              "type": "function",
+              "name": "requestWithdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_amountInSnBnb", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [],
+              "sourceId": "lista-official-stake-manager-source"
+            },
+            {
+              "type": "function",
+              "name": "claimWithdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_idx", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [],
+              "sourceId": "lista-official-stake-manager-source"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "lista-official-stake-manager-source",
+      "url": "https://github.com/lista-dao/synclub-contracts/blob/9ee9a952066681bc8abb7ec149310560a21da563/contracts/interfaces/IStakeManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Lista DAO source commit 9ee9a952066681bc8abb7ec149310560a21da563 declares deposit() payable and requestWithdraw(uint256 _amountInSnBnb), claimWithdraw(uint256 _idx) nonpayable, all with no outputs. The source snapshot does not prove the current proxy implementation."
+    },
+    {
+      "sourceId": "lista-stake-manager-implementation-source",
+      "url": "https://github.com/lista-dao/synclub-contracts/blob/9ee9a952066681bc8abb7ec149310560a21da563/contracts/ListaStakeManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned implementation source documents positive native deposit/conversion, nonzero slisBNB withdrawal amount, minBnb condition, indexed user withdrawal requests, and queue/claim behavior. These are protocol conditions, not platform financial or ownership filters."
+    },
+    {
+      "sourceId": "lista-bsc-mainnet-fork-test",
+      "url": "https://github.com/lista-dao/synclub-contracts/blob/9ee9a952066681bc8abb7ec149310560a21da563/test/foundry/ListaStakeManagerMainnet.t.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official published BSC mainnet fork test labels 0x1adB950d8bB3dA4bE104211D5AB038628e477fE6 as proxy and 0xB0b84D294e0C75A6abe60171b70edEb2EFd14A1B as slisBNB, selecting fork block 45946093. The test upgrades the proxy to a newly deployed implementation during setUp; it is dated test-role evidence, not a present deployment/runtime observation or funded-execution proof."
+    }
+  ]
+}

@@ -51,9 +51,8 @@ export async function getDepositInfoAuth(
   walletId?: string,
   signal?: AbortSignal,
 ) {
-  const response = await authFetch<unknown>('/v1/wallets/deposit-info', getToken, {
-    method: 'POST', body: JSON.stringify({ chainId, ...(walletId ? { walletId } : {}) }), signal,
-  });
+  const query = new URLSearchParams({ chainId: String(chainId), ...(walletId ? { walletId } : {}) });
+  const response = await authFetch<unknown>(`/wallets/deposits?${query}`, getToken, { signal });
   return response;
 }
 
@@ -67,6 +66,7 @@ export interface AuthSessionResponse {
 
 export interface RefreshApiKeyResponse {
   apiKey: string;
+  walletId: string;
 }
 
 export interface BalanceEntry {
@@ -182,6 +182,8 @@ export interface TransactionStatusResponse extends SendTransactionResponse {
 
 export interface ApiKeyRecord {
   id: string;
+  /** Immutable wallet binding; null is reserved for unbound legacy keys. */
+  walletId: string | null;
   displayPrefix: string;
   name: string | null;
   revoked: boolean;
@@ -195,8 +197,8 @@ export interface ApiKeyRecord {
   lastUsedIp: string | null;
   lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
-  allowedContracts: string[];
-  allowedFunctionSelectors: string[];
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
   dailySpendLimit: string | null;
   monthlySpendLimit: string | null;
 }
@@ -319,11 +321,14 @@ export interface ApiKeyPermissions {
 export interface CreateApiKeyResponse {
   rawKey: string;
   id: string;
+  walletId: string;
   displayPrefix: string;
   name: string;
   expiresAt: string;
   createdAt: string;
   permissions: ApiKeyPermissions;
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
 }
 
 export interface ApiKeySpendLimits {
@@ -332,13 +337,65 @@ export interface ApiKeySpendLimits {
 }
 
 export interface CreateApiKeyRequest {
+  walletId: string;
   name: string;
   allowedIps?: string[];
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  capabilityMode?: ApiKeyCapabilityMode;
+  allowedCapabilityIds?: string[];
   spendLimits?: ApiKeySpendLimits;
   permissions?: Partial<ApiKeyPermissions>;
 }
+
+export interface DefiCapability {
+  capabilityId: string;
+  type: 'contract_call' | 'typed_data_sign';
+  chainId: number;
+  contract?: string;
+  functionSignature?: string;
+  label: string;
+  description: string;
+  status: 'active' | 'inactive' | 'paused';
+  policy: { ref: string; version: number };
+  protocol?: string;
+  operation?: string;
+  warnings?: string[];
+  provenance?: { sourceRef: string; verifiedAt: string; status: 'verified' | 'candidate' };
+}
+
+export interface DefiCapabilitiesResponse {
+  capabilities: DefiCapability[];
+}
+
+export interface DefiCapabilityBundle {
+  bundleId: string;
+  version: string;
+  label: string;
+  chainIds: number[];
+  capabilityIds: string[];
+  fingerprint: string;
+  warnings: string[];
+  limitations: string[];
+  available: boolean;
+  unavailableCapabilityIds: string[];
+}
+
+export interface DefiCapabilityBundlesResponse {
+  schemaVersion: 1;
+  currentCatalogManifestHash: string;
+  bundles: DefiCapabilityBundle[];
+}
+
+export interface UpdateApiKeyCapabilitiesResponse {
+  id: string;
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
+}
+
+export type ApiKeyCapabilityMode = 'all' | 'custom';
+
+export type UpdateApiKeyCapabilitiesRequest =
+  | { capabilityMode: 'all' }
+  | { capabilityMode: 'custom'; allowedCapabilityIds: string[] };
 
 export interface StepUpChallengeResponse {
   challengeId: string;
@@ -423,7 +480,7 @@ export interface AssignBillingPlanRequest {
 }
 
 /**
- * POST /v1/billing/plan result. Server owns amount, effective dates, and kind.
+ * POST /billing/plan result. Server owns amount, effective dates, and kind.
  * - unchanged: already on the requested plan (idempotent)
  * - payment_required: upgrade charge created; pay before entitlements change
  * - scheduled: downgrade/lateral takes effect at the next UTC month boundary
@@ -599,7 +656,7 @@ export interface InvoicePaymentAttemptStatus {
 }
 
 /**
- * GET /v1/billing/invoices/:id/payment-status — read-only dashboard recovery.
+ * GET /billing/invoices/:id/payment-status — read-only dashboard recovery.
  * Surfaces active pending/confirming, wallet reservation, and every unresolved
  * needs_review/reorged attempt so a newer quote cannot hide earlier review.
  */
@@ -792,17 +849,19 @@ export async function syncSession(getToken: () => Promise<string | null>, signal
   return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
 }
 
-/** @deprecated Use syncSession. */
-export const socialLogin = syncSession;
-
 export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
   return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
 }
 
-export async function refreshApiKey(getToken: () => Promise<string | null>, stepUpToken: string) {
-  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
+export async function refreshApiKey(
+  getToken: () => Promise<string | null>,
+  stepUpToken: string,
+  walletId: string,
+) {
+  return authFetch<RefreshApiKeyResponse>('/api-keys/rotations', getToken, {
     method: 'POST',
     headers: { 'X-Step-Up-Token': stepUpToken },
+    body: JSON.stringify({ walletId }),
   });
 }
 
@@ -843,31 +902,31 @@ export async function markAgentRegistrationTransaction(
 // --- Dashboard MFA (TOTP) ---
 
 export async function getMfaStatusAuth(getToken: () => Promise<string | null>) {
-  return authFetch<MfaStatusResponse>('/v1/auth/mfa/status', getToken);
+  return authFetch<MfaStatusResponse>('/auth/mfa/status', getToken);
 }
 
 export async function setupTotpAuth(getToken: () => Promise<string | null>) {
-  return authFetch<TotpSetupResponse>('/v1/auth/mfa/totp/setup', getToken, {
+  return authFetch<TotpSetupResponse>('/auth/mfa/totp/setup', getToken, {
     method: 'POST',
   });
 }
 
 export async function enableTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<TotpEnableResponse>('/v1/auth/mfa/totp/enable', getToken, {
+  return authFetch<TotpEnableResponse>('/auth/mfa/totp/enable', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
   });
 }
 
 export async function verifyTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<TotpVerifyResponse>('/v1/auth/mfa/totp/verify', getToken, {
+  return authFetch<TotpVerifyResponse>('/auth/mfa/totp/verify', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
   });
 }
 
 export async function disableTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<void>('/v1/auth/mfa/totp/disable', getToken, {
+  return authFetch<void>('/auth/mfa/totp/disable', getToken, {
     method: 'POST',
     body: JSON.stringify({ code }),
   });
@@ -883,7 +942,7 @@ export async function signWithApiKey(apiKey: string, body: SignRequest) {
 }
 
 export async function sendTransactionWithApiKey(apiKey: string, body: SendTransactionRequest) {
-  return apiFetch<SendTransactionResponse>('/v1/transactions/send', apiKey, {
+  return apiFetch<SendTransactionResponse>('/v1/transactions', apiKey, {
     method: 'POST',
     body: JSON.stringify(body),
   });
@@ -896,7 +955,28 @@ export async function getTransactionStatusWithApiKey(apiKey: string, transaction
 // --- Dashboard API (JWT-authenticated) ---
 
 export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
-  return authFetch<ApiKeyRecord[]>('/v1/api-keys', getToken);
+  return authFetch<ApiKeyRecord[]>('/api-keys', getToken);
+}
+
+export async function listDefiCapabilitiesAuth(getToken: () => Promise<string | null>) {
+  return authFetch<DefiCapabilitiesResponse>('/defi-capabilities', getToken);
+}
+
+export async function listDefiCapabilityBundlesAuth(getToken: () => Promise<string | null>) {
+  return authFetch<DefiCapabilityBundlesResponse>('/defi-capability-bundles', getToken);
+}
+
+export async function updateApiKeyCapabilitiesAuth(
+  getToken: () => Promise<string | null>,
+  id: string,
+  request: UpdateApiKeyCapabilitiesRequest,
+  stepUpToken: string,
+) {
+  return authFetch<UpdateApiKeyCapabilitiesResponse>(`/api-keys/${id}/capabilities`, getToken, {
+    method: 'PATCH',
+    headers: { 'X-Step-Up-Token': stepUpToken },
+    body: JSON.stringify(request),
+  });
 }
 
 export async function createApiKeyAuth(
@@ -904,7 +984,7 @@ export async function createApiKeyAuth(
   request: CreateApiKeyRequest,
   stepUpToken?: string,
 ) {
-  return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
+  return authFetch<CreateApiKeyResponse>('/api-keys', getToken, {
     method: 'POST',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify(request),
@@ -916,7 +996,7 @@ export async function revokeApiKeyAuth(
   id: string,
   stepUpToken?: string,
 ) {
-  return authFetch<void>(`/v1/api-keys/${id}`, getToken, {
+  return authFetch<void>(`/api-keys/${id}`, getToken, {
     method: 'DELETE',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
@@ -926,7 +1006,7 @@ export async function revokeAllApiKeysAuth(
   getToken: () => Promise<string | null>,
   stepUpToken?: string,
 ) {
-  return authFetch<{ success: boolean; revokedCount: number }>('/v1/api-keys', getToken, {
+  return authFetch<{ success: boolean; revokedCount: number }>('/api-keys', getToken, {
     method: 'DELETE',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
@@ -942,7 +1022,7 @@ export async function listSecurityNotificationsAuth(
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
   return authFetch<SecurityNotificationRecord[]>(
-    `/v1/security-notifications${qs ? `?${qs}` : ''}`,
+    `/security-notifications${qs ? `?${qs}` : ''}`,
     getToken,
     { signal },
   );
@@ -953,7 +1033,7 @@ export async function markSecurityNotificationReadAuth(
   notificationId: string,
 ) {
   return authFetch<{ success: boolean; updatedCount: number }>(
-    `/v1/security-notifications/${notificationId}/read`,
+    `/security-notifications/${notificationId}/read`,
     getToken,
     { method: 'POST' },
   );
@@ -961,7 +1041,7 @@ export async function markSecurityNotificationReadAuth(
 
 export async function markAllSecurityNotificationsReadAuth(getToken: () => Promise<string | null>) {
   return authFetch<{ success: boolean; updatedCount: number }>(
-    '/v1/security-notifications/read-all',
+    '/security-notifications/read-all',
     getToken,
     { method: 'POST' },
   );
@@ -975,11 +1055,12 @@ export async function withdrawAuth(
   chainId = DEFAULT_CHAIN_ID,
   stepUpToken?: string,
   walletId?: string,
+  idempotencyKey: string = crypto.randomUUID(),
 ) {
-  return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
+  return authFetch<WithdrawResponse>('/wallets/withdrawals', getToken, {
     method: 'POST',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-    body: JSON.stringify({ chainId, to, amount, token, walletId, idempotencyKey: crypto.randomUUID() }),
+    body: JSON.stringify({ chainId, to, amount, token, walletId, idempotencyKey }),
   });
 }
 
@@ -989,7 +1070,7 @@ export async function listWithdrawalAddressesAuth(
   walletId?: string,
 ) {
   const query = walletId ? `?walletId=${encodeURIComponent(walletId)}` : '';
-  return authFetch<ListWithdrawalAddressesResponse>(`/v1/wallets/withdrawal-addresses${query}`, getToken, {
+  return authFetch<ListWithdrawalAddressesResponse>(`/wallets/withdrawal-addresses${query}`, getToken, {
     signal,
   });
 }
@@ -999,7 +1080,7 @@ export async function addWithdrawalAddressAuth(
   body: { address: string; label?: string },
   stepUpToken?: string,
 ) {
-  return authFetch<WithdrawalAddressRecord>('/v1/wallets/withdrawal-addresses', getToken, {
+  return authFetch<WithdrawalAddressRecord>('/wallets/withdrawal-addresses', getToken, {
     method: 'POST',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
     body: JSON.stringify(body),
@@ -1011,7 +1092,7 @@ export async function removeWithdrawalAddressAuth(
   id: string,
   stepUpToken?: string,
 ) {
-  return authFetch<{ success: boolean }>(`/v1/wallets/withdrawal-addresses/${id}`, getToken, {
+  return authFetch<{ success: boolean }>(`/wallets/withdrawal-addresses/${id}`, getToken, {
     method: 'DELETE',
     headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
   });
@@ -1025,7 +1106,7 @@ export async function getBalancesAuth(
 ) {
   const query = new URLSearchParams({ chainId: String(chainId) });
   if (walletId) query.set('walletId', walletId);
-  return authFetch<BalancesResponse>(`/v1/wallets/balances?${query}`, getToken, {
+  return authFetch<BalancesResponse>(`/wallets/balances?${query}`, getToken, {
     signal,
   });
 }
@@ -1071,7 +1152,7 @@ export async function listTransactionsAuth(
   if (params?.page) query.set('page', String(params.page));
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
-  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, {
+  return authFetch<ListTransactionsResponse>(`/transactions${qs ? `?${qs}` : ''}`, getToken, {
     signal,
   });
 }
@@ -1116,7 +1197,7 @@ export async function listSigningRequestsAuth(
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
   return authFetch<ListSigningRequestsResponse>(
-    `/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`,
+    `/wallets/signing-requests${qs ? `?${qs}` : ''}`,
     getToken,
     { signal },
   );
@@ -1146,7 +1227,7 @@ export async function getTransactionDetailAuth(
   transactionId: string,
   signal?: AbortSignal,
 ) {
-  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, {
+  return authFetch<TransactionDetail>(`/transactions/${transactionId}/detail`, getToken, {
     signal,
   });
 }
@@ -1170,7 +1251,7 @@ export async function getSigningRequestDetailAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<SigningRequestDetail>(
-    `/v1/wallets/signing-requests/${signingRequestId}`,
+    `/wallets/signing-requests/${signingRequestId}`,
     getToken,
     { signal },
   );
@@ -1180,21 +1261,21 @@ export async function getBillingPlansAuth(
   getToken: () => Promise<string | null>,
   signal?: AbortSignal,
 ) {
-  return authFetch<BillingPlanResponse>('/v1/billing/plans', getToken, { signal });
+  return authFetch<BillingPlanResponse>('/billing/plans', getToken, { signal });
 }
 
 export async function assignBillingPlanAuth(
   getToken: () => Promise<string | null>,
   planCode: string,
 ) {
-  return authFetch<AssignBillingPlanResponse>('/v1/billing/plan', getToken, {
+  return authFetch<AssignBillingPlanResponse>('/billing/plan', getToken, {
     method: 'POST',
     body: JSON.stringify({ planCode } satisfies AssignBillingPlanRequest),
   });
 }
 
 /**
- * POST /v1/billing/plan/cancel result. Cancels a pending scheduled plan change
+ * POST /billing/plan/cancel result. Cancels a pending scheduled plan change
  * (typically a downgrade) for the next UTC month. Optional fields are present
  * when the server still reports plan identity after cancel/no-op.
  * - canceled: a scheduled change was removed
@@ -1208,13 +1289,13 @@ export type CancelBillingPlanResponse = {
 };
 
 export async function cancelBillingPlanAuth(getToken: () => Promise<string | null>) {
-  return authFetch<CancelBillingPlanResponse>('/v1/billing/plan/cancel', getToken, {
+  return authFetch<CancelBillingPlanResponse>('/billing/plan/cancel', getToken, {
     method: 'POST',
   });
 }
 
 /**
- * POST /v1/billing/plan/upgrade/cancel result. Cancels a pending unpaid plan
+ * POST /billing/plan/upgrade/cancel result. Cancels a pending unpaid plan
  * upgrade charge. Optional fields may identify the plan the user remains on.
  * - canceled: pending upgrade was removed
  * - unchanged: nothing was pending (idempotent)
@@ -1227,7 +1308,7 @@ export type CancelBillingPlanUpgradeResponse = {
 };
 
 export async function cancelBillingPlanUpgradeAuth(getToken: () => Promise<string | null>) {
-  return authFetch<CancelBillingPlanUpgradeResponse>('/v1/billing/plan/upgrade/cancel', getToken, {
+  return authFetch<CancelBillingPlanUpgradeResponse>('/billing/plan/upgrade/cancel', getToken, {
     method: 'POST',
   });
 }
@@ -1238,7 +1319,7 @@ export async function getBillingSummaryAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<BillingSummary>(
-    `/v1/billing/summary?period=${encodeURIComponent(period)}`,
+    `/billing/summary?period=${encodeURIComponent(period)}`,
     getToken,
     { signal },
   );
@@ -1258,7 +1339,7 @@ export async function listBillingInvoicesAuth(
   if (params?.page) query.set('page', String(params.page));
   if (params?.limit) query.set('limit', String(params.limit));
   const qs = query.toString();
-  return authFetch<BillingInvoicesResponse>(`/v1/billing/invoices${qs ? `?${qs}` : ''}`, getToken, {
+  return authFetch<BillingInvoicesResponse>(`/billing/invoices${qs ? `?${qs}` : ''}`, getToken, {
     signal,
   });
 }
@@ -1268,7 +1349,7 @@ export async function getBillingInvoiceAuth(
   invoiceId: string,
   signal?: AbortSignal,
 ) {
-  return authFetch<BillingInvoice>(`/v1/billing/invoices/${invoiceId}`, getToken, { signal });
+  return authFetch<BillingInvoice>(`/billing/invoices/${invoiceId}`, getToken, { signal });
 }
 
 export async function getBillingInvoicePdfAuth(
@@ -1280,7 +1361,7 @@ export async function getBillingInvoicePdfAuth(
     throw new Error('Openfort session is not ready. Refresh and sign in again.');
   }
 
-  const res = await fetch(`${API_BASE}/v1/billing/invoices/${invoiceId}/pdf`, {
+  const res = await fetch(`${API_BASE}/billing/invoices/${invoiceId}/pdf`, {
     headers: {
       Accept: 'application/pdf',
       Authorization: `Bearer ${token}`,
@@ -1310,7 +1391,7 @@ export async function createBillingCheckoutSessionAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<BillingCheckoutResponse>(
-    `/v1/billing/invoices/${invoiceId}/checkout`,
+    `/billing/invoices/${invoiceId}/checkout`,
     getToken,
     {
       method: 'POST',
@@ -1329,7 +1410,7 @@ export async function createUsdcQuoteAuth(
   const body: { chainId?: number; walletId?: string } = {};
   if (chainId !== undefined) body.chainId = chainId;
   if (walletId) body.walletId = walletId;
-  return authFetch<UsdcQuoteResponse>(`/v1/billing/invoices/${invoiceId}/usdc/quote`, getToken, {
+  return authFetch<UsdcQuoteResponse>(`/billing/invoices/${invoiceId}/usdc/quote`, getToken, {
     method: 'POST',
     body: JSON.stringify(body),
     signal,
@@ -1344,7 +1425,7 @@ export async function createUsdcClaimAuth(
   signal?: AbortSignal,
 ) {
   const body: UsdcClaimRequest = { paymentAttemptId, txHash };
-  return authFetch<UsdcClaimResponse>(`/v1/billing/invoices/${invoiceId}/usdc/claim`, getToken, {
+  return authFetch<UsdcClaimResponse>(`/billing/invoices/${invoiceId}/usdc/claim`, getToken, {
     method: 'POST',
     body: JSON.stringify(body),
     signal,
@@ -1352,7 +1433,7 @@ export async function createUsdcClaimAuth(
 }
 
 /**
- * POST /v1/billing/invoices/:id/usdc/pay-from-wallet
+ * POST /billing/invoices/:id/usdc/pay-from-wallet
  * Body is paymentAttemptId only (server-bound quote facts). Requires step-up.
  */
 export async function payUsdcFromWalletAuth(
@@ -1363,7 +1444,7 @@ export async function payUsdcFromWalletAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<UsdcWalletPayResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/pay-from-wallet`,
+    `/billing/invoices/${invoiceId}/usdc/pay-from-wallet`,
     getToken,
     {
       method: 'POST',
@@ -1375,7 +1456,7 @@ export async function payUsdcFromWalletAuth(
 }
 
 /**
- * GET /v1/billing/invoices/:id/usdc/payment-status?paymentAttemptId=
+ * GET /billing/invoices/:id/usdc/payment-status?paymentAttemptId=
  * Poll reserved wallet-payment state without step-up. Safe fields only.
  */
 export async function getUsdcPaymentStatusAuth(
@@ -1386,7 +1467,7 @@ export async function getUsdcPaymentStatusAuth(
 ) {
   const query = new URLSearchParams({ paymentAttemptId });
   return authFetch<UsdcWalletPayResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
+    `/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
     getToken,
     { signal },
   );
@@ -1405,7 +1486,7 @@ export interface UsdcCancelResult {
 }
 
 /**
- * POST /v1/billing/invoices/:id/usdc/cancel
+ * POST /billing/invoices/:id/usdc/cancel
  * Body is paymentAttemptId only. Cancels only clean pending (unreserved,
  * evidence-free) USDC quotes. Confirming/reserved/evidence/review/terminal
  * return 409 USDC_CANCEL_NOT_ALLOWED (or related conflicts).
@@ -1417,7 +1498,7 @@ export async function cancelUsdcQuoteAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<UsdcCancelResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/cancel`,
+    `/billing/invoices/${invoiceId}/usdc/cancel`,
     getToken,
     {
       method: 'POST',
@@ -1428,7 +1509,7 @@ export async function cancelUsdcQuoteAuth(
 }
 
 /**
- * GET /v1/billing/invoices/:id/payment-status
+ * GET /billing/invoices/:id/payment-status
  * Invoice-level read-only payment recovery (BILL-018). Never creates quotes
  * or attempts. Safe fields only — no hashes, receipts, or provider details.
  */
@@ -1438,7 +1519,7 @@ export async function getInvoicePaymentStatusAuth(
   signal?: AbortSignal,
 ) {
   return authFetch<InvoicePaymentStatus>(
-    `/v1/billing/invoices/${invoiceId}/payment-status`,
+    `/billing/invoices/${invoiceId}/payment-status`,
     getToken,
     { signal },
   );
