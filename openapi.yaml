@@ -21,9 +21,9 @@ info:
 
     如果 key 被冻结，请勿在日志、工单或消息中泄露 key。通过 Dashboard 创建新 key，更新后端 secret 后撤销旧 key；按 Dashboard/支持流程完成恢复。若 key 疑似泄露，应立即轮换。
 
-    Dashboard 专用端点不包含在本公开规格中，包括 `/v1/api-keys/*`、`GET /v1/wallets/balances`、`POST /v1/wallets/deposit-info`、`POST /v1/wallets/withdraw`、`/v1/wallets/signing-requests*`、`/v1/wallets/withdrawal-addresses*`、`GET /v1/transactions`、`GET /v1/transactions/:id/detail` 和 `/v1/billing/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。
+    Dashboard 专用端点不包含在本公开规格中，包括 `/api-keys/*`、`/defi-capabilities`、`/defi-capability-bundles`、`GET /wallets/balances`、`GET /wallets/deposits`、`POST /wallets/withdrawals`、`/wallets/signing-requests*`、`/wallets/withdrawal-addresses*`、`GET /transactions`、`GET /transactions/:id/detail`、`/billing/*`、`/security-notifications/*` 和 `/auth/mfa/*`。这些 Dashboard 端点只接受 Openfort IAM Bearer token，并通过 `FrontendOnlyGuard` 校验请求来源；API Key 不能调用这些端点。`/auth/*` 和 `/health/*` 也不属于公开 API Key 合约，因此不在本规格中列出。Public API-key contract routes remain under `/v1`; the Stripe webhook remains at `/v1/billing/webhooks/stripe` as an operational/provider exception.
 
-    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/me/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。`GET /v1/me/wallets` 仅返回当前 key 绑定的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
+    `GET /v1/permissions`、`GET /v1/capabilities` 和 `GET /v1/wallets` 是只读 API-key 端点；它们不要求 `canSign`、`canSendTransaction` 或 `canReadTransactionStatus` 等权限标志。API-key authentication 仍执行冻结/IP allowlist/计费等现有 guard。权限响应只报告配置，不保证操作可执行；`all` capability mode 动态代表当前 catalog 能力，`custom` 的空列表不授予任何 catalog capability。Capability 定义本身不会授予权限。`GET /v1/wallets` 仅返回当前 key 绑定的钱包安全元数据，不含余额、链上实时校验或 Openfort 内部 ID。
 
     每个新 API key 都不可变地绑定到一个钱包；一个钱包可以有多个 key，最多 10 个 active keys 的限制仍按用户跨钱包计算。公开签名和交易发送仅使用 key 绑定的钱包。发送请求可带 `walletId`，但必须与该绑定一致，否则拒绝。交易状态只可由绑定到该交易同一钱包的 key 查询；绑定其他钱包的 key 无法读取。`walletId` 仅对被迁移撤销、且用户无法唯一确定钱包的旧 key 为空。
 
@@ -50,7 +50,7 @@ info:
 
     ```bash
     # 1. 发送一笔原始交易
-    curl -X POST https://api.example.com/v1/transactions/send \
+    curl -X POST https://api.example.com/v1/transactions \
       -H "X-API-Key: sk_your_key_here" \
       -H "Content-Type: application/json" \
       -d '{
@@ -144,13 +144,13 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-  /v1/me/wallets:
+  /v1/wallets:
     get:
       tags: [API key]
-      summary: 列出当前 API-key 用户的钱包
+      summary: 列出当前 API key 绑定的钱包
       description: |
         仅需有效 `X-API-Key`，不要求任何 `can*` permission；现有冻结、IP allowlist、计费等 API-key guard 仍照常执行。仅返回当前 API key 不可变绑定的钱包安全元数据及链授权信息，不列出该用户的其他钱包，也不返回 Openfort 内部 ID；不包含余额，也不执行链上实时验证。
-      operationId: getMyWallets
+      operationId: listWallets
       responses:
         '200':
           description: 当前 API key 绑定钱包的安全元数据
@@ -174,8 +174,9 @@ paths:
 
         | type | 说明 | 必填字段 |
         |------|------|----------|
-        | `message` | EIP-191 个人消息签名 | `chainId`, `message` |
-        | `typed_data` | EIP-712 结构化数据签名 | `typedData.domain.chainId`, `typedData`；如同时传 `chainId` 必须一致 |
+        | `typed_data` | EIP-712 ClobAuth bootstrap、符合精确 schema 的 Polygon CLOB V2 单笔订单，或经验证的 DepositWallet Batch | 对应 lane 的精确 `typedData` 和 `chainId`；如同时在 domain 与顶层提供 chainId 必须一致 |
+
+        `type: message` EIP-191 签名和其他任意 typed-data 均不支持，会被拒绝；下方 examples 仅展示受支持的 typed-data lanes。
 
         Destination-protection preflight is preserved and may deny earlier. The key's immutable wallet binding selects the signing wallet; callers cannot select another wallet.
       operationId: signData
@@ -186,13 +187,6 @@ paths:
             schema:
               $ref: '#/components/schemas/SignRequest'
             examples:
-              message:
-                summary: Unsupported example — message signing is denied
-                value:
-                  type: message
-                  chainId: 84532
-                  executionMode: session_key
-                  message: "Hello, SOFA ONE!"
               typedData:
                 summary: Polymarket CLOB ClobAuth bootstrap
                 value:
@@ -349,7 +343,7 @@ paths:
                 path: "/v1/wallets/sign"
 
   # ──────────────────────────── Transactions ────────────────────────────
-  /v1/transactions/send:
+  /v1/transactions:
     post:
       tags: [Transactions]
       summary: 发送交易
@@ -374,7 +368,7 @@ paths:
          reject otherwise granted DeFi calls; ordinary DeFi is not exempted from those gates.
          Protocol contract revert semantics are unchanged. Dashboard-only capability routes
          remain intentionally absent from this public API spec.
-      operationId: sendTransaction
+      operationId: createTransaction
       requestBody:
         required: true
         content:
@@ -420,7 +414,7 @@ paths:
                 message: "walletId must match the API key's bound wallet"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
-                path: "/v1/transactions/send"
+                path: "/v1/transactions"
         '400':
           description: 请求参数错误或幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
           content:
@@ -433,7 +427,7 @@ paths:
                 message: "Idempotency key already used with different request payload"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
-                path: "/v1/transactions/send"
+                path: "/v1/transactions"
         '424':
           description: 当 `sponsorship=required` 且该链未配置 Openfort Paymaster policy 时返回
           content:
@@ -446,7 +440,7 @@ paths:
                 message: "No gas sponsorship policy is configured for chainId 137."
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
-                path: "/v1/transactions/send"
+                path: "/v1/transactions"
 
         '403':
           description: DeFi capability denial, destination/risk policy denial, or billing asset-flow denial. DeFi codes include `DEFI_CAPABILITY_NOT_FOUND`, `DEFI_CONTRACT_NOT_ALLOWED`, `DEFI_FUNCTION_NOT_ALLOWED`, `DEFI_CAPABILITY_NOT_GRANTED`, `DEFI_CAPABILITY_PAUSED`, `DEFI_INVALID_PARAMETERS`, and `DEFI_POLICY_UNAVAILABLE`.
@@ -462,7 +456,7 @@ paths:
                     message: "Outbound transfers are blocked until outstanding invoices are settled"
                     requestId: "req_..."
                     timestamp: "2026-04-20T10:00:00.000Z"
-                    path: "/v1/transactions/send"
+                    path: "/v1/transactions"
                 assetFlowUnverifiable:
                   value:
                     statusCode: 403
@@ -470,7 +464,7 @@ paths:
                     message: "Asset flow could not be verified while outstanding invoices remain unpaid"
                     requestId: "req_..."
                     timestamp: "2026-04-20T10:00:00.000Z"
-                    path: "/v1/transactions/send"
+                    path: "/v1/transactions"
         '503':
           description: 无法安全查询账单状态，因此拒绝创建新交易
           content:
@@ -483,14 +477,14 @@ paths:
                 message: "Billing debt check is temporarily unavailable"
                 requestId: "req_..."
                 timestamp: "2026-04-20T10:00:00.000Z"
-                path: "/v1/transactions/send"
+                path: "/v1/transactions"
 
   /v1/transactions/{transactionId}:
     get:
       tags: [Transactions]
       summary: 查询交易状态
       description: |
-        使用 `X-API-Key` 查询当前用户通过公开 `POST /v1/transactions/send` 创建的交易状态。状态来自 SOFA ONE 本地交易记录；响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。Dashboard withdrawal 等 frontend-only 交易不通过此公开接口查询。
+        使用 `X-API-Key` 查询当前用户通过公开 `POST /v1/transactions` 创建的交易状态。状态来自 SOFA ONE 本地交易记录；响应只返回安全状态字段，不返回 calldata、requestHash 或 interactionsHash。Dashboard withdrawal 等 frontend-only 交易不通过此公开接口查询。
       operationId: getTransactionStatus
       parameters:
         - name: transactionId
@@ -618,7 +612,7 @@ components:
           description: |
             签名类型：
             - `message` — schema shape only; unsupported by this endpoint
-            - `typed_data` — only the ClobAuth or separately specified V2 single-order shapes are eligible
+            - `typed_data` — only the exact ClobAuth bootstrap, CLOB V2 single-order, or verifier-gated DepositWallet Batch lanes are eligible
         executionMode:
           type: string
           enum: [eoa]
@@ -635,7 +629,7 @@ components:
     EIP712TypedData:
       type: object
       required: [domain, types, primaryType, message]
-      description: Typed data; only exact ClobAuth or separately specified V2 single-order shapes are eligible.
+      description: Typed data; only exact ClobAuth, CLOB V2 single-order, or verifier-gated DepositWallet Batch shapes are eligible.
       properties:
         domain:
           type: object
@@ -673,7 +667,7 @@ components:
       properties:
         signature:
           type: string
-          description: Raw EOA signature for an eligible ClobAuth bootstrap or separately granted V2 single order.
+          description: Raw EOA signature for an eligible ClobAuth bootstrap, separately granted V2 single order, or verifier-gated DepositWallet Batch.
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
@@ -889,7 +883,7 @@ components:
             message: "Invalid API key"
             requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/send"
+            path: "/v1/transactions"
 
     NotFound:
       description: 钱包未找到
@@ -903,7 +897,7 @@ components:
             message: "Wallet not found"
             requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/send"
+            path: "/v1/transactions"
 
     ValidationError:
       description: 请求参数验证失败（Nest ValidationPipe 返回 400）
@@ -920,4 +914,4 @@ components:
               - "interactions.0.to must be a valid Ethereum address"
             requestId: "req_..."
             timestamp: "2026-04-20T10:00:00.000Z"
-            path: "/v1/transactions/send"
+            path: "/v1/transactions"

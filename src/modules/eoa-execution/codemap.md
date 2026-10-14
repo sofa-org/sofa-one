@@ -37,4 +37,4 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 - Imported by `WalletModule` and `TransactionsModule`; both inject the policy as `@Optional()` and fail closed with `ForbiddenException` if it is absent.
 - Dependencies: `ConfigService` (env `EOA_EXECUTION_ENABLED`, validated in `src/config/env.validation.ts`, default `false` in `.env.example`), `PrismaService` (rate-limit count on `security_events`), `SecurityEventService` (audit), `IpAllowlistService` (IP enforcement).
 - Emits security events: `eoa_execution_allowed`, `eoa_execution_denied`, and `api_key.ip_rejected` (via `IpAllowlistService`).
-- Not part of the public `openapi.yaml` surface; it is an internal service-layer gate for the public `POST /v1/wallets/sign` and `POST /v1/transactions/send` routes.
+- Not part of the public `openapi.yaml` surface; it is an internal service-layer gate for the public `POST /v1/wallets/sign` and `POST /v1/transactions` routes.

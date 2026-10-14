@@ -8,7 +8,7 @@ validated environment configuration into a running application exposing two dist
 surfaces:
 
 - **Public API-key surface** (documented in `openapi.yaml`): `POST /v1/wallets/sign`,
-  `POST /v1/transactions/send`, `GET /v1/transactions/:id` — programmatic, authenticated
+  `POST /v1/transactions`, `GET /v1/transactions/:id`, `GET /v1/wallets` — programmatic, authenticated
   by `X-API-Key`.
 - **Frontend-only dashboard surface** (intentionally omitted from `openapi.yaml`): wallet
   balances/deposit/withdraw, API-key management and DeFi bundle metadata, billing, MFA, security notifications,
@@ -70,7 +70,7 @@ formatting, throttling, request correlation) globally.
   `EoaExecutionPolicyService`, `SessionKeyPolicyService`) isolate high-risk rules and record
   `SecurityEvent` telemetry; `@Optional()` injection lets optional security/billing services
   degrade gracefully (never fail-open).
-- **DeFi catalog and scoped authorization.** Production loads the generated static v3 catalog: 349 exact functions (326 actions, 23 independent approvals), preserving all 315 M2 definitions and adding 34 source-qualified functions. Thirteen closed scopes cover seven same-target NPM multicall wrappers and six empty-callback Morpho methods. Nine literal version 1.0.0 profiles contain 75 unique IDs and never auto-grant. The IAM/frontend-only `GET /v1/defi-capability-bundles` is omitted from public OpenAPI; key grant mutation retains its existing explicit replacement and step-up. The mandatory final M3 gate remains pending. The current M3 coverage projection is `FALSE`: nine target-scoped function rows are complete and seven are population-incomplete, not nine complete products. Historical M2 market/workflow data remain preserved; 144 workflow rows is an M2 snapshot, not an M3 result. See [`majority-catalog-v3.md`](../docs/defi-research/majority-catalog-v3.md), [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md), and the [capability matrix](../docs/defi-capability-matrix.md).
+- **DeFi catalog and scoped authorization.** Production loads the generated static v3 catalog: 349 exact functions (326 actions, 23 independent approvals), preserving all 315 M2 definitions and adding 34 source-qualified functions. Thirteen closed scopes cover seven same-target NPM multicall wrappers and six empty-callback Morpho methods. Nine literal version 1.0.0 profiles contain 75 unique IDs and never auto-grant. The IAM/frontend-only `GET /defi-capability-bundles` is omitted from public OpenAPI; key grant mutation retains its existing explicit replacement and step-up. The mandatory final M3 gate remains pending. The current M3 coverage projection is `FALSE`: nine target-scoped function rows are complete and seven are population-incomplete, not nine complete products. Historical M2 market/workflow data remain preserved; 144 workflow rows is an M2 snapshot, not an M3 result. See [`majority-catalog-v3.md`](../docs/defi-research/majority-catalog-v3.md), [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md), and the [capability matrix](../docs/defi-capability-matrix.md).
 - **Unified security telemetry.** `security-events` is the single write path for
   `security_events` rows, with deterministic rule-based risk scoring (`SecurityRiskService`),
   multi-factor risk evaluation + enforcement (`RiskEvaluationService`), dashboard alert
@@ -103,7 +103,7 @@ formatting, throttling, request correlation) globally.
    → Openfort submission → safe response shaping.
 4. **Dashboard path** (wallets, transactions history, billing, MFA, API-key mgmt, security
    notifications, auth): `OpenfortUserGuard` + `FrontendOnlyGuard`; sensitive routes
-   (withdraw, withdrawal-addresses, API-key create/revoke, refresh-api-key, step-up) add
+    (withdrawals, withdrawal-addresses, API-key mutations/rotation, step-up) add
    `StepUpGuard` (TOTP proof via `X-Step-Up-Token`).
 5. **Cross-domain data flow.** Auth provisions `User`/`UserWallet`/`WalletChainAuthorization`
    (agent-key registration state machine `registration_required → pending_registration →

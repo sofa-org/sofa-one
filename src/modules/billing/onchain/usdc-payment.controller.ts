@@ -17,12 +17,12 @@ import { UsdcCancelDto } from './dto/usdc-cancel.dto';
  * selector (quote), `{ paymentAttemptId, txHash }` (claim), or
  * `{ paymentAttemptId }` (cancel of a clean pending quote).
  */
-@Controller('v1/billing/invoices/:id/usdc')
+@Controller('billing/invoices/:id/usdc')
 export class UsdcPaymentController {
   constructor(private readonly usdcPaymentService: UsdcPaymentService) {}
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/quote — creates (or reuses) a pending
+   * POST /billing/invoices/:id/usdc/quote — creates (or reuses) a pending
    * USDC payment attempt for a finalized, unpaid USD invoice owned by the
    * user. Returns a safe quote (token, treasury, expected payer, exact amount,
    * TTL, confirmations); never returns logs, calldata, RPC details, Openfort
@@ -40,7 +40,7 @@ export class UsdcPaymentController {
   }
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/claim — verifies a user-submitted
+   * POST /billing/invoices/:id/usdc/claim — verifies a user-submitted
    * transaction hash against the attempt's server-side quote snapshot and
    * advances the payment lifecycle (confirming → settled, or review/expired/
    * failed on any mismatch). Retryable outcomes never fabricate a payment.
@@ -62,7 +62,7 @@ export class UsdcPaymentController {
   }
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/cancel — BILL-003 user cancel of a clean
+   * POST /billing/invoices/:id/usdc/cancel — BILL-003 user cancel of a clean
    * evidence-free pending USDC quote. Body is only `{ paymentAttemptId }`.
    * No RPC/provider calls; fail closed on confirming, reservation, any hash/
    * receipt/evidence, or inconsistent state. Idempotent when already cancelled.

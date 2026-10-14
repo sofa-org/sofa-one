@@ -79,7 +79,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 
 ## Flow
 1. **Global**: `ApiKeyThrottlerGuard` (APP_GUARD) rate-limits every request — key-prefix bucket for API-key auth, IP bucket otherwise.
-2. **Public API-key routes** (`POST /v1/wallets/sign`, `POST /v1/transactions/send`, `GET /v1/transactions/:id`): `ApiKeyAuthGuard` → `ApiKeyPermissionGuard`. Auth resolves the key, rejects frozen key/user, enforces IP allowlist, freezes suspicious usage, meters billing; permission guard requires `canSign` / `canSendTransaction` / `canReadTransactionStatus`.
+2. **Public API-key routes** (`POST /v1/wallets/sign`, `POST /v1/transactions`, `GET /v1/transactions/:id`): `ApiKeyAuthGuard` → `ApiKeyPermissionGuard`. Auth resolves the key, rejects frozen key/user, enforces IP allowlist, freezes suspicious usage, meters billing; permission guard requires `canSign` / `canSendTransaction` / `canReadTransactionStatus`. The separate `GET /v1/wallets` metadata route requires API-key auth but no permission flag.
 3. **Dashboard routes** (wallets, transactions status, billing, security notifications, MFA, API-key management): `OpenfortUserGuard` + `FrontendOnlyGuard`; sensitive routes (withdraw, withdrawal-addresses, API-key create/revoke, step-up challenge) add `StepUpGuard`.
 4. **Auth routes**: `OpenfortAuthGuard` at controller level (session verification only); `@Public()` bypasses auth on health and Stripe webhook routes.
 5. **Rejection paths** all record `SecurityEvent` rows (frozen rejections, IP rejections, first use, suspicious use, freeze) with safe metadata only — never raw keys, calldata, or headers.

@@ -123,7 +123,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `frontend/package.json` / `frontend/package-lock.json` | Independent Vite/React package scripts and locked dependencies |
 | `tsconfig.json`, `tsconfig.build.json`, `nest-cli.json`, `.eslintrc.js` | Backend TypeScript, Nest CLI, and lint/build configuration |
 | `prisma/schema.prisma`, `prisma/migrations/` | Canonical PostgreSQL schema and versioned migration history; see [`prisma/codemap.md`](prisma/codemap.md) |
-| `openapi.yaml` | Public API-key contract only: signing and transaction send/status; dashboard routes are intentionally excluded |
+| `openapi.yaml` | Public API-key contract only: signing and transaction creation/status; dashboard routes are intentionally excluded |
 | `docker-compose.yml` | Local Postgres 16 and Redis 7 services with loopback port bindings and health checks |
 | `.env.example` and runtime env files | Backend configuration template; secrets and local values are not part of the codemap |
 | `test/` and `src/**/*.spec.ts` | E2E/unit tests; excluded from generated codemap analysis, but validate the mapped production code |
@@ -145,7 +145,7 @@ Client → POST /v1/wallets/sign (X-API-Key only)
     → Exact ClobAuth bootstrap and single CLOB V2 order signing retain separate policies; high-privilege DepositWallet Batch signing uses polymarket:137:deposit-wallet-batch-sign:v1 grants, accepts any bounded zero-value calls, and checks each target's pause at preflight/acceptance; deployment verification is fail-closed and this route never broadcasts
    → EOA isolation, destination allowlist/protection, risk/signing-policy and frozen-state checks remain enforced; grant, pause, live-key and bound-digest acceptance are rechecked at atomic SigningRequest creation before Openfort
 
-Client → POST /v1/transactions/send (X-API-Key only)
+Client → POST /v1/transactions (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
   → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
    → TransactionPolicyService enforces generic limits independently; DefiPolicyService checks catalog function/grant and canonical ABI
@@ -159,20 +159,20 @@ Client → POST /v1/transactions/send (X-API-Key only)
 
   Capability mode and IDs are configuration metadata, not expanded effective IDs. Create omission defaults to all with empty IDs; rotation resets to all with empty IDs; PATCH replaces full configuration (IDs-only means custom), while custom `[]` denies catalog capabilities. The one-time migration maps prior empty lists to all and nonempty lists to custom unchanged. Pause is an overlay that mode cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
 
-Dashboard → POST /v1/wallets/withdraw (Openfort IAM + FrontendOnly + step-up)
+Dashboard → POST /wallets/withdrawals (Openfort IAM + FrontendOnly + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`
   → WalletService rejects frozen wallets, then checks idempotency and balance before submitting a Calibur agent user operation through Openfort
   → Transaction row persists withdrawal request hash/details for audit/idempotency
 
-Dashboard → POST /v1/wallets/withdrawal-addresses (Openfort IAM + FrontendOnly + step-up)
+Dashboard → POST /wallets/withdrawal-addresses (Openfort IAM + FrontendOnly + step-up)
   → WithdrawalPolicyService enables address allowlist policy, normalizes the EVM address, records a 24h/default cooldown window, and writes allowlist lifecycle `SecurityEvent` rows
   → Later withdrawals to that address are blocked until `availableAt`
 
-Dashboard → GET /v1/security-notifications (Openfort IAM + FrontendOnly)
+Dashboard → GET /security-notifications (Openfort IAM + FrontendOnly)
   → SecurityNotificationService returns recent user-facing security alerts derived from `SecurityEvent` rows
   → Dashboard can mark individual notifications or all unread notifications as read
 
-Dashboard → `/v1/billing/*` (Openfort IAM + FrontendOnly)
+Dashboard → `/billing/*` (Openfort IAM + FrontendOnly; Stripe webhook remains `/v1/billing/webhooks/stripe`)
   → Billing summary/invoice endpoints expose plan, usage, invoice, and payment state
   → API-key guards meter API calls; `BillingWalletLifecycleService` serializes wallet reservations and activation quota/peak accounting
   → BillingReconciliationService matches receipt-confirmed outbound usage to transactions

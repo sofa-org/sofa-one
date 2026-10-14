@@ -464,7 +464,7 @@ describe('ApiKeyAuthGuard', () => {
     const { guard } = createGuard([keyRecord], billing, debt);
     jest.mocked(argon2.verify).mockResolvedValue(true as never);
     const request: any = {
-      method: 'POST', url: '/v1/transactions/send', route: { path: '/v1/transactions/send' },
+      method: 'POST', url: '/v1/transactions', route: { path: '/v1/transactions' },
       headers: { 'x-api-key': rawKey }, ip: '203.0.113.10',
     };
 
@@ -506,7 +506,7 @@ describe('ApiKeyAuthGuard', () => {
     );
     jest.mocked(argon2.verify).mockResolvedValue(true as never);
     const request: any = {
-      method: 'POST', route: { path: '/v1/transactions/send' },
+      method: 'POST', route: { path: '/v1/transactions' },
       headers: { 'x-api-key': rawKey }, ip: '127.0.0.1',
     };
     await expect(guard.canActivate({
@@ -520,7 +520,7 @@ describe('ApiKeyAuthGuard', () => {
 
   it.each([
     ['POST', '/v1/wallets/sign'],
-    ['POST', '/v1/transactions/send'],
+    ['POST', '/v1/transactions'],
   ])('denies billable %s %s under mature debt without metering', async (method, route) => {
     const keyRecord = {
       id: 'key-1', apiKeyHash: 'hash-1', allowedIps: [],

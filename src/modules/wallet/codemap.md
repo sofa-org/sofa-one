@@ -3,15 +3,15 @@
 ## Responsibility
 Wallet operations for the SOFA ONE dashboard and public API:
 - Read-only wallet queries: deposit info, native/stablecoin balances, signing-request history, with owner-scoped wallet selection.
-- API-key wallet metadata (`GET /v1/me/wallets`) is restricted to the authenticated key's immutable wallet binding; unbound legacy keys fail closed.
+- API-key wallet metadata (`GET /v1/wallets`) is restricted to the authenticated key's immutable wallet binding; unbound legacy keys fail closed.
 - API-key signing route with exact Polymarket CLOB `ClobAuth`, capability-authorized CLOB V2 order, and high-privilege DepositWallet Batch EIP-712 signing; arbitrary message/typed-data signing remains denied. Batch calls accept any well-formed calldata/target with zero native value and retain per-target pause checks. The verifier probes configured Polygon RPC and fails closed on missing/invalid deployment evidence.
 - Withdrawal-address allowlist management and withdrawal policy enforcement (single/daily limits, step-up, address allowlist + cooldown).
 - Withdrawal submission as a Calibur agent user operation through Openfort, with idempotency and on-chain balance pre-checks.
 - Freeze enforcement: frozen wallets are rejected before any query result or signing/withdrawal side effect.
 
 ## Design/Patterns
-- **Controller/service split with validated DTOs.** `WalletController` owns routing, guard composition, and route-level throttles; `WalletService` owns business logic; `dto/` (see `dto/codemap.md`) owns class-validator request shapes.
-- **Access-control split.** `POST /v1/wallets/sign` is API-key only (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard` with `canSign`). All other routes are dashboard-only: `OpenfortUserGuard` + `FrontendOnlyGuard`, with `StepUpGuard` + `@RequireStepUp()` on `withdraw`, `POST/DELETE withdrawal-addresses`.
+- **Controller/service split with validated DTOs.** `WalletController` owns API-key signing only, `DashboardWalletController` owns IAM routes, and `ApiKeyWalletController` remains separate; `WalletService` owns business logic; `dto/` owns class-validator request shapes.
+- **Access-control split.** `POST /v1/wallets/sign` is API-key only (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard` with `canSign`). Dashboard routes use `OpenfortUserGuard` + `FrontendOnlyGuard`, with `StepUpGuard` + `@RequireStepUp()` on withdrawal and withdrawal-address mutations.
 - **Policy services encapsulate security rules.** `DefiPolicyService` restricts API-key signing to the exact Polymarket `ClobAuth` bootstrap shape, while `WithdrawalPolicyService` owns dashboard withdrawal/address rules and records telemetry. `SigningPolicyService` is applied to the narrowly allowed signing path.
 - **Optional dependency injection for defense-in-depth services.** `WalletService` injects `EoaExecutionPolicyService`, `SigningPolicyService`, `RequestContextService`, `RiskEvaluationService`, and `SessionKeyPolicyService` as `@Optional()`; each is invoked when present and its absence is handled explicitly (e.g. EOA mode throws `ForbiddenException` if the policy service is missing).
 - **Execution modes.** `session_key` (default) signs with the Calibur session key and wraps the raw signature as ABI-encoded `(keyHash, signature, hookData)`; `eoa` signs with the backend EOA and returns the raw signature. EOA mode is gated by `EoaExecutionPolicyService` (global opt-in, IP allowlist, ≤30-day key TTL, 1/min rate limit, security-event audit).
@@ -23,9 +23,9 @@ Wallet operations for the SOFA ONE dashboard and public API:
 ## Flow
 
 ### Wallet queries (dashboard-only)
-- `GET /v1/wallets/deposit-info` → optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists (multiple require explicit selection, no arbitrary default). Load `UserWallet`, reject frozen (`assertWalletNotFrozen`) and non-active wallets, return `walletAddress`, chain metadata, and supported tokens (USDC/USDT/native per chain config).
-- `GET /v1/wallets/balances?chainId=&walletId=` → optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists. Apply the same frozen/active guards, then parallel viem reads: native `getBalance` (`formatEther`) and ERC-20 `balanceOf` for configured stablecoins (`formatUnits(raw, 6)`). Per-token failures degrade to `{ formatted: null, error: 'fetch failed' }` rather than failing the whole request.
-- `GET /v1/wallets/signing-requests` and `GET /v1/wallets/signing-requests/:id` → ownership-scoped (`userId`) `SigningRequest` list (filters: type/status/chainId; pagination) and detail. Never returns the digest or request hash.
+- `GET /wallets/deposits?chainId=...&walletId=...` → validated query DTO; optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists (multiple require explicit selection, no arbitrary default). Load `UserWallet`, reject frozen (`assertWalletNotFrozen`) and non-active wallets, return `walletAddress`, chain metadata, and supported tokens (USDC/USDT/native per chain config).
+- `GET /wallets/balances?chainId=&walletId=` → optional owned `walletId` selects the user's wallet; omission resolves only when exactly one eligible wallet exists. Apply the same frozen/active guards, then parallel viem reads: native `getBalance` (`formatEther`) and ERC-20 `balanceOf` for configured stablecoins (`formatUnits(raw, 6)`). Per-token failures degrade to `{ formatted: null, error: 'fetch failed' }` rather than failing the whole request.
+- `GET /wallets/signing-requests` and `GET /wallets/signing-requests/:id` → ownership-scoped (`userId`) `SigningRequest` list (filters: type/status/chainId; pagination) and detail. Never returns the digest or request hash.
 
 ### Signing (API-key only)
 1. `ApiKeyAuthGuard` resolves the API key user; `ApiKeyPermissionGuard` requires `canSign`; `WalletService.sign` re-checks `apiKeyRecord.canSign`.
@@ -62,4 +62,4 @@ Wallet operations for the SOFA ONE dashboard and public API:
 - **Common utils:** `getSupportedChain` (chain validation + token addresses), `hashRequest` (stable SHA-256), `AgentStatus` (chain-authorization readiness), `API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION` / `WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE`.
 - **Prisma models:** `UserWallet` (+ `WalletChainAuthorization`), `SigningRequest`, `Transaction`, `WithdrawalPolicy`, `WithdrawalAddress`, `SecurityEvent`.
 - **DTOs:** `SignDto` (message/typed-data, executionMode, chainId), `WithdrawDto` (chainId, to, amount bounds, token, idempotencyKey), `CreateWithdrawalAddressDto`, `ListSigningRequestsQueryDto` — see `dto/codemap.md`.
-- **Route throttles:** signing-request reads 20/60s + 100/1h; withdraw and withdrawal-address writes 3/60s + 10/1h (on top of global throttling).
+- **Route throttles:** signing-request reads 20/60s + 100/1h; withdrawal and withdrawal-address writes 3/60s + 10/1h (on top of global throttling). `POST /wallets/withdrawals` uses the existing withdrawal throttle.

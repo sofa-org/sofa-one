@@ -27,7 +27,8 @@ Frontend-only endpoints must use Openfort IAM bearer auth plus `FrontendOnlyGuar
 Used only for automation/client integrations:
 
 - `POST /v1/wallets/sign`
-- `POST /v1/transactions/send`
+- `GET /v1/wallets` (API-key-bound wallet metadata)
+- `POST /v1/transactions`
 - `GET /v1/transactions/:id`
 
 These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.

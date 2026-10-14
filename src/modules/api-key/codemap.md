@@ -4,7 +4,7 @@
 Dashboard-only API-key lifecycle management for programmatic access to public signing/transaction endpoints. Capability configuration uses `capabilityMode: all|custom`: `all` dynamically includes active, unpaused reviewed capabilities; `custom` permits only exact `allowedCapabilityIds` (`[]` denies all). Neither mode bypasses independent permissions or safety policies. Mutations require Openfort IAM, frontend-origin checks, and TOTP step-up.
 
 ## Files
-- `api-key.controller.ts` — create/list/revoke-all/revoke-one and step-up-protected full-replacement `PATCH /v1/api-keys/:id/capabilities`; IAM catalog `GET /v1/defi-capabilities` returns async `{ capabilities }` metadata.
+- `api-key.controller.ts` — create/list/revoke-all/revoke-one, step-up-protected `POST /api-keys/rotations`, full-replacement capabilities, and IAM catalog reads.
 - `api-key.service.ts` — all lifecycle business logic, hashing, normalization, constraints, and audit writes.
 - `api-key.module.ts` — NestJS wiring; imports `StepUpModule`, `SecurityEventModule`, and leaf `DefiModule`; exports `ApiKeyService`.
 - `dto/create-api-key.dto.ts` — validated request shape for creation (see `dto/codemap.md`; not duplicated here).
@@ -45,26 +45,27 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 
 ## Flow
 
-### Create (`POST /v1/api-keys`)
+### Create (`POST /api-keys`)
 1. `ApiKeyController.create` — `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard`; DTO validated by global `ValidationPipe` (whitelist, forbid non-whitelisted, transform).
 2. `normalizeCreateOptions`: trim/require name; merge permissions over defaults; omitted mode+IDs become all/empty; IDs alone become custom; explicit all allows omitted/empty IDs; custom requires IDs and all rejects nonempty/null IDs. Validate IDs, spend limits, high-risk IP allowlist, and TTL.
 3. `generateKeyMaterial`: `sk_` + 64-hex secret → 27-char prefix → Argon2id hash.
 4. Transaction: `assertCanCreateKey` (≤10 active keys; unique non-empty active name, case-insensitive) → create `ApiKey` row (hash, prefix, name, expiry, IP allowlist, mode and configured IDs, spend limits, permissions) → audit `api_key.created` (prefix, name, metadata: expiry/permissions/capability configuration).
 5. Return `{ rawKey, id, displayPrefix, name, expiresAt, createdAt, permissions }` — raw key is shown exactly once.
 
-### List (`GET /v1/api-keys`)
+### List (`GET /api-keys`)
 - `findMany` metadata only (no hash): prefix, name, revoked, freeze state, expiry, timestamps, last-used IP/UA, permissions, IP allowlist, configured capability mode and IDs (not expanded effective IDs), spend limits; ordered `createdAt desc`; `displayPrefix` = first 11 chars + `...`.
 
-### Capability grants (`PATCH /v1/api-keys/:id/capabilities`)
-- Openfort IAM + `FrontendOnlyGuard` + `StepUpGuard`; body replaces complete mode/configuration: `{ capabilityMode: "all" }` resets; `{ capabilityMode: "custom", allowedCapabilityIds: [...] }` sets exact IDs including empty; IDs-only remains custom; `{}` is invalid. Catalog is separate read-only `GET /v1/defi-capabilities`; both dashboard routes remain outside public OpenAPI.
+### Capability grants (`PATCH /api-keys/:id/capabilities`)
+- Openfort IAM + `FrontendOnlyGuard` + `StepUpGuard`; body replaces complete mode/configuration: `{ capabilityMode: "all" }` resets; `{ capabilityMode: "custom", allowedCapabilityIds: [...] }` sets exact IDs including empty; IDs-only remains custom; `{}` is invalid. Catalog is separate read-only `GET /defi-capabilities`; both dashboard routes remain outside public OpenAPI.
 
-### Revoke one (`DELETE /v1/api-keys/:id`)
+### Revoke one (`DELETE /api-keys/:id`)
 - Transaction: `findFirst` by `{ id, userId }` (404 if absent; no-op if already revoked) → `updateMany` `revoked: true` → audit `api_key.revoked`.
 
-### Revoke all (`DELETE /v1/api-keys`)
+### Revoke all (`DELETE /api-keys`)
 - Transaction: collect active keys → `updateMany` `revoked: true` → audit `api_key.revoked` per key with `reason: 'bulk_revoke'`.
 
-### Rotate (`ApiKeyService.rotateApiKey`, called by `AuthService.refreshApiKey`)
+### Rotate (`ApiKeyService.rotateApiKey`)
+- `POST /api-keys/rotations` validates `walletId`, requires IAM + FrontendOnly + step-up and uses its 3/60s + 10/1h throttle. Calls `rotateApiKey(userId, 'Refreshed', walletId)` and returns `{ apiKey }`. Rotation revokes every active key for the user across all wallets, then creates the selected-wallet replacement; it is not scoped to one wallet/key.
 - Transaction: revoke all active keys (audit `api_key.revoked`, `reason: 'rotation'`) → create replacement with `capabilityMode: all`, empty configured IDs, and prior permission/IP/TTL defaults → audit `api_key.rotated` with `revokedKeyCount` → return raw key once.
 
 ### Runtime consumption (outside this module)
@@ -77,5 +78,5 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 - **Persistence**: `PrismaService`; `ApiKey` and `ApiKeyEvent` models in `prisma/schema.prisma` (`api_keys` / `api_key_events` tables). `ApiKey` carries permission booleans, allowlists, spend limits, freeze state, and last-used fields; indexed on `keyPrefix` and `[userId, revoked]`.
 - **Shared helper**: `getApiKeyPrefix` from `src/common/api-key/api-key-prefix` (27-char prefix; legacy 11-char handled at lookup time).
 - **Downstream consumers**: `ApiKeyAuthGuard` (hash verification, freeze, first-use/suspicious-use events, last-used updates), `ApiKeyPermissionGuard` (permission enforcement), and wallet/transactions modules read permissions, spend limits, and allowlists from the resolved key record.
-- **Upstream consumer**: `src/modules/auth/auth.service.ts` calls `rotateApiKey(user.id, 'Refreshed')` in `refreshApiKey` and returns the new raw key.
-- **Not part of the public API spec**: all `/v1/api-keys/*` routes are frontend-only (omitted from `openapi.yaml`); API-key management is never callable by API keys.
+- **Related internal method**: `AuthService.refreshApiKey` remains available to internal service callers/tests; it is not exposed as an HTTP route. Dashboard rotation uses `ApiKeyController` directly.
+- **Not part of the public API spec**: all `/api-keys/*` routes are frontend-only (omitted from `openapi.yaml`); API-key management is never callable by API keys.

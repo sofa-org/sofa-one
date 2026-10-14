@@ -1,7 +1,7 @@
 # Code Map for /src/modules/wallet/dto
 
 ## Responsibility
-Validated request bodies and query params for the wallet module's signing and withdrawal flows. These DTOs are the single source of truth for what the `WalletController` accepts from clients; they enforce shape, format, and business-rule bounds before any service logic runs. No business logic lives here beyond validation.
+Validated request bodies and query params for the wallet module's signing and withdrawal flows. These DTOs are the single source of truth for what the API-key `WalletController` and IAM `DashboardWalletController` accept; they enforce shape, format, and business-rule bounds before any service logic runs. No business logic lives here beyond validation.
 
 ## Files & Key Symbols
 
@@ -21,17 +21,20 @@ Validated request bodies and query params for the wallet module's signing and wi
 - **`getWithdrawalAmountBounds(token)`** (private fn): returns `{ min, max, label }` per token family.
 - **`IsWithdrawalAmount(options?)`** (private decorator factory): `registerDecorator` validating that `amount` is a digits-only string parseable to `BigInt` within the token's bounds; reads `token` from the containing `WithdrawDto` instance.
 - **`WithdrawDto`** (class): fields `chainId` (`@IsInt @Min(1)`), `to` (Ethereum address regex), `amount` (string, `@MaxLength(40)` + `@IsWithdrawalAmount`), `token` (`@IsIn`), `idempotencyKey` (alphanumeric, max 64).
-  - Input: JSON body for `POST /v1/wallets/withdraw`.
+  - Input: JSON body for `POST /wallets/withdrawals`.
   - Output: validated `WithdrawDto` consumed by `WalletService.withdraw` and `WithdrawalPolicyService`.
 
 ### `withdrawal-address.dto.ts`
 - **`CreateWithdrawalAddressDto`** (class): fields `address` (Ethereum address regex, required), `label?` (string, max 100).
-  - Input: JSON body for `POST /v1/wallets/withdrawal-addresses`.
+  - Input: JSON body for `POST /wallets/withdrawal-addresses`.
   - Output: validated DTO consumed by `WalletService.addWithdrawalAddress` / `WithdrawalPolicyService.addWithdrawalAddress`.
+
+### `wallet-query.dto.ts`
+- `WalletDepositInfoDto` validates `chainId` with numeric query-string coercion and optional UUID `walletId`; used by canonical `GET /wallets/deposits`. `WalletBalancesQueryDto` validates dashboard balance query parameters.
 
 ### `list-signing-requests-query.dto.ts`
 - **`ListSigningRequestsQueryDto`** (class): optional query filters `type?` (`'message' | 'typed_data'`), `chainId?` (`@IsInt @Min(1)`), `status?` (`'submitting' | 'signed' | 'failed'`), `page?` (default 1), `limit?` (default 20, `@Max(100)`). Numeric fields use `@Type(() => Number)` for query-string coercion.
-  - Input: query string for `GET /v1/wallets/signing-requests`.
+  - Input: query string for `GET /wallets/signing-requests`.
   - Output: validated query object consumed by `WalletService.listSigningRequests`.
 
 ## Design/Patterns
@@ -43,17 +46,17 @@ Validated request bodies and query params for the wallet module's signing and wi
 - **Query coercion** with `@Type(() => Number)` so string query params become numbers before `@IsInt` runs.
 
 ## Flow
-1. `POST /v1/wallets/sign` → `SignDto` validates `type` and conditionally requires `message` (EIP-191) or `typedData` (EIP-712); `executionMode` defaults to session key; `chainId` optional (required for message signing, optional for typed data when `domain.chainId` present). Passed to `WalletService.sign`.
-2. `POST /v1/wallets/withdraw` → `WithdrawDto` validates chain, destination address, token, amount within token-specific bounds, and idempotency key. Passed to `WalletService.withdraw`.
-3. `POST /v1/wallets/withdrawal-addresses` → `CreateWithdrawalAddressDto` validates address + optional label. Passed to `WalletService.addWithdrawalAddress`.
-4. `GET /v1/wallets/signing-requests` → `ListSigningRequestsQueryDto` validates optional filters/pagination. Passed to `WalletService.listSigningRequests`.
+1. `POST /v1/wallets/sign` → `SignDto` validates payload structure; runtime policy only accepts exact approved typed-data lanes. EIP-191 `message` and other arbitrary typed-data shapes are rejected. Passed to `WalletService.sign`.
+2. `POST /wallets/withdrawals` → `WithdrawDto` validates chain, destination address, token, amount within token-specific bounds, and idempotency key. Passed to `WalletService.withdraw`.
+3. `POST /wallets/withdrawal-addresses` → `CreateWithdrawalAddressDto` validates address + optional label. Passed to `WalletService.addWithdrawalAddress`.
+4. `GET /wallets/signing-requests` → `ListSigningRequestsQueryDto` validates optional filters/pagination. Passed to `WalletService.listSigningRequests`.
 
 ## Integration
-- **`WalletController`** (`../wallet.controller.ts`) is the sole consumer of all four DTOs as `@Body()`/`@Query()` parameters:
+- **Controllers** (`../wallet.controller.ts`) consume these DTOs as `@Body()`/`@Query()` parameters:
   - `SignDto` → `POST /v1/wallets/sign` (API-key only, `ApiKeyAuthGuard` + `ApiKeyPermissionGuard`, requires `canSign`).
-  - `WithdrawDto` → `POST /v1/wallets/withdraw` (frontend-only, step-up required).
-  - `CreateWithdrawalAddressDto` → `POST /v1/wallets/withdrawal-addresses` (frontend-only, step-up required).
-  - `ListSigningRequestsQueryDto` → `GET /v1/wallets/signing-requests` (frontend-only).
+  - `WithdrawDto` → `POST /wallets/withdrawals` (frontend-only, step-up required).
+  - `CreateWithdrawalAddressDto` → `POST /wallets/withdrawal-addresses` (frontend-only, step-up required).
+  - `ListSigningRequestsQueryDto` → `GET /wallets/signing-requests` (frontend-only).
 - **`WalletService`** (`../wallet.service.ts`): consumes `SignDto`/`SignMessage`/`ExecutionMode` (sign, `resolveSigningChainId`), `WithdrawDto` (withdraw, `getWithdrawalTokenLabel`), `CreateWithdrawalAddressDto` (addWithdrawalAddress), `ListSigningRequestsQueryDto` (listSigningRequests).
 - **`SigningPolicyService`** (`../signing-policy.service.ts`): consumes `SignDto`/`SignMessage` types for policy checks.
 - **`WithdrawalPolicyService`** (`../withdrawal-policy.service.ts`): consumes `WithdrawDto` and `CreateWithdrawalAddressDto` types for policy checks.

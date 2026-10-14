@@ -28,6 +28,7 @@ coverage/
 !docs/defi-research/
 !docs/defi-research/*.md
 !docs/defi-capability-matrix.md
+!docs/API_DESIGN.md
 !codemap.md
 /.agent-shell/
 .slim/

@@ -279,7 +279,7 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
       expect(before[0]!.method).toBe('usdc');
 
       const res = await request(app!.getHttpServer())
-        .post(`/v1/billing/invoices/${seed.invoiceId}/checkout`)
+        .post(`/billing/invoices/${seed.invoiceId}/checkout`)
         .set('Origin', FRONTEND_ORIGIN)
         .set('Authorization', `Bearer ${seed.token}`)
         .expect(409);
@@ -290,7 +290,7 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
           statusCode: 409,
           code: 'BAD_REQUEST',
           message: expect.stringMatching(/active payment of another rail/i),
-          path: `/v1/billing/invoices/${seed.invoiceId}/checkout`,
+          path: `/billing/invoices/${seed.invoiceId}/checkout`,
           requestId: expect.any(String),
         }),
       );

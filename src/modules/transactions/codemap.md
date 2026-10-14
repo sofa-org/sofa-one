@@ -4,7 +4,7 @@
 Public transaction submission and status API for Openfort-backed sends, plus dashboard-only transaction history. The module owns the full send pipeline: API-key permission enforcement, execution-mode strategy selection, generic transaction limits, risk evaluation, wallet readiness, idempotency, destination and billing gates, provider simulation preflight, Openfort submission, and safe response shaping. `TransactionPolicyService` enforces generic structural constraints, configured API-key spend budgets, and Permit/NFT restrictions; function authority belongs to the DeFi catalog.
 
 ## Files
-- `transactions.controller.ts` — route wiring: guards, throttles, DTO binding, and delegation to the service.
+- `transactions.controller.ts` — separate API-key `TransactionsController` send/status from IAM `DashboardTransactionsController` history/detail under `/transactions`; public send is canonical `POST /v1/transactions` only.
 - `transactions.service.ts` — orchestration of the send pipeline, list/detail/status reads, idempotency, and response shaping. DeFi authorization snapshots exact interactions and is rechecked at acceptance for current catalog/grant/pause state; it does not capture or recheck DeFi-specific source/runtime/financial evidence. Separate debt-aware billing asset-flow checks may perform their own simulation/evidence verification.
 - `transaction-policy.service.ts` — generic pre-wallet policy: interaction/calldata/target limits, user-configured API-key daily/monthly value budgets, and Permit/Permit2/NFT operator restrictions. Payable native value and cataloged ERC-20 approvals are not blanket-denied here. Contract/function authorization belongs exclusively to `DefiPolicyService`.
 - `transaction-simulation.service.ts` — per-interaction `eth_call` preflight via a cached viem public client; plus separate debt-gated asset-flow evidence simulation (explicit per-chain HTTPS `rpcUrl`, never default public `http()`).
@@ -21,8 +21,8 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 
 ### Access-control split
 - API-key send and public status are scoped to the authenticated key's bound wallet; explicit send wallet selectors may only repeat that binding. Idempotency and legacy attribution must prove that same wallet before returning an existing row.
-- `POST /v1/transactions/send` and `GET /v1/transactions/:id` are public API-key routes: `ApiKeyAuthGuard` (resolves the API key, rejects frozen users/keys) + `ApiKeyPermissionGuard` with `canSendTransaction` / `canReadTransactionStatus`. The service re-asserts the permission from `req.apiKeyRecord` so it never trusts the guard alone.
-- `GET /v1/transactions` and `GET /v1/transactions/:id/detail` are dashboard-only: `OpenfortUserGuard` + `FrontendOnlyGuard` (origin/referer allowlist). These routes are intentionally omitted from `openapi.yaml`.
+- `POST /v1/transactions` and `GET /v1/transactions/:id` are public API-key routes: `ApiKeyAuthGuard` (resolves the API key, rejects frozen users/keys) + `ApiKeyPermissionGuard` with `canSendTransaction` / `canReadTransactionStatus`. The service re-asserts the permission from `req.apiKeyRecord` so it never trusts the guard alone.
+- `GET /transactions` and `GET /transactions/:id/detail` are registered on the separate dashboard controller and are IAM-only: `OpenfortUserGuard` + `FrontendOnlyGuard` (origin/referer allowlist). These routes are intentionally omitted from `openapi.yaml`.
 - Route-level throttling: send is tight (5/60s + 20/3600s); read routes are 20/60s + 100/3600s.
 
 ### Execution-mode strategy
@@ -64,7 +64,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 
 ## Flow
 
-### Send (`POST /v1/transactions/send`)
+### Send (`POST /v1/transactions`)
 1. Guards resolve the API key and require `canSendTransaction`; throttle applies; `req.apiKeyRecord` is passed to the service.
 2. Service asserts the API key record and permission, validates `chainId` via `getSupportedChain`, and resolves `executionMode` (default `session_key`).
 3. `eoa` mode: assert `canUseEoaExecution`, run `EoaExecutionPolicyService.assertAllowed` (IP allowlist from `request.ip` via `RequestContextService`, TTL, rate limit), and log a privileged security warning.
@@ -85,8 +85,8 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 16. On failure the row is updated to `failed` with a sanitized `failureReason` and the error is rethrown.
 
 ### Reads
-- `GET /v1/transactions` (dashboard): filter by `status`/`chainId`, paginate (`page`/`limit`, default 1/20, max 100), order by `createdAt desc`; returns `{ items, total, page, limit }` with safe list items.
-- `GET /v1/transactions/:id/detail` (dashboard): ownership-enforced `findFirst({ id, userId })`; safe detail view including withdrawal `to`/`amount`/`token` for `operationType === 'withdraw'`.
+- `GET /transactions` (dashboard): filter by `status`/`chainId`, paginate (`page`/`limit`, default 1/20, max 100), order by `createdAt desc`; returns `{ items, total, page, limit }` with safe list items.
+- `GET /transactions/:id/detail` (dashboard): ownership-enforced `findFirst({ id, userId })`; safe detail view including withdrawal `to`/`amount`/`token` for `operationType === 'withdraw'`.
 - `GET /v1/transactions/:id` (public API key): requires `canReadTransactionStatus`; scoped to `operationType: 'send'` and `authMethod: 'api_key'`; returns safe status fields only.
 
 ## Integration

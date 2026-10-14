@@ -233,37 +233,37 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
   describe('guard and origin', () => {
     it('rejects billing routes without Origin/Referer', async () => {
       const res = await request(app!.getHttpServer())
-        .get('/v1/billing/plans')
+        .get('/billing/plans')
         .set('Authorization', `Bearer ${primary.token}`)
         .expect(403);
 
-      expectApiError(res.body, 403, 'BAD_REQUEST', '/v1/billing/plans');
+      expectApiError(res.body, 403, 'BAD_REQUEST', '/billing/plans');
       expect(res.headers['x-request-id']).toEqual(expect.any(String));
     });
 
     it('rejects billing routes without a bearer token', async () => {
       const res = await request(app!.getHttpServer())
-        .get('/v1/billing/plans')
+        .get('/billing/plans')
         .set('Origin', FRONTEND_ORIGIN)
         .expect(401);
 
-      expectApiError(res.body, 401, 'UNAUTHORIZED', '/v1/billing/plans');
+      expectApiError(res.body, 401, 'UNAUTHORIZED', '/billing/plans');
     });
 
     it('rejects billing routes with an invalid IAM token', async () => {
       const res = await request(app!.getHttpServer())
-        .get('/v1/billing/plans')
+        .get('/billing/plans')
         .set('Authorization', 'Bearer not-a-real-token')
         .set('Origin', FRONTEND_ORIGIN)
         .expect(401);
 
-      expectApiError(res.body, 401, 'UNAUTHORIZED', '/v1/billing/plans');
+      expectApiError(res.body, 401, 'UNAUTHORIZED', '/billing/plans');
       expect(mockOpenfortService.verifyIamSession).toHaveBeenCalledWith('not-a-real-token');
     });
 
     it('rejects a disallowed Origin even with a valid token', async () => {
       await request(app!.getHttpServer())
-        .get('/v1/billing/plans')
+        .get('/billing/plans')
         .set('Authorization', `Bearer ${primary.token}`)
         .set('Origin', 'https://evil.example')
         .expect(403);
@@ -271,14 +271,19 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
     it('does not accept an API key for dashboard billing routes', async () => {
       await request(app!.getHttpServer())
-        .get('/v1/billing/plans')
+        .get('/billing/plans')
         .set('X-API-Key', 'sk_00000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
         .set('Origin', FRONTEND_ORIGIN)
         .expect(401);
     });
 
     it('allows billing routes from the development frontend origin with IAM', async () => {
-      const res = await dashboardGet(primary, '/v1/billing/plans').expect(200);
+      await request(app!.getHttpServer())
+        .get('/v1/billing/plans')
+        .set('Authorization', `Bearer ${primary.token}`)
+        .set('Origin', FRONTEND_ORIGIN)
+        .expect(404);
+      const res = await dashboardGet(primary, '/billing/plans').expect(200);
 
       expect(res.headers['x-request-id']).toEqual(expect.any(String));
       expect(res.body).toEqual(
@@ -294,9 +299,9 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
   // ── Plans ─────────────────────────────────────────────────────────────────
 
-  describe('GET /v1/billing/plans', () => {
+  describe('GET /billing/plans', () => {
     it('returns the catalog and defaults the account to Free', async () => {
-      const res = await dashboardGet(primary, '/v1/billing/plans').expect(200);
+      const res = await dashboardGet(primary, '/billing/plans').expect(200);
 
       expect(res.body.currentPlanId).toBe('free');
       expect(res.body.scheduledPlan).toBeUndefined();
@@ -333,11 +338,11 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
   // ── Plan assignment ───────────────────────────────────────────────────────
 
-  describe('POST /v1/billing/plan', () => {
+  describe('POST /billing/plan', () => {
     it('requires payment for Free→Starter upgrade with current-period proration', async () => {
       const current = currentUtcMonthPeriod();
 
-      const res = await dashboardPost(primary, '/v1/billing/plan', { planCode: 'starter' }).expect(
+      const res = await dashboardPost(primary, '/billing/plan', { planCode: 'starter' }).expect(
         201,
       );
 
@@ -358,7 +363,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       expect(res.body.effectiveFrom.startsWith(`${current}-01`)).toBe(true);
 
       // Entitlements stay Free until the plan_charge is paid.
-      const plans = await dashboardGet(primary, '/v1/billing/plans').expect(200);
+      const plans = await dashboardGet(primary, '/billing/plans').expect(200);
       expect(plans.body.currentPlanId).toBe('free');
       expect(plans.body.scheduledPlan).toBeUndefined();
 
@@ -392,7 +397,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       expect(invoice.totalMicros).toBeGreaterThan(0n);
       expect(invoice.totalMicros).toBeLessThanOrEqual(starter.monthlyFeeMicros!);
 
-      const listed = await dashboardGet(primary, '/v1/billing/invoices').expect(200);
+      const listed = await dashboardGet(primary, '/billing/invoices').expect(200);
       expect(listed.body.total).toBeGreaterThanOrEqual(1);
       const charge = listed.body.items.find((i: { id: string }) => i.id === invoice.id);
       expect(charge).toEqual(
@@ -412,12 +417,12 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
     });
 
     it('is idempotent when the same pending upgrade is requested again', async () => {
-      const first = await dashboardPost(primary, '/v1/billing/plan', {
+      const first = await dashboardPost(primary, '/billing/plan', {
         planCode: 'starter',
       }).expect(201);
       expect(first.body.outcome).toBe('payment_required');
 
-      const again = await dashboardPost(primary, '/v1/billing/plan', {
+      const again = await dashboardPost(primary, '/billing/plan', {
         planCode: 'starter',
       }).expect(201);
       expect(again.body.outcome).toBe('payment_required');
@@ -448,7 +453,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       await seedPaidCurrentPlanAssignment(primary, 'starter');
 
       const nextPeriod = nextUtcMonthPeriod();
-      const res = await dashboardPost(primary, '/v1/billing/plan', { planCode: 'free' }).expect(
+      const res = await dashboardPost(primary, '/billing/plan', { planCode: 'free' }).expect(
         201,
       );
 
@@ -465,7 +470,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       );
       expect(res.body.effectiveFrom.startsWith(`${nextPeriod}-01`)).toBe(true);
 
-      const plans = await dashboardGet(primary, '/v1/billing/plans').expect(200);
+      const plans = await dashboardGet(primary, '/billing/plans').expect(200);
       expect(plans.body.currentPlanId).toBe('starter');
       expect(plans.body.scheduledPlan).toEqual({
         planCode: 'free',
@@ -474,7 +479,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       });
 
       // Same schedule again is idempotent (still scheduled, same target).
-      const again = await dashboardPost(primary, '/v1/billing/plan', { planCode: 'free' }).expect(
+      const again = await dashboardPost(primary, '/billing/plan', { planCode: 'free' }).expect(
         201,
       );
       expect(again.body.outcome).toBe('scheduled');
@@ -486,35 +491,35 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
     });
 
     it('rejects enterprise self-service and unknown plan codes', async () => {
-      const enterprise = await dashboardPost(primary, '/v1/billing/plan', {
+      const enterprise = await dashboardPost(primary, '/billing/plan', {
         planCode: 'enterprise',
       }).expect(409);
       expect(enterprise.body.message).toEqual(expect.any(String));
 
-      const unknown = await dashboardPost(primary, '/v1/billing/plan', {
+      const unknown = await dashboardPost(primary, '/billing/plan', {
         planCode: 'nonexistent',
       }).expect(400);
-      expectApiError(unknown.body, 400, 'BAD_REQUEST', '/v1/billing/plan');
+      expectApiError(unknown.body, 400, 'BAD_REQUEST', '/billing/plan');
     });
 
     it('rejects unknown body fields and empty planCode', async () => {
-      await dashboardPost(primary, '/v1/billing/plan', {
+      await dashboardPost(primary, '/billing/plan', {
         planCode: 'starter',
         effectiveFrom: '2099-01-01',
       }).expect(400);
 
-      await dashboardPost(primary, '/v1/billing/plan', { planCode: '' }).expect(400);
+      await dashboardPost(primary, '/billing/plan', { planCode: '' }).expect(400);
 
-      await dashboardPost(primary, '/v1/billing/plan', {}).expect(400);
+      await dashboardPost(primary, '/billing/plan', {}).expect(400);
     });
   });
 
   // ── Summary ───────────────────────────────────────────────────────────────
 
-  describe('GET /v1/billing/summary', () => {
+  describe('GET /billing/summary', () => {
     it('returns a JSON-safe Free-plan estimate for the current UTC month', async () => {
       const current = currentUtcMonthPeriod();
-      const res = await dashboardGet(primary, '/v1/billing/summary').expect(200);
+      const res = await dashboardGet(primary, '/billing/summary').expect(200);
 
       expect(res.body).toEqual(
         expect.objectContaining({
@@ -548,12 +553,12 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       // synthesize evidence for arbitrary historical periods; use the current
       // period already materialized by the suite.
       const current = currentUtcMonthPeriod();
-      const ok = await dashboardGet(primary, `/v1/billing/summary?period=${current}`).expect(200);
+      const ok = await dashboardGet(primary, `/billing/summary?period=${current}`).expect(200);
       expect(ok.body.period).toBe(current);
 
-      await dashboardGet(primary, '/v1/billing/summary?period=2026-13').expect(400);
-      await dashboardGet(primary, '/v1/billing/summary?period=not-a-period').expect(400);
-      await dashboardGet(primary, '/v1/billing/summary?period=2026-1').expect(400);
+      await dashboardGet(primary, '/billing/summary?period=2026-13').expect(400);
+      await dashboardGet(primary, '/billing/summary?period=not-a-period').expect(400);
+      await dashboardGet(primary, '/billing/summary?period=2026-1').expect(400);
     });
   });
 
@@ -561,17 +566,17 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
   describe('invoices ownership and validation', () => {
     it('lists only the caller account invoices and enforces pagination bounds', async () => {
-      const primaryUpgrade = await dashboardPost(primary, '/v1/billing/plan', {
+      const primaryUpgrade = await dashboardPost(primary, '/billing/plan', {
         planCode: 'growth',
       }).expect(201);
       expect(primaryUpgrade.body.outcome).toBe('payment_required');
 
-      const otherUpgrade = await dashboardPost(other, '/v1/billing/plan', {
+      const otherUpgrade = await dashboardPost(other, '/billing/plan', {
         planCode: 'starter',
       }).expect(201);
       expect(otherUpgrade.body.outcome).toBe('payment_required');
 
-      const list = await dashboardGet(primary, '/v1/billing/invoices?page=1&limit=20').expect(200);
+      const list = await dashboardGet(primary, '/billing/invoices?page=1&limit=20').expect(200);
       expect(list.body).toEqual(
         expect.objectContaining({
           total: 1,
@@ -590,23 +595,23 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
         list.body.items.some((i: { id: string }) => i.id === otherUpgrade.body.invoiceId),
       ).toBe(false);
 
-      await dashboardGet(primary, '/v1/billing/invoices?page=0').expect(400);
-      await dashboardGet(primary, '/v1/billing/invoices?limit=0').expect(400);
-      await dashboardGet(primary, '/v1/billing/invoices?limit=101').expect(400);
+      await dashboardGet(primary, '/billing/invoices?page=0').expect(400);
+      await dashboardGet(primary, '/billing/invoices?limit=0').expect(400);
+      await dashboardGet(primary, '/billing/invoices?limit=101').expect(400);
       assertNoSecrets(list.body);
     });
 
     it('returns owned invoices and 404s cross-account / missing ids', async () => {
-      const mineUpgrade = await dashboardPost(primary, '/v1/billing/plan', {
+      const mineUpgrade = await dashboardPost(primary, '/billing/plan', {
         planCode: 'starter',
       }).expect(201);
-      const theirsUpgrade = await dashboardPost(other, '/v1/billing/plan', {
+      const theirsUpgrade = await dashboardPost(other, '/billing/plan', {
         planCode: 'growth',
       }).expect(201);
 
       const owned = await dashboardGet(
         primary,
-        `/v1/billing/invoices/${mineUpgrade.body.invoiceId}`,
+        `/billing/invoices/${mineUpgrade.body.invoiceId}`,
       ).expect(200);
       expect(owned.body).toEqual(
         expect.objectContaining({
@@ -623,24 +628,24 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
       const cross = await dashboardGet(
         primary,
-        `/v1/billing/invoices/${theirsUpgrade.body.invoiceId}`,
+        `/billing/invoices/${theirsUpgrade.body.invoiceId}`,
       ).expect(404);
       expectApiError(
         cross.body,
         404,
         'NOT_FOUND',
-        `/v1/billing/invoices/${theirsUpgrade.body.invoiceId}`,
+        `/billing/invoices/${theirsUpgrade.body.invoiceId}`,
       );
 
       const missing = randomUUID();
-      await dashboardGet(primary, `/v1/billing/invoices/${missing}`).expect(404);
+      await dashboardGet(primary, `/billing/invoices/${missing}`).expect(404);
 
-      await dashboardGet(primary, '/v1/billing/invoices/not-a-uuid').expect(400);
+      await dashboardGet(primary, '/billing/invoices/not-a-uuid').expect(400);
     });
 
     it('does not allow checkout of open invoices or another account invoice', async () => {
       // Open usage_period invoices are not payable — fail closed before Stripe.
-      await dashboardGet(primary, '/v1/billing/plans').expect(200);
+      await dashboardGet(primary, '/billing/plans').expect(200);
       const primaryAccount = await prisma!.billingAccount.findUniqueOrThrow({
         where: { userId: primary.userId },
       });
@@ -675,7 +680,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
       const openCheckout = await dashboardPost(
         primary,
-        `/v1/billing/invoices/${openInvoiceId}/checkout`,
+        `/billing/invoices/${openInvoiceId}/checkout`,
         {},
       ).expect(409);
       expect(openCheckout.body.message).toMatch(/finalized/i);
@@ -683,7 +688,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       expect(mockStripe.customers.create).not.toHaveBeenCalled();
 
       // Ensure the other account exists (lazy-created on first billing access).
-      await dashboardGet(other, '/v1/billing/plans').expect(200);
+      await dashboardGet(other, '/billing/plans').expect(200);
 
       // Seed a finalized invoice on the other account and prove ownership 404.
       const otherAccount = await prisma!.billingAccount.findUniqueOrThrow({
@@ -717,27 +722,27 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
 
       const crossCheckout = await dashboardPost(
         primary,
-        `/v1/billing/invoices/${finalizedId}/checkout`,
+        `/billing/invoices/${finalizedId}/checkout`,
         {},
       ).expect(404);
       expectApiError(
         crossCheckout.body,
         404,
         'NOT_FOUND',
-        `/v1/billing/invoices/${finalizedId}/checkout`,
+        `/billing/invoices/${finalizedId}/checkout`,
       );
       expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled();
 
       // Own finalized plan_charge is checkout-eligible, but mocked Stripe refuses
       // session creation (5xx); invoice stays unpaid — never fabricate success.
-      const upgrade = await dashboardPost(primary, '/v1/billing/plan', {
+      const upgrade = await dashboardPost(primary, '/billing/plan', {
         planCode: 'starter',
       }).expect(201);
       expect(upgrade.body.outcome).toBe('payment_required');
 
       const ownCheckout = await dashboardPost(
         primary,
-        `/v1/billing/invoices/${upgrade.body.invoiceId}/checkout`,
+        `/billing/invoices/${upgrade.body.invoiceId}/checkout`,
         {},
       );
       expect(ownCheckout.status).toBeGreaterThanOrEqual(500);
@@ -826,7 +831,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
    */
   async function seedPaidCurrentPlanAssignment(user: TestUser, planCode: string): Promise<void> {
     // Ensure BillingAccount + default Free assignment exist via the real path.
-    await dashboardGet(user, '/v1/billing/plans').expect(200);
+    await dashboardGet(user, '/billing/plans').expect(200);
 
     const account = await prisma!.billingAccount.findUniqueOrThrow({
       where: { userId: user.userId },
@@ -893,7 +898,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
     expect(seeded.source).toBe('upgrade_payment');
 
     // Confirm the dashboard sees the paid plan before the downgrade request.
-    const plans = await dashboardGet(user, '/v1/billing/plans').expect(200);
+    const plans = await dashboardGet(user, '/billing/plans').expect(200);
     expect(plans.body.currentPlanId).toBe(planCode);
   }
 

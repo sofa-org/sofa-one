@@ -39,9 +39,9 @@ describe('UsdcWalletPaymentController', () => {
     controller = new UsdcWalletPaymentController(walletPayment as never);
   });
 
-  it('is mounted under v1/billing/invoices/:id/usdc', () => {
+  it('is mounted under billing/invoices/:id/usdc', () => {
     const path = Reflect.getMetadata(PATH_METADATA, UsdcWalletPaymentController);
-    expect(path).toBe('v1/billing/invoices/:id/usdc');
+    expect(path).toBe('billing/invoices/:id/usdc');
   });
 
   it('pay-from-wallet requires IAM + FrontendOnly + StepUp', () => {

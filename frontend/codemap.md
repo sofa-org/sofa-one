@@ -51,7 +51,7 @@ Root-level files:
 - **Build**: `npm run build` type-checks then emits the production bundle to `dist/` (served by `vite preview` or any static host).
 
 ## Integration
-- **Backend**: the SPA talks to the NestJS backend over HTTP. In dev it goes through the Vite `/api` proxy; in production it uses `VITE_API_URL` directly. The access-control split is respected: dashboard routes use Openfort IAM bearer tokens (`authFetch`), while only the three public API-key endpoints (`POST /v1/wallets/sign`, `POST /v1/transactions/send`, `GET /v1/transactions/:id`) use explicit API keys (`apiFetch`).
+- **Backend**: the SPA talks to the NestJS backend over HTTP. In dev it goes through the Vite `/api` proxy; in production it uses `VITE_API_URL` directly. The access-control split is respected: dashboard routes use Openfort IAM bearer tokens (`authFetch`), while the frontend's API-key helpers use explicit keys for signing, transaction submission, and transaction status. The public API also exposes read-only `/v1/wallets` metadata, which these helpers do not consume.
 - **Openfort**: `@openfort/react` provides IAM auth (email OTP), the embedded EOA wallet, Shield recovery, and 7702 authorization; `@openfort/react/wagmi` + `wagmi` + `viem` provide the wallet/chain stack. `AuthProviders.tsx` builds a 13-chain wagmi config with public RPC defaults overridable via `VITE_*_RPC_URL`.
 - **Blockchain**: `src/lib/calibur.ts` builds EIP-7702-authorized Calibur smart accounts (EntryPoint v0.8) whose user operations are signed by the owner account and submitted through Openfort (or Pimlico on Monad).
 - **Dependencies** (`package.json`):

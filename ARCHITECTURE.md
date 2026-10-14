@@ -43,7 +43,6 @@ Browser SPA
 - Synchronizes Openfort IAM users into local `User` rows.
 - Returns wallet/authorization state for dashboard sessions.
 - Handles embedded-wallet authorization and Calibur agent-key registration lifecycle.
-- Provides compatibility alias `POST /auth/social` for older frontend builds.
 
 ### `ApiKeyModule`
 
@@ -82,20 +81,21 @@ There are two intentionally separate API surfaces.
 These routes require `X-API-Key` and must reject dashboard IAM-only access:
 
 - `POST /v1/wallets/sign`
-- `POST /v1/transactions/send`
+- `POST /v1/transactions`
 - `GET /v1/transactions/:id`
+- `GET /v1/wallets` (authenticated key's bound wallet metadata)
 
 ### Dashboard/frontend surface
 
 These routes require Openfort IAM bearer auth and frontend-origin/referer checks where marked frontend-only:
 
-- `GET /v1/wallets/balances`
-- `POST /v1/wallets/deposit-info`
-- `POST /v1/wallets/withdraw`
-- `GET /v1/api-keys`
-- `POST /v1/api-keys`
-- `DELETE /v1/api-keys/:id`
-- selected `/auth/*` dashboard operations such as API-key refresh
+- `GET /wallets/balances`
+- `GET /wallets/deposits`
+- `POST /wallets/withdrawals`
+- `GET /api-keys`
+- `POST /api-keys`
+- `DELETE /api-keys/:id`
+- selected `/auth/*` dashboard operations
 
 Do not add `FrontendOnlyGuard` to public API-key endpoints. Do not allow API-key auth on API-key management endpoints.
 
@@ -127,7 +127,7 @@ Dashboard user authorizes embedded wallet
 
 ```text
 Dashboard user
-  → POST /v1/api-keys
+  → POST /api-keys
   → OpenfortUserGuard + FrontendOnlyGuard
   → ApiKeyService validates limits/name/expiry/IP allowlist
   → generate raw secret
@@ -153,7 +153,7 @@ API client
 
 ```text
 API client
-  → POST /v1/transactions/send with X-API-Key
+  → POST /v1/transactions with X-API-Key
   → request DTO validates chain/interactions/idempotency
   → TransactionsService loads UserWallet + authorization context
   → Openfort submits transaction/UserOperation

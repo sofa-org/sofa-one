@@ -12,7 +12,7 @@ Step-up authentication proofs: issue short-lived proof tokens after a successful
 - `cleanupExpiredChallenges` bulk-deletes expired rows; the code comment says it "should be called periodically (e.g., via cron job)", but no scheduler/cron wiring exists in the codebase.
 
 ## Flow
-1. Frontend completes TOTP (or recovery-code) verification via `POST /v1/auth/mfa/totp/verify` → `MfaService.verifyTotp` → on success calls `StepUpService.createProof(userId, 'totp_mfa')`, which returns `{ proofToken, expiresAt }` to the frontend.
+1. Frontend completes TOTP (or recovery-code) verification via `POST /auth/mfa/totp/verify` → `MfaService.verifyTotp` → on success calls `StepUpService.createProof(userId, 'totp_mfa')`, which returns `{ proofToken, expiresAt }` to the frontend.
 2. Frontend stores the proof token and sends it in the `X-Step-Up-Token` header on subsequent sensitive requests.
 3. `StepUpGuard` (in `src/common/guards/`) activates only on routes marked `@RequireStepUp()` (metadata key `STEP_UP_KEY = 'requireStepUp'`). It reads `X-Step-Up-Token` and `request.user.id`, then calls `StepUpService.validateProof(proofToken, userId, 'totp_mfa')`. On success it sets `request.stepUpVerified = true`; on missing/invalid/expired proof it throws `ForbiddenException`.
 4. Downstream services consume the `stepUpVerified` flag as defense-in-depth: `WithdrawalPolicyService` rejects withdrawals when `policy.requireStepUp` and `stepUpVerified` is falsy; `WalletService.withdraw` treats a `require_step_up` risk-assessment action as satisfied only when `stepUpVerified === true`.
@@ -22,7 +22,7 @@ Step-up authentication proofs: issue short-lived proof tokens after a successful
 - Depends on `PrismaService` (`src/core/database/`) and the `StepUpChallenge` model (`prisma/schema.prisma`, table `step_up_challenges`, FK to `User` with `onDelete: Cascade`, indexes on `[proofToken]` and `[userId, createdAt]`).
 - Consumed by `MfaService` (`createProof` after TOTP/recovery-code verification) and `StepUpGuard` (`validateProof`).
 - Routes protected by `@RequireStepUp()` + `StepUpGuard` (all frontend-only, Openfort IAM bearer + `FrontendOnlyGuard`):
-  - `POST /auth/refresh-api-key` (AuthController)
-  - `POST /v1/api-keys`, `DELETE /v1/api-keys`, `DELETE /v1/api-keys/:id` (ApiKeyController)
-  - `POST /v1/wallets/withdrawal-addresses`, `DELETE /v1/wallets/withdrawal-addresses/:id`, `POST /v1/wallets/withdraw` (WalletController)
+  - `POST /api-keys/rotations` (ApiKeyController)
+  - `POST /api-keys`, `DELETE /api-keys`, `DELETE /api-keys/:id` (ApiKeyController)
+  - `POST /wallets/withdrawal-addresses`, `DELETE /wallets/withdrawal-addresses/:id`, `POST /wallets/withdrawals` (DashboardWalletController)
 - `cleanupExpiredChallenges` is not wired to any scheduler; it is currently dead code outside tests.

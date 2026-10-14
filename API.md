@@ -1,6 +1,7 @@
 # API Guide
 
 `openapi.yaml` is the public machine-readable API specification. It intentionally documents only API-key endpoints. This file explains both public and dashboard-only route boundaries for maintainers.
+See [`docs/API_DESIGN.md`](docs/API_DESIGN.md) for versioning, compatibility, status, and idempotent-retry conventions.
 
 ## 1. Authentication methods
 
@@ -22,18 +23,18 @@ Use Openfort IAM bearer tokens:
 Authorization: Bearer <openfort_iam_access_token>
 ```
 
-Frontend-only dashboard endpoints also require an allowed `Origin` or `Referer` header.
+Frontend-only routes require IAM authentication plus the `FrontendOnlyGuard` origin check. In production, an allowed `Origin` is required; outside production, an allowed `Referer` may be used when `Origin` is absent. These headers are CSRF defense-in-depth, not authentication.
 
 ## 2. Public API-key endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth, capability-authorized CLOB V2 order, or verified DepositWallet Batch typed data |
-| `POST` | `/v1/transactions/send` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
+| `POST` | `/v1/transactions` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 | `GET` | `/v1/permissions` | Return the key's configured permissions, capability mode/IDs, and constraints; configuration is not an execution guarantee |
 | `GET` | `/v1/capabilities?ids=id1,id2` | Look up 1–100 catalog capability definitions; definitions do not grant capabilities |
-| `GET` | `/v1/me/wallets` | List the key owner's bound EOA (`walletAddress`) and nullable signer (`agentWalletAddress`), plus safe chain metadata (no balances or Openfort internal IDs) |
+| `GET` | `/v1/wallets` | List only the key owner's bound EOA (`walletAddress`) and nullable signer (`agentWalletAddress`), plus safe chain metadata (no balances or Openfort internal IDs) |
 
 All public routes use `X-API-Key`; these three read routes require no `can*` permission. Existing API-key freeze, IP and billing guards still apply. For capability lookup, `ids` is required; comma-separated values are trimmed, non-empty, unique, and at most 256 characters each (query max 25,700 chars). Invalid input returns 400; unknown IDs are returned in `unknownIds` with 200, preserving request order. `all` mode dynamically includes catalog capabilities; `custom` with `[]` grants none. Wallet listing is owner-scoped, is not a balance or live on-chain check, and omits Openfort internal IDs. Do not accept Openfort IAM-only auth on these routes.
 
@@ -42,20 +43,24 @@ All public routes use `X-API-Key`; these three read routes require no `can*` per
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/auth/session` | Sync current Openfort IAM session to local user/wallet state |
-| `POST` | `/auth/social` | Compatibility alias for session sync |
 | `GET` | `/auth/me` | Return current user wallet/authorization state |
-| `POST` | `/auth/refresh-api-key` | Revoke all active keys across the user's wallets and issue one replacement bound to the selected wallet |
+| `POST` | `/api-keys/rotations` | Revoke all active keys across the user and issue one replacement bound to selected wallet (step-up) |
 | `POST` | `/auth/embedded-wallet/authorize` | Bind embedded EOA and return agent registration details |
 | `POST` | `/auth/embedded-wallet/registration-transaction` | Persist submitted Calibur registration tx hash |
 | `POST` | `/auth/embedded-wallet/registration-result` | Persist final registration status |
-| `GET` | `/v1/wallets/balances` | Return native token and USDC balances |
-| `POST` | `/v1/wallets/deposit-info` | Return wallet deposit address/context |
-| `POST` | `/v1/wallets/withdraw` | Submit dashboard-authenticated withdrawal |
-| `GET` | `/v1/api-keys` | List API-key metadata |
-| `POST` | `/v1/api-keys` | Create API key and return raw secret once |
-| `DELETE` | `/v1/api-keys/:id` | Revoke API key |
-| `GET` | `/v1/defi-capabilities` | List catalog DeFi capability metadata |
-| `PATCH` | `/v1/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
+| `GET/POST` | `/auth/mfa/*` | Dashboard MFA/TOTP operations |
+| `GET` | `/wallets/balances` | Return native token and USDC balances |
+| `GET` | `/wallets/deposits?chainId=...&walletId=...` | Return wallet deposit address/context |
+| `POST` | `/wallets/withdrawals` | Submit dashboard-authenticated withdrawal |
+| `GET` | `/transactions` and `/transactions/:id/detail` | Dashboard transaction history/detail; distinct from versioned API-key routes |
+| `GET` | `/api-keys` | List API-key metadata |
+| `POST` | `/api-keys` | Create API key and return raw secret once |
+| `POST` | `/api-keys/rotations` | Rotate all active keys for the user (step-up required) |
+| `DELETE` | `/api-keys/:id` | Revoke API key |
+| `GET` | `/defi-capabilities`, `/defi-capability-bundles` | List catalog DeFi capability metadata |
+| `PATCH` | `/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
+| `GET/POST` | `/security-notifications/*` | List and mark security notifications |
+| `GET/POST` | `/billing/*` | Dashboard billing and invoice payment operations |
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
 
@@ -63,14 +68,13 @@ These routes must not be added to `openapi.yaml` unless the product intentionall
 
 Each new API key is immutably bound to exactly one of its owner's wallets. A wallet may
 have multiple keys; the existing maximum of 10 active keys is per user across all wallets.
-Dashboard `POST /v1/api-keys` creation requires `walletId` as a wallet UUID owned by the
-authenticated user. The dashboard-only `POST /auth/refresh-api-key` likewise requires
+Dashboard `POST /api-keys` creation requires `walletId` as a wallet UUID owned by the
+authenticated user. The dashboard-only `POST /api-keys/rotations` likewise requires
 `{ "walletId": "<wallet UUID>" }`: it revokes **all** of that user's active keys across
 all wallets and creates one replacement bound to the selected wallet. It does not move or
-rebind a surviving key. Both routes remain IAM/frontend-only, and refresh keeps its
-step-up requirement.
+rebind a surviving key. Both routes remain IAM/frontend-only and step-up protected.
 
-Public `POST /v1/wallets/sign` and `POST /v1/transactions/send` always resolve the
+Public `POST /v1/wallets/sign` and `POST /v1/transactions` always resolve the
 execution wallet from the authenticated key's binding, not from caller selection. Send's
 optional `walletId` is accepted only if it equals that binding; a different wallet is
 rejected. Transaction status remains scoped to the key's bound wallet: another key bound
@@ -173,7 +177,7 @@ Errors are normalized by the global exception filter and include request context
   "message": "Invalid API key",
   "requestId": "req_...",
   "timestamp": "2026-04-20T10:00:00.000Z",
-  "path": "/v1/transactions/send"
+  "path": "/v1/transactions"
 }
 ```
 
@@ -216,7 +220,7 @@ Dedicated dashboard withdrawal and payment flows remain separate.
 ## 5. Public transaction example
 
 ```bash
-curl -X POST http://localhost:3100/v1/transactions/send \
+curl -X POST http://localhost:3100/v1/transactions \
   -H "X-API-Key: sk_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{

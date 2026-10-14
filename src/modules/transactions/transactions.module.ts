@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TransactionsController } from './transactions.controller';
+import { TransactionsController, DashboardTransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { EoaExecutionModule } from '../eoa-execution/eoa-execution.module';
@@ -19,7 +19,7 @@ import { DefiModule } from '../defi/defi.module';
     WithdrawalDestinationModule,
     DefiModule,
   ],
-  controllers: [TransactionsController],
+  controllers: [TransactionsController, DashboardTransactionsController],
   providers: [TransactionsService, TransactionPolicyService, TransactionSimulationService],
 })
 export class TransactionsModule {}

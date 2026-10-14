@@ -15,12 +15,12 @@ Dashboard-facing security notifications derived from unified `SecurityEvent` row
 
 ## Flow
 1. **Generation**: A security event is recorded via `SecurityEventService.record()` (risk scored by `SecurityRiskService`). The `security_event` row is created, then `notifications?.notifyForSecurityEvent(event, client)` runs in the same transaction. `notifyForSecurityEvent` returns `null` when the event has no `userId` or fails `shouldNotify`; otherwise it builds title/body + safe metadata and inserts a `security_notifications` row linked by `securityEventId`.
-2. **Query**: `GET /v1/security-notifications?unreadOnly=true&limit=N` → `listForUser(userId, query)` returns the user's notifications, newest first.
-3. **Read status**: `POST /v1/security-notifications/:id/read` → `markRead(userId, id)` sets `readAt` only if the row belongs to the user and is unread. `POST /v1/security-notifications/read-all` → `markAllRead(userId)` sets `readAt` on all of the user's unread rows.
+2. **Query**: `GET /security-notifications?unreadOnly=true&limit=N` → `listForUser(userId, query)` returns the user's notifications, newest first.
+3. **Read status**: `POST /security-notifications/:id/read` → `markRead(userId, id)` sets `readAt` only if the row belongs to the user and is unread. `POST /security-notifications/read-all` → `markAllRead(userId)` sets `readAt` on all of the user's unread rows.
 
 ## Integration
 - **Prisma**: model `SecurityNotification` maps to `security_notifications`. `userId` → `users` (`onDelete: Cascade`); `securityEventId` → `security_events` (`onDelete: SetNull`). Indexes: `[userId, readAt, createdAt]` and `[securityEventId]`.
 - **Module wiring**: `SecurityNotificationModule` declares the controller, provides and exports `SecurityNotificationService`. It is imported by `SecurityEventModule` (for generation) and by `AppModule`.
 - **Dependencies**: `SecurityNotificationService` depends only on `PrismaService`. It imports the `SecurityEventRiskLevel` type from `../security-events/security-event.service`. `SecurityEventService` injects it as `@Optional()`.
 - **Auth**: `OpenfortUserGuard` authenticates via Openfort IAM bearer token (never API keys) and attaches `request.user`; `FrontendOnlyGuard` restricts to the configured `CORS_ORIGIN` allowlist (dev fallback: localhost:3000/3100). `@CurrentUser('id')` reads the authenticated user id.
-- **API surface** (frontend-only, not in `openapi.yaml`): `GET /v1/security-notifications`, `POST /v1/security-notifications/:id/read`, `POST /v1/security-notifications/read-all`.
+- **API surface** (frontend-only, not in `openapi.yaml`): `GET /security-notifications`, `POST /security-notifications/:id/read`, `POST /security-notifications/read-all`.

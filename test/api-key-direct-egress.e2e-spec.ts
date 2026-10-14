@@ -333,7 +333,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     },
   ) {
     return request(app!.getHttpServer())
-      .post('/v1/transactions/send')
+      .post('/v1/transactions')
       .set('X-API-Key', apiKey)
       .send(body);
   }
@@ -899,7 +899,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     }).expect(403);
 
     const authRes = await request(app!.getHttpServer())
-      .post(`/v1/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
+      .post(`/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
       .set('Authorization', `Bearer ${iamToken}`)
       .set('Origin', 'http://localhost:3000')
       .set('X-Step-Up-Token', 'e2e-step-up-proof')
@@ -927,7 +927,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
   it('authorize-direct-egress rejects without IAM bearer', async () => {
     await request(app!.getHttpServer())
-      .post(`/v1/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
+      .post(`/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
       .set('Origin', 'http://localhost:3000')
       .set('X-Step-Up-Token', 'e2e-step-up-proof')
       .expect(401);

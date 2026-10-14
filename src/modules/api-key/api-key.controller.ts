@@ -10,14 +10,15 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './dto/create-api-key.dto';
 import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { DefiBundleService } from '../defi/bundles/bundle.service';
+import { RotateApiKeyDto } from './dto/rotate-api-key.dto';
 
-@Controller('v1/api-keys')
+@Controller('api-keys')
 @FrontendOnly()
 @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
-  /** POST /v1/api-keys — create a new API key (returns raw key once). Requires step-up. */
+  /** POST /api-keys — create a new API key (returns raw key once). Requires step-up. */
   @RequireStepUp()
   @UseGuards(StepUpGuard)
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
@@ -35,6 +36,16 @@ export class ApiKeyController {
     });
   }
 
+  /** Replaces every active API key for the user; walletId selects the replacement binding only. */
+  @RequireStepUp()
+  @UseGuards(StepUpGuard)
+  @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
+  @Post('rotations')
+  async rotate(@CurrentUser('id') userId: string, @Body() dto: RotateApiKeyDto) {
+    const result = await this.apiKeyService.rotateApiKey(userId, 'Refreshed', dto.walletId);
+    return { apiKey: result.rawKey };
+  }
+
   @RequireStepUp()
   @UseGuards(StepUpGuard)
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
@@ -43,13 +54,13 @@ export class ApiKeyController {
     return this.apiKeyService.replaceCapabilities(keyId, userId, dto);
   }
 
-  /** GET /v1/api-keys — list all keys (metadata only). */
+  /** GET /api-keys — list all keys (metadata only). */
   @Get()
   async list(@CurrentUser('id') userId: string) {
     return this.apiKeyService.listApiKeys(userId);
   }
 
-  /** DELETE /v1/api-keys — revoke every active key without creating a replacement. Requires step-up. */
+  /** DELETE /api-keys — revoke every active key without creating a replacement. Requires step-up. */
   @RequireStepUp()
   @UseGuards(StepUpGuard)
   @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
@@ -60,7 +71,7 @@ export class ApiKeyController {
   }
 
   /**
-   * POST /v1/api-keys/:id/authorize-direct-egress — acknowledge destination-policy
+   * POST /api-keys/:id/authorize-direct-egress — acknowledge destination-policy
    * binding for API-key direct asset egress (BILL-016). Requires step-up.
    * Dashboard-only; omitted from public openapi.yaml.
    */
@@ -72,7 +83,7 @@ export class ApiKeyController {
     return this.apiKeyService.authorizeDirectEgress(keyId, userId);
   }
 
-  /** DELETE /v1/api-keys/:id — revoke a specific key. Requires step-up. */
+  /** DELETE /api-keys/:id — revoke a specific key. Requires step-up. */
   @RequireStepUp()
   @UseGuards(StepUpGuard)
   @Delete(':id')
@@ -82,7 +93,7 @@ export class ApiKeyController {
   }
 }
 
-@Controller('v1/defi-capabilities')
+@Controller('defi-capabilities')
 @FrontendOnly()
 @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
 export class DefiCapabilityController {
@@ -92,7 +103,7 @@ export class DefiCapabilityController {
 }
 
 /** Dashboard-only read of reviewed, immutable capability bundle metadata. */
-@Controller('v1/defi-capability-bundles')
+@Controller('defi-capability-bundles')
 @FrontendOnly()
 @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
 export class DefiCapabilityBundleController {

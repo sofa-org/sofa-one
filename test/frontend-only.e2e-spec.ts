@@ -77,7 +77,7 @@ describe('Frontend-only access control (e2e)', () => {
 
   it('rejects frontend-only routes when Origin/Referer is absent', async () => {
     const res = await request(app.getHttpServer())
-      .get('/v1/api-keys')
+      .get('/api-keys')
       .set('Authorization', 'Bearer fake-openfort-token')
       .expect(403);
 
@@ -86,14 +86,20 @@ describe('Frontend-only access control (e2e)', () => {
         statusCode: 403,
         code: 'BAD_REQUEST',
         requestId: expect.any(String),
-        path: '/v1/api-keys',
+        path: '/api-keys',
       }),
     );
   });
 
   it('allows frontend-only routes from the configured development frontend origin', async () => {
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .get('/v1/api-keys')
+      .set('Authorization', 'Bearer fake-openfort-token')
+      .set('Origin', 'http://localhost:3000')
+      .expect(404);
+
+    const res = await request(app.getHttpServer())
+      .get('/api-keys')
       .set('Authorization', 'Bearer fake-openfort-token')
       .set('Origin', 'http://localhost:3000')
       .expect(200);

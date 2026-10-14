@@ -17,7 +17,7 @@ Validated request-body shapes for embedded-wallet authorization, agent-key regis
   - `agentExpiresAt` (optional) bounds the backend agent key lifetime.
 - `POST /auth/embedded-wallet/registration-transaction` → body validated into `AgentRegistrationTransactionDto` → fields destructured and passed to `AuthService.markAgentRegistrationTransaction(openfortUserId, chainId, txHash)`, which flips the `WalletChainAuthorization` status to `PendingRegistration` and stores `registrationTxHash`.
 - `POST /auth/embedded-wallet/registration-result` → body validated into `AgentRegistrationResultDto` → fields destructured and passed to `AuthService.markAgentRegistrationResult(openfortUserId, chainId, status, txHash)`, which (for `registered`) verifies the agent key on-chain via Openfort before persisting the final `Registered`/`RegistrationFailed` status.
-- `POST /auth/refresh-api-key` → `RefreshApiKeyDto` validates the required wallet UUID before key rotation.
+- `RefreshApiKeyDto` validates the wallet UUID accepted by the retained internal `AuthService.refreshApiKey` method; no HTTP route uses this DTO.
 
 ## Integration
 - Consumed exclusively by `AuthController` (`src/modules/auth/auth.controller.ts`) as `@Body()` parameters on the three `POST /auth/embedded-wallet/*` routes, all guarded by `OpenfortAuthGuard` (Bearer Openfort IAM token) with route-level throttling.

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WalletController, ApiKeyWalletController } from './wallet.controller';
+import { WalletController, DashboardWalletController, ApiKeyWalletController } from './wallet.controller';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { IpAllowlistService } from '../../common/guards/ip-allowlist.service';
 import { WalletService } from './wallet.service';
@@ -27,7 +27,7 @@ import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batc
     WithdrawalDestinationModule,
     DefiModule,
   ],
-  controllers: [WalletController, ApiKeyWalletController],
+  controllers: [WalletController, DashboardWalletController, ApiKeyWalletController],
   providers: [WalletService, WithdrawalPolicyService, SigningPolicyService, PolymarketDepositWalletVerifierService, PolymarketDepositBatchVerifierService, PolymarketSigningBudgetService, ApiKeyAuthGuard, IpAllowlistService],
 })
 export class WalletModule {}

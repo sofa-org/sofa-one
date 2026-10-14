@@ -16,6 +16,7 @@ import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
 import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import { THROTTLER_LIMIT, THROTTLER_TTL } from '@nestjs/throttler/dist/throttler.constants';
 
 describe('ApiKeyController', () => {
   const apiKeyService = {
@@ -25,6 +26,7 @@ describe('ApiKeyController', () => {
     revokeAllKeys: jest.fn(),
     authorizeDirectEgress: jest.fn(),
     replaceCapabilities: jest.fn(),
+    rotateApiKey: jest.fn(),
   };
 
   let controller: ApiKeyController;
@@ -107,6 +109,17 @@ describe('ApiKeyController', () => {
     expect(apiKeyService.listApiKeys).toHaveBeenCalledWith('user-1');
   });
 
+  it('rotates every user key through the step-up route using legacy refresh semantics and throttle', async () => {
+    apiKeyService.rotateApiKey.mockResolvedValue({ rawKey: 'sk_replacement' });
+    await expect(controller.rotate('user-1', { walletId: 'wallet-1' } as any)).resolves.toEqual({ apiKey: 'sk_replacement' });
+    expect(apiKeyService.rotateApiKey).toHaveBeenCalledWith('user-1', 'Refreshed', 'wallet-1');
+    expect(Reflect.getMetadata(STEP_UP_KEY, controller.rotate)).toBe(true);
+    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'short', controller.rotate)).toBe(3);
+    expect(Reflect.getMetadata(THROTTLER_TTL + 'short', controller.rotate)).toBe(60000);
+    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'medium', controller.rotate)).toBe(10);
+    expect(Reflect.getMetadata(THROTTLER_TTL + 'medium', controller.rotate)).toBe(3600000);
+  });
+
   it('delegates revoke to apiKeyService.revokeApiKey', async () => {
     apiKeyService.revokeApiKey.mockResolvedValue(undefined);
 
@@ -158,7 +171,7 @@ describe('DefiCapabilityBundleController', () => {
     expect(Reflect.getMetadata(GUARDS_METADATA, DefiCapabilityBundleController)).toEqual([OpenfortUserGuard, FrontendOnlyGuard]);
     expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, DefiCapabilityBundleController)).toBe(true);
     const listHandler = DefiCapabilityBundleController.prototype.list;
-    expect(Reflect.getMetadata(PATH_METADATA, DefiCapabilityBundleController)).toBe('v1/defi-capability-bundles');
+    expect(Reflect.getMetadata(PATH_METADATA, DefiCapabilityBundleController)).toBe('defi-capability-bundles');
     expect(Reflect.getMetadata(PATH_METADATA, listHandler)).toBe('/');
     expect(Reflect.getMetadata(METHOD_METADATA, listHandler)).toBe(0);
     expect(Reflect.getMetadata(STEP_UP_KEY, listHandler)).toBeUndefined();

@@ -15,7 +15,7 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 ### 3.1 Authentication and wallet onboarding
 
 - The backend must accept Openfort IAM bearer tokens for dashboard/user-session operations.
-- `POST /auth/session` and compatibility alias `POST /auth/social` must synchronize the Openfort IAM user to a local `User` record.
+- `POST /auth/session` must synchronize the Openfort IAM user to a local `User` record; no `/auth/social` alias is exposed.
 - Users must be able to authorize an Openfort embedded EOA and persist Calibur agent-key registration progress per supported chain.
 - `UserWallet.openfortAccountId` must remain the stable Openfort account foreign key.
 
@@ -44,7 +44,7 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 
 ### 3.4 Public transaction API
 
-- `POST /v1/transactions/send` must require `X-API-Key`.
+- `POST /v1/transactions` must require `X-API-Key`; `/v1/transactions/send` is not exposed.
 - Requests must validate chain ID, interactions, value fields, and idempotency keys.
 - The service must persist transaction records with request hashes and API-key attribution snapshots for audit/idempotency.
 - `GET /v1/transactions/:id` must return only safe status fields when the key is bound to the transaction's wallet; another key for that wallet may read it, but a key bound to another wallet may not.
@@ -52,7 +52,7 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 
 ### 3.5 Frontend-only wallet operations
 
-- `GET /v1/wallets/balances`, `POST /v1/wallets/deposit-info`, and `POST /v1/wallets/withdraw` must require Openfort IAM auth and frontend-origin checks.
+- `GET /wallets/balances`, `GET /wallets/deposits`, and `POST /wallets/withdrawals` must require Openfort IAM auth and frontend-origin checks.
 - These endpoints must not be callable with API keys.
 
 ### 3.6 Health and operations

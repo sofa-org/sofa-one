@@ -220,7 +220,7 @@ export default function ApiKeysPage() {
   const [keysRefreshing, setKeysRefreshing] = useState(false);
   const [keyStatusFilter, setKeyStatusFilter] = useState<KeyStatusFilter>(getStoredKeyStatusFilter);
   const apiBaseUrl = getApiBaseUrlForDisplay();
-  const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions/send \
+  const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -820,7 +820,7 @@ export default function ApiKeysPage() {
               {[
                 ['canReadTransactionStatus', 'Read status', 'Fetch transaction status by id.'],
                 ['canSign', 'Sign messages', 'Use /v1/wallets/sign.'],
-                ['canSendTransaction', 'Send transactions', 'Use /v1/transactions/send.'],
+                ['canSendTransaction', 'Send transactions', 'Use /v1/transactions.'],
                 ['canUseEoaExecution', 'Use EOA execution', 'Privileged backend EOA mode.'],
               ].map(([permission, label, description]) => (
                 <label

@@ -112,7 +112,7 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
     prisma.apiKey.findMany.mockResolvedValue([{ ...record }]);
   });
 
-  const endpoints = ['/v1/permissions', '/v1/capabilities?ids=some-id', '/v1/me/wallets'];
+  const endpoints = ['/v1/permissions', '/v1/capabilities?ids=some-id', '/v1/wallets'];
   it.each(endpoints)('rejects missing key and bearer-only access: %s', async (path) => {
     await request(app.getHttpServer()).get(path).expect(401);
     await request(app.getHttpServer())
@@ -146,7 +146,7 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
       }],
     });
     const response = await request(app.getHttpServer())
-      .get('/v1/me/wallets?userId=attacker')
+      .get('/v1/wallets?userId=attacker')
       .set('X-API-Key', key)
       .expect(200);
     expect(walletService.listApiKeyWallets).toHaveBeenCalledWith(user.id, record.walletId);
@@ -158,7 +158,8 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
     walletService.listApiKeyWallets.mockResolvedValueOnce({
       wallets: [{ id: record.walletId, walletAddress: '0xeoa', agentWalletAddress: null, status: 'active', isFrozen: false, chainAuthorizations: [] }],
     });
-    const response = await request(app.getHttpServer()).get('/v1/me/wallets').set('X-API-Key', key).expect(200);
+    await request(app.getHttpServer()).get('/v1/me/wallets').set('X-API-Key', key).expect(404);
+    const response = await request(app.getHttpServer()).get('/v1/wallets').set('X-API-Key', key).expect(200);
     expect(response.body.wallets[0]).toMatchObject({ walletAddress: '0xeoa', agentWalletAddress: null });
   });
 
