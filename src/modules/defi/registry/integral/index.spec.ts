@@ -29,7 +29,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({
 
 describe('Integral SIZE Ethereum relayer fixture', () => {
   it('binds both inactive raw source declarations to exact tuple ABI hashes, return identity, target and source references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/integral.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/integral.json', 'utf8'));
     const family = source.families[0];
     const rawContract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

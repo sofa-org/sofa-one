@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Liquid Collective River deposit update
 
 This ordinary update adds exactly one unscoped payable Ethereum binding: `deposit()` on the documented Liquid Collective River proxy at `0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549`. Stable ID: `liquid-collective-river:v1:1:0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549:deposit`. Only the no-argument caller deposit is admitted. `depositAndTransfer`, `receive`/fallback, validators, withdrawal queue, admin, and all other initial-snapshot methods are excluded.

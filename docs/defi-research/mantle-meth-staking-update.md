@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Mantle mETH staking update
 
 This ordinary update adds exactly one unscoped payable Ethereum binding: `stake(uint256 minMETHAmount)` on the documented Staking role at `0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f`. Stable ID: `mantle-meth-staking:v1:1:0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f:stake`. The contract is the staking role, not the mETH token. Unstake requests, permit, queue/withdraw, admin, token, helper, and other initial-subset functions are excluded.

@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Compound Comet USDC collateral purchase update
 
 Inspection date: 2026-10-05. This ordinary data update admits one selector on the existing Ethereum Compound Comet USDC target. Pinned declarations and source roles are historical source evidence, not live deployment or execution-state verification.

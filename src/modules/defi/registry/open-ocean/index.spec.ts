@@ -31,7 +31,7 @@ const hashes = [
 
 describe('OpenOcean bounded Uniswap proxy isolated fixture', () => {
   it('pins inactive proxy candidate, exact full ABI objects, selectors, and ABI identities', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v7/sources/open-ocean.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/open-ocean.json', 'utf8'));
     const contract = source.families[0].contracts[0];
     expect(source.families[0].familyId).toBe('open-ocean');
     expect(contract).toMatchObject({ chainId: 1, address: proxy, status: 'inactive' });

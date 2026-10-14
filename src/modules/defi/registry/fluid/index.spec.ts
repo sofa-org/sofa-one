@@ -26,7 +26,7 @@ function calldata(fn: (typeof FLUID_CAPABILITIES)[number], args = argsFor(fn)): 
 
 describe('Fluid Base registry fixture', () => {
   it('keeps the source snapshot source-qualified and consistent with all three official artifacts', () => {
-    const source = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v5/sources/fluid.json'), 'utf8')) as {
+    const source = JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/sources/fluid.json'), 'utf8')) as {
       families: { familyId: string; familyVersion: string; contracts: { chainId: number; address: string; abiFunctions: { name: string; inputs: { type: string }[] }[] }[] }[];
       sources: { sourceId: string; url: string; retrievedAtUtc: string; evidence: string }[];
     };

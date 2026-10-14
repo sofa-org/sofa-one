@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Aave V3 main-pool aToken repayment update
 
 Inspection date: 2026-10-05. This ordinary data update adds one exact method identity to the existing Ethereum, Optimism, and Base Aave V3 main-pool targets. It is a pinned declaration/body record, not live deployment or financial-state verification.

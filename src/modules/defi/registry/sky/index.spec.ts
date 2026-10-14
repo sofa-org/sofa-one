@@ -24,7 +24,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({ to: fn
 
 describe('Sky sUSDS Ethereum Savings fixture', () => {
   it('binds all six inactive overloads to literal ABI hashes, selector IDs and source refs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/sky.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/sky.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

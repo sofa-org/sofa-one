@@ -6,7 +6,7 @@ Standalone Ethereum test fixture for seven source-qualified Puffer calls. It is 
 ## Files and authority
 - `index.ts`: reviewed active test fragment using listed implementation V5 ABI and stable `puffer:v5-snapshot:1:<proxy>:<operation>` identifiers.
 - `index.spec.ts`: raw inactive-source correspondence plus exact policy authorization, grant isolation, ABI canonicality and payability tests.
-- `data/defi-catalog/v6/sources/puffer.json`: inactive source candidates and four-key dated provenance records.
+- `data/defi-catalog/sources/puffer.json`: inactive source candidates and four-key dated provenance records.
 - `docs/defi-research/expansion55-puffer-v6.md`: source scope and limitations.
 
 ## Boundaries

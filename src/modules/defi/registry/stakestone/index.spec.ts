@@ -22,7 +22,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({
 
 describe('StakeStone Ethereum StoneVault fixture', () => {
   it('binds all three inactive source methods to exact ABI hashes, IDs and refs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/stakestone.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/stakestone.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

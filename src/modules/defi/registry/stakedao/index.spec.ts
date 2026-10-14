@@ -21,7 +21,7 @@ const call = (fn: DefiFunctionPolicy, args = argsFor(fn), value?: bigint) => ({ 
 
 describe('StakeDAO CRV Depositor Ethereum fixture', () => {
   it('binds the two selected declarations to exact full ABI hashes, stable IDs, inactive source and resolved strict refs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/stakedao.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/stakedao.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

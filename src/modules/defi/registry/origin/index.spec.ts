@@ -20,7 +20,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({ to: fn.contract, dat
 
 describe('Origin OETH Ethereum user-proxy fixture', () => {
   it('binds four inactive deployment ABI declarations to fixture hashes, IDs and strict source references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/origin.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/origin.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

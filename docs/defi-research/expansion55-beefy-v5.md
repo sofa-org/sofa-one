@@ -14,5 +14,5 @@ There is no claim of funded execution, runtime code correspondence, current liqu
 
 ## Evidence
 
-- [Official Beefy vault API](https://api.beefy.finance/vaults), snapshot metadata recorded in `data/defi-catalog/v5/sources/beefy.json`.
+- [Official Beefy vault API](https://api.beefy.finance/vaults), snapshot metadata recorded in `data/defi-catalog/sources/beefy.json`.
 - [Pinned official Beefy v2 client](https://github.com/beefyfinance/beefy-v2/tree/97385b9a832316d78a4c595319352726d5a322a7), with the Standard vault ABI/type mapping.

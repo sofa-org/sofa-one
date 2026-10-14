@@ -29,7 +29,7 @@ const context = (grants: string[] = [], chainId = 1): DefiExecutionContext => ({
 
 describe('Gearbox Pool V3.10 Ethereum fixed-selector fixture', () => {
   it('binds exactly four inactive source declarations to their complete ABI objects, hashes, and source references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/gearbox.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/gearbox.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract, abi })));

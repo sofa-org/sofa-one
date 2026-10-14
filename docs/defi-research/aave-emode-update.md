@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Aave V3 main-pool EMode update
 
 Inspection date: 2026-10-05. This ordinary data update admits one selector on five already-cataloged Aave V3 main Pool roles. Pinned source and role evidence is dated historical qualification, not verification of current proxy, implementation, or storage state.

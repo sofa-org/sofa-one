@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Stader ETHx StakePoolsManager deposit update
 
 This update adds one unscoped payable Ethereum binding: `deposit(address)` on the documented StaderStakePoolsManager target `0xcf5ea1b38380f6af39068375516daf40ed70d299`. Its stable ID is `stader-ethx-manager:v1:1:0xcf5ea1b38380f6af39068375516daf40ed70d299:deposit`. Only the one-address overload is included; `deposit(address,string)` referral, validator batch deposit, operator/admin, withdrawal, and token methods are not admitted.

@@ -31,7 +31,7 @@ function call(fn: DefiFunctionPolicy, values = args(fn), value?: bigint) { retur
 
 describe('Liquity V2 Ethereum WETH-branch fixture', () => {
   it('matches all ten raw inactive ABIs, source refs, IDs and signatures', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/liquity.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/liquity.json', 'utf8'));
     const family = source.families[0];
     const raw = family.contracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract: contract.address, abi })));
     expect(family.familyId).toBe('liquity-v2');

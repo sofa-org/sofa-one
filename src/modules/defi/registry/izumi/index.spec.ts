@@ -58,7 +58,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({ to: fn.contract, dat
 
 describe('iZUMi Ethereum fixed-selector fixture', () => {
   it('binds all five inactive source declarations to exact fixture ABIs, hashes, source references, and IDs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/izumi.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/izumi.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract, abi })));

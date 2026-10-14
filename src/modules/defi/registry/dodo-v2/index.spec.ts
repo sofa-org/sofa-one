@@ -19,7 +19,7 @@ describe('DODO V2 registry fixture', () => {
   const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));
   const call = (index: number, args: any[], value?: string) => ({ to: target, value, data: encodeFunctionData({ abi: [fns[index].abi], functionName: fns[index].functionName, args }) });
   it('matches all three inactive source candidates, full ABI hashes and unique selectors', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/dodo.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/dodo.json', 'utf8'));
     const rawFns = source.families[0].chains[0].contracts[0].functions;
     expect(source.sources).toHaveLength(2);
     expect(source.sources.every((r: any) => Object.keys(r).sort().join(',') === 'evidence,retrievedAtUtc,sourceId,url')).toBe(true);

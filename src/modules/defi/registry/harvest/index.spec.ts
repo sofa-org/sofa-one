@@ -18,7 +18,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({ to: fn
 
 describe('Harvest fUSDC Ethereum vault fixture', () => {
   it('binds exactly two inactive source declarations to full ABI hashes, IDs and valid references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/harvest.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/harvest.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

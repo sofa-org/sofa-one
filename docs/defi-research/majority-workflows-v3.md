@@ -1,4 +1,6 @@
-# M3 v3 scoped workflow progress
+# Historical M3 v3 scoped workflow progress
+
+> Historical evidence only. The versioned catalog and `scripts/defi-coverage/v3-cli.ts` have been removed. This report is not reproducible from the current single-catalog maintenance workflow.
 
 This report is a deterministic offline projection of the committed v3 candidate catalog and workflow-extension ABI snapshot. It is a target-specific execution-scope/workflow progress report, not a revised market denominator or a whole-product support certificate.
 
@@ -16,7 +18,7 @@ The normalized v3 input retains the M2 UTC observation time `2026-10-03T19:11:22
 
 The v3 report fingerprint currently is `sha256:c3f276857105f6759b1f1734a02176d4a13335fc9133913bbae9092ac39059ea`. Its activity/identity counts match the M2 frozen input; target workflow progress does not promote any market identity or alter activity weights. `objectiveEstablished` remains false. This output is not evidence of all-chain/product workflow completion, liquidity, financial safety, live execution, or funded transactions.
 
-## Reproduction
+## Historical reproduction command
 
 From repository root:
 

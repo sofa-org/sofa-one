@@ -1,6 +1,6 @@
 # M2 lending / yield source fragment
 
-This is a source-only fragment for the v2 catalog input. It adds no runtime rules, financial filters, automatic approvals, or grant/dependency policy. The source JSON is `data/defi-catalog/v2/sources/lending-yield.json`; it does not modify the frozen v1 baseline, v2 generated catalog, or production registry.
+This is a source-only fragment for the v2 catalog input. It adds no runtime rules, financial filters, automatic approvals, or grant/dependency policy. The source JSON is `data/defi-catalog/sources/lending-yield.json`; it does not modify the frozen v1 baseline, v2 generated catalog, or production registry.
 
 ## Verification and count
 

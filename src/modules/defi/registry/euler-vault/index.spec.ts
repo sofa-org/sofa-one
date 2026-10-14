@@ -22,7 +22,7 @@ describe('Euler registered EVault and EVC fixture', () => {
   const call = (c: number, i: number, values?: any[], value?: string) => ({ to: contracts[c].address, value, data: encodeFunctionData({ abi: [f(c, i).abi], functionName: f(c, i).functionName, args: values ?? (c < 2 ? vaultArgs[i] : evcArgs[i]) }) });
 
   it('binds all sixteen inactive source ABIs, role addresses, full hashes, source refs and exact IDs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/euler.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/euler.json', 'utf8'));
     const raw = source.families.flatMap((family: any) => family.chains.flatMap((chain: any) => chain.contracts.flatMap((contract: any) => contract.functions)));
     const fns = contracts.flatMap(c => c.functions);
     expect(contracts.map(c => c.address)).toEqual([...vaults, evc]); expect(raw).toHaveLength(16); expect(fns).toHaveLength(16);

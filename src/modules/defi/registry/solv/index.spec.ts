@@ -30,7 +30,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint, args = argsFor(fn)) => ({ 
 
 describe('SolvBTC Router V2 Ethereum proxy fixture', () => {
   it('binds three inactive source declarations to full ABI hashes, stable IDs and strict resolved refs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/solv.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/solv.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

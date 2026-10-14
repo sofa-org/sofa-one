@@ -39,7 +39,7 @@ const context = (grants: string[] = [], chainId = 1): DefiExecutionContext => ({
 
 describe('Ethena Ethereum sUSDe V2 fixed-selector fixture', () => {
   it('binds exactly seven inactive source ABIs, hashes, signatures, IDs, and references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/ethena.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/ethena.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract, abi })));

@@ -23,7 +23,7 @@ describe('Maverick V2 bounded router fixture', () => {
   });
 
   it('has exactly one chain-specific active fixture call per documented router with full source ABI identity', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/maverick.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/maverick.json', 'utf8'));
     const rawFunctions = source.families[0].chains.flatMap((chain: { contracts: Array<{ functions: unknown[] }> }) => chain.contracts.flatMap((contract) => contract.functions));
     const sources = new Map(source.sources.map((record: { sourceId: string }) => [record.sourceId, record]));
     expect(rawFunctions).toHaveLength(2);

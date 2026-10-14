@@ -28,7 +28,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({ to: fn.contract, dat
 
 describe('EigenLayer source-qualified fixture', () => {
   it('matches all three inactive source ABIs, hashes, stable IDs, and strict provenance', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/eigenlayer.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/eigenlayer.json', 'utf8'));
     const family = source.families[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));
     expect(family.familyId).toBe('eigenlayer');

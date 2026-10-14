@@ -4,7 +4,7 @@ This bounded candidate is preparation only. Raw source functions are inactive; t
 
 ## Pinned source and target
 
-At official `liquity/bold` commit `d262669ef3c4d37bf0544df3bb2624c07b8a5ee0`, `contracts/addresses/1.json` lists the WETH branch `BorrowerOperations` at `0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65` and `StabilityPool` at `0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf`. The same address table records WETH collateral and BOLD token metadata; neither token receives an implicit approval capability. The pinned `Interfaces/IBorrowerOperations.sol` and `BorrowerOperations.sol`, plus `Interfaces/IStabilityPool.sol` and `StabilityPool.sol`, ground the ten complete selected ABI entries in `data/defi-catalog/v6/sources/liquity.json`.
+At official `liquity/bold` commit `d262669ef3c4d37bf0544df3bb2624c07b8a5ee0`, `contracts/addresses/1.json` lists the WETH branch `BorrowerOperations` at `0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65` and `StabilityPool` at `0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf`. The same address table records WETH collateral and BOLD token metadata; neither token receives an implicit approval capability. The pinned `Interfaces/IBorrowerOperations.sol` and `BorrowerOperations.sol`, plus `Interfaces/IStabilityPool.sol` and `StabilityPool.sol`, ground the ten complete selected ABI entries in `data/defi-catalog/sources/liquity.json`.
 
 ## Fixed operation subset
 

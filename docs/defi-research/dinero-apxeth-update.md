@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Dinero AutoPxEth ordinary update
 
 This update adds exactly four unscoped ordinary Ethereum bindings to AutoPxEth at `0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6`: `deposit(uint256,address)`, `mint(uint256,address)`, `withdraw(uint256,address,address)`, and `redeem(uint256,address,address)`. The source contract and function entries remain inactive; only the four exact plan admissions become active in generated production. Harvest, admin, Pirex redemption-hook transfers, native-ETH helpers, and other selectors are excluded.

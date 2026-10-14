@@ -22,7 +22,7 @@ const call = (fn: DefiFunctionPolicy, value = 0n, extremes = true) => ({
 
 describe('1inch Ethereum AggregationRouterV6 isolated fixture', () => {
   it('matches the inactive source candidate, full ABI objects, exact selectors, and twelve selected methods', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v7/sources/one-inch.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/one-inch.json', 'utf8'));
     const contract = source.families[0].contracts[0];
     expect(source.families[0].familyId).toBe('one-inch');
     expect(contract).toMatchObject({ chainId: 1, address: target, status: 'inactive' });

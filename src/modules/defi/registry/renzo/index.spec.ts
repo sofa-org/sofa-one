@@ -22,7 +22,7 @@ describe('Renzo ordinary deposit/withdraw fixture', () => {
   const call = (i: number, value?: string) => ({ to: target(i), value, data: encodeFunctionData({ abi: [fns[i].abi], functionName: fns[i].functionName, args: args[i] }) });
 
   it('binds six inactive source declarations to exact fixture ABI hashes and selector-derived IDs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/renzo.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/renzo.json', 'utf8'));
     const raw = source.families[0].chains[0].contracts.flatMap((c: any) => c.functions);
     expect(source.sources.every((r: any) => Object.keys(r).sort().join(',') === 'evidence,retrievedAtUtc,sourceId,url')).toBe(true);
     expect(raw).toHaveLength(6); expect(fns).toHaveLength(6);

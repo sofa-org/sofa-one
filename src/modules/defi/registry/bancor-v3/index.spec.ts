@@ -26,7 +26,7 @@ describe('Bancor V3 source-qualified registry fixture', () => {
   });
 
   it('matches all six full pinned deployment ABI records and source-qualified inactive snapshots', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/bancor.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/bancor.json', 'utf8'));
     const raw = source.families.flatMap((family: any) => family.chains.flatMap((chain: any) => chain.contracts.flatMap((row: any) => row.functions)));
     expect(fragment.chains.map((chain) => [chain.chainId, chain.status])).toEqual([[1, 'active']]);
     expect(contract.address).toBe('0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB');

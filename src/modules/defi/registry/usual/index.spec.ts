@@ -20,7 +20,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({ to: fn
 
 describe('Usual sUSD0 Ethereum savings fixture', () => {
   it('binds exactly four literal source declarations to IDs, ABI hashes and references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/usual.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/usual.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

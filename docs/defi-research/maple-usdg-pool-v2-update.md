@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Maple syrupUSDG Pool V2 ordinary update
 
 This update adds exactly three Ethereum, scope-free ordinary bindings on syrupUSDG PoolV2 at `0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a`: `deposit(uint256,address)`, `mint(uint256,address)`, and `requestRedeem(uint256,address)`. It does not admit the SyrupRouter, wrapped-token target, redeem/withdraw completion methods, or helper/admin selectors.

@@ -20,7 +20,7 @@ const call = (fn: DefiFunctionPolicy, args: readonly unknown[] = fn.functionName
 
 describe('Swell Ethereum deposit fixture', () => {
   it('matches all four inactive source ABIs, hashes, deployment/interface references and stable IDs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/swell.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/swell.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract, abi })));

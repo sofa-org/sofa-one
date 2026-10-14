@@ -1,7 +1,7 @@
 jest.mock('../../security-events/security-event.module', () => ({ SecurityEventModule: class SecurityEventModule {} }));
 jest.mock('../../../core/openfort/openfort.service', () => ({ OpenfortService: class OpenfortService {} }));
 import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST, PRODUCTION_DEFI_APPROVALS } from './production-registry';
-import { loadCurrentProductionExpectations } from './__fixtures__/current-production-expectations';
+import { loadCatalogExpectations } from './__fixtures__/catalog-expectations';
 import { DefiCatalogService } from '../defi-catalog.service';
 import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
@@ -28,21 +28,16 @@ import { buildSparkLendRegistry } from './spark-lend';
 import { buildVenusRegistry } from './venus';
 import { buildSushiV2Registry } from './sushi-v2';
 import { buildExpansionTokenApprovalRegistry } from './expansion-token-approvals';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { buildReviewedManifest, functionAbiHash } from './defi-manifest';
-import { validateCatalogDocument } from '../catalog-tooling/catalog-generator';
-import { V6_SOURCE_IDENTITIES } from '../catalog-tooling/v6-identities';
+import { functionAbiHash } from './defi-manifest';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { executionScopeHash } from '../execution/scope';
-import { V9_SDAI_BINDINGS } from '../catalog-tooling/v9-identities';
 
 const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
 @Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }, { provide: SecurityEventService, useValue: {} }, { provide: OpenfortService, useValue: {} }], exports: [PrismaService, SecurityEventService, OpenfortService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
   it('assembles the selected catalog as exact, source-verified function capabilities', () => {
-    const expected = loadCurrentProductionExpectations(process.cwd());
+    const expected = loadCatalogExpectations(process.cwd());
     const byCapabilityId = (a: { capabilityId: string }, b: { capabilityId: string }) => a.capabilityId.localeCompare(b.capabilityId);
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST)).toBe(true);
     expect(Object.isFrozen(PRODUCTION_DEFI_MANIFEST.capabilities)).toBe(true);
@@ -116,24 +111,9 @@ describe('production DeFi registry assembly', () => {
     expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(expected.approvals);
     expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId)).size).toBe(expected.definitions);
     expect(new Set(PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => `${fn.chainId}:${fn.contract.toLowerCase()}:${toFunctionSelector(fn.signature)}`)).size).toBe(expected.definitions);
-    const v9Functions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => V9_SDAI_BINDINGS.some((binding) => binding.capabilityId === fn.capabilityId));
-    expect(v9Functions).toHaveLength(4);
-    expect(v9Functions.map((fn) => fn.capabilityId).sort()).toEqual(V9_SDAI_BINDINGS.map((binding) => binding.capabilityId).sort());
-    for (const binding of V9_SDAI_BINDINGS) {
-      const fn = v9Functions.find((candidate) => candidate.capabilityId === binding.capabilityId)!;
-      expect(fn).toMatchObject({ chainId: 1, contract: '0x83f20f44975d03b1b09e64809b757c47f942beea', functionName: binding.functionName, signature: binding.signature, status: 'active', provenance: { status: 'verified' } });
-      expect(toFunctionSelector(fn.signature)).toBe(binding.selector);
-      expect(functionAbiHash(fn)).toBe(binding.abiHash);
-      expect(fn.executionScope).toBeUndefined();
-    }
-    const frozenV8 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v8/catalog.json'), 'utf8')));
-    const v8Functions = buildReviewedManifest([frozenV8]).capabilities;
-    expect(v8Functions).toHaveLength(669);
-    for (const prior of v8Functions) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === prior.capabilityId)).toEqual(prior);
-    const pinnedV9 = buildReviewedManifest([validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v9/catalog.json'), 'utf8')))]).capabilities;
-    for (const prior of pinnedV9) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === prior.capabilityId)).toEqual(prior);
-    expect(pinnedV9.filter((fn) => fn.protocol === 'aave-v3')).toHaveLength(12);
-    expect(pinnedV9.filter((fn) => fn.protocol === 'compound-v2')).toHaveLength(22);
+    const sdaiFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'sdai-savings');
+    expect(sdaiFunctions.map((fn) => fn.functionName).sort()).toEqual(['deposit', 'mint', 'redeem', 'withdraw']);
+    expect(sdaiFunctions.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified' && fn.executionScope === undefined)).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
     const isSourceFunction = (fn: { protocol?: string }) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? '');
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter(isSourceFunction);
@@ -177,23 +157,6 @@ describe('production DeFi registry assembly', () => {
     if (pancakeWrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Expected Pancake bounded multicall scope');
     expect(pancakeWrapper.executionScope.allowedChildren).toHaveLength(8);
     expect(pancakeWrapper.executionScope.allowedChildren.every((child) => pancakeswap.some((fn) => fn.capabilityId === child.capabilityId && fn.signature === child.signature))).toBe(true);
-    const frozenV3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v3/catalog.json'), 'utf8')));
-    const oldCapabilities = buildReviewedManifest([frozenV3]).capabilities;
-    expect(oldCapabilities).toHaveLength(349);
-    for (const oldFn of oldCapabilities) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === oldFn.capabilityId)).toEqual(oldFn);
-    const frozenV5 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v5/catalog.json'), 'utf8')));
-    const v5Capabilities = buildReviewedManifest([frozenV5]).capabilities;
-    expect(v5Capabilities).toHaveLength(506);
-    for (const oldFn of v5Capabilities) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === oldFn.capabilityId)).toEqual(oldFn);
-    const v6Capabilities = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => V6_SOURCE_IDENTITIES.some((identity) => identity.capabilityId === fn.capabilityId));
-    expect(v6Capabilities).toHaveLength(134);
-    expect(v6Capabilities.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified')).toBe(true);
-    expect(v6Capabilities.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(0);
-    const v7Catalog = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v7/catalog.json'), 'utf8')));
-    const v7Manifest = buildReviewedManifest([v7Catalog]);
-    expect(v7Manifest.capabilities).toHaveLength(668);
-    expect(v7Manifest.capabilities.filter((fn) => fn.executionScope)).toHaveLength(15);
-    for (const fn of v7Manifest.capabilities) expect(PRODUCTION_DEFI_MANIFEST.capabilities.find((candidate) => candidate.capabilityId === fn.capabilityId)).toEqual(fn);
     const ensoRoot = PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)!;
     expect(ensoRoot).toMatchObject({
       status: 'active', chainId: 1, contract: ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract,
@@ -236,12 +199,8 @@ describe('production DeFi registry assembly', () => {
     await expect(policy.authorizeContractCalls([{ to: payableNpm.contract, data: payableData, value: '17' }], context(1, [payableNpm.capabilityId]))).resolves.toBeDefined();
   });
 
-  it('authorizes each of the 19 v4 source additions only under its exact grant and fixed ABI/scope', async () => {
-    const v3 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v3/catalog.json'), 'utf8')));
-    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v4/catalog.json'), 'utf8')));
-    const priorIds = new Set(buildReviewedManifest([v3]).capabilities.map((fn) => fn.capabilityId));
-    const v4Ids = new Set(buildReviewedManifest([v4]).capabilities.map((fn) => fn.capabilityId));
-    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => v4Ids.has(fn.capabilityId) && !priorIds.has(fn.capabilityId));
+  it('authorizes every Curve, Pancake V3 and Yearn source entry only under its exact grant and fixed ABI/scope', async () => {
+    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => ['curve-3pool-stableswap', 'pancakeswap-v3-position-manager', 'yearn-tokenized-strategy'].includes(fn.protocol ?? ''));
     expect(additions).toHaveLength(19);
     const curve = additions.filter((fn) => fn.protocol === 'curve-3pool-stableswap');
     const pancake = additions.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager');
@@ -366,14 +325,12 @@ describe('production DeFi registry assembly', () => {
       .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
   });
 
-  it('authorizes all 138 exact v5 additions through the assembled catalog and policy', async () => {
-    const v4 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v4/catalog.json'), 'utf8')));
-    const v5 = validateCatalogDocument(JSON.parse(readFileSync(resolve(process.cwd(), 'data/defi-catalog/v5/catalog.json'), 'utf8')));
-    const v4Ids = new Set(buildReviewedManifest([v4]).capabilities.map((fn) => fn.capabilityId));
-    const additions = buildReviewedManifest([v5]).capabilities.filter((fn) => !v4Ids.has(fn.capabilityId));
+  it('authorizes source-derived protocol entries through exact grants and the current policy', async () => {
+    const addedProtocolIds = ['ambient', 'aura', 'beefy-standard', 'camelot-v2', 'convex', 'dodo-v2', 'dolomite-router', 'etherfi', 'euler-vault', 'euler-evc', 'fluid-lending', 'fluid-vault-t1', 'kelp', 'lfj-liquidity-book', 'maverick-v2', 'moonwell', 'pendle-v3', 'quickswap-v2', 'renzo', 'rocket-pool', 'silo-vault', 'stakewise'];
+    const additions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => addedProtocolIds.includes(fn.protocol ?? ''));
     expect(additions).toHaveLength(138);
     expect(additions.some((fn) => fn.type === 'contract_call' && fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toBe(false);
-    expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(loadCurrentProductionExpectations(process.cwd()).approvals);
+    expect(PRODUCTION_DEFI_APPROVALS).toHaveLength(loadCatalogExpectations(process.cwd()).approvals);
 
     type Param = { type: string; name?: string; components?: readonly Param[] };
     const address = '0x1111111111111111111111111111111111111111';

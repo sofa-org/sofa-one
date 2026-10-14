@@ -31,7 +31,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({
 
 describe('Hashflow Ethereum RFQ router fixture', () => {
   it('binds both inactive source declarations to exact tuple ABI hashes, signatures, IDs and refs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/hashflow.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/hashflow.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

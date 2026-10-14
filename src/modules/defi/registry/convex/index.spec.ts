@@ -17,7 +17,7 @@ describe('Convex source fixture', () => {
   const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
   const manifest = buildReviewedManifest([fragment]);
   const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));
-  const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/convex.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; sourceRefs: string[]; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<{ sourceId: string; url: string }> };
+  const source = JSON.parse(readFileSync('data/defi-catalog/sources/convex.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; sourceRefs: string[]; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<{ sourceId: string; url: string }> };
   const args: Record<string, readonly unknown[]> = {
     deposit: [0n, 1n, true], 'deposit-all': [0n, true], withdraw: [0n, 1n], 'withdraw-all': [0n],
     'withdraw-and-unwrap': [1n, true], 'get-reward': [],

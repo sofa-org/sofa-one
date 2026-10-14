@@ -6,7 +6,7 @@ import { ENSO_CAPABILITIES } from './index';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../../execution/enso-identity';
 import { executionScopeHash } from '../../execution/scope';
 
-const abiFile = 'data/defi-catalog/v8/sources/enso.json';
+const abiFile = 'data/defi-catalog/sources/enso.json';
 
 describe('Enso static Weiroll candidate fixture', () => {
   it('matches the exact source-selected payable root ABI, selector, identity, and mandatory scope', () => {
@@ -50,7 +50,7 @@ describe('Enso static Weiroll candidate fixture', () => {
       .toBe('c032c8f9fa1af179fbac8f6a6a052bd711e8d4bd879bb37d6681e6704c9dc7ef');
   });
 
-  it('resolves the root and every allowed child against the current generated production manifest', () => {
+  it('resolves the root and every allowed child against the generated registry manifest', () => {
     const manifest = buildReviewedManifest([GENERATED_DEFI_REGISTRY]);
     const root = manifest.capabilities.find((candidate) => candidate.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)!;
 

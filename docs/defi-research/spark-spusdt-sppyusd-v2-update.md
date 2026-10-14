@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Spark spUSDT and spPYUSD Savings Vault V2 ordinary update
 
 This update adds exactly four unscoped ordinary Ethereum bindings to each of two user-facing Savings Vault V2 targets:

@@ -28,7 +28,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({ to: fn
 
 describe('Frax frxETH v2 Ethereum fixture', () => {
   it('binds all seven inactive source functions to full ABI hashes, IDs and references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/frax.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/frax.json', 'utf8'));
     const family = source.families[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));
     expect(family.familyId).toBe('frax');

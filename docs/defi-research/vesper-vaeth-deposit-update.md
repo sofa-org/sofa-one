@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Vesper vaETH payable deposit update
 
 This ordinary update admits exactly one Ethereum capability: payable, zero-argument `deposit()` at the vaETH pool target `0xd1c117319b3595fbc39b471ab1fd485629eb05f2`. Capability ID: `vesper-vaeth:v1:1:0xd1c117319b3595fbc39b471ab1fd485629eb05f2:deposit`. The inactive source snapshot and explicit admission are in `data/defi-catalog/updates/vesper-vaeth-deposit/`. Family/version is `vesper-vaeth` / `veth@60b621ea`.

@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Compound V2 `repayBorrowBehalf` update
 
 Inspection date: 2026-10-05. This ordinary data update admits one ERC20 CToken selector on three existing Ethereum Compound V2 markets. Pinned source and address-map roles are dated qualification, not current deployment, proxy/delegator, or implementation verification.

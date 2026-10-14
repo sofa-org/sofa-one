@@ -17,7 +17,7 @@ describe('Pendle v3 source fixture', () => {
   const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
   const manifest = buildReviewedManifest([fragment]);
   const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));
-  const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/pendle.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<Record<string, unknown>> };
+  const source = JSON.parse(readFileSync('data/defi-catalog/sources/pendle.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<Record<string, unknown>> };
   const args: Record<string, readonly unknown[]> = {
     'add-liquidity-dual-sy-pt': [B, C, 1n, 2n, 0n], 'remove-liquidity-dual-sy-pt': [B, C, 1n, 0n, 0n],
     'mint-py-from-sy': [B, C, 1n, 0n], 'redeem-py-to-sy': [B, C, 1n, 0n],

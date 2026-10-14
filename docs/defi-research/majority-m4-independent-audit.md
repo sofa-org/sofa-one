@@ -1,4 +1,6 @@
-# M4 Independent Offline Audit
+# Historical M4 Independent Offline Audit
+
+> Historical evidence only. The version-specific verifier and full catalog snapshots described here have been removed. The reports below do not describe current production catalog verification.
 
 ## Current result: source/catalog verification valid; market objective blocked
 
@@ -28,7 +30,7 @@ Compound V2 source ID 114 remains identity-only; its captured `BORROW_INTEREST` 
 
 The V4 catalog batch is not a market-coverage completion. Product-chain enumerations, identity crosswalks, full core workflows, and product-instance populations are still incomplete. The Yearn record is a historical candidate; the bounded 2026-10-04 00:26Z yDaemon request returned HTTP 200 but did not contain that address, so current membership is unresolved and no retirement conclusion is drawn. No deployment-bytecode/runtime identity, state, liquidity, funded execution, user operation, or financial safety is proven. Existing financial-argument freedoms and independent approvals remain unchanged.
 
-## Reproduction
+## Historical reproduction commands (removed)
 
 ```sh
 # Default follows the explicit production catalog selection: V4.

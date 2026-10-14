@@ -52,7 +52,7 @@ function call(fn: DefiFunctionPolicy, values: readonly unknown[] = args(fn), val
 
 describe('Exactly OP Mainnet source-qualified fixture', () => {
   it('binds all 22 inactive source declarations, exact ABI hashes, target provenance, IDs, and return units', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/exactly.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/exactly.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract: contract.address, abi })));

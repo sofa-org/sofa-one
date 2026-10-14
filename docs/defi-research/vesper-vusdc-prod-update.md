@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Vesper production vUSDC deposit and withdraw update
 
 This ordinary update admits exactly two Ethereum capabilities on Vesper's production vUSDC Grow-pool target `0x0c49066c0808ee8c673553b7cbd99bcc9abf113d`:

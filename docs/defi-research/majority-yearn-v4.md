@@ -48,7 +48,7 @@ not prove retirement. No Base or other-chain instance is inferred.
 
 ## Fixed ABI candidate
 
-`data/defi-catalog/v4/sources/yearn.json` contains six exact, nonpayable
+`data/defi-catalog/sources/yearn.json` contains six exact, nonpayable
 TokenizedStrategy functions, with both overloads retained as separate ABI
 entries: `deposit(uint256,address)`, `mint(uint256,address)`,
 `withdraw(uint256,address,address)`,

@@ -22,7 +22,7 @@ const call = (fn: DefiFunctionPolicy, amount = max, value?: bigint) => ({
 
 describe('Lista BSC StakeManager fixture', () => {
   it('matches all three inactive source ABIs, hashes, IDs and references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/lista.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/lista.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Ankr ETH staking update
 
 This ordinary update adds exactly one unscoped payable Ethereum binding: `stakeAndClaimAethC()` on the documented GlobalPool proxy role at `0x84db6ee82b7cf3b47e8f19270abde5718b936670`. Stable ID: `ankr-eth-global-pool:r46:1:0x84db6ee82b7cf3b47e8f19270abde5718b936670:stake-and-claim-aeth-c`. The deprecated `stake()` alias, standalone claim, unstake/withdraw, validator/admin, and every other function are excluded.

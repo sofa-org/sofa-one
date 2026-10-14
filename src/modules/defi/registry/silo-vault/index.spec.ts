@@ -20,7 +20,7 @@ describe('Silo WETH/USDC market vault fixture', () => {
   const call = (v: number, i: number, values = args[i]) => ({ to: vaults[v], data: encodeFunctionData({ abi: [fn(v, i).abi], functionName: fn(v, i).functionName, args: values }) });
 
   it('binds all twelve inactive source functions to full fixture ABIs, source records, IDs and unique selectors', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/silo.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/silo.json', 'utf8'));
     const rawContracts = source.families[0].chains[0].contracts; const allRaw = rawContracts.flatMap((c: any) => c.functions);
     const allFns = contracts.flatMap(c => c.functions);
     expect(rawContracts).toHaveLength(2); expect(allRaw).toHaveLength(12); expect(allFns).toHaveLength(12);

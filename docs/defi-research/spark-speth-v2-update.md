@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Spark spETH Vault V2 ordinary update
 
 This update adds exactly four unscoped ordinary Ethereum bindings to the spETH user-facing Spark Vault V2 target `0xfe6eb3b609a7c8352a241f7f3a21cea4e9209b8f`: `deposit(uint256,address)`, `mint(uint256,address)`, `withdraw(uint256,address,address)`, and `redeem(uint256,address,address)`. It excludes native-ETH helpers/wrapping, referral overloads, permits, admin, route/strategy and cross-chain methods. In particular, the spETH product name does not make these vault methods payable or imply that they wrap ETH.

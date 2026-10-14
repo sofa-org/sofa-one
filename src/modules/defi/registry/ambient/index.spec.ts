@@ -28,7 +28,7 @@ describe('Ambient cold-path registry fixture', () => {
   const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));
 
   it('binds the source candidate, full ABI, closed scope, target and stable capability identity', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/ambient.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/ambient.json', 'utf8'));
     const raw = source.families[0].chains[0].contracts[0].functions[0];
     expect(source.sources.map((record: { sourceId: string }) => record.sourceId)).toContain(raw.provenance.sourceRef);
     expect(raw.status).toBe('inactive');

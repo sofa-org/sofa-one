@@ -6,7 +6,7 @@ Standalone Ethereum WETH-branch test fixture for seven BorrowerOperations and th
 ## Files and authority
 - `index.ts`: reviewed active test-only fragment with exact `liquity-v2:v2-weth:1:<lowercase-target>:<operation>` IDs.
 - `index.spec.ts`: ten-function inactive-source correspondence and actual catalog/policy authorization matrix.
-- `data/defi-catalog/v6/sources/liquity.json`: inactive candidates and pinned source/address provenance.
+- `data/defi-catalog/sources/liquity.json`: inactive candidates and pinned source/address provenance.
 - `docs/defi-research/expansion55-liquity-v6.md`: scope and limitations.
 
 ## Boundaries

@@ -16,7 +16,7 @@ describe('Dolomite deposit/withdraw router fixture', () => {
   const args: any[][] = [[1n, 2n, 3n, maxUint256, 1], [1n, 2n, 0], [1n, 2n, 3n, maxUint256, 1], [1n, 2n, 3n, maxUint256, 3], [1n, 2n, maxUint256, 3], [1n, 2n, 3n, maxUint256, 3]];
   const call = (i: number, value?: string) => ({ to: target, value, data: encodeFunctionData({ abi: [fns[i].abi], functionName: fns[i].functionName, args: args[i] }) });
   it('matches all six source ABI candidates and stable selectors/IDs', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/dolomite.json', 'utf8')); const raw = source.families[0].chains[0].contracts[0].functions;
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/dolomite.json', 'utf8')); const raw = source.families[0].chains[0].contracts[0].functions;
     expect(source.sources).toHaveLength(4); expect(source.sources.every((r: any) => Object.keys(r).sort().join(',') === 'evidence,retrievedAtUtc,sourceId,url')).toBe(true);
     expect(raw).toHaveLength(6); expect(fns).toHaveLength(6);
     raw.forEach((r: any, i: number) => { expect(r.status).toBe('inactive'); expect(source.sources.some((s: any) => s.sourceId === r.provenance.sourceRef)).toBe(true); expect(r.abi).toEqual(fns[i].abi); expect(functionAbiHash({ abi: r.abi })).toBe(functionAbiHash(fns[i])); });

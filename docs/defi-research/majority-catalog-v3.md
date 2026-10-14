@@ -2,11 +2,12 @@
 
 The M3 source-candidate catalog and explicit versioned bundle metadata are published in code. Oracle Gate 3 passed on attempt 2/3 after resolving R1, with no new material finding; the earlier attempt-1 block is historical. The parent authorized the local M3 commit and owns committing it; no hash is claimed here. Publication does not assign grants to any user/API key or prove deployment, funding, market readiness, or complete workflow availability. Existing grants remain unchanged; profile adoption remains separate explicit user selection and grant replacement.
 
-## Fixed inputs and result
+## Historical inputs and result
 
-- Source snapshot: `data/defi-catalog/v3/sources/workflow-extensions.json` (retrieved `2026-10-04` only).
-- Admission snapshot: `data/defi-catalog/v3/admissions.json`, bound to canonical source SHA-256 `aa0e40024ff15409ce90c3bd16ecbf7cb69a91eff91d690d86a11f00ec078299`.
-- Output: `data/defi-catalog/v3/catalog.json`; produced only by the fixed offline `assemble --input data/defi-catalog/v3/catalog.json` command and rendered to `src/modules/defi/registry/generated/production-catalog.ts` only by the explicit v3 `generate` command.
+Versioned full catalog snapshots, admission manifests, and assembly plans have since been removed in favor of one current offline catalog pipeline. The following historical counts describe the original M3 review, not files or operations in the current maintenance workflow.
+
+- Source snapshot: `data/defi-catalog/sources/workflow-extensions.json` (retrieved `2026-10-04` only).
+- Source evidence is retained at `data/defi-catalog/sources/workflow-extensions.json`; the historical admission snapshot and full catalog output are no longer maintained.
 - The source records 69 ABI entries over nine independently evidenced contract deployments: seven Uniswap V3 Position Manager deployments (Ethereum, Optimism, BNB Chain, Polygon, Monad, Base, Arbitrum) and Morpho Blue on Ethereum and Base.
 - The assembled catalog contains 349 function definitions: all 315 v2 definitions are unchanged, with 34 additional definitions. The repeated five existing Position Manager entries on seven deployments (35 ABI records) merge against the existing exact IDs rather than replacing their original metadata. Approval count stays at 23; v3 adds zero approvals.
 - The 13 new scoped definitions are seven `multicall(bytes[])` wrappers and six Morpho callback-bearing functions. Scope hashes use the shared strict execution-scope canonicalizer.

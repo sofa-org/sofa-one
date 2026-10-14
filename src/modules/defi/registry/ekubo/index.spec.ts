@@ -34,7 +34,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint) => ({ to: fn.contract, dat
 
 describe('Ekubo Ethereum Positions LP fixture', () => {
   it('binds six inactive source ABIs, outputs, selector-qualified IDs and source references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/ekubo.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/ekubo.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

@@ -30,7 +30,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint, args = argsFor(fn)) => ({ 
 
 describe('Ajna Ethereum rETH/DAI ERC20 pool fixture', () => {
   it('binds six inactive source declarations to exact ABI hashes, stable IDs and strict resolved references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/ajna.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/ajna.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

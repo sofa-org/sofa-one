@@ -36,7 +36,7 @@ const context = (grants: string[] = [], chainId = 1): DefiExecutionContext => ({
 
 describe('Symbiotic Ethereum vault fixed-selector fixture', () => {
   it('binds exactly five inactive source declarations to fixture ABI hashes, stable IDs, and provenance references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/symbiotic.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/symbiotic.json', 'utf8'));
     const family = source.families[0];
     const rawContracts = family.contracts;
     const rawFunctions = rawContracts.flatMap((contract: any) => contract.abiFunctions.map((abi: any) => ({ contract, abi })));

@@ -21,7 +21,7 @@ const call = (fn: DefiFunctionPolicy, value?: bigint, args = argsFor(fn)) => ({ 
 
 describe('Lombard Ethereum LBTC proxy fixture', () => {
   it('binds two inactive source declarations to exact ABI hashes, stable IDs and strict resolved references', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v6/sources/lombard.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/lombard.json', 'utf8'));
     const family = source.families[0];
     const contract = family.contracts[0];
     const sourceIds = new Set(source.sources.map((record: any) => record.sourceId));

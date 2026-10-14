@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Aave V3 Arbitrum and Polygon aToken repayment update
 
 Inspection date: 2026-10-05. This bounded ordinary data update adds the already-qualified `repayWithATokens` method to two existing Aave V3 main Pool role targets. It records dated public source roles and a pinned shared declaration/body, not live deployment or financial-state verification.

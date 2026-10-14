@@ -17,7 +17,7 @@ describe('StakeWise source fixture', () => {
   const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
   const manifest = buildReviewedManifest([fragment]);
   const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(fragment.chains, prisma as never, manifest));
-  const source = JSON.parse(readFileSync('data/defi-catalog/v5/sources/stakewise.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; sourceRefs: string[]; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<{ sourceId: string; url: string }> };
+  const source = JSON.parse(readFileSync('data/defi-catalog/sources/stakewise.json', 'utf8')) as { families: Array<{ familyId: string; familyVersion: string; contracts: Array<{ chainId: number; address: string; status: string; sourceRefs: string[]; abiFunctions: DefiFunctionPolicy['abi'][] }> }>; sources: Array<{ sourceId: string; url: string }> };
   const args: Record<string, readonly unknown[]> = {
     deposit: [A, B], 'enter-exit-queue': [1n, A], 'claim-exited-assets': [1n, 2n, 3n],
   };

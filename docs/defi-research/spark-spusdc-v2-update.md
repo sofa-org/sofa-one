@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Spark spUSDC Savings Vault V2 ordinary update
 
 This update adds exactly four unscoped ordinary Ethereum bindings on the spUSDC Spark Savings Vault V2 target `0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d`: `deposit(uint256,address)`, `mint(uint256,address)`, `withdraw(uint256,address,address)`, and `redeem(uint256,address,address)`. It excludes referral overloads, permit/helper/admin/strategy/cross-chain methods, and every other target. The selected ABI entries are the exact plain declarations from the retained full implementation ABI, not generalized ERC-4626 guesses.

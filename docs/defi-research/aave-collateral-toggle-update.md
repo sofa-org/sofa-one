@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Aave V3 five-chain collateral-toggle update
 
 Inspection date: 2026-10-05. This ordinary catalog update adds one exact selector to five existing Aave V3 main Pool roles. It is based on dated public role records and pinned interface/body sources, not live deployment or financial-state verification.

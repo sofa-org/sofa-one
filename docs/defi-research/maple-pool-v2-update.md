@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Maple Pool V2 ordinary catalog update
 
 This update adds six explicit, ordinary, scope-free Ethereum bindings: `deposit(uint256,address)`, `mint(uint256,address)`, and `requestRedeem(uint256,address)` on syrupUSDC (`0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b`) and syrupUSDT (`0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d`) PoolV2 targets. All are nonpayable and retain the exact named ABI fields and outputs from the verified source.

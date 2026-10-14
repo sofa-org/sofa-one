@@ -7,10 +7,9 @@ import { DefiCatalogService } from '../../defi-catalog.service';
 import { DefiPolicyService } from '../../defi-policy.service';
 import type { DefiExecutionContext, DefiInteraction, DefiFunctionPolicy } from '../../defi.types';
 import { buildReviewedManifest, functionAbiHash } from '../defi-manifest';
-import { canonicalSourceSha256, validateCatalogDocument } from '../../catalog-tooling/catalog-generator';
-import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCurrentProductionExpectations } from '../__fixtures__/current-production-expectations';
-import { executionScopeHash } from '../../execution/scope';
+import { canonicalSourceSha256 } from '../../catalog-tooling/catalog-generator';
+import { PRODUCTION_DEFI_MANIFEST, PRODUCTION_DEFI_CATALOG } from '../production-registry';
+import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 import { buildSdaiSavingsRegistry, SDAI_SAVINGS_CAPABILITIES } from './index';
 
 const CONTRACT = '0x83f20f44975d03b1b09e64809b757c47f942beea';
@@ -20,15 +19,16 @@ const API_KEY_ID = '00000000-0000-4000-8000-000000000001';
 const OWNER = '0x0000000000000000000000000000000000000002';
 const OTHER = '0x0000000000000000000000000000000000000003';
 const RECIPIENT = '0x0000000000000000000000000000000000000004';
-const sourcePath = 'data/defi-catalog/v9/sources/sdai-savings.json';
+const sourcePath = 'data/defi-catalog/sources/sdai-savings.json';
 const source = JSON.parse(readFileSync(sourcePath, 'utf8'));
 const sourceFamily = source.families.find((family: any) => family.familyId === 'sdai-savings');
 const contractSource = sourceFamily.contracts[0];
 const builder = buildSdaiSavingsRegistry();
-const baselineIds = PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId);
+const catalogCapabilityIds = PRODUCTION_DEFI_MANIFEST.capabilities.map((fn) => fn.capabilityId);
 const candidateIds = SDAI_SAVINGS_CAPABILITIES.map((fn) => fn.capabilityId);
-// Use the pinned historical v8 artifact, not subtraction from an evolving current production catalog.
-const historicalV8Projection = validateCatalogDocument(JSON.parse(readFileSync('data/defi-catalog/v8/catalog.json', 'utf8'))).chains;
+const catalogWithoutSdai = { chains: PRODUCTION_DEFI_CATALOG.map((chain) => ({ ...chain,
+  contracts: chain.contracts.map((contract) => ({ ...contract, functions: contract.functions.filter((fn) => fn.protocol !== 'sdai-savings') }))
+    .filter((contract) => contract.functions.length > 0) })).filter((chain) => chain.contracts.length > 0) };
 
 function argsFor(fn: DefiFunctionPolicy, maxValues = false): readonly unknown[] {
   const amount = maxValues ? MAX : 0n;
@@ -42,8 +42,8 @@ function interaction(fn: DefiFunctionPolicy, args = argsFor(fn)): DefiInteractio
 
 function makePolicy(pausedScopeKeys: string[] = [], events = { record: jest.fn().mockResolvedValue(undefined) }) {
   const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys }) } };
-  const manifest = buildReviewedManifest([{ chains: historicalV8Projection }, builder]);
-  const catalog = new DefiCatalogService(manifest.chains, prisma as unknown as PrismaService, manifest);
+  const manifest = PRODUCTION_DEFI_MANIFEST;
+  const catalog = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as unknown as PrismaService, manifest);
   return { policy: new DefiPolicyService(prisma as unknown as PrismaService, events as unknown as SecurityEventService, catalog), prisma, manifest, events };
 }
 
@@ -110,33 +110,19 @@ describe('sDAI no-referral isolated registry fixture', () => {
     expect(sourceFamily.familyVersion).toBe('no-referral-v1@66587976');
   });
 
-  it('uses pinned v8 directly, then adds only the four sDAI methods', () => {
-    expect(historicalV8Projection.flatMap((chain) => chain.contracts).some((entry) => entry.address.toLowerCase() === CONTRACT)).toBe(false);
+  it('keeps the four sDAI methods bound to their stable identities in the catalog input', () => {
     expect(candidateIds).toEqual([
       `sdai-savings:no-referral-v1:1:${CONTRACT}:deposit`,
       `sdai-savings:no-referral-v1:1:${CONTRACT}:mint`,
       `sdai-savings:no-referral-v1:1:${CONTRACT}:withdraw`,
       `sdai-savings:no-referral-v1:1:${CONTRACT}:redeem`,
     ]);
-    expect(candidateIds.every((id) => baselineIds.includes(id))).toBe(true);
-    const projectedIds = historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId)));
+    expect(candidateIds.every((id) => catalogCapabilityIds.includes(id))).toBe(true);
+    const projectedIds = catalogWithoutSdai.chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions.map((fn) => fn.capabilityId)));
     expect(candidateIds.some((id) => projectedIds.includes(id))).toBe(false);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(loadCurrentProductionExpectations(process.cwd()).definitions);
-    const pinnedV8 = buildReviewedManifest([JSON.parse(readFileSync('data/defi-catalog/v8/catalog.json', 'utf8'))]);
-    const projectedV8 = buildReviewedManifest([{ chains: historicalV8Projection }]);
-    expect(pinnedV8.capabilities).toHaveLength(669);
-    expect(projectedV8.capabilities).toHaveLength(669);
-    expect(projectedV8.capabilities).toEqual(pinnedV8.capabilities);
-    expect(historicalV8Projection.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions))).toHaveLength(669);
-    const combined = buildReviewedManifest([{ chains: historicalV8Projection }, builder]);
-    expect(combined.capabilities).toHaveLength(673);
-    const pinnedV9 = buildReviewedManifest([JSON.parse(readFileSync('data/defi-catalog/v9/catalog.json', 'utf8'))]);
-    for (const original of pinnedV9.capabilities.filter((fn) => !candidateIds.includes(fn.capabilityId))) {
-      expect(combined.capabilities.find((fn) => fn.capabilityId === original.capabilityId)).toEqual(original);
-    }
-    const originalScopeHashes = pinnedV8.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
-    const fixtureScopeHashes = combined.capabilities.filter((fn) => fn.executionScope).map((fn) => executionScopeHash(fn.executionScope!)).sort();
-    expect(fixtureScopeHashes).toEqual(originalScopeHashes);
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(loadCatalogExpectations(process.cwd()).definitions);
+    expect(buildReviewedManifest([catalogWithoutSdai]).capabilities.map((fn) => fn.capabilityId).sort()).toEqual(projectedIds.sort());
+    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'sdai-savings').map((fn) => fn.capabilityId).sort()).toEqual(candidateIds.sort());
   });
 });
 

@@ -4,7 +4,7 @@
 
 ## Bounded identity
 
-Ethereum chain 1 router `0xB098881c587f623FAC85eAe60809bEE7A174CeE7`, identified in verified Etherscan source as `BopAmmRouter`. The only selected entrypoint is payable `swapWithAllowance(address,address,uint256,uint256,address,uint256,uint256)`, selector `0xa2e6fd72`, returning `uint256 amountOut`. Its exact compiler ABI is copied into `data/defi-catalog/v7/sources/bebop.json`. Full router ABI SHA-256: `c0966bf4c1d9adb707b0eb4f42793c5374a4c0fcdb9d8328c99953108baec609`; selected function ABI identity: `0x5a53829938a28226220683aed1235bb83c74de4aedb3b88b65e17e3c21fb231f`.
+Ethereum chain 1 router `0xB098881c587f623FAC85eAe60809bEE7A174CeE7`, identified in verified Etherscan source as `BopAmmRouter`. The only selected entrypoint is payable `swapWithAllowance(address,address,uint256,uint256,address,uint256,uint256)`, selector `0xa2e6fd72`, returning `uint256 amountOut`. Its exact compiler ABI is copied into `data/defi-catalog/sources/bebop.json`. Full router ABI SHA-256: `c0966bf4c1d9adb707b0eb4f42793c5374a4c0fcdb9d8328c99953108baec609`; selected function ABI identity: `0x5a53829938a28226220683aed1235bb83c74de4aedb3b88b65e17e3c21fb231f`.
 
 ## Evidence and scope limits
 

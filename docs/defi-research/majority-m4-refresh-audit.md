@@ -1,8 +1,12 @@
-# M4 offline catalog refresh audit
+# Historical M4 offline catalog refresh audit
+
+> Historical record only. The refresh-audit utility, versioned full catalogs, plans, and profiles described below are no longer part of the repository workflow. Current maintenance uses only `data/defi-catalog/catalog.json` with `npm run defi:catalog:generate`, `check`, and `diff`; the original versioned inputs have been removed.
 
 ## Purpose and boundary
 
-`src/modules/defi/catalog-tooling/refresh-audit.ts` compares fully parsed static catalog documents and reports whether a proposal is unchanged, needs explicit review, or reuses/changing existing authority under the same ID and is blocked. It reuses the strict catalog parser and reviewed-manifest/scope validation. It does not regenerate, publish, write, mutate grants, fetch network data, or establish market coverage. The CLI accepts only repository-owned fixed `data/defi-catalog/v1..v4/catalog.json` paths; it has no URL, traversal, symlink, output-path, or write mode. `--check-current` derives the selected version from the actual `package.json` `defi:catalog:check` command using a strict fixed v1-v4 selector; it never chooses v4 just because a v4 file exists. Pure audit functions accept object fixtures for adversarial tests; CLI input remains path constrained.
+At the time of the M4 review, `src/modules/defi/catalog-tooling/refresh-audit.ts` compared versioned static catalog documents. It did not regenerate, publish, write, mutate grants, fetch network data, or establish market coverage. That version-specific utility has since been removed.
+
+The following commands are historical examples and are no longer runnable:
 
 ```sh
 # Self-check the current v4 catalog and its twelve literal production profiles

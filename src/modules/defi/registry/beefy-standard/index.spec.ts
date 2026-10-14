@@ -20,7 +20,7 @@ describe('Beefy standard source fixture', () => {
   const call = (fn: DefiFunctionPolicy, args: readonly unknown[] = [], value?: string) => ({ to: fn.contract, data: encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: args as never }), value });
   const eurc = '0x01F1A592B0b757B2931bbcCf28227cdC1e892dde';
   const lcap = '0x028baCa249B33d24FC32ac01d6531F6be0061c8E';
-  const source = JSON.parse(readFileSync(join(process.cwd(), 'data/defi-catalog/v5/sources/beefy.json'), 'utf8')) as {
+  const source = JSON.parse(readFileSync(join(process.cwd(), 'data/defi-catalog/sources/beefy.json'), 'utf8')) as {
     families: Array<{ contracts: Array<{ chainId: number; address: string; abiFunctions: Array<Record<string, unknown>> }> }>;
   };
 

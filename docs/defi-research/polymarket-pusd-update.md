@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Polymarket pUSD wrap implementation review
 
 Status: restricted catalog implementation activated in the generated production registry, with user consent to Lane E semantics and Oracle admission approval. This records static admission only, not funded execution or a live RPC verification.

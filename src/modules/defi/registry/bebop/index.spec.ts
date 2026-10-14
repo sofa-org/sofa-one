@@ -19,7 +19,7 @@ const call = (data: `0x${string}` = encodeFunctionData({ abi: [fn.abi], function
 
 describe('Bebop BOP AMM isolated fixture', () => {
   it('pins inactive source candidate and exact selected full-ABI function', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v7/sources/bebop.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/bebop.json', 'utf8'));
     const contract = source.families[0].contracts[0];
     expect(source.families[0].familyId).toBe('bebop');
     expect(contract).toMatchObject({ chainId: 1, address: '0xB098881c587f623FAC85eAe60809bEE7A174CeE7', status: 'inactive' });

@@ -1,3 +1,5 @@
+> Historical research record. The versioned catalogs, update plans, and update assembler referenced below have been removed. Paths and digests are preserved as original provenance, but these reports are not reproducible from the current single-catalog workflow.
+
 # Compound Comet USDC delegated selectors
 
 Inspection date: 2026-10-05. This source-qualified ordinary-method update records two additional ABI declarations for Ethereum Comet USDC at `0xc3d688b66703497daa19211eedff47f25384cdc3`. It does not certify deployed/runtime identity or financial state.

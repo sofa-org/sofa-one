@@ -25,7 +25,7 @@ const call = (fn: DefiFunctionPolicy, value = 0n, extremes = true) => ({ to: fn.
 
 describe('0x Ethereum Native Orders isolated fixture', () => {
   it('matches the pinned inactive source candidate, full ABI identity, selectors, and exactly eight methods', () => {
-    const source = JSON.parse(readFileSync('data/defi-catalog/v7/sources/zero-x.json', 'utf8'));
+    const source = JSON.parse(readFileSync('data/defi-catalog/sources/zero-x.json', 'utf8'));
     const contract = source.families[0].contracts[0];
     expect(source.families[0].familyId).toBe('zero-x');
     expect(contract).toMatchObject({ chainId: 1, address: target, status: 'inactive' });
