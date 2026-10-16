@@ -6,6 +6,8 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 ## Directory Map
 - `Landing.tsx` — `/` landing page; product pitch, public navigation, onboarding steps, feature chips, CTAs to `/sign-in` and `/dashboard/docs`.
 - `Protocols.tsx` — unauthenticated `/protocols` directory with search and official-site links; `supported-protocols.ts` keeps its canonical display dataset separate from the backend registry.
+  - The directory includes ApeSwap, BabySwap, Biswap, Dfyn, Resolv, ShibaSwap and WOOFi alongside the existing canonical SushiSwap/Uniswap/Frax entries; versions do not create duplicate product cards. KyberSwap remains excluded.
+  - BabySwap links to archived official deployment documentation because its former live site serves a lander; Dfyn links to official contract documentation (direct availability could not be confirmed). The directory is informational, not an assurance of live website or protocol availability. Cards allow shrinking so long reference URLs truncate without mobile overflow.
 - `Pricing.tsx` — public `/pricing` page with links to the protocol directory and sign-in.
 - `SignIn.tsx` — `/sign-in/*` auth shell; responsive split layout (brand panel + form panel) that lazy-loads `AuthFormPanel`.
 - `EmailOtpForm.tsx` — the actual Openfort email-OTP form (request code → verify code → redirect); rendered inside `AuthFormPanel`'s provider/guard stack.

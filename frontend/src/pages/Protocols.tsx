@@ -62,7 +62,7 @@ export default function ProtocolsPage() {
             {filteredProtocols.map((protocol) => (
               <article
                 key={protocol.name}
-                className="group flex min-h-32 items-center justify-between gap-4 rounded-2xl border border-brand-border bg-white/80 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-accent/50 hover:shadow-md"
+                className="group flex min-h-32 min-w-0 items-center justify-between gap-4 rounded-2xl border border-brand-border bg-white/80 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-accent/50 hover:shadow-md"
               >
                 <div className="min-w-0">
                   <h2 className="font-serif text-xl font-medium text-brand-text">{protocol.name}</h2>
