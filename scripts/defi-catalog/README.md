@@ -24,3 +24,20 @@ Optionally run `npm run defi:catalog:diff` to review catalog changes. `generate`
 These commands are offline and make no network, RPC, or database calls. Profiles do not grant capabilities, expand effective permissions, or prove a complete workflow.
 
 Catalog admission records deployment-source and ABI-binding evidence. It does not establish deployed runtime identity, funding, balances, liquidity, successful execution, complete workflows, or financial safety. Preserve canonical ABI decoding, authorization, pause checks, final rechecks, and signing/execution boundaries; catalog membership does not bypass any independent control.
+
+## Router additions reviewed 2026-10-16
+
+Ethereum mainnet (`chainId: 1`) now includes these exact deployments:
+
+| Protocol | Router | Active functions | Evidence |
+| --- | --- | --- | --- |
+| `uniswap-v2` | `0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D` | 14 | [Official deployments](https://developers.uniswap.org/docs/protocols/v2/deployments), [deployment/source binding](https://github.com/Uniswap/docs/blob/1c7597d73be0e9a3a4e44aa75b8fb212b40ea136/archive/docs/contracts/v2/reference/smart-contracts/06-router02.md), [pinned Router02 source](https://github.com/Uniswap/v2-periphery/blob/69617118cda519dab608898d62aaa79877a61004/contracts/UniswapV2Router02.sol), [published ABI](https://unpkg.com/@uniswap/v2-periphery@1.1.0-beta.0/build/UniswapV2Router02.json) |
+| `fraxswap-v2` | `0xC14d550632db8592D1243Edc8B95b0Ad06703867` | 10 | [Official deployments](https://docs.frax.finance/fraxswap/fraxswap-contract-addresses), [address-bound verified source/ABI](https://etherscan.io/address/0xC14d550632db8592D1243Edc8B95b0Ad06703867#code), [pinned router source](https://github.com/FraxFinance/frax-solidity/blob/9ec3e9cebe52de9cbe623efe62f0c3ee997a0792/src/hardhat/contracts/Fraxswap/periphery/FraxswapRouter.sol) |
+
+Both admit the six ordinary exact-input/exact-output token/ETH swaps and four ordinary token/token or token/ETH add/remove-liquidity functions. Uniswap additionally admits three fee-on-transfer swap variants and `removeLiquidityETHSupportingFeeOnTransferTokens`. Fraxswap's fee-on-transfer variants are outside this admission; its ABI was bound independently, not copied from Uniswap.
+
+Permit/signature entry points are excluded from both additions. Read-only getters/quotes do not add transaction capabilities or a read API. Fraxswap's state-changing TWAMM quote helpers and separate opaque Multihop router are also excluded; ordinary swaps/liquidity can still settle existing pool virtual orders, but these capabilities do not create long-term orders. Neither addition admits arbitrary `execute`/`multicall` surfaces.
+
+These are direct router deployments, not proxy admissions. Uniswap's published implementation and router interfaces matched the pinned source; Fraxswap's verified router body matched the pinned official source after newline normalization. No live bytecode or execution attestation is implied.
+
+The dashboard's catalog metadata exposes these functions through the existing catalog service. Custom API keys must select the exact capability IDs; `all` mode includes active, unpaused additions dynamically. Token/LP approvals, balances, gas, liquidity, slippage, recipient and deadline remain caller responsibilities subject to independent policies. Payable functions can spend native ETH; nonpayable functions still reject nonzero value. Fee-on-transfer tokens have additional tax/nonstandard-behavior risk.
