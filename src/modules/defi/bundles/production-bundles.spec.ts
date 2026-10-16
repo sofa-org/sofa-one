@@ -41,7 +41,7 @@ describe('current production profiles', () => {
   it('matches the single checked-in catalog and fingerprints every literal metadata profile', () => {
     const document = JSON.parse(readFileSync('data/defi-catalog/catalog.json', 'utf8')) as { chains: unknown };
     expect(document.chains).toEqual(GENERATED_DEFI_REGISTRY.chains);
-    expect(flat).toHaveLength(793);
+    expect(flat).toHaveLength(797);
     expect(flat.filter((fn) => fn.functionName === 'approve' && fn.signature === 'approve(address,uint256)')).toHaveLength(23);
     expect(flat.filter((fn) => fn.executionScope)).toHaveLength(17);
     expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
