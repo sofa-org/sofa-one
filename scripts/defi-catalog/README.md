@@ -41,3 +41,12 @@ Permit/signature entry points are excluded from both additions. Read-only getter
 These are direct router deployments, not proxy admissions. Uniswap's published implementation and router interfaces matched the pinned source; Fraxswap's verified router body matched the pinned official source after newline normalization. No live bytecode or execution attestation is implied.
 
 The dashboard's catalog metadata exposes these functions through the existing catalog service. Custom API keys must select the exact capability IDs; `all` mode includes active, unpaused additions dynamically. Token/LP approvals, balances, gas, liquidity, slippage, recipient and deadline remain caller responsibilities subject to independent policies. Payable functions can spend native ETH; nonpayable functions still reject nonzero value. Fee-on-transfer tokens have additional tax/nonstandard-behavior risk.
+
+## ShibaSwap V1 addition reviewed 2026-10-16
+
+Ethereum mainnet (`chainId: 1`) admits 14 ordinary swap/liquidity functions at the exact ShibaSwap V1 router [`0x03f7724180AA6b939894B5Ca4314783B0b36b329`](https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code), protocol ID `shibaswap-v1`. The [official deployment mapping](https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address) was retrieved through its search index because direct requests returned HTTP 530; the exact Ethereum explorer independently corroborates attribution and supplies the verified deployment ABI/source. No generic fork ABI was substituted.
+
+The reproducible evidence, full ABI and 24-function review inventory are in `data/defi-catalog/sources/shibaswap-v1-router.json`: nine explicit swaps and five non-permit liquidity actions are active; seven getters/quotes and three permit/signature variants are excluded. Constructors and `receive` create no capabilities. This is the direct V1 router, not a proxy or the separate V2 deployment.
+
+Four payable functions can spend native ETH. Fee-on-transfer variants retain tax/accounting risk: supporting token/ETH removal forwards the router's entire token balance, and supporting token-to-ETH swaps unwrap its entire WETH balance. Removal minimums do not guarantee net post-tax tokens at the recipient. Paths, recipient, amounts, minimums, deadlines, token/LP allowances and financial outcomes remain caller responsibilities under independent controls. `all` mode dynamically includes active, unpaused functions; custom keys must select exact IDs. Admission does not attest current bytecode, funding, liquidity or execution.
+
