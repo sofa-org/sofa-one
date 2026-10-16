@@ -1,0 +1,3285 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+  "protocol": "resolv-wstusr",
+  "contractName": "WstUSR via TransparentUpgradeableProxy",
+  "reviewedAt": "2026-10-16",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md",
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+    "sourceType": "official Resolv Ethereum deployment table, independently corroborated by exact-address proxy verification",
+    "evidence": "Official Smart Contracts table identifies the exact Ethereum wstUSR proxy and separately identifies the stUSR token. This is wstUSR, not the unrelated stRESOLV governance-token staking contract. Etherscan and Sourcify identify TransparentUpgradeableProxy and report the same applicable WstUSR implementation.",
+    "corroboratingRefs": [
+      "https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code",
+      "https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all",
+      "https://docs.resolv.xyz/litepaper/using-resolv/usr/stake.md"
+    ],
+    "deploymentTransaction": "0xc12811c27477bb310280482a19974a3448d9f3bf725ceeec4f14802d63d4733a",
+    "deploymentBlock": "20577431",
+    "deployer": "0x8729dAE4370A1cf21F28c95F9E736E69995358BC",
+    "proxyType": "TransparentUpgradeableProxy / EIP-1967",
+    "reportedProxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x4d021a0949086d156746c6DFE9fA8d121A090279",
+          "name": "WstUSR"
+        }
+      ]
+    },
+    "implementation": "0x4d021a0949086d156746c6DFE9fA8d121A090279",
+    "initialImplementation": "0x6Ed5485D079d7f0cfa8E395499B3C01A6C359CC0",
+    "initialStUSR": "0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4",
+    "documentedUSR": "0x66a1e37c9b0eaddca17d3662d6c05f4decf3e110",
+    "limitations": [
+      "The constructor implementation differs from the implementation reported at review; the original ABI was not substituted for the reported current implementation ABI.",
+      "The proxy constructor initializer binds initial stUSR. The WstUSR initializer derives usrAddress from stUSR.underlyingToken(); the documentation mapping does not independently prove current stored dependencies or underlying-token configuration.",
+      "The supplied resolv-im/resolv-contracts-public GitHub repository lead returned HTTP 404. Official deployment documentation plus exact-address verified implementation source/ABI establish this binding without a generic repository ABI.",
+      "Source snapshots and proxy resolution are evidence-service observations, not a live storage/bytecode, liquidity, balances, collateral, successful execution or financial-safety attestation."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all",
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+    "implementation": "0x4d021a0949086d156746c6DFE9fA8d121A090279",
+    "sourceType": "exact-address implementation ABI applied through independently reported proxy resolution",
+    "proxyBindingRefs": [
+      "https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all",
+      "https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code"
+    ],
+    "implementationSourceRef": "https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+    "sourcifyMatchId": "27565323",
+    "sourcifyVerifiedAt": "2026-04-04T01:51:09Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "compiler": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.29+commit.ab55807c",
+      "compilerSettings": {
+        "optimizer": {
+          "runs": 20000,
+          "enabled": true
+        },
+        "evmVersion": "paris"
+      },
+      "name": "WstUSR",
+      "fullyQualifiedName": "contracts/WstUSR.sol:WstUSR"
+    },
+    "sourceFile": "contracts/WstUSR.sol",
+    "metadataSourceKeccak256": "0x9129d5b9a4b3d464e9cfc095414e28c1bc88e229c9390bb8da1e303dfdc767d6",
+    "verifiedSourceSha256": "b4e89535d9e82b94beb28e85eb525ee27c887ca36333a70cc3e0aa061b55aa11",
+    "implementationDeployment": {
+      "transactionHash": "0x84a2369667ff31fb01a77876fa9d24e38971daec0bfa77484d86270a8445bbe1",
+      "blockNumber": "24797874",
+      "transactionIndex": "157",
+      "deployer": "0x77BD45342cb69d94613290b2758E91feFef58fA3"
+    },
+    "evidence": "Top-level abi is the full exact applicable WstUSR implementation ABI returned for the reported implementation address, including all 68 functions, 34 errors, 18 events and constructor. No generic ERC4626 ABI is substituted: verified IWstUSR explicitly extends IERC4626, while the actual WstUSR body separately implements USR deposit/mint/withdraw/redeem and rebasing-stUSR wrap/unwrap with overloaded convenience calls. proxyAbi preserves the full exact TransparentUpgradeableProxy ABI separately; it has no function entries.",
+    "proxyAdministration": "Verified TransparentUpgradeableProxy dispatches upgradeToAndCall(address,bytes) only for its immutable ProxyAdmin caller through fallback. This implicit privileged dispatcher is not a WstUSR ABI function and is not selected; fallback/receive/constructor create no capabilities. No ProxyAdmin address is admitted."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AccessControlBadConfirmation",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AccessControlEnforcedDefaultAdminDelay",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "schedule",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ]
+    },
+    {
+      "name": "AccessControlEnforcedDefaultAdminRules",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AccessControlInvalidDefaultAdmin",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "defaultAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "neededRole",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AddressInsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "Blacklisted",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ECDSAInvalidSignature",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ECDSAInvalidSignatureLength",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "length",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ECDSAInvalidSignatureS",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612ExpiredSignature",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612InvalidSigner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "signer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_maxWstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_maxUsrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IdempotencyKeyAlreadyExist",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_idempotencyKey",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "name": "InvalidAccountNonce",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "currentNonce",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidAmount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidInitialization",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidRequest",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MathOverflowedMulDiv",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NotBlacklisted",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "NotInitializing",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeCastOverflowedUintDowncast",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "bits",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "TooSmallAmount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AddedToBlacklist",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BurnedFromBlacklist",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DefaultAdminDelayChangeCanceled",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "DefaultAdminDelayChangeScheduled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newDelay",
+          "type": "uint48",
+          "indexed": false,
+          "internalType": "uint48"
+        },
+        {
+          "name": "effectSchedule",
+          "type": "uint48",
+          "indexed": false,
+          "internalType": "uint48"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DefaultAdminTransferCanceled",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "DefaultAdminTransferScheduled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "acceptSchedule",
+          "type": "uint48",
+          "indexed": false,
+          "internalType": "uint48"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "EIP712DomainChanged",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemovedFromBlacklist",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleAdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleGranted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleRevoked",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unwrap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_stUSRAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Wrap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_stUSRAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BLACKLISTER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DEFAULT_ADMIN_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ST_USR_SHARES_OFFSET",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptDefaultAdminTransfer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addToBlacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "usrTokenAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "beginDefaultAdminTransfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "blacklisted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "isBlacklisted",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "burnFromBlacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "cancelDefaultAdminTransfer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "changeDefaultAdminDelay",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newDelay",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "defaultAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "defaultAdminDelay",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "defaultAdminDelayIncreaseWait",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "_r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "eip712Domain",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "fields",
+          "type": "bytes1",
+          "internalType": "bytes1"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "extensions",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "grantRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "hasRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "_symbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "_stUSRAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initializeV2",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_admin",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_blacklister",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxUsrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxWstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxWstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxUsrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mintWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "_r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingDefaultAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "schedule",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingDefaultAdminDelay",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "newDelay",
+          "type": "uint48",
+          "internalType": "uint48"
+        },
+        {
+          "name": "schedule",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeFromBlacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "rollbackDefaultAdminDelay",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "stUSRAddress",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "totalManagedUsrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unwrap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unwrap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "usrAddress",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_usrAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "wrap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_stUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "wrap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_stUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "wrapWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_stUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "_r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wstUSRAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "initialOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidAdmin",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidImplementation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967NonPayable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ProxyDeniedAdminAccess",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "BLACKLISTER_ROLE",
+      "signature": "BLACKLISTER_ROLE()",
+      "decision": "excluded",
+      "reason": "Read-only blacklister role identifier; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "DEFAULT_ADMIN_ROLE",
+      "signature": "DEFAULT_ADMIN_ROLE()",
+      "decision": "excluded",
+      "reason": "Read-only default-admin role identifier; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "DOMAIN_SEPARATOR",
+      "signature": "DOMAIN_SEPARATOR()",
+      "decision": "excluded",
+      "reason": "Read-only permit domain separator; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "ST_USR_SHARES_OFFSET",
+      "signature": "ST_USR_SHARES_OFFSET()",
+      "decision": "excluded",
+      "reason": "Read-only stUSR accounting offset; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "acceptDefaultAdminTransfer",
+      "signature": "acceptDefaultAdminTransfer()",
+      "decision": "excluded",
+      "reason": "Accepts privileged default-admin control; administrative authority changes are outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "addToBlacklist",
+      "signature": "addToBlacklist(address)",
+      "decision": "excluded",
+      "reason": "Privileged blacklister changes account restrictions; no blacklist-management capability is admitted."
+    },
+    {
+      "functionName": "allowance",
+      "signature": "allowance(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only wstUSR allowance; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "approve",
+      "signature": "approve(address,uint256)",
+      "decision": "excluded",
+      "reason": "Creates wstUSR spending allowance; token approval is a separate authorization surface and is not admitted here."
+    },
+    {
+      "functionName": "asset",
+      "signature": "asset()",
+      "decision": "excluded",
+      "reason": "Read-only configured USR asset address; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "balanceOf",
+      "signature": "balanceOf(address)",
+      "decision": "excluded",
+      "reason": "Read-only wstUSR balance; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "beginDefaultAdminTransfer",
+      "signature": "beginDefaultAdminTransfer(address)",
+      "decision": "excluded",
+      "reason": "Schedules privileged default-admin transfer; no administrative authority capability is admitted."
+    },
+    {
+      "functionName": "blacklisted",
+      "signature": "blacklisted(address)",
+      "decision": "excluded",
+      "reason": "Read-only account restriction status; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "burnFromBlacklist",
+      "signature": "burnFromBlacklist(address)",
+      "decision": "excluded",
+      "reason": "Privileged confiscation burns a blacklisted account balance and underlying USR; not an ordinary user unwrap or redemption."
+    },
+    {
+      "functionName": "cancelDefaultAdminTransfer",
+      "signature": "cancelDefaultAdminTransfer()",
+      "decision": "excluded",
+      "reason": "Cancels scheduled privileged admin transfer; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "changeDefaultAdminDelay",
+      "signature": "changeDefaultAdminDelay(uint48)",
+      "decision": "excluded",
+      "reason": "Changes privileged default-admin delay configuration; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "convertToAssets",
+      "signature": "convertToAssets(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only USR conversion quote; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "convertToShares",
+      "signature": "convertToShares(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only wstUSR conversion quote; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "decimals",
+      "signature": "decimals()",
+      "decision": "excluded",
+      "reason": "Read-only token decimals; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "defaultAdmin",
+      "signature": "defaultAdmin()",
+      "decision": "excluded",
+      "reason": "Read-only default-admin address; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "defaultAdminDelay",
+      "signature": "defaultAdminDelay()",
+      "decision": "excluded",
+      "reason": "Read-only admin-transfer delay; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "defaultAdminDelayIncreaseWait",
+      "signature": "defaultAdminDelayIncreaseWait()",
+      "decision": "excluded",
+      "reason": "Read-only admin-delay increase wait; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USR deposit: pulls USR from caller, deposits it in configured stUSR and mints previewDeposit-derived wstUSR. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USR deposit: pulls USR from caller, deposits it in configured stUSR and mints previewDeposit-derived wstUSR. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "depositWithPermit",
+      "signature": "depositWithPermit(uint256,address,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Invokes USR signature permit before deposit; signature-bearing entry point is not admitted under ordinary explicit-call controls."
+    },
+    {
+      "functionName": "eip712Domain",
+      "signature": "eip712Domain()",
+      "decision": "excluded",
+      "reason": "Read-only signature domain metadata; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "getRoleAdmin",
+      "signature": "getRoleAdmin(bytes32)",
+      "decision": "excluded",
+      "reason": "Read-only role administrator; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "grantRole",
+      "signature": "grantRole(bytes32,address)",
+      "decision": "excluded",
+      "reason": "Grants privileged access-control role membership; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "hasRole",
+      "signature": "hasRole(bytes32,address)",
+      "decision": "excluded",
+      "reason": "Read-only role membership; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize(string,string,address)",
+      "decision": "excluded",
+      "reason": "Initializes token metadata, underlying dependency and permanent underlying allowance; deployment configuration is not an ordinary user action."
+    },
+    {
+      "functionName": "initializeV2",
+      "signature": "initializeV2(address,address)",
+      "decision": "excluded",
+      "reason": "Reinitializer configures default admin and blacklister roles; privileged migration/configuration is not admitted."
+    },
+    {
+      "functionName": "maxDeposit",
+      "signature": "maxDeposit(address)",
+      "decision": "excluded",
+      "reason": "Read-only interface maximum deposit; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "maxMint",
+      "signature": "maxMint(address)",
+      "decision": "excluded",
+      "reason": "Read-only interface maximum mint; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "maxRedeem",
+      "signature": "maxRedeem(address)",
+      "decision": "excluded",
+      "reason": "Read-only owner maximum redemption; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "maxWithdraw",
+      "signature": "maxWithdraw(address)",
+      "decision": "excluded",
+      "reason": "Read-only owner maximum withdrawal; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR mint: calculates previewMint USR, pulls caller USR, deposits in stUSR and mints the specified wstUSR. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR mint: calculates previewMint USR, pulls caller USR, deposits in stUSR and mints the specified wstUSR. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "mintWithPermit",
+      "signature": "mintWithPermit(uint256,address,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Invokes USR signature permit before mint; signature-bearing entry point is not admitted under ordinary explicit-call controls."
+    },
+    {
+      "functionName": "name",
+      "signature": "name()",
+      "decision": "excluded",
+      "reason": "Read-only token name; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "nonces",
+      "signature": "nonces(address)",
+      "decision": "excluded",
+      "reason": "Read-only permit nonce; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "decision": "excluded",
+      "reason": "Read-only default-admin ownership interface; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "pendingDefaultAdmin",
+      "signature": "pendingDefaultAdmin()",
+      "decision": "excluded",
+      "reason": "Read-only pending admin transfer; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "pendingDefaultAdminDelay",
+      "signature": "pendingDefaultAdminDelay()",
+      "decision": "excluded",
+      "reason": "Read-only pending admin-delay change; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "permit",
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-based wstUSR spending authorization; excluded independently of ordinary asset conversion functions."
+    },
+    {
+      "functionName": "previewDeposit",
+      "signature": "previewDeposit(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only deposit conversion preview; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "previewMint",
+      "signature": "previewMint(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only mint conversion preview; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "previewRedeem",
+      "signature": "previewRedeem(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only redemption conversion preview; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "previewWithdraw",
+      "signature": "previewWithdraw(uint256)",
+      "decision": "excluded",
+      "reason": "Read-only withdrawal conversion preview; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR redemption: withdraws previewRedeem-derived USR from configured stUSR and burns owner wstUSR; another owner requires caller allowance. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "redeem",
+      "signature": "redeem(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR redemption: withdraws previewRedeem-derived USR from configured stUSR and burns owner wstUSR; another owner requires caller allowance. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "removeFromBlacklist",
+      "signature": "removeFromBlacklist(address)",
+      "decision": "excluded",
+      "reason": "Privileged blacklister changes account restrictions; no blacklist-management capability is admitted."
+    },
+    {
+      "functionName": "renounceRole",
+      "signature": "renounceRole(bytes32,address)",
+      "decision": "excluded",
+      "reason": "Changes privileged access-control role membership; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "revokeRole",
+      "signature": "revokeRole(bytes32,address)",
+      "decision": "excluded",
+      "reason": "Revokes privileged access-control role membership; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "rollbackDefaultAdminDelay",
+      "signature": "rollbackDefaultAdminDelay()",
+      "decision": "excluded",
+      "reason": "Cancels privileged admin-delay configuration; outside ordinary wrapper admission."
+    },
+    {
+      "functionName": "stUSRAddress",
+      "signature": "stUSRAddress()",
+      "decision": "excluded",
+      "reason": "Read-only configured rebasing stUSR address; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "supportsInterface",
+      "signature": "supportsInterface(bytes4)",
+      "decision": "excluded",
+      "reason": "Read-only interface support; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "symbol",
+      "signature": "symbol()",
+      "decision": "excluded",
+      "reason": "Read-only token symbol; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "totalAssets",
+      "signature": "totalAssets()",
+      "decision": "excluded",
+      "reason": "Read-only accounting-derived USR assets; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "totalSupply",
+      "signature": "totalSupply()",
+      "decision": "excluded",
+      "reason": "Read-only wstUSR supply; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "transfer",
+      "signature": "transfer(address,uint256)",
+      "decision": "excluded",
+      "reason": "Plain wstUSR token transfer is outside this wrapper/staking function admission; no token-transfer capability is added."
+    },
+    {
+      "functionName": "transferFrom",
+      "signature": "transferFrom(address,address,uint256)",
+      "decision": "excluded",
+      "reason": "Allowance-mediated wstUSR token transfer is outside this wrapper/staking function admission; no token-transfer capability is added."
+    },
+    {
+      "functionName": "unwrap",
+      "signature": "unwrap(uint256,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR unwrap: burns caller wstUSR and transfers wstUSRAmount*1000 stUSR shares to receiver. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "unwrap",
+      "signature": "unwrap(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wstUSR unwrap: burns caller wstUSR and transfers wstUSRAmount*1000 stUSR shares to receiver. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "usrAddress",
+      "signature": "usrAddress()",
+      "decision": "excluded",
+      "reason": "Read-only configured USR address; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USR withdrawal: withdraws USR from configured stUSR and burns previewWithdraw-derived owner wstUSR; another owner requires caller allowance. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USR withdrawal: withdraws USR from configured stUSR and burns previewWithdraw-derived owner wstUSR; another owner requires caller allowance. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "wrap",
+      "signature": "wrap(uint256,address)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-stUSR wrap: transfers rebasing stUSR from caller and mints convertToShares-derived non-rebasing wstUSR. Caller explicitly chooses receiver."
+    },
+    {
+      "functionName": "wrap",
+      "signature": "wrap(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary exact-stUSR wrap: transfers rebasing stUSR from caller and mints convertToShares-derived non-rebasing wstUSR. Single-argument overload fixes receiver to caller."
+    },
+    {
+      "functionName": "wrapWithPermit",
+      "signature": "wrapWithPermit(uint256,address,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Invokes stUSR signature permit before wrap; signature-bearing entry point is not admitted under ordinary explicit-call controls."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:deposit-to-receiver",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Deposit USR into wstUSR (explicit receiver)",
+      "operation": "deposit-to-receiver",
+      "warnings": [
+        "Consumes caller USR allowance to this wrapper. Exact USR input; wstUSR output is conversion-dependent with no minimum-share parameter.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "deposit",
+      "signature": "deposit(uint256)",
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Deposit USR into wstUSR (caller)",
+      "operation": "deposit",
+      "warnings": [
+        "Consumes caller USR allowance to this wrapper. Exact USR input; wstUSR output is conversion-dependent with no minimum-share parameter.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:mint-to-receiver",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Mint exact wstUSR with USR (explicit receiver)",
+      "operation": "mint-to-receiver",
+      "warnings": [
+        "Consumes caller USR allowance to this wrapper. Exact wstUSR output; required USR rounds upward and is unbounded by a caller-supplied maximum-input parameter.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:mint",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "mint",
+      "signature": "mint(uint256)",
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Mint exact wstUSR with USR (caller)",
+      "operation": "mint",
+      "warnings": [
+        "Consumes caller USR allowance to this wrapper. Exact wstUSR output; required USR rounds upward and is unbounded by a caller-supplied maximum-input parameter.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:redeem-from-owner",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Redeem wstUSR for USR (explicit receiver/owner)",
+      "operation": "redeem-from-owner",
+      "warnings": [
+        "Exact wstUSR burn; USR output rounds downward with no minimum-assets parameter. Three-argument overload spends owner allowance when caller differs from owner; single-argument overload uses caller as receiver and owner.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "redeem",
+      "signature": "redeem(uint256)",
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Redeem wstUSR for USR (caller)",
+      "operation": "redeem",
+      "warnings": [
+        "Exact wstUSR burn; USR output rounds downward with no minimum-assets parameter. Three-argument overload spends owner allowance when caller differs from owner; single-argument overload uses caller as receiver and owner.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:unwrap-to-receiver",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "unwrap",
+      "signature": "unwrap(uint256,address)",
+      "abi": {
+        "name": "unwrap",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "stUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Unwrap wstUSR into stUSR (explicit receiver)",
+      "operation": "unwrap-to-receiver",
+      "warnings": [
+        "Burns caller wstUSR and transfers stUSR shares rather than withdrawing USR. Nominal rebasing stUSR output depends on convertToUnderlyingToken at execution; no minimum-output parameter exists.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:unwrap",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "unwrap",
+      "signature": "unwrap(uint256)",
+      "abi": {
+        "name": "unwrap",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "stUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Unwrap wstUSR into stUSR (caller)",
+      "operation": "unwrap",
+      "warnings": [
+        "Burns caller wstUSR and transfers stUSR shares rather than withdrawing USR. Nominal rebasing stUSR output depends on convertToUnderlyingToken at execution; no minimum-output parameter exists.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Withdraw USR from wstUSR (caller)",
+      "operation": "withdraw",
+      "warnings": [
+        "Exact USR output; wstUSR burned rounds upward without a maximum-share parameter. Three-argument overload spends owner allowance when caller differs from owner; single-argument overload uses caller as receiver and owner.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:withdraw-from-owner",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_usrAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Withdraw USR from wstUSR (explicit receiver/owner)",
+      "operation": "withdraw-from-owner",
+      "warnings": [
+        "Exact USR output; wstUSR burned rounds upward without a maximum-share parameter. Three-argument overload spends owner allowance when caller differs from owner; single-argument overload uses caller as receiver and owner.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:wrap-to-receiver",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "wrap",
+      "signature": "wrap(uint256,address)",
+      "abi": {
+        "name": "wrap",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_stUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Wrap stUSR into wstUSR (explicit receiver)",
+      "operation": "wrap-to-receiver",
+      "warnings": [
+        "Consumes caller stUSR allowance to this wrapper, not USR allowance. Exact nominal stUSR input; output is convertToShares(amount), truncated after the 1000-share offset. A positive small input can mint zero wstUSR; no minimum output is checked.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    },
+    {
+      "capabilityId": "resolv-wstusr:v1:1:0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055:wrap",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055",
+      "functionName": "wrap",
+      "signature": "wrap(uint256)",
+      "abi": {
+        "name": "wrap",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_stUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "wstUSRAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.resolv.xyz/litepaper/for-developers/smart-contracts.md ; https://etherscan.io/address/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055#code ; https://sourcify.dev/server/v2/contract/1/0x1202F5C7b4B9E47a1A484E8B270be34dbbC75055?fields=all ; https://sourcify.dev/server/v2/contract/1/0x4d021a0949086d156746c6DFE9fA8d121A090279?fields=all ; https://etherscan.io/address/0x4d021a0949086d156746c6DFE9fA8d121A090279#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "resolv-wstusr",
+      "label": "Wrap stUSR into wstUSR (caller)",
+      "operation": "wrap",
+      "warnings": [
+        "Consumes caller stUSR allowance to this wrapper, not USR allowance. Exact nominal stUSR input; output is convertToShares(amount), truncated after the 1000-share offset. A positive small input can mint zero wstUSR; no minimum output is checked.",
+        "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+        "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+        "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+        "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+        "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+        "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+      ]
+    }
+  ],
+  "reviewNotes": {
+    "ordinaryFunctionCount": 12,
+    "excludedFunctionCount": 56,
+    "callableFunctionCount": 68,
+    "conversionModel": "USR deposit/mint transfer the configured USR to this wrapper, call stUSR.deposit and mint wstUSR. USR withdraw/redeem call stUSR.withdraw and burn owner wstUSR. wrap transfers nominal rebasing stUSR and converts to shares/1000; unwrap burns wstUSR and transfers amount*1000 stUSR shares. This is not a fixed 1:1 conversion and the full ABI, not an assumed token standard, defines selected calls.",
+    "readOnlyLimit": "view/pure entries remain in the full ABI with mutability intact, but no read API or transaction capability is added. maxDeposit/maxMint return uint256 maximum in source, not proof of executable capacity.",
+    "controlLimit": "All initialization, access-control/admin, blacklist/confiscation, token approval/transfer and signature-permit surfaces are individually excluded. No opaque executor, callback or multicall function appears in this implementation ABI. No grant, policy, safety control or dependent-token capability is changed.",
+    "warnings": [
+      "Upgradeable TransparentUpgradeableProxy: this ABI is bound to the implementation reported by Etherscan and Sourcify on 2026-10-16, not a live identity guarantee. Proxy administration can replace the implementation; no upgrade or administrative capability is admitted.",
+      "wstUSR is non-rebasing; stUSR is rebasing. Source conversions use the stUSR share accounting and ST_USR_SHARES_OFFSET=1000, not a fixed 1:1 wstUSR/stUSR or wstUSR/USR exchange rate. Integer rounding and small amounts can reduce output.",
+      "The proxy constructor initialized stUSR to 0x6c8984bc7DBBeDAf4F6b2FD766f16eBB7d10AAb4; initialize derives usrAddress from that token underlyingToken(). Current dependency identity, implementation, exchange rates, configuration, token allowances and balances are not attested by these snapshots.",
+      "Implementation blacklist checks can block token mint, burn or transfer; the blacklister can blacklist accounts and burn confiscated balances. Source warning requires adequately seeded stUSR share accounting and warns of inflation/share-price manipulation. Neither current seeding nor economic safety is established.",
+      "No ordinary selected overload has a deadline or caller-set minimum-output/maximum-input guard. Receiver, owner, amount, conversion rate, approvals, gas and execution policies remain caller responsibilities; all selected functions are nonpayable and require zero native value.",
+      "Catalog admission and source verification do not establish live runtime identity, configuration, collateral backing, funding, balances, liquidity, successful execution or financial safety, and do not grant API-key authority or bypass independent controls."
+    ]
+  }
+}
