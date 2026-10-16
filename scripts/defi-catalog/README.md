@@ -1,6 +1,6 @@
 # DeFi catalog workflow
 
-The current catalog source is `data/defi-catalog/catalog.json`. The offline CLI validates this reviewed input and deterministically generates the static TypeScript module consumed by the runtime. Runtime authorization does not discover or load source snapshots or plans.
+The current catalog source is `data/defi-catalog/catalog.json`. Offline tooling validates this reviewed input and deterministically generates the static TypeScript module consumed by the runtime. Runtime authorization does not discover or load source snapshots or plans.
 
 ## Lean admission path
 
@@ -10,16 +10,17 @@ Enumerate ABI `function` entries as the callable interface surface. ABI entries 
 
 The capability identity remains the existing chain + exact address + full canonical signature, bound to the fixed ABI fragment and existing catalog ID/schema. Inventory is not automatic activation: ordinary entries can be recorded without requiring full-workflow, market-coverage, liquidity, funding, or financial-safety research as admission prerequisites. Keep security-sensitive functions and opaque multicall/executor surfaces unactivated unless they fit the existing independently required execution controls; give every unactivated entry a specific reason. This is not a new per-function financial-review process.
 
-The current generator consumes per-function records in `catalog.json`; it does **not** import and enumerate an entire ABI. Whole-ABI enumeration is a small future tooling step, not implemented here. It should produce/review the same existing records and IDs rather than add a schema, DSL, service, or runtime discovery path. Do not write API-key grants automatically. In `capabilityMode: all`, active, unpaused reviewed capabilities may be used subject to all independent gates; `custom` uses the exact configured IDs and `custom` with `[]` denies catalog capabilities. Catalog updates do not trigger automatic grant writes or imply that every new function requires an explicit regrant in `all` mode.
+The inventory helper emits schema-v1 per-function records for manual review; it does not import into or write `catalog.json`. It requires explicit chain, address, protocol, deployment evidence and ABI evidence. Both evidence records carry `sourceRef`, `verifiedAt`, `chainId`, and `address`, and must match the supplied deployment identity. Input is a local JSON file with those fields and the ABI array; run `npm run defi:catalog:inventory -- path/to/input.json`. The helper makes no network/RPC/database calls and writes only drafts to stdout. Drafts and their hierarchy are inactive, provenance is `candidate`, and each function has an explicit review reason. Review/edit selected records and merge them into `data/defi-catalog/catalog.json` manually; never activate an ABI wholesale or write API-key grants. In `capabilityMode: all`, active, unpaused reviewed capabilities may be used subject to all independent gates; `custom` uses exact configured IDs and `custom` with `[]` denies catalog capabilities.
 
-From the repository root:
+Minimal draft → review → generate/check workflow, from the repository root:
 
 ```sh
 npm run defi:catalog:generate
 npm run defi:catalog:check
-npm run defi:catalog:diff
 ```
 
-`generate` updates the generated runtime module; `check` validates that it matches the catalog; `diff` reports catalog changes. These commands are offline and make no network, RPC, or database calls. Catalog entries are function metadata, not API-key grants. Profiles are reviewed metadata groupings only: they do not grant capabilities, expand effective permissions, or prove a complete workflow.
+Optionally run `npm run defi:catalog:diff` to review catalog changes. `generate` updates the generated runtime module; `check` validates that it matches the catalog. Review the diff, generated output and each record before admission. Catalog entries are function metadata, not API-key grants. Profiles are reviewed metadata groupings only.
+
+These commands are offline and make no network, RPC, or database calls. Profiles do not grant capabilities, expand effective permissions, or prove a complete workflow.
 
 Catalog admission records deployment-source and ABI-binding evidence. It does not establish deployed runtime identity, funding, balances, liquidity, successful execution, complete workflows, or financial safety. Preserve canonical ABI decoding, authorization, pause checks, final rechecks, and signing/execution boundaries; catalog membership does not bypass any independent control.

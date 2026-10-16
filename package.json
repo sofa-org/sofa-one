@@ -30,7 +30,8 @@
     "billing:fixture": "ts-node --transpile-only scripts/billing-fixture.ts",
     "defi:catalog:generate": "ts-node --transpile-only scripts/defi-catalog/cli.ts generate",
     "defi:catalog:check": "ts-node --transpile-only scripts/defi-catalog/cli.ts check",
-    "defi:catalog:diff": "ts-node --transpile-only scripts/defi-catalog/cli.ts diff"
+    "defi:catalog:diff": "ts-node --transpile-only scripts/defi-catalog/cli.ts diff",
+    "defi:catalog:inventory": "ts-node --transpile-only scripts/defi-catalog/inventory.ts"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",
