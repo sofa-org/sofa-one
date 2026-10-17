@@ -25,6 +25,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
     name: 'BabySwap',
     website: 'https://web.archive.org/web/20211017144751id_/https://docs.babyswap.finance/developers/smart-contracts',
   },
+  // Legacy vault frontend is retired; link the official direct-contract exit guide.
+  { name: 'Badger', website: 'https://github.com/Badger-Finance/badger-legacy-sunset' },
   // The former BakerySwap site serves a lander; use the attributable official source repository.
   { name: 'BakerySwap', website: 'https://github.com/BakeryProject/bakery-swap-periphery' },
   { name: 'Balancer', website: 'https://balancer.fi' },
@@ -68,14 +70,21 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Mantle', website: 'https://www.methprotocol.xyz' },
   { name: 'Maple', website: 'https://maple.finance' },
   { name: 'Maverick', website: 'https://mav.xyz' },
+  { name: 'MDEX', website: 'https://bsc.mdex.com/' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
   // The reviewed imUSD implementation is exit-only; use its legacy deployment reference.
   { name: 'mStable', website: 'https://developers.mstable.org/contracts/imassets-save.md' },
+  // Legacy Nerve 3pool exit only; use the surviving official migration reference.
+  {
+    name: 'Nerve Finance',
+    website: 'https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272',
+  },
   { name: 'OpenOcean', website: 'https://openocean.finance' },
   { name: 'Origin', website: 'https://www.originprotocol.com' },
   { name: 'PancakeSwap', website: 'https://pancakeswap.finance' },
   { name: 'Pendle', website: 'https://pendle.finance' },
+  { name: 'Pickle Finance', website: 'https://docs.pickle.finance/' },
   { name: 'Polymarket', website: 'https://polymarket.com' },
   { name: 'Puffer', website: 'https://puffer.fi' },
   { name: 'QuickSwap', website: 'https://quickswap.exchange' },
