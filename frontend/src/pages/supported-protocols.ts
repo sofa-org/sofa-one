@@ -43,6 +43,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dinero', website: 'https://dinero.xyz' },
   { name: 'DODO', website: 'https://dodoex.io' },
   { name: 'Dolomite', website: 'https://dolomite.io' },
+  // Deployment documentation only; no current legacy trading frontend is asserted.
+  { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
   { name: 'EigenLayer', website: 'https://www.eigenlayer.xyz' },
   { name: 'Ekubo', website: 'https://ekubo.org' },
   { name: 'Enso', website: 'https://enso.build' },
@@ -91,8 +93,12 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Pendle', website: 'https://pendle.finance' },
   { name: 'Pickle Finance', website: 'https://docs.pickle.finance/' },
   { name: 'Polymarket', website: 'https://polymarket.com' },
+  // Retired Prisma mkUSD StabilityPool exits only; link the surviving official source reference.
+  { name: 'Prisma Finance', website: 'https://github.com/prisma-fi/prisma-contracts' },
   { name: 'Puffer', website: 'https://puffer.fi' },
   { name: 'QuickSwap', website: 'https://quickswap.exchange' },
+  // Legacy-router scope only; current documentation does not promise legacy frontend support.
+  { name: 'Ramses', website: 'https://www.ramses.xyz/docs/legacy-liquidity' },
   { name: 'Renzo', website: 'https://renzoprotocol.com' },
   { name: 'Resolv', website: 'https://resolv.xyz' },
   { name: 'Rocket Pool', website: 'https://rocketpool.net' },

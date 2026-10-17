@@ -87,7 +87,8 @@ SOFA ONE turns automated on-chain execution into an operational, integrable, and
 ### 6.6 DeFi Protocol Catalog
 
 - DeFi integrations are scoped to exact chains, contract addresses and function signatures. The public `/protocols` directory is an index, not support for every feature of a protocol.
-- This expansion adds the direct JetSwap and WaultSwap routers on BNB Smart Chain, each with nine swaps and five non-permit liquidity functions. Deployment and ABI evidence is recorded in the [DeFi catalog workflow](./scripts/defi-catalog/README.md).
+- The catalog includes exact JetSwap/WaultSwap router functions on BNB Smart Chain, Dystopia on Polygon and Ramses V1 on Arbitrum. Deployment and ABI evidence is recorded in the [DeFi catalog workflow](./scripts/defi-catalog/README.md).
+- Prisma Finance is limited to Ethereum mkUSD StabilityPool exits/checkpointing and stored collateral claims after its announced shutdown; new deposits and historical PRISMA reward claims are not admitted. Version, proxy-upgrade and external-dependency constraints remain independently relevant.
 - `all` mode dynamically includes active, unpaused capabilities; `custom` mode requires exact capability IDs. Independent permissions, pauses and execution policies still apply. Catalog membership does not guarantee current liquidity, execution success or financial safety.
 - Legacy entries may link to archived official documentation or source references rather than an operating trading frontend. KyberSwap and Synapse remain excluded pending approved nested-execution scopes; Alpaca remains excluded for missing implementation ABI evidence.
 
