@@ -35,3 +35,4 @@ coverage/
 .slim/deepwork/
 examples/
 .opencode
+tsconfig.tsbuildinfo
