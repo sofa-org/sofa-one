@@ -82,6 +82,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Renzo', website: 'https://renzoprotocol.com' },
   { name: 'Resolv', website: 'https://resolv.xyz' },
   { name: 'Rocket Pool', website: 'https://rocketpool.net' },
+  // Saddle has wound down; the reviewed legacy USD pool supports proportional exit only.
+  { name: 'Saddle', website: 'https://docs.saddle.finance/' },
   { name: 'ShibaSwap', website: 'https://shibaswap.com' },
   { name: 'Sky', website: 'https://sky.money' },
   { name: 'Silo', website: 'https://silo.finance' },
@@ -95,6 +97,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'SushiSwap', website: 'https://sushi.com' },
   { name: 'Swell', website: 'https://swellnetwork.io' },
   { name: 'Symbiotic', website: 'https://symbiotic.fi' },
+  { name: 'THENA', website: 'https://thena.fi/' },
   { name: 'Uniswap', website: 'https://uniswap.org' },
   { name: 'Usual', website: 'https://usual.money' },
   { name: 'Velora', website: 'https://velora.xyz' },
