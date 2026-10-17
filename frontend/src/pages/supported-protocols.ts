@@ -24,6 +24,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
     name: 'BabySwap',
     website: 'https://web.archive.org/web/20211017144751id_/https://docs.babyswap.finance/developers/smart-contracts',
   },
+  // The former BakerySwap site serves a lander; use the attributable official source repository.
+  { name: 'BakerySwap', website: 'https://github.com/BakeryProject/bakery-swap-periphery' },
   { name: 'Balancer', website: 'https://balancer.fi' },
   { name: 'Bancor', website: 'https://bancor.network' },
   { name: 'Bebop', website: 'https://bebop.xyz' },
