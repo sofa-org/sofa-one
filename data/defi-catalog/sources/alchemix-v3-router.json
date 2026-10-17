@@ -1,0 +1,3143 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+  "protocol": "alchemix-v3",
+  "website": "https://alchemix.fi",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.alchemix.fi/dev/contracts/ethereum",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+    "implementation": "0xd5F26C90EAD033554BF36227d0bbe993F6f76570",
+    "proxyBindingRef": "https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code",
+    "proxyType": "TransparentUpgradeableProxy",
+    "creationTransaction": "0x6117a6ae7ea5520a2dc49b74fad2440185e5a3c841e35909ba9dbc21db686d80",
+    "evidence": "Official Ethereum mainnet V3 deployments list this exact Mix USDC/alUSD Alchemist separately from its MYT vault, NFT, router and transmuter. Exact proxy Etherscan page reports TransparentUpgradeableProxy and implementation address above. No V2 historical ABI substituted.",
+    "limitations": [
+      "Sourcify proxy lookup was unavailable in initial research; Etherscan exact-proxy implementation report supplies the binding. No independent live storage/bytecode attestation is claimed.",
+      "Documentation lists MYT0x9B44efCa3e2a707B63Dc00CE79d646E5E5D24bA5 and NFT0x872a03FabC86b59c883CD9c439E969321b719bEB but source review does not prove current stored addresses/risk configuration."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+    "implementation": "0xd5F26C90EAD033554BF36227d0bbe993F6f76570",
+    "proxyBindingRef": "https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.28+commit.7893614a",
+      "compilerSettings": {
+        "viaIR": true,
+        "metadata": {
+          "appendCBOR": true,
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "optimizer": {
+          "runs": 800,
+          "details": {
+            "yul": false
+          },
+          "enabled": true
+        },
+        "evmVersion": "cancun",
+        "remappings": [
+          "\"ds-test/=\"../lib/ds-test/src/",
+          "\"forge-std/=\"lib/forge-std/src/",
+          "\"@permit2\"/=\"lib/permit2/src/\"/",
+          "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/",
+          "ds-test/=lib/solmate/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+          "permit2/=lib/permit2/",
+          "solmate/=lib/solmate/src/",
+          "v2-foundry/=lib/v2-foundry/src/",
+          "vault-v2/=lib/vault-v2/src/"
+        ]
+      },
+      "name": "AlchemistV3",
+      "fullyQualifiedName": "src/AlchemistV3.sol:AlchemistV3"
+    },
+    "matchId": "42967224",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceFile": "src/AlchemistV3.sol",
+    "sourceSha256": "30932182dab788ca663f40d8d0a6be1d9ed49530c38a30f4bf55530c5fc4259f",
+    "evidence": "Full ABI is exact Sourcify implementation ABI applied to the explorer-bound proxy. Reviewed implementation contains real ordinary methods; exact-account-owner checks, caller-funded transfers, debt caps, fees and same-block constraints were read from deployed source. Separate proxyAbi is extracted from the exact-proxy explorer Contract ABI block; fallback/constructor create no capabilities."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AccountNotHealthy",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AlchemistV3NFTAlreadySetError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AlchemistV3NFTZeroAddressError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AlchemistVaultTokenMismatchError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "BurnLimitExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "CannotMintOnRepayBlock",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "CannotRepayOnMintBlock",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC20CallFailed",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "GlobalCollateralizationTooLow",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "IllegalArgument",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IllegalState",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidInitialization",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LiquidationError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MissingInputData",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MulDivOverflow",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MulDivZeroDenominator",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NotInitializing",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Unauthorized",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnauthorizedAccountAccessError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Undercollateralized",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnknownAccountOwnerIDError",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AlchemistFeeVaultUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "alchemistFeeVault",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AlchemistV3PositionNFTMinted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ApproveMint",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "ownerTokenId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BatchLiquidated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "accounts",
+          "type": "uint256[]",
+          "indexed": true,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "liquidator",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInYield",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInETH",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Burn",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipientId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CollateralizationLowerBoundUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "collateralizationLowerBound",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipientId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositCapUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositsPaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "isPaused",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeShortfall",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "liquidator",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requested",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "paid",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ForceRepay",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "creditToYield",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "protocolFeeTotal",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "GlobalMinimumCollateralizationUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "globalMinimumCollateralization",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "GuardianSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "guardian",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "state",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Liquidated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidator",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInYield",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInUnderlying",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LiquidationTargetCollateralizationUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "liquidationTargetCollateralization",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LiquidatorFeeUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LoansPaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "isPaused",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MinimumCollateralizationUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "minimumCollateralization",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Mint",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MintAllowancesReset",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PendingAdminUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pendingAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ProtocolFeeReceiverUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ProtocolFeeUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Redemption",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Repay",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipientId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "credit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RepaymentFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeReciever",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "feeInYield",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInUnderlying",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RepaymentFeeUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SelfLiquidated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountLiquidated",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokenAdapterUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "adapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TransmuterUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "transmuter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "FIXED_POINT_SCALAR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ONE_Q128",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "alchemistFeeVault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "alchemistPositionNFT",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approveMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "batchLiquidate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accountIds",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "totalAmountLiquidated",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalFeesInYield",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalFeesInUnderlying",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "burn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipientId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "calculateLiquidation",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "collateral",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "targetCollateralization",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "alchemistCurrentCollateralization",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "alchemistMinimumCollateralization",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grossCollateralToSeize",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "debtToBurn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "outsourcedFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "collateralizationLowerBound",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertDebtTokensToYield",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertUnderlyingTokensToYield",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertYieldTokensToDebt",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertYieldTokensToUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "cumulativeEarmarked",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "debtToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositCap",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "depositsPaused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getCDP",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getMaxBorrowable",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getMaxWithdrawable",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTotalDeposited",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTotalLockedUnderlyingValue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTotalUnderlyingValue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getUnrealizedCumulativeEarmarked",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "globalMinimumCollateralization",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "guardians",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "params",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "admin",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "debtToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "underlyingToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "depositCap",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "minimumCollateralization",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "globalMinimumCollateralization",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "collateralizationLowerBound",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidationTargetCollateralization",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "transmuter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "protocolFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "protocolFeeReceiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidatorFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "repaymentFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "myt",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "internalType": "struct AlchemistInitializationParams"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "lastEarmarkBlock",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastRedemptionBlock",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastTransmuterTokenBalance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "yieldAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInYield",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeInUnderlying",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "liquidationTargetCollateralization",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidatorFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "loansPaused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "minimumCollateralization",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mintAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "ownerTokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mintFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "myt",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "normalizeDebtTokensToUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "normalizeUnderlyingTokensToDebt",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pauseDeposits",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "isPaused",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "pauseLoans",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "isPaused",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "pendingAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poke",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "protocolFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "protocolFeeReceiver",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sharesSent",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "reduceSyntheticsIssued",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "repay",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipientTokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "repaymentFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "resetMintAllowances",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "selfLiquidate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accountId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountLiquidated",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAlchemistFeeVault",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAlchemistPositionNFT",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "nft",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setCollateralizationLowerBound",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setDepositCap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setGlobalMinimumCollateralization",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setGuardian",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "guardian",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "isActive",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setLiquidationTargetCollateralization",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setLiquidatorFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMinimumCollateralization",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPendingAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProtocolFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProtocolFeeReceiver",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setRepaymentFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTokenAdapter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTransmuterTokenBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "tokenAdapter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalDebt",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSyntheticsIssued",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalValue",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transmuter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "underlyingConversionFactor",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "underlyingToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "version",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_logic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "initialOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "admin",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1967InvalidAdmin",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1967InvalidImplementation",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ERC1967NonPayable",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedCall",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ProxyDeniedAdminAccess",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "previousAdmin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "AdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "BPS",
+      "signature": "BPS()",
+      "decision": "excluded",
+      "reason": "Exclude BPS read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "FIXED_POINT_SCALAR",
+      "signature": "FIXED_POINT_SCALAR()",
+      "decision": "excluded",
+      "reason": "Exclude FIXED_POINT_SCALAR read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "ONE_Q128",
+      "signature": "ONE_Q128()",
+      "decision": "excluded",
+      "reason": "Exclude ONE_Q128 read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "acceptAdmin",
+      "signature": "acceptAdmin()",
+      "decision": "excluded",
+      "reason": "Privileged pending-admin acceptance; no administrative authority admitted."
+    },
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "decision": "excluded",
+      "reason": "Exclude admin read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "alchemistFeeVault",
+      "signature": "alchemistFeeVault()",
+      "decision": "excluded",
+      "reason": "Exclude alchemistFeeVault read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "alchemistPositionNFT",
+      "signature": "alchemistPositionNFT()",
+      "decision": "excluded",
+      "reason": "Exclude alchemistPositionNFT read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "approveMint",
+      "signature": "approveMint(uint256,address,uint256)",
+      "decision": "excluded",
+      "reason": "Changes position-specific delegated borrowing allowance; separate authority surface excluded."
+    },
+    {
+      "functionName": "batchLiquidate",
+      "signature": "batchLiquidate(uint256[])",
+      "decision": "excluded",
+      "reason": "Third-party multi-position keeper liquidation is outside the selected owner-directed position lifecycle; no liquidation capability admitted."
+    },
+    {
+      "functionName": "burn",
+      "signature": "burn(uint256,uint256)",
+      "decision": "admitted",
+      "reason": "Repays unearmarked debt of selected position by burning a bounded amount of caller debt tokens. Requires burn allowance; actual credit is capped by account/global debt and outstanding synthetic/transmuter constraints. Same-block mint/burn rejected."
+    },
+    {
+      "functionName": "calculateLiquidation",
+      "signature": "calculateLiquidation(uint256,uint256,uint256,uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Exclude calculateLiquidation read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "collateralizationLowerBound",
+      "signature": "collateralizationLowerBound()",
+      "decision": "excluded",
+      "reason": "Exclude collateralizationLowerBound read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "convertDebtTokensToYield",
+      "signature": "convertDebtTokensToYield(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude convertDebtTokensToYield read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "convertUnderlyingTokensToYield",
+      "signature": "convertUnderlyingTokensToYield(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude convertUnderlyingTokensToYield read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "convertYieldTokensToDebt",
+      "signature": "convertYieldTokensToDebt(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude convertYieldTokensToDebt read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "convertYieldTokensToUnderlying",
+      "signature": "convertYieldTokensToUnderlying(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude convertYieldTokensToUnderlying read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "cumulativeEarmarked",
+      "signature": "cumulativeEarmarked()",
+      "decision": "excluded",
+      "reason": "Exclude cumulativeEarmarked read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "debtToken",
+      "signature": "debtToken()",
+      "decision": "excluded",
+      "reason": "Exclude debtToken read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit MYT-share collateral deposit: transfers amount from caller using MYT allowance. tokenId=0 mints a position NFT to recipient; existing tokenId receives caller-funded collateral without requiring ownership and recipient does not change the owner. Pause, deposit cap and bad-debt checks remain on chain."
+    },
+    {
+      "functionName": "depositCap",
+      "signature": "depositCap()",
+      "decision": "excluded",
+      "reason": "Exclude depositCap read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "depositsPaused",
+      "signature": "depositsPaused()",
+      "decision": "excluded",
+      "reason": "Exclude depositsPaused read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getCDP",
+      "signature": "getCDP(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude getCDP read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getMaxBorrowable",
+      "signature": "getMaxBorrowable(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude getMaxBorrowable read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getMaxWithdrawable",
+      "signature": "getMaxWithdrawable(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude getMaxWithdrawable read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getTotalDeposited",
+      "signature": "getTotalDeposited()",
+      "decision": "excluded",
+      "reason": "Exclude getTotalDeposited read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getTotalLockedUnderlyingValue",
+      "signature": "getTotalLockedUnderlyingValue()",
+      "decision": "excluded",
+      "reason": "Exclude getTotalLockedUnderlyingValue read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getTotalUnderlyingValue",
+      "signature": "getTotalUnderlyingValue()",
+      "decision": "excluded",
+      "reason": "Exclude getTotalUnderlyingValue read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "getUnrealizedCumulativeEarmarked",
+      "signature": "getUnrealizedCumulativeEarmarked()",
+      "decision": "excluded",
+      "reason": "Exclude getUnrealizedCumulativeEarmarked read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "globalMinimumCollateralization",
+      "signature": "globalMinimumCollateralization()",
+      "decision": "excluded",
+      "reason": "Exclude globalMinimumCollateralization read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "guardians",
+      "signature": "guardians(address)",
+      "decision": "excluded",
+      "reason": "Exclude guardians read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize((address,address,address,uint256,uint256,uint256,uint256,uint256,address,uint256,address,uint256,uint256,address))",
+      "decision": "excluded",
+      "reason": "Deployment initialization binds addresses and risk parameters; no lifecycle/configuration authority admitted."
+    },
+    {
+      "functionName": "lastEarmarkBlock",
+      "signature": "lastEarmarkBlock()",
+      "decision": "excluded",
+      "reason": "Exclude lastEarmarkBlock read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "lastRedemptionBlock",
+      "signature": "lastRedemptionBlock()",
+      "decision": "excluded",
+      "reason": "Exclude lastRedemptionBlock read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "lastTransmuterTokenBalance",
+      "signature": "lastTransmuterTokenBalance()",
+      "decision": "excluded",
+      "reason": "Exclude lastTransmuterTokenBalance read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "liquidate",
+      "signature": "liquidate(uint256)",
+      "decision": "excluded",
+      "reason": "Third-party liquidation is not the selected owner-directed selfLiquidate path; no keeper liquidation capability admitted."
+    },
+    {
+      "functionName": "liquidationTargetCollateralization",
+      "signature": "liquidationTargetCollateralization()",
+      "decision": "excluded",
+      "reason": "Exclude liquidationTargetCollateralization read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "liquidatorFee",
+      "signature": "liquidatorFee()",
+      "decision": "excluded",
+      "reason": "Exclude liquidatorFee read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "loansPaused",
+      "signature": "loansPaused()",
+      "decision": "excluded",
+      "reason": "Exclude loansPaused read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "minimumCollateralization",
+      "signature": "minimumCollateralization()",
+      "decision": "excluded",
+      "reason": "Exclude minimumCollateralization read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(uint256,uint256,address)",
+      "decision": "admitted",
+      "reason": "Explicit debt-token borrowing against a caller-owned NFT position; owner equality, loan pause, account/global health and collateralization checks remain on chain. Creates debt and mints requested amount to recipient; not a risk-free token mint."
+    },
+    {
+      "functionName": "mintAllowance",
+      "signature": "mintAllowance(uint256,address)",
+      "decision": "excluded",
+      "reason": "Exclude mintAllowance read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "mintFrom",
+      "signature": "mintFrom(uint256,uint256,address)",
+      "decision": "excluded",
+      "reason": "Delegated borrowing based on mintAllowance is excluded from this caller-owner mint admission; no delegated credit authority added."
+    },
+    {
+      "functionName": "myt",
+      "signature": "myt()",
+      "decision": "excluded",
+      "reason": "Exclude myt read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "normalizeDebtTokensToUnderlying",
+      "signature": "normalizeDebtTokensToUnderlying(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude normalizeDebtTokensToUnderlying read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "normalizeUnderlyingTokensToDebt",
+      "signature": "normalizeUnderlyingTokensToDebt(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude normalizeUnderlyingTokensToDebt read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "pauseDeposits",
+      "signature": "pauseDeposits(bool)",
+      "decision": "excluded",
+      "reason": "Privileged guardian/admin pause mutation excluded; catalog admission cannot grant pause-management authority."
+    },
+    {
+      "functionName": "pauseLoans",
+      "signature": "pauseLoans(bool)",
+      "decision": "excluded",
+      "reason": "Privileged guardian/admin pause mutation excluded; catalog admission cannot grant pause-management authority."
+    },
+    {
+      "functionName": "pendingAdmin",
+      "signature": "pendingAdmin()",
+      "decision": "excluded",
+      "reason": "Exclude pendingAdmin read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "poke",
+      "signature": "poke(uint256)",
+      "decision": "excluded",
+      "reason": "Permissionless accounting synchronization is outside the selected explicit deposit/withdraw/borrow/repay/close operations; not an independently admitted updater."
+    },
+    {
+      "functionName": "protocolFee",
+      "signature": "protocolFee()",
+      "decision": "excluded",
+      "reason": "Exclude protocolFee read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "protocolFeeReceiver",
+      "signature": "protocolFeeReceiver()",
+      "decision": "excluded",
+      "reason": "Exclude protocolFeeReceiver read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "redeem",
+      "signature": "redeem(uint256)",
+      "decision": "excluded",
+      "reason": "Restricted onlyTransmuter debt-redemption flow; not a user withdrawal or ordinary generic-send capability."
+    },
+    {
+      "functionName": "reduceSyntheticsIssued",
+      "signature": "reduceSyntheticsIssued(uint256)",
+      "decision": "excluded",
+      "reason": "Restricted onlyTransmuter synthetic-accounting mutation; not user repayment."
+    },
+    {
+      "functionName": "repay",
+      "signature": "repay(uint256,uint256)",
+      "decision": "admitted",
+      "reason": "Repays a selected position using caller MYT-share allowance; credit capped by account/global debt, earmarked debt prioritized, protocol fee can consume target collateral, and repayment transfers MYT to configured transmuter. Same-block mint/repay rejected."
+    },
+    {
+      "functionName": "repaymentFee",
+      "signature": "repaymentFee()",
+      "decision": "excluded",
+      "reason": "Exclude repaymentFee read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "resetMintAllowances",
+      "signature": "resetMintAllowances(uint256)",
+      "decision": "excluded",
+      "reason": "Owner/NFT-mediated clearing of delegated borrowing authority excluded as an allowance-management surface."
+    },
+    {
+      "functionName": "selfLiquidate",
+      "signature": "selfLiquidate(uint256,address)",
+      "decision": "admitted",
+      "reason": "Owner-only closing of a healthy indebted position using its own collateral. Clears earmarked and remaining debt, transfers repayment collateral to transmuter and sends residual MYT shares to explicit recipient. It is not third-party liquidation."
+    },
+    {
+      "functionName": "setAlchemistFeeVault",
+      "signature": "setAlchemistFeeVault(address)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setAlchemistFeeVault risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setAlchemistPositionNFT",
+      "signature": "setAlchemistPositionNFT(address)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setAlchemistPositionNFT risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setCollateralizationLowerBound",
+      "signature": "setCollateralizationLowerBound(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setCollateralizationLowerBound risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setDepositCap",
+      "signature": "setDepositCap(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setDepositCap risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setGlobalMinimumCollateralization",
+      "signature": "setGlobalMinimumCollateralization(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setGlobalMinimumCollateralization risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setGuardian",
+      "signature": "setGuardian(address,bool)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setGuardian risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setLiquidationTargetCollateralization",
+      "signature": "setLiquidationTargetCollateralization(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setLiquidationTargetCollateralization risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setLiquidatorFee",
+      "signature": "setLiquidatorFee(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setLiquidatorFee risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setMinimumCollateralization",
+      "signature": "setMinimumCollateralization(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setMinimumCollateralization risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setPendingAdmin",
+      "signature": "setPendingAdmin(address)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setPendingAdmin risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setProtocolFee",
+      "signature": "setProtocolFee(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setProtocolFee risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setProtocolFeeReceiver",
+      "signature": "setProtocolFeeReceiver(address)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setProtocolFeeReceiver risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setRepaymentFee",
+      "signature": "setRepaymentFee(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setRepaymentFee risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setTokenAdapter",
+      "signature": "setTokenAdapter(address)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setTokenAdapter risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "setTransmuterTokenBalance",
+      "signature": "setTransmuterTokenBalance(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude privileged setTransmuterTokenBalance risk/dependency/administrative configuration; not an ordinary position action."
+    },
+    {
+      "functionName": "tokenAdapter",
+      "signature": "tokenAdapter()",
+      "decision": "excluded",
+      "reason": "Exclude tokenAdapter read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "totalDebt",
+      "signature": "totalDebt()",
+      "decision": "excluded",
+      "reason": "Exclude totalDebt read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "totalSyntheticsIssued",
+      "signature": "totalSyntheticsIssued()",
+      "decision": "excluded",
+      "reason": "Exclude totalSyntheticsIssued read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "totalValue",
+      "signature": "totalValue(uint256)",
+      "decision": "excluded",
+      "reason": "Exclude totalValue read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "transmuter",
+      "signature": "transmuter()",
+      "decision": "excluded",
+      "reason": "Exclude transmuter read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "underlyingConversionFactor",
+      "signature": "underlyingConversionFactor()",
+      "decision": "excluded",
+      "reason": "Exclude underlyingConversionFactor read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "underlyingToken",
+      "signature": "underlyingToken()",
+      "decision": "excluded",
+      "reason": "Exclude underlyingToken read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "version",
+      "signature": "version()",
+      "decision": "excluded",
+      "reason": "Exclude version read-only metadata/quote/accounting helper; no read API or executable-state assurance is added."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit MYT-share withdrawal to recipient for an existing position; requires caller to be exactly the NFT owner, synchronizes accounting, checks unlocked collateral and validates the debt ratio. NFT operator approval alone is insufficient."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:burn",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "burn",
+      "signature": "burn(uint256,uint256)",
+      "abi": {
+        "name": "burn",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipientId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 burn",
+      "operation": "burn",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    },
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address,uint256)",
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 deposit",
+      "operation": "deposit",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    },
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:mint",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "mint",
+      "signature": "mint(uint256,uint256,address)",
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 mint",
+      "operation": "mint",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    },
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:repay",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "repay",
+      "signature": "repay(uint256,uint256)",
+      "abi": {
+        "name": "repay",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipientTokenId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 repay",
+      "operation": "repay",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    },
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:self-liquidate",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "selfLiquidate",
+      "signature": "selfLiquidate(uint256,address)",
+      "abi": {
+        "name": "selfLiquidate",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "accountId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountLiquidated",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 selfLiquidate",
+      "operation": "self-liquidate",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    },
+    {
+      "capabilityId": "alchemix-v3:v3:1:0xeb83112d925268bede86654c13d423a987587e3e:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xeB83112d925268BeDe86654C13D423a987587e3E",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,uint256)",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.alchemix.fi/dev/contracts/ethereum ; proxy implementation binding: https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code ; exact implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "alchemix-v3",
+      "label": "Alchemix V3 withdraw",
+      "operation": "withdraw",
+      "warnings": [
+        "This is Ethereum V3 Mix USDC Alchemist, not the disabled V2 deployment. The exact proxy is bound to explorer-reported implementation at review; upgrades can replace it and no live bytecode/storage persistence is attested.",
+        "Deposits and repayments consume configured MYT vault shares, not raw USDC or native ETH. MYT, underlying token, position NFT, token adapter, transmuter, fee vault, rate and risk settings are storage-configured dependencies; documentation mapping is not live dependency/configuration verification.",
+        "tokenId/accountId identifies an NFT position. withdraw, mint and selfLiquidate require caller equals NFT owner; operator approvals are not enough. Existing-position deposit may fund somebody else without transferring ownership; recipient determines NFT owner only when tokenId=0.",
+        "mint creates collateralized debt. burn spends caller debt tokens; repay spends caller MYT shares and may debit target collateral for earmarked-debt fees. burn/repay can benefit a position not owned by caller. selfLiquidate clears a healthy owner position using collateral, not a promise of zero loss.",
+        "On-chain pauses, deposit caps, health/global collateralization, earmarking, synthetic issuance, transmuter locks, fees, conversion/rounding and same-block mint/repay restrictions may reject or alter effects. No caller-set deadline or minimum residual output is present; all selected functions are nonpayable and require zero native value.",
+        "Source/ABI admission does not establish balances, allowances, collateral backing, MYT liquidity, rates, configuration, executable workflows or financial safety. Existing exact grants/all mode, pauses and independent execution controls remain in force; no new privileges or API-key configuration are written."
+      ]
+    }
+  ]
+}

@@ -112,3 +112,28 @@ BSC 56 adds `bakeryswap-v1` at `0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F`: 14 
 
 ABI native methods explicitly use BNB/WBNB names. Four payable functions spend native BNB; caller financial parameters and token/LP approvals remain independent responsibilities. Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Net taxed-token receipts, liquidity and execution success are not guaranteed. The former official site serves a lander, so the frontend directory links to the official source repository instead. No API-key configuration, pause or execution control changed.
 
+## mStable exit-only savings and Alchemix V3 reviewed 2026-10-17
+
+| Protocol ID | Chain | Exact proxy | Reported implementation | Active / excluded functions |
+| --- | --- | --- | --- | --- |
+| `mstable-savings` | Ethereum 1 | `0x30647a72Dc82d7Fbb1123EA74716aB8A317Eac19` | `0x0bc67971b49F7c23704c064F57B40d42A9B6f2B6` | 4 / 40 |
+| `alchemix-v3` | Ethereum 1 | `0xeB83112d925268BeDe86654C13D423a987587e3E` | `0xd5F26C90EAD033554BF36227d0bbe993F6f76570` | 6 / 75 |
+
+**mStable:** [official legacy SAVE documentation](https://developers.mstable.org/contracts/imassets-save.md) attributes the proxy; [exact implementation ABI/source](https://sourcify.dev/server/v2/contract/1/0x0bc67971b49F7c23704c064F57B40d42A9B6f2B6?fields=all) identifies the deprecated, exit-only implementation. Only `redeem(uint256,address,address)`, `withdraw(uint256,address,address)`, `redeemCredits(uint256)` and `redeemUnderlying(uint256)` are active. Historical documentation's deposit/mint methods do not exist in this implementation and remain denied. Full implementation plus proxy ABI and all 44 function decisions are retained in `data/defi-catalog/sources/mstable-savings-router.json`; catalog fragments omit only redundant legacy `constant`/`payable` flags after checking their consistency with `stateMutability`.
+
+The underlying is mUSD, not USDC. Exchange-rate rounding can produce zero output for small redemptions; exact-asset withdrawal adds one share after division, including at exact divisibility. No caller-set deadline or slippage bound exists. Optional external interest collection, connector rebalancing/poke cadence, liquidity and upgrades can affect or revert exits. The frontend links to the attributable legacy reference, not an assertion that historical deposit flows remain available.
+
+**Alchemix V3:** [official Ethereum deployment mapping](https://docs.alchemix.fi/dev/contracts/ethereum), [proxy explorer resolution](https://etherscan.io/address/0xeB83112d925268BeDe86654C13D423a987587e3E#code) and [exact implementation ABI/source](https://sourcify.dev/server/v2/contract/1/0xd5F26C90EAD033554BF36227d0bbe993F6f76570?fields=all) bind the Mix USDC/alUSD Alchemist. The complete 81-function implementation inventory and separate proxy ABI are in `data/defi-catalog/sources/alchemix-v3-router.json`. Ordinary `deposit`, `withdraw`, `mint`, `burn`, `repay` and owner-only `selfLiquidate` are active; delegated minting, approval management, third-party liquidation, privileged/transmuter-only methods, initialization and getters are excluded.
+
+Deposit, withdrawal and repayment amounts are MYT shares, not raw USDC. Existing positions can receive third-party collateral deposits; withdrawal/mint/self-liquidation require the NFT owner, not merely an approved NFT operator. Burn repays unearmarked debt; MYT repayment handles earmarked debt and fees differently. Same-block mint/repay restrictions, health and locked-collateral checks, debt caps, pause state, rounding, mutable dependencies and upgrades remain authoritative. `selfLiquidate` closes the owner's healthy indebted position using its collateral; it is not third-party liquidation. No caller-set deadline/minimum residual or live dependency/balance/rate/execution guarantee is implied.
+
+Alchemix V2 is **not admitted**: `data/defi-catalog/sources/alchemix-v2-router.json` records proxy `0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd`, reported implementation `0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a`, full ABI inventories and zero selected functions. Its ordinary lifecycle methods unconditionally revert in the reviewed implementation; the frontend's single Alchemix card represents the V3 admission only.
+
+All admitted calls retain existing exact-function grants, canonical calldata checks, pause scopes and independent execution controls. Source admission does not attest current deployed implementation identity, configuration, backing, liquidity, financial safety or execution success.
+
+## Alpaca ibUSDT admission blocked on implementation evidence
+
+`data/defi-catalog/sources/alpaca-vault-router.json` records the official BSC ibUSDT proxy `0x158Da805682BdC8ee32d52833aD41E74bb951E59` and source-service-reported implementation `0x7684966f3A3d679939622eF0260EC9A20318e981`. Only the proxy's five administrative ABI functions could be bound and inventoried; all are excluded. No implementation-function inventory is claimed, and neither runtime capabilities nor a frontend card are added.
+
+Implementation Sourcify v2 and full/partial metadata requests returned 404; explorer read-contract surfaces reported no matching implementation ABI/source. The implementation page returned 403/human verification, and the explorer API requires a key. Pinned official repository and deployment-manifest searches did not bind this exact implementation. Historical `Vault.sol` interfaces are not substituted. Continuing this candidate requires trustworthy ABI/source or official build/deployment artifacts binding that implementation to this proxy. KyberSwap remains skipped independently.
+

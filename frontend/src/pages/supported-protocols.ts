@@ -14,6 +14,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Aave V3', website: 'https://aave.com' },
   { name: 'Aerodrome', website: 'https://aerodrome.finance' },
   { name: 'Ajna', website: 'https://ajna.finance' },
+  { name: 'Alchemix', website: 'https://alchemix.fi' },
   { name: 'Ambient', website: 'https://ambient.finance' },
   { name: 'Angle', website: 'https://angle.money' },
   { name: 'Ankr', website: 'https://www.ankr.com' },
@@ -69,6 +70,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Maverick', website: 'https://mav.xyz' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
+  // The reviewed imUSD implementation is exit-only; use its legacy deployment reference.
+  { name: 'mStable', website: 'https://developers.mstable.org/contracts/imassets-save.md' },
   { name: 'OpenOcean', website: 'https://openocean.finance' },
   { name: 'Origin', website: 'https://www.originprotocol.com' },
   { name: 'PancakeSwap', website: 'https://pancakeswap.finance' },
