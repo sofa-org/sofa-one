@@ -84,6 +84,13 @@ SOFA ONE turns automated on-chain execution into an operational, integrable, and
 - Basic transaction policy checks reduce high-risk calls.
 - Redacted security events can be exported for monitoring integrations.
 
+### 6.6 DeFi Protocol Catalog
+
+- DeFi integrations are scoped to exact chains, contract addresses and function signatures. The public `/protocols` directory is an index, not support for every feature of a protocol.
+- This expansion adds the direct JetSwap and WaultSwap routers on BNB Smart Chain, each with nine swaps and five non-permit liquidity functions. Deployment and ABI evidence is recorded in the [DeFi catalog workflow](./scripts/defi-catalog/README.md).
+- `all` mode dynamically includes active, unpaused capabilities; `custom` mode requires exact capability IDs. Independent permissions, pauses and execution policies still apply. Catalog membership does not guarantee current liquidity, execution success or financial safety.
+- Legacy entries may link to archived official documentation or source references rather than an operating trading frontend. KyberSwap and Synapse remain excluded pending approved nested-execution scopes; Alpaca remains excluded for missing implementation ABI evidence.
+
 ## 7. Supported Chains
 
 SOFA ONE supports multiple EVM networks, with Base Sepolia as the default development network.

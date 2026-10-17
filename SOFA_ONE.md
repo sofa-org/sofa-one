@@ -84,6 +84,13 @@ SOFA ONE 通过仪表盘、API Key、交易策略限制、幂等控制和安全�
 - 对交易请求执行基础策略限制，减少高风险调用。
 - 可输出脱敏安全事件，便于后续接入监控系统。
 
+### 6.6 DeFi 协议目录
+
+- DeFi 接入按精确链、合约地址和函数签名维护，公共 `/protocols` 页面提供协议索引；不代表支持某协议全部功能。
+- 本次新增 BNB Smart Chain 上的 JetSwap、WaultSwap 直接 Router，各包含 9 个兑换和 5 个非 permit 流动性函数；完整部署与 ABI 证据见 [DeFi 目录工作流](./scripts/defi-catalog/README.md)。
+- `all` 模式动态包含已启用且未暂停的能力；`custom` 模式需选择精确能力 ID。独立权限、暂停与执行策略仍生效；目录不保证当前流动性、执行成功或资金安全。
+- 旧协议的目录链接可能指向官方文档存档或源码参考，而非仍在运行的交易前端。KyberSwap、Synapse 的嵌套执行范围，以及 Alpaca 的实现 ABI 证据仍未满足接入条件，暂不开放。
+
 ## 7. 已支持的链
 
 SOFA ONE 已支持多条 EVM 网络，默认开发网络为 Base Sepolia。

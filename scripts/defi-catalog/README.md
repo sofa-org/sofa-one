@@ -194,3 +194,20 @@ Amounts are 3NRV-LP shares; caller needs LP balance and pool allowance, three pe
 
 The frontend's Nerve Finance card uses the surviving official migration reference rather than expired legacy domains. This does not admit Synapse's blocked router, bridges, successor pools or incentives. Source-service `match` is recorded as reported; exact grants, canonical ABI/value checks, all pause scopes and independent execution controls are unchanged.
 
+## JetSwap and WaultSwap direct routers reviewed 2026-10-17
+
+| Protocol ID | Chain | Exact target | Active / excluded functions |
+| --- | --- | --- | --- |
+| `jetswap-v1` | BSC 56 | `0xBe65b8f75B9F20f4C522e0067a3887FADa714800` | 14 / 10 |
+| `waultswap-v1` | BSC 56 | `0xD48745E39BbED146eEC15b79cBF964884F9877c2` | 14 / 10 |
+
+Each addition admits nine explicit swaps and five non-permit liquidity actions. The complete deployment-bound ABI, selected fragments, dependencies and all 24 function decisions are retained in `data/defi-catalog/sources/<protocol-id>-router.json`. Seven getters/quotes and three signature/permit paths per router remain excluded; constructor and receive entries create no capabilities. Neither router exposes an opaque executor, multicall or administrative entry.
+
+**JetSwap:** [archived official BSC mapping](https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts) binds the exact router, factory and pair-init-code hash; [exact-address Sourcify ABI/source](https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all) binds the direct non-proxy implementation. The deployed library uses 997/1000 swap arithmetic; its pair-init-code hash matches the archived mapping. Source-service creation/runtime `match` labels are preserved, not relabeled `exact_match`. The former `jetswap.finance` domain serves unrelated casino content; the directory links to the archived official contract documentation, not that former frontend.
+
+**WaultSwap:** the [legacy transparency mapping](https://wault.finance/transparency/), [published Inspex WSwap audit](https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf) (page 4) and indexed exact-address BscScan label attribute this BSC router. [Exact-address Sourcify ABI/source](https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all) binds the direct non-proxy implementation and reports creation/runtime `exact_match`; these are the service's labels, not a fresh runtime attestation or audit endorsement. Its deployed library independently uses 998/1000 arithmetic and its own pair-init-code hash. The directory uses the attributable [WaultFinance repository](https://github.com/WaultFinance/WAULT) as an informational reference, not router source evidence or a functioning swap frontend.
+
+Both routers bind immutable factory/WBNB dependencies, derive explicit token-path pairs and use empty pair callback bytes. ETH-named methods spend native BNB. Caller balances, token/LP allowances, assets, paths, amounts, recipient, deadline and financial parameters remain independent responsibilities. Liquidity-add minimum checks are branch-dependent, with neither minimum checked for an empty pool and no minimum LP-output argument. Fee-supporting native removal forwards the router's entire token balance; supporting token/native swaps unwrap its entire WBNB balance. Burn-accounting minimums do not guarantee net post-tax recipient receipts.
+
+Existing `all` mode dynamically includes active, unpaused additions; custom keys require exact capability IDs. No key configuration or execution control is changed. Canonical calldata/value validation, preflight/final grants and all pause scopes remain enforced. No fresh deployed runtime/dependency identity, funding, liquidity, execution success or financial-safety guarantee is implied. KyberSwap and Synapse remain skipped pending approved nested-execution scopes; Alpaca remains skipped for missing trustworthy implementation ABI/source.
+

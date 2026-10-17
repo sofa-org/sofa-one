@@ -60,6 +60,11 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Idle', website: 'https://idle.finance' },
   { name: 'Integral', website: 'https://integral.link' },
   { name: 'izumi', website: 'https://izumi.finance' },
+  // Legacy JetSwap domain now serves unrelated content; retain official deployment documentation.
+  {
+    name: 'JetSwap',
+    website: 'https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts',
+  },
   { name: 'Kelp', website: 'https://kerneldao.com/kelp/' },
   { name: 'LFJ', website: 'https://lfj.gg' },
   { name: 'Lido', website: 'https://lido.fi' },
@@ -113,6 +118,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Velodrome', website: 'https://velodrome.finance' },
   { name: 'Venus', website: 'https://venus.io' },
   { name: 'Vesper', website: 'https://vesper.finance' },
+  // Attributable source reference only; no functioning legacy swap frontend is asserted.
+  { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
