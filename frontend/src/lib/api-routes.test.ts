@@ -1,36 +1,51 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getDepositInfoAuth, getMfaStatusAuth, refreshApiKey, sendTransactionWithApiKey, syncSession, withdrawAuth } from './api';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as Api from './api';
 
-describe('canonical API route transports', () => {
-  afterEach(() => vi.restoreAllMocks());
+describe.each([
+  { mode: 'Vite proxy', apiUrl: undefined, base: '/api' },
+  { mode: 'configured API URL', apiUrl: 'http://localhost:3100', base: 'http://localhost:3100' },
+])('canonical API route transports ($mode)', ({ apiUrl, base }) => {
+  let api: typeof Api;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_API_URL', apiUrl);
+    // API_BASE is captured at module load, so import only after setting each case's environment.
+    api = await import('./api');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
 
   it('sends API-key transactions to the canonical resource path', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(new Response('{}', { status: 200 }))
       .mockResolvedValueOnce(new Response('{}', { status: 200 }));
-    await sendTransactionWithApiKey('sk_test', { chainId: 84532, idempotencyKey: 'stable', interactions: [] } as any);
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/transactions');
+    await api.sendTransactionWithApiKey('sk_test', { chainId: 84532, idempotencyKey: 'stable', interactions: [] });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/v1/transactions`);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ 'X-API-Key': 'sk_test' }) });
   });
 
   it('uses validated GET query parameters for deposit info', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await getDepositInfoAuth(async () => 'iam-token', 84532, '00000000-0000-4000-8000-000000000001');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/wallets/deposits?chainId=84532&walletId=00000000-0000-4000-8000-000000000001');
+    await api.getDepositInfoAuth(async () => 'iam-token', 84532, '00000000-0000-4000-8000-000000000001');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/wallets/deposits?chainId=84532&walletId=00000000-0000-4000-8000-000000000001`);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
   });
 
   it('uses the canonical unversioned auth path and bearer token', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await syncSession(async () => 'iam-token');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/auth/session');
+    await api.syncSession(async () => 'iam-token');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/auth/session`);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
   });
 
   it('uses canonical unversioned MFA paths', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await getMfaStatusAuth(async () => 'iam-token');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/auth/mfa/status');
+    await api.getMfaStatusAuth(async () => 'iam-token');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/auth/mfa/status`);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
   });
 
@@ -39,13 +54,13 @@ describe('canonical API route transports', () => {
       .mockResolvedValueOnce(new Response('{}', { status: 200 }))
       .mockResolvedValueOnce(new Response('{}', { status: 200 }))
       .mockResolvedValueOnce(new Response('{}', { status: 200 }));
-    await refreshApiKey(async () => 'iam-token', 'proof', 'wallet-id');
+    await api.refreshApiKey(async () => 'iam-token', 'proof', 'wallet-id');
     const input = [async () => 'iam-token', '0x1111111111111111111111111111111111111111', '100', 'USDC', 84532, 'proof', undefined, 'stable-retry-key'] as const;
-    await withdrawAuth(...input);
-    await withdrawAuth(...input);
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/api-keys/rotations');
+    await api.withdrawAuth(...input);
+    await api.withdrawAuth(...input);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/api-keys/rotations`);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token', 'X-Step-Up-Token': 'proof' }) });
-    expect(fetchMock.mock.calls[1][0]).toBe('/api/wallets/withdrawals');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${base}/wallets/withdrawals`);
     expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token', 'X-Step-Up-Token': 'proof' }) });
     expect(fetchMock.mock.calls.slice(1).map(([, init]) => JSON.parse(String(init?.body)).idempotencyKey)).toEqual(['stable-retry-key', 'stable-retry-key']);
   });

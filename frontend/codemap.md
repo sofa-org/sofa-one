@@ -35,6 +35,8 @@ Root-level files:
   - `build` → `tsc -b && vite build` (type-check then bundle).
   - `preview` → `vite preview` (serve the production build locally).
   - `lint` → `eslint .` (run separately; root repo lint skips `frontend/`).
+  - `test` → `vitest run`; the API route suite explicitly sets and restores `VITE_API_URL` before loading the client for each case, covering both the unset `/api` proxy fallback and a configured absolute backend URL independently of CI/local environment values.
+  - `verify` → lint, unit tests, then the production build.
 - **TypeScript** (`tsconfig.json`): `strict: true`, `noUnusedLocals`/`noUnusedParameters`, `noEmit` (Vite emits), `moduleResolution: "bundler"`, `jsx: "react-jsx"`, `paths: { "@/*": ["./src/*"] }`. `include: ["src", "vite-env.d.ts"]`.
 - **Vite** (`vite.config.ts`):
   - Plugins: `@vitejs/plugin-react` + `@tailwindcss/vite` (Tailwind v4 CSS-first, no `tailwind.config.js`).
