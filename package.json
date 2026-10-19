@@ -20,7 +20,7 @@
     "test:e2e:billing": "ts-node --transpile-only scripts/billing-e2e-runner.ts",
     "test:e2e:billing:gate": "ts-node --transpile-only scripts/billing-e2e-runner.ts --gate-only",
     "prisma:generate": "prisma generate",
-    "verify:backend": "npm run prisma:generate && npm run lint:check && npm run test -- --runInBand && npm run build",
+    "verify:backend": "npm run prisma:generate && npm run defi:catalog:check && npm run lint:check && npm run test -- --runInBand && npm run build",
     "verify:frontend": "npm --prefix frontend run verify",
     "verify": "npm run verify:backend && npm run verify:frontend",
     "prisma:migrate:dev": "prisma migrate dev",

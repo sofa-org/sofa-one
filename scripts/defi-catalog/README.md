@@ -1,6 +1,6 @@
 # DeFi catalog workflow
 
-The current catalog source is `data/defi-catalog/catalog.json`. Offline tooling validates this reviewed input and deterministically generates the static TypeScript module consumed by the runtime. Runtime authorization does not discover or load source snapshots or plans.
+The current catalog source is `data/defi-catalog/catalog.json`. Offline tooling validates this reviewed input and deterministically generates the static TypeScript module consumed by the runtime and `frontend/public/protocols.json` for public download. Runtime authorization does not discover or load source snapshots or plans.
 
 ## Lean admission path
 
@@ -19,11 +19,20 @@ npm run defi:catalog:generate
 npm run defi:catalog:check
 ```
 
-Optionally run `npm run defi:catalog:diff` to review catalog changes. `generate` updates the generated runtime module; `check` validates that it matches the catalog. Review the diff, generated output and each record before admission. Catalog entries are function metadata, not API-key grants. Profiles are reviewed metadata groupings only.
+Optionally run `npm run defi:catalog:diff` to review catalog changes. `generate` updates both the generated runtime module and public JSON; `check` rejects either missing/stale output. `npm run verify:backend` also runs this catalog check, including in CI. Review the diff, generated output and each record before admission. Catalog entries are function metadata, not API-key grants. Profiles are reviewed metadata groupings only.
 
 These commands are offline and make no network, RPC, or database calls. Profiles do not grant capabilities, expand effective permissions, or prove a complete workflow.
 
 Catalog admission records deployment-source and ABI-binding evidence. It does not establish deployed runtime identity, funding, balances, liquidity, successful execution, complete workflows, or financial safety. Preserve canonical ABI decoding, authorization, pause checks, final rechecks, and signing/execution boundaries; catalog membership does not bypass any independent control.
+
+## Public protocols.json
+
+`frontend/public/protocols.json` is served as `/protocols.json` without importing backend code into the browser or adding an unauthenticated backend API. Its only fields are chain-ID keys and contract objects containing `address`, `protocol`, and `abi`: `{"1":[{"address":"0x...","protocol":"...","abi":[...]}]}`. Exported addresses are lowercase. Each address/protocol pair is a separate object, so multiple protocol labels at one address are retained.
+
+Only active chains, active contracts, and active `contract_call` functions with verified provenance are exported. No functions are discovered from full source ABIs; read-only functions appear only if already admitted as active catalog functions. An eligible function must have a protocol label; export fails rather than inventing one. Chains, addresses, protocol labels, and canonical function signatures are sorted deterministically. The function ABI retains `type`, `name`, `stateMutability`, `inputs`, `outputs`, and recursive tuple `components`; `internalType` and catalog-only metadata are omitted.
+
+This is static public metadata, not live authorization or pause state. It supplies no API-key grants and guarantees neither successful execution nor current deployment identity, balances, liquidity, or financial safety. In particular, an exported structured-executor ABI does not bypass runtime nested-execution scope, admitted-child bindings, child grants, pauses, or canonical-calldata controls. Those restrictions are intentionally not encoded in this minimal ABI download and remain independently enforced by runtime.
+
 
 ## Router additions reviewed 2026-10-16
 

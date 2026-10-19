@@ -114,6 +114,51 @@ The frontend is a static SPA. Common hosting options:
 
 Backend CORS must allow the deployed frontend origin.
 
+### Public contract ABI download
+
+`frontend/public/protocols.json` is generated from the reviewed catalog and copied by
+Vite to `frontend/dist/protocols.json`. Serve it at **`GET /protocols.json` on the
+frontend origin**, without sign-in, API keys, cookies, or backend routing. The public
+`/protocols` page has a direct download link; third parties can fetch the JSON itself.
+Deploy the generated file with the rest of `frontend/dist`.
+
+For this exact path, the static host must:
+
+- Serve the actual file as `Content-Type: application/json`, or return 404 when it is
+  missing. Do not rewrite missing `/protocols.json` requests to `index.html` or a
+  sign-in page.
+- Return `Access-Control-Allow-Origin: *` for credential-free cross-origin GET
+  requests. Do not enable credentials or broaden backend API CORS to publish this file.
+- Allow public GET/HEAD access independently of dashboard authentication.
+
+No provider-specific production hosting configuration is checked into this repository;
+these response headers and fallback exceptions must be configured on the deployed
+static host/CDN. Vite's static-file serving alone does not configure production CORS.
+For the Nginx hosting option above, add an exact location alongside the SPA location
+(using the same `root` pointing at `frontend/dist`):
+
+```nginx
+location = /protocols.json {
+    try_files $uri =404;
+    default_type application/json;
+    add_header Access-Control-Allow-Origin "*" always;
+}
+
+location / {
+    try_files $uri /index.html;
+}
+```
+
+On S3/CloudFront, allow public object reads and configure an equivalent
+credential-free GET/HEAD CORS policy and response header for this object; ensure
+SPA error rewriting does not convert its missing-object response to HTML. On
+Vercel/Netlify, configure the same exact-path response header and preserve static
+file precedence with an explicit missing-file exclusion from SPA rewrites.
+
+The download is static public metadata, not an API-key grant or a guarantee of
+current authorization, unpaused availability, liquidity or execution success.
+Structured executor ABIs do not bypass runtime nested-execution scope checks.
+
 ## 8. Billing worker (optional, default off)
 
 The billing worker (`BillingWorkerService`) is an **in-process** 5-minute scheduler
