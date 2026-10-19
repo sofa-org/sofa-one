@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Address } from 'viem';
 import { resolveCaliburDeployment } from './calibur-deployment';
-import { CALIBUR_ADDRESS, CALIBUR_ADDRESSES, LEGACY_CALIBUR_ADDRESS } from './calibur';
+import { CALIBUR_ADDRESS, CALIBUR_ADDRESSES, LEGACY_CALIBUR_ADDRESS } from '../../../src/common/calibur/calibur-primitives';
 
 function client(chainId: number, getCode: (args: { address: Address }) => Promise<`0x${string}` | undefined>) {
   return { chain: { id: chainId }, getCode };

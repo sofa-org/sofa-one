@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { padHex, type Hex } from 'viem';
-import { CALIBUR_ADDRESSES, CALIBUR_DELEGATION_CODES, hashKey, KeyType } from '@/lib/calibur';
+import { CALIBUR_ADDRESSES, CALIBUR_DELEGATION_CODES, hashKey, KeyType } from '../../../../src/common/calibur/calibur-primitives';
 import WalletPage from './Wallet';
 
 const mocks = vi.hoisted(() => ({

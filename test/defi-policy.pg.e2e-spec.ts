@@ -12,6 +12,7 @@ jest.mock('../src/core/openfort/openfort.service', () => ({
 import { TransactionsService } from '../src/modules/transactions/transactions.service';
 import { TransactionPolicyService } from '../src/modules/transactions/transaction-policy.service';
 import { extractDirectTransferIntents, uniqueDirectTransferDestinations } from '../src/modules/transactions/direct-transfer-intents';
+import { RequestContextService } from '../src/common/request-context/request-context.service';
 import {
   applyBillingE2eDatabaseUrl,
   assertBillingE2eDatabaseIdentity,
@@ -178,6 +179,11 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
       db as never, {} as never, new TransactionPolicyService(db as never, events), {} as never, {} as never,
       destinationPolicy as never, policyService,
       events as never,
+      { assertAllowed: jest.fn() } as never,
+      { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
+      { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
+      { assertSessionKeyAllowed: jest.fn() } as never,
+      new RequestContextService(),
     );
     const extraction = extractDirectTransferIntents(authorization.interactions as any, authorization.context.executionOwner);
     if (!extraction.ok) throw new Error('Invalid destination fixture');

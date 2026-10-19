@@ -18,7 +18,7 @@ Unified security-event persistence, deterministic rule-based risk scoring, multi
 - `SecurityEventExportService` is fire-and-forget: no-op when `SECURITY_EVENTS_SIEM_WEBHOOK_URL` is unset; network/HTTP failures are logged, never thrown. Payload redaction is layered: sensitive keys (`secret`, `private`, `raw`, `calldata`, `typeddata`, `api[_-]?key`, `authorization`, `token`, `signature`) → `[redacted]`, strings sanitized via `sanitizeErrorMessage(value, 240)`, depth capped at 4, arrays sliced to 20, objects to 50 keys, `bigint` → string, `Date` → ISO.
 - Attribution (`actorType`, `userId`, `apiKeyId`, `walletId`), outcome (`result`, `reason`), risk level, request context, and safe JSON metadata are stored per event. `metadata` defaults to `Prisma.JsonNull`; `requestId` falls back to `RequestContextService.getRequestId()`.
 - Failure isolation: notification and SIEM-export failures are caught and logged inside `record()` so they never fail the canonical event write.
-- `@Optional()` injection throughout (`notifications`, `riskService`, `exporter`, `securityEvents`) enables graceful degradation in consumers and in tests.
+- Notification, scoring/export and audit sinks retain their existing optional integration behavior. Operation-level risk evaluation in wallet and transaction services is required, not an optional bypass.
 
 ## Flow
 1. Caller constructs a safe, non-secret `RecordSecurityEventInput` (actor, event type, attribution, optional risk/result/reason/metadata).
@@ -36,7 +36,7 @@ Unified security-event persistence, deterministic rule-based risk scoring, multi
 
 ## Integration
 - Imported by `AppModule`, `ApiKeyModule` (lifecycle events, passes its Prisma tx into `record()`), `AuthModule` (login/step-up events), `EoaExecutionModule` (EOA allow/deny audit), `TransactionsModule` (policy denies, simulation allow/deny, risk evaluation), `WalletModule` (withdrawal policy/high-value, signing policy, risk evaluation), and `SessionKeyModule` (session-key allow/deny/policy-drift events).
-- `RiskEvaluationService` is `@Optional()` in `TransactionsService` and `WalletService`; when absent, risk evaluation is skipped (graceful degradation). `SecurityEventService` is `@Optional()` in signing/withdrawal/session-key policy services and in `IpAllowlistService`.
+- `RiskEvaluationService` is required in `TransactionsService` and `WalletService`; missing policy wiring fails startup. `SecurityEventService` remains optional in signing/withdrawal/session-key policy services and in `IpAllowlistService` for their existing audit isolation.
 - Common guards consume events: `ApiKeyAuthGuard` and `IpAllowlistService` (the latter is provided/exported by this module) record auth/allowlist outcomes.
 - Imports `SecurityNotificationModule` so user-facing dashboard alerts can be derived from selected security events.
 - Optional SIEM integration uses `SECURITY_EVENTS_SIEM_WEBHOOK_URL` (validated as an HTTPS URL in `env.validation.ts`) and optional `SECURITY_EVENTS_SIEM_WEBHOOK_SECRET` (sent as `Authorization: Bearer ...`).

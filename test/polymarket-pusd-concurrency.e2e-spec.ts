@@ -9,6 +9,7 @@ import { applyBillingE2eDatabaseUrl, assertBillingE2eDatabaseIdentity, queryBill
 import { TransactionsService } from '../src/modules/transactions/transactions.service';
 import { WithdrawalDestinationPolicyService } from '../src/modules/withdrawal-destination/withdrawal-destination-policy.service';
 import { POLYMARKET_PUSD_WRAP_ABI, POLYMARKET_PUSD_WRAP_IDENTITY } from '../src/modules/defi/execution/pusd-identity';
+import { RequestContextService } from '../src/common/request-context/request-context.service';
 
 const target = applyBillingE2eDatabaseUrl(resolveBillingE2eDatabaseTarget());
 const DEST = '0x2222222222222222222222222222222222222222';
@@ -61,7 +62,12 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
     const defi = { assertStillAuthorized: jest.fn().mockResolvedValue(undefined), recordAllowedInTx: jest.fn() };
     const transactionPolicy = { assertSpendAllowedInTx: jest.fn().mockResolvedValue(undefined) };
     const service = new TransactionsService(prisma as any, openfort as any, transactionPolicy as any,
-      {} as any, {} as any, destinationPolicy, defi as any, {} as any);
+      {} as never, {} as never, destinationPolicy, defi as never, {} as never,
+      { assertAllowed: jest.fn() } as never,
+      { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
+      { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
+      { assertSessionKeyAllowed: jest.fn() } as never,
+      new RequestContextService());
 
     const interaction = {
       to: POLYMARKET_PUSD_WRAP_IDENTITY.contract,
@@ -148,7 +154,12 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
     const service = new TransactionsService(prisma as any, openfort as any,
       { assertSpendAllowedInTx: jest.fn().mockResolvedValue(undefined) } as any, {} as any, {} as any,
       destinationPolicy, { assertStillAuthorized: jest.fn().mockResolvedValue(undefined), recordAllowedInTx: jest.fn().mockResolvedValue(null) } as any,
-      { exportCommitted: jest.fn() } as any);
+      { exportCommitted: jest.fn() } as never,
+      { assertAllowed: jest.fn() } as never,
+      { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
+      { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
+      { assertSessionKeyAllowed: jest.fn() } as never,
+      new RequestContextService());
     // Isolate destination serialization from the independent API-key row lock;
     // the first race above exercises the production destination gate itself.
     (service as any).assertDirectEgressKeyStateInTx = jest.fn().mockResolvedValue(undefined);

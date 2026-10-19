@@ -87,6 +87,14 @@ describe('wallet HTTP route auth and deposit query contract', () => {
     expect(service.sign).toHaveBeenCalledWith('api-user', expect.objectContaining({ type: 'typed_data' }), { id: 'key-id' });
   });
 
+  it('rejects message and session-key signing before invoking the service', async () => {
+    await request(app.getHttpServer()).post('/v1/wallets/sign').set('X-API-Key', 'key')
+      .send({ type: 'message', message: 'Hello', chainId: 137 }).expect(400);
+    await request(app.getHttpServer()).post('/v1/wallets/sign').set('X-API-Key', 'key')
+      .send({ type: 'typed_data', executionMode: 'session_key', typedData: {} }).expect(400);
+    expect(service.sign).not.toHaveBeenCalled();
+  });
+
   it('registers step-up IAM withdrawal at the canonical path and removes /withdraw', async () => {
     const body = { chainId: 84532, to: '0x1111111111111111111111111111111111111111', amount: '1000000', token: 'USDC', idempotencyKey: 'stable-retry' };
     await request(app.getHttpServer()).post('/wallets/withdraw').set('Authorization', 'Bearer iam').set('X-Step-Up-Token', 'proof').send(body).expect(404);

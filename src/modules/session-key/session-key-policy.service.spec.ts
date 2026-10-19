@@ -3,7 +3,7 @@ import {
   SessionKeyPolicyService,
   type SessionKeyPolicyContext,
 } from './session-key-policy.service';
-import { ZERO_ADDRESS } from '../../common/calibur/calibur';
+import { ZERO_ADDRESS } from '../../common/calibur/calibur-primitives';
 
 // Mock calibur functions
 jest.mock('../../common/calibur/calibur', () => ({

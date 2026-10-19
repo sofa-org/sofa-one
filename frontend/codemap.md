@@ -37,10 +37,11 @@ Root-level files:
   - `lint` → `eslint .` (run separately; root repo lint skips `frontend/`).
   - `test` → `vitest run`; the API route suite explicitly sets and restores `VITE_API_URL` before loading the client for each case, covering both the unset `/api` proxy fallback and a configured absolute backend URL independently of CI/local environment values.
   - `verify` → lint, unit tests, then the production build.
-- **TypeScript** (`tsconfig.json`): `strict: true`, `noUnusedLocals`/`noUnusedParameters`, `noEmit` (Vite emits), `moduleResolution: "bundler"`, `jsx: "react-jsx"`, `paths: { "@/*": ["./src/*"] }`. `include: ["src", "vite-env.d.ts"]`.
+- **TypeScript** (`tsconfig.json`): `strict: true`, `noUnusedLocals`/`noUnusedParameters`, `noEmit` (Vite emits), `moduleResolution: "bundler"`, `jsx: "react-jsx"`. `@/*` resolves to `./src/*`; `viem` resolves to this package's `./node_modules/viem`, including from the external shared Calibur leaf. `include: ["src", "vite-env.d.ts"]`.
 - **Vite** (`vite.config.ts`):
   - Plugins: `@vitejs/plugin-react` + `@tailwindcss/vite` (Tailwind v4 CSS-first, no `tailwind.config.js`).
-  - `resolve.alias`: `@` → `./src`.
+  - `resolve.alias`: `@` → `./src`; `resolve.dedupe: ['viem']` uses the frontend dependency for shared-leaf imports instead of loading a second backend viem. Vitest applies the same deduplication.
+  - Dev-server `fs.allow` includes this package and `../src/common/calibur`, permitting the directly imported browser-safe shared leaf without exposing the entire backend source tree.
   - `build.modulePreload: false`; `chunkSizeWarningLimit: 1300`; suppresses third-party `/*#__PURE__*/` annotation warnings.
   - `manualChunks`: `vendor` (react, react-dom, react-router-dom) and `wallet` (@openfort/react, wagmi, viem) for cache-friendly splitting.
 - **Styling**: Tailwind v4 via `@import "tailwindcss"` in `src/index.css`, with a `@theme` block defining brand tokens (`brand-bg`, `brand-accent`, etc.) and font families (Inter/Newsreader/Source Code Pro loaded from Google Fonts in `index.html`).
@@ -56,7 +57,7 @@ Root-level files:
 ## Integration
 - **Backend**: the SPA talks to the NestJS backend over HTTP. In dev it goes through the Vite `/api` proxy; in production it uses `VITE_API_URL` directly. The access-control split is respected: dashboard routes use Openfort IAM bearer tokens (`authFetch`), while the frontend's API-key helpers use explicit keys for signing, transaction submission, and transaction status. The public API also exposes read-only `/v1/wallets` metadata, which these helpers do not consume.
 - **Openfort**: `@openfort/react` provides IAM auth (email OTP), the embedded EOA wallet, Shield recovery, and 7702 authorization; `@openfort/react/wagmi` + `wagmi` + `viem` provide the wallet/chain stack. `AuthProviders.tsx` builds a 13-chain wagmi config with public RPC defaults overridable via `VITE_*_RPC_URL`.
-- **Blockchain**: `src/lib/calibur.ts` builds EIP-7702-authorized Calibur smart accounts (EntryPoint v0.8) whose user operations are signed by the owner account and submitted through Openfort (or Pimlico on Monad).
+- **Blockchain**: `src/lib/calibur.ts` builds EIP-7702-authorized Calibur smart accounts (EntryPoint v0.8) whose user operations are signed by the owner account and submitted through Openfort (or Pimlico on Monad). Constants, key types/hashing/settings, registry encoders and EntryPoint call encoding come directly from `../src/common/calibur/calibur-primitives.ts`; this leaf has only a viem dependency and does not import NestJS, Prisma, backend account factories or signing code.
 - **Dependencies** (`package.json`):
   - Runtime: `@openfort/react`, `@tanstack/react-query`, `lucide-react`, `qrcode`, `react`, `react-dom`, `react-router-dom`, `viem`, `wagmi`.
   - Dev: `@tailwindcss/vite`, `@types/*`, `@typescript-eslint/*`, `@vitejs/plugin-react`, `eslint`, `eslint-config-prettier`, `tailwindcss`, `typescript`, `vite`.

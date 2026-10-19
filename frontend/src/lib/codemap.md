@@ -16,12 +16,12 @@ Browser-side API and blockchain helper layer for the SOFA ONE dashboard. Three m
 - **Idempotency**: `withdrawAuth` defaults to a generated key per invocation and accepts an optional trailing caller-owned `idempotencyKey` for reuse across retry calls; callers own retry-key lifecycle.
 - **Access-control split respected**: public API-key wrappers include `POST /v1/wallets/sign`, `POST /v1/transactions`, `GET /v1/transactions/:id`, and `GET /v1/wallets`; everything else is bearer-token dashboard-only.
 - **Types**: all request/response DTOs are exported interfaces co-located with their wrappers (auth session, wallet info, balances, withdrawals, signing, transactions, API keys and capability catalog, MFA/TOTP, security notifications, billing, USDC claim status union).
+- **Signing contract**: `SignRequest` only accepts approved Polymarket `typed_data` (`ClobAuth`, `TypedDataSign`, `Batch`) with optional EOA-only execution mode; omission defaults to EOA. `SignResponse` reports the EOA agent signer. This does not change transaction sending's default `session_key` mode.
 
 ### `calibur.ts`
-- **Constants**: `CALIBUR_ADDRESS`, `LEGACY_CALIBUR_ADDRESS`, `CALIBUR_ADDRESSES`, `CALIBUR_DELEGATION_CODE`/`CALIBUR_DELEGATION_CODES` (`0xef0100` + address) for EIP-7702 delegation detection.
-- **Pure encoders**: `hashKey` (keccak of `(keyType, keccak(publicKey))`), `packSettings` (bit-packed `isAdmin | expiration | hook` into a `uint256`), `encodeRegisterKey`, `encodeUpdateKeySettings`, `encodeSelfCall`, `encodeExecute` (batched `execute(calls, revertOnFailure=true)`).
-- **EntryPoint v0.8 integration**: `createCaliburAccount` builds a `toSmartAccount` with `entryPoint08Abi`/`entryPoint08Address`, EIP-7702 authorization (`factory: '0x7702'`), `getUserOperationTypedData` signing, and a `ROOT_KEY` + stub-signature wrapper. `encodeExecuteUserOp` (private) emits the `0x8dd7712f` selector + ABI-encoded `BatchedCall` that EntryPoint v0.8 rewrites into `executeUserOp`. `normalizeSignature` (private) fixes low-`v` ECDSA signatures before serialization.
-- **Key types**: `KeyType` enum (`P256`, `WebAuthnP256`, `Secp256k1`); `CaliburKey`, `KeySettings`, `CaliburCall` types.
+- **Shared pure primitives**: imports `src/common/calibur/calibur-primitives.ts` directly for deployment constants, delegation codes, `KeyType`, `CaliburKey`, `CaliburKeySettings`, key hashing, settings packing and register/update/UserOp encoding. This leaf has no Nest, Prisma, provider signing or private-key dependency and is not re-exported through either account factory.
+- **Browser-only helpers**: `encodeSelfCall` and direct `encodeExecute` compose the owner's registration calls.
+- **EntryPoint v0.8 integration**: `createCaliburAccount` remains the browser owner-account factory with EIP-7702 authorization, root-key signature wrapping and viem typed-data signing. It uses the shared `encodeCaliburExecuteUserOpCalls` for selector + BatchedCall encoding; the backend session-account factory remains separate.
 
 ### `chains.ts`
 - **Static registry**: `SUPPORTED_CHAINS` `as const` array of 14 chains (Base Sepolia 84532, Base 8453, Ethereum 1, Ethereum Sepolia 11155111, Polygon 137, Polygon Amoy 80002, Arbitrum One 42161, OP Mainnet 10, OP Sepolia 11155420, BNB 56, BNB Testnet 97, Monad 143, Monad Testnet 10143). Testnets carry an optional `gasHelpUrl` faucet link.
@@ -34,10 +34,10 @@ Browser-side API and blockchain helper layer for the SOFA ONE dashboard. Three m
 - **MFA/TOTP**: `getMfaStatusAuth`, `setupTotpAuth`, `enableTotpAuth`, `verifyTotpAuth`, `disableTotpAuth` use unversioned `/auth/mfa/*`. Verify/enable return a `proofToken` used as the step-up token for sensitive mutations.
 - **Dashboard data**: API-key CRUD (`/api-keys`), balances, deposit information via `GET /wallets/deposits`, withdrawals (`/wallets/withdrawals`) and withdrawal-address allowlist, security notifications, IAM transaction/signing-request history, billing and USDC payment.
 - **Public API examples**: `signWithApiKey`, `sendTransactionWithApiKey`, `getTransactionStatusWithApiKey` — the only wrappers that use `apiFetch` with an explicit API key.
-- **Calibur flow**: dashboard wallet setup uses `calibur.ts` encoders to build `register`/`update`/`execute` calldata and `createCaliburAccount` to obtain a smart account whose user operations are signed by the owner account and submitted through Openfort.
+- **Calibur flow**: dashboard wallet setup uses shared pure register/update encoders with browser self-call/execute helpers and `createCaliburAccount` to obtain the owner account for Openfort submission.
 
 ## Integration
 - `api.ts` is consumed by dashboard pages (`Wallet`, `ApiKeys`, `Transactions`, `Billing`, `SecurityNotifications`, `DashboardLayout`, `WithdrawForm`, `BalanceDisplay`, `UsdcPaymentPanel`, `step-up.ts`, `wallet-helpers.ts`), shared components (`DashboardStepUpGate`, `AuthProviders`), and `Docs.tsx` (base-URL display). `getToken` callbacks come from the Openfort IAM provider; `DEFAULT_CHAIN_ID` (84532) is exported from `api.ts` and used across the dashboard.
 - `chains.ts` is consumed by `Docs`, `Step2AuthorizeAccess`, `BalanceDisplay`, `WithdrawForm`, `Wallet`, and `wallet-helpers.ts` for chain labels, explorer links, faucet links, and Monad-specific behavior.
 - `calibur.ts` is consumed by `Wallet.tsx` for agent-key registration and Calibur account creation.
-- Depends on browser `fetch`, `crypto.randomUUID`, viem (`viem`, `viem/account-abstraction`, `viem/actions`), and Vite env (`VITE_API_URL`). No backend imports; all contracts are HTTP + typed DTOs.
+- Depends on browser `fetch`, `crypto.randomUUID`, viem and Vite env (`VITE_API_URL`). The sole backend-tree import is the browser-safe Calibur primitive leaf; runtime backend services remain separated by HTTP + typed DTOs. Vite/Vitest deduplicate viem and frontend TypeScript resolves that leaf against the frontend package's own viem dependency.

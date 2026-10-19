@@ -36,12 +36,16 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ['viem'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
     port: 3000,
+    fs: {
+      allow: [__dirname, path.resolve(__dirname, '../src/common/calibur')],
+    },
     proxy: {
       '/api': {
         target: apiProxyTarget,

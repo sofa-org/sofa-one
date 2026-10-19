@@ -37,12 +37,13 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import type { WithdrawDto } from './dto/withdraw.dto';
+import type { SignDto } from './dto/sign.dto';
 import { WithdrawalPolicyService } from './withdrawal-policy.service';
 import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { SigningPolicyService } from './signing-policy.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
-import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
 import { DefiPolicyService } from '../defi/defi-policy.service';
 import { DefiPolicyDenial } from '../defi/defi.types';
@@ -228,6 +229,12 @@ describe('WalletService.withdraw()', () => {
           useValue: { getDebt: mockGetDebt },
         },
         { provide: DefiPolicyService, useValue: { authorizeSigning: jest.fn().mockImplementation(() => { throw new ForbiddenException({ code: 'DEFI_FUNCTION_NOT_ALLOWED' }); }), recordDenied: jest.fn() } },
+        { provide: EoaExecutionPolicyService, useValue: {} },
+        { provide: SigningPolicyService, useValue: {} },
+        { provide: RequestContextService, useValue: { getLogContext: (extra: unknown) => extra } },
+        { provide: PolymarketDepositWalletVerifierService, useValue: {} },
+        { provide: PolymarketSigningBudgetService, useValue: {} },
+        { provide: PolymarketDepositBatchVerifierService, useValue: {} },
         {
           provide: RiskEvaluationService,
           useValue: { evaluateRisk: mockEvaluateRisk, enforceRiskAction: mockEnforceRiskAction },
@@ -248,6 +255,32 @@ describe('WalletService.withdraw()', () => {
     mockWalletFindMany.mockResolvedValue([]);
 
     await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects an explicit wallet not owned by the user without falling back to another wallet', async () => {
+    mockWalletFindFirst.mockResolvedValue(null);
+    await expect(service.withdraw('user-1', { ...VALID_DTO, walletId: 'foreign-wallet' }))
+      .rejects.toBeInstanceOf(NotFoundException);
+    expect(mockWalletFindMany).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('requires selection among multiple eligible withdrawal wallets', async () => {
+    mockWalletFindMany.mockResolvedValue([WALLET, { ...WALLET, id: 'wallet-2' }]);
+    await expect(service.withdraw('user-1', VALID_DTO)).rejects.toThrow(/walletId is required/i);
+    expect(mockWalletFindFirst).not.toHaveBeenCalled();
+    expect(mockSendUserOperation).not.toHaveBeenCalled();
+  });
+
+  it('selects the only eligible withdrawal wallet when other wallets are inactive or frozen', async () => {
+    mockWalletFindMany.mockResolvedValue([
+      { ...WALLET, id: 'pending-wallet', status: 'pending' },
+      { ...WALLET, id: 'frozen-wallet', frozenAt: new Date() },
+      WALLET,
+    ]);
+    await service.withdraw('user-1', VALID_DTO);
+    expect(mockSendUserOperation).toHaveBeenCalledTimes(1);
+    expect(mockWalletFindFirst).not.toHaveBeenCalled();
   });
 
   // ── 2. Wallet not active ─────────────────────────────────────────────────────
@@ -779,7 +812,6 @@ describe('WalletService.sign()', () => {
   const mockSendUserOperationForSigning = jest.fn();
   const mockSendBackendTransactionForSigning = jest.fn();
   const mockVerifyAgentKeyRegistration = jest.fn();
-  const mockAssertSessionKeyAllowed = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
   const mockSigningRequestFindMany = jest.fn();
@@ -819,7 +851,6 @@ describe('WalletService.sign()', () => {
     });
     mockWalletFindFirst.mockImplementation(async () => mockFindUnique());
     mockVerifyAgentKeyRegistration.mockResolvedValue(undefined);
-    mockAssertSessionKeyAllowed.mockResolvedValue(undefined);
     mockSignData.mockResolvedValue(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id: 'signing-request-1' });
     mockSigningRequestUpdate.mockResolvedValue({ id: 'signing-request-1', status: 'signed' });
@@ -885,10 +916,8 @@ describe('WalletService.sign()', () => {
           provide: EoaExecutionPolicyService,
           useValue: { assertAllowed: mockAssertEoaExecutionAllowed, assertPolymarketOrderPrerequisites: jest.fn().mockResolvedValue(undefined) },
         },
-        {
-          provide: SessionKeyPolicyService,
-          useValue: { assertSessionKeyAllowed: mockAssertSessionKeyAllowed },
-        },
+        { provide: RequestContextService, useValue: { getClientIp: jest.fn(), getLogContext: (extra: unknown) => extra } },
+        { provide: RiskEvaluationService, useValue: { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } },
         {
           provide: SecurityEventService,
           useValue: { record: mockSecurityEventRecord },
@@ -920,7 +949,7 @@ describe('WalletService.sign()', () => {
 
   it('scopes selected-wallet history to both embedded and agent addresses', async () => {
     const second = { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444', agentWalletAddress: '0x5555555555555555555555555555555555555555' };
-    mockWalletFindMany.mockResolvedValue([WALLET, second]);
+    mockWalletFindFirst.mockResolvedValue(second);
     mockSigningRequestFindMany.mockResolvedValue([]);
     await service.listSigningRequests('user-1', { walletId: second.id } as any);
     expect(mockSigningRequestFindMany.mock.calls.at(-1)?.[0].where.walletAddress).toEqual({ in: [second.walletAddress, second.agentWalletAddress] });
@@ -928,7 +957,7 @@ describe('WalletService.sign()', () => {
 
   it('returns empty pending-wallet history and not-found detail without Prisma null-address lookup', async () => {
     const pending = { ...WALLET, id: 'pending-wallet', walletAddress: null, agentWalletAddress: null };
-    mockWalletFindMany.mockResolvedValue([pending]);
+    mockWalletFindFirst.mockResolvedValue(pending);
     await expect(service.listSigningRequests('user-1', { walletId: pending.id } as any)).resolves.toMatchObject({ items: [], total: 0 });
     expect(mockSigningRequestFindMany).not.toHaveBeenCalled();
     await expect(service.getSigningRequestDetail('user-1', 'sr-1', pending.id)).rejects.toThrow(NotFoundException);
@@ -938,17 +967,6 @@ describe('WalletService.sign()', () => {
   afterEach(() => {
     loggerErrorSpy.mockRestore();
     loggerWarnSpy.mockRestore();
-  });
-
-  it('does not infer another wallet for a bound signing key', async () => {
-    mockWalletFindMany.mockResolvedValue([
-      { ...WALLET },
-      { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' },
-    ]);
-    await expect(service.sign('user-1', { type: 'typed_data', typedData: createTypedData(137), chainId: 137 } as any, API_KEY_CONTEXT))
-      .rejects.toBeInstanceOf(ForbiddenException);
-    expect(mockWalletFindMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
-    expect(mockSignData).not.toHaveBeenCalled();
   });
 
   it('rejects a forged wallet ID not present in the authenticated owner wallet set', async () => {
@@ -981,13 +999,15 @@ describe('WalletService.sign()', () => {
     expect(mockSecurityEventRecord).not.toHaveBeenCalled();
   });
 
-  it('accepts only the bound EOA ClobAuth payload and signs/persists the same digest', async () => {
+  it('defaults typed-data signing to EOA and signs/persists the bound ClobAuth digest', async () => {
     const timestamp = String(Math.floor(Date.now() / 1000));
     const payload = Object.freeze({ domain: Object.freeze({ name: 'ClobAuthDomain', version: '1', chainId: 137 }), types: Object.freeze({ ClobAuth: Object.freeze([{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }]) }), primaryType: 'ClobAuth', message: Object.freeze({ address: WALLET.agentWalletAddress, timestamp, nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION }) });
     const digest = hashTypedData(payload as any);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({ context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] }), requiredPermission: 'canSign', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137, executionMode: 'eoa', policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`, walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
     mockWalletFindMany.mockResolvedValue([WALLET, { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' }]);
-    const result = await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: payload } as any, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
+    // The frozen canonical fixture is immutable at runtime; DTO typing uses mutable arrays.
+    const dto = { type: 'typed_data', typedData: payload } as unknown as SignDto;
+    const result = await service.sign('user-1', dto, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
     expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ walletId: 'wallet-1', walletAddress: WALLET.walletAddress }));
     expect(mockDefiAssertSigningStillAuthorized).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ typedDataDigest: digest }), expect.objectContaining({ digest, agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
     expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest }) }));
@@ -1305,7 +1325,7 @@ describe('WalletService.sign()', () => {
   });
 
   it('throws NotFoundException when wallet not found', async () => {
-    mockWalletFindMany.mockResolvedValue([]);
+    mockWalletFindFirst.mockResolvedValue(null);
 
     await expect(
       service.sign(
@@ -1340,22 +1360,7 @@ describe('WalletService.sign()', () => {
 
   it.each([
     {
-      name: 'typed_data × session_key',
-      dto: { type: 'typed_data', typedData: createTypedData(137), chainId: 137 },
-      apiKey: API_KEY_CONTEXT,
-    },
-    {
-      name: 'typed_data × eoa',
-      dto: {
-        type: 'typed_data',
-        typedData: createTypedData(137),
-        chainId: 137,
-        executionMode: 'eoa',
-      },
-      apiKey: { ...API_KEY_CONTEXT, canUseEoaExecution: true },
-    },
-    {
-      name: 'typed_data × session_key',
+      name: 'typed_data × default EOA',
       dto: { type: 'typed_data', typedData: createTypedData(137), chainId: 137 },
       apiKey: API_KEY_CONTEXT,
     },
@@ -1378,7 +1383,6 @@ describe('WalletService.sign()', () => {
 
       expect(mockAcquireUserDestinationLock).not.toHaveBeenCalled();
       expect(mockTransaction).not.toHaveBeenCalled();
-      expect(mockAssertSessionKeyAllowed).not.toHaveBeenCalled();
       expect(mockAssertEoaExecutionAllowed).not.toHaveBeenCalled();
       expect(mockSecurityEventRecord).toHaveBeenCalledTimes(1);
       expect(mockSecurityEventRecord).toHaveBeenCalledWith(
@@ -1391,7 +1395,7 @@ describe('WalletService.sign()', () => {
             code: API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION,
             type: dto.type,
             chainId: 137,
-            executionMode: (dto as any).executionMode ?? 'session_key',
+            executionMode: dto.executionMode ?? 'eoa',
             apiKeyPrefix: API_KEY_PREFIX,
           }),
         }),
@@ -1561,6 +1565,13 @@ describe('WalletService.getDepositInfo()', () => {
           useValue: { getDebt: jest.fn().mockResolvedValue({ hasDebt: false, invoiceIds: [] }) },
         },
         { provide: DefiPolicyService, useValue: { authorizeSigning: jest.fn(), recordDenied: jest.fn() } },
+        { provide: EoaExecutionPolicyService, useValue: {} },
+        { provide: SigningPolicyService, useValue: {} },
+        { provide: RequestContextService, useValue: { getLogContext: (extra: unknown) => extra } },
+        { provide: RiskEvaluationService, useValue: {} },
+        { provide: PolymarketDepositWalletVerifierService, useValue: {} },
+        { provide: PolymarketSigningBudgetService, useValue: {} },
+        { provide: PolymarketDepositBatchVerifierService, useValue: {} },
       ],
     }).compile();
 

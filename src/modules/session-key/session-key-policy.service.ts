@@ -12,10 +12,12 @@ import {
   isCaliburKeyRegistered,
   getCaliburKeySettings,
   getAgentKeyUsabilityFailure,
+} from '../../common/calibur/calibur';
+import {
   encodeUpdateKeySettings,
   ZERO_ADDRESS,
   type CaliburKeySettings,
-} from '../../common/calibur/calibur';
+} from '../../common/calibur/calibur-primitives';
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { createPublicClient, http, type Hex } from 'viem';
 

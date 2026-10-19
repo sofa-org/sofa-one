@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   Logger,
   NotFoundException,
-  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -184,16 +183,11 @@ export class TransactionsService {
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     private readonly defiPolicy: DefiPolicyService,
     private readonly securityEvents: SecurityEventService,
-    @Optional()
-    private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
-    @Optional()
-    private readonly transactionSimulation?: TransactionSimulationService,
-    @Optional()
-    private readonly riskEvaluation?: RiskEvaluationService,
-    @Optional()
-    private readonly sessionKeyPolicy?: SessionKeyPolicyService,
-    @Optional()
-    private readonly requestContext?: RequestContextService,
+    private readonly eoaExecutionPolicy: EoaExecutionPolicyService,
+    private readonly transactionSimulation: TransactionSimulationService,
+    private readonly riskEvaluation: RiskEvaluationService,
+    private readonly sessionKeyPolicy: SessionKeyPolicyService,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   /** Send a transaction from the user's EIP-7702 delegated EOA via the backend agent signer. */
@@ -240,25 +234,24 @@ export class TransactionsService {
       dailySpendLimit: apiKeyRecord.dailySpendLimit,
       monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
     });
-    const wallets = await this.prisma.userWallet.findMany({
+    const wallet = await this.prisma.userWallet.findFirst({
       where: { id: apiKeyRecord.walletId, userId },
       include: {
         chainAuthorizations: { where: { chainId: BigInt(chainId) } },
       },
     });
-    const wallet = wallets.find((candidate) => candidate.id === apiKeyRecord.walletId);
     if (!wallet) throw new NotFoundException('Wallet not found');
 
     this.assertWalletNotFrozen(wallet);
     this.assertWalletReady(wallet);
-    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+    const riskAssessment = await this.riskEvaluation.evaluateRisk({
       userId,
       apiKeyId: apiKeyRecord.id,
       walletId: wallet.id,
       operationType: 'transaction_send',
     });
-    if (riskAssessment && riskAssessment.action !== 'allow') {
-      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+    if (riskAssessment.action !== 'allow') {
+      await this.riskEvaluation.enforceRiskAction(riskAssessment, {
         userId,
         apiKeyId: apiKeyRecord.id,
         walletId: wallet.id,
@@ -268,7 +261,7 @@ export class TransactionsService {
     const accountAddress = wallet.walletAddress!;
     if (executionMode === 'session_key') {
       this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
-      await this.sessionKeyPolicy?.assertSessionKeyAllowed({
+      await this.sessionKeyPolicy.assertSessionKeyAllowed({
         userId,
         walletId: wallet.id,
         apiKeyId: apiKeyRecord.id,
@@ -692,16 +685,13 @@ export class TransactionsService {
     apiKeyRecord: ApiKeyTransactionContext,
     context: { operation: 'send_transaction'; chainId: number; metadata?: Record<string, unknown> },
   ) {
-    if (!this.eoaExecutionPolicy) {
-      throw new ForbiddenException('EOA execution policy is not available');
-    }
     await this.eoaExecutionPolicy.assertAllowed({
       operation: context.operation,
       userId,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
       allowedIps: apiKeyRecord.allowedIps,
-      clientIp: this.requestContext?.getClientIp(),
+      clientIp: this.requestContext.getClientIp(),
       expiresAt: apiKeyRecord.expiresAt,
       chainId: context.chainId,
       metadata: context.metadata as any,
@@ -808,9 +798,6 @@ export class TransactionsService {
     apiKeyRecord: ApiKeyTransactionContext,
     context: { chainId: number; executionMode: ExecutionMode; from: string },
   ): Promise<void> {
-    if (!this.transactionSimulation) {
-      throw new BadRequestException('Transaction simulation service is not available');
-    }
     await this.transactionSimulation.assertSimulatable(dto, {
       userId,
       apiKeyId: apiKeyRecord.id,
@@ -1448,19 +1435,6 @@ export class TransactionsService {
       });
     }
 
-    if (!this.transactionSimulation?.simulateAssetFlowEvidence) {
-      this.logBillingAssetFlowBlocked(
-        userId,
-        context,
-        invoiceCount,
-        'simulation_service_unavailable',
-      );
-      throw new ForbiddenException({
-        code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE,
-        message: 'Asset flow could not be verified while outstanding invoices remain unpaid',
-      });
-    }
-
     let evidence: Awaited<ReturnType<TransactionSimulationService['simulateAssetFlowEvidence']>>;
     try {
       evidence = await this.transactionSimulation.simulateAssetFlowEvidence({
@@ -1806,7 +1780,7 @@ export class TransactionsService {
   }
 
   private logContext(extra: Record<string, unknown>) {
-    return this.requestContext?.getLogContext(extra) ?? extra;
+    return this.requestContext.getLogContext(extra);
   }
 
   private logSecurityWarning(extra: Record<string, unknown>): void {

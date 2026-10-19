@@ -3,7 +3,7 @@
 ## Responsibility
 
 Centralized runtime policy gate for **session-key (agent-key) execution** — the
-`session_key` execution mode used by API-key-driven signing and transaction sending.
+`session_key` execution mode used by API-key-driven transaction sending.
 Before any operation proceeds, `SessionKeyPolicyService` verifies that the wallet's
 agent key is actually usable **on-chain** (Calibur EIP-7702 delegation, registration,
 settings), detects policy drift between backend API-key constraints and what Calibur
@@ -77,26 +77,28 @@ module owns the *policy* (should this API-key operation be allowed?).
 
 ## Integration
 
-- **Consumers:** `WalletModule` and `TransactionsModule` both import `SessionKeyModule`.
-  `WalletService` and `TransactionsService` inject `SessionKeyPolicyService` as
-  `@Optional()` and call `assertSessionKeyAllowed` before signing / transaction creation.
+- **Consumers:** `TransactionsModule` imports `SessionKeyModule` and
+  `TransactionsService` requires `SessionKeyPolicyService` before transaction
+  creation. Public signing is EOA-only; `WalletService` no longer injects this gate.
 - **Dependencies:**
   - `SecurityEventService` (via `SecurityEventModule`) — decision telemetry.
   - `PrismaService` — injected but **currently unused** in this service's methods
     (retained for DI wiring).
-  - `src/common/calibur/calibur.ts` — `hasCaliburDelegation`, `isCaliburKeyRegistered`,
-    `getCaliburKeySettings`, `getAgentKeyUsabilityFailure`, `encodeUpdateKeySettings`,
-    `ZERO_ADDRESS`.
+  - `src/common/calibur/calibur.ts` — on-chain readers `hasCaliburDelegation`,
+    `isCaliburKeyRegistered`, `getCaliburKeySettings` and backend usability policy
+    `getAgentKeyUsabilityFailure`.
+  - `src/common/calibur/calibur-primitives.ts` — browser-safe shared
+    `encodeUpdateKeySettings`, `ZERO_ADDRESS`, `CaliburKeySettings`.
   - `src/common/chains/supported-chains.ts` — `getSupportedChain` for the viem chain.
   - `viem` — `createPublicClient`, `http`, `Hex`.
 - **Related execution path:** after this policy passes, transaction submission for
   `session_key` mode records `execution: 'calibur_agent_user_operation'` and uses the
   Calibur smart-account factory (`createCaliburSessionAccount`) in
-  `src/core/openfort/openfort.service.ts`; wallet signing wraps the raw agent signature
-  via `wrapCaliburSignature` in `WalletService`.
+  `src/core/openfort/openfort.service.ts`. The browser owner-account factory is
+  separate and shares only the pure Calibur primitives.
 - **Tests:** `session-key-policy.service.spec.ts` (unit) covers all branches; the service
-  is overridden/mocked in `wallet.service.spec.ts`, `transactions.service.spec.ts`, and
-  `test/api-key-flow.e2e-spec.ts`.
+  is overridden/mocked in `transactions.service.spec.ts` and relevant transaction
+  E2E fixtures; missing production wiring cannot silently skip this policy.
 
 ### Key symbols
 

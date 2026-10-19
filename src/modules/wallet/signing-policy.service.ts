@@ -21,8 +21,8 @@ export type SigningPolicyResult = {
 export type SigningPolicyContext = {
   userId: string;
   chainId: number;
-  type: 'message' | 'typed_data';
-  executionMode: 'session_key' | 'eoa';
+  type: 'typed_data';
+  executionMode: 'eoa';
   apiKeyId?: string;
   apiKeyPrefix?: string;
   /** Caller will persist its own allowed audit atomically at acceptance. */

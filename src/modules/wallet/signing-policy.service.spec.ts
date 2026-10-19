@@ -56,7 +56,7 @@ describe('SigningPolicyService', () => {
       userId: 'user-1',
       chainId: 84532,
       type: 'typed_data',
-      executionMode: 'session_key',
+      executionMode: 'eoa',
       apiKeyId: 'api-key-1',
       apiKeyPrefix: 'sk_test',
     };
@@ -282,7 +282,7 @@ describe('SigningPolicyService', () => {
         result: 'allowed',
         metadata: {
           chainId: 84532,
-          executionMode: 'session_key',
+          executionMode: 'eoa',
           apiKeyPrefix: 'sk_test',
           type: 'typed_data',
           primaryType: 'Mail',

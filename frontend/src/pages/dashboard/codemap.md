@@ -82,7 +82,7 @@ Static reference for the three documented automation endpoints (`/v1/wallets/sig
 - **Auth**: `@openfort/react` — `useUser` (`getAccessToken`, `isAuthenticated`, `user`), `useOpenfort`, `useSignOut`, `useEthereumEmbeddedWallet`, `use7702Authorization`.
 - **API layer**: `@/lib/api` — all `*Auth` helpers (wallet, keys, notifications, transactions, billing, USDC, TOTP), `getApiErrorMessage`/`hasApiErrorCode`/`isApiError`, `DEFAULT_CHAIN_ID`, and response types.
 - **Chains**: `@/lib/chains` — `SUPPORTED_CHAINS`, explorer/gas-help URL builders, `getNativeCurrencySymbol`, `isMonadChain`.
-- **Calibur**: `@/lib/calibur` — `CALIBUR_ADDRESSES`, `CALIBUR_DELEGATION_CODES`, `hashKey`, `encodeRegisterKey`, `encodeUpdateKeySettings`, `encodeSelfCall`, `createCaliburAccount`.
+- **Calibur**: `src/common/calibur/calibur-primitives.ts` (direct relative import) — shared `CALIBUR_ADDRESSES`, `CALIBUR_DELEGATION_CODES`, `KeyType`, `CaliburKey`, `hashKey`, registry encoders; `@/lib/calibur` — browser-only `encodeSelfCall`, `createCaliburAccount`; `@/lib/calibur-deployment` resolves the chain's implementation.
 - **Wallet stack**: `viem` (public client, `padHex`, `zeroAddress`), `viem/account-abstraction` (bundler/paymaster clients), `wagmi` (`usePublicClient`).
 - **Shared UI**: `@/components/CopyButton`; `DashboardStepUpGate` (in `src/components/`) consumes `step-up-session.ts`.
 - **Env**: `VITE_OPENFORT_PUBLISHABLE_KEY`, `VITE_OPENFORT_FEE_SPONSORSHIP_ID`, `VITE_PIMLICO_API_KEY`/`VITE_PIMLICO_RPC_URL_<chainId>`.

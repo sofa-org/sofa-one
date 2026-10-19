@@ -67,7 +67,8 @@
   - `common/chains/supported-chains` — `getSupportedChain`、`isMonadChain`。
   - `common/errors/api-error-codes` — `API_ERROR_CODES`（`AGENT_REGISTRATION_PENDING`、`PAYMASTER_POLICY_NOT_CONFIGURED`、`WALLET_SERVICE_UNAVAILABLE`、`BACKEND_TRANSACTION_FAILED`、`USER_OPERATION_GAS_PRICE_UNAVAILABLE`、`USER_OPERATION_REJECTED`）。
   - `common/utils/sanitize` — `sanitizeErrorMessage`。
-  - `common/calibur/calibur` — `CALIBUR_ADDRESSES`、`createCaliburSessionAccount`、`getAgentKeyUsabilityFailure`、`getCaliburKeySettings`、`hasCaliburDelegation`、`hashKey`、`isCaliburKeyRegistered`、`KeyType`。
+  - `common/calibur/calibur` — `createCaliburSessionAccount`、`getAgentKeyUsabilityFailure`、`getCaliburKeySettings`、`hasCaliburDelegation`、`isCaliburKeyRegistered`。
+  - `common/calibur/calibur-primitives` — shared browser-safe `CALIBUR_ADDRESSES`、`hashKey`、`KeyType`；不通过 account factory 模块 re-export。
 - **外部依赖**：`@openfort/openfort-node`（Openfort 客户端）、`viem` / `viem/account-abstraction` / `viem/actions` / `viem/accounts`（链客户端、bundler、paymaster、账户抽象）、`@nestjs/config`（`ConfigService`）。
 - **配置项**：`openfort.apiKey`、`openfort.walletSecret`、`openfort.publishableKey`、`openfort.timeoutMs`、`pimlico.apiKey`、`pimlico.rpcUrls.<chainId>`。
 - **外部服务**：Openfort API（账户/会话/签名/UserOp RPC）、Pimlico RPC（Monad）、各链 RPC（`getSupportedChain` 提供 transport）。

@@ -106,6 +106,15 @@ the Polymarket CLOB `ClobAuth` bootstrap: `type: typed_data`, `executionMode: eo
 137, exact domain (`ClobAuthDomain`, version `1`, chainId `137`, no verifying contract or
 salt), exact `ClobAuth` primary type and ordered fields (`address`, `timestamp`, `nonce`,
 `message`), and the fixed message `This message attests that I control the given wallet`.
+The request contract accepts only `type: typed_data` and requires `typedData`.
+`executionMode` may be omitted and defaults to `eoa`; an explicit `session_key`
+or `type: message` is rejected during request validation. Top-level `chainId` is
+optional when supplied by `typedData.domain.chainId`, and both must agree if present.
+This signing-only cleanup does not remove transaction session keys:
+`POST /v1/transactions` still defaults to `session_key`, checks the registered,
+unexpired chain authorization and live on-chain key, then submits an Openfort
+UserOperation. Clients do not call `/v1/wallets/sign` before sending a transaction.
+
 `message.address` must equal the selected wallet's agentWalletAddress (not its embedded
 `walletAddress` or funder address); timestamp is canonical decimal Unix seconds within
 ±300 seconds; nonce is a uint256 supplied as a safe integer or decimal string (zero is

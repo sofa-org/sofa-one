@@ -110,23 +110,24 @@ export interface ListWithdrawalAddressesResponse {
   addresses: WithdrawalAddressRecord[];
 }
 
-export interface SignMessageRequest {
-  chainId: number;
-  type: 'message';
-  message: string;
-}
-
-export interface SignTypedDataRequest {
+export interface SignRequest {
+  walletId?: string;
   chainId?: number;
+  executionMode?: 'eoa';
   type: 'typed_data';
-  typedData: Record<string, unknown>;
+  typedData: {
+    domain: Record<string, unknown>;
+    types: Record<string, Array<{ name: string; type: string }>>;
+    primaryType: 'ClobAuth' | 'TypedDataSign' | 'Batch';
+    message: Record<string, unknown>;
+  };
 }
-
-export type SignRequest = SignMessageRequest | SignTypedDataRequest;
 
 export interface SignResponse {
   signature: string;
   walletAddress: string;
+  agentWalletAddress: string;
+  executionMode: 'eoa';
   type: SignRequest['type'];
 }
 

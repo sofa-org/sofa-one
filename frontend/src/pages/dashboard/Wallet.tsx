@@ -42,13 +42,12 @@ import {
   CALIBUR_ADDRESSES,
   CALIBUR_DELEGATION_CODES,
   KeyType,
-  createCaliburAccount,
   encodeRegisterKey,
-  encodeSelfCall,
   encodeUpdateKeySettings,
   hashKey,
   type CaliburKey,
-} from '@/lib/calibur';
+} from '../../../../src/common/calibur/calibur-primitives';
+import { createCaliburAccount, encodeSelfCall } from '@/lib/calibur';
 import { AlertCircle, RotateCcw } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';

@@ -170,11 +170,11 @@ paths:
 
         ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring active, unpaused `polymarket:137:clob-order:v2`: `all` includes it dynamically and `custom` requires the exact ID. DepositWallet Batch signing uses the `polymarket:137:deposit-wallet-batch-sign:v1` capability ID (`all` includes it; `custom` requires the exact ID), plus `canSign`, `canUseEoaExecution`, and EOA mode; it never sends transactions or requires `canSendTransaction`. It accepts any well-formed call target and calldata within the exact Batch schema/size bounds, but every call's native value must be zero. There is no target/function/ABI-canonicality/spender/operator allowlist; this high-privilege signature can transfer tokens, grant approvals, or change wallet permissions. Pauses on actual call targets are checked before signing and at atomic acceptance; unrelated spender/operator pauses are not inferred. Its verifier uses configured `SIMULATION_RPC_URLS__137`, binds full block-pinned deployment identity evidence to digest/deadline/signer/RPC fingerprint, re-probes current nonce and pause state, then performs non-broadcast `wallet.execute` eth_call from the factory after TEE signer recovery. Missing RPC or failed verification is rejected. Simulation is not proof that effects were mined or will persist. See API.md for scope and limitations. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data outside these exact lanes, or session-key signing is supported. EOA isolation, destination protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No live Openfort/client end-to-end outcome is claimed.
 
-        Dashboard-only withdrawal and payment execution are separate flows and are not affected.
+        Signing accepts only `type: typed_data`; `executionMode` is optional and defaults to `eoa`, its only accepted value. `typedData.domain.chainId` is required; top-level `chainId` may be omitted and is inferred from the domain. This signing-only contract does not change `POST /v1/transactions`, which still defaults to `session_key` UserOperation execution. Dashboard-only withdrawal and payment execution remain separate flows.
 
         | type | 说明 | 必填字段 |
         |------|------|----------|
-        | `typed_data` | EIP-712 ClobAuth bootstrap、符合精确 schema 的 Polygon CLOB V2 单笔订单，或经验证的 DepositWallet Batch | 对应 lane 的精确 `typedData` 和 `chainId`；如同时在 domain 与顶层提供 chainId 必须一致 |
+        | `typed_data` | EIP-712 ClobAuth bootstrap、符合精确 schema 的 Polygon CLOB V2 单笔订单，或经验证的 DepositWallet Batch | 对应 lane 的精确 `typedData`；domain.chainId 必填，如同时提供顶层 chainId 必须一致 |
 
         `type: message` EIP-191 签名和其他任意 typed-data 均不支持，会被拒绝；下方 examples 仅展示受支持的 typed-data lanes。
 
@@ -600,7 +600,8 @@ components:
     # ──────────── Signing ────────────
     SignRequest:
       type: object
-      required: [type]
+      additionalProperties: false
+      required: [type, typedData]
       properties:
         walletId:
           type: string
@@ -611,19 +612,16 @@ components:
           enum: [typed_data]
           description: |
             签名类型：
-            - `message` — schema shape only; unsupported by this endpoint
             - `typed_data` — only the exact ClobAuth bootstrap, CLOB V2 single-order, or verifier-gated DepositWallet Batch lanes are eligible
         executionMode:
           type: string
           enum: [eoa]
-          description: |
-            签名执行身份：
-            - `session_key` — schema shape only; not permitted for this endpoint
-            - `eoa` — required for the ClobAuth exception; raw EOA signature
+          default: eoa
+          description: Optional EOA-only signing identity. Omission selects eoa; session_key is rejected by request validation. Transaction sending retains its independent session_key default.
         chainId:
           type: integer
           minimum: 1
-          description: ClobAuth exception requires chainId 137. Other request shapes are not authorized.
+          description: Optional chain context, inferred from typedData.domain.chainId when omitted. All supported signing lanes require Polygon chainId 137.
         typedData:
           $ref: '#/components/schemas/EIP712TypedData'
     EIP712TypedData:

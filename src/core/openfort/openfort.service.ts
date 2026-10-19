@@ -20,15 +20,13 @@ import { getSupportedChain, isMonadChain } from '../../common/chains/supported-c
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
-  CALIBUR_ADDRESSES,
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
   hasCaliburDelegation,
-  hashKey,
   isCaliburKeyRegistered,
-  KeyType,
 } from '../../common/calibur/calibur';
+import { CALIBUR_ADDRESSES, hashKey, KeyType } from '../../common/calibur/calibur-primitives';
 
 @Injectable()
 export class OpenfortService {
