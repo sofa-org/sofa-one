@@ -1,10 +1,15 @@
 import type { AbiFunction, AbiParameter } from 'viem';
 import type { DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment } from '../registry/defi-manifest.types';
+import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID } from '../signing/polymarket-clob-auth';
+import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID } from '../signing/polymarket-clob-order';
+import { POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from '../defi-catalog.service';
 
 const compare = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
 
 type PublicContract = { address: string; protocol: string; abi: AbiFunction[] };
+type PublicSigning = { protocol: string; capabilityId: string; type: 'typed_data'; primaryType: string };
+type PublicChain = { contracts: PublicContract[]; sign: PublicSigning[] };
 
 function publicParameter(parameter: AbiParameter): AbiParameter {
   return {
@@ -26,7 +31,7 @@ function publicFunction(abi: AbiFunction): AbiFunction {
 
 /** Static reviewed metadata only; runtime grants, pauses and execution scopes still apply. */
 export function renderProtocolsJson(fragment: DefiRegistryFragment): string {
-  const output: Record<string, PublicContract[]> = {};
+  const output: Record<string, PublicChain> = {};
   for (const chain of [...fragment.chains].sort((left, right) => left.chainId - right.chainId)) {
     if (chain.status !== 'active') continue;
     const groups = new Map<string, { address: string; protocol: string; functions: DefiFunctionPolicy[] }>();
@@ -46,14 +51,21 @@ export function renderProtocolsJson(fragment: DefiRegistryFragment): string {
       }
     }
     if (groups.size > 0) {
-      output[String(chain.chainId)] = [...groups.values()]
+      output[String(chain.chainId)] = { contracts: [...groups.values()]
         .sort((left, right) => compare(left.address, right.address) || compare(left.protocol, right.protocol))
         .map(({ address, protocol, functions }) => ({
           address,
           protocol,
           abi: functions.sort((left, right) => compare(left.signature, right.signature)).map((fn) => publicFunction(fn.abi)),
-        }));
+        })), sign: [] };
     }
   }
+  // Signing capabilities are independent of contract-function catalog membership.
+  const polygon = output['137'] ??= { contracts: [], sign: [] };
+  polygon.sign = [
+    { protocol: 'polymarket', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, type: 'typed_data', primaryType: 'ClobAuth' },
+    { protocol: 'polymarket', capabilityId: POLYMARKET_CLOB_ORDER_CAPABILITY_ID, type: 'typed_data', primaryType: 'TypedDataSign' },
+    { protocol: 'polymarket', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, type: 'typed_data', primaryType: 'Batch' },
+  ];
   return `${JSON.stringify(output, null, 2)}\n`;
 }

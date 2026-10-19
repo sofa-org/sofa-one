@@ -32,11 +32,13 @@ describe('public protocols.json export', () => {
     const fragment = { chains: [chain([fn()])] };
     const original = JSON.stringify(fragment);
     const result = JSON.parse(renderProtocolsJson(fragment));
-    expect(Object.keys(result)).toEqual(['1']);
-    expect(Object.keys(result['1'][0])).toEqual(['address', 'protocol', 'abi']);
-    expect(result['1'][0].address).toBe(address.toLowerCase());
-    expect(result['1'][0].protocol).toBe('example');
-    expect(result['1'][0].abi).toEqual([{
+    expect(Object.keys(result)).toEqual(['1', '137']);
+    expect(Object.keys(result['1'])).toEqual(['contracts', 'sign']);
+    expect(result['1'].sign).toEqual([]);
+    expect(Object.keys(result['1'].contracts[0])).toEqual(['address', 'protocol', 'abi']);
+    expect(result['1'].contracts[0].address).toBe(address.toLowerCase());
+    expect(result['1'].contracts[0].protocol).toBe('example');
+    expect(result['1'].contracts[0].abi).toEqual([{
       type: 'function', name: 'deposit', stateMutability: 'payable',
       inputs: [{ name: 'requests', type: 'tuple[]', components: [
         { name: 'owner', type: 'address' },
@@ -53,9 +55,9 @@ describe('public protocols.json export', () => {
     const inactiveChain = { ...chain([fn()]), chainId: 2, status: 'inactive' as const };
     const inactiveContract = { ...chain([fn()]), chainId: 3, contracts: [{ ...chain([fn()]).contracts[0], status: 'inactive' as const }] };
     const result = JSON.parse(renderProtocolsJson({ chains: [inactiveChain, inactiveContract, active] }));
-    expect(Object.keys(result)).toEqual(['1']);
-    expect(result['1'][0].abi).toHaveLength(1);
-    expect(renderProtocolsJson({ chains: [chain([])] })).toBe('{}\n');
+    expect(Object.keys(result)).toEqual(['1', '137']);
+    expect(result['1'].contracts[0].abi).toHaveLength(1);
+    expect(JSON.parse(renderProtocolsJson({ chains: [chain([])] }))['1']).toBeUndefined();
   });
 
   it('sorts chains, addresses, protocol labels and signatures independently of input order', () => {
@@ -77,18 +79,29 @@ describe('public protocols.json export', () => {
     })) });
     expect(reversed).toBe(forward);
     const result = JSON.parse(forward);
-    expect(Object.keys(result)).toEqual(['1', '10']);
-    expect(result['1'].map((item: { protocol: string }) => item.protocol)).toEqual(['example', 'alpha', 'zeta']);
-    expect(result['1'][1].abi.map((item: AbiFunction) => item.name)).toEqual(['a', 'z']);
+    expect(Object.keys(result)).toEqual(['1', '10', '137']);
+    expect(result['1'].contracts.map((item: { protocol: string }) => item.protocol)).toEqual(['example', 'alpha', 'zeta']);
+    expect(result['1'].contracts[1].abi.map((item: AbiFunction) => item.name)).toEqual(['a', 'z']);
   });
 
   it('does not invent view functions but preserves an already admitted active view', () => {
     const view = fn({ abi: { ...abi, stateMutability: 'view' } });
-    expect(JSON.parse(renderProtocolsJson({ chains: [chain([view])] }))['1'][0].abi[0].stateMutability).toBe('view');
+    expect(JSON.parse(renderProtocolsJson({ chains: [chain([view])] }))['1'].contracts[0].abi[0].stateMutability).toBe('view');
   });
 
   it('fails rather than inventing missing protocol labels', () => {
     expect(() => renderProtocolsJson({ chains: [chain([fn({ protocol: undefined })])] })).toThrow('requires a protocol label');
+  });
+
+  it('exposes signing-only Polygon without mixing signing envelopes into contract ABIs', () => {
+    const result = JSON.parse(renderProtocolsJson({ chains: [] }));
+    expect(Object.keys(result)).toEqual(['137']);
+    expect(result['137'].contracts).toEqual([]);
+    expect(result['137'].sign).toEqual([
+      { protocol: 'polymarket', capabilityId: 'polymarket:137:clob-auth:v1', type: 'typed_data', primaryType: 'ClobAuth' },
+      { protocol: 'polymarket', capabilityId: 'polymarket:137:clob-order:v2', type: 'typed_data', primaryType: 'TypedDataSign' },
+      { protocol: 'polymarket', capabilityId: 'polymarket:137:deposit-wallet-batch-sign:v1', type: 'typed_data', primaryType: 'Batch' },
+    ]);
   });
 
 });

@@ -114,9 +114,9 @@ The frontend is a static SPA. Common hosting options:
 
 Backend CORS must allow the deployed frontend origin.
 
-### Public contract ABI download
+### Public contract and signing catalog download
 
-`frontend/public/protocols.json` is generated from the reviewed catalog and copied by
+`frontend/public/protocols.json` is generated from the reviewed contract catalog and supported signing capability IDs, with `{ contracts, sign }` per chain, and copied by
 Vite to `frontend/dist/protocols.json`. Serve it at **`GET /protocols.json` on the
 frontend origin**, without sign-in, API keys, cookies, or backend routing. The public
 `/protocols` page has a direct download link; third parties can fetch the JSON itself.

@@ -43,7 +43,7 @@ export default function ProtocolsPage() {
             download="protocols.json"
             className="mt-6 inline-flex rounded-full border border-brand-border px-5 py-2.5 text-sm font-medium text-brand-text transition hover:border-brand-accent hover:text-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
           >
-            Download contract ABIs (protocols.json)
+            Download contracts and signing catalog (protocols.json)
           </a>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-baseline gap-2">
@@ -97,7 +97,7 @@ export default function ProtocolsPage() {
 
         <aside className="mt-8 rounded-2xl border border-brand-border/80 bg-brand-surface/50 px-5 py-4 text-sm leading-6 text-brand-muted sm:px-6">
           <p><span className="font-semibold text-brand-text">A note on support:</span> Integrations cover specific reviewed functions only—not every feature a protocol offers. This directory is informational and is not an endorsement or financial advice. Always verify a project and its website before interacting.</p>
-          <p className="mt-2">The downloadable catalog is static public metadata, not an API-key grant or a guarantee of live executability. Authorization, pauses, and runtime execution scope—including nested calls in structured executors—still apply.</p>
+          <p className="mt-2">The downloadable catalog separates contract ABIs and supported signing types. It is static public metadata, not an API-key grant or a guarantee of live executability. Signing domain, payload and wallet checks, authorization, pauses, and runtime execution scope—including nested calls in structured executors—still apply.</p>
         </aside>
 
         <footer className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-brand-border pt-6 text-sm text-brand-muted sm:flex-row sm:items-center">
