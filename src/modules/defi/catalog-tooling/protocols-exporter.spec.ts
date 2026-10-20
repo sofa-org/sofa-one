@@ -1,6 +1,8 @@
+import { toFunctionSelector } from 'viem';
 import type { AbiFunction } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import { renderProtocolsJson } from './protocols-exporter';
+import { GENERATED_DEFI_REGISTRY } from '../registry/generated/production-catalog';
 
 const address = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 const abi: AbiFunction = {
@@ -28,6 +30,28 @@ function chain(functions: readonly DefiFunctionPolicy[]): DefiChainPolicy {
 }
 
 describe('public protocols.json export', () => {
+  it.each([
+    ['Aave V3', 'aave-v3'],
+    ['Morpho Blue', 'morpho-blue'],
+    ['Compound III', 'compound-iii'],
+  ])('exports %s as one protocol per address with its complete admitted ABI', (protocol, prefix) => {
+    const result = JSON.parse(renderProtocolsJson(GENERATED_DEFI_REGISTRY));
+    for (const chain of GENERATED_DEFI_REGISTRY.chains) {
+      for (const contract of chain.contracts) {
+        const functions = contract.functions.filter((fn) => fn.capabilityId.startsWith(`${prefix}:`)
+          || (prefix === 'compound-iii' && fn.capabilityId.startsWith('compound-comet:')));
+        if (functions.length === 0) continue;
+        const entries = result[String(chain.chainId)].contracts.filter(
+          (entry: { address: string }) => entry.address === contract.address.toLowerCase(),
+        );
+        expect(entries).toHaveLength(1);
+        expect(entries[0].protocol).toBe(protocol);
+        expect(entries[0].abi.map((abi: AbiFunction) => toFunctionSelector(abi)).sort())
+          .toEqual(functions.map((fn) => toFunctionSelector(fn.signature)).sort());
+      }
+    }
+  });
+
   it('exports only standard function ABI, preserving nested tuples, outputs and mutability without mutating input', () => {
     const fragment = { chains: [chain([fn()])] };
     const original = JSON.stringify(fragment);

@@ -82,7 +82,7 @@ describe('current production profiles', () => {
   });
 
   it('permits only empty callback bytes for each Morpho callback function', async () => {
-    const callbacks = flat.filter((fn) => fn.protocol === 'morpho-blue' && fn.executionScope?.kind === 'empty-callback-data-v1');
+    const callbacks = flat.filter((fn) => fn.capabilityId.startsWith('morpho-blue:') && fn.executionScope?.kind === 'empty-callback-data-v1');
     expect(callbacks).toHaveLength(6);
     const grants = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((profile) => profile.bundleId.startsWith('morpho-blue-')).flatMap((profile) => profile.capabilityIds);
     const { policy } = makePolicy();

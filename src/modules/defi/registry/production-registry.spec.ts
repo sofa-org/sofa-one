@@ -51,14 +51,11 @@ describe('production DeFi registry assembly', () => {
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.every((fn) => Object.isFrozen(fn) && Object.isFrozen(fn.abi) && Object.isFrozen(fn.abi.inputs) && Object.isFrozen(fn.abi.outputs) && Object.isFrozen(fn.provenance))).toBe(true);
     expect(PRODUCTION_DEFI_CATALOG.every((chain) => Object.isFrozen(chain) && Object.isFrozen(chain.contracts) && chain.contracts.every((contract) => Object.isFrozen(contract) && Object.isFrozen(contract.functions)))).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => !PRODUCTION_DEFI_APPROVALS.some((approval) => approval.capabilityId === fn.capabilityId))).toHaveLength(expected.actions);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Aave V3')).toHaveLength(28);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Compound III')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Morpho Vault V2')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'uniswap-v3' || fn.protocol === 'uniswap-v3-router02' || fn.protocol === 'pancakeswap-v3')).toHaveLength(12);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'aerodrome')).toHaveLength(7);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'velodrome')).toHaveLength(7);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Lido')).toHaveLength(8);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Morpho Blue')).toHaveLength(6);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'pancakeswap-v2')).toHaveLength(10);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'SparkLend')).toHaveLength(4);
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'Venus')).toHaveLength(27);
@@ -115,13 +112,11 @@ describe('production DeFi registry assembly', () => {
     expect(sdaiFunctions.map((fn) => fn.functionName).sort()).toEqual(['deposit', 'mint', 'redeem', 'withdraw']);
     expect(sdaiFunctions.every((fn) => fn.status === 'active' && fn.provenance.status === 'verified' && fn.executionScope === undefined)).toBe(true);
     expect(PRODUCTION_DEFI_MANIFEST.manifestHash).toMatch(/^0x[0-9a-f]{64}$/);
-    const isSourceFunction = (fn: { protocol?: string }) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|aave-v3|compound-iii|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? '');
+    const isSourceFunction = (fn: { protocol?: string; capabilityId: string }) => /^(?:uniswap-v3-position-manager|balancer-v2-vault|compound-v2|curve-3pool-stableswap|pancakeswap-v3-position-manager|yearn-tokenized-strategy)$/.test(fn.protocol ?? '') || /^(?:aave-v3:v3-aave:|compound-iii:)/.test(fn.capabilityId);
     const sourceFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter(isSourceFunction);
     expect(sourceFunctions).toHaveLength(expected.capabilities.filter(isSourceFunction).length);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'uniswap-v3-position-manager')).toHaveLength(63);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'balancer-v2-vault')).toHaveLength(24);
-    expect(sourceFunctions.filter((fn) => fn.protocol === 'aave-v3')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'aave-v3').length);
-    expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-iii')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'compound-iii').length);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-v2')).toHaveLength(expected.capabilities.filter((fn) => fn.protocol === 'compound-v2').length);
     const curve = sourceFunctions.filter((fn) => fn.protocol === 'curve-3pool-stableswap');
     const pancakeswap = sourceFunctions.filter((fn) => fn.protocol === 'pancakeswap-v3-position-manager');
@@ -146,7 +141,7 @@ describe('production DeFi registry assembly', () => {
     expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-v2').every((fn) => fn.warnings?.some((warning) => warning.includes('uint error-code')))).toBe(true);
     expect(sourceFunctions.filter((fn) => fn.protocol === 'compound-v2' && fn.abi.stateMutability === 'payable').every((fn) => fn.warnings?.some((warning) => warning.includes('Native CEther')))).toBe(true);
     const newNpmFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'uniswap-v3-position-manager' && ['multicall', 'refundETH', 'unwrapWETH9', 'sweepToken'].includes(fn.functionName));
-    const newMorphoFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.protocol === 'morpho-blue');
+    const newMorphoFunctions = PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.capabilityId.startsWith('morpho-blue:v1-callback-free:'));
     expect(newNpmFunctions).toHaveLength(28);
     expect(newMorphoFunctions).toHaveLength(6);
     expect([...newNpmFunctions, ...newMorphoFunctions]).toHaveLength(34);
@@ -178,7 +173,7 @@ describe('production DeFi registry assembly', () => {
   });
 
   it('keeps source-added calls subject to exact capability, chain, target, selector, and ABI matching', async () => {
-    const fn = PRODUCTION_DEFI_MANIFEST.capabilities.find((item) => item.protocol === 'aave-v3' && item.functionName === 'supply')!;
+    const fn = PRODUCTION_DEFI_MANIFEST.capabilities.find((item) => item.capabilityId.startsWith('aave-v3:v3-aave:') && item.functionName === 'supply')!;
     const args = ['0x0000000000000000000000000000000000000001', 1n << 255n, '0x0000000000000000000000000000000000000001', 65535n] as const;
     const data = encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args });
     const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
