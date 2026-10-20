@@ -68,6 +68,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
     website: 'https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts',
   },
   { name: 'Kelp', website: 'https://kerneldao.com/kelp/' },
+  { name: 'KnightSwap', website: 'https://knights.gitbook.io/knightswap/contracts-security-and-visuals/knight-contracts.md' },
   { name: 'LFJ', website: 'https://lfj.gg' },
   { name: 'Lido', website: 'https://lido.fi' },
   { name: 'Liquid Collective', website: 'https://liquidcollective.io' },
@@ -80,6 +81,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'MDEX', website: 'https://bsc.mdex.com/' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
+  // Wind-down wrapper conversion only; use official wrapping/redemption guidance.
+  { name: 'Mountain Protocol', website: 'https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md' },
   // The reviewed imUSD implementation is exit-only; use its legacy deployment reference.
   { name: 'mStable', website: 'https://developers.mstable.org/contracts/imassets-save.md' },
   // Legacy Nerve 3pool exit only; use the surviving official migration reference.
@@ -87,6 +90,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
     name: 'Nerve Finance',
     website: 'https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272',
   },
+  // Official team-disbandment notice recommends withdrawing; no renewed support is asserted.
+  { name: 'Nomiswap', website: 'https://nomiswap.gitbook.io/home/home.md' },
   { name: 'OpenOcean', website: 'https://openocean.finance' },
   { name: 'Origin', website: 'https://www.originprotocol.com' },
   { name: 'PancakeSwap', website: 'https://pancakeswap.finance' },
