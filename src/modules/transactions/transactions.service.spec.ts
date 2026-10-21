@@ -239,7 +239,7 @@ describe('TransactionsService', () => {
   const SIM_RPC = 'https://rpc.example.test/base';
   const config = {
     get: jest.fn((key: string) => {
-      if (key === 'simulation.rpcUrls.8453') return SIM_RPC;
+      if (key === 'rpc.urls.8453') return SIM_RPC;
       return undefined;
     }),
   } as any;
@@ -401,7 +401,7 @@ describe('TransactionsService', () => {
     );
     billingDebt.getDebt.mockResolvedValue({ hasDebt: false, invoiceIds: [] });
     config.get.mockImplementation((key: string) => {
-      if (key === 'simulation.rpcUrls.8453') return SIM_RPC;
+      if (key === 'rpc.urls.8453') return SIM_RPC;
       return undefined;
     });
     service = new TransactionsService(
@@ -2117,7 +2117,7 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
   });
 
-  it('debt + unknown with missing simulation.rpcUrls fails closed as UNVERIFIABLE (no public http fallback)', async () => {
+  it('debt + unknown with missing RPC fails closed as UNVERIFIABLE (no public http fallback)', async () => {
     billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
     config.get.mockImplementation(() => undefined);
     const unknownDto = {
@@ -2144,10 +2144,10 @@ describe('TransactionsService', () => {
     );
   });
 
-  it('debt path rejects non-https simulation.rpcUrls at resolve time', async () => {
+  it('debt path rejects non-https RPC URLs at resolve time', async () => {
     billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
     config.get.mockImplementation((key: string) => {
-      if (key === 'simulation.rpcUrls.8453') return 'http://insecure.example.invalid';
+      if (key === 'rpc.urls.8453') return 'http://insecure.example.invalid';
       return undefined;
     });
     const unknownDto = {

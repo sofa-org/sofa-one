@@ -50,7 +50,7 @@ describe('PolymarketDepositBatchVerifierService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     now = NOW;
-    config = { get: jest.fn(() => RPC) };
+    config = { get: jest.fn((key: string) => key === 'rpc.urls.137' ? RPC : undefined) };
     const id = `0x${SIGNER.slice(2).toLowerCase().padStart(64, '0')}` as Hex;
     state = {
       nonce: 4n,

@@ -184,7 +184,7 @@ implicitly infer or block a spender/operator relationship.
 
 Normal EOA isolation, destination protection, risk, freeze, pause, live grant/permission,
 deadline and digest rechecks remain in force; order-only rate/budget policy is not applied.
-The verifier uses `SIMULATION_RPC_URLS__137` and fails closed if it is unavailable or
+The verifier uses shared backend `RPC_URLS__137` and fails closed if it is unavailable or
 verification fails. It pins all deployment reads to one Polygon block and retains the full
 factory/Beacon/implementation/wallet identity snapshot, including runtime hashes, proxy
 slots, predicted address, signer/id/owner, current nonce and paused state. Local evidence is

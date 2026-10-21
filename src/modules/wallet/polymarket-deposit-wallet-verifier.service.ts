@@ -20,7 +20,7 @@ export class PolymarketDepositWalletVerifierService {
   constructor(private readonly config: ConfigService) {}
 
   private getRpc(): string {
-    const rpc = this.config.get<string>('simulation.rpcUrls.137');
+    const rpc = this.config.get<string>('rpc.urls.137');
     if (typeof rpc !== 'string' || !rpc.trim()) throw new ServiceUnavailableException('Polymarket deposit wallet verification unavailable');
     return rpc;
   }

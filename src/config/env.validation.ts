@@ -192,27 +192,25 @@ export function validate(config: Record<string, unknown>) {
   validateStripeConfig(validatedConfig);
   validateUsdcConfig(validatedConfig);
   validateBillingWorkerConfig(validatedConfig);
-  validateSimulationRpcUrls(config);
+  validateRpcUrls(config);
   return validatedConfig;
 }
 
 /**
- * Per-chain debt-gate simulation RPCs (`SIMULATION_RPC_URLS__<chainId>`).
+ * Shared per-chain RPCs for simulation and verification (`RPC_URLS__<chainId>`).
  *
  * - Keys must be numeric string chain ids present in SUPPORTED_CHAINS.
  * - Values must be non-empty https:// URLs (no http, no blanks).
  * - Present-but-empty values are rejected (empty is not implicitly valid).
  * - Unknown / non-numeric chain suffixes fail startup.
- * - Absence of all keys is allowed at boot; runtime debt-gate fails closed
- *   per-chain via BILLING_ASSET_FLOW_UNVERIFIABLE when a URL is missing.
+ * - Absence of all keys is allowed at boot; consumers fail closed per-chain
+ *   when their required RPC URL is missing.
  */
-export function validateSimulationRpcUrls(config: Record<string, unknown>): void {
-  const prefix = 'SIMULATION_RPC_URLS__';
-  let sawAny = false;
+export function validateRpcUrls(config: Record<string, unknown>): void {
+  const prefix = 'RPC_URLS__';
 
   for (const [key, value] of Object.entries(config)) {
     if (!key.startsWith(prefix)) continue;
-    sawAny = true;
 
     const chainPart = key.slice(prefix.length);
     if (!/^\d+$/.test(chainPart)) {
@@ -237,25 +235,23 @@ export function validateSimulationRpcUrls(config: Record<string, unknown>): void
   }
 
   // A bare empty map is fine (no keys). Reject an explicit empty JSON object
-  // if operators set SIMULATION_RPC_URLS="{}" (Nest may pass through as string).
-  const bare = config.SIMULATION_RPC_URLS;
+  // if operators set RPC_URLS="{}" (Nest may pass through as string).
+  const bare = config.RPC_URLS;
   if (bare !== undefined && bare !== null) {
     if (typeof bare === 'string' && bare.trim() === '') {
-      throw new Error('SIMULATION_RPC_URLS must not be an empty value; use SIMULATION_RPC_URLS__<chainId>');
+      throw new Error('RPC_URLS must not be an empty value; use RPC_URLS__<chainId>');
     }
     if (typeof bare === 'object' && !Array.isArray(bare) && Object.keys(bare as object).length === 0) {
       throw new Error(
-        'SIMULATION_RPC_URLS empty object is not valid; set SIMULATION_RPC_URLS__<chainId>=https://...',
+        'RPC_URLS empty object is not valid; set RPC_URLS__<chainId>=https://...',
       );
     }
     if (typeof bare === 'string' && bare.trim() === '{}') {
       throw new Error(
-        'SIMULATION_RPC_URLS empty object is not valid; set SIMULATION_RPC_URLS__<chainId>=https://...',
+        'RPC_URLS empty object is not valid; set RPC_URLS__<chainId>=https://...',
       );
     }
   }
-
-  void sawAny;
 }
 
 function validateProductionConfig(config: EnvironmentVariables) {

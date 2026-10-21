@@ -1,4 +1,5 @@
 import { ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createPublicClient, keccak256, toBytes } from 'viem';
 import { PolymarketDepositWalletVerifierService } from './polymarket-deposit-wallet-verifier.service';
 import { validatePolymarketClobOrder } from '../defi/signing/polymarket-clob-order';
@@ -19,12 +20,13 @@ function payload() {
 
 describe('PolymarketDepositWalletVerifierService', () => {
   let rpc: string | undefined;
-  const config = { get: jest.fn(() => rpc) } as any;
+  const config = new ConfigService();
+  const mockConfigGet = jest.spyOn(config, 'get');
   let service: PolymarketDepositWalletVerifierService;
   beforeEach(() => {
     jest.clearAllMocks();
     rpc = 'https://polygon.example/rpc';
-    config.get.mockImplementation(() => rpc);
+    mockConfigGet.mockImplementation((key: string) => key === 'rpc.urls.137' ? rpc : undefined);
     mockGetChainId.mockResolvedValue(137);
     mockGetCode.mockResolvedValue(CODE);
     mockReadContract.mockResolvedValue('0x1626ba7e');

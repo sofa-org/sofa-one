@@ -84,10 +84,43 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
   Review the capability catalog and key grants in the dashboard; do not retry using an
   unrestricted legacy key.
 - Generic API-key message/typed-data signing is denied except the exact Polymarket CLOB
-  ClobAuth bootstrap. It requires `canSign`, `canUseEoaExecution`, and either `all` capability
-  mode or custom mode explicitly containing `polymarket:137:clob-auth:v1`; independent
-  EOA/destination/risk controls still apply. Other denials can have different policy error
-  codes; destination protection may deny earlier. Dashboard withdrawals/payments are separate.
+  ClobAuth bootstrap, CLOB V2 order, and DepositWallet Batch policies. They require `canSign`,
+  `canUseEoaExecution`, and either `all` capability mode or custom mode explicitly containing
+  the matching signing capability; independent EOA/destination/risk controls still apply.
+  Other denials can have different policy error codes; destination protection may deny
+  earlier. Dashboard withdrawals/payments are separate.
+
+### Shared backend RPC configuration migration
+
+- Rename every `SIMULATION_RPC_URLS__<chainId>` deployment variable to
+  `RPC_URLS__<chainId>`, preserving its URL, and restart/redeploy all backend instances.
+  The old variables are no longer read; there is no compatibility alias.
+- Simulation and Polymarket Order/Batch verification share `rpc.urls.<chainId>`.
+  They retain their own timeouts, chain/deployment checks and fail-closed behavior.
+  This change does not add public fallback or change bundler, USDC receipt-provider,
+  or browser RPC configuration.
+
+### Polymarket order signing returns deposit wallet verification unavailable
+
+- `503` with `Polymarket deposit wallet verification unavailable` is a pre-signing
+  verification failure, before Openfort signing. It can mean the backend Polygon RPC is
+  missing, the RPC call failed, `eth_chainId` is not `0x89` (137), or `eth_getCode` for
+  the DepositWallet returned no runtime code. The response alone does not distinguish them.
+- Set `RPC_URLS__137` in the **backend process environment** to a reachable
+  Polygon mainnet HTTPS RPC. For local development, an explicit public endpoint example is
+  `RPC_URLS__137=https://polygon-bor-rpc.publicnode.com`; use a reliable provider
+  for production. The backend reads `rpc.urls.137`; `VITE_POLYGON_RPC_URL`,
+  `DEFAULT_CHAIN_ID`, and frontend RPC configuration do not supply this value.
+- Restart/redeploy the backend after changing the environment. From that same runtime,
+  check `eth_chainId` and `eth_getCode` for the request's `message.verifyingContract`.
+  A successful read from a developer machine does not establish deployment connectivity.
+  There is no automatic public RPC fallback; do not disable verification.
+- Generate a fresh order before retrying: order `timestamp` is in milliseconds and must
+  be within five minutes of server time. Replaying an old diagnostic payload can instead
+  fail typed-data validation with a 400.
+- Passing this preflight proves only reachable Polygon runtime code. Signing still checks
+  recovered signer, unchanged code, and ERC-1271; failures in that later stage return
+  `POLYMARKET_SIGNING_FAILED`. A successful preflight is not successful CLOB order placement.
 
 ### Capability mode or grant confusion
 

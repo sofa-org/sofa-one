@@ -85,7 +85,7 @@ export class PolymarketDepositBatchVerifierService implements PolymarketDepositB
   }
 
   private getProbe(): PolymarketDepositBatchDeploymentProbe {
-    const rpcUrl = this.config.get<string>('simulation.rpcUrls.137');
+    const rpcUrl = this.config.get<string>('rpc.urls.137');
     if (typeof rpcUrl !== 'string' || !rpcUrl.trim()) throw unavailable();
     if (!this.probe || this.probeRpc !== rpcUrl) {
       this.probe = this.createProbe(rpcUrl);

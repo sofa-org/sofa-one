@@ -115,7 +115,7 @@ signing and during atomic acceptance; pauses on contracts not present as call ta
 block the Batch merely due to inferred spender/operator roles. Only global, Polygon-chain,
 or capability pause blocks the capability metadata/grant itself.
 
-The deployment verifier uses configured `SIMULATION_RPC_URLS__137` and fails closed on
+The deployment verifier uses shared backend `RPC_URLS__137` and fails closed on
 missing configuration or any verification failure. It pins deployment reads to one block
 and retains the full factory/Beacon/implementation/wallet identity (runtime hashes and proxy
 slots included), predicted wallet, owner/signer/id, current nonce and pause state. Evidence

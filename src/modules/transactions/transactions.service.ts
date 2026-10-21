@@ -1426,7 +1426,7 @@ export class TransactionsService {
     },
     invoiceCount: number,
   ): Promise<BoundAssetFlowVerification> {
-    const rpcUrl = this.resolveSimulationRpcUrl(context.chainId);
+    const rpcUrl = this.resolveRpcUrl(context.chainId);
     if (!rpcUrl) {
       this.logBillingAssetFlowBlocked(userId, context, invoiceCount, 'missing_simulation_rpc');
       throw new ForbiddenException({
@@ -1712,14 +1712,14 @@ export class TransactionsService {
   }
 
   /**
-   * Strict explicit simulation RPC lookup from `simulation.rpcUrls.<chainId>`.
+   * Strict explicit shared RPC lookup from `rpc.urls.<chainId>`.
    * Never falls back to public http() or request-supplied URLs.
    * Missing/empty/non-https values fail closed at the call site
    * (BILLING_ASSET_FLOW_UNVERIFIABLE). Startup validation already enforces
    * supported-chain keys + https for declared env entries.
    */
-  private resolveSimulationRpcUrl(chainId: number): string | null {
-    const raw = this.config.get<unknown>(`simulation.rpcUrls.${chainId}`);
+  private resolveRpcUrl(chainId: number): string | null {
+    const raw = this.config.get<unknown>(`rpc.urls.${chainId}`);
     if (typeof raw !== 'string') return null;
     const url = raw.trim();
     if (!url) return null;
