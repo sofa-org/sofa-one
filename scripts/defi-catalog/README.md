@@ -4,6 +4,15 @@ The current catalog source is `data/defi-catalog/catalog.json`. Offline tooling 
 
 ## Lean admission path
 
+### Lifecycle exclusion policy
+
+Do not admit or retain protocols whose team has disbanded or whose project is winding down or shut down. Retired/sunset deployments and explicitly unmaintained legacy integrations are also unsupported, even if their contracts still expose withdrawal functions. There is no exit-only exception. Remove their capabilities from `catalog.json`, regenerate both outputs, and remove their public directory cards; hiding a card or adding warnings is not sufficient. Existing custom IDs cannot restore a removed capability. Keep historical source evidence for audit only; it is not an admission instruction.
+
+As of 2026-10-21, this policy removes 40 capabilities across Nomiswap V1 (team disbanded), Mountain wUSDM (wind-down), Saddle USD (wind-down), mStable savings (deprecated exit-only deployment), Prisma mkUSD StabilityPool (shutdown), Badger legacy Sett (sunset), Nerve 3pool (retired migration/exit-only deployment), and Ramses V1 (legacy support/update cessation). The latter deployment exclusions do not assert shutdown of a successor product or the entire Ramses/Badger ecosystem. Alpaca remains unadmitted. A shutdown notice for another chain alone is not grounds to classify the reviewed deployment as shut down; MDEX's HECO notice does not establish a BSC shutdown.
+
+The dated admission sections below are historical records and are superseded by this exclusion policy and the current `catalog.json`; their former active counts do not describe current support. No catalog maintenance step should reimport their historical `selectedFunctions` wholesale.
+
+
 Use a contract-first inventory: **chain and exact deployed address → matching ABI → function inventory → capability records → existing catalog workflow**. Establish the chain/address from a reliable deployment source and bind the ABI to that deployment using a reliable ABI source. Where a proxy is involved, match the proxy address and the applicable implementation/interface; record the relevant implementation identity when available. These are inventory evidence, not proof of current runtime bytecode identity, funding, or executable behavior.
 
 Enumerate ABI `function` entries as the callable interface surface. ABI entries do not say whether a function was declared `public` or `external`; either appears as a function. Internal/private functions are not part of this ABI surface. Do not create function capabilities for constructors, `fallback`, or `receive`. Retain `view`/`pure` mutability metadata, without implying that a read endpoint exists. Identify functions by their full canonical signature, not name alone: include canonical tuple component types and array suffixes (for example, `f((address,uint256)[],uint8)`). Overloads are supported when their selectors differ; the manifest rejects selector collisions, not repeated function names.
