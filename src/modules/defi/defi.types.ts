@@ -106,7 +106,7 @@ export type DefiSigningAuthorization = Readonly<{
   payload: Readonly<Record<string, unknown>>;
   bindingCommitment: `0x${string}`;
   walletAddress: string;
-  agentWalletAddress: string;
+  signerAddress: string;
   agentOpenfortAccountId: string;
   executionWalletAddress?: string;
 }>;

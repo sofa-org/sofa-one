@@ -28,6 +28,43 @@ describe.each([
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ 'X-API-Key': 'sk_test' }) });
   });
 
+  it('preserves distinct wallet and signer addresses in EOA signing responses', async () => {
+    const response: Api.SignResponse = {
+      signature: '0x1234',
+      walletAddress: '0x1111111111111111111111111111111111111111',
+      signerAddress: '0x2222222222222222222222222222222222222222',
+      executionMode: 'eoa',
+      type: 'typed_data',
+    };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }));
+    const request: Api.SignRequest = {
+      type: 'typed_data',
+      executionMode: 'eoa',
+      typedData: {
+        domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 },
+        types: { ClobAuth: [
+          { name: 'address', type: 'address' },
+          { name: 'timestamp', type: 'string' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'message', type: 'string' },
+        ] },
+        primaryType: 'ClobAuth',
+        message: {
+          address: response.signerAddress,
+          timestamp: String(Math.floor(Date.now() / 1000)),
+          nonce: 0,
+          message: 'This message attests that I control the given wallet',
+        },
+      },
+    };
+    const result = await api.signWithApiKey('sk_test', request);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/v1/wallets/sign`);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ 'X-API-Key': 'sk_test' }) });
+    expect(result).toEqual(response);
+    expect(result.walletAddress).not.toBe(result.signerAddress);
+    expect(result).not.toHaveProperty('agentWalletAddress');
+  });
+
   it('uses validated GET query parameters for deposit info', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
     await api.getDepositInfoAuth(async () => 'iam-token', 84532, '00000000-0000-4000-8000-000000000001');

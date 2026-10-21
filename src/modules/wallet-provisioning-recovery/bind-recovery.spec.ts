@@ -45,7 +45,7 @@ describe('bindProvisionedAccount', () => {
 
   it('rejects partial conflicting identity and leaves intent unchanged', async () => {
     const { tx, prisma, provider } = make();
-    tx.userWallet.findUnique.mockResolvedValue({ id: 'wallet', userId: 'user', agentOpenfortAccountId: null, agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: null });
+    tx.userWallet.findUnique.mockResolvedValue({ id: 'wallet', userId: 'user', agentOpenfortAccountId: null, signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: null });
     await expect(bindProvisionedAccount(prisma, provider, () => 'hash', input)).rejects.toThrow('conflicting agent identity');
     expect(tx.walletProvisioningIntent.updateMany).not.toHaveBeenCalled();
   });

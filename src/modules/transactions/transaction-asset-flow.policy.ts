@@ -33,7 +33,7 @@ export type ClassifyTransactionAssetFlowInput = {
   /**
    * Trusted owner of the executing wallet:
    * - session_key → UserWallet.walletAddress
-   * - eoa → UserWallet.agentWalletAddress
+   * - eoa → UserWallet.signerAddress
    */
   ownerAddress: string;
   /** Chain id for chain-scoped protocol address registries. */

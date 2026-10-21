@@ -243,9 +243,9 @@ export class WalletService {
       signingAuthorization = await this.defiPolicy.authorizeSigning(batchPayload ?? orderPayload ?? params.typedData, {
         userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
         walletId: activeWallet.id, chainId, executionMode,
-        executionOwner: activeWallet.agentWalletAddress!,
+        executionOwner: activeWallet.signerAddress!,
         allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [], capabilityMode: apiKey.capabilityMode,
-        walletAddress: activeWallet.walletAddress!, agentWalletAddress: activeWallet.agentWalletAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
+        walletAddress: activeWallet.walletAddress!, signerAddress: activeWallet.signerAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
       });
     } catch (error) {
       if (error instanceof DefiPolicyDenial) {
@@ -296,16 +296,16 @@ export class WalletService {
     }
 
     this.assertBackendWalletReady(activeWallet);
-    const signingWalletAddress = activeWallet.agentWalletAddress!;
+    const signingWalletAddress = activeWallet.signerAddress!;
 
     const data = signingAuthorization.typedDataDigest;
     let depositEvidence: DepositWalletEvidence | undefined;
     let batchEvidence: PolymarketDepositBatchEvidence | undefined;
     if (orderPayload) {
-      depositEvidence = await this.polymarketVerifier.verify(activeWallet.agentWalletAddress!, orderPayload);
+      depositEvidence = await this.polymarketVerifier.verify(activeWallet.signerAddress!, orderPayload);
     }
     if (batchPayload) {
-      batchEvidence = await this.polymarketBatchVerifier.verify(batchPayload, activeWallet.agentWalletAddress!);
+      batchEvidence = await this.polymarketBatchVerifier.verify(batchPayload, activeWallet.signerAddress!);
     }
 
     // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
@@ -328,8 +328,8 @@ export class WalletService {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
         if (isPolymarketOrder) await this.polymarketBudget.acquireWalletLock(txClient, activeWallet.id);
-        if (isPolymarketOrder) this.polymarketVerifier.assertFresh(depositEvidence!, activeWallet.agentWalletAddress!, orderPayload!);
-        if (isPolymarketDepositBatch) this.polymarketBatchVerifier.assertFresh(batchEvidence!, batchPayload!, activeWallet.agentWalletAddress!);
+        if (isPolymarketOrder) this.polymarketVerifier.assertFresh(depositEvidence!, activeWallet.signerAddress!, orderPayload!);
+        if (isPolymarketDepositBatch) this.polymarketBatchVerifier.assertFresh(batchEvidence!, batchPayload!, activeWallet.signerAddress!);
         const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
         if (protectionOn) {
           throw new DeferredSigningDestinationProtectionDenial(
@@ -340,7 +340,7 @@ export class WalletService {
         await this.defiPolicy.assertSigningStillAuthorized(txClient, signingAuthorization, {
           userId, apiKeyId: apiKey.id!, chainId, executionMode, type: params.type,
           digest: data, walletId: activeWallet.id, walletAddress: activeWallet.walletAddress!,
-          agentWalletAddress: activeWallet.agentWalletAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
+          signerAddress: activeWallet.signerAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
         });
         allowedEvent = isPolymarketOrder
           ? await this.polymarketBudget.recordAcceptedInTransaction(txClient, { walletId: activeWallet.id, userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix })
@@ -354,6 +354,7 @@ export class WalletService {
             apiKeyName: apiKey.name,
             type: params.type,
             chainId: BigInt(chainId),
+            // Historical signing records retain the execution signer, not the user wallet.
             walletAddress: signingWalletAddress,
             requestHash: hashRequest({
               type: params.type,
@@ -404,20 +405,20 @@ export class WalletService {
       if (isPolymarketOrder) {
         if (!orderPayload || !depositEvidence) throw new Error('order evidence unavailable');
         const recovered = await recoverAddress({ hash: polymarketWrapperDigest(orderPayload), signature: rawSignature as Hex });
-        if (recovered.toLowerCase() !== activeWallet.agentWalletAddress!.toLowerCase()) throw new Error('signer mismatch');
+        if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
         const envelope = buildPolymarketPoly1271Envelope(orderPayload, rawSignature as Hex);
-        this.polymarketVerifier.assertFresh(depositEvidence, activeWallet.agentWalletAddress!, orderPayload);
-        const finalEvidence = await this.polymarketVerifier.verify(activeWallet.agentWalletAddress!, orderPayload);
+        this.polymarketVerifier.assertFresh(depositEvidence, activeWallet.signerAddress!, orderPayload);
+        const finalEvidence = await this.polymarketVerifier.verify(activeWallet.signerAddress!, orderPayload);
         if (finalEvidence.codeHash.toLowerCase() !== depositEvidence.codeHash.toLowerCase()) throw new Error('deposit wallet code changed');
         await this.polymarketVerifier.verify1271(orderPayload, polymarketOrderDigest(orderPayload), envelope);
         signature = rawSignature;
       } else if (isPolymarketDepositBatch) {
         if (!batchPayload || !batchEvidence) throw new Error('batch evidence unavailable');
         const recovered = await recoverAddress({ hash: polymarketDepositBatchDigest(batchPayload), signature: rawSignature as Hex });
-        if (recovered.toLowerCase() !== activeWallet.agentWalletAddress!.toLowerCase()) throw new Error('signer mismatch');
-        await this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
-        await this.polymarketBatchVerifier.verifySignature(batchPayload, activeWallet.agentWalletAddress!, rawSignature as Hex, batchEvidence);
-        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
+        if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
+        await this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
+        await this.polymarketBatchVerifier.verifySignature(batchPayload, activeWallet.signerAddress!, rawSignature as Hex, batchEvidence);
+        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
         signature = rawSignature;
       } else {
         signature = rawSignature;
@@ -449,7 +450,7 @@ export class WalletService {
 
     if (isPolymarketDepositBatch && batchPayload && batchEvidence) {
       try {
-        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.agentWalletAddress!);
+        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
       } catch {
         await this.updateSigningRequestStatus(signingRequest.id, 'failed');
         throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
@@ -470,8 +471,8 @@ export class WalletService {
 
     return {
       signature,
-      walletAddress: signingWalletAddress,
-      agentWalletAddress: signingWalletAddress,
+      walletAddress: activeWallet.walletAddress!,
+      signerAddress: signingWalletAddress,
       type: params.type,
       executionMode,
     };
@@ -480,10 +481,10 @@ export class WalletService {
   /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
   async getSigningRequestDetail(userId: string, signingRequestId: string, walletId?: string) {
     const wallet = walletId ? await this.selectWallet(userId, walletId) : undefined;
-    if (walletId && !wallet?.walletAddress && !wallet?.agentWalletAddress) {
+    if (walletId && !wallet?.walletAddress && !wallet?.signerAddress) {
       throw new NotFoundException('Signing request not found');
     }
-    const addresses = wallet ? [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x) : [];
+    const addresses = wallet ? [wallet.walletAddress, wallet.signerAddress].filter((x): x is string => !!x) : [];
     const sr = await this.prisma.signingRequest.findFirst({
       where: { id: signingRequestId, userId, ...(wallet ? { walletAddress: { in: addresses } } : {}) },
     });
@@ -493,6 +494,7 @@ export class WalletService {
       id: sr.id,
       type: sr.type,
       chainId: sr.chainId ? Number(sr.chainId) : null,
+      // Historical records preserve their stored execution address.
       walletAddress: sr.walletAddress,
       status: sr.status,
       authMethod: sr.authMethod,
@@ -511,7 +513,7 @@ export class WalletService {
       select: {
         id: true,
         walletAddress: true,
-        agentWalletAddress: true,
+        signerAddress: true,
         status: true,
         frozenAt: true,
         chainAuthorizations: {
@@ -522,10 +524,10 @@ export class WalletService {
       orderBy: { id: 'asc' },
     });
     return {
-      wallets: wallets.map(({ id, walletAddress, agentWalletAddress, status, frozenAt, chainAuthorizations }) => ({
+      wallets: wallets.map(({ id, walletAddress, signerAddress, status, frozenAt, chainAuthorizations }) => ({
         id,
         walletAddress,
-        agentWalletAddress: agentWalletAddress ?? null,
+        signerAddress: signerAddress ?? null,
         status,
         isFrozen: frozenAt !== null,
         chainAuthorizations: chainAuthorizations.map(({ chainId, status: authorizationStatus, expiresAt }) => ({
@@ -546,7 +548,7 @@ export class WalletService {
     const where: Record<string, unknown> = { userId };
     if (query.walletId) {
       const wallet = await this.selectWallet(userId, query.walletId);
-      const addresses = [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x);
+      const addresses = [wallet.walletAddress, wallet.signerAddress].filter((x): x is string => !!x);
       if (addresses.length === 0) return { items: [], total: 0, page, limit };
       where.walletAddress = { in: addresses };
     }
@@ -576,6 +578,7 @@ export class WalletService {
         id: sr.id,
         type: sr.type,
         chainId: sr.chainId ? Number(sr.chainId) : null,
+        // Historical records preserve their stored execution address.
         walletAddress: sr.walletAddress,
         status: sr.status,
         apiKeyPrefix: sr.apiKeyPrefix,
@@ -733,12 +736,12 @@ export class WalletService {
   private assertBackendWalletReady(wallet: {
     status: string;
     agentOpenfortAccountId?: string | null;
-    agentWalletAddress?: string | null;
+    signerAddress?: string | null;
   }): void {
     if (
       wallet.status !== 'active' ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress
+      !wallet.signerAddress
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -877,7 +880,7 @@ export class WalletService {
       wallet.status !== 'active' ||
       !wallet.walletAddress ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress ||
+      !wallet.signerAddress ||
       !wallet.agentKeyHash
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
@@ -1053,7 +1056,7 @@ export class WalletService {
               amount: params.amount,
               token: params.token,
               contractAddress: tokenAddress,
-              agentWalletAddress: wallet.agentWalletAddress,
+              signerAddress: wallet.signerAddress,
               agentKeyHash: wallet.agentKeyHash,
               idempotencyKey: params.idempotencyKey,
               requestHash,

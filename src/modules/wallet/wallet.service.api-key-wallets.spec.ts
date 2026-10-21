@@ -32,7 +32,7 @@ describe('WalletService.listApiKeyWallets', () => {
       select: {
         id: true,
         walletAddress: true,
-        agentWalletAddress: true,
+        signerAddress: true,
         status: true,
         frozenAt: true,
         chainAuthorizations: {
@@ -49,7 +49,7 @@ describe('WalletService.listApiKeyWallets', () => {
       {
         id: 'wallet-a',
         walletAddress: '0x1',
-        agentWalletAddress: '0x2',
+        signerAddress: '0x2',
         status: 'active',
         frozenAt: new Date(),
         openfortAccountId: 'must-not-leak',
@@ -65,7 +65,7 @@ describe('WalletService.listApiKeyWallets', () => {
         {
           id: 'wallet-a',
           walletAddress: '0x1',
-          agentWalletAddress: '0x2',
+          signerAddress: '0x2',
           status: 'active',
           isFrozen: true,
           chainAuthorizations: [{ chainId: 10, status: 'active', expiresAt: null }],
@@ -73,14 +73,17 @@ describe('WalletService.listApiKeyWallets', () => {
       ],
     });
     expect(JSON.stringify(result)).not.toContain('must-not-leak');
+    expect(result.wallets[0]).not.toHaveProperty('agentWalletAddress');
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'owner', id: 'wallet-a' } }));
   });
 
   it('returns null when the bound wallet has no signer address', async () => {
-    findMany.mockResolvedValue([{ id: 'wallet-a', walletAddress: '0x1', status: 'active', frozenAt: null, chainAuthorizations: [] }]);
-    await expect(service.listApiKeyWallets('owner', 'wallet-a')).resolves.toMatchObject({
-      wallets: [{ walletAddress: '0x1', agentWalletAddress: null }],
+    findMany.mockResolvedValue([{ id: 'wallet-a', walletAddress: '0x1', signerAddress: null, status: 'active', frozenAt: null, chainAuthorizations: [] }]);
+    const result = await service.listApiKeyWallets('owner', 'wallet-a');
+    expect(result).toMatchObject({
+      wallets: [{ walletAddress: '0x1', signerAddress: null }],
     });
+    expect(result.wallets[0]).not.toHaveProperty('agentWalletAddress');
   });
 
   it('rejects unbound API keys without querying wallet metadata', async () => {

@@ -168,7 +168,7 @@ describe('BillingReconciliationService', () => {
     runUpdateMany.mockResolvedValue({ count: 1 });
     txCount.mockResolvedValue(0);
     walletFindUnique.mockResolvedValue({ walletAddress: WALLET });
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     recordSuccessfulOutbound.mockResolvedValue({ outcome: 'inserted' });
     txUpdateMany.mockResolvedValue({ count: 1 });
     txUpdate.mockResolvedValue({ id: 'tx-1' });
@@ -581,7 +581,7 @@ describe('BillingReconciliationService', () => {
 
   it('counts an unowned or mismatched transaction wallet as a conflict without metering', async () => {
     mockCandidates([txRow({ walletAddress: OTHER })]);
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
 
     const result = await service.reconcile('user-1', { limit: 50, targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
@@ -647,7 +647,7 @@ describe('BillingReconciliationService', () => {
   });
 
   it('posts a backend_eoa send when receipt.from matches the wallet', async () => {
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,
@@ -676,7 +676,7 @@ describe('BillingReconciliationService', () => {
   });
 
   it('quarantines a backend_eoa send whose receipt.from does not match the wallet', async () => {
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,

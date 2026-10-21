@@ -532,7 +532,7 @@ describe('API-key public security flow (e2e)', () => {
       openfortAccountId: string;
       walletAddress: string;
       agentOpenfortAccountId?: string;
-      agentWalletAddress?: string;
+      signerAddress?: string;
       agentKeyHash?: string;
     } = {
       openfortAccountId: 'ofa_test_account_123',
@@ -554,7 +554,7 @@ describe('API-key public security flow (e2e)', () => {
         walletAddress: wallet.walletAddress,
         agentOpenfortAccountId:
           wallet.agentOpenfortAccountId ?? defaultAgentOpenfortAccountId(socialId),
-        agentWalletAddress: wallet.agentWalletAddress ?? defaultAgentWalletAddress(socialId),
+        signerAddress: wallet.signerAddress ?? defaultSignerAddress(socialId),
         agentKeyHash: wallet.agentKeyHash ?? defaultAgentKeyHash(socialId),
       },
     });
@@ -591,7 +591,7 @@ describe('API-key public security flow (e2e)', () => {
       : `ofa_${socialId}_agent_account_123`;
   }
 
-  function defaultAgentWalletAddress(socialId: string): string {
+  function defaultSignerAddress(socialId: string): string {
     return socialId === 'test_social_id_e2e'
       ? `0x${'4'.repeat(40)}`
       : `0x${hexFromText(socialId, 40)}`;

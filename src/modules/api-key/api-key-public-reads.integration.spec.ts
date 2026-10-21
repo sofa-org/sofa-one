@@ -139,7 +139,7 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
       wallets: [{
         id: record.walletId,
         walletAddress: '0xeoa',
-        agentWalletAddress: '0xsigner',
+        signerAddress: '0xsigner',
         status: 'active',
         isFrozen: false,
         chainAuthorizations: [],
@@ -150,17 +150,18 @@ describe('API-key read endpoints (HTTP with real ApiKeyAuthGuard)', () => {
       .set('X-API-Key', key)
       .expect(200);
     expect(walletService.listApiKeyWallets).toHaveBeenCalledWith(user.id, record.walletId);
-    expect(response.body.wallets[0]).toMatchObject({ walletAddress: '0xeoa', agentWalletAddress: '0xsigner' });
-    expect(JSON.stringify(response.body)).not.toMatch(/openfortAccountId|apiKeyHash/);
+    expect(response.body.wallets[0]).toMatchObject({ walletAddress: '0xeoa', signerAddress: '0xsigner' });
+    expect(JSON.stringify(response.body)).not.toMatch(/agentWalletAddress|openfortAccountId|apiKeyHash/);
   });
 
   it('preserves null signer address in wallet response', async () => {
     walletService.listApiKeyWallets.mockResolvedValueOnce({
-      wallets: [{ id: record.walletId, walletAddress: '0xeoa', agentWalletAddress: null, status: 'active', isFrozen: false, chainAuthorizations: [] }],
+      wallets: [{ id: record.walletId, walletAddress: '0xeoa', signerAddress: null, status: 'active', isFrozen: false, chainAuthorizations: [] }],
     });
     await request(app.getHttpServer()).get('/v1/me/wallets').set('X-API-Key', key).expect(404);
     const response = await request(app.getHttpServer()).get('/v1/wallets').set('X-API-Key', key).expect(200);
-    expect(response.body.wallets[0]).toMatchObject({ walletAddress: '0xeoa', agentWalletAddress: null });
+    expect(response.body.wallets[0]).toMatchObject({ walletAddress: '0xeoa', signerAddress: null });
+    expect(response.body.wallets[0]).not.toHaveProperty('agentWalletAddress');
   });
 
   it('returns configured non-default permission values through authenticated request', async () => {

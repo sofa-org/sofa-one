@@ -25,9 +25,9 @@ export class PolymarketDepositWalletVerifierService {
     return rpc;
   }
 
-  async verify(agentWalletAddress: string, payload: ValidatedPolymarketOrder): Promise<DepositWalletEvidence> {
+  async verify(signerAddress: string, payload: ValidatedPolymarketOrder): Promise<DepositWalletEvidence> {
     const deposit = polymarketDepositWalletAddress(payload);
-    const agent = agentWalletAddress.toLowerCase();
+    const agent = signerAddress.toLowerCase();
     const rpc = this.getRpc();
     try {
       if (!this.client || this.clientRpc !== rpc) {

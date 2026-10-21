@@ -34,9 +34,30 @@ Frontend-only routes require IAM authentication plus the `FrontendOnlyGuard` ori
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 | `GET` | `/v1/permissions` | Return the key's configured permissions, capability mode/IDs, and constraints; configuration is not an execution guarantee |
 | `GET` | `/v1/capabilities?ids=id1,id2` | Look up 1–100 catalog capability definitions; definitions do not grant capabilities |
-| `GET` | `/v1/wallets` | List only the key owner's bound EOA (`walletAddress`) and nullable signer (`agentWalletAddress`), plus safe chain metadata (no balances or Openfort internal IDs) |
+| `GET` | `/v1/wallets` | List only the key owner's bound user wallet (`walletAddress`) and nullable TEE EOA signer (`signerAddress`), plus safe chain metadata (no balances or Openfort internal IDs) |
 
 All public routes use `X-API-Key`; these three read routes require no `can*` permission. Existing API-key freeze, IP and billing guards still apply. For capability lookup, `ids` is required; comma-separated values are trimmed, non-empty, unique, and at most 256 characters each (query max 25,700 chars). Invalid input returns 400; unknown IDs are returned in `unknownIds` with 200, preserving request order. `all` mode dynamically includes catalog capabilities; `custom` with `[]` grants none. Wallet listing is owner-scoped, is not a balance or live on-chain check, and omits Openfort internal IDs. Do not accept Openfort IAM-only auth on these routes.
+
+### Wallet and signer identity (breaking response change)
+
+Public and dashboard wallet projections use `walletAddress` for the selected user's wallet
+and `signerAddress` for its TEE-managed EOA signer (nullable when not configured).
+EIP-7702 delegation to Calibur does not change the user's wallet address. A signer address
+does not itself establish authorization: consult per-chain status/expiry metadata; execution
+still enforces existing live authorization and independent policies.
+
+**Breaking change:** `signerAddress` replaces the former JSON property `agentWalletAddress`
+without an alias. Successful `POST /v1/wallets/sign` responses now return the selected user
+wallet in `walletAddress` and the actual TEE signer in `signerAddress`; EOA signing no
+longer duplicates the signer into `walletAddress`. Clients using the response for signature
+recovery or Polymarket ClobAuth must use `signerAddress`. Public signing remains EOA-only;
+this response change does not add session-key signing or change execution policies.
+
+Transaction status/history and signing-request history are audit records, not current wallet
+projections. Their persisted `walletAddress` fields retain the address recorded at execution
+or signing: transaction EOA execution records the TEE signer, while session-key execution
+records the user wallet. Historical signing rows retain their recorded signing address.
+These fields are not renamed, backfilled, or reinterpreted as the current user's wallet.
 
 ## 3. Dashboard/frontend-only endpoints
 
@@ -115,7 +136,7 @@ This signing-only cleanup does not remove transaction session keys:
 unexpired chain authorization and live on-chain key, then submits an Openfort
 UserOperation. Clients do not call `/v1/wallets/sign` before sending a transaction.
 
-`message.address` must equal the selected wallet's agentWalletAddress (not its embedded
+`message.address` must equal the selected wallet's `signerAddress` (not its embedded
 `walletAddress` or funder address); timestamp is canonical decimal Unix seconds within
 ±300 seconds; nonce is a uint256 supplied as a safe integer or decimal string (zero is
 valid). The EIP712Domain type

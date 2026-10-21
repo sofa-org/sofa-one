@@ -65,7 +65,7 @@ const WALLET = {
   walletAddress: '0xABCDEF1234567890ABCDEf1234567890abcdef12',
   openfortAccountId: 'acc-1',
   agentOpenfortAccountId: 'agent-acc-1',
-  agentWalletAddress: '0x2222222222222222222222222222222222222222',
+  signerAddress: '0x2222222222222222222222222222222222222222',
   agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
   chainId: BigInt(84532),
   status: 'active',
@@ -870,13 +870,13 @@ describe('WalletService.sign()', () => {
     mockDefiAssertSigningStillAuthorized.mockResolvedValue(undefined);
     mockDefiRecordSigningAllowed.mockResolvedValue({ id: 'allowed-event' });
     mockDefiExportSigningAllowed.mockResolvedValue(undefined);
-    mockVerifyDepositWallet.mockResolvedValue({ agent: WALLET.agentWalletAddress.toLowerCase(), deposit: WALLET.walletAddress.toLowerCase(), codeHash: `0x${'1'.repeat(64)}`, checkedAt: Date.now(), rpcFingerprint: `0x${'2'.repeat(64)}` });
+    mockVerifyDepositWallet.mockResolvedValue({ agent: WALLET.signerAddress.toLowerCase(), deposit: WALLET.walletAddress.toLowerCase(), codeHash: `0x${'1'.repeat(64)}`, checkedAt: Date.now(), rpcFingerprint: `0x${'2'.repeat(64)}` });
     mockVerify1271.mockResolvedValue(undefined);
     mockAssertEvidenceFresh.mockImplementation(() => undefined);
     mockBudgetAcquire.mockResolvedValue(undefined);
     mockBudgetAccept.mockResolvedValue({ id: 'order-accepted' });
     mockBudgetExport.mockResolvedValue(undefined);
-    mockBatchVerify.mockResolvedValue({ deployment: Object.freeze({ chainId: 137, wallet: WALLET.walletAddress.toLowerCase(), signer: WALLET.agentWalletAddress.toLowerCase(), id: `0x${'0'.repeat(63)}1`, factoryAddress: '0x4444444444444444444444444444444444444444', factoryBeaconAddress: '0x5555555555555555555555555555555555555555', nonce: 7n, executionWalletPaused: false, blockNumber: 12345678n, blockHash: `0x${'44'.repeat(32)}`, blockTimestamp: BigInt(Math.floor(Date.now() / 1000)), checkedAt: Date.now(), rpcFingerprint: `0x${'33'.repeat(32)}`, factoryProxyCodeHash: `0x${'11'.repeat(32)}`, factoryImplementation: '0x6666666666666666666666666666666666666666', factoryImplementationCodeHash: `0x${'22'.repeat(32)}`, beaconCodeHash: `0x${'33'.repeat(32)}`, beaconDefaultImplementation: '0x7777777777777777777777777777777777777777', beaconPinnedImplementation: '0x7777777777777777777777777777777777777777', currentImplementationCodeHash: `0x${'44'.repeat(32)}`, walletBeaconAddress: '0x5555555555555555555555555555555555555555', walletCodeHash: `0x${'55'.repeat(32)}`, identityDigest: `0x${'66'.repeat(32)}` }), payloadDigest: `0x${'77'.repeat(32)}`, deadline: '0', signerAddress: WALLET.agentWalletAddress.toLowerCase() });
+    mockBatchVerify.mockResolvedValue({ deployment: Object.freeze({ chainId: 137, wallet: WALLET.walletAddress.toLowerCase(), signer: WALLET.signerAddress.toLowerCase(), id: `0x${'0'.repeat(63)}1`, factoryAddress: '0x4444444444444444444444444444444444444444', factoryBeaconAddress: '0x5555555555555555555555555555555555555555', nonce: 7n, executionWalletPaused: false, blockNumber: 12345678n, blockHash: `0x${'44'.repeat(32)}`, blockTimestamp: BigInt(Math.floor(Date.now() / 1000)), checkedAt: Date.now(), rpcFingerprint: `0x${'33'.repeat(32)}`, factoryProxyCodeHash: `0x${'11'.repeat(32)}`, factoryImplementation: '0x6666666666666666666666666666666666666666', factoryImplementationCodeHash: `0x${'22'.repeat(32)}`, beaconCodeHash: `0x${'33'.repeat(32)}`, beaconDefaultImplementation: '0x7777777777777777777777777777777777777777', beaconPinnedImplementation: '0x7777777777777777777777777777777777777777', currentImplementationCodeHash: `0x${'44'.repeat(32)}`, walletBeaconAddress: '0x5555555555555555555555555555555555555555', walletCodeHash: `0x${'55'.repeat(32)}`, identityDigest: `0x${'66'.repeat(32)}` }), payloadDigest: `0x${'77'.repeat(32)}`, deadline: '0', signerAddress: WALLET.signerAddress.toLowerCase() });
     mockBatchAssertFresh.mockImplementation(() => undefined);
     mockBatchVerifySignature.mockResolvedValue(undefined);
     mockTransaction.mockImplementation(async (callback) =>
@@ -948,15 +948,32 @@ describe('WalletService.sign()', () => {
   });
 
   it('scopes selected-wallet history to both embedded and agent addresses', async () => {
-    const second = { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444', agentWalletAddress: '0x5555555555555555555555555555555555555555' };
+    const second = { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444', signerAddress: '0x5555555555555555555555555555555555555555' };
     mockWalletFindFirst.mockResolvedValue(second);
     mockSigningRequestFindMany.mockResolvedValue([]);
     await service.listSigningRequests('user-1', { walletId: second.id } as any);
-    expect(mockSigningRequestFindMany.mock.calls.at(-1)?.[0].where.walletAddress).toEqual({ in: [second.walletAddress, second.agentWalletAddress] });
+    expect(mockSigningRequestFindMany.mock.calls.at(-1)?.[0].where.walletAddress).toEqual({ in: [second.walletAddress, second.signerAddress] });
+  });
+
+  it('preserves stored execution addresses in signing history rather than reinterpreting them as user wallets', async () => {
+    const stored = { id: 'sr-eoa', type: 'typed_data', chainId: 137n,
+      walletAddress: WALLET.signerAddress, status: 'completed', authMethod: 'api_key' };
+    mockSigningRequestFindMany.mockResolvedValue([stored]);
+    mockSigningRequestCount.mockResolvedValue(1);
+    mockSigningRequestFindFirst.mockResolvedValue(stored);
+
+    const list = await service.listSigningRequests('user-1', {});
+    const detail = await service.getSigningRequestDetail('user-1', stored.id);
+
+    expect(list.items[0].walletAddress).toBe(WALLET.signerAddress);
+    expect(detail.walletAddress).toBe(WALLET.signerAddress);
+    expect(list.items[0]).not.toHaveProperty('agentWalletAddress');
+    expect(detail).not.toHaveProperty('agentWalletAddress');
+    expect(detail).not.toHaveProperty('signerAddress');
   });
 
   it('returns empty pending-wallet history and not-found detail without Prisma null-address lookup', async () => {
-    const pending = { ...WALLET, id: 'pending-wallet', walletAddress: null, agentWalletAddress: null };
+    const pending = { ...WALLET, id: 'pending-wallet', walletAddress: null, signerAddress: null };
     mockWalletFindFirst.mockResolvedValue(pending);
     await expect(service.listSigningRequests('user-1', { walletId: pending.id } as any)).resolves.toMatchObject({ items: [], total: 0 });
     expect(mockSigningRequestFindMany).not.toHaveBeenCalled();
@@ -1001,20 +1018,22 @@ describe('WalletService.sign()', () => {
 
   it('defaults typed-data signing to EOA and signs/persists the bound ClobAuth digest', async () => {
     const timestamp = String(Math.floor(Date.now() / 1000));
-    const payload = Object.freeze({ domain: Object.freeze({ name: 'ClobAuthDomain', version: '1', chainId: 137 }), types: Object.freeze({ ClobAuth: Object.freeze([{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }]) }), primaryType: 'ClobAuth', message: Object.freeze({ address: WALLET.agentWalletAddress, timestamp, nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION }) });
+    const payload = Object.freeze({ domain: Object.freeze({ name: 'ClobAuthDomain', version: '1', chainId: 137 }), types: Object.freeze({ ClobAuth: Object.freeze([{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }]) }), primaryType: 'ClobAuth', message: Object.freeze({ address: WALLET.signerAddress, timestamp, nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION }) });
     const digest = hashTypedData(payload as any);
-    mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({ context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] }), requiredPermission: 'canSign', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137, executionMode: 'eoa', policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`, walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
+    mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({ context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.signerAddress, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] }), requiredPermission: 'canSign', capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, chainId: 137, executionMode: 'eoa', policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`, walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: WALLET.signerAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
     mockWalletFindMany.mockResolvedValue([WALLET, { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' }]);
     // The frozen canonical fixture is immutable at runtime; DTO typing uses mutable arrays.
     const dto = { type: 'typed_data', typedData: payload } as unknown as SignDto;
     const result = await service.sign('user-1', dto, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
     expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ walletId: 'wallet-1', walletAddress: WALLET.walletAddress }));
     expect(mockDefiAssertSigningStillAuthorized).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ typedDataDigest: digest }), expect.objectContaining({ digest, agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
-    expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest }) }));
+    expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest, walletAddress: WALLET.signerAddress }) }));
     expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, digest);
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
     expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ signature: RAW_SIGNATURE, agentWalletAddress: WALLET.agentWalletAddress, executionMode: 'eoa' });
+    expect(result).toMatchObject({ signature: RAW_SIGNATURE, walletAddress: WALLET.walletAddress, signerAddress: WALLET.signerAddress, executionMode: 'eoa' });
+    expect(result.walletAddress).not.toBe(result.signerAddress);
+    expect(result).not.toHaveProperty('agentWalletAddress');
     expect(mockDefiRecordSigningAllowed).toHaveBeenCalledTimes(1);
     expect(mockDefiExportSigningAllowed).toHaveBeenCalledWith({ id: 'allowed-event' });
   });
@@ -1026,14 +1045,14 @@ describe('WalletService.sign()', () => {
     const input = depositBatch();
     const payload = validatePolymarketDepositBatch(input);
     const digest = polymarketDepositBatchDigest(payload);
-    const signer = WALLET.agentWalletAddress.toLowerCase();
+    const signer = WALLET.signerAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode, allowedCapabilityIds }),
       requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
-      walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
+      walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
-    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockRecoverAddress.mockResolvedValue(WALLET.signerAddress);
     const result = await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: input } as any, { ...API_KEY_CONTEXT, capabilityMode: capabilityMode as 'all' | 'custom', allowedCapabilityIds, canUseEoaExecution: true });
     expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(payload, expect.objectContaining({ capabilityMode, allowedCapabilityIds }));
     expect(mockBatchVerify).toHaveBeenCalledWith(payload, signer);
@@ -1043,19 +1062,20 @@ describe('WalletService.sign()', () => {
     expect(mockBudgetAccept).not.toHaveBeenCalled();
     expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, digest);
     expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest }) }));
-    expect(result).toMatchObject({ signature: RAW_SIGNATURE, walletAddress: WALLET.agentWalletAddress, agentWalletAddress: WALLET.agentWalletAddress, executionMode: 'eoa' });
+    expect(result).toMatchObject({ signature: RAW_SIGNATURE, walletAddress: WALLET.walletAddress, signerAddress: WALLET.signerAddress, executionMode: 'eoa' });
+    expect(result).not.toHaveProperty('agentWalletAddress');
   });
 
   it('withholds a Batch signature when recovered TEE signer is wrong and never broadcasts', async () => {
     const input = depositBatch();
     const payload = validatePolymarketDepositBatch(input);
     const digest = polymarketDepositBatchDigest(payload);
-    const signer = WALLET.agentWalletAddress.toLowerCase();
+    const signer = WALLET.signerAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode: 'all', allowedCapabilityIds: [] }),
       requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
-      walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
+      walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
     mockRecoverAddress.mockResolvedValue('0x9999999999999999999999999999999999999999');
     await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: input } as any, { ...API_KEY_CONTEXT, capabilityMode: 'all', allowedCapabilityIds: [], canUseEoaExecution: true })).rejects.toMatchObject({ response: { code: 'POLYMARKET_SIGNING_FAILED' } });
@@ -1072,12 +1092,12 @@ describe('WalletService.sign()', () => {
     const payload = validatePolymarketDepositBatch(input);
     const digest = polymarketDepositBatchDigest(payload);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
-      context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
+      context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.signerAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
       requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
-      walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
+      walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: WALLET.signerAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
-    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockRecoverAddress.mockResolvedValue(WALLET.signerAddress);
     mockBatchVerifySignature.mockRejectedValueOnce(new ServiceUnavailableException('raw RPC and signature material'));
     await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: input } as any, { ...API_KEY_CONTEXT, capabilityMode: 'all', allowedCapabilityIds: [], canUseEoaExecution: true }))
       .rejects.toMatchObject({ response: { code: 'POLYMARKET_SIGNING_FAILED' } });
@@ -1094,12 +1114,12 @@ describe('WalletService.sign()', () => {
     const payload = validatePolymarketDepositBatch(input);
     const digest = polymarketDepositBatchDigest(payload);
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
-      context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.agentWalletAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
+      context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: WALLET.signerAddress, capabilityMode: 'all', allowedCapabilityIds: [] }),
       requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
-      walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
+      walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: WALLET.signerAddress.toLowerCase(), agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
-    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockRecoverAddress.mockResolvedValue(WALLET.signerAddress);
     let freshnessChecks = 0;
     mockBatchAssertFresh.mockImplementation(() => {
       freshnessChecks += 1;
@@ -1117,12 +1137,12 @@ describe('WalletService.sign()', () => {
     const input = depositBatch();
     const payload = validatePolymarketDepositBatch(input);
     const digest = polymarketDepositBatchDigest(payload);
-    const signer = WALLET.agentWalletAddress.toLowerCase();
+    const signer = WALLET.signerAddress.toLowerCase();
     mockDefiAuthorizeSigning.mockResolvedValue(Object.freeze({
       context: Object.freeze({ userId: 'user-1', apiKeyId: 'api-key-1', walletId: 'wallet-1', chainId: 137, executionMode: 'eoa', executionOwner: signer, capabilityMode: 'all', allowedCapabilityIds: [] }),
       requiredPermission: 'canSign', capabilityId: POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID, signingKind: 'deposit_batch', chainId: 137, executionMode: 'eoa',
       policyHash: `0x${'1'.repeat(64)}`, typedDataDigest: digest, payload, bindingCommitment: `0x${'2'.repeat(64)}`,
-      walletAddress: WALLET.walletAddress.toLowerCase(), agentWalletAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
+      walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
     mockBatchVerify.mockRejectedValueOnce(new ServiceUnavailableException('verification unavailable'));
     await expect(service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: input } as any, { ...API_KEY_CONTEXT, capabilityMode: 'all', allowedCapabilityIds: [], canUseEoaExecution: true })).rejects.toBeInstanceOf(ServiceUnavailableException);
@@ -1141,7 +1161,7 @@ describe('WalletService.sign()', () => {
     const order = { salt:'1', maker, signer:maker, tokenId:'2', makerAmount:'3', takerAmount:'4', side:0, signatureType:3, timestamp:String(Date.now()), metadata:`0x${'00'.repeat(32)}`, builder:`0x${'00'.repeat(32)}` };
     const typedData = { domain:{ name:'Polymarket CTF Exchange', version:'2', chainId:137, verifyingContract:'0xE111180000d2663C0091e4f400237545B87B996B' }, types, primaryType:'TypedDataSign', message:{ contents:order, name:'DepositWallet', version:'1', chainId:137, verifyingContract:maker, salt:`0x${'00'.repeat(32)}` } };
     const digest = hashTypedData(typedData as any);
-    mockDefiAuthorizeSigning.mockResolvedValue({ context:{ userId:'user-1', apiKeyId:'api-key-1', walletId:'wallet-1', chainId:137, executionMode:'eoa', executionOwner:WALLET.agentWalletAddress, capabilityMode:'all', allowedCapabilityIds:[] }, requiredPermission:'canSign', capabilityId:'polymarket:137:clob-order:v2', chainId:137, executionMode:'eoa', typedDataDigest:digest, payload:typedData, walletAddress:maker.toLowerCase(), agentWalletAddress:WALLET.agentWalletAddress.toLowerCase(), agentOpenfortAccountId:WALLET.agentOpenfortAccountId });
+    mockDefiAuthorizeSigning.mockResolvedValue({ context:{ userId:'user-1', apiKeyId:'api-key-1', walletId:'wallet-1', chainId:137, executionMode:'eoa', executionOwner:WALLET.signerAddress, capabilityMode:'all', allowedCapabilityIds:[] }, requiredPermission:'canSign', capabilityId:'polymarket:137:clob-order:v2', chainId:137, executionMode:'eoa', typedDataDigest:digest, payload:typedData, walletAddress:maker.toLowerCase(), signerAddress:WALLET.signerAddress.toLowerCase(), agentOpenfortAccountId:WALLET.agentOpenfortAccountId });
     const sentinel = 'SENTINEL_SECRET_RAW_SIGNATURE_OR_ENVELOPE';
     mockSignData.mockRejectedValueOnce(new Error(`provider failed ${sentinel}`));
     let thrown: any;
@@ -1162,9 +1182,9 @@ describe('WalletService.sign()', () => {
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
 
-    mockVerifyDepositWallet.mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'1'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` })
-      .mockResolvedValueOnce({ agent:WALLET.agentWalletAddress.toLowerCase(), deposit:maker, codeHash:`0x${'3'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` });
-    mockRecoverAddress.mockResolvedValue(WALLET.agentWalletAddress);
+    mockVerifyDepositWallet.mockResolvedValueOnce({ agent:WALLET.signerAddress.toLowerCase(), deposit:maker, codeHash:`0x${'1'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` })
+      .mockResolvedValueOnce({ agent:WALLET.signerAddress.toLowerCase(), deposit:maker, codeHash:`0x${'3'.repeat(64)}`, checkedAt:Date.now(), rpcFingerprint:`0x${'2'.repeat(64)}` });
+    mockRecoverAddress.mockResolvedValue(WALLET.signerAddress);
     mockSignData.mockResolvedValueOnce(RAW_SIGNATURE);
     mockSigningRequestCreate.mockResolvedValue({ id:'signing-request-code-change' });
     await expect(service.sign('user-1', { type:'typed_data', chainId:137, executionMode:'eoa', typedData } as any, { ...API_KEY_CONTEXT, capabilityMode:'custom', allowedCapabilityIds:['polymarket:137:clob-order:v2'], canUseEoaExecution:true })).rejects.toMatchObject({ response:{ code:'POLYMARKET_SIGNING_FAILED' } });
@@ -1183,7 +1203,7 @@ describe('WalletService.sign()', () => {
     const finalAcceptanceSpy = jest.spyOn(realPolicy, 'assertSigningStillAuthorized');
     (service as any).defiPolicy = realPolicy;
     const timestamp = String(Math.floor(Date.now() / 1000));
-    const typedData = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: WALLET.agentWalletAddress, timestamp, nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
+    const typedData = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: WALLET.signerAddress, timestamp, nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
     const acceptedKey = { userId: 'user-1', walletId: 'wallet-1', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all' as const, allowedCapabilityIds: [] as string[] };
     let liveKey: any = acceptedKey;
     let finalPauseKeys: string[] = [];

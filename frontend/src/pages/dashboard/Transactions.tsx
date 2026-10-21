@@ -486,11 +486,14 @@ function TransactionDetailContent({ data }: { data: TransactionDetail }) {
         <DetailField label="Transaction ID" value={data.id} copyValue={data.id} mono />
         <DetailField label="Chain" value={chainName(data.chainId)} />
         <DetailField
-          label="Wallet Address"
+          label="Execution Address"
           value={data.walletAddress}
           copyValue={data.walletAddress}
           mono
         />
+        <p className="text-xs leading-5 text-brand-muted">
+          Address recorded for this execution: the user wallet for session-key execution or the TEE signer for EOA execution.
+        </p>
         <DetailField
           label="Operation Type"
           value={data.operationType === 'withdraw' ? 'Withdraw' : data.operationType}
@@ -569,11 +572,14 @@ function SigningRequestDetailContent({ data }: { data: SigningRequestDetail }) {
         <DetailField label="Type" value={typeLabel} />
         <DetailField label="Chain" value={chainName(data.chainId)} />
         <DetailField
-          label="Wallet Address"
+          label="Recorded Signing Address"
           value={data.walletAddress}
           copyValue={data.walletAddress}
           mono
         />
+        <p className="text-xs leading-5 text-brand-muted">
+          Signing address stored with this audit record, not the current user wallet projection.
+        </p>
         <DetailField
           label="Auth Method"
           value={data.authMethod === 'api_key' ? 'API Key' : 'Dashboard'}

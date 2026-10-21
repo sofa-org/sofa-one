@@ -33,9 +33,11 @@ export interface WalletInfo {
   openfortAccountId?: string;
   isDefault?: boolean;
   provisioningStatus?: string | null;
+  /** User wallet identity; EIP-7702 delegation does not change this address. */
   walletAddress: string | null;
   status: string;
-  agentWalletAddress?: string | null;
+  /** TEE-managed EOA signer; presence alone does not establish chain authorization. */
+  signerAddress?: string | null;
   agentKeyHash?: string | null;
   chainAuthorizations: Array<{
     chainId: number;
@@ -125,8 +127,10 @@ export interface SignRequest {
 
 export interface SignResponse {
   signature: string;
+  /** Selected user wallet, not the EOA that produced the signature. */
   walletAddress: string;
-  agentWalletAddress: string;
+  /** Actual TEE-managed EOA that produced the signature. */
+  signerAddress: string;
   executionMode: 'eoa';
   type: SignRequest['type'];
 }
@@ -175,6 +179,7 @@ export interface SendTransactionResponse {
 
 export interface TransactionStatusResponse extends SendTransactionResponse {
   chainId: number;
+  /** Persisted execution address, not a current wallet identity projection. */
   walletAddress: string;
   failureReason: string | null;
   createdAt: string;
@@ -1113,6 +1118,7 @@ export async function getBalancesAuth(
 }
 
 // --- Transaction & Signing Request History (dashboard-only) ---
+// Audit walletAddress values are the persisted execution/signing address, not current WalletInfo identity.
 
 export interface TransactionListItem {
   id: string;

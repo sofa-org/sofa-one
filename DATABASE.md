@@ -21,10 +21,23 @@ Wallet record owned by one user; a user may have multiple wallet records:
 - `userId` relation to `User`
 - `openfortAccountId` stable Openfort account foreign key
 - `walletAddress` EVM address
-- backend agent metadata: `agentOpenfortAccountId`, `agentWalletAddress`, `agentKeyHash`
+- backend signer metadata: `agentOpenfortAccountId`, `signerAddress`, `agentKeyHash`
 - related per-chain authorizations
 
 Invariant: do not replace `openfortAccountId` with wallet address or orphan it from the user wallet lifecycle.
+
+`UserWallet.signerAddress` and `WalletProvisioningIntent.signerAddress` map to physical
+`signer_address` columns. Migration `20261021000000_rename_signer_address` renames the
+former columns and indexes without copying or changing address values. It also renames
+the top-level `transactions.details.agentWalletAddress` key to `signerAddress`, preserving
+other metadata; conflicting dual-key values abort the entire migration for operator review.
+Transaction and signing-request audit `walletAddress` values remain the originally recorded
+execution/signing address. Immutable security-event metadata is not rewritten.
+
+Deployment requires a coordinated cutover: stop old application instances, run
+`npm run prisma:migrate:deploy`, then start the new application with its regenerated
+Prisma Client. Old binaries cannot query the renamed columns; do not use mixed-version
+rolling deployment. Do not reset the database or edit previously applied migrations.
 
 ### `WalletChainAuthorization`
 

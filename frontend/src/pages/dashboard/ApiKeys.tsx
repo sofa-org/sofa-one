@@ -819,9 +819,9 @@ export default function ApiKeysPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 ['canReadTransactionStatus', 'Read status', 'Fetch transaction status by id.'],
-                ['canSign', 'Sign messages', 'Use /v1/wallets/sign.'],
+                ['canSign', 'Sign typed data', 'Use /v1/wallets/sign for approved EOA typed data.'],
                 ['canSendTransaction', 'Send transactions', 'Use /v1/transactions.'],
-                ['canUseEoaExecution', 'Use EOA execution', 'Privileged backend EOA mode.'],
+                ['canUseEoaExecution', 'Use EOA execution', 'Privileged TEE signer EOA mode.'],
               ].map(([permission, label, description]) => (
                 <label
                   key={permission}

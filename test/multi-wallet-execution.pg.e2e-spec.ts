@@ -38,7 +38,7 @@ async function fixture(label: string) {
       const wallet = await prisma!.userWallet.create({ data: {
         userId: user.id, status: 'active', walletAddress: `0x${unique}`,
         openfortAccountId: `embedded-${id}-${n}`, agentOpenfortAccountId: `agent-${id}-${n}`,
-        agentWalletAddress: `0x${agent}`, agentKeyHash: `0x${id.replace(/-/g, '').padStart(64, '0')}`,
+        signerAddress: `0x${agent}`, agentKeyHash: `0x${id.replace(/-/g, '').padStart(64, '0')}`,
       } });
       wallets.push(wallet);
       await prisma!.walletChainAuthorization.create({ data: { walletId: wallet.id, chainId: BigInt(chainId), status: 'registered', expiresAt: new Date(Date.now() + 3600_000) } });

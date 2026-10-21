@@ -27,6 +27,8 @@ info:
 
     每个新 API key 都不可变地绑定到一个钱包；一个钱包可以有多个 key，最多 10 个 active keys 的限制仍按用户跨钱包计算。公开签名和交易发送仅使用 key 绑定的钱包。发送请求可带 `walletId`，但必须与该绑定一致，否则拒绝。交易状态只可由绑定到该交易同一钱包的 key 查询；绑定其他钱包的 key 无法读取。`walletId` 仅对被迁移撤销、且用户无法唯一确定钱包的旧 key 为空。
 
+    Breaking wallet identity response change: wallet projections and signing responses replace `agentWalletAddress` with `signerAddress`, with no alias. `walletAddress` identifies the selected user wallet, unchanged by EIP-7702 delegation; `signerAddress` identifies its TEE-managed EOA signer. Signing responses no longer duplicate the signer into `walletAddress`. Use `signerAddress` for signature recovery and ClobAuth. Signer presence is not chain authorization; chain status/expiry and existing live policies remain independent. Transaction status/history and signing-request audit `walletAddress` fields retain their persisted execution/signing address; this change does not migrate or reinterpret them. Public signing remains EOA-only.
+
     Polymarket CLOB order signing is a continuous single-order signing operation, not a batch API. It requires active, unpaused capability `polymarket:137:clob-order:v2`: `all` includes it dynamically, while `custom` requires the exact ID. Only Polygon V2 `TypedDataSign` wrapping the 11-field `Order`, DepositWallet signature type 3, and fixed ordinary/neg-risk exchanges are eligible. Strict protocol validation, Polygon chain/runtime-code presence and stability checks, agent-signature recovery, and ERC-1271 validity apply; these checks do not prove official-wallet ownership. See API.md for security boundaries and limitations.
 
     ## 支持的链
@@ -166,7 +168,7 @@ paths:
       tags: [Signing]
       summary: API-key signing (Polymarket ClobAuth, CLOB V2 single order, or verifier-gated DepositWallet Batch)
       description: |
-        One signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's agentWalletAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
+        One signing exception is Polymarket CLOB authentication bootstrap: `type: typed_data`, `executionMode: eoa`, chain ID 137, and exact `ClobAuthDomain` (name `ClobAuthDomain`, version `1`, chainId 137; no verifyingContract or salt), `ClobAuth` primary type with ordered fields address/address, timestamp/string, nonce/uint256, message/string, and fixed message `This message attests that I control the given wallet`. `message.address` must equal the selected wallet's signerAddress, not embedded walletAddress or funder. Timestamp must be canonical decimal Unix seconds within ±300 seconds; nonce is uint256, supplied as a safe integer or decimal string, and zero is valid. Optional EIP712Domain declaration must exactly be name:string, version:string, chainId:uint256.
 
         ClobAuth requires API-key permissions `canSign` and `canUseEoaExecution`, plus either `capabilityMode: all` or `capabilityMode: custom` with `polymarket:137:clob-auth:v1`. Separately, the order example is a single-order operation (not batch) requiring active, unpaused `polymarket:137:clob-order:v2`: `all` includes it dynamically and `custom` requires the exact ID. DepositWallet Batch signing uses the `polymarket:137:deposit-wallet-batch-sign:v1` capability ID (`all` includes it; `custom` requires the exact ID), plus `canSign`, `canUseEoaExecution`, and EOA mode; it never sends transactions or requires `canSendTransaction`. It accepts any well-formed call target and calldata within the exact Batch schema/size bounds, but every call's native value must be zero. There is no target/function/ABI-canonicality/spender/operator allowlist; this high-privilege signature can transfer tokens, grant approvals, or change wallet permissions. Pauses on actual call targets are checked before signing and at atomic acceptance; unrelated spender/operator pauses are not inferred. Its verifier uses configured `SIMULATION_RPC_URLS__137`, binds full block-pinned deployment identity evidence to digest/deadline/signer/RPC fingerprint, re-probes current nonce and pause state, then performs non-broadcast `wallet.execute` eth_call from the factory after TEE signer recovery. Missing RPC or failed verification is rejected. Simulation is not proof that effects were mined or will persist. See API.md for scope and limitations. Other message/typed-data signing is denied; no raw-hash, Permit, arbitrary typed-data outside these exact lanes, or session-key signing is supported. EOA isolation, destination protection, risk/signing-policy, frozen/live state and final grant/pause/bound-digest acceptance checks remain enforced. Destination protection can deny earlier. No live Openfort/client end-to-end outcome is claimed.
 
@@ -210,7 +212,7 @@ paths:
                         - { name: message, type: string }
                     primaryType: ClobAuth
                     message:
-                      address: "<selected wallet agentWalletAddress>"
+                      address: "<selected wallet signerAddress>"
                       timestamp: "<current Unix seconds as canonical decimal string>"
                       nonce: 0
                       message: "This message attests that I control the given wallet"
@@ -303,8 +305,14 @@ paths:
           description: Successful verifier-approved signing; raw 65-byte EOA signature only (no transaction/order submission).
           content:
             application/json:
-            schema:
-              $ref: '#/components/schemas/SignResponse'
+              schema:
+                $ref: '#/components/schemas/SignResponse'
+              example:
+                signature: "0x5d99b6f7..."
+                walletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                signerAddress: "0x1111111111111111111111111111111111111111"
+                type: typed_data
+                executionMode: eoa
         '429':
           description: Wallet-level Polymarket order signing rate limit exceeded; retry after the indicated delay.
           content:
@@ -351,7 +359,7 @@ paths:
         使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和交易提交。
         此端点不接受 Openfort IAM Bearer token。
 
-        `executionMode` 可选：默认 `session_key`，通过已授权的 Backend Agent Signer / Calibur UserOperation 从用户 EIP-7702 delegated EOA 执行；`eoa` 通过服务端 backend wallet 直接签名并发送交易。
+        `executionMode` 可选：默认 `session_key`，通过该链已授权的 TEE Signer / Calibur UserOperation 从用户 EIP-7702 delegated wallet (`walletAddress`) 执行；`eoa` 从 TEE signer EOA (`signerAddress`) 直接签名并发送交易，不是从用户钱包执行。
 
         `sponsorship` 仅适用于 `executionMode=session_key`：默认 `none` 不使用 Paymaster；`required` 要求必须使用 Openfort Paymaster，且该链必须已配置 fee sponsorship policy。
 
@@ -581,11 +589,11 @@ components:
           type: array
           items:
             type: object
-            required: [id, walletAddress, agentWalletAddress, status, isFrozen, chainAuthorizations]
+            required: [id, walletAddress, signerAddress, status, isFrozen, chainAuthorizations]
             properties:
               id: { type: string, format: uuid }
-              walletAddress: { type: string }
-              agentWalletAddress: { type: string, nullable: true, description: Signer wallet address; null when not configured. }
+              walletAddress: { type: string, description: "Selected user wallet address; unchanged by EIP-7702 delegation." }
+              signerAddress: { type: string, nullable: true, description: "TEE-managed EOA signer; null when not configured. Presence alone is not chain authorization." }
               status: { type: string }
               isFrozen: { type: boolean }
               chainAuthorizations:
@@ -661,7 +669,7 @@ components:
 
     SignResponse:
       type: object
-      required: [signature, walletAddress, agentWalletAddress, type, executionMode]
+      required: [signature, walletAddress, signerAddress, type, executionMode]
       properties:
         signature:
           type: string
@@ -669,11 +677,11 @@ components:
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: Actual address used for signing; for the permitted EOA ClobAuth mode this is the selected wallet's agentWalletAddress.
-        agentWalletAddress:
+          description: Selected user wallet address; unchanged by EIP-7702 delegation and independent of the signing EOA.
+        signerAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: Present for EOA signing; equals walletAddress and identifies the selected agent wallet signer.
+          description: Actual TEE-managed EOA that produced the signature. Use this address for signature recovery and ClobAuth, not walletAddress.
         type:
           type: string
           enum: [typed_data]
@@ -701,8 +709,8 @@ components:
           default: session_key
           description: |
             交易执行身份：
-            - `session_key` — 默认，通过已授权的 Backend Agent Signer / Calibur UserOperation 执行，需要该链 API access authorization
-            - `eoa` — 服务端 backend wallet 直接签名并发送交易
+            - `session_key` — 默认，通过该链已授权的 TEE Signer / Calibur UserOperation 从用户钱包执行，需要该链 API access authorization
+            - `eoa` — 从 TEE signer EOA (`signerAddress`) 直接签名并发送交易，不是用户钱包地址 (`walletAddress`)
         sponsorship:
           type: string
           enum: [required, none]
@@ -783,6 +791,7 @@ components:
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
+          description: Persisted execution address, unchanged by the wallet identity response cutover. EOA execution records the TEE signer; session-key execution records the user wallet.
         failureReason:
           type: string
           nullable: true

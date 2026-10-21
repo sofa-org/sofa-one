@@ -49,6 +49,7 @@ Renders desktop sidebar + mobile drawer from `NAV_ITEMS` (Wallet, API Keys, Hist
 1. Loads session via `getMe`; on `NOT_FOUND`/`WALLET_NOT_FOUND` falls back to `syncSession`. Stores `wallet` and one-time `apiKeyDisplay`.
 2. **Step 1 (no EOA)**: `Step1CreateEoa` collects a recovery password; `handleConnectWallet` creates an Openfort embedded EOA (`AccountTypeEnum.EOA`, `RecoveryMethod.PASSWORD`), retries `authorizeEmbeddedWallet` up to 5×, and refreshes embedded accounts.
 3. **Step 2 (EOA exists)**: `Step2AuthorizeAccess` picks chain + expiry (≤30 days) + password. `handleRegisterAgent` verifies Calibur deployment on the chain, checks native gas (unless `VITE_OPENFORT_FEE_SPONSORSHIP_ID`), validates the agent key hash, builds `encodeRegisterKey` + `encodeUpdateKeySettings` self-calls, signs an EIP-7702 authorization via `use7702Authorization`, and submits a Calibur UserOp through Openfort (or Pimlico on Monad) bundler. Then `markAgentRegistrationTransaction` + `confirmAgentRegistration` poll the receipt and `markAgentRegistrationResult` (retrying on `AGENT_REGISTRATION_PENDING`).
+   The identity panel labels the stable user wallet **Wallet Address** and the TEE EOA **Signer Address**, consuming `signerAddress` without a legacy alias. EIP-7702/TEE helper text does not imply authorization; the existing per-chain status/expiry badges remain separate evidence.
 4. **Balances**: `getBalancesAuth` per selected chain; refresh nonce + retry button.
 5. **Withdraw**: `WithdrawForm` manages the allowlist (`listWithdrawalAddressesAuth`/`addWithdrawalAddressAuth`/`removeWithdrawalAddressAuth`, each step-up gated) and submits `withdrawAuth` with parsed base units (`parseWithdrawalAmount`).
 
@@ -59,6 +60,7 @@ Lists keys (sorted: active by soonest expiry then last-used; revoked by newest),
 ### Transactions (`/dashboard/transactions`)
 
 Two tabs: transactions (`listTransactionsAuth`) and signing requests (`listSigningRequestsAuth`), each with status/type/chain filters, 20-per-page pagination, and refresh. Row click opens a slide-over drawer that fetches detail (`getTransactionDetailAuth`/`getSigningRequestDetailAuth`) with retry; Escape/backdrop close and body scroll is locked while open.
+Historical detail addresses are labeled execution/recorded signing addresses and shown unchanged from persisted `walletAddress`, not projected from the current wallet.
 
 ### SecurityNotifications (`/dashboard/notifications`)
 
@@ -74,7 +76,7 @@ Selects Base/Ethereum mainnet/Sepolia, fetches a quote (`createUsdcQuoteAuth`), 
 
 ### Docs (`/dashboard/docs`)
 
-Static reference for the three documented automation endpoints (`/v1/wallets/sign`, `/v1/transactions`, `/v1/transactions/:id`): field tables, curl examples, supported networks from `SUPPORTED_CHAINS`, and error-format notes. Base URL comes from `getApiBaseUrlForDisplay`/`getApiBaseUrlModeLabel` (Vite proxy vs `VITE_API_URL`).
+Static reference for the three documented automation endpoints (`/v1/wallets/sign`, `/v1/transactions`, `/v1/transactions/:id`): field tables, EOA-only approved typed-data signing examples, supported networks from `SUPPORTED_CHAINS`, and error-format notes. Wallet/signer identity notes document the breaking `signerAddress` response cutover and distinguish unchanged historical execution addresses. Base URL comes from `getApiBaseUrlForDisplay`/`getApiBaseUrlModeLabel` (Vite proxy vs `VITE_API_URL`).
 
 ## Integration
 

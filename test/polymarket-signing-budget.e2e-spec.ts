@@ -19,7 +19,7 @@ async function fixture(label: string) {
   const address = suffix.padEnd(40, 'a').slice(0, 40);
   const wallet = await prisma.userWallet.create({ data: {
     userId: user.id, status: 'active', walletAddress: `0x${address}`,
-    openfortAccountId: `embedded-${suffix}`, agentWalletAddress: `0x${address}`,
+    openfortAccountId: `embedded-${suffix}`, signerAddress: `0x${address}`,
   } });
   const keys = await Promise.all([0, 1].map((n) => prisma.apiKey.create({ data: {
     userId: user.id, walletId: wallet.id, apiKeyHash: `unused-${suffix}-${n}`, keyPrefix: `sk_${suffix.slice(0, 20)}${n}`,
@@ -99,7 +99,7 @@ describe('Polymarket signing budget PostgreSQL acceptance scope', () => {
   it('does not serialize a different wallet behind the held wallet lock', async () => {
     const f = await fixture('wallet-isolation');
     const secondAddress = randomUUID().replace(/-/g, '').padEnd(40, 'a').slice(0, 40);
-    const second = await prisma.userWallet.create({ data: { userId: f.user.id, status: 'active', walletAddress: `0x${secondAddress}`, openfortAccountId: `embedded-${randomUUID()}`, agentWalletAddress: `0x${secondAddress}` } });
+    const second = await prisma.userWallet.create({ data: { userId: f.user.id, status: 'active', walletAddress: `0x${secondAddress}`, openfortAccountId: `embedded-${randomUUID()}`, signerAddress: `0x${secondAddress}` } });
     const holder = new Pg({ connectionString: target.url });
     await holder.connect();
     try {

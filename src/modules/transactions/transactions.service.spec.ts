@@ -117,7 +117,7 @@ describe('TransactionsService', () => {
     openfortAccountId: 'acc-1',
     walletAddress: '0xabCDEF1234567890ABcDEF1234567890aBCDeF12',
     agentOpenfortAccountId: 'agent-acc-1',
-    agentWalletAddress: '0x2222222222222222222222222222222222222222',
+    signerAddress: '0x2222222222222222222222222222222222222222',
     agentKeyHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
     chainId: BigInt(84532),
     status: 'active',
@@ -577,11 +577,13 @@ describe('TransactionsService', () => {
         status: 'submitting',
         chainId: BigInt(8453),
         operationType: 'send',
+        walletAddress: wallet.walletAddress,
         idempotencyKey: 'idem-1',
         requestHash: expect.any(String),
         details: expect.objectContaining({
           type: 'send',
           interactionCount: 1,
+          signerAddress: wallet.signerAddress,
           requestHash: expect.any(String),
         }),
       }),
@@ -589,6 +591,7 @@ describe('TransactionsService', () => {
     expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty(
       'interactions',
     );
+    expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty('agentWalletAddress');
     expect(openfort.sendUserOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         chainId: 8453,
@@ -674,7 +677,7 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
     expect(transactionSimulation.assertSimulatable).toHaveBeenCalledWith(
       expect.any(Object),
-      expect.objectContaining({ executionMode: 'eoa', from: wallet.agentWalletAddress }),
+      expect.objectContaining({ executionMode: 'eoa', from: wallet.signerAddress }),
     );
     expect(openfort.sendBackendTransaction).toHaveBeenCalledWith({
       accountId: wallet.agentOpenfortAccountId,
@@ -694,10 +697,11 @@ describe('TransactionsService', () => {
     );
     expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        walletAddress: wallet.agentWalletAddress,
-        details: expect.objectContaining({ executionMode: 'eoa', execution: 'backend_eoa' }),
+        walletAddress: wallet.signerAddress,
+        details: expect.objectContaining({ executionMode: 'eoa', execution: 'backend_eoa', signerAddress: wallet.signerAddress }),
       }),
     });
+    expect(prisma.transaction.create.mock.calls[0][0].data.details).not.toHaveProperty('agentWalletAddress');
   });
 
   it('rejects transaction sending when the API key lacks send permission', async () => {
@@ -1566,27 +1570,30 @@ describe('TransactionsService', () => {
       .resolves.toMatchObject({ transactionId: 'tx-same-wallet', walletId: wallet.id });
   });
 
-  it('accepts legacy status attribution only for the unique case-insensitive account+agent pair', async () => {
+  it('accepts migrated legacy status attribution only for the unique case-insensitive account+signer pair', async () => {
     prisma.userWallet.findMany.mockResolvedValue([wallet] as any);
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
       chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
       operationType: 'send', authMethod: 'api_key',
-      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+      details: { signerAddress: wallet.signerAddress.toUpperCase() },
     });
     await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).resolves.toMatchObject({ walletId: null });
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-legacy-eoa', userId: 'user-1', status: 'pending', txHash: null,
-      chainId: BigInt(8453), walletAddress: wallet.agentWalletAddress.toUpperCase(),
+      chainId: BigInt(8453), walletAddress: wallet.signerAddress.toUpperCase(),
       operationType: 'send', authMethod: 'api_key',
-      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase(), executionMode: 'eoa' },
+      details: { signerAddress: wallet.signerAddress.toUpperCase(), executionMode: 'eoa' },
     });
-    await expect(service.getStatus('user-1', 'tx-legacy-eoa', apiKeyContext)).resolves.toMatchObject({ walletId: null });
+    const legacyEoa = await service.getStatus('user-1', 'tx-legacy-eoa', apiKeyContext);
+    expect(legacyEoa).toMatchObject({ walletId: null, walletAddress: wallet.signerAddress.toUpperCase() });
+    expect(legacyEoa).not.toHaveProperty('agentWalletAddress');
+    expect(legacyEoa).not.toHaveProperty('signerAddress');
     prisma.transaction.findFirst.mockResolvedValue({
       id: 'tx-legacy', userId: 'user-1', status: 'pending', txHash: null,
       chainId: BigInt(8453), walletAddress: wallet.walletAddress.toUpperCase(),
       operationType: 'send', authMethod: 'api_key',
-      details: { agentWalletAddress: wallet.agentWalletAddress.toUpperCase() },
+      details: { signerAddress: wallet.signerAddress.toUpperCase() },
     });
     prisma.userWallet.findMany.mockResolvedValue([wallet, { ...wallet, id: 'wallet-duplicate' }] as any);
     await expect(service.getStatus('user-1', 'tx-legacy', apiKeyContext)).rejects.toThrow(NotFoundException);
@@ -2328,27 +2335,27 @@ describe('TransactionsService', () => {
     expect(openfort.sendUserOperation).toHaveBeenCalled();
   });
 
-  it('classifies EOA sends with agentWalletAddress as evidence owner', async () => {
+  it('classifies EOA sends with signerAddress as evidence owner', async () => {
     billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-1'] });
     const retainedToAgent = {
       ...dto,
       executionMode: 'eoa' as const,
       interactions: [
-        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.agentWalletAddress), value: '0' },
+        { to: AAVE_POOL_8453, data: aaveSupplyData(wallet.signerAddress), value: '0' },
       ],
       idempotencyKey: 'eoa-retained-1',
     };
     transactionSimulation.simulateAssetFlowEvidence.mockResolvedValue(
       mockProductionEvidence({
         interactions: retainedToAgent.interactions,
-        ownerAddress: wallet.agentWalletAddress,
+        ownerAddress: wallet.signerAddress,
         executionMode: 'eoa',
       }),
     );
     mockVerifyTransactionAssetFlow.mockReturnValue(
       mockVerifiedVerdict({
         interactions: retainedToAgent.interactions,
-        ownerAddress: wallet.agentWalletAddress,
+        ownerAddress: wallet.signerAddress,
         executionMode: 'eoa',
       }),
     );
@@ -2362,7 +2369,7 @@ describe('TransactionsService', () => {
 
     expect(transactionSimulation.simulateAssetFlowEvidence).toHaveBeenCalledWith(
       expect.objectContaining({
-        ownerAddress: wallet.agentWalletAddress,
+        ownerAddress: wallet.signerAddress,
         executionMode: 'eoa',
       }),
     );

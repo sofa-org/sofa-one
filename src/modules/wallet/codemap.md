@@ -4,6 +4,7 @@
 Wallet operations for the SOFA ONE dashboard and public API:
 - Read-only wallet queries: deposit info, native/stablecoin balances, signing-request history, with owner-scoped wallet selection.
 - API-key wallet metadata (`GET /v1/wallets`) is restricted to the authenticated key's immutable wallet binding; unbound legacy keys fail closed.
+- Internal wallet bindings use `signerAddress` for the backend signer, separately from the user's `walletAddress`; signing history retains its stored execution `walletAddress` without reinterpretation.
 - API-key signing route with exact Polymarket CLOB `ClobAuth`, capability-authorized CLOB V2 order, and high-privilege DepositWallet Batch EIP-712 signing; arbitrary message/typed-data signing remains denied. Batch calls accept any well-formed calldata/target with zero native value and retain per-target pause checks. The verifier probes configured Polygon RPC and fails closed on missing/invalid deployment evidence.
 - Withdrawal-address allowlist management and withdrawal policy enforcement (single/daily limits, step-up, address allowlist + cooldown).
 - Withdrawal submission as a Calibur agent user operation through Openfort, with idempotency and on-chain balance pre-checks.

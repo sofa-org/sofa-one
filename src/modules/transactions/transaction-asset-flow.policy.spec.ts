@@ -394,7 +394,7 @@ describe('classifyTransactionAssetFlow', () => {
       expect(result.interactions[0].rule).toBe('aave_v3_supply_to_owner');
     });
 
-    it('treats EOA owner (agentWalletAddress) as the retention boundary for audited protocols', () => {
+    it('treats EOA owner (signerAddress) as the retention boundary for audited protocols', () => {
       const agent = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
       const result = classify(
         [{ to: AAVE_POOL_84532, data: aaveSupply(agent), value: '0' }],

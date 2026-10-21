@@ -951,7 +951,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
         openfortAccountId: `ofa_${SUITE_ID}`,
         walletAddress: PLATFORM_WALLET.toLowerCase(),
         agentOpenfortAccountId: `ofa_agent_${SUITE_ID}`,
-        agentWalletAddress: AGENT_WALLET.toLowerCase(),
+        signerAddress: AGENT_WALLET.toLowerCase(),
         agentKeyHash: AGENT_KEY_HASH,
         status: 'active',
       },

@@ -640,7 +640,7 @@ export default function WalletPage() {
 
     try {
       assertWebCryptoAvailable();
-      if (!selectedWallet?.walletAddress || !selectedWallet.agentWalletAddress || !selectedWallet.agentKeyHash) {
+      if (!selectedWallet?.walletAddress || !selectedWallet.signerAddress || !selectedWallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
       }
       if (pendingAuthorization) {
@@ -751,7 +751,7 @@ export default function WalletPage() {
 
       const agentKey: CaliburKey = {
         keyType: KeyType.Secp256k1,
-        publicKey: padHex(currentWallet.agentWalletAddress as Hex, { size: 32 }),
+        publicKey: padHex(currentWallet.signerAddress as Hex, { size: 32 }),
       };
       const frontendKeyHash = hashKey(agentKey);
       if (frontendKeyHash.toLowerCase() !== currentWallet.agentKeyHash!.toLowerCase()) {
@@ -1040,23 +1040,26 @@ export default function WalletPage() {
 
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                    EOA Address
+                    Wallet Address
                   </label>
                   <div className="mt-1 flex items-center gap-3">
                     <p className="break-all font-mono text-sm text-brand-text flex-1">
-                      {selectedWallet.walletAddress ?? 'Create an agent EOA to finish setup'}
+                      {selectedWallet.walletAddress ?? 'Create a wallet to finish setup'}
                     </p>
                     {selectedWallet.walletAddress && (
                       <CopyButton text={selectedWallet.walletAddress} className="shrink-0" />
                     )}
                   </div>
+                  <p className="mt-2 text-xs leading-5 text-brand-muted">
+                    Your wallet address stays the same when EIP-7702 delegates execution to Calibur.
+                  </p>
                 </div>
 
-                {selectedWallet.agentWalletAddress && (
+                {selectedWallet.signerAddress && (
                   <div className="rounded-xl border border-brand-border/60 bg-brand-bg/30 p-4 text-sm">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <span className="text-[11px] font-bold uppercase tracking-widest text-brand-muted">
-                        Authorized Signer
+                        Signer Address
                       </span>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-muted ring-1 ring-brand-border/60">
@@ -1073,10 +1076,13 @@ export default function WalletPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <code className="min-w-0 flex-1 break-all font-mono text-xs text-brand-text">
-                        {selectedWallet.agentWalletAddress}
+                        {selectedWallet.signerAddress}
                       </code>
-                      <CopyButton text={selectedWallet.agentWalletAddress} className="shrink-0" />
+                      <CopyButton text={selectedWallet.signerAddress} className="shrink-0" />
                     </div>
+                    <p className="mt-2 text-xs leading-5 text-brand-muted">
+                      TEE-managed EOA used for backend signing. This address alone does not establish authorization; see the per-network status below.
+                    </p>
                     <AuthorizationBadges authorizations={selectedWallet.chainAuthorizations} />
                   </div>
                 )}

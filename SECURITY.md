@@ -65,7 +65,7 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
 - API-key signing permits the exact Polymarket CLOB `ClobAuth` bootstrap typed data and the separately scoped V2 order exception below: EOA mode,
   Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),
-  exact ordered `ClobAuth` fields and fixed message, selected agentWalletAddress (never the
+  exact ordered `ClobAuth` fields and fixed message, selected `signerAddress` (never the
   embedded wallet address or funder), canonical decimal Unix timestamp within ±300 seconds,
   and uint256 nonce (zero allowed). Optional EIP712Domain declaration must exactly contain
   name:string, version:string, chainId:uint256. ClobAuth itself is not order, Permit, arbitrary

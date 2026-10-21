@@ -21,8 +21,8 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 ### Identity & Wallet
 
 - **User** (`users`): Openfort IAM identity — `socialProvider`/`socialId` (unique), optional `email`, freeze state. 1:N with `UserWallet` (at most one partial-indexed default), plus 1:1 `WithdrawalPolicy`, `UserMfaTotpCredential`, `BillingAccount`; existing wallet rows remain intact during multi-wallet rollout.
-- **UserWallet** (`user_wallets`): N:1 per user. `openfortAccountId` (stable Openfort FK, unique), `walletAddress` (unique), `isDefault`, `status`, agent wallet fields (`agentOpenfortAccountId`, `agentWalletAddress`, `agentKeyHash` — Calibur session key), freeze state. `openfortAccountId` must never be replaced by wallet address or orphaned.
-- **WalletProvisioningIntent** (`wallet_provisioning_intents`): one durable intent per wallet; pending/dispatched/uncertain/provisioned/completed lifecycle, single dispatch token, known provider agent identifiers and audited resolution metadata. Contains no private keys; uncertain creates require fail-closed human/provider recovery.
+- **UserWallet** (`user_wallets`): N:1 per user. `openfortAccountId` (stable Openfort FK, unique), `walletAddress` (unique), `isDefault`, `status`, signer fields (`agentOpenfortAccountId`, `signerAddress` mapped to `signer_address`, `agentKeyHash` — Calibur session key), freeze state. `openfortAccountId` must never be replaced by wallet address or orphaned.
+- **WalletProvisioningIntent** (`wallet_provisioning_intents`): one durable intent per wallet; pending/dispatched/uncertain/provisioned/completed lifecycle, single dispatch token, known provider agent identifiers including `signerAddress` (`signer_address`), and audited resolution metadata. Contains no private keys; uncertain creates require fail-closed human/provider recovery.
 - **WalletChainAuthorization** (`wallet_chain_authorizations`): composite PK `(walletId, chainId)`; per-chain agent registration status, `registrationTxHash`, `expiresAt`; cascade-deletes with wallet.
 
 ### API Keys & Audit
@@ -78,6 +78,8 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 7. **Billing**: usage is recorded into `BillingUsageEvent` (api_request/openfort_receipt sources); `BillingReconciliationService` reconciles receipts against `Transaction` rows (account/period-scoped runs with DB leases) and updates run state; `BillingService` computes invoices from usage/plan assignments; `StripePaymentService`/`UsdcPaymentService` create `BillingPaymentAttempt` rows; `InvoiceSettlementService` atomically settles via `paidAt`/`paidVia`/`settlementAttemptId` CAS; `StripeWebhookService` records webhook events, transitions attempts, and mirrors/materializes subscription renewals. When `BILLING_WORKER_ENABLED=true`, `BillingWorkerService` (5-minute interval) drains reconciliation and finalizes eligible periods, resumes pending/confirming USDC claims via persisted `submittedTxHash`/`nextCheckAt`, retries deferred Stripe renewal events, and recovers interrupted pending Checkouts.
 
 ## Migration History
+
+- **20261021000000_rename_signer_address**: Data-preserving signer column/index renames on wallets and provisioning intents; renames transaction details signer key, aborting on conflicting dual-key identities. Historical audit execution addresses and immutable security-event metadata are unchanged. Requires coordinated application/database cutover; see `DATABASE.md`.
 
 - **20260419143630_init**: Core tables — `users`, `user_wallets` (with `chain_id`), `api_keys` (with `salt`), `transactions` (with `intent_id`).
 - **20260421090537_refactor**: Drop `api_keys.salt`; add `transactions.details` + `wallet_address`.

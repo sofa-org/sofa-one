@@ -17,6 +17,17 @@ Dashboard IAM routes (wallets, transaction history, API-key management, billing,
 notifications) are unversioned; public API-key routes such as `/v1/wallets/sign` and
 `/v1/transactions` remain versioned. Do not infer route audience from a shared resource name.
 
+Wallet identity responses have a breaking terminology/semantics cutover: wallet projections
+and signing responses expose `signerAddress`, not the former `agentWalletAddress` JSON property;
+no compatibility alias is returned. In these responses, `walletAddress` always identifies
+the selected user wallet (unchanged by EIP-7702), and `signerAddress` identifies its
+TEE-managed EOA. EOA signing responses no longer duplicate the signer in `walletAddress`;
+clients doing signature recovery must switch to `signerAddress`. Public signing remains
+EOA-only. Signer presence is not authorization; per-chain status/expiry and existing live
+policy checks remain independent. Persisted transaction/status and signing-request history
+`walletAddress` fields keep their recorded execution/signing address and are not migrated
+or reinterpreted by this response-only change. Prisma/internal agent field names are unchanged.
+
 ## Audience and authentication
 
 Public automation routes use API keys only. Dashboard routes use Openfort IAM bearer tokens

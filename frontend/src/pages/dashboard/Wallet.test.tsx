@@ -48,7 +48,7 @@ vi.mock('@/lib/calibur', async (importOriginal) => ({
 const address = '0x1111111111111111111111111111111111111111';
 const addressA = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const addressB = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-const created = { id: 'wallet-B', walletAddress: address, agentWalletAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
+const created = { id: 'wallet-B', walletAddress: address, signerAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
 
 async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, walletCode: Hex = '0x', clientChainId = chainId) {
   vi.stubEnv('VITE_OPENFORT_FEE_SPONSORSHIP_ID', feeSponsorshipId ?? '');
@@ -56,7 +56,7 @@ async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, 
   const agentKeyHash = hashKey({ keyType: KeyType.Secp256k1, publicKey: padHex(addressB as Hex, { size: 32 }) });
   const authorizedWallet = {
     ...created,
-    agentWalletAddress: addressB,
+    signerAddress: addressB,
     agentKeyHash,
     chainAuthorizations: [{ chainId, expiresAt: new Date(Date.now() + 86_400_000).toISOString(), status: 'authorized' }],
   };
@@ -106,6 +106,21 @@ describe('WalletPage provisioning identity', () => {
       waitForUserOperationReceipt: vi.fn(async () => ({ receipt: { transactionHash: '0xtx' } })),
     });
     mocks.sendUserOperation.mockResolvedValue('0xuserop');
+  });
+
+  it('separates user wallet and TEE signer identity without implying authorization', async () => {
+    const wallet = { ...created, signerAddress: addressB, chainAuthorizations: [] };
+    mocks.getMe.mockResolvedValue({ wallet, wallets: [wallet] });
+    render(<WalletPage />);
+    const walletLabel = await screen.findByText('Wallet Address');
+    const signerLabel = screen.getByText('Signer Address');
+    expect(walletLabel.parentElement?.textContent).toContain(address);
+    expect(walletLabel.parentElement?.textContent).toContain('EIP-7702');
+    expect(signerLabel.closest('.rounded-xl')?.textContent).toContain(addressB);
+    expect(screen.getByText(/This address alone does not establish authorization/)).toBeTruthy();
+    expect(screen.queryByText('Authorized Signer')).toBeNull();
+    expect(screen.getByText('0 networks configured')).toBeTruthy();
+    expect(mocks.signAuthorization).not.toHaveBeenCalled();
   });
 
   it('authorizes the created provider identity even when response has no openfortAccountId', async () => {
@@ -180,7 +195,7 @@ describe('WalletPage provisioning identity', () => {
   });
 
   it('does not authorize when refreshed accounts are ordered B then A, and uses the live selected provider for A', async () => {
-    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', agentWalletAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
+    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', signerAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
     const walletB = { ...walletA, id: 'wallet-B', walletAddress: addressB, openfortAccountId: 'account-B' };
     mocks.getMe.mockResolvedValue({ wallet: walletA, wallets: [walletA, walletB] });
     mocks.update.mockResolvedValue([{ id: 'account-B', address: addressB }, { id: 'account-A', address: addressA }]);
@@ -199,7 +214,7 @@ describe('WalletPage provisioning identity', () => {
   });
 
   it('rejects a live provider on B even when the SDK hook reports A active', async () => {
-    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', agentWalletAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
+    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', signerAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
     const walletB = { ...walletA, id: 'wallet-B', walletAddress: addressB, openfortAccountId: 'account-B' };
     mocks.getMe.mockResolvedValue({ wallet: walletA, wallets: [walletA, walletB] });
     mocks.update.mockResolvedValue([{ id: 'account-A', address: addressA }, { id: 'account-B', address: addressB }]);
@@ -220,7 +235,7 @@ describe('WalletPage provisioning identity', () => {
       ...created,
       walletAddress: address,
       openfortAccountId: 'account-A',
-      agentWalletAddress: addressB,
+      signerAddress: addressB,
       agentKeyHash: `0x${'1'.repeat(64)}`,
       chainAuthorizations: [],
     };

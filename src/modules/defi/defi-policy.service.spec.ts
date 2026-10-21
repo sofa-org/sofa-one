@@ -126,12 +126,12 @@ describe('DefiPolicyService', () => {
     const { policy } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
     const payload = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: '0', message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
-    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], capabilityMode: 'custom', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID], capabilityMode: 'custom', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, signerAddress: agent } as any;
     const auth = await policy.authorizeSigning(payload, context);
     const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_AUTH_CAPABILITY_ID] };
-    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
-    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
     expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
     const allAuth = await policy.authorizeSigning(payload, { ...context, capabilityMode: 'all', allowedCapabilityIds: [] });
@@ -173,7 +173,7 @@ describe('DefiPolicyService', () => {
     const { policy } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
     const input = { domain: { name: 'ClobAuthDomain', version: '1', chainId: 137 }, types: { ClobAuth: [{ name: 'address', type: 'address' }, { name: 'timestamp', type: 'string' }, { name: 'nonce', type: 'uint256' }, { name: 'message', type: 'string' }] }, primaryType: 'ClobAuth', message: { address: agent, timestamp: String(Math.floor(Date.now() / 1000)), nonce: 0, message: POLYMARKET_CLOB_AUTH_ATTESTATION } };
-    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent };
+    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, signerAddress: agent };
     await expect(policy.authorizeSigning(input, base as any)).resolves.toMatchObject({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, context: { capabilityMode: 'all', allowedCapabilityIds: [] } });
     await expect(policy.authorizeSigning(input, { ...base, capabilityMode: 'custom' } as any)).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
   });
@@ -181,18 +181,18 @@ describe('DefiPolicyService', () => {
   it('authorizes CLOB orders in all mode or by exact custom grant and binds the full TypedDataSign wrapper digest', async () => {
     const { policy, prisma } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
-    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID], agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const context = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID], agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, signerAddress: agent } as any;
     const payload = orderPayload();
     const auth = await policy.authorizeSigning(payload, context);
     expect(auth.capabilityId).toBe(POLYMARKET_CLOB_ORDER_CAPABILITY_ID);
     expect(auth.walletAddress).toBe(OWNER.toLowerCase());
-    expect(auth.agentWalletAddress).toBe(agent.toLowerCase());
+    expect(auth.signerAddress).toBe(agent.toLowerCase());
     expect((auth.payload.message as { verifyingContract: string }).verifyingContract).toBe(DEPOSIT_WALLET);
     expect(auth.typedDataDigest).toBe(polymarketWrapperDigest(auth.payload as any));
     const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'custom', allowedCapabilityIds: [POLYMARKET_CLOB_ORDER_CAPABILITY_ID] };
-    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
-    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
     const allContext = { ...context, capabilityMode: 'all', allowedCapabilityIds: [] };
     const allAuth = await policy.authorizeSigning(payload, allContext);
@@ -233,7 +233,7 @@ describe('DefiPolicyService', () => {
     const { policy, prisma } = makePolicy();
     prisma.defiPolicyState.findUnique.mockResolvedValue({ id: 'global', pausedScopeKeys: [] });
     const agent = '0x2222222222222222222222222222222222222222';
-    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const base = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, signerAddress: agent } as any;
     const payload = batchPayload();
     payload.message.calls[0].target = OTHER;
     const all = await policy.authorizeSigning(payload, base);
@@ -273,14 +273,14 @@ describe('DefiPolicyService', () => {
   it('atomically rechecks batch deadline, live permissions, capability mode, key state, digest and target contract pauses', async () => {
     const { policy } = makePolicy();
     const agent = '0x2222222222222222222222222222222222222222';
-    const batchSignContext = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, agentWalletAddress: agent } as any;
+    const batchSignContext = { ...ctx, chainId: 137, executionMode: 'eoa', executionOwner: agent, allowedCapabilityIds: [], capabilityMode: 'all', agentOpenfortAccountId: 'agent-account', walletAddress: OWNER, signerAddress: agent } as any;
     const payload = batchPayload();
     payload.message.calls[0].target = OTHER;
     const auth = await policy.authorizeSigning(payload, batchSignContext);
     const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSign: true, canUseEoaExecution: true, capabilityMode: 'all', allowedCapabilityIds: [] };
-    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const wallet = { id: 'wallet', userId: 'user', status: 'active', frozenAt: null, walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     const tx: any = { $queryRaw: jest.fn(), defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) }, apiKey: { findUnique: jest.fn().mockResolvedValue(key) }, userWallet: { findFirst: jest.fn().mockResolvedValue(wallet) }, user: { findUnique: jest.fn().mockResolvedValue({ id: 'user', frozenAt: null }) } };
-    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, agentWalletAddress: agent, agentOpenfortAccountId: 'agent-account' };
+    const actual = { userId: 'user', apiKeyId: ctx.apiKeyId, chainId: 137, executionMode: 'eoa', type: 'typed_data', digest: auth.typedDataDigest, walletId: 'wallet', walletAddress: OWNER, signerAddress: agent, agentOpenfortAccountId: 'agent-account' };
     await expect(policy.assertSigningStillAuthorized(tx, auth, actual)).resolves.toBeUndefined();
     for (const liveKey of [
       { ...key, canSign: false },

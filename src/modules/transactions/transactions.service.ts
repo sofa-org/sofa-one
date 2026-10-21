@@ -278,7 +278,7 @@ export class TransactionsService {
       this.assertBackendWalletReady(wallet);
     }
     const transactionWalletAddress =
-      executionMode === 'eoa' ? wallet.agentWalletAddress! : accountAddress;
+      executionMode === 'eoa' ? wallet.signerAddress! : accountAddress;
 
     const requestInteractions = Object.freeze(dto.interactions.map((interaction) => Object.freeze({ ...interaction })));
     const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
@@ -309,7 +309,7 @@ export class TransactionsService {
       return this.toSendResponse(existingTransaction);
     }
 
-    const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.agentWalletAddress!;
+    const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.signerAddress!;
     let defiAuthorization: DefiAuthorization;
     try {
       defiAuthorization = await this.defiPolicy.authorizeContractCalls([...requestInteractions], {
@@ -343,7 +343,7 @@ export class TransactionsService {
     // Owner for asset-flow classification + destination policy + evidence binding:
     // session_key executes as the user wallet; eoa executes as the agent backend wallet.
     const assetFlowOwnerAddress =
-      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress!;
+      executionMode === 'eoa' ? wallet.signerAddress! : wallet.walletAddress!;
 
     // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
     // Completeness is per-interaction: notProven entries are never dropped.
@@ -430,7 +430,7 @@ export class TransactionsService {
         executionMode,
         ...(sponsorship ? { sponsorship } : {}),
         interactionCount: authorizedInteractions.length,
-        agentWalletAddress: wallet.agentWalletAddress,
+        signerAddress: wallet.signerAddress,
         agentKeyHash: wallet.agentKeyHash,
         idempotencyKey: dto.idempotencyKey,
         requestHash,
@@ -753,7 +753,7 @@ export class TransactionsService {
       status: string;
       walletAddress?: string | null;
       agentOpenfortAccountId?: string | null;
-      agentWalletAddress?: string | null;
+      signerAddress?: string | null;
       agentKeyHash?: string | null;
     },
     authorization?: { status: string; expiresAt?: Date | string | null } | null,
@@ -762,7 +762,7 @@ export class TransactionsService {
       wallet.status !== 'active' ||
       !wallet.walletAddress ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress ||
+      !wallet.signerAddress ||
       !wallet.agentKeyHash
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
@@ -781,12 +781,12 @@ export class TransactionsService {
   private assertBackendWalletReady(wallet: {
     status: string;
     agentOpenfortAccountId?: string | null;
-    agentWalletAddress?: string | null;
+    signerAddress?: string | null;
   }): void {
     if (
       wallet.status !== 'active' ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress
+      !wallet.signerAddress
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
@@ -1280,7 +1280,7 @@ export class TransactionsService {
   }
 
   /** A persisted wallet id is authoritative. Legacy attribution is accepted only
-   * when both account and agent addresses identify exactly the key-bound wallet. */
+   * when both account and signer addresses identify exactly the key-bound wallet. */
   private async transactionBelongsToBoundWallet(
     transaction: { userId: string; walletAddress: string; details: unknown },
     userId: string,
@@ -1292,17 +1292,17 @@ export class TransactionsService {
       : {};
     if (typeof details.walletId === 'string') return details.walletId === walletId;
 
-    if (typeof details.agentWalletAddress !== 'string') return false;
+    if (typeof details.signerAddress !== 'string') return false;
     const candidates = await this.prisma.userWallet.findMany({
       where: { userId },
-      select: { id: true, walletAddress: true, agentWalletAddress: true },
+      select: { id: true, walletAddress: true, signerAddress: true },
     });
     const transactionAddress = transaction.walletAddress.toLowerCase();
-    const legacyAgent = details.agentWalletAddress.toLowerCase();
+    const legacySigner = details.signerAddress.toLowerCase();
     const matching = candidates.filter((candidate) =>
-      candidate.walletAddress && candidate.agentWalletAddress &&
-      candidate.agentWalletAddress.toLowerCase() === legacyAgent &&
-      (candidate.walletAddress.toLowerCase() === transactionAddress || candidate.agentWalletAddress.toLowerCase() === transactionAddress),
+      candidate.walletAddress && candidate.signerAddress &&
+      candidate.signerAddress.toLowerCase() === legacySigner &&
+      (candidate.walletAddress.toLowerCase() === transactionAddress || candidate.signerAddress.toLowerCase() === transactionAddress),
     );
     return matching.length === 1 && matching[0].id === walletId;
   }
