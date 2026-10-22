@@ -354,3 +354,10 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - Abracadabra is skipped: the retrieved official wind-down proposal/voting evidence is preserved in the replacement source. Residual sSPELL exit functions do not override the no-exit-only lifecycle policy.
 - Verification: only six additions; generate/check, 65 scoped backend tests and one frontend test passed. Real policy smoke covered six functions and 125 excluded selectors; browser searches and the two served ABI entries passed. No full gates or live on-chain execution.
 
+## Automatic expansion cycle 4 — Lagoon Finance and Spectra (2026-10-22)
+
+- `sources/lagoon-detrade-core-usdc.json`: twelve Base DeTrade Core USDC v0.5.0 request, cancel-deposit, settled share/asset claim and conditional synchronous deposit functions. Expired-NAV asynchronous and valid-NAV synchronous entry are distinct. v0.5.0 redemption requests cannot be cancelled; curator settlement, whitelist/operator checks, pause and fees remain authoritative.
+- `sources/spectra-gami-usdc-metavault.json`: six Base Gami USDC MetaVault **user wrapper**, not market Safe, functions. The deposit/redeem claim parameters are ignored by the deployed wrapper: they claim all settled shares/assets, not the requested partial amount. No Safe/Zodiac executor or legacy APWine authority is added.
+- Mellow legacy/Lido Earn brand-boundary findings are recorded as skipped; choosing Lagoon does not claim shutdown of the whole Mellow ecosystem.
+- Verification: only 18 additions; generate/check, 65 backend and one frontend tests passed; real policy smoke covered all 18 calls and 114 excluded selectors. Browser searches and both served ABI entries passed; scoped in-memory/no-broadcast limitations apply.
+
