@@ -380,3 +380,9 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - Frozen/recovery Ostium OLP and paused compromised Wasabi EVM targets are skipped with evidence; no old separate Avantis tranches are admitted.
 - Verification: only 12 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 12 calls and 187 excluded selectors; both browser searches and three served targets passed. No real settlement or full gates.
 
+## Automatic expansion cycle 8 — Treehouse and Re Protocol (2026-10-22)
+
+- `sources/treehouse-teth.json`: five Ethereum router entry and V3 redemption functions. tETH's accounting-unit ERC4626 surface is not an ordinary ETH vault and is excluded. Exits escrow tETH, wait, then claim wstETH subject to fees and initiation/finalization rate haircut. NFT-ticket redemption actually transfers the eligible NFT to treasury; it is not a free eligibility bypass.
+- `sources/re-protocol-reusd.json`: eight Ethereum ICL and gateway entry/instant/window-redemption functions. KYC/legal agreements remain required. Approvals belong to the actual redemption modules, not necessarily the gateway. Quarterly requests require open windows; settled payouts have a 30-day claim limit and may be partial. Re Protocol reUSD is not Resupply reUSD/sreUSD; no unrelated wrapper is admitted.
+- Verification: only 13 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered all 13 functions and 147 excluded selectors; browser searches and all four served targets passed. No live deposits, NFT transfer or redemption settlement was executed.
+
