@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Huma",
+  "website": "https://huma.finance/",
+  "status": "unadmitted",
+  "verifiedAt": "2026-10-22",
+  "selectedFunctions": [],
+  "admissionBlocker": "No primary current pool chain/address plus deployment-bound ABI/source was established on allowed chains. No ABI invented and no retired Polygon V1 fallback admitted.",
+  "lifecycleEvidence": {
+    "sourceRefs": [
+      "https://docs.huma.finance/ecosystem-resources/smart-contracts.md",
+      "https://docs.huma.finance/products/huma-institutional/user-manuals/lenders.md",
+      "https://docs.huma.finance/about-huma/key-resources.md",
+      "https://institutional.huma.finance/"
+    ],
+    "observed": [
+      "Official Smart Contracts page lists current Solana programs and EVM Arf 3-month/6-month deployments but does not specify EVM chain.",
+      "Institutional lender guide requires Securitize KYC/KYB, accreditation where required, legal agreements and separate tranche approval. It describes epoch-based redemption and pool closure; these rules are not exact deployment-state evidence.",
+      "Institutional frontend returned Access Restricted and no geography bypass was attempted.",
+      "Sourcify exact address for official Arf3-month junior tranche 0x483D02C11f8F1E31C267040A6C86AaB80c428BaB returned 404 on all allowed chains 1,10,56,137,143,8453,42161. A404 does not prove absence of deployment.",
+      "Official repository exploration found huma-contracts-v2 develop, but no exact chain/deployment artifact established. GitHub API hit unauthenticated rate limit.",
+      "Public reports identify Polygon V1 as deprecated and exploited May11 2026; historical V1 not admitted."
+    ]
+  },
+  "unboundOfficialTargets": [
+    {
+      "pool": "Arf3-month",
+      "contract": "JuniorTranche",
+      "address": "0x483D02C11f8F1E31C267040A6C86AaB80c428BaB",
+      "chainId": null
+    },
+    {
+      "pool": "Arf6-month",
+      "contract": "JuniorTranche",
+      "address": "0x8413a7345cD8bF8Afe8c2EfE866a764A93B305e2",
+      "chainId": null
+    }
+  ],
+  "attemptedAbiRefs": [
+    "https://sourcify.dev/server/v2/contract/1/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/10/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/56/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/137/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/143/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/8453/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all",
+    "https://sourcify.dev/server/v2/contract/42161/0x483D02C11f8F1E31C267040A6C86AaB80c428BaB?fields=all"
+  ],
+  "limitations": [
+    "Research skip, not assertion of Huma protocol shutdown. Current Solana products and unknown-chain institutional tranches cannot expand catalog chain scope. No function inventory claimed without exact deployed ABI."
+  ],
+  "supplementaryIncidentRef": "https://crypto.news/huma-finance-legacy-v1-contract-on-polygon-exploited-for-101400-usdc/"
+}

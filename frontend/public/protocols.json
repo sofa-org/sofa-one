@@ -5332,6 +5332,145 @@
         ]
       },
       {
+        "address": "0x547213367cfb08ab418e7b54d7883b2c2aa27fd7",
+        "protocol": "Anzen",
+        "abi": [
+          {
+            "type": "function",
+            "name": "CDAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "CDShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x55084ee0fef03f14a305cd24286359a35d735151",
         "protocol": "hashflow",
         "abi": [
@@ -29158,6 +29297,258 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x8498312a6b3cbd158bf0c93abdcf29e6e4f55081",
+        "protocol": "Magma",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositMON",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "referralId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositMONGVault",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "valId",
+                "type": "uint64"
+              },
+              {
+                "name": "referralId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositWMON",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "referralId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositWMONGVault",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "valId",
+                "type": "uint64"
+              },
+              {
+                "name": "referralId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemMON",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeemGVault",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              },
+              {
+                "name": "valId",
+                "type": "uint64"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
               }
             ]
           }
