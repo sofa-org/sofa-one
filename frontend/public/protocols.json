@@ -1339,6 +1339,93 @@
         ]
       },
       {
+        "address": "0x08fb9833a5a84d5bcecdf5a4a635d33260c5f05c",
+        "protocol": "YieldFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRedemption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "vault",
+                "type": "address"
+              },
+              {
+                "name": "queueIndex",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "vault",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "minShares",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedemption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "vault",
+                "type": "address"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x09db87a538bd693e9d08544577d5ccfaa6373a48",
         "protocol": "yieldnest-yneth",
         "abi": [
@@ -5744,6 +5831,112 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x722fc3640ba007c3e9867ccdb0dca59f2e2f29f9",
+        "protocol": "YieldBasis",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "debt",
+                "type": "uint256"
+              },
+              {
+                "name": "min_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "debt",
+                "type": "uint256"
+              },
+              {
+                "name": "min_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "min_assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "min_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
               }
             ]
           }
@@ -13130,6 +13323,33 @@
             "stateMutability": "payable",
             "inputs": [],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xdd5eff0756db08bad0ff16b66f88f506e7318894",
+        "protocol": "YieldFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

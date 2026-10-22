@@ -145,6 +145,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
+  { name: 'YieldBasis', website: 'https://yieldbasis.com' },
+  { name: 'YieldFi', website: 'https://yield.fi' },
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
   { name: 'YO Protocol', website: 'https://yo.xyz' },
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
