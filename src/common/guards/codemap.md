@@ -2,7 +2,7 @@
 
 ## Responsibility
 Centralized request access control for the SOFA ONE API. Guards here enforce three distinct auth models:
-1. **Openfort IAM (dashboard/human routes)** — Bearer JWT verified against Openfort, full `User` row resolved onto `request.user`.
+1. **Application sessions (dashboard/human routes)** — opaque HttpOnly cookie resolved locally, full-MFA required except explicit bootstrap routes; current User/freeze state is loaded on every authentication.
 2. **API-key (public programmatic routes)** — `X-API-Key` verified via Argon2id against prefix candidates, with frozen-key/user rejection, IP allowlist enforcement, suspicious-usage freezing, and durable billing metering.
 3. **Frontend-only / step-up / permission gates** — origin/referer allowlist checks, step-up proof validation, and API-key permission enforcement layered on top of auth.
 
@@ -11,7 +11,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 ## Files
 
 ### `api-key-auth.guard.ts` — `ApiKeyAuthGuard`
-- **Role**: Authenticates public API routes with `X-API-Key` only. Intentionally does **not** accept Bearer tokens (dashboard routes use `OpenfortUserGuard`; public routes use this guard directly).
+- **Role**: Public API routes authenticate with X-API-Key only; IAM bearers and application cookies are never substitutes.
 - **Key symbols**: `ApiKeyAuthGuard` (class), `ApiKeyAuthRecord` (type), constants `MAX_USER_AGENT_LENGTH = 255`, `SUSPICIOUS_USE_LOOKBACK_MS = 24h`.
 - **Inputs**: `X-API-Key` header; `request.ip` (trust-proxy processed — never raw `X-Forwarded-For`); `user-agent` header (truncated to 255 chars).
 - **Outputs**: On success sets `request.user` (Prisma `User`) and `request.apiKeyRecord` (Prisma `ApiKey` incl. `user`), returns `true`. Throws `UnauthorizedException` (missing/invalid key), `ForbiddenException` (frozen key/user, IP not allowed, suspicious-usage freeze), `ServiceUnavailableException` (billing unavailable/metering write failure), or re-throws `BillingQuotaExceededException` (→ HTTP 429).
@@ -35,7 +35,7 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 ### `frontend-only.guard.ts` — `FrontendOnlyGuard`
 - **Role**: Restricts `@FrontendOnly()` routes to requests originating from the configured `CORS_ORIGIN` allowlist.
 - **Key symbols**: `FrontendOnlyGuard` (class); fields `allowedOrigins`, `isProduction`.
-- **Inputs**: `IS_FRONTEND_ONLY_KEY` metadata; `Origin` header (primary), `Referer` header (fallback, **non-production only**); `CORS_ORIGIN` and `NODE_ENV` from `ConfigService`.
+- **Inputs**: FrontendOnly metadata; Origin allowlist, with trusted Referer fallback for safe GET/HEAD even in production. `assertTrustedOrigin` independently requires a single trusted Origin for unsafe cookie requests.
 - **Outputs**: `true` if origin allowed; `ForbiddenException` otherwise. Origins normalized via `new URL(value).origin`. Dev default allowlist: `http://localhost:3000`, `http://localhost:3100`.
 - **Dependencies**: `Reflector`, `ConfigService`, `IS_FRONTEND_ONLY_KEY` (`../decorators/frontend-only.decorator`).
 
@@ -47,30 +47,23 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 - **Dependencies**: `@Optional() SecurityEventService`, `isIpAllowed` (`../utils/ip-cidr` — IPv4/IPv6 + CIDR matching). Provided/exported by `SecurityEventModule`.
 
 ### `openfort-auth.guard.ts` — `OpenfortAuthGuard`
-- **Role**: Verifies Openfort IAM access token from `Authorization: Bearer`; attaches Openfort session context. Does **not** resolve the DB user row.
-- **Key symbols**: `OpenfortAuthGuard` (class).
-- **Inputs**: `Authorization: Bearer <token>`; `IS_PUBLIC_KEY` metadata.
-- **Outputs**: Sets `request.openfortUserId`, `request.openfortAccessToken`, `request.openfortSession`, `request.openfortEmail`; `true`. Throws `UnauthorizedException` (missing/invalid token).
-- **Dependencies**: `Reflector`, `OpenfortService`, `IS_PUBLIC_KEY`. Used at controller level in `AuthController`.
+- Login exchange and fresh wallet identity proof only. Reads Authorization Bearer and attaches validated provider identity/access token to the request.
+- Missing/invalid identity returns provider-only AUTH_PROVIDER_INVALID 401; provider outages preserve AUTH_PROVIDER_UNAVAILABLE 502 rather than becoming lost local login.
 
-### `openfort-user.guard.ts` — `OpenfortUserGuard`
-- **Role**: Openfort-only guard for dashboard/frontend routes. Never accepts API keys. Resolves the full user and rejects frozen accounts.
-- **Key symbols**: `OpenfortUserGuard` (class).
-- **Inputs**: `Authorization: Bearer <token>`; `IS_PUBLIC_KEY` metadata.
-- **Outputs**: Sets `request.user` (Prisma `User`), `request.openfortUserId`, `request.openfortSession`, `request.openfortEmail`; `true`. Throws `UnauthorizedException` (missing token, user not found, invalid token) or `ForbiddenException` (frozen user).
-- **Dependencies**: `Reflector`, `OpenfortService`, `PrismaService`, `IS_PUBLIC_KEY`.
+### `app-session.guard.ts` — `AppSessionGuard`
+- Accepts only the live opaque application cookie; never IAM bearer or API key.
+- Injects AppSessionService/FrontendOnlyGuard and Reflector; resolves session/user locally, rejects frozen users, expiry/revocation and pending business access.
+- Explicit AllowPendingMfa metadata permits only bootstrap methods. Unsafe requests independently require trusted Origin and CSRF regardless of FrontendOnly metadata.
+- Attaches request.user, request.appSession and derived request.appSessionCsrfToken. DB failures are 503, not 401.
 
 ### `step-up.guard.ts` — `StepUpGuard`
-- **Role**: Validates a step-up proof token from the `X-Step-Up-Token` header on `@RequireStepUp()` routes. Proof must be valid, unexpired, and belong to the authenticated user.
-- **Key symbols**: `StepUpGuard` (class).
-- **Inputs**: `STEP_UP_KEY` metadata; `X-Step-Up-Token` header; `request.user.id`.
-- **Outputs**: `true` (skips when route has no step-up requirement); sets `request.stepUpVerified = true` on success. Throws `ForbiddenException` (missing token, missing auth, invalid/expired proof).
-- **Dependencies**: `Reflector`, `StepUpService` (`../../modules/step-up/step-up.service`), `STEP_UP_KEY` (`../decorators/step-up.decorator`). Validates with purpose `'totp_mfa'`.
+- RequireStepUp metadata requires X-Step-Up-Token bound to request.user.id AND request.appSession.id.
+- Service validation rechecks proof expiry and the live full-MFA/unrevoked/unfrozen session; success sets request.stepUpVerified. Rejection is 403.
 
 ## Design/Patterns
 - **Wallet binding**: API-key authentication requires a bound wallet relation whose ID and owner match the key; null or foreign bindings fail closed after every lookup-prefix candidate is hash verified.
 - **NestJS `CanActivate` guards** composed per-route via `@UseGuards()`; metadata-driven activation via `Reflector.getAllAndOverride` against handler + class.
-- **Two auth models kept separate**: `OpenfortUserGuard` (dashboard, IAM-only) and `ApiKeyAuthGuard` (public, API-key-only). Public API routes must never accept IAM tokens; dashboard routes must never accept API keys.
+- **Separate audiences**: AppSessionGuard handles dashboard cookies; ApiKeyAuthGuard handles public API keys. OpenfortAuthGuard is only an identity proof at explicit exchange/wallet boundaries.
 - **Prefix-candidate + Argon2 verification**: API keys are stored as Argon2id hashes; lookup uses 27-char and legacy 11-char prefixes as a non-unique hint, then verifies every candidate hash to avoid prefix collisions and legacy false negatives.
 - **Defense in depth**: `ApiKeyPermissionGuard` enforces permissions at the guard layer while services retain their own checks; `StepUpGuard` marks `request.stepUpVerified` so downstream services can enforce per-user step-up policies.
 - **Shared audit service**: `IpAllowlistService` centralizes allowlist checks and records `SecurityEvent` rows, avoiding duplicated logic across guards and `EoaExecutionPolicyService`.
@@ -80,18 +73,18 @@ Also hosts `IpAllowlistService`, the shared IP allowlist enforcement + audit ser
 ## Flow
 1. **Global**: `ApiKeyThrottlerGuard` (APP_GUARD) rate-limits every request — key-prefix bucket for API-key auth, IP bucket otherwise.
 2. **Public API-key routes** (`POST /v1/wallets/sign`, `POST /v1/transactions`, `GET /v1/transactions/:id`): `ApiKeyAuthGuard` → `ApiKeyPermissionGuard`. Auth resolves the key, rejects frozen key/user, enforces IP allowlist, freezes suspicious usage, meters billing; permission guard requires `canSign` / `canSendTransaction` / `canReadTransactionStatus`. The separate `GET /v1/wallets` metadata route requires API-key auth but no permission flag.
-3. **Dashboard routes** (wallets, transactions status, billing, security notifications, MFA, API-key management): `OpenfortUserGuard` + `FrontendOnlyGuard`; sensitive routes (withdraw, withdrawal-addresses, API-key create/revoke, step-up challenge) add `StepUpGuard`.
-4. **Auth routes**: `OpenfortAuthGuard` at controller level (session verification only); `@Public()` bypasses auth on health and Stripe webhook routes.
+3. **Dashboard routes**: AppSessionGuard + FrontendOnlyGuard; sensitive operations add exact-session StepUpGuard. Pending MFA is explicitly allowlisted only for session/MFA bootstrap.
+4. **Auth routes**: Per-method guards; login exchange and embedded-wallet identity proof additionally use OpenfortAuthGuard. Health/Stripe public behavior is unchanged.
 5. **Rejection paths** all record `SecurityEvent` rows (frozen rejections, IP rejections, first use, suspicious use, freeze) with safe metadata only — never raw keys, calldata, or headers.
 
 ## Integration
 - **Global registration**: `ApiKeyThrottlerGuard` as `APP_GUARD` in `src/app.module.ts`; throttler storage via `src/common/throttler/throttler.module.ts`.
 - **Consumers** (via `@UseGuards()`):
-  - `src/modules/wallet/wallet.controller.ts` — `OpenfortUserGuard`+`FrontendOnlyGuard` (+`StepUpGuard` on withdraw/withdrawal-address routes); `ApiKeyAuthGuard`+`ApiKeyPermissionGuard` on sign.
-  - `src/modules/transactions/transactions.controller.ts` — `ApiKeyAuthGuard`+`ApiKeyPermissionGuard` on public send/status; `OpenfortUserGuard`+`FrontendOnlyGuard` on dashboard routes.
-  - `src/modules/auth/auth.controller.ts` — `OpenfortAuthGuard` (controller-level).
-  - `src/modules/billing/billing.controller.ts`, `src/modules/billing/onchain/usdc-payment.controller.ts`, `src/modules/security-notifications/security-notification.controller.ts`, `src/modules/mfa/mfa.controller.ts`, `src/modules/api-key/api-key.controller.ts` — `OpenfortUserGuard`+`FrontendOnlyGuard` (+`StepUpGuard` on API-key management).
+  - Wallet and transaction controllers keep distinct AppSessionGuard dashboard methods and ApiKeyAuthGuard public methods.
+  - Billing, notifications and API-key management use AppSessionGuard + FrontendOnlyGuard, with StepUpGuard on sensitive mutations.
+  - AuthController separates login exchange, pending session introspection/logout, full-session wallet actions and all-device logout.
+  - MfaController marks only status/setup/enable/verify AllowPendingMfa; disable requires full local MFA.
 - **`IpAllowlistService`** is provided/exported by `SecurityEventModule` and consumed by `ApiKeyAuthGuard` and `EoaExecutionPolicyService`.
 - **Upstream dependencies**: `OpenfortService` (`src/core/openfort`), `PrismaService` (`src/core/database`), `SecurityEventService` (`src/modules/security-events`), `BillingService` (`src/modules/billing`), `StepUpService` (`src/modules/step-up`), `ConfigService` (`@nestjs/config`), `argon2`, `@nestjs/throttler`.
 - **Sibling helpers**: decorators `public.decorator.ts`, `api-key-permission.decorator.ts`, `frontend-only.decorator.ts`, `step-up.decorator.ts`; utils `api-key-prefix.ts` (`getApiKeyLookupPrefixes`), `ip-cidr.ts` (`isIpAllowed`).
-- **Access-control split**: public API-key routes are documented in `openapi.yaml`; frontend-only routes are intentionally omitted and require IAM bearer + origin/referer checks. API-key management is never callable by API keys.
+- **Access-control split**: Public OpenAPI remains API-key-only; dashboard cookie/CSRF routes remain omitted. API keys cannot manage keys.

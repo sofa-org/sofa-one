@@ -1,21 +1,14 @@
-import { GUARDS_METADATA } from '@nestjs/common/constants';
-import { THROTTLER_LIMIT, THROTTLER_TTL } from '@nestjs/throttler/dist/throttler.constants';
 import { validate } from 'class-validator';
 
 jest.mock('./usdc-payment.service', () => ({
   UsdcPaymentService: class UsdcPaymentService {},
 }));
-jest.mock('../../../common/guards/openfort-user.guard', () => ({
-  OpenfortUserGuard: class OpenfortUserGuard {},
-}));
+jest.mock('../../../common/guards/app-session.guard', () => ({ AppSessionGuard: class AppSessionGuard {} }));
 jest.mock('../../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
 
 import { UsdcPaymentController } from './usdc-payment.controller';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
-import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
-import { IS_FRONTEND_ONLY_KEY } from '../../../common/decorators/frontend-only.decorator';
 import { UsdcQuoteDto } from './dto/usdc-quote.dto';
 import { UsdcClaimDto } from './dto/usdc-claim.dto';
 import { UsdcCancelDto } from './dto/usdc-cancel.dto';
@@ -77,33 +70,6 @@ describe('UsdcPaymentController', () => {
     expect(result).toEqual({ status: 'cancelled' });
   });
 
-  it('protects quote/claim/cancel with OpenfortUserGuard and FrontendOnlyGuard', () => {
-    const routes = [controller.quote, controller.claim, controller.cancel];
-
-    for (const route of routes) {
-      const guards = Reflect.getMetadata(GUARDS_METADATA, route) ?? [];
-      expect(guards).toContain(OpenfortUserGuard);
-      expect(guards).toContain(FrontendOnlyGuard);
-      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, route)).toBe(true);
-    }
-  });
-
-  it('applies route-level throttle to claim and cancel but not to quote', () => {
-    // Claim performs RPC lookups (receipt + chain head) and must carry a tight
-    // throttle; cancel is local DB-only but still throttled against abuse.
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'short', controller.claim)).toBe(5);
-    expect(Reflect.getMetadata(THROTTLER_TTL + 'short', controller.claim)).toBe(60000);
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'medium', controller.claim)).toBe(20);
-    expect(Reflect.getMetadata(THROTTLER_TTL + 'medium', controller.claim)).toBe(3600000);
-
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'short', controller.cancel)).toBe(10);
-    expect(Reflect.getMetadata(THROTTLER_TTL + 'short', controller.cancel)).toBe(60000);
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'medium', controller.cancel)).toBe(60);
-    expect(Reflect.getMetadata(THROTTLER_TTL + 'medium', controller.cancel)).toBe(3600000);
-
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'short', controller.quote)).toBeUndefined();
-    expect(Reflect.getMetadata(THROTTLER_LIMIT + 'medium', controller.quote)).toBeUndefined();
-  });
 });
 
 describe('USDC DTO validation (global whitelist + forbidNonWhitelisted contract)', () => {

@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useOpenfort, useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider';
 import { Activity, ArrowLeft, Check, Mail, Users, Wallet, Zap } from 'lucide-react';
-import AuthProviders from '../components/AuthProviders';
 import { getBillingPlansAuth } from '@/lib/api';
 
 type PlanId = 'free' | 'starter' | 'growth' | 'scale' | 'business' | 'enterprise';
@@ -150,10 +149,6 @@ const PLANS: readonly PricingPlan[] = [
   },
 ];
 
-const OPENFORT_KEY = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
-const OPENFORT_SHIELD_KEY = import.meta.env.VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY;
-const HAS_OPENFORT_CONFIG = Boolean(OPENFORT_KEY && OPENFORT_SHIELD_KEY);
-
 const OUTBOUND_TIERS: readonly { range: string; rate: string }[] = [
   { range: '$0 – $500K', rate: '0.0100%' },
   { range: '$500K – $2M', rate: '0.0075%' },
@@ -178,9 +173,9 @@ function formatCount(value: number | string): string {
 }
 
 function HeaderAuthAction() {
-  const { isLoading, user } = useOpenfort();
+  const { loading, session } = useAppSession();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <span
         className="invisible rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text"
@@ -191,7 +186,7 @@ function HeaderAuthAction() {
     );
   }
 
-  if (user) {
+  if (session) {
     return null;
   }
 
@@ -403,30 +398,25 @@ function PlansGrid({ views }: { views: PlanCardView[] }) {
   );
 }
 
-/**
- * Nested under AuthProviders so Openfort hooks are valid.
- * Auth must be settled before treating the visitor as logged in or fetching plans.
- */
-function PricingOpenfortContent({
+function PricingContent({
   fromBilling,
   onBack,
 }: {
   fromBilling: boolean;
   onBack: () => void;
 }) {
-  const { isLoading: authLoading, user } = useOpenfort();
-  const { getAccessToken } = useUser();
-  /** Canonical current plan from API — null while loading, anonymous, or on failure. */
-  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
-
-  const authSettled = !authLoading;
-  const isLoggedIn = authSettled && Boolean(user);
+  const { loading, session } = useAppSession();
+  const sessionId = !loading && session?.mfaVerified ? session.sessionId : null;
+  const isLoggedIn = !loading && Boolean(session);
+  /** Only display a canonical plan for the full session that fetched it. */
+  const [currentPlan, setCurrentPlan] = useState<{
+    sessionId: string;
+    planId: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (!authSettled) return;
-
-    if (!user) {
-      setCurrentPlanId(null);
+    if (!sessionId) {
+      setCurrentPlan(null);
       return;
     }
 
@@ -435,20 +425,14 @@ function PricingOpenfortContent({
 
     void (async () => {
       try {
-        const data = await getBillingPlansAuth(async () => {
-          const token = await getAccessToken();
-          if (!token) {
-            throw new Error('Openfort session is not ready.');
-          }
-          return token;
-        }, controller.signal);
+        const data = await getBillingPlansAuth(controller.signal);
         if (!cancelled) {
-          setCurrentPlanId(data.currentPlanId);
+          setCurrentPlan({ sessionId, planId: data.currentPlanId });
         }
       } catch {
         // Keep marketing highlight (Growth most popular); never invent a current plan.
         if (!cancelled) {
-          setCurrentPlanId(null);
+          setCurrentPlan(null);
         }
       }
     })();
@@ -457,8 +441,9 @@ function PricingOpenfortContent({
       cancelled = true;
       controller.abort();
     };
-  }, [authSettled, user, getAccessToken]);
+  }, [sessionId]);
 
+  const currentPlanId = currentPlan?.sessionId === sessionId ? currentPlan.planId : null;
   const views = buildPlanCardViews(isLoggedIn, currentPlanId);
 
   return (
@@ -597,28 +582,5 @@ export default function PricingPage() {
   const fromBilling = location.state?.fromBilling === true;
   const onBack = () => navigate(-1);
 
-  // Missing Openfort keys: keep the public marketing page (Growth most popular). Never show a config error wall.
-  if (!HAS_OPENFORT_CONFIG) {
-    return (
-      <PricingShell
-        fromBilling={fromBilling}
-        onBack={onBack}
-        headerAction={
-          <Link
-            to="/sign-in"
-            className="rounded-full border border-brand-border bg-white px-5 py-2 text-xs font-medium tracking-widest text-brand-text transition-all hover:border-brand-text hover:bg-brand-surface"
-          >
-            SIGN IN
-          </Link>
-        }
-        plans={<PlansGrid views={buildPlanCardViews(false, null)} />}
-      />
-    );
-  }
-
-  return (
-    <AuthProviders>
-      <PricingOpenfortContent fromBilling={fromBilling} onBack={onBack} />
-    </AuthProviders>
-  );
+  return <PricingContent fromBilling={fromBilling} onBack={onBack} />;
 }

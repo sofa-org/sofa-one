@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   HttpStatus,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 const backendCreate = jest.fn();
 const backendSign = jest.fn();
@@ -155,7 +157,7 @@ describe('OpenfortService', () => {
     };
     const service = new OpenfortService(configService as any);
 
-    await expect(service.verifyIamSession('access-token')).rejects.toThrow(ForbiddenException);
+    await expect(service.verifyIamSession('access-token')).rejects.toThrow(UnauthorizedException);
   });
 
   it('maps IAM session lookup failures to BadGatewayException', async () => {
@@ -167,6 +169,30 @@ describe('OpenfortService', () => {
     const service = new OpenfortService(configService as any);
 
     await expect(service.verifyIamSession('access-token')).rejects.toThrow(BadGatewayException);
+  });
+
+  it.each([401, 403, 429, 503])('classifies IAM HTTP %s without treating outages as expired login', async (statusCode) => {
+    iamGetSession.mockRejectedValue(Object.assign(new Error('provider error'), { statusCode }));
+    const service = new OpenfortService(new ConfigService({ openfort: { apiKey: 'secret', walletSecret: 'secret', timeoutMs: 25 } }));
+    await expect(service.verifyIamSession('access-token')).rejects.toMatchObject({
+      status: statusCode === 401 ? 401 : 502,
+      response: expect.objectContaining({
+        code: statusCode === 401 ? 'AUTH_PROVIDER_INVALID' : 'AUTH_PROVIDER_UNAVAILABLE',
+      }),
+    });
+  });
+
+  it('does not log access tokens echoed by failed IAM requests', async () => {
+    const sentinel = 'IAM_TOKEN_MUST_NOT_BE_LOGGED';
+    iamGetSession.mockRejectedValue(new Error(`failed token ${sentinel}`));
+    const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    try {
+      const service = new OpenfortService(new ConfigService({ openfort: { apiKey: 'secret', walletSecret: 'secret', timeoutMs: 25 } }));
+      await expect(service.verifyIamSession(sentinel)).rejects.toThrow(BadGatewayException);
+      expect(JSON.stringify(log.mock.calls)).not.toContain(sentinel);
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it('rejects embedded wallet addresses not owned by the Openfort user', async () => {

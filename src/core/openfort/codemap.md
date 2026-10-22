@@ -19,8 +19,8 @@
 - **门面（Facade）/ 服务封装**：`OpenfortService` 包装 Openfort SDK 客户端与 viem bundler 客户端，向调用方暴露高层领域方法。
 - **构造注入 + 配置驱动**：构造器从 `ConfigService` 读取 `openfort.apiKey`、`openfort.walletSecret`（必填）、`openfort.publishableKey`（可选）、`openfort.timeoutMs`（默认 15000）初始化 SDK 客户端。
 - **`@Optional()` 依赖**：`RequestContextService` 可选注入，用于日志上下文（`logContext`）。
-- **统一错误归一化**：外部失败转换为 Nest `HttpException`；通常经 `logOpenfortError` 记录安全化上下文。`signData` 专用失败日志仅包含固定 operation 与 timeout/provider-error 分类，不记录 provider message 或 stack。
-- **超时保护**：`withTimeout<T>(op, name)` 用 `Promise.race` 包裹所有 Openfort 调用，超时抛错并映射为 `WALLET_SERVICE_UNAVAILABLE`。
+- **错误归一化与安全日志**：外部失败转换为 Nest HttpException；signData 与 verifyIamSession 仅记录固定操作/失败分类，不记录 provider message、token 或 stack。IAM 明确 401/缺失身份返回 AUTH_PROVIDER_INVALID，超时或上游故障返回 502 AUTH_PROVIDER_UNAVAILABLE，不误清本地会话。
+- **超时保护**：withTimeout 用 Promise.race 包裹外部调用；钱包操作按既有分类映射，身份校验超时单独归类为 AUTH_PROVIDER_UNAVAILABLE。
 - **判别联合结果**：`TransactionReceiptResult` 区分 `success` / `reverted` / `not_found` / `error`，供调用方区分终态与可重试态。
 - **安全回执视图**：`SanitizedReceipt` / `SanitizedReceiptLog` 仅暴露计费所需字段，绝不返回 calldata、私钥、API key 或原始 provider/client。
 - **链差异分支**：Monad 链走 Pimlico RPC（无 Openfort 赞助），非 Monad 走 Openfort RPC（可赞助），由 `isMonadChain` 分流。
@@ -58,14 +58,14 @@
    - `bundlerClient.sendUserOperation` → `waitForUserOperationReceipt` → 返回 userOpHash + transactionHash。
 6. **后端直发**：`sendBackendTransaction` → `accounts.evm.backend.sendTransaction`。
 7. **回执查询**：`getTransactionReceipt` → `getTransactionReceipt` + `getBlock` → 组装 `SanitizedReceipt`；缺失/失败返回可重试的 `not_found`/`error`。
-8. **错误路径**：所有方法 catch → `logOpenfortError` → 按操作与错误特征映射为带 `API_ERROR_CODES` 的 `HttpException`。
+8. **错误路径**：多数方法经 logOpenfortError；签名和身份校验使用固定分类安全日志，再按操作映射带 API_ERROR_CODES 的 HttpException。本地会话读写不调用 Openfort。
 
 ## Integration
 - **消费方**：auth / wallet / transactions 等模块注入 `OpenfortService`（`@Global()` 导出）。
 - **依赖（内部 common）**：
   - `common/request-context/request-context.service` — `RequestContextService`（可选）日志上下文。
   - `common/chains/supported-chains` — `getSupportedChain`、`isMonadChain`。
-  - `common/errors/api-error-codes` — `API_ERROR_CODES`（`AGENT_REGISTRATION_PENDING`、`PAYMASTER_POLICY_NOT_CONFIGURED`、`WALLET_SERVICE_UNAVAILABLE`、`BACKEND_TRANSACTION_FAILED`、`USER_OPERATION_GAS_PRICE_UNAVAILABLE`、`USER_OPERATION_REJECTED`）。
+  - `common/errors/api-error-codes` — 钱包/执行错误及 `AUTH_PROVIDER_INVALID`、`AUTH_PROVIDER_UNAVAILABLE`。
   - `common/utils/sanitize` — `sanitizeErrorMessage`。
   - `common/calibur/calibur` — `createCaliburSessionAccount`、`getAgentKeyUsabilityFailure`、`getCaliburKeySettings`、`hasCaliburDelegation`、`isCaliburKeyRegistered`。
   - `common/calibur/calibur-primitives` — shared browser-safe `CALIBUR_ADDRESSES`、`hashKey`、`KeyType`；不通过 account factory 模块 re-export。

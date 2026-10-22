@@ -1,6 +1,6 @@
 # SOFA ONE
 
-SOFA ONE is a NestJS API plus Vite/React SPA for server-side automated blockchain signing. Users authenticate with Openfort IAM email OTP / embedded wallet, authorize a backend agent signer on-chain, and create API keys for programmatic transaction submission.
+SOFA ONE is a NestJS API plus Vite/React SPA for server-side automated blockchain signing. Users sign in with Openfort IAM email OTP, complete TOTP into a local SOFA session, authorize a backend agent signer on-chain, and create API keys for programmatic transaction submission.
 
 ## Documentation
 
@@ -81,7 +81,7 @@ Public API-key endpoints:
 - `GET /v1/capabilities?ids=id1,id2`
 - `GET /v1/wallets` (only the authenticated key's bound wallet)
 
-Frontend-only endpoints require an Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks:
+Frontend-only endpoints require a live, MFA-verified SOFA HttpOnly session cookie plus `FrontendOnlyGuard` origin/referer checks. Unsafe requests also require `X-CSRF-Token`. Openfort bearer tokens are used only for login exchange and fresh embedded-wallet identity proof; they do not authenticate ordinary dashboard requests.
 
 - `GET /wallets/balances`
 - `GET /wallets/deposits`
@@ -90,6 +90,8 @@ Frontend-only endpoints require an Openfort IAM bearer token plus `FrontendOnlyG
 - selected `/auth/*` dashboard operations
 
 See [API.md](./API.md) and [openapi.yaml](./openapi.yaml).
+
+Application sessions expire absolutely after one hour; pending MFA expires after 15 minutes. Current/all-device logout revokes session-bound step-up proofs. Deploy the SPA/API same-site over HTTPS and coordinate the `20261022000000_application_sessions` migration with both packages; see [DEPLOYMENT.md](./DEPLOYMENT.md) and [API.md](./API.md).
 
 ## Non-negotiable security rules
 

@@ -129,14 +129,18 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
 - `all` dynamically follows active, unpaused reviewed catalog capabilities. `custom` allows
   only exact IDs, and `[]` denies all catalog capabilities. Neither mode overrides API-key
   permissions or independent authorization and safety checks.
-- Capability create/edit/rotation routes are IAM/frontend-only; PATCH requires step-up and
+- Capability create/edit/rotation routes are application-session/frontend-only; PATCH requires step-up and
   replaces the complete configuration. These routes are intentionally absent from
   `openapi.yaml`.
 
 ### Dashboard route fails with frontend-only error
 
-- Confirm the request includes Openfort IAM bearer token.
-- Confirm `Origin`/`Referer` matches configured `CORS_ORIGIN`.
+- Confirm a live SOFA session cookie is sent with `credentials: 'include'`; IAM bearer tokens do not authenticate ordinary dashboard routes.
+- Check `GET /auth/session`: pending MFA cannot access business routes (`MFA_REQUIRED`); complete TOTP or recovery verification.
+- Unsafe requests need the current snapshot's `X-CSRF-Token` and an allowed Origin. Safe GET/HEAD may use an allowed Referer when Origin is absent.
+- Confirm SPA/API are same-site, production is HTTPS, and proxies preserve cookies/headers. Cross-site cookie hosting is unsupported.
+- A provider-only `AUTH_PROVIDER_INVALID` 401 requires wallet identity reconnection, not SOFA logout; `AUTH_PROVIDER_UNAVAILABLE` 502 requires retry, not repeated sign-in.
+- Local sessions expire absolutely after one hour; upstream IAM revocation is not instantaneous locally. Current/all-device logout and account freeze take effect at subsequent auth/proof checks.
 - Do not call frontend-only routes from API-key clients.
 
 ### Transaction status lacks calldata/request details

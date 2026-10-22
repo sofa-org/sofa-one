@@ -65,40 +65,85 @@ describe.each([
     expect(result).not.toHaveProperty('agentWalletAddress');
   });
 
-  it('uses validated GET query parameters for deposit info', async () => {
+  it('uses cookie credentials without a provider bearer for dashboard reads', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await api.getDepositInfoAuth(async () => 'iam-token', 84532, '00000000-0000-4000-8000-000000000001');
+    await api.getDepositInfoAuth(84532, '00000000-0000-4000-8000-000000000001');
     expect(fetchMock.mock.calls[0][0]).toBe(`${base}/wallets/deposits?chainId=84532&walletId=00000000-0000-4000-8000-000000000001`);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
+    const init = fetchMock.mock.calls[0][1];
+    expect(init?.credentials).toBe('include');
+    expect(new Headers(init?.headers).has('Authorization')).toBe(false);
   });
 
-  it('uses the canonical unversioned auth path and bearer token', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await api.syncSession(async () => 'iam-token');
+  it('uses an explicit identity bearer only for session exchange and wallet authorization', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}'));
+    await api.exchangeAppSession('fresh-identity');
+    await api.authorizeEmbeddedWallet('fresh-wallet-identity', { embeddedWalletAddress: '0x1111111111111111111111111111111111111111' });
     expect(fetchMock.mock.calls[0][0]).toBe(`${base}/auth/session`);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Authorization')).toBe('Bearer fresh-identity');
+    expect(new Headers(fetchMock.mock.calls[1][1]?.headers).get('Authorization')).toBe('Bearer fresh-wallet-identity');
+    expect(fetchMock.mock.calls.every(([, init]) => init?.credentials === 'include')).toBe(true);
   });
 
-  it('uses canonical unversioned MFA paths', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await api.getMfaStatusAuth(async () => 'iam-token');
-    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/auth/mfa/status`);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ headers: expect.objectContaining({ Authorization: 'Bearer iam-token' }) });
-  });
-
-  it('rotates keys through the dashboard command with step-up and posts withdrawals canonically', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response('{}', { status: 200 }))
-      .mockResolvedValueOnce(new Response('{}', { status: 200 }))
-      .mockResolvedValueOnce(new Response('{}', { status: 200 }));
-    await api.refreshApiKey(async () => 'iam-token', 'proof', 'wallet-id');
-    const input = [async () => 'iam-token', '0x1111111111111111111111111111111111111111', '100', 'USDC', 84532, 'proof', undefined, 'stable-retry-key'] as const;
+  it('sends CSRF and step-up for unsafe dashboard calls, preserving withdrawal retry keys', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}'));
+    api.configureAppSessionTransport('csrf-secret');
+    await api.refreshApiKey('proof', 'wallet-id');
+    const input = ['0x1111111111111111111111111111111111111111', '100', 'USDC', 84532, 'proof', undefined, 'stable-retry-key'] as const;
     await api.withdrawAuth(...input);
     await api.withdrawAuth(...input);
-    expect(fetchMock.mock.calls[0][0]).toBe(`${base}/api-keys/rotations`);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token', 'X-Step-Up-Token': 'proof' }) });
-    expect(fetchMock.mock.calls[1][0]).toBe(`${base}/wallets/withdrawals`);
-    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer iam-token', 'X-Step-Up-Token': 'proof' }) });
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init?.credentials).toBe('include');
+      const headers = new Headers(init?.headers);
+      expect(headers.get('X-CSRF-Token')).toBe('csrf-secret');
+      expect(headers.get('X-Step-Up-Token')).toBe('proof');
+      expect(headers.has('Authorization')).toBe(false);
+    }
     expect(fetchMock.mock.calls.slice(1).map(([, init]) => JSON.parse(String(init?.body)).idempotencyKey)).toEqual(['stable-retry-key', 'stable-retry-key']);
+  });
+
+  it('restores, upgrades MFA, and revokes sessions through cookie endpoints', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}'));
+    api.configureAppSessionTransport('csrf-secret');
+    await api.getAppSession();
+    await api.getMfaStatusAuth();
+    await api.verifyTotpAuth('123456');
+    await api.deleteAppSession();
+    await api.deleteAllAppSessions('proof');
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      `${base}/auth/session`, `${base}/auth/mfa/status`, `${base}/auth/mfa/totp/verify`,
+      `${base}/auth/session`, `${base}/auth/sessions`,
+    ]);
+    expect(fetchMock.mock.calls[0][1]?.cache).toBe('no-store');
+    expect(fetchMock.mock.calls[3][1]?.method).toBe('DELETE');
+    expect(fetchMock.mock.calls[4][1]?.method).toBe('DELETE');
+    expect(new Headers(fetchMock.mock.calls[4][1]?.headers).get('X-Step-Up-Token')).toBe('proof');
+  });
+
+  it('preserves app authentication when only the separate wallet identity fails', async () => {
+    const invalidate = vi.fn();
+    api.configureAppSessionTransport('csrf-secret', invalidate);
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'AUTH_PROVIDER_INVALID' }), { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'AUTH_PROVIDER_UNAVAILABLE' }), { status: 502 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'AUTHENTICATION_REQUIRED' }), { status: 401 }));
+    const body = { embeddedWalletAddress: '0x1111111111111111111111111111111111111111' };
+    await expect(api.authorizeEmbeddedWallet('expired-provider', body)).rejects.toMatchObject({ code: 'AUTH_PROVIDER_INVALID' });
+    expect(invalidate).not.toHaveBeenCalled();
+    await expect(api.authorizeEmbeddedWallet('fresh-provider', body)).rejects.toMatchObject({ code: 'AUTH_PROVIDER_UNAVAILABLE' });
+    expect(invalidate).not.toHaveBeenCalled();
+    await expect(api.authorizeEmbeddedWallet('fresh-provider', body)).rejects.toBeInstanceOf(api.ApiError);
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('invalidates local authentication only on dashboard 401, not 403 or outages', async () => {
+    const invalidate = vi.fn();
+    api.configureAppSessionTransport('csrf-secret', invalidate);
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    for (const status of [403, 503, 401]) {
+      fetchMock.mockResolvedValueOnce(new Response('{}', { status }));
+      await expect(api.getBillingPlansAuth()).rejects.toBeInstanceOf(api.ApiError);
+      expect(invalidate).toHaveBeenCalledTimes(status === 401 ? 1 : 0);
+    }
   });
 });

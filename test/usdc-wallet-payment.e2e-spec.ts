@@ -2,8 +2,8 @@
  * Phase 2B runtime evidence: quote-bound dashboard wallet payment (pay-from-wallet).
  *
  * Real: AppModule + runner-provisioned PostgreSQL (BILLING_E2E_* only), row locks,
- *       reservation binding, destination policy, StepUp/IAM guards.
- * Mocked: Openfort (IAM + UserOp), SessionKeyPolicy, USDC receipt RPC — never live chain.
+ *       reservation binding, destination policy, persisted full-MFA app sessions.
+ * Mocked: Openfort UserOp, StepUpGuard, SessionKeyPolicy, USDC receipt RPC — never live chain.
  *
  * Run via `npm run test:e2e:billing`. No DATABASE_URL / agent_wallet fallback.
  */
@@ -16,6 +16,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as request from 'supertest';
 import { getAddress } from 'viem';
 import { PrismaService } from '../src/core/database/prisma.service';
+import { AppSessionService } from '../src/modules/app-session/app-session.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { StepUpGuard } from '../src/common/guards/step-up.guard';
 import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
@@ -88,18 +89,12 @@ const BLOCK_HASH = `0x${'d'.repeat(64)}`;
 const PROVIDER_IDENTITY = createHash('sha256').update(RPC_URL).digest('hex');
 const FRONTEND_ORIGIN = 'http://localhost:3000';
 
-const iamSessions = new Map<string, { openfortUserId: string; email: string; userId: string }>();
+interface DashboardSessionFixture {
+  cookie: string;
+  csrfToken: string;
+}
 
 const mockOpenfortService = {
-  verifyIamSession: jest.fn(async (accessToken: string) => {
-    const session = iamSessions.get(accessToken);
-    if (!session) throw new Error('invalid openfort token');
-    return {
-      openfortUserId: session.openfortUserId,
-      email: session.email,
-      session: { id: `sess_${session.openfortUserId}` },
-    };
-  }),
   createBackendWallet: jest.fn(),
   verifyAgentKeyRegistration: jest.fn().mockResolvedValue(undefined),
   submitUserOperation: jest.fn().mockResolvedValue({ userOpHash: USER_OP_HASH }),
@@ -164,8 +159,8 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   let planChargeInvoiceId: string;
   let attemptId: string;
   let planChargeAttemptId: string;
-  let iamToken: string;
-  let otherIamToken: string;
+  let dashboardSession: DashboardSessionFixture;
+  let otherDashboardSession: DashboardSessionFixture;
 
   beforeAll(async () => {
     try {
@@ -234,7 +229,6 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     (mockReceiptProvider.getBlockNumber as jest.Mock).mockResolvedValue(200n);
 
     await cleanDatabase();
-    iamSessions.clear();
     const seeded = await seedFixtures();
     userId = seeded.userId;
     walletId = seeded.walletId;
@@ -242,8 +236,8 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     planChargeInvoiceId = seeded.planChargeInvoiceId;
     attemptId = seeded.attemptId;
     planChargeAttemptId = seeded.planChargeAttemptId;
-    iamToken = seeded.iamToken;
-    otherIamToken = seeded.otherIamToken;
+    dashboardSession = seeded.dashboardSession;
+    otherDashboardSession = seeded.otherDashboardSession;
   });
 
   afterAll(async () => {
@@ -284,30 +278,31 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   }
 
   function payFromWallet(
-    token: string,
+    session: DashboardSessionFixture,
     invId: string,
     body: Record<string, unknown>,
     withStepUp = true,
   ) {
     const req = request(app!.getHttpServer())
       .post(`/billing/invoices/${invId}/usdc/pay-from-wallet`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Cookie', session.cookie)
+      .set('X-CSRF-Token', session.csrfToken)
       .set('Origin', FRONTEND_ORIGIN);
     if (withStepUp) req.set('X-Step-Up-Token', 'e2e-step-up-proof');
     return req.send(body);
   }
 
-  function paymentStatus(token: string, invId: string, paymentAttemptId: string) {
+  function paymentStatus(session: DashboardSessionFixture, invId: string, paymentAttemptId: string) {
     return request(app!.getHttpServer())
       .get(`/billing/invoices/${invId}/usdc/payment-status`)
       .query({ paymentAttemptId })
-      .set('Authorization', `Bearer ${token}`)
+      .set('Cookie', session.cookie)
       .set('Origin', FRONTEND_ORIGIN);
   }
 
   // ── Endpoint contract ──────────────────────────────────────────────────────
 
-  it('rejects API-key auth on pay-from-wallet (dashboard IAM only)', async () => {
+  it('rejects API-key auth on pay-from-wallet (dashboard session only)', async () => {
     await request(app!.getHttpServer())
       .post(`/billing/invoices/${invoiceId}/usdc/pay-from-wallet`)
       .set('X-API-Key', 'sk_test_not_valid')
@@ -318,7 +313,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   });
 
   it('rejects client override fields (forbidNonWhitelisted)', async () => {
-    const res = await payFromWallet(iamToken, invoiceId, {
+    const res = await payFromWallet(dashboardSession, invoiceId, {
       paymentAttemptId: attemptId,
       amount: '1',
       chainId: 1,
@@ -329,16 +324,16 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   });
 
   it('rejects non-UUID paymentAttemptId', async () => {
-    await payFromWallet(iamToken, invoiceId, { paymentAttemptId: 'not-a-uuid' }).expect(400);
+    await payFromWallet(dashboardSession, invoiceId, { paymentAttemptId: 'not-a-uuid' }).expect(400);
   });
 
   it('rejects cross-user ownership (other user invoice)', async () => {
-    await payFromWallet(otherIamToken, invoiceId, { paymentAttemptId: attemptId }).expect(404);
+    await payFromWallet(otherDashboardSession, invoiceId, { paymentAttemptId: attemptId }).expect(404);
     expect(mockOpenfortService.submitUserOperation).not.toHaveBeenCalled();
   });
 
   it('payment-status works without StepUp and stays safe', async () => {
-    const res = await paymentStatus(iamToken, invoiceId, attemptId).expect(200);
+    const res = await paymentStatus(dashboardSession, invoiceId, attemptId).expect(200);
     expect(res.body).toEqual(
       expect.objectContaining({
         invoiceId,
@@ -354,7 +349,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
   it('rejects plan_charge attempt while usage debt exists', async () => {
     // usage invoice unpaid → debt; plan_charge wallet pay blocked.
-    const res = await payFromWallet(iamToken, planChargeInvoiceId, {
+    const res = await payFromWallet(dashboardSession, planChargeInvoiceId, {
       paymentAttemptId: planChargeAttemptId,
     }).expect(403);
     expect(res.body.code).toBe(API_ERROR_CODES.USDC_WALLET_USAGE_DEBT_ONLY);
@@ -366,7 +361,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
       where: { id: walletId },
       data: { frozenAt: new Date(), frozenReason: 'e2e' },
     });
-    const res = await payFromWallet(iamToken, invoiceId, {
+    const res = await payFromWallet(dashboardSession, invoiceId, {
       paymentAttemptId: attemptId,
     }).expect(409);
     expect(res.body.code).toBe(API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE);
@@ -375,7 +370,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
 
   it('rejects when treasury is not allowlisted under destination policy', async () => {
     await prisma!.withdrawalAddress.deleteMany({ where: { userId } });
-    const res = await payFromWallet(iamToken, invoiceId, {
+    const res = await payFromWallet(dashboardSession, invoiceId, {
       paymentAttemptId: attemptId,
     }).expect(403);
     expect(res.body.code).toBe(API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED);
@@ -385,7 +380,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   // ── Happy path + reservation ───────────────────────────────────────────────
 
   it('accepts pay-from-wallet: one binding, provider once, not paid until claim path', async () => {
-    const res = await payFromWallet(iamToken, invoiceId, {
+    const res = await payFromWallet(dashboardSession, invoiceId, {
       paymentAttemptId: attemptId,
     }).expect(202);
 
@@ -427,8 +422,8 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   it('concurrent duplicate pay: single executor / single provider call', async () => {
     // Two parallel HTTP pays — second must not double-dispatch.
     const [a, b] = await Promise.all([
-      payFromWallet(iamToken, invoiceId, { paymentAttemptId: attemptId }),
-      payFromWallet(iamToken, invoiceId, { paymentAttemptId: attemptId }),
+      payFromWallet(dashboardSession, invoiceId, { paymentAttemptId: attemptId }),
+      payFromWallet(dashboardSession, invoiceId, { paymentAttemptId: attemptId }),
     ]);
     expect([a.status, b.status].every((s) => s === 202 || s === 409 || s === 403)).toBe(true);
     // At most one UserOp submission.
@@ -567,6 +562,20 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
   });
 
   // ── Seeds / cleanup ────────────────────────────────────────────────────────
+
+  async function createDashboardSession(ownerId: string): Promise<DashboardSessionFixture> {
+    const sessions = app!.get(AppSessionService);
+    const { token, session } = await sessions.exchange(ownerId, undefined);
+    // Explicit factor fixture: this suite covers payment behavior, not TOTP verification.
+    await prisma!.appSession.update({
+      where: { id: session.id },
+      data: { mfaVerified: true },
+    });
+    return {
+      cookie: `${sessions.cookieName}=${token}`,
+      csrfToken: sessions.csrfToken(token),
+    };
+  }
 
   async function seedFixtures() {
     const socialId = `wpay_${SUITE_ID}`;
@@ -716,18 +725,8 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     const att = await mkAttempt(usageInv.id, { expiresInMs: 3_600_000 });
     const planAtt = await mkAttempt(planInv.id, { expiresInMs: 3_600_000 });
 
-    const token = `iam-wpay-${SUITE_ID}`;
-    const otherToken = `iam-wpay-o-${SUITE_ID}`;
-    iamSessions.set(token, {
-      openfortUserId: socialId,
-      email: `${socialId}@example.com`,
-      userId: user.id,
-    });
-    iamSessions.set(otherToken, {
-      openfortUserId: otherSocial,
-      email: `${otherSocial}@example.com`,
-      userId: other.id,
-    });
+    const dashboardSession = await createDashboardSession(user.id);
+    const otherDashboardSession = await createDashboardSession(other.id);
 
     return {
       userId: user.id,
@@ -736,8 +735,8 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
       planChargeInvoiceId: planInv.id,
       attemptId: att,
       planChargeAttemptId: planAtt,
-      iamToken: token,
-      otherIamToken: otherToken,
+      dashboardSession,
+      otherDashboardSession,
     };
   }
 
@@ -746,7 +745,7 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
       where: { id: attemptId },
       data: { quoteExpiresAt: new Date(Date.now() + 2 * 60_000) },
     });
-    const res = await payFromWallet(iamToken, invoiceId, {
+    const res = await payFromWallet(dashboardSession, invoiceId, {
       paymentAttemptId: attemptId,
     }).expect(400);
     expect(res.body.code).toBe(API_ERROR_CODES.USDC_QUOTE_EXPIRY_TOO_SOON);
@@ -771,6 +770,10 @@ describe('USDC wallet-payment (Phase 2B e2e runtime evidence)', () => {
     await prisma.walletChainAuthorization.deleteMany().catch(() => undefined);
     await prisma.userWallet.deleteMany().catch(() => undefined);
     await prisma.stepUpChallenge.deleteMany().catch(() => undefined);
+    // Deleting only this suite's sessions also cascades their session-bound proofs.
+    await prisma.appSession.deleteMany({
+      where: { user: { socialId: { in: [`wpay_${SUITE_ID}`, `wpay_o_${SUITE_ID}`] } } },
+    });
     await prisma.securityEvent.deleteMany().catch(() => undefined);
     await prisma.user.deleteMany().catch(() => undefined);
   }

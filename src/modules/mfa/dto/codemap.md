@@ -47,11 +47,11 @@ shape and format of the `code` field; no other module defines or re-validates it
 
 - **Consumers**: `MfaController` (`src/modules/mfa/mfa.controller.ts`) imports
   `TotpCodeDto` and uses it as the `@Body()` type on three routes:
-  - `POST /auth/mfa/totp/enable` → `mfa.enableTotp(req.user.id, dto.code)`
-  - `POST /auth/mfa/totp/verify` → `mfa.verifyTotp(req.user.id, dto.code)`
-  - `POST /auth/mfa/totp/disable` → `mfa.disableTotp(req.user.id, dto.code)`
+  - `POST /auth/mfa/totp/enable` → `mfa.enableTotp(req.user.id, req.appSession.id, dto.code)`
+  - `POST /auth/mfa/totp/verify` → `mfa.verifyTotp(req.user.id, req.appSession.id, dto.code)`
+  - `POST /auth/mfa/totp/disable` → `mfa.disableTotp(req.user.id, req.appSession.id, dto.code)` and clear revoked cookie
 - **Not used** by `GET /auth/mfa/status` or `POST /auth/mfa/totp/setup` (no body).
-- **Route context**: all routes are `@FrontendOnly()` and guarded by `OpenfortUserGuard` +
+- **Route context**: all routes are frontend-only and use AppSessionGuard +
   `FrontendOnlyGuard`; the DTO itself carries no auth concerns.
 - **Dependencies**: external `class-validator` (npm). No internal module imports.
 - **Output**: a validated `TotpCodeDto` instance (or a 400 `BadRequestException` from the global

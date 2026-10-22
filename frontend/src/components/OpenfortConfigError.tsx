@@ -6,7 +6,7 @@ type OpenfortConfigErrorProps = {
 };
 
 const OPENFORT_ENV_HELP: Record<string, string> = {
-  VITE_OPENFORT_PUBLISHABLE_KEY: 'Enables Openfort email OTP sign-in and IAM session checks.',
+  VITE_OPENFORT_PUBLISHABLE_KEY: 'Enables Openfort email OTP sign-in and fresh wallet identity proof, not local SOFA session restoration.',
   VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY: 'Enables embedded wallet recovery and dashboard wallet setup.',
 };
 
@@ -43,7 +43,7 @@ export function OpenfortConfigError({ missingVars }: OpenfortConfigErrorProps) {
               <div className="mt-2 space-y-3">
                 {signInVars.length > 0 && (
                   <div>
-                    <p className="font-semibold text-red-900">Sign-in and session checks</p>
+                    <p className="font-semibold text-red-900">Sign-in and wallet identity</p>
                     <ul className="mt-1 space-y-1.5">
                       {signInVars.map((name) => (
                         <li key={name}>

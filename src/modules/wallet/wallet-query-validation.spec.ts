@@ -2,14 +2,14 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 jest.mock('./wallet.service', () => ({ WalletService: class WalletService {} }));
-jest.mock('../../common/guards/openfort-user.guard', () => ({ OpenfortUserGuard: class OpenfortUserGuard {} }));
+jest.mock('../../common/guards/app-session.guard', () => ({ AppSessionGuard: class AppSessionGuard {} }));
 jest.mock('../../common/guards/frontend-only.guard', () => ({ FrontendOnlyGuard: class FrontendOnlyGuard {} }));
 jest.mock('../../common/guards/step-up.guard', () => ({ StepUpGuard: class StepUpGuard {} }));
 jest.mock('../../common/guards/api-key-auth.guard', () => ({ ApiKeyAuthGuard: class ApiKeyAuthGuard {} }));
 jest.mock('../../common/guards/api-key-permission.guard', () => ({ ApiKeyPermissionGuard: class ApiKeyPermissionGuard {} }));
 import { DashboardWalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
 
 describe('Wallet query HTTP validation', () => {
@@ -24,7 +24,7 @@ describe('Wallet query HTTP validation', () => {
       controllers: [DashboardWalletController],
       providers: [{ provide: WalletService, useValue: walletService }],
     })
-      .overrideGuard(OpenfortUserGuard).useValue({ canActivate: () => true })
+      .overrideGuard(AppSessionGuard).useValue({ canActivate: () => true })
       .overrideGuard(FrontendOnlyGuard).useValue({ canActivate: () => true })
       .compile();
     app = module.createNestApplication();

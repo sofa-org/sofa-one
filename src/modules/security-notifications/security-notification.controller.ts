@@ -2,12 +2,12 @@ import { Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { SecurityNotificationService } from './security-notification.service';
 
 @Controller('security-notifications')
 @FrontendOnly()
-@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+@UseGuards(AppSessionGuard, FrontendOnlyGuard)
 export class SecurityNotificationController {
   constructor(private readonly notifications: SecurityNotificationService) {}
 

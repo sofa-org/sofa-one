@@ -11,8 +11,8 @@ Wallet operations for the SOFA ONE dashboard and public API:
 - Freeze enforcement: frozen wallets are rejected before any query result or signing/withdrawal side effect.
 
 ## Design/Patterns
-- **Controller/service split with validated DTOs.** `WalletController` owns API-key signing only, `DashboardWalletController` owns IAM routes, and `ApiKeyWalletController` remains separate; `WalletService` owns business logic; `dto/` owns class-validator request shapes.
-- **Access-control split.** `POST /v1/wallets/sign` is API-key only (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard` with `canSign`). Dashboard routes use `OpenfortUserGuard` + `FrontendOnlyGuard`, with `StepUpGuard` + `@RequireStepUp()` on withdrawal and withdrawal-address mutations.
+- **Controller split**: WalletController owns public API-key signing; DashboardWalletController owns local-session wallet operations; ApiKeyWalletController owns public key-bound metadata. Existing DTO/service responsibilities are unchanged.
+- **Auth split**: AppSessionGuard + FrontendOnlyGuard on dashboard routes, Origin/CSRF on mutations and exact-session StepUpGuard on withdrawal/address changes. Public signing remains API-key-only.
 - **Policy services encapsulate security rules.** `DefiPolicyService` restricts API-key signing to the exact Polymarket `ClobAuth` bootstrap shape, while `WithdrawalPolicyService` owns dashboard withdrawal/address rules and records telemetry. `SigningPolicyService` is applied to the narrowly allowed signing path.
 - **Required core policy injection.** `WalletService` requires EOA execution, signing, risk, request context, Polymarket order verifier/budget, and Batch verifier services. Only best-effort destination-protection audit injection remains optional, with failures isolated from policy results.
 - **Signing execution mode.** Signing accepts only approved `typed_data` with `executionMode: 'eoa'` (also the default when omitted), returning the raw backend EOA signature. EOA isolation remains gated by `EoaExecutionPolicyService`. Transaction session-key/UserOperation submission is unchanged; withdrawals still use the Calibur agent.
@@ -42,7 +42,7 @@ Wallet operations for the SOFA ONE dashboard and public API:
 - `DELETE` removes ownership-scoped (`userId`) and records `withdrawal_address.removed`.
 
 ### Withdrawal (dashboard-only, step-up)
-1. Guards: `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard`; `stepUpVerified` is passed into the service.
+1. Guards: AppSessionGuard + FrontendOnlyGuard + exact-session StepUpGuard; unsafe Origin/CSRF checked before the existing stepUpVerified service boundary.
 2. Load `UserWallet` with `chainAuthorizations`; reject frozen, non-active (missing agent account/address/keyHash), or chain-unauthorized wallets; reject self-withdrawal.
 3. `WithdrawalPolicyService.assertWithdrawalAllowed` with `skipDailyLimit: true`: enforces `requireStepUp` (defense-in-depth), single-withdrawal limit (defaults: 10k USDC/USDT micro-units, 100 native wei), and address allowlist/cooldown; records `withdrawal.policy_denied` and `withdrawal.high_value_requested` (≥1k stablecoin units / ≥1 native token).
 4. `RiskEvaluationService.evaluateRisk` (`operationType: 'withdrawal'`); `require_step_up` is satisfied only when `stepUpVerified === true`.
@@ -54,11 +54,11 @@ Wallet operations for the SOFA ONE dashboard and public API:
 
 ### Freezing
 - `assertWalletNotFrozen` throws `ForbiddenException(frozenReason ?? 'Wallet is frozen')` whenever `UserWallet.frozenAt` is set; applied to `getDepositInfo`, `getBalances`, `sign`, and `withdraw` before any data return or side effect.
-- Frozen users/API keys are additionally rejected upstream by `ApiKeyAuthGuard`/`OpenfortUserGuard` (outside this module).
+- Frozen users are rejected by AppSessionGuard/ApiKeyAuthGuard; frozen API-key behavior is unchanged.
 - Risk enforcement can freeze the API key (`risk.critical_frozen` → `ApiKey.frozenAt`) during signing/withdrawal risk evaluation.
 
 ## Integration
-- **Guards/decorators:** `ApiKeyAuthGuard`, `ApiKeyPermissionGuard` + `@RequireApiKeyPermission('canSign')` (sign); `OpenfortUserGuard`, `FrontendOnlyGuard`, `@FrontendOnly()` (dashboard routes); `StepUpGuard` + `@RequireStepUp()` (withdraw, withdrawal-address writes); `@CurrentUser('id')`.
+- **Guards**: public API-key permission guards remain separate from dashboard application-session/Origin/CSRF and step-up guards.
 - **Services:** `PrismaService` (persistence), `OpenfortService` (`signData`, `sendUserOperation`), `DefiPolicyService` (mandatory), `PolymarketDepositBatchVerifierService` + deployment probe (full Polygon deployment identity and non-broadcast execute simulation; configured RPC required), Polymarket order verifier/budget, `WithdrawalPolicyService`, `SigningPolicyService`, EOA/risk policies, `RequestContextService`, optional best-effort `SecurityEventService`.
 - **Modules imported by `WalletModule`:** `StepUpModule`, `SecurityEventModule`, `EoaExecutionModule`, `BillingModule`, `DefiModule`, `WithdrawalDestinationModule` (shared destination/cooldown leaf + `withdrawal_dest:<userId>` advisory lock for BILL-016; no cycle with destination module). Session-key policy wiring is owned by the transaction module, not wallet signing.
 - **Common utils:** `getSupportedChain` (chain validation + token addresses), `hashRequest` (stable SHA-256), `AgentStatus` (chain-authorization readiness), `API_ERROR_CODES.SIGNING_BLOCKED_BY_DESTINATION_PROTECTION` / `WITHDRAWAL_DESTINATION_POLICY_UNAVAILABLE`.

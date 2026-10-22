@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -83,6 +84,7 @@ export class AuthService {
       where: { socialId },
     include: { wallets: { include: { chainAuthorizations: true, provisioningIntent: true }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } },
     });
+    if (existing?.frozenAt) throw new ForbiddenException('User account is frozen');
 
     let userId: string;
     let wallets: any[] = existing?.wallets ?? [];
@@ -173,10 +175,6 @@ export class AuthService {
     };
   }
 
-  /** @deprecated Use syncOpenfortSession. Kept as a compatibility alias for older callers/tests. */
-  async handleSocialLogin(openfortUserId: string, _depth = 0) {
-    return this.syncOpenfortSession(openfortUserId, undefined, undefined, undefined, _depth);
-  }
 
   async authorizeEmbeddedWallet(
     openfortUserId: string,

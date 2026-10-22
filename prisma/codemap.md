@@ -21,6 +21,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 ### Identity & Wallet
 
 - **User** (`users`): Openfort IAM identity — `socialProvider`/`socialId` (unique), optional `email`, freeze state. 1:N with `UserWallet` (at most one partial-indexed default), plus 1:1 `WithdrawalPolicy`, `UserMfaTotpCredential`, `BillingAccount`; existing wallet rows remain intact during multi-wallet rollout.
+- **AppSession** (app_sessions): hash-only opaque cookie identity, userId, MFA/pending deadline, fixed expiry, revocation and creation timestamps. Composite (id,userId) anchors exact-owner step-up proofs.
 - **UserWallet** (`user_wallets`): N:1 per user. `openfortAccountId` (stable Openfort FK, unique), `walletAddress` (unique), `isDefault`, `status`, signer fields (`agentOpenfortAccountId`, `signerAddress` mapped to `signer_address`, `agentKeyHash` — Calibur session key), freeze state. `openfortAccountId` must never be replaced by wallet address or orphaned.
 - **WalletProvisioningIntent** (`wallet_provisioning_intents`): one durable intent per wallet; pending/dispatched/uncertain/provisioned/completed lifecycle, single dispatch token, known provider agent identifiers including `signerAddress` (`signer_address`), and audited resolution metadata. Contains no private keys; uncertain creates require fail-closed human/provider recovery.
 - **WalletChainAuthorization** (`wallet_chain_authorizations`): composite PK `(walletId, chainId)`; per-chain agent registration status, `registrationTxHash`, `expiresAt`; cascade-deletes with wallet.
@@ -41,7 +42,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 - **WithdrawalPolicy** (`withdrawal_policies`): 1:1 per user — single/daily withdrawal limits (decimal strings), `requireAddressAllowlist`, `newAddressCooldownHours` (default 24), `requireStepUp` (default true).
 - **WithdrawalAddress** (`withdrawal_addresses`): allowlisted destinations with `availableAt` cooldown; unique `(userId, address)`.
 - **UserKnownIp** (`user_known_ips`): per-user known IPs for context-change detection; unique `(userId, ip)`.
-- **StepUpChallenge** (`step_up_challenges`): random `proofToken` (indexed), `verified`, `expiresAt`; cascade-deletes with user. Unused challenge-code hash and attempt-count columns were removed; validation still only accepts verified, unexpired proofs bound to the requested user and type.
+- **StepUpChallenge**: verified expiring proof bound to required (sessionId,userId) FK. Validation additionally requires the exact live full-MFA/unfrozen session; legacy unbound proofs are deleted during session cutover.
 - **UserMfaTotpCredential** (`user_mfa_totp_credentials`): 1:1 per user — `encryptedSecret`, `status` (`pending`/enabled/disabled lifecycle), `enabledAt`/`disabledAt`.
 - **UserMfaTotpRecoveryCode** (`user_mfa_totp_recovery_codes`): hashed recovery codes with `usedAt`; cascade-deletes with credential.
 
@@ -78,6 +79,8 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 7. **Billing**: usage is recorded into `BillingUsageEvent` (api_request/openfort_receipt sources); `BillingReconciliationService` reconciles receipts against `Transaction` rows (account/period-scoped runs with DB leases) and updates run state; `BillingService` computes invoices from usage/plan assignments; `StripePaymentService`/`UsdcPaymentService` create `BillingPaymentAttempt` rows; `InvoiceSettlementService` atomically settles via `paidAt`/`paidVia`/`settlementAttemptId` CAS; `StripeWebhookService` records webhook events, transitions attempts, and mirrors/materializes subscription renewals. When `BILLING_WORKER_ENABLED=true`, `BillingWorkerService` (5-minute interval) drains reconciliation and finalizes eligible periods, resumes pending/confirming USDC claims via persisted `submittedTxHash`/`nextCheckAt`, retries deferred Stripe renewal events, and recovers interrupted pending Checkouts.
 
 ## Migration History
+
+- **20261022000000_application_sessions**: Adds hashed local sessions, invalidates legacy unbound step-up proofs and requires composite session/owner binding. Coordinate backend/frontend cutover; existing user/wallet/key/billing IDs are preserved.
 
 - **20261021000000_rename_signer_address**: Data-preserving signer column/index renames on wallets and provisioning intents; renames transaction details signer key, aborting on conflicting dual-key identities. Historical audit execution addresses and immutable security-event metadata are unchanged. Requires coordinated application/database cutover; see `DATABASE.md`.
 
@@ -141,7 +144,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 - **PrismaService / PrismaModule** (`src/core/database/`): Global provider; all consumers inject `PrismaService` and use generated model delegates plus `$transaction` (interactive transactions for atomic key creation, wallet provisioning, settlement, and usage recording).
 - **AuthModule** (`src/modules/auth/auth.service.ts`): `User` find-or-create, `UserWallet` provisioning, `WalletChainAuthorization` updates, `UserKnownIp` tracking.
 - **ApiKeyModule** (`src/modules/api-key/api-key.service.ts`): `ApiKey` create/list/revoke/rotate with `ApiKeyEvent` audit inside transactions.
-- **Auth guards** (`src/common/guards/`): `ApiKeyAuthGuard`/`EitherAuthGuard`/`OpenfortUserGuard` — `ApiKey` prefix-candidate lookup + Argon2 verification, `User` resolution, `SecurityEvent` writes, `ApiKey.updateMany` freeze actions; `IpAllowlistService` reads `ApiKey.allowedIps`.
+- **Auth guards**: ApiKeyAuthGuard handles public prefix/hash/freeze policy; AppSessionGuard resolves local session/current User/freeze state. Openfort identity verification occurs only at explicit exchange/wallet-proof boundaries.
 - **WalletModule** (`src/modules/wallet/`): `UserWallet` reads/freeze checks, `SigningRequest` create/list/update, `Transaction` writes for withdrawals, `WithdrawalPolicy`/`WithdrawalAddress` management with row locks.
 - **TransactionsModule** (`src/modules/transactions/`): `Transaction` create/update/list/status with idempotency and attribution snapshots; `TransactionPolicyService` reads transaction history for spend-limit enforcement.
 - **SecurityEventsModule** (`src/modules/security-events/`): `SecurityEvent` writes (risk-scored), `ApiKey` reads for risk evaluation; `SecurityNotificationsModule` creates/reads `SecurityNotification` rows.

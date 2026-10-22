@@ -20,9 +20,7 @@ jest.mock('argon2', () => ({ verify: jest.fn() }));
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
-jest.mock('../../common/guards/openfort-user.guard', () => ({
-  OpenfortUserGuard: class OpenfortUserGuard {},
-}));
+jest.mock('../../common/guards/app-session.guard', () => ({ AppSessionGuard: class AppSessionGuard {} }));
 
 const key = 'sk_' + 'a'.repeat(64);
 const user = { id: 'owner-id', frozenAt: null };

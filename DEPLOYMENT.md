@@ -82,6 +82,10 @@ npm run build
 - Set `TRUST_PROXY` to trusted proxy IP/CIDR values.
 - Use strong PostgreSQL/Redis credentials.
 - Run `npm run prisma:migrate:deploy` before starting new backend code.
+- Application-session cutover is coordinated, not mixed-version rolling deployment: drain old API instances, back up the database, apply `20261022000000_application_sessions`, regenerate Prisma Client, then deploy the matching backend and frontend. It deletes legacy unbound step-up proofs and adds a required session FK; users must complete MFA again. User, wallet, API-key and billing IDs are preserved.
+- Serve SPA/API same-site over HTTPS (same origin `/api` proxy or same-site subdomains). Session cookies use `SameSite=Lax`; unrelated cross-site deployments are unsupported. Preserve `Set-Cookie`, Origin/Referer and `X-CSRF-Token` through proxies; allow credentialed CORS for exact SPA origins, never `*`.
+- Production cookies are `__Host-sofa_session` with Secure/HttpOnly/Path=/ and no Domain. Do not rewrite Domain/Path in a way that violates the `__Host-` contract. Non-wallet dashboard pages need no wallet SDK/Shield configuration; email login and wallet controls still need their respective Openfort configuration.
+- PrismaService appends `-c timezone=UTC` to effective PostgreSQL startup options for every pooled connection. The installed adapter assumes UTC timestamptz results; keep this invariant when constructing independent clients. This does not rewrite persisted timestamps.
 - Capability-mode migrations require coordinated maintenance: stop all old API instances and
   other API-key writers, apply the migration, and then start the new version. Never run mixed
   old/new writers because old binaries do not preserve the mode invariant. This one-time

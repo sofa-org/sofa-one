@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEmailOtpAuth } from '@openfort/react';
+import { useEmailOtpAuth, useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 type RedirectState = {
@@ -31,10 +32,16 @@ function normalizeOtpInput(value: string) {
   return value.replace(/[\s-]/g, '');
 }
 
-export default function EmailOtpForm() {
+export default function EmailOtpForm({
+  walletReauthentication = false,
+  onWalletReauthenticated,
+}: { walletReauthentication?: boolean; onWalletReauthenticated?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { requestEmailOtp, signInEmailOtp, isRequesting, isLoading } = useEmailOtpAuth();
+  const { getAccessToken } = useUser();
+  const { exchange } = useAppSession();
+  const [exchanging, setExchanging] = useState(false);
   const otpInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -102,22 +109,32 @@ export default function EmailOtpForm() {
       return;
     }
 
+    setExchanging(true);
     try {
       const result = await signInEmailOtp({ email: normalizedEmail, otp: normalizedOtp });
       if (result.error || !result.user) {
         setError(result.error?.message ?? 'Invalid OTP.');
         return;
       }
-      navigate(getPostSignInPath(location.state), { replace: true });
+      const providerBearer = await getAccessToken();
+      if (!providerBearer) throw new Error('Identity verification is not ready. Try the code again.');
+      if (!walletReauthentication) {
+        await exchange(providerBearer);
+        navigate(getPostSignInPath(location.state), { replace: true });
+      } else {
+        onWalletReauthenticated?.();
+      }
     } catch (err: unknown) {
       setError(getAuthErrorMessage(err, 'Could not verify OTP. Check your connection and try again.'));
+    } finally {
+      setExchanging(false);
     }
   }
 
   return (
     <div className="w-full rounded-2xl border border-brand-border bg-white p-8 shadow-2xl shadow-[#E8E2D9]/40">
       <h1 className="font-serif text-2xl font-semibold text-brand-text">
-        Sign in or create account
+        {walletReauthentication ? 'Reconnect wallet controls' : 'Sign in or create account'}
       </h1>
       <p className="mt-2 text-sm text-brand-muted">
         We&apos;ll send a one-time code to your email. No social OAuth or browser
@@ -167,10 +184,10 @@ export default function EmailOtpForm() {
 
         <button
           type="submit"
-          disabled={isRequesting || isLoading || !email.trim() || (sent && !otp.trim())}
+          disabled={isRequesting || isLoading || exchanging || !email.trim() || (sent && !otp.trim())}
           className="w-full rounded-full bg-brand-text px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-brand-text/90 disabled:opacity-50"
         >
-          {sent ? (isLoading ? 'Verifying…' : 'Verify code') : isRequesting ? 'Sending…' : 'Send OTP'}
+          {sent ? (isLoading || exchanging ? 'Verifying…' : 'Verify code') : isRequesting ? 'Sending…' : 'Send OTP'}
         </button>
       </form>
 

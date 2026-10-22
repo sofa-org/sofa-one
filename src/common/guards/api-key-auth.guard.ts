@@ -53,9 +53,9 @@ type ApiKeyAuthRecord = {
 /**
  * Authenticates public API routes with X-API-Key only.
  *
- * This guard intentionally does not accept Bearer tokens. Dashboard/human routes
- * should use OpenfortUserGuard, while public programmatic routes should use this
- * guard directly; public routes never use a combined-auth flow.
+ * This guard accepts neither IAM bearer tokens nor application-session cookies.
+ * Dashboard/human routes use AppSessionGuard; public programmatic routes never
+ * use a combined-auth flow.
  */
 @Injectable()
 export class ApiKeyAuthGuard implements CanActivate {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider'
 import { AlertCircle, ArrowLeft, ArrowRight, Loader2, RefreshCw, X } from 'lucide-react';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import { CopyButton } from '@/components/CopyButton';
@@ -96,12 +96,8 @@ function truncateAddress(address: string | null) {
 }
 
 export default function TransactionsPage() {
-  const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    return token;
-  }, [getAccessToken]);
+  const { session, loading: authLoading } = useAppSession()
+  
 
   const [activeTab, setActiveTab] = useState<TabValue>('transactions');
 
@@ -140,7 +136,7 @@ export default function TransactionsPage() {
       const params: Record<string, unknown> = { page: txPage, limit: PAGE_SIZE };
       if (txStatus) params.status = txStatus;
       if (txChainId) params.chainId = txChainId;
-      const data = await listTransactionsAuth(getToken, params, undefined);
+      const data = await listTransactionsAuth(params, undefined);
       setTxItems(data.items);
       setTxTotal(data.total);
     } catch (err: unknown) {
@@ -148,7 +144,7 @@ export default function TransactionsPage() {
     } finally {
       setTxLoading(false);
     }
-  }, [getToken, txPage, txStatus, txChainId]);
+  }, [txPage, txStatus, txChainId]);
 
   const fetchSigningRequests = useCallback(async () => {
     setSrLoading(true);
@@ -158,7 +154,7 @@ export default function TransactionsPage() {
       if (srType) params.type = srType;
       if (srStatus) params.status = srStatus;
       if (srChainId) params.chainId = srChainId;
-      const data = await listSigningRequestsAuth(getToken, params, undefined);
+      const data = await listSigningRequestsAuth(params, undefined);
       setSrItems(data.items);
       setSrTotal(data.total);
     } catch (err: unknown) {
@@ -166,18 +162,18 @@ export default function TransactionsPage() {
     } finally {
       setSrLoading(false);
     }
-  }, [getToken, srPage, srType, srStatus, srChainId]);
+  }, [srPage, srType, srStatus, srChainId]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) {
+    if (!session) {
       setTxLoading(false);
       setSrLoading(false);
       return;
     }
     if (activeTab === 'transactions') fetchTransactions();
     else fetchSigningRequests();
-  }, [authLoading, isAuthenticated, activeTab, fetchTransactions, fetchSigningRequests]);
+  }, [authLoading, session, activeTab, fetchTransactions, fetchSigningRequests]);
 
   const handleTxStatusChange = useCallback((value: string) => {
     setTxPage(1);
@@ -245,10 +241,10 @@ export default function TransactionsPage() {
     async function load() {
       try {
         if (drawerType === 'transaction') {
-          const data = await getTransactionDetailAuth(getToken, id, controller.signal);
+          const data = await getTransactionDetailAuth(id, controller.signal);
           if (!cancelled) setDrawerData(data);
         } else if (drawerType === 'signing-request') {
-          const data = await getSigningRequestDetailAuth(getToken, id, controller.signal);
+          const data = await getSigningRequestDetailAuth(id, controller.signal);
           if (!cancelled) setDrawerData(data);
         }
       } catch (err: unknown) {
@@ -263,7 +259,7 @@ export default function TransactionsPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [drawerOpen, drawerId, drawerType, drawerRetryNonce, getToken]);
+  }, [drawerOpen, drawerId, drawerType, drawerRetryNonce]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {

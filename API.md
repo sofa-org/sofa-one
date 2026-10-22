@@ -17,13 +17,23 @@ API keys are accepted only by public automation endpoints.
 
 ### Dashboard clients
 
-Use Openfort IAM bearer tokens:
+Use browser-managed HttpOnly application-session cookies with `credentials: 'include'`.
+`POST /auth/session` exchanges a fresh `Authorization: Bearer <openfort_iam_access_token>`
+for a pending-MFA SOFA cookie and `{ sessionId, userId, email, mfaVerified, expiresAt, csrfToken }`.
+`GET /auth/session` restores this snapshot without calling Openfort. There is no bearer
+fallback on ordinary dashboard routes.
 
-```http
-Authorization: Bearer <openfort_iam_access_token>
-```
+Unsafe cookie requests require both an allowed `Origin` and `X-CSRF-Token` from the current
+snapshot. Safe GET/HEAD requests may use a trusted `Referer` when Origin is absent, including
+production same-origin fetches. These headers are not authentication. Production uses
+`__Host-sofa_session` (`Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, no Domain); development
+uses `sofa_session`. SPA/API must be same-site; unrelated cross-site hosting is unsupported.
 
-Frontend-only routes require IAM authentication plus the `FrontendOnlyGuard` origin check. In production, an allowed `Origin` is required; outside production, an allowed `Referer` may be used when `Origin` is absent. These headers are CSRF defense-in-depth, not authentication.
+Every exchange starts pending MFA. Only introspection, current logout, MFA status, and
+TOTP setup/enable/verify are available before verification. A pending session expires after
+15 minutes; successful TOTP/recovery verification upgrades that exact session atomically
+with proof issuance. Absolute expiry remains one hour from exchange, with no sliding renewal.
+Openfort-side identity revocation is therefore bounded by that hour, not synchronized instantly.
 
 ## 2. Public API-key endpoints
 
@@ -63,10 +73,13 @@ These fields are not renamed, backfilled, or reinterpreted as the current user's
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/auth/session` | Sync current Openfort IAM session to local user/wallet state |
+| `POST` | `/auth/session` | Exchange Openfort identity for a pending-MFA HttpOnly session |
+| `GET` | `/auth/session` | Restore local session snapshot and CSRF token; pending allowed |
+| `DELETE` | `/auth/session` | Revoke current session/proofs and clear cookie; pending allowed |
+| `DELETE` | `/auth/sessions` | Revoke all user sessions/proofs; full MFA plus current-session step-up |
 | `GET` | `/auth/me` | Return current user wallet/authorization state |
 | `POST` | `/api-keys/rotations` | Revoke all active keys across the user and issue one replacement bound to selected wallet (step-up) |
-| `POST` | `/auth/embedded-wallet/authorize` | Bind embedded EOA and return agent registration details |
+| `POST` | `/auth/embedded-wallet/authorize` | Full local session plus fresh Openfort bearer whose subject matches the local user; bind proven embedded EOA |
 | `POST` | `/auth/embedded-wallet/registration-transaction` | Persist submitted Calibur registration tx hash |
 | `POST` | `/auth/embedded-wallet/registration-result` | Persist final registration status |
 | `GET/POST` | `/auth/mfa/*` | Dashboard MFA/TOTP operations |
@@ -85,6 +98,12 @@ These fields are not renamed, backfilled, or reinterpreted as the current user's
 
 These routes must not be added to `openapi.yaml` unless the product intentionally exposes them as public API-key routes.
 
+Session/MFA responses are `Cache-Control: no-store`. `MFA_REQUIRED` is a 403, not a lost login.
+`AUTH_PROVIDER_INVALID` is a provider-only 401 and must not clear a valid SOFA session;
+`AUTH_PROVIDER_UNAVAILABLE` is a 502. Other application-cookie 401s require sign-in again.
+Step-up proofs expire after at most 15 minutes, are bound to the exact user/session, and are
+invalidated on cookie replacement/logout. TOTP disable verifies the factor and revokes all sessions.
+
 ### Wallet-bound API keys
 
 Each new API key is immutably bound to exactly one of its owner's wallets. A wallet may
@@ -93,7 +112,7 @@ Dashboard `POST /api-keys` creation requires `walletId` as a wallet UUID owned b
 authenticated user. The dashboard-only `POST /api-keys/rotations` likewise requires
 `{ "walletId": "<wallet UUID>" }`: it revokes **all** of that user's active keys across
 all wallets and creates one replacement bound to the selected wallet. It does not move or
-rebind a surviving key. Both routes remain IAM/frontend-only and step-up protected.
+rebind a surviving key. Both routes remain application-session/frontend-only and step-up protected.
 
 Public `POST /v1/wallets/sign` and `POST /v1/transactions` always resolve the
 execution wallet from the authenticated key's binding, not from caller selection. Send's
@@ -113,7 +132,7 @@ omitted defaults to `all` and `[]`; IDs alone selects custom, including `[]`; ex
 accepts omitted or empty IDs. `custom` requires IDs, and
 `all` rejects nonempty or null IDs. List/create/rotation/PATCH expose the configured mode
 and IDs, not a materialized expansion of effective IDs. Rotation resets to `all` with an
-empty ID list while preserving its established permission/IP/TTL defaults. IAM step-up
+empty ID list while preserving its established permission/IP/TTL defaults. Dashboard step-up
 PATCH accepts `{ "capabilityMode": "all" }` to reset, or custom plus the complete ID list;
 IDs-only PATCH remains custom for compatibility. `{}` is invalid.
 

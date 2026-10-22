@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider'
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X, ShieldCheck, Search } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
@@ -167,14 +167,8 @@ function walletLabel(wallet: WalletInfo) {
 }
 
 export default function ApiKeysPage() {
-  const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
+  const { session, loading: authLoading } = useAppSession()
+  
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [wallets, setWallets] = useState<WalletInfo[]>([]);
   const [walletsLoading, setWalletsLoading] = useState(true);
@@ -270,7 +264,7 @@ export default function ApiKeysPage() {
     setKeysRefreshing(true);
     setListError(null);
     try {
-      const data = await listApiKeysAuth(getToken);
+      const data = await listApiKeysAuth();
       setKeys(data);
     } catch (err: unknown) {
       setListError(getApiErrorMessage(err));
@@ -278,12 +272,12 @@ export default function ApiKeysPage() {
       setLoading(false);
       setKeysRefreshing(false);
     }
-  }, [getToken]);
+  }, []);
 
   const fetchWallets = useCallback(async () => {
     setWalletsLoading(true);
     try {
-      const session = await getMe(getToken);
+      const session = await getMe();
       const availableWallets = session.wallets?.length ? session.wallets : session.wallet ? [session.wallet] : [];
       setWallets(availableWallets);
       setSelectedWalletId((current) =>
@@ -297,26 +291,26 @@ export default function ApiKeysPage() {
     } finally {
       setWalletsLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   const fetchCapabilities = useCallback(async () => {
     setCapabilitiesLoading(true);
     setCapabilitiesError(null);
     try {
-      const result = await listDefiCapabilitiesAuth(getToken);
+      const result = await listDefiCapabilitiesAuth();
       setCapabilities(result.capabilities);
     } catch (err: unknown) {
       setCapabilitiesError(getApiErrorMessage(err));
     } finally {
       setCapabilitiesLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   const fetchBundles = useCallback(async () => {
     setBundlesLoading(true);
     setBundlesError(null);
     try {
-      const response = await listDefiCapabilityBundlesAuth(getToken);
+      const response = await listDefiCapabilityBundlesAuth();
       if (response.schemaVersion !== 1 || typeof response.currentCatalogManifestHash !== 'string' || !Array.isArray(response.bundles)) throw new Error('The capability bundle response is invalid.');
       setBundles(response.bundles);
     } catch (err: unknown) {
@@ -325,11 +319,11 @@ export default function ApiKeysPage() {
     } finally {
       setBundlesLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated || !user) {
+    if (!session) {
       setLoading(false);
       return;
     }
@@ -337,7 +331,7 @@ export default function ApiKeysPage() {
     fetchWallets();
     fetchCapabilities();
     fetchBundles();
-  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, fetchWallets, isAuthenticated, user]);
+  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, fetchWallets, session]);
 
   function startBundlePreview(mode: 'add' | 'replace', target: string, ids: string[]) {
     const bundle = bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey);
@@ -414,19 +408,16 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      const result = await createApiKeyAuth(
-        getToken,
-        {
-          walletId: selectedWalletId,
-          name: trimmedName,
-          ...(allowedIps.length > 0 ? { allowedIps } : {}),
-          ...capabilityFieldsForMode(newKeyCapabilityMode, newKeyAllowedCapabilityIds),
-          ...(Object.keys(spendLimits).length > 0 ? { spendLimits } : {}),
-          permissions: newKeyPermissions,
-        },
-        stepUpToken,
-      );
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
+      const result = await createApiKeyAuth({
+        walletId: selectedWalletId,
+        name: trimmedName,
+        ...(allowedIps.length > 0 ? { allowedIps } : {}),
+        ...capabilityFieldsForMode(newKeyCapabilityMode, newKeyAllowedCapabilityIds),
+        ...(Object.keys(spendLimits).length > 0 ? { spendLimits } : {}),
+        permissions: newKeyPermissions,
+      },
+      stepUpToken,);
       setNewRawKey(result.rawKey);
       setNewKeyExpiresAt(result.expiresAt);
       setNewKeyName('');
@@ -457,8 +448,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      await revokeApiKeyAuth(getToken, key.id, stepUpToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
+      await revokeApiKeyAuth(key.id, stepUpToken);
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -482,8 +473,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      const result = await refreshApiKeyApi(getToken, stepUpToken, selectedWalletId);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
+      const result = await refreshApiKeyApi(stepUpToken, selectedWalletId);
       setNewRawKey(result.apiKey);
       await fetchKeys();
     } catch (err: unknown) {
@@ -505,8 +496,8 @@ export default function ApiKeysPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      await revokeAllApiKeysAuth(getToken, stepUpToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
+      await revokeAllApiKeysAuth(stepUpToken);
       setNewRawKey(null);
       setNewKeyExpiresAt(null);
       await fetchKeys();
@@ -527,8 +518,8 @@ export default function ApiKeysPage() {
     setCapabilitySaving(true);
     setCapabilityError(null);
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken(getToken);
-      const result = await updateApiKeyCapabilitiesAuth(getToken, key.id, modeRequest, stepUpToken);
+      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
+      const result = await updateApiKeyCapabilitiesAuth(key.id, modeRequest, stepUpToken);
       setKeys((current) => current.map((item) => applyCapabilityUpdate(item, result)));
       setEditingKeyId(null);
     } catch (err: unknown) {

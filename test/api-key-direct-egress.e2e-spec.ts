@@ -19,6 +19,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as request from 'supertest';
 import { getAddress, keccak256, stringToHex } from 'viem';
 import { PrismaService } from '../src/core/database/prisma.service';
+import { AppSessionService } from '../src/modules/app-session/app-session.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { SessionKeyPolicyService } from '../src/modules/session-key/session-key-policy.service';
 import { TransactionSimulationService } from '../src/modules/transactions/transaction-simulation.service';
@@ -81,14 +82,10 @@ function unknownCalldata(): string {
   return `0xdeadbeef${padAddress(EXTERNAL)}${padUint(1n)}`;
 }
 
-/**
- * Production TransactionsService calls:
- *   session_key → submitUserOperation → waitForUserOperationReceipt → getTransactionReceipt
- *   eoa         → sendBackendTransaction
- * Do not mock the legacy sendUserOperation name alone.
- */
-/** IAM bearer → session for dashboard authorize-direct-egress. */
-const iamSessions = new Map<string, { openfortUserId: string; email: string; userId: string }>();
+interface DashboardSessionFixture {
+  cookie: string;
+  csrfToken: string;
+}
 
 /**
  * One-shot hook invoked inside the simulation mock after outer destination
@@ -106,6 +103,12 @@ const assertSimulatableMock = jest.fn().mockImplementation(async () => {
   }
 });
 
+/**
+ * Production TransactionsService calls:
+ *   session_key → submitUserOperation → waitForUserOperationReceipt → getTransactionReceipt
+ *   eoa         → sendBackendTransaction
+ * Do not mock the legacy sendUserOperation name alone.
+ */
 const mockOpenfortService = {
   createBackendWallet: jest.fn(),
   verifyAgentKeyRegistration: jest.fn().mockResolvedValue(undefined),
@@ -120,15 +123,6 @@ const mockOpenfortService = {
   getTransactionReceipt: jest.fn().mockResolvedValue({ status: 'success' }),
   sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TX_HASH }),
   signData: jest.fn(),
-  verifyIamSession: jest.fn(async (accessToken: string) => {
-    const session = iamSessions.get(accessToken);
-    if (!session) throw new Error('invalid openfort token');
-    return {
-      openfortUserId: session.openfortUserId,
-      email: session.email,
-      session: { id: `sess_${session.openfortUserId}` },
-    };
-  }),
 };
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
@@ -153,7 +147,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
   let rawKey: string;
   let keyUnauthorized: string;
   let keyUnauthorizedId: string;
-  let iamToken: string;
+  let dashboardSession: DashboardSessionFixture;
 
   beforeAll(async () => {
     try {
@@ -220,7 +214,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
           recordDenied: jest.fn().mockResolvedValue(undefined),
         })
         // Step-up is required on authorize-direct-egress; this suite evidences
-        // endpoint wiring + CAS, not TOTP crypto. Real Openfort IAM is mocked.
+        // endpoint behavior + CAS, not TOTP crypto; app sessions are real full-MFA fixtures.
         .overrideGuard(StepUpGuard)
         .useValue({ canActivate: () => true })
         .compile();
@@ -261,7 +255,6 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     resetProviderMocks();
 
     await cleanDatabase();
-    iamSessions.clear();
     const seeded = await seedFixtures();
     userId = seeded.userId;
     walletId = seeded.walletId;
@@ -269,7 +262,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     rawKey = seeded.rawKey;
     keyUnauthorized = seeded.keyUnauthorized;
     keyUnauthorizedId = seeded.keyUnauthorizedId;
-    iamToken = seeded.iamToken;
+    dashboardSession = seeded.dashboardSession;
   });
 
   afterEach(() => {
@@ -888,7 +881,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expect(metadata).not.toHaveProperty('interactions');
   });
 
-  // ── authorize-direct-egress HTTP (IAM + FrontendOnly + StepUp override) ───
+  // ── authorize-direct-egress HTTP (app session + FrontendOnly + StepUp override) ───
 
   it('authorize-direct-egress sets acceptance; send then succeeds without fixture stamp', async () => {
     // Key starts unauthorized — transfer denied by reauth.
@@ -900,7 +893,8 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
     const authRes = await request(app!.getHttpServer())
       .post(`/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
-      .set('Authorization', `Bearer ${iamToken}`)
+      .set('Cookie', dashboardSession.cookie)
+      .set('X-CSRF-Token', dashboardSession.csrfToken)
       .set('Origin', 'http://localhost:3000')
       .set('X-Step-Up-Token', 'e2e-step-up-proof')
       .expect(201);
@@ -925,7 +919,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expectSessionKeyProviderCalled();
   });
 
-  it('authorize-direct-egress rejects without IAM bearer', async () => {
+  it('authorize-direct-egress rejects without an application session cookie', async () => {
     await request(app!.getHttpServer())
       .post(`/api-keys/${keyUnauthorizedId}/authorize-direct-egress`)
       .set('Origin', 'http://localhost:3000')
@@ -1003,12 +997,17 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       directEgressPolicyAcceptedAt: null,
     });
 
-    const token = `iam-direct-egress-${SUITE_ID}`;
-    iamSessions.set(token, {
-      openfortUserId: socialId,
-      email: `${socialId}@example.com`,
-      userId: user.id,
+    const sessions = app!.get(AppSessionService);
+    const { token, session } = await sessions.exchange(user.id, undefined);
+    // Explicit factor fixture: this suite covers destination policy, not TOTP verification.
+    await prisma!.appSession.update({
+      where: { id: session.id },
+      data: { mfaVerified: true },
     });
+    const dashboardSession: DashboardSessionFixture = {
+      cookie: `${sessions.cookieName}=${token}`,
+      csrfToken: sessions.csrfToken(token),
+    };
 
     return {
       userId: user.id,
@@ -1017,7 +1016,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       rawKey: authorized.rawKey,
       keyUnauthorized: unauthorized.rawKey,
       keyUnauthorizedId: unauthorized.id,
-      iamToken: token,
+      dashboardSession,
     };
   }
 
@@ -1135,6 +1134,10 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     await prisma.withdrawalAddress.deleteMany();
     await prisma.withdrawalPolicy.deleteMany();
     await prisma.stepUpChallenge.deleteMany().catch(() => undefined);
+    // Deleting only this suite's sessions also cascades their session-bound proofs.
+    await prisma.appSession.deleteMany({
+      where: { user: { socialId: `direct_egress_${SUITE_ID}` } },
+    });
     await prisma.userMfaTotpRecoveryCode.deleteMany().catch(() => undefined);
     await prisma.userMfaTotpCredential.deleteMany().catch(() => undefined);
     await prisma.userKnownIp.deleteMany().catch(() => undefined);

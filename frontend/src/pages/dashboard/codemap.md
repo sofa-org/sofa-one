@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Authenticated, post-sign-in screens for the SOFA ONE agent wallet: wallet provisioning and chain authorization, balances and withdrawals, API key lifecycle management, transaction/signing history, security notifications, billing (plan/usage/invoices + card & USDC payment), and public API reference docs. All data comes from backend endpoints that require an Openfort IAM bearer token (frontend-only routes); API keys are only ever _displayed_ here, never used for dashboard calls.
+Authenticated wallet, key, history, notification and billing screens use local SOFA application-session cookies/CSRF. Openfort hooks are confined to wallet operations; API keys are displayed for automation, never used to authenticate dashboard calls.
 
 ## File inventory
 
@@ -25,9 +25,9 @@ Authenticated, post-sign-in screens for the SOFA ONE agent wallet: wallet provis
 ## Design/Patterns
 
 - **Container pages with local state**: each page is a default-exported component holding its own fetch/loading/error state; no global store. Data fetching uses `useCallback` loaders + `useEffect` with `AbortController` cleanup; retry is a nonce bump that re-runs the effect.
-- **Shared layout via nested routes**: `DashboardLayout` renders `<Outlet />`; `App.tsx` mounts it under `/dashboard` wrapped in `AuthProviders → ProtectedRoute → DashboardStepUpGate`. All dashboard pages are `lazy()`-loaded.
-- **Token accessor pattern**: every page builds `getToken = useCallback(async () => getAccessToken()...)` from `useUser()` and passes it to `@/lib/api` helpers; pages bail out when `!isAuthenticated`.
-- **Step-up gating**: guarded mutations (withdraw, allowlist add/remove, API key create/revoke/rotate, USDC pay-from-wallet) call `getDashboardStepUpToken() ?? await requestStepUpToken(getToken)`; the proof token is cached in `sessionStorage` (`step-up-session.ts`) and cleared on sign-out. Payment-status polls do not require step-up.
+- **Shared layout**: ProtectedRoute → server-authoritative DashboardStepUpGate → DashboardLayout; only index Wallet mounts AuthProviders/Wagmi/Shield.
+- **Cookie transports**: API helpers take business parameters directly, with credentials and in-memory CSRF managed by AppSessionProvider. No generic provider token accessors.
+- **Step-up**: sensitive calls reuse only a proof for the current session or prompt for TOTP. Requests capture the originating session; delayed responses from replaced sessions cannot poison the new cache.
 - **Controlled forms**: key creation, capability grants, withdrawal, and allowlist forms lift all field state to the page and pass setters down to presentational components.
 - **Presentational split**: `Wallet.tsx` owns all logic; `Step1CreateEoa`/`Step2AuthorizeAccess`/`BalanceDisplay`/`WithdrawForm` are dumb props-driven components.
 - **Stale-response guards**: request-id refs (`UsdcPaymentPanel`, `Billing.refreshInvoicesSilently`) and `isMountedRef` prevent out-of-order responses from clobbering state.
@@ -42,11 +42,11 @@ Authenticated, post-sign-in screens for the SOFA ONE agent wallet: wallet provis
 
 ### DashboardLayout
 
-Renders desktop sidebar + mobile drawer from `NAV_ITEMS` (Wallet, API Keys, History, Alerts, Billing, API Docs). On mount (and on `sofa:security-notifications-changed` events) fetches unread alert count via `listSecurityNotificationsAuth` for the Alerts badge. Sign-out clears the step-up proof, calls `signOut()`, and navigates to `/sign-in`.
+Sidebar/mobile layout uses AppSessionProvider, loads alerts with cookies and exposes current/all-device logout. Backend revocation completes before local state is cleared; all-device logout requires current-session step-up. No Openfort context dependency.
 
 ### Wallet (`/dashboard`)
 
-1. Loads session via `getMe`; on `NOT_FOUND`/`WALLET_NOT_FOUND` falls back to `syncSession`. Stores `wallet` and one-time `apiKeyDisplay`.
+1. Loads wallet projection with getMe using the application cookie; session introspection/exchange is separate and never silently repeated on wallet errors.
 2. **Step 1 (no EOA)**: `Step1CreateEoa` collects a recovery password; `handleConnectWallet` creates an Openfort embedded EOA (`AccountTypeEnum.EOA`, `RecoveryMethod.PASSWORD`), retries `authorizeEmbeddedWallet` up to 5×, and refreshes embedded accounts.
 3. **Step 2 (EOA exists)**: `Step2AuthorizeAccess` picks chain + expiry (≤30 days) + password. `handleRegisterAgent` verifies Calibur deployment on the chain, checks native gas (unless `VITE_OPENFORT_FEE_SPONSORSHIP_ID`), validates the agent key hash, builds `encodeRegisterKey` + `encodeUpdateKeySettings` self-calls, signs an EIP-7702 authorization via `use7702Authorization`, and submits a Calibur UserOp through Openfort (or Pimlico on Monad) bundler. Then `markAgentRegistrationTransaction` + `confirmAgentRegistration` poll the receipt and `markAgentRegistrationResult` (retrying on `AGENT_REGISTRATION_PENDING`).
    The identity panel labels the stable user wallet **Wallet Address** and the TEE EOA **Signer Address**, consuming `signerAddress` without a legacy alias. EIP-7702/TEE helper text does not imply authorization; the existing per-chain status/expiry badges remain separate evidence.
@@ -81,7 +81,7 @@ Static reference for the three documented automation endpoints (`/v1/wallets/sig
 ## Integration
 
 - **Routing**: mounted by `frontend/src/App.tsx` under `/dashboard` (lazy imports); guarded by `ProtectedRoute` and `DashboardStepUpGate`; `DashboardLayout` provides the `<Outlet />`.
-- **Auth**: `@openfort/react` — `useUser` (`getAccessToken`, `isAuthenticated`, `user`), `useOpenfort`, `useSignOut`, `useEthereumEmbeddedWallet`, `use7702Authorization`.
+- **Auth**: AppSessionProvider for SOFA identity/MFA; Openfort useUser/useOpenfort/useEthereumEmbeddedWallet/use7702Authorization only in Wallet. Wallet identity can reconnect without replacing the app session.
 - **API layer**: `@/lib/api` — all `*Auth` helpers (wallet, keys, notifications, transactions, billing, USDC, TOTP), `getApiErrorMessage`/`hasApiErrorCode`/`isApiError`, `DEFAULT_CHAIN_ID`, and response types.
 - **Chains**: `@/lib/chains` — `SUPPORTED_CHAINS`, explorer/gas-help URL builders, `getNativeCurrencySymbol`, `isMonadChain`.
 - **Calibur**: `src/common/calibur/calibur-primitives.ts` (direct relative import) — shared `CALIBUR_ADDRESSES`, `CALIBUR_DELEGATION_CODES`, `KeyType`, `CaliburKey`, `hashKey`, registry encoders; `@/lib/calibur` — browser-only `encodeSelfCall`, `createCaliburAccount`; `@/lib/calibur-deployment` resolves the chain's implementation.
@@ -94,6 +94,6 @@ Static reference for the three documented automation endpoints (`/v1/wallets/sig
 
 - Private keys never leave Openfort; the dashboard only handles the recovery password (browser-local, never stored/returned) and signs via the embedded wallet.
 - Raw API keys are shown once with a 2-minute TTL and are never persisted; docs and quick-start emphasize backend-only storage.
-- Guarded mutations require a TOTP step-up proof token (session-scoped, expiry-checked, cleared on sign-out).
+- Guarded mutations require exact-session TOTP step-up proofs. Cookie replacement/logout/expiry clears cache; provider identity mismatch never upgrades or replaces SOFA identity.
 - Withdrawals enforce an allowlist + cooldown policy; recipient inputs validate `^0x[a-fA-F0-9]{40}$`.
 - Public status responses (Docs) intentionally omit calldata/request hashes.

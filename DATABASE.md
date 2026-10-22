@@ -13,6 +13,23 @@ Local identity record mapped from Openfort IAM:
 - optional `email`
 - relations to wallet, API keys, events, transactions, and signing requests
 
+### `AppSession`
+
+Opaque browser sessions owned by `User`: unique SHA-256 `tokenHash`, `mfaVerified`,
+`mfaPendingUntil`, fixed `expiresAt`, `revokedAt`, and `createdAt`. Raw cookie tokens are
+never persisted. A composite `(id, userId)` key anchors `StepUpChallenge.sessionId/userId`
+so proofs cannot be assigned to another owner. Sessions and proofs remain valid only while
+the user is unfrozen and the exact session is live.
+
+Migration `20261022000000_application_sessions` adds this model and invalidates all legacy
+unbound step-up proofs before adding the required FK. Coordinate backend/frontend cutover;
+do not run old proof issuers against the migrated schema. Existing user/wallet/API-key/
+billing identities are unchanged.
+
+PrismaService forces UTC PostgreSQL startup timezone on each pooled connection, preserving
+other URL startup options. This is required by the installed driver's timestamptz
+normalization; independent clients must use equivalent UTC connections.
+
 ### `UserWallet`
 
 

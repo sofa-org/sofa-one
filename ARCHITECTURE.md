@@ -33,7 +33,7 @@ Browser SPA
 | Data model | `prisma/schema.prisma` | Canonical PostgreSQL schema |
 | Public API spec | `openapi.yaml` | Public API-key endpoints only |
 | Frontend bootstrap | `frontend/src/main.tsx` | React SPA entrypoint and providers |
-| Frontend API client | `frontend/src/lib/api.ts` | Dashboard IAM fetches and public API-key fetch helpers |
+| Frontend API client | `frontend/src/lib/api.ts` | Dashboard cookie/CSRF transport, explicit identity exchange and public API-key helpers |
 | Repo atlas | `codemap.md` | Generated navigation map; read before deep work |
 
 ## 3. Backend module boundaries
@@ -78,7 +78,7 @@ There are two intentionally separate API surfaces.
 
 ### Public API-key surface
 
-These routes require `X-API-Key` and must reject dashboard IAM-only access:
+These routes require `X-API-Key` and reject dashboard cookies and IAM-only access:
 
 - `POST /v1/wallets/sign`
 - `POST /v1/transactions`
@@ -87,7 +87,7 @@ These routes require `X-API-Key` and must reject dashboard IAM-only access:
 
 ### Dashboard/frontend surface
 
-These routes require Openfort IAM bearer auth and frontend-origin/referer checks where marked frontend-only:
+These routes require an MFA-verified local application-session cookie and frontend-origin/referer checks; unsafe cookie requests additionally require the current CSRF token:
 
 - `GET /wallets/balances`
 - `GET /wallets/deposits`
@@ -101,22 +101,30 @@ Do not add `FrontendOnlyGuard` to public API-key endpoints. Do not allow API-key
 
 ## 5. Core flows
 
-### 5.1 Session synchronization
+### 5.1 Identity exchange and local sessions
 
 ```text
 Browser obtains Openfort IAM token
   → POST /auth/session
   → OpenfortAuthGuard verifies token
-  → AuthService find-or-create local User
-  → return wallet and authorization state
+  → AuthService find-or-create local User (existing IDs/wallet ownership preserved)
+  → AppSessionService stores only token hash, returns pending-MFA HttpOnly cookie/snapshot
+  → TOTP/recovery verification atomically upgrades this session and issues bound step-up
+  → dashboard guards resolve local session without Openfort IAM requests
 ```
+
+Sessions have a fixed one-hour lifetime and 15-minute pending-MFA deadline. Logout revokes
+local sessions/proofs; there is no instant upstream IAM-revocation synchronization.
+`GET /auth/session` is identity introspection only; `/auth/me` remains wallet projection/
+receipt reconciliation. Wallet/Wagmi/Shield providers mount only on the wallet route.
 
 ### 5.2 Embedded wallet and agent authorization
 
 ```text
 Dashboard user authorizes embedded wallet
   → POST /auth/embedded-wallet/authorize
-  → AuthService verifies embedded EOA belongs to IAM session
+  → full local session plus fresh Openfort identity matching the local subject
+  → AuthService verifies embedded EOA belongs to that IAM identity
   → local UserWallet is bound to Openfort account/address
   → backend agent registration details returned
   → dashboard submits/records Calibur registerKey transaction
@@ -128,7 +136,7 @@ Dashboard user authorizes embedded wallet
 ```text
 Dashboard user
   → POST /api-keys
-  → OpenfortUserGuard + FrontendOnlyGuard
+  → AppSessionGuard + FrontendOnlyGuard + session-bound StepUpGuard
   → ApiKeyService validates limits/name/expiry/IP allowlist
   → generate raw secret
   → store Argon2id hash + keyPrefix only
@@ -198,9 +206,9 @@ See [DATABASE.md](./DATABASE.md) for invariants and migration workflow.
 ## 8. Frontend architecture
 
 - Vite 6 + React 19 + React Router 7 + Tailwind CSS 4.
-- Dashboard routes are protected by frontend auth checks and backed by Openfort IAM calls.
+- AppSessionProvider restores local session/MFA state without Openfort calls; heavy wallet providers mount only on the wallet route.
 - `frontend/src/lib/api.ts` centralizes API calls:
-  - dashboard routes use bearer-token authenticated fetches;
+  - dashboard requests use credentialed cookie fetches and unsafe-method CSRF; provider bearer is explicit only for exchange/wallet proof;
   - public examples use API-key fetches only for public API-key endpoints.
 - Local dev can leave `VITE_API_URL` unset to use the Vite `/api` proxy.
 

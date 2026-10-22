@@ -46,7 +46,7 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 ## Flow
 
 ### Create (`POST /api-keys`)
-1. `ApiKeyController.create` — `OpenfortUserGuard` + `FrontendOnlyGuard` + `StepUpGuard`; DTO validated by global `ValidationPipe` (whitelist, forbid non-whitelisted, transform).
+1. ApiKeyController.create — AppSessionGuard + FrontendOnlyGuard + exact-session StepUpGuard; unsafe cookie Origin/CSRF and the existing global DTO validation apply.
 2. `normalizeCreateOptions`: trim/require name; merge permissions over defaults; omitted mode+IDs become all/empty; IDs alone become custom; explicit all allows omitted/empty IDs; custom requires IDs and all rejects nonempty/null IDs. Validate IDs, spend limits, high-risk IP allowlist, and TTL.
 3. `generateKeyMaterial`: `sk_` + 64-hex secret → 27-char prefix → Argon2id hash.
 4. Transaction: `assertCanCreateKey` (≤10 active keys; unique non-empty active name, case-insensitive) → create `ApiKey` row (hash, prefix, name, expiry, IP allowlist, mode and configured IDs, spend limits, permissions) → audit `api_key.created` (prefix, name, metadata: expiry/permissions/capability configuration).
@@ -74,7 +74,7 @@ Dashboard-only API-key lifecycle management for programmatic access to public si
 
 ## Integration
 - **Imports**: `StepUpModule`, `SecurityEventModule`, and leaf `DefiModule` (grant validation/catalog access); `SecurityEventService.record` is callable with a Prisma transaction client for atomic audit.
-- **Guards/decorators**: `OpenfortUserGuard` + `FrontendOnlyGuard` (class-level), `StepUpGuard` + `@RequireStepUp()` (mutations), `@CurrentUser('id')`, `@Throttle`.
+- **Guards/decorators**: AppSessionGuard + FrontendOnlyGuard at class level; StepUpGuard/RequireStepUp on mutations; CurrentUser and route throttles unchanged.
 - **Persistence**: `PrismaService`; `ApiKey` and `ApiKeyEvent` models in `prisma/schema.prisma` (`api_keys` / `api_key_events` tables). `ApiKey` carries permission booleans, allowlists, spend limits, freeze state, and last-used fields; indexed on `keyPrefix` and `[userId, revoked]`.
 - **Shared helper**: `getApiKeyPrefix` from `src/common/api-key/api-key-prefix` (27-char prefix; legacy 11-char handled at lookup time).
 - **Downstream consumers**: `ApiKeyAuthGuard` (hash verification, freeze, first-use/suspicious-use events, last-used updates), `ApiKeyPermissionGuard` (permission enforcement), and wallet/transactions modules read permissions, spend limits, and allowlists from the resolved key record.

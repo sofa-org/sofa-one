@@ -5,7 +5,7 @@ import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.guard';
 import { RequireApiKeyPermission } from '../../common/decorators/api-key-permission.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SendTransactionDto } from './dto/send-transaction.dto';
@@ -46,7 +46,7 @@ export class DashboardTransactionsController {
   /** GET /transactions — dashboard only: list transaction history with optional filtering and pagination. */
   @Get()
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
   async list(@CurrentUser('id') userId: string, @Query() query: ListTransactionsQueryDto) {
     return this.transactionsService.list(userId, query);
@@ -55,7 +55,7 @@ export class DashboardTransactionsController {
   /** GET /transactions/:id/detail — dashboard only: full transaction detail view. */
   @Get(':id/detail')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 20, ttl: 60000 }, medium: { limit: 100, ttl: 3600000 } })
   async getDetail(
     @CurrentUser('id') userId: string,

@@ -14,8 +14,9 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 
 ### 3.1 Authentication and wallet onboarding
 
-- The backend must accept Openfort IAM bearer tokens for dashboard/user-session operations.
-- `POST /auth/session` must synchronize the Openfort IAM user to a local `User` record; no `/auth/social` alias is exposed.
+- Openfort IAM bearer identity is accepted for login exchange and fresh embedded-wallet ownership proof only; ordinary dashboard routes require a live, MFA-verified local HttpOnly session cookie.
+- `POST /auth/session` must synchronize the existing Openfort user, create a pending-MFA local session, and return its snapshot/CSRF token; no `/auth/social` alias is exposed.
+- Pending MFA has a 15-minute deadline; session expiry is fixed at one hour. Current/all-device logout revokes the relevant sessions and exact-session step-up proofs. Unsafe cookie requests require trusted Origin and CSRF.
 - Users must be able to authorize an Openfort embedded EOA and persist Calibur agent-key registration progress per supported chain.
 - `UserWallet.openfortAccountId` must remain the stable Openfort account foreign key.
 

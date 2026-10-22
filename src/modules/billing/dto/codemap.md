@@ -17,7 +17,7 @@ dashboard-only billing endpoints:
 | `reconcile-body.dto.ts` | `ReconcileBodyDto` | `POST /billing/reconcile` | `billingReconciliationService.reconcile(userId, { limit })` |
 | `create-subscription-checkout.dto.ts` | `CreateSubscriptionCheckoutDto` | `POST /billing/invoices/:id/subscription-checkout` | `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)` |
 
-All routes are gated by `OpenfortUserGuard` + `FrontendOnlyGuard` (see
+All routes are gated by AppSessionGuard + FrontendOnlyGuard (see
 `billing.controller.ts`), so these DTOs never validate API-key requests.
 
 ## Design/Patterns

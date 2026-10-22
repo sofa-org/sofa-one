@@ -11,7 +11,7 @@ Dashboard-facing security notifications derived from unified `SecurityEvent` row
 - **Failure isolation**: `SecurityEventService.record()` wraps the notification call in try/catch; a notification failure is logged (`Security notification creation failed`) and does not fail event recording or SIEM export.
 - **Read-status**: `markRead`/`markAllRead` use `updateMany` scoped to `userId` (and `readAt: null`), returning `{ success: true, updatedCount }`. Idempotent: already-read or non-existent notifications yield `updatedCount: 0` rather than an error/404.
 - **Query**: `listForUser` orders by `createdAt desc`, applies `readAt: null` when `unreadOnly` is true, and clamps `limit` via `normalizeLimit` to `[1, 50]` with a default of 20.
-- **Controller**: all routes are `@FrontendOnly()` and guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; they are intentionally omitted from `openapi.yaml`.
+- **Controller**: AppSessionGuard + FrontendOnlyGuard on frontend-only cookie/MFA routes; mutations require Origin/CSRF and remain omitted from public OpenAPI.
 
 ## Flow
 1. **Generation**: A security event is recorded via `SecurityEventService.record()` (risk scored by `SecurityRiskService`). The `security_event` row is created, then `notifications?.notifyForSecurityEvent(event, client)` runs in the same transaction. `notifyForSecurityEvent` returns `null` when the event has no `userId` or fails `shouldNotify`; otherwise it builds title/body + safe metadata and inserts a `security_notifications` row linked by `securityEventId`.
@@ -22,5 +22,5 @@ Dashboard-facing security notifications derived from unified `SecurityEvent` row
 - **Prisma**: model `SecurityNotification` maps to `security_notifications`. `userId` → `users` (`onDelete: Cascade`); `securityEventId` → `security_events` (`onDelete: SetNull`). Indexes: `[userId, readAt, createdAt]` and `[securityEventId]`.
 - **Module wiring**: `SecurityNotificationModule` declares the controller, provides and exports `SecurityNotificationService`. It is imported by `SecurityEventModule` (for generation) and by `AppModule`.
 - **Dependencies**: `SecurityNotificationService` depends only on `PrismaService`. It imports the `SecurityEventRiskLevel` type from `../security-events/security-event.service`. `SecurityEventService` injects it as `@Optional()`.
-- **Auth**: `OpenfortUserGuard` authenticates via Openfort IAM bearer token (never API keys) and attaches `request.user`; `FrontendOnlyGuard` restricts to the configured `CORS_ORIGIN` allowlist (dev fallback: localhost:3000/3100). `@CurrentUser('id')` reads the authenticated user id.
+- **Auth**: AppSessionGuard loads current local user/MFA/freeze state; FrontendOnlyGuard restricts browser origin/referer. API keys and IAM bearers do not substitute for the app cookie.
 - **API surface** (frontend-only, not in `openapi.yaml`): `GET /security-notifications`, `POST /security-notifications/:id/read`, `POST /security-notifications/read-all`.

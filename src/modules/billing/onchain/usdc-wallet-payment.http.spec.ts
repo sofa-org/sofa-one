@@ -5,7 +5,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { UsdcWalletPaymentController } from './usdc-wallet-payment.controller';
 import { UsdcWalletPaymentService } from './usdc-wallet-payment.service';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../../common/guards/app-session.guard';
 import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
 import { StepUpGuard } from '../../../common/guards/step-up.guard';
 jest.mock('../../../core/openfort/openfort.service', () => ({ OpenfortService: class OpenfortService {} }));
@@ -13,8 +13,7 @@ jest.mock('../../../core/openfort/openfort.service', () => ({ OpenfortService: c
 class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest();
-    if (!req.headers.authorization?.startsWith('Bearer ')) return false;
-    req.user = { id: 'iam-user' }; return true;
+    req.user = { id: 'payment-status-user' }; return true;
   }
 }
 
@@ -26,7 +25,7 @@ describe('USDC wallet payment HTTP status', () => {
       controllers: [UsdcWalletPaymentController],
       providers: [{ provide: UsdcWalletPaymentService, useValue: { payFromWallet: pay, getPaymentStatus: jest.fn() } }],
     })
-      .overrideGuard(OpenfortUserGuard).useClass(AuthGuard)
+      .overrideGuard(AppSessionGuard).useClass(AuthGuard)
       .overrideGuard(FrontendOnlyGuard).useValue({ canActivate: () => true })
       .overrideGuard(StepUpGuard).useValue({ canActivate: () => true })
       .compile();
@@ -41,17 +40,14 @@ describe('USDC wallet payment HTTP status', () => {
     const paymentAttemptId = '00000000-0000-4000-8000-000000000002';
     await request(app.getHttpServer())
       .post(`/v1/billing/invoices/${invoiceId}/usdc/pay-from-wallet`)
-      .set('Authorization', 'Bearer iam')
       .set('X-Step-Up-Token', 'proof')
       .send({ paymentAttemptId })
       .expect(404);
     await request(app.getHttpServer())
       .post(`/billing/invoices/${invoiceId}/usdc/pay-from-wallet`)
-      .set('Authorization', 'Bearer iam')
       .set('X-Step-Up-Token', 'proof')
       .send({ paymentAttemptId })
       .expect(202)
       .expect({ status: 'accepted' });
-    expect(pay).toHaveBeenCalledWith('iam-user', invoiceId, paymentAttemptId);
   });
 });

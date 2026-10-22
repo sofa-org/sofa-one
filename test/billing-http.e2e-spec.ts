@@ -3,7 +3,7 @@
  * plan assignment, invoice ownership/validation).
  *
  * Real: AppModule + PostgreSQL (runner-provisioned BILLING_E2E_* target only).
- * Mocked: Openfort IAM session verification, Stripe client (never confirms payment).
+ * Mocked: Openfort wallet operations, Stripe client (never confirms payment).
  * Does not fake successful payment or expose secrets.
  *
  * Database isolation: see test/billing-e2e-database.ts + scripts/billing-e2e-runner.ts.
@@ -17,6 +17,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as request from 'supertest';
 import { PrismaService } from '../src/core/database/prisma.service';
+import { AppSessionService } from '../src/modules/app-session/app-session.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { STRIPE_CLIENT } from '../src/modules/billing/stripe/stripe.constants';
 import { calculateUpgradeProrationMicros } from '../src/modules/billing/billing-plan-change.proration';
@@ -52,27 +53,14 @@ const FRONTEND_ORIGIN = 'http://localhost:3000';
 const SUITE_ID = randomUUID().replace(/-/g, '').slice(0, 12);
 
 type TestUser = {
-  token: string;
+  cookie: string;
+  csrfToken: string;
   socialId: string;
   email: string;
   userId: string;
 };
 
-/** Token → IAM session mapping for the Openfort mock. */
-const iamSessions = new Map<string, { openfortUserId: string; email: string }>();
-
 const mockOpenfortService = {
-  verifyIamSession: jest.fn(async (accessToken: string) => {
-    const session = iamSessions.get(accessToken);
-    if (!session) {
-      throw new Error('invalid openfort token');
-    }
-    return {
-      openfortUserId: session.openfortUserId,
-      email: session.email,
-      session: { id: `sess_${session.openfortUserId}` },
-    };
-  }),
   createBackendWallet: jest.fn(),
   createAgentWallet: jest.fn(),
   getTransactionReceipt: jest.fn(),
@@ -178,7 +166,6 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       throw new Error('billing HTTP e2e: database not initialized or identity unverified');
     }
     jest.clearAllMocks();
-    iamSessions.clear();
     await cleanDatabase();
 
     primary = await seedUser('primary');
@@ -228,20 +215,20 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
     }
   }
 
-  // ── Guard / origin / IAM ──────────────────────────────────────────────────
+  // ── Guard / origin / application session ──────────────────────────────────
 
   describe('guard and origin', () => {
     it('rejects billing routes without Origin/Referer', async () => {
       const res = await request(app!.getHttpServer())
         .get('/billing/plans')
-        .set('Authorization', `Bearer ${primary.token}`)
+        .set('Cookie', primary.cookie)
         .expect(403);
 
       expectApiError(res.body, 403, 'BAD_REQUEST', '/billing/plans');
       expect(res.headers['x-request-id']).toEqual(expect.any(String));
     });
 
-    it('rejects billing routes without a bearer token', async () => {
+    it('rejects billing routes without an application-session cookie', async () => {
       const res = await request(app!.getHttpServer())
         .get('/billing/plans')
         .set('Origin', FRONTEND_ORIGIN)
@@ -250,21 +237,20 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       expectApiError(res.body, 401, 'UNAUTHORIZED', '/billing/plans');
     });
 
-    it('rejects billing routes with an invalid IAM token', async () => {
+    it('rejects IAM bearer authentication without an application-session cookie', async () => {
       const res = await request(app!.getHttpServer())
         .get('/billing/plans')
-        .set('Authorization', 'Bearer not-a-real-token')
+        .set('Authorization', 'Bearer provider-iam-session')
         .set('Origin', FRONTEND_ORIGIN)
         .expect(401);
 
       expectApiError(res.body, 401, 'UNAUTHORIZED', '/billing/plans');
-      expect(mockOpenfortService.verifyIamSession).toHaveBeenCalledWith('not-a-real-token');
     });
 
-    it('rejects a disallowed Origin even with a valid token', async () => {
+    it('rejects a disallowed Origin even with a valid application-session cookie', async () => {
       await request(app!.getHttpServer())
         .get('/billing/plans')
-        .set('Authorization', `Bearer ${primary.token}`)
+        .set('Cookie', primary.cookie)
         .set('Origin', 'https://evil.example')
         .expect(403);
     });
@@ -277,10 +263,10 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
         .expect(401);
     });
 
-    it('allows billing routes from the development frontend origin with IAM', async () => {
+    it('allows billing routes from the development frontend origin with a local session', async () => {
       await request(app!.getHttpServer())
         .get('/v1/billing/plans')
-        .set('Authorization', `Bearer ${primary.token}`)
+        .set('Cookie', primary.cookie)
         .set('Origin', FRONTEND_ORIGIN)
         .expect(404);
       const res = await dashboardGet(primary, '/billing/plans').expect(200);
@@ -292,7 +278,6 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
           plans: expect.any(Array),
         }),
       );
-      expect(mockOpenfortService.verifyIamSession).toHaveBeenCalledWith(primary.token);
       assertNoSecrets(res.body);
     });
   });
@@ -768,20 +753,20 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
   function dashboardGet(user: TestUser, path: string) {
     return request(app!.getHttpServer())
       .get(path)
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Cookie', user.cookie)
       .set('Origin', FRONTEND_ORIGIN);
   }
 
   function dashboardPost(user: TestUser, path: string, body: Record<string, unknown>) {
     return request(app!.getHttpServer())
       .post(path)
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Cookie', user.cookie)
+      .set('X-CSRF-Token', user.csrfToken)
       .set('Origin', FRONTEND_ORIGIN)
       .send(body);
   }
 
   async function seedUser(label: string): Promise<TestUser> {
-    const token = `billing-http-token-${SUITE_ID}-${label}-${randomUUID()}`;
     const socialId = `billing_http_e2e_${SUITE_ID}_${label}_${randomUUID()}`;
     const email = `${socialId}@example.com`;
 
@@ -793,9 +778,22 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       },
     });
 
-    iamSessions.set(token, { openfortUserId: socialId, email });
+    const sessions = app!.get(AppSessionService);
+    const { token, session } = await sessions.exchange(user.id, undefined);
+    // Billing fixtures explicitly satisfy MFA; real factor verification is
+    // covered by the dedicated application-session PostgreSQL suite.
+    await prisma!.appSession.update({
+      where: { id: session.id },
+      data: { mfaVerified: true },
+    });
 
-    return { token, socialId, email, userId: user.id };
+    return {
+      cookie: `${sessions.cookieName}=${token}`,
+      csrfToken: sessions.csrfToken(token),
+      socialId,
+      email,
+      userId: user.id,
+    };
   }
 
   function currentUtcMonthPeriod(): string {
@@ -965,6 +963,10 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
     await prisma.withdrawalPolicy.deleteMany();
     await prisma.securityNotification.deleteMany();
     await prisma.securityEvent.deleteMany();
+    // Deleting suite-owned sessions also cascades their session-bound proofs.
+    await prisma.appSession.deleteMany({
+      where: { user: { socialId: { startsWith: `billing_http_e2e_${SUITE_ID}_` } } },
+    });
     await prisma.stepUpChallenge.deleteMany();
     await prisma.userMfaTotpRecoveryCode.deleteMany();
     await prisma.userMfaTotpCredential.deleteMany();

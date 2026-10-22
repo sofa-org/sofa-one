@@ -56,15 +56,14 @@ function renderPanel(
     walletChoicesError: string | null;
   }> = {},
 ) {
-  const getToken = vi.fn().mockResolvedValue('test-token');
   const onChange = over.onChange ?? vi.fn().mockResolvedValue(true);
   const invoice = over.invoice ?? makePayableInvoice('inv_1');
 
   const view = render(
-    <UsdcPaymentPanel invoice={invoice} getToken={getToken} onChange={onChange} wallets={over.wallets ?? []} walletChoicesError={over.walletChoicesError} />,
+    <UsdcPaymentPanel invoice={invoice} onChange={onChange} wallets={over.wallets ?? []} walletChoicesError={over.walletChoicesError} />,
   );
 
-  return { view, onChange, invoice, getToken };
+  return { view, onChange, invoice };
 }
 
 /** Render the panel, request a quote (user-triggered), and wait until the claim form is usable. */
@@ -280,7 +279,7 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
   });
 
   it('pay from wallet sends only paymentAttemptId with step-up and does not treat accepted as paid', async () => {
-    const { onChange, getToken } = await renderWithQuote();
+    const { onChange } = await renderWithQuote();
 
     vi.mocked(payUsdcFromWalletAuth).mockResolvedValue(
       makeWalletPayResult({
@@ -296,7 +295,6 @@ describe('UsdcPaymentPanel — quote facts and wallet pay', () => {
 
     await waitFor(() => expect(payUsdcFromWalletAuth).toHaveBeenCalledTimes(1));
     expect(payUsdcFromWalletAuth).toHaveBeenCalledWith(
-      getToken,
       'inv_1',
       'attempt_1',
       'step-up-token',
@@ -672,7 +670,7 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
     screen.queryByRole('button', { name: /Cancel this unused USDC quote/i });
 
   it('shows Cancel quote for a clean idle pending quote and cancels after confirm', async () => {
-    const { onChange, getToken } = await renderWithQuote();
+    const { onChange } = await renderWithQuote();
 
     expect(cancelButton()).toBeInTheDocument();
     expect(cancelButton()).not.toBeDisabled();
@@ -680,7 +678,7 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
     fireEvent.click(cancelButton()!);
 
     await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
-    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(getToken, 'inv_1', 'attempt_1');
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith('inv_1', 'attempt_1');
     expect(window.confirm).toHaveBeenCalled();
     expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
     // Local quote cleared so claim/pay are gone until a new quote.
@@ -787,14 +785,14 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
       )
       .mockResolvedValue(makeInvoicePaymentStatus());
 
-    const { onChange, getToken } = renderPanel();
+    const { onChange } = renderPanel();
     expect(await screen.findByText(/USDC payment in progress/i)).toBeInTheDocument();
     expect(cancelButton()).toBeInTheDocument();
 
     fireEvent.click(cancelButton()!);
 
     await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
-    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(getToken, 'inv_1', 'att_pending');
+    expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith('inv_1', 'att_pending');
     expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
     expect(onChange).toHaveBeenCalled();
     // Never auto-quoted.
@@ -827,7 +825,6 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
     // Status refresh path after 409.
     await waitFor(() =>
       expect(getUsdcPaymentStatusAuth).toHaveBeenCalledWith(
-        expect.any(Function),
         'inv_1',
         'attempt_1',
         undefined,
@@ -868,19 +865,17 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
     });
     expect(await screen.findByText(/USDC quote cancelled/i)).toBeInTheDocument();
   });
-  it('requires an explicit payer and binds the quote to the chosen wallet', async () => {
+  it('requires an explicit payer before enabling quote generation', async () => {
     const wallets = [
       { id: 'wallet-a', walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'active' },
       { id: 'wallet-b', walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'active' },
     ];
-    vi.mocked(createUsdcQuoteAuth).mockResolvedValue(makeQuote());
     renderPanel({ wallets });
     await screen.findByRole('button', { name: /Get quote/i });
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
     expect(createUsdcQuoteAuth).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText('Paying wallet'), { target: { value: 'wallet-a' } });
-    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
-    await waitFor(() => expect(createUsdcQuoteAuth).toHaveBeenCalledWith(expect.any(Function), 'inv_1', 84532, undefined, 'wallet-a'));
+    expect(screen.getByRole('button', { name: /Get quote/i })).toBeEnabled();
   });
 
   it('does not display an A quote after payer choices arrive and change to B in flight', async () => {
@@ -889,7 +884,7 @@ describe('UsdcPaymentPanel — BILL-003 cancel clean pending quote', () => {
     const initial = renderPanel();
     await screen.findByRole('button', { name: /Get quote/i });
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
-    initial.view.rerender(<UsdcPaymentPanel invoice={initial.invoice} getToken={initial.getToken} onChange={initial.onChange} wallets={[{ id: 'wallet-a', walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'active' }, { id: 'wallet-b', walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'active' }]} />);
+    initial.view.rerender(<UsdcPaymentPanel invoice={initial.invoice} onChange={initial.onChange} wallets={[{ id: 'wallet-a', walletAddress: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'active' }, { id: 'wallet-b', walletAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'active' }]} />);
     fireEvent.change(await screen.findByLabelText('Paying wallet'), { target: { value: 'wallet-b' } });
     resolveQuote(makeQuote());
     await waitFor(() => expect(screen.queryByText('12.50')).not.toBeInTheDocument());

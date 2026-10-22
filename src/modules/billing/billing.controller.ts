@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { BillingService } from './billing.service';
@@ -25,8 +25,8 @@ import { AssignPlanBodyDto } from './dto/assign-plan-body.dto';
 
 /**
  * Frontend-only billing routes. These are intentionally NOT part of the public
- * API-key spec (openapi.yaml) and require an Openfort IAM bearer token plus the
- * FrontendOnlyGuard origin/referer check.
+ * API-key spec (openapi.yaml) and require a full-MFA application-session cookie
+ * plus FrontendOnlyGuard; unsafe requests additionally require Origin and CSRF.
  *
  * First recurring Stripe subscription is created automatically after a
  * successful one-time Card checkout (webhook + worker) — there is no dashboard
@@ -44,7 +44,7 @@ export class BillingController {
   /** GET /billing/plans — current plan + plan catalog. */
   @Get('plans')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async getPlans(@CurrentUser('id') userId: string) {
     return this.billingService.getPlans(userId);
   }
@@ -58,7 +58,7 @@ export class BillingController {
    */
   @Post('plan')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async assignPlan(@CurrentUser('id') userId: string, @Body() body: AssignPlanBodyDto) {
     return this.billingService.assignPlan(userId, body.planCode);
   }
@@ -71,7 +71,7 @@ export class BillingController {
    */
   @Post('plan/cancel')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async cancelScheduledPlan(@CurrentUser('id') userId: string) {
     return this.billingService.cancelScheduledPlan(userId);
   }
@@ -84,7 +84,7 @@ export class BillingController {
    */
   @Post('plan/upgrade/cancel')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async cancelPendingUpgrade(@CurrentUser('id') userId: string) {
     return this.billingService.cancelPendingUpgrade(userId);
   }
@@ -92,7 +92,7 @@ export class BillingController {
   /** GET /billing/summary?period=YYYY-MM — monthly usage estimate. */
   @Get('summary')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async getSummary(@CurrentUser('id') userId: string, @Query() query: GetSummaryQueryDto) {
     return this.billingService.getSummary(userId, query.period);
   }
@@ -100,7 +100,7 @@ export class BillingController {
   /** GET /billing/invoices?page=&limit= — paginated invoice list. */
   @Get('invoices')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async listInvoices(@CurrentUser('id') userId: string, @Query() query: ListInvoicesQueryDto) {
     return this.billingService.listInvoices(userId, { page: query.page, limit: query.limit });
   }
@@ -108,7 +108,7 @@ export class BillingController {
   /** GET /billing/invoices/:id — single invoice owned by the user. */
   @Get('invoices/:id')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async getInvoice(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -127,7 +127,7 @@ export class BillingController {
    */
   @Get('invoices/:id/payment-status')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async getInvoicePaymentStatus(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -148,7 +148,7 @@ export class BillingController {
   @Header('Cache-Control', 'private, no-store')
   @Header('X-Content-Type-Options', 'nosniff')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async downloadInvoicePdf(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -171,7 +171,7 @@ export class BillingController {
    */
   @Post('invoices/:id/checkout')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async checkoutInvoice(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -188,7 +188,7 @@ export class BillingController {
    */
   @Post('reconcile')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async reconcile(@CurrentUser('id') userId: string, @Body() body: ReconcileBodyDto) {
     return this.reconciliationService.reconcile(userId, { limit: body.limit });
   }

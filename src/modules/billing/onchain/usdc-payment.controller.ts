@@ -1,7 +1,7 @@
 import { Body, Controller, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../../common/guards/app-session.guard';
 import { FrontendOnly } from '../../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { UsdcPaymentService } from './usdc-payment.service';
@@ -11,8 +11,8 @@ import { UsdcCancelDto } from './dto/usdc-cancel.dto';
 
 /**
  * Dashboard-only native USDC invoice payment routes. These are intentionally
- * NOT part of the public API-key spec (openapi.yaml) and require an Openfort
- * IAM bearer token plus the FrontendOnlyGuard origin/referer check. All
+ * NOT part of the public API-key spec and require a full-MFA local session
+ * plus FrontendOnlyGuard and unsafe-request Origin/CSRF checks. All
  * payment facts are server-derived; the client only supplies a verified chain
  * selector (quote), `{ paymentAttemptId, txHash }` (claim), or
  * `{ paymentAttemptId }` (cancel of a clean pending quote).
@@ -30,7 +30,7 @@ export class UsdcPaymentController {
    */
   @Post('quote')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async quote(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -51,7 +51,7 @@ export class UsdcPaymentController {
    */
   @Post('claim')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async claim(
     @CurrentUser('id') userId: string,
@@ -70,7 +70,7 @@ export class UsdcPaymentController {
    */
   @Post('cancel')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 10, ttl: 60000 }, medium: { limit: 60, ttl: 3600000 } })
   async cancel(
     @CurrentUser('id') userId: string,

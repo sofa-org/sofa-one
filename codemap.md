@@ -18,7 +18,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Public signing and transaction submission require `X-API-Key`; Openfort IAM tokens are not accepted for these public API routes, and API-key permissions are enforced before service code runs.
 - Frontend-only routes additionally require `FrontendOnlyGuard`, which checks `Origin`/`Referer` against `CORS_ORIGIN` allowlist.
 - API keys are stored as Argon2 hashes; new `keyPrefix` values are 27 chars and all lookup candidates are Argon2-verified to tolerate collisions and legacy 11-char prefixes.
-- API-key management is dashboard-only (Openfort IAM). Each new key is immutably bound to one wallet (multiple keys per wallet); maximum 10 active keys remains per user across wallets. Creation/refresh select an owned wallet, and public signing/sending resolve the bound wallet. Legacy keys bind only when exactly one wallet row exists across all states; otherwise they are revoked and retained unbound. Other lifecycle limits include unique non-empty active names, supported chains, bounded future expiry, freeze metadata, and unified `SecurityEvent` audit.
+- API-key management is dashboard-only (MFA-verified local SOFA session). Each new key is immutably wallet-bound, with existing per-user active-key/name/TTL/freeze/audit limits. Public signing/sending resolve the authenticated key's bound wallet; API keys cannot manage keys.
 - API-key capability configuration uses `capabilityMode: all|custom`: `all` dynamically permits active, unpaused reviewed capabilities; `custom` permits exact `allowedCapabilityIds` (`[]` denies all). Neither bypasses independent permissions or safety policies. Catalog definitions and profiles are metadata, not grants: custom mode requires explicit IDs, while `all` still obeys independent permission and safety controls. The current catalog is the single reviewed input at `data/defi-catalog/catalog.json`; runtime consumes its deterministic generated TypeScript module and never discovers source snapshots or plans. Profiles group reviewed IDs for display/selection but do not grant capabilities or prove complete workflows. Source/ABI review does not establish deployed runtime identity, funding, balances, liquidity, execution success, or financial safety. See [`scripts/defi-catalog/README.md`](scripts/defi-catalog/README.md) for the offline workflow.
 - `frontend/public/protocols.json` is the public, generated protocol directory, keyed by chain ID with `{ contracts, sign }`. Contracts contain `{ address, protocol, abi }`; signing entries contain `{ protocol, capabilityId, type, primaryType }` for the independent supported signing policies. The catalog workflow generates/checks it alongside the runtime module; `verify:backend` checks freshness. It is static metadata, not API-key grants, live pause status or an execution guarantee.
 - User, API-key, and wallet freeze state is modeled explicitly; frozen users are rejected by dashboard and API-key auth, frozen API keys are rejected by `ApiKeyAuthGuard`, and frozen wallets cannot sign, send, withdraw, expose deposit info, or fetch balances.
@@ -42,7 +42,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/common/decorators/` | Custom parameter decorators: `@CurrentUser()`, `@Public()` | [View Map](src/common/decorators/codemap.md) |
 | `src/common/errors/` | Stable machine-readable API error-code vocabulary | [View Map](src/common/errors/codemap.md) |
 | `src/common/filters/` | Global HTTP exception filter for standardized error responses | [View Map](src/common/filters/codemap.md) |
-| `src/common/guards/` | Auth guards: Openfort IAM verification + API key validation | [View Map](src/common/guards/codemap.md) |
+| `src/common/guards/` | Local session/MFA, explicit provider identity, public API-key and permission guards | [View Map](src/common/guards/codemap.md) |
 | `src/common/middleware/` | Request-ID resolution and AsyncLocalStorage context seeding | [View Map](src/common/middleware/codemap.md) |
 | `src/common/request-context/` | Request-scoped correlation context backed by AsyncLocalStorage | [View Map](src/common/request-context/codemap.md) |
 | `src/common/throttler/` | Redis-backed throttling with in-memory fallback | [View Map](src/common/throttler/codemap.md) |
@@ -52,7 +52,8 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/core/openfort/` | Openfort SDK wrapper for TEE wallet creation and transaction intents | [View Map](src/core/openfort/codemap.md) |
 | `src/types/` | Express request ambient type augmentation for middleware and guards | [View Map](src/types/codemap.md) |
 | `src/modules/` | Feature modules container | [View Map](src/modules/codemap.md) |
-| `src/modules/auth/` | Social OAuth via Openfort, user sync, and wallet provisioning | [View Map](src/modules/auth/codemap.md) |
+| `src/modules/auth/` | Openfort identity exchange, local user sync, wallet onboarding and session HTTP routes | [View Map](src/modules/auth/codemap.md) |
+| `src/modules/app-session/` | Hash-only opaque cookie sessions, CSRF, pending/full MFA, expiry and revocation | [Service](src/modules/app-session/app-session.service.ts) |
 | `src/modules/auth/dto/` | Embedded-wallet authorization and agent-registration request DTOs | [View Map](src/modules/auth/dto/codemap.md) |
 | `src/modules/api-key/` | API key lifecycle: create (Argon2 hash), list metadata, revoke | [View Map](src/modules/api-key/codemap.md) |
 | `src/modules/api-key/dto/` | Input DTOs for API key creation with class-validator decorators | [View Map](src/modules/api-key/dto/codemap.md) |
@@ -92,7 +93,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 - Sensitive lookup fields use normalized storage patterns (`keyPrefix` lookup hint plus hashed API keys, unique wallet identifiers).
 
 #### `prisma/` Flow
-- User authenticates via Openfort IAM → `User` row is created or reused.
+- Openfort identity exchange creates/reuses User, then issues a pending local session. TOTP/recovery verification atomically upgrades that exact session and issues a bound proof.
 - Wallet provisioning creates one of a user's `UserWallet` rows with `openfortAccountId`, `walletAddress`, `chainId`, and `status`; `User.wallets` is one-to-many and a persisted default supports compatibility projection only.
 - API key issuance stores only `apiKeyHash`, extended `keyPrefix`, optional metadata, IP allowlist, and optional freeze state in `ApiKey`; lifecycle events are recorded in `ApiKeyEvent`.
 - Cross-cutting security telemetry is recorded in `SecurityEvent` with user/API-key/wallet attribution, rule-based risk scoring, request context, safe metadata, optional dashboard notifications, and optional redacted SIEM webhook export.
@@ -112,7 +113,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `frontend/` | Vite build config, Tailwind CSS 4, path aliasing, dev proxy to port 3100 | [View Map](frontend/codemap.md) |
 | `frontend/src/` | App entry point, React Router routes, Openfort provider composition | [View Map](frontend/src/codemap.md) |
 | `frontend/src/components/` | Openfort/provider composition, route guards, MFA step-up gate, and shared UI/diagnostics | [View Map](frontend/src/components/codemap.md) |
-| `frontend/src/lib/` | Typed bearer/API-key HTTP transports, chain metadata, and Calibur encoders | [View Map](frontend/src/lib/codemap.md) |
+| `frontend/src/lib/` | Cookie/CSRF and public API-key transports, chain metadata and Calibur encoders | [View Map](frontend/src/lib/codemap.md) |
 | `frontend/src/pages/` | Public landing/sign-in routes and authenticated dashboard boundary | [View Map](frontend/src/pages/codemap.md) |
 | `frontend/src/pages/dashboard/` | Authenticated wallet, API-key, transaction, billing, notification, and docs screens | [View Map](frontend/src/pages/dashboard/codemap.md) |
 
@@ -139,7 +140,8 @@ patterns, flow, and integration points for its directory.
 ```
 Browser → Openfort IAM → POST /auth/session
   → AuthService: find-or-create User + pending Wallet record
-  → Returns { userId, wallet }
+  → Returns HttpOnly pending-MFA cookie + identity/CSRF snapshot
+  → TOTP/recovery verification upgrades the same session; dashboard auth is local
 
 Client → POST /v1/wallets/sign (X-API-Key only)
   → ApiKeyAuthGuard + ApiKeyPermissionGuard require canSign
@@ -160,20 +162,20 @@ Client → POST /v1/transactions (X-API-Key only)
 
   Capability mode and IDs are configuration metadata, not expanded effective IDs. Create omission defaults to all with empty IDs; rotation resets to all with empty IDs; PATCH replaces full configuration (IDs-only means custom), while custom `[]` denies catalog capabilities. The one-time migration maps prior empty lists to all and nonempty lists to custom unchanged. Pause is an overlay that mode cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
 
-Dashboard → POST /wallets/withdrawals (Openfort IAM + FrontendOnly + step-up)
+Dashboard → POST /wallets/withdrawals (local MFA cookie + Origin/CSRF + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`
   → WalletService rejects frozen wallets, then checks idempotency and balance before submitting a Calibur agent user operation through Openfort
   → Transaction row persists withdrawal request hash/details for audit/idempotency
 
-Dashboard → POST /wallets/withdrawal-addresses (Openfort IAM + FrontendOnly + step-up)
+Dashboard → POST /wallets/withdrawal-addresses (local MFA cookie + Origin/CSRF + step-up)
   → WithdrawalPolicyService enables address allowlist policy, normalizes the EVM address, records a 24h/default cooldown window, and writes allowlist lifecycle `SecurityEvent` rows
   → Later withdrawals to that address are blocked until `availableAt`
 
-Dashboard → GET /security-notifications (Openfort IAM + FrontendOnly)
+Dashboard → GET /security-notifications (local MFA cookie + FrontendOnly)
   → SecurityNotificationService returns recent user-facing security alerts derived from `SecurityEvent` rows
   → Dashboard can mark individual notifications or all unread notifications as read
 
-Dashboard → `/billing/*` (Openfort IAM + FrontendOnly; Stripe webhook remains `/v1/billing/webhooks/stripe`)
+Dashboard → `/billing/*` (local MFA cookie + FrontendOnly/CSRF; Stripe webhook remains `/v1/billing/webhooks/stripe`)
   → Billing summary/invoice endpoints expose plan, usage, invoice, and payment state
   → API-key guards meter API calls; `BillingWalletLifecycleService` serializes wallet reservations and activation quota/peak accounting
   → BillingReconciliationService matches receipt-confirmed outbound usage to transactions
@@ -206,8 +208,8 @@ Client → GET /v1/transactions/:id (X-API-Key only)
 - **Execution:** `OpenfortService` is the only wallet/signing facade. It routes chain
   execution through Openfort or Pimlico/viem as appropriate; Calibur session-key and the
   explicitly isolated backend-EOA mode are policy-gated before submission.
-- **Frontend:** `frontend/` is a separate Vite package. Dashboard calls use IAM bearer
-  helpers; only the public signing/transaction examples use API-key helpers. In development
+- **Frontend:** frontend is a separate Vite package. Dashboard calls use cookie/CSRF
+  helpers; only public signing/transaction examples use API-key helpers. In development
   Vite proxies `/api` to the backend and strips the prefix.
 - **Public contract:** `openapi.yaml` intentionally documents only `X-API-Key` public
   signing and transaction routes. Dashboard, billing, auth, health, and webhook routes are
@@ -217,7 +219,7 @@ Client → GET /v1/transactions/:id (X-API-Key only)
 
 - Private keys never enter this repository's persistence, logs, responses, or local signing
   code; Openfort TEE owns key management and signing.
-- Public API-key routes and frontend-only IAM routes remain separate. Never add
+- Public API-key routes and frontend-only application-session routes remain separate. Never add
   `FrontendOnlyGuard` to public routes or expose API-key management to API keys.
 - API keys are Argon2id hashes; prefix matches are only lookup hints and every candidate must
   be verified. `request.ip` after Express trust-proxy handling is the source for IP allowlists.

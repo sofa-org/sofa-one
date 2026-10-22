@@ -136,7 +136,7 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 ### Controller wiring
 
 - `BillingController` (`billing`, all routes `@FrontendOnly()` +
-  `OpenfortUserGuard` + `FrontendOnlyGuard`, user id from `@CurrentUser('id')`):
+  AppSessionGuard + FrontendOnlyGuard, with local MFA cookie/unsafe CSRF and user id from CurrentUser):
   - `GET /plans` → `billingService.getPlans`
   - `POST /plan` → `billingService.assignPlan(userId, body.planCode)`
   - `GET /summary?period=` → `billingService.getSummary`
@@ -453,7 +453,7 @@ BILLING_WORKER_ENABLED)
   recovery columns.
 - **Security scope.** All `billing` dashboard routes are intentionally
   omitted from `openapi.yaml` (public spec is API-key-only) and require an
-  Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks.
+  full-MFA local application cookie plus FrontendOnlyGuard and unsafe-request Origin/CSRF.
   The Stripe webhook is the only public route in the module — it is
   signature-verified from the raw body, `@Public()`, and exempt from
   throttling so Stripe retries are never rate-limited. Reconciliation and

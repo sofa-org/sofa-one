@@ -22,7 +22,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 ### Access-control split
 - API-key send and public status are scoped to the authenticated key's bound wallet; explicit send wallet selectors may only repeat that binding. Idempotency and legacy attribution must prove that same wallet before returning an existing row.
 - `POST /v1/transactions` and `GET /v1/transactions/:id` are public API-key routes: `ApiKeyAuthGuard` (resolves the API key, rejects frozen users/keys) + `ApiKeyPermissionGuard` with `canSendTransaction` / `canReadTransactionStatus`. The service re-asserts the permission from `req.apiKeyRecord` so it never trusts the guard alone.
-- `GET /transactions` and `GET /transactions/:id/detail` are registered on the separate dashboard controller and are IAM-only: `OpenfortUserGuard` + `FrontendOnlyGuard` (origin/referer allowlist). These routes are intentionally omitted from `openapi.yaml`.
+- Dashboard transaction history/detail uses AppSessionGuard + FrontendOnlyGuard (full local cookie/MFA), intentionally omitted from public OpenAPI.
 - Route-level throttling: send is tight (5/60s + 20/3600s); read routes are 20/60s + 100/3600s.
 
 ### Execution-mode strategy
@@ -90,7 +90,7 @@ Public transaction submission and status API for Openfort-backed sends, plus das
 - `GET /v1/transactions/:id` (public API key): requires `canReadTransactionStatus`; scoped to `operationType: 'send'` and `authMethod: 'api_key'`; returns safe status fields only.
 
 ## Integration
-- **Guards/decorators**: `ApiKeyAuthGuard`, `ApiKeyPermissionGuard`, `RequireApiKeyPermission`, `OpenfortUserGuard`, `FrontendOnlyGuard`, `FrontendOnly`, `CurrentUser` from `src/common`.
+- **Guards**: ApiKeyAuthGuard/ApiKeyPermissionGuard for public automation; AppSessionGuard/FrontendOnlyGuard for dashboard history; CurrentUser derives the authenticated local owner.
 - **Services**: `PrismaService` (Transaction/UserWallet reads and writes), `OpenfortService` (`sendUserOperation`, `sendBackendTransaction`), `RequestContextService` (client IP + log context), `EoaExecutionPolicyService`, `SessionKeyPolicyService`, `RiskEvaluationService`, `SecurityEventService` (via policy/simulation services).
 - **Modules**: `DefiModule` (leaf catalog/grant/pause authorization), `SecurityEventModule`, `EoaExecutionModule`, `SessionKeyModule`, `BillingModule` (debt snapshot via billing debt helper on the send path; Stripe/USDC settlement remains outside this module), `WithdrawalDestinationModule` (destination/cooldown leaf for API-key direct egress; no WalletModule cycle). Protection enablement (`WithdrawalPolicy.requireAddressAllowlist`) is read in this module for the BILL-016 conservative gate; dedicated withdraw/payment paths stay outside generic-send capability authorization.
 - **Common utils**: `getSupportedChain` (`src/common/chains/supported-chains`), `hashRequest` (`src/common/utils/request-hash`), `sanitizeErrorMessage` (`src/common/utils/sanitize`), `AgentStatus` (`src/common/agent/agent-status`).

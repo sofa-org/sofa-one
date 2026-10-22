@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AppSessionProvider } from './components/AppSessionProvider';
 
 const AuthProviders = lazy(() => import('./components/AuthProviders'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
@@ -39,6 +40,7 @@ function PageFallback() {
 
 export default function App() {
   return (
+    <AppSessionProvider>
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-accent selection:text-white">
       <Suspense fallback={<PageFallback />}>
         <Routes>
@@ -65,16 +67,14 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <AuthProviders>
                 <ProtectedRoute>
                   <DashboardStepUpGate>
                     <DashboardLayout />
                   </DashboardStepUpGate>
                 </ProtectedRoute>
-              </AuthProviders>
             }
           >
-            <Route index element={<WalletPage />} />
+            <Route index element={<AuthProviders><WalletPage /></AuthProviders>} />
             <Route path="api-keys" element={<ApiKeysPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="notifications" element={<SecurityNotificationsPage />} />
@@ -85,5 +85,6 @@ export default function App() {
         </Routes>
       </Suspense>
     </div>
+    </AppSessionProvider>
   );
 }

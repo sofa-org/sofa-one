@@ -7,9 +7,9 @@ import { IS_FRONTEND_ONLY_KEY } from '../decorators/frontend-only.decorator';
  * Restricts access to routes marked with @FrontendOnly() to requests
  * originating from the configured CORS_ORIGIN allowlist.
  *
- * Checks the `Origin` header first, then falls back to `Referer` outside
- * production. In development (no CORS_ORIGIN set), allows localhost:3000
- * and localhost:3100.
+ * Checks Origin first. Safe reads may use a trusted Referer because same-origin
+ * browser GET requests do not send Origin; unsafe cookie requests require Origin.
+ * Development defaults to localhost:3000 and localhost:3100.
  */
 @Injectable()
 export class FrontendOnlyGuard implements CanActivate {
@@ -39,19 +39,28 @@ export class FrontendOnlyGuard implements CanActivate {
     if (!isFrontendOnly) return true;
 
     const request = context.switchToHttp().getRequest<{
+      method?: string;
       headers: Record<string, string | undefined>;
     }>();
 
     const origin = request.headers['origin'];
     const referer = request.headers['referer'];
 
-    const candidate = origin ?? (this.isProduction ? undefined : this.extractOriginFromReferer(referer));
+    const safeRead = request.method === 'GET' || request.method === 'HEAD';
+    const candidate = origin ?? ((!this.isProduction || safeRead) ? this.extractOriginFromReferer(referer) : undefined);
 
     if (candidate && this.isAllowed(candidate)) {
       return true;
     }
 
     throw new ForbiddenException('This endpoint is only accessible from the SOFA ONE frontend');
+  }
+
+  assertTrustedOrigin(request: { headers: { origin?: string | string[] } }): void {
+    const origin = request.headers.origin;
+    if (typeof origin !== 'string' || !this.isAllowed(origin)) {
+      throw new ForbiddenException('This endpoint requires a trusted frontend Origin');
+    }
   }
 
   private isAllowed(origin: string): boolean {

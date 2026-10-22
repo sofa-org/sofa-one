@@ -23,7 +23,7 @@ Defines the validated request shape for API-key creation (`POST /api-keys`). The
 | `IsWeiAmountConstraint` | `ValidatorConstraint` (`isWeiAmount`, sync) | Regex `^\d+$`; used on `ApiKeySpendLimitsDto.daily`/`monthly`. |
 
 ## Inputs / Outputs
-- **Input**: raw JSON request body of `POST /api-keys` (Openfort IAM bearer token + step-up required at the controller level).
+- **Input**: raw POST /api-keys JSON after full local MFA cookie, Origin/CSRF and exact-session step-up.
 - **Output**: a validated, transformed `CreateApiKeyDto` instance whose fields are destructured by `ApiKeyController.create` into the plain object passed to `ApiKeyService.createApiKey(userId, {...})`.
 - **Rejection**: invalid input surfaces as a 400 via the global `ValidationPipe` (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`); unknown fields are rejected, not stripped.
 
@@ -34,7 +34,7 @@ Defines the validated request shape for API-key creation (`POST /api-keys`). The
 - **Single Responsibility**: the file only shapes/validates input; no business logic, hashing, or persistence.
 
 ## Flow
-1. `POST /api-keys` → `ApiKeyController.create` (guarded by `OpenfortUserGuard`, `FrontendOnlyGuard`, `StepUpGuard`; throttled 5/60s, 20/1h).
+1. POST /api-keys → AppSessionGuard, FrontendOnlyGuard and StepUpGuard → existing route throttles and DTO validation.
 2. Global `ValidationPipe` transforms the raw body into `CreateApiKeyDto` and runs all decorator rules (trim, length, ISO-8601, per-element regex checks, nested-object validation).
 3. On success, the controller destructures the DTO fields and forwards them as a plain object to `ApiKeyService.createApiKey(userId, {...})`.
 4. On failure, the pipe throws a 400 before any service code runs.

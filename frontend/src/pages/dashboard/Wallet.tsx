@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAppSession } from '@/components/AppSessionProvider';
+import EmailOtpForm from '@/pages/EmailOtpForm';
 import {
   AccountTypeEnum,
   RecoveryMethod,
@@ -17,7 +19,6 @@ import {
   getMe,
   markAgentRegistrationResult,
   markAgentRegistrationTransaction,
-  syncSession,
   withdrawAuth,
   addWithdrawalAddressAuth,
   getBalancesAuth,
@@ -90,14 +91,11 @@ import {
 
 export default function WalletPage() {
   const openfort = useOpenfort();
-  const { getAccessToken, isAuthenticated, isLoading: authLoading, user } = useUser();
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
+  const { getAccessToken, isAuthenticated: providerAuthenticated, isLoading: providerLoading } = useUser();
+  const { session, loading: authLoading } = useAppSession();
+  const user = session;
+  const isAuthenticated = Boolean(session);
+  const [walletIdentityRequired, setWalletIdentityRequired] = useState(false);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [wallets, setWallets] = useState<WalletInfo[]>([]);
   const [selectedWalletId, setSelectedWalletId] = useState('');
@@ -200,7 +198,7 @@ export default function WalletPage() {
 
       while (shouldContinue()) {
         try {
-          return await markAgentRegistrationResult(getToken, { chainId, txHash, status, walletId: selectedWalletId });
+          return await markAgentRegistrationResult({ chainId, txHash, status, walletId: selectedWalletId });
         } catch (err: unknown) {
           if (
             status === 'registration_failed' ||
@@ -214,7 +212,7 @@ export default function WalletPage() {
 
       return null;
     },
-    [getToken, selectedWalletId],
+    [selectedWalletId],
   );
 
   const checkPendingAgentRegistration = useCallback(
@@ -250,13 +248,7 @@ export default function WalletPage() {
 
     async function init() {
       try {
-        let result: AuthSessionResponse;
-        try {
-          result = await getMe(getToken, controller.signal);
-        } catch (err: unknown) {
-          if (!hasApiErrorCode(err, 'NOT_FOUND', 'WALLET_NOT_FOUND')) throw err;
-          result = await syncSession(getToken, controller.signal);
-        }
+        const result = await getMe(controller.signal);
 
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
@@ -278,7 +270,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [authLoading, isAuthenticated, user, getToken, walletReloadNonce]);
+  }, [authLoading, isAuthenticated, user?.sessionId, walletReloadNonce]);
 
   useEffect(() => {
     if (!apiKeyDisplay) return;
@@ -300,7 +292,7 @@ export default function WalletPage() {
     const controller = new AbortController();
     setBalancesLoading(true);
     setBalancesError(null);
-    getBalancesAuth(getToken, selectedChainId, controller.signal, selectedWallet.id)
+    getBalancesAuth(selectedChainId, controller.signal, selectedWallet.id)
       .then((data) => {
         if (!controller.signal.aborted) {
           setBalances(data.chains);
@@ -317,7 +309,7 @@ export default function WalletPage() {
     return () => {
       controller.abort();
     };
-  }, [user, selectedChainId, selectedWallet?.id, selectedWallet?.walletAddress, getToken, balanceRefreshNonce]);
+  }, [user?.sessionId, selectedChainId, selectedWallet?.id, selectedWallet?.walletAddress, balanceRefreshNonce]);
 
   const loadWithdrawalAllowlist = useCallback(
     async (signal?: AbortSignal) => {
@@ -330,7 +322,7 @@ export default function WalletPage() {
       setWithdrawalAllowlistLoading(true);
       setWithdrawalAllowlistError(null);
       try {
-        const data = await listWithdrawalAddressesAuth(getToken, signal, selectedWallet?.id);
+        const data = await listWithdrawalAddressesAuth(signal, selectedWallet?.id);
         if (!signal?.aborted) setWithdrawalAllowlist(data);
       } catch (err: unknown) {
         if (!signal?.aborted) setWithdrawalAllowlistError(getApiErrorMessage(err));
@@ -338,7 +330,7 @@ export default function WalletPage() {
         if (!signal?.aborted) setWithdrawalAllowlistLoading(false);
       }
     },
-    [getToken, user, selectedWallet?.walletAddress, selectedWallet?.id],
+    [user?.sessionId, selectedWallet?.walletAddress, selectedWallet?.id],
   );
 
   useEffect(() => {
@@ -447,9 +439,9 @@ export default function WalletPage() {
     try {
       const baseUnits = parseWithdrawalAmount(amount, token);
       const chainId = selectedChainId;
-      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken());
       if (!selectedWallet?.id) throw new Error('Select the wallet to withdraw from.');
-      const result = await withdrawAuth(getToken, to, baseUnits, token, chainId, stepUpToken, selectedWallet.id);
+      const result = await withdrawAuth(to, baseUnits, token, chainId, stepUpToken, selectedWallet.id);
       setWithdrawResult({
         message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
         transactionHash: result.transactionHash,
@@ -482,15 +474,12 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
-      await addWithdrawalAddressAuth(
-        getToken,
-        {
-          address: newWithdrawalAddress,
-          label: newWithdrawalAddressLabel || undefined,
-        },
-        stepUpToken,
-      );
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken());
+      await addWithdrawalAddressAuth({
+        address: newWithdrawalAddress,
+        label: newWithdrawalAddressLabel || undefined,
+      },
+      stepUpToken,);
       setNewWithdrawalAddress('');
       setNewWithdrawalAddressLabel('');
       await loadWithdrawalAllowlist();
@@ -506,8 +495,8 @@ export default function WalletPage() {
     setWithdrawalAllowlistError(null);
 
     try {
-      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken(getToken));
-      await removeWithdrawalAddressAuth(getToken, id, stepUpToken);
+      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken());
+      await removeWithdrawalAddressAuth(id, stepUpToken);
       await loadWithdrawalAllowlist();
     } catch (err: unknown) {
       setWithdrawalAllowlistError(getApiErrorMessage(err));
@@ -530,6 +519,7 @@ export default function WalletPage() {
     setWalletSetupSuccess(null);
 
     try {
+      if (!providerAuthenticated) throw new Error('Verify your email below to reconnect Openfort wallet controls.');
       assertWebCryptoAvailable();
       if (password.length < 8) {
         throw new Error('Use a wallet recovery password with at least 8 characters.');
@@ -596,13 +586,19 @@ export default function WalletPage() {
 
       let authorized: AuthSessionResponse;
       for (let attempt = 0; ; attempt += 1) {
+        const providerBearer = await getAccessToken();
+        if (!providerBearer) {
+          setWalletIdentityRequired(true);
+          throw new Error('Reconnect Openfort before authorizing a wallet.');
+        }
         try {
-          authorized = await authorizeEmbeddedWallet(getToken, {
+          authorized = await authorizeEmbeddedWallet(providerBearer, {
             embeddedWalletAddress: address,
             embeddedOpenfortAccountId: accountId,
           });
           break;
         } catch (err: unknown) {
+          if (hasApiErrorCode(err, 'AUTH_PROVIDER_INVALID')) throw err;
           if (attempt >= AUTHORIZE_EMBEDDED_WALLET_RETRIES) throw err;
           await delay(AUTHORIZE_EMBEDDED_WALLET_RETRY_DELAY_MS);
           refreshedAccounts = await openfort.updateEmbeddedAccounts({ silent: true });
@@ -621,6 +617,7 @@ export default function WalletPage() {
       );
       return true;
     } catch (err: unknown) {
+      if (hasApiErrorCode(err, 'AUTH_PROVIDER_INVALID')) setWalletIdentityRequired(true);
       setWalletSetupError(getApiErrorMessage(err));
       if (creatingNew && /provision|review|uncertain/i.test(getApiErrorMessage(err))) setWalletSetupError(`${getApiErrorMessage(err)} Do not repeat this creation; wait for review.`);
       return false;
@@ -639,6 +636,7 @@ export default function WalletPage() {
     setWalletSetupSuccess(null);
 
     try {
+      if (!providerAuthenticated) throw new Error('Verify your email below to reconnect Openfort wallet controls.');
       assertWebCryptoAvailable();
       if (!selectedWallet?.walletAddress || !selectedWallet.signerAddress || !selectedWallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
@@ -684,7 +682,12 @@ export default function WalletPage() {
         authorization.status === 'registered' ||
         authorization.status === 'registration_failed'
       ) {
-        const initialized = await authorizeEmbeddedWallet(getToken, {
+        const providerBearer = await getAccessToken();
+        if (!providerBearer) {
+          setWalletIdentityRequired(true);
+          throw new Error('Reconnect Openfort before authorizing a wallet.');
+        }
+        const initialized = await authorizeEmbeddedWallet(providerBearer, {
           embeddedWalletAddress: address,
           embeddedOpenfortAccountId: selectedAccount.id ?? selectedAccount.accountId,
           chainId: agentChainId,
@@ -872,7 +875,7 @@ export default function WalletPage() {
           `Agent registration UserOperation was submitted but no transaction hash was returned: ${userOpHash}`,
         );
       }
-      const pending = await markAgentRegistrationTransaction(getToken, {
+      const pending = await markAgentRegistrationTransaction({
         chainId: agentChainId,
         txHash,
         walletId: selectedWallet?.id,
@@ -914,6 +917,7 @@ export default function WalletPage() {
         setWalletSetupError(`API access authorization failed: ${txHash}`);
       }
     } catch (err: unknown) {
+      if (hasApiErrorCode(err, 'AUTH_PROVIDER_INVALID')) setWalletIdentityRequired(true);
       setWalletSetupError(getApiErrorMessage(err));
     } finally {
       setWalletSetupLoading(false);
@@ -935,7 +939,7 @@ export default function WalletPage() {
   const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
   const isAgentRegistrationChecking = Boolean(pendingAuthorization);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
-  const authorizeSubmitDisabled = registrationBusy;
+  const authorizeSubmitDisabled = registrationBusy || !providerAuthenticated || providerLoading;
   const showAgentRegistrationSpinner =
     walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !selectedWallet?.walletAddress
@@ -990,6 +994,22 @@ export default function WalletPage() {
       title="Agent Wallet"
       description="Manage your secure wallets, authorize API access, then use API keys from your backend."
     >
+      {providerAuthenticated && !walletIdentityRequired && (
+        <div className="mb-4 flex justify-end">
+          <button type="button" disabled={registrationBusy || providerLoading}
+            onClick={() => setWalletIdentityRequired(true)}
+            className="text-sm font-semibold text-brand-accent disabled:opacity-50">
+            Reconnect wallet identity
+          </button>
+        </div>
+      )}
+      {(!providerAuthenticated || walletIdentityRequired) && !providerLoading && (
+        <DashboardCard>
+          <p className="mb-4 text-sm text-brand-muted">Your SOFA session is active. Verify your email again to use Openfort wallet controls; other dashboard pages do not need this connection.</p>
+          {session?.email && <p className="mb-4 text-sm text-brand-muted">Use the identity associated with your SOFA account: {session.email}.</p>}
+          <EmailOtpForm walletReauthentication onWalletReauthenticated={() => setWalletIdentityRequired(false)} />
+        </DashboardCard>
+      )}
       {loading ? (
         <WalletLoadingState />
       ) : error ? (

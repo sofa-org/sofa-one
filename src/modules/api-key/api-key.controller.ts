@@ -2,7 +2,7 @@ import { Controller, Post, Delete, Get, Body, Param, UseGuards, ParseUUIDPipe, P
 import { Throttle } from '@nestjs/throttler';
 import { ApiKeyService } from './api-key.service';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../common/decorators/step-up.decorator';
@@ -14,7 +14,7 @@ import { RotateApiKeyDto } from './dto/rotate-api-key.dto';
 
 @Controller('api-keys')
 @FrontendOnly()
-@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+@UseGuards(AppSessionGuard, FrontendOnlyGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
@@ -95,7 +95,7 @@ export class ApiKeyController {
 
 @Controller('defi-capabilities')
 @FrontendOnly()
-@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+@UseGuards(AppSessionGuard, FrontendOnlyGuard)
 export class DefiCapabilityController {
   constructor(private readonly defiCatalog: DefiCatalogService) {}
   @Get()
@@ -105,7 +105,7 @@ export class DefiCapabilityController {
 /** Dashboard-only read of reviewed, immutable capability bundle metadata. */
 @Controller('defi-capability-bundles')
 @FrontendOnly()
-@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+@UseGuards(AppSessionGuard, FrontendOnlyGuard)
 export class DefiCapabilityBundleController {
   constructor(private readonly bundles: DefiBundleService) {}
 

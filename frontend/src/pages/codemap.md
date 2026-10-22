@@ -17,14 +17,14 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
   - Disbanded, winding-down/shut-down protocols and retired/sunset or explicitly unmaintained deployments are excluded without an exit-only exception. Nomiswap, Mountain Protocol, Saddle, mStable, Prisma Finance, Badger legacy Sett, Nerve Finance and Ramses V1 have no cards or runtime/public catalog capabilities. Historical evidence does not grant support or justify re-admission.
 - `Pricing.tsx` — public `/pricing` page with links to the protocol directory and sign-in.
 - `SignIn.tsx` — `/sign-in/*` auth shell; responsive split layout (brand panel + form panel) that lazy-loads `AuthFormPanel`.
-- `EmailOtpForm.tsx` — the actual Openfort email-OTP form (request code → verify code → redirect); rendered inside `AuthFormPanel`'s provider/guard stack.
+- `EmailOtpForm.tsx` — Openfort email OTP followed by explicit SOFA session exchange before redirect; walletReauthentication mode reconnects provider identity without replacing the SOFA session.
 - `dashboard/` — authenticated dashboard subtree (see `dashboard/codemap.md`): `DashboardLayout`, `Wallet`, `ApiKeys`, `Transactions`, `SecurityNotifications`, `Billing`, `Docs`, plus setup/step-up/helper modules. Not detailed here; see the child map.
 - `codemap.md` — this file.
 
 ## Design/Patterns
 - **Presentational public pages**: `Landing` and `SignIn` are static, copy-driven components using Tailwind brand tokens (`brand-*`) and `react-router-dom` `<Link>`s; no data fetching.
 - **Lazy route loading**: every page (public and dashboard) is `lazy()`-imported in `App.tsx` under a top-level `<Suspense>`; `SignIn` additionally lazy-loads `AuthFormPanel` with its own skeleton fallback.
-- **Composition-root auth form**: `SignIn` does not render the OTP form directly — it lazy-loads `AuthFormPanel` (from `src/components/`), which composes `OpenfortAuthProvider → PublicOnlyRoute → EmailOtpForm`. This keeps provider wiring and route guards out of the page layer.
+- **Composition-root auth form**: PublicOnlyRoute uses SOFA state before mounting OpenfortAuthProvider → EmailOtpForm.
 - **Controlled OTP form with local state**: `EmailOtpForm` holds `email`/`otp`/`sent`/`error`/`resendCooldownSeconds` locally; OTP input is normalized (strips spaces/dashes), auto-focuses on send, and enforces a 30s resend cooldown.
 - **Redirect-state round-trip**: `ProtectedRoute` stores `state.from` on redirect to `/sign-in`; `EmailOtpForm` reads `location.state.from` and returns the user to the original dashboard path (preserving search/hash) after a successful sign-in, defaulting to `/dashboard`.
 
@@ -36,25 +36,25 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 - `/pricing` → `PricingPage`
 - `/sign-in/*` → `SignInPage` (renders `AuthFormPanel` → `EmailOtpForm`)
 - `/sign-up/*` → `<Navigate to="/sign-in" replace />`
-- `/dashboard` → `AuthProviders → ProtectedRoute → DashboardStepUpGate → DashboardLayout` with nested children: index (`Wallet`), `api-keys`, `transactions`, `notifications`, `billing`, `docs`
+- `/dashboard` → ProtectedRoute → DashboardStepUpGate → DashboardLayout under AppSessionProvider; only index WalletPage mounts AuthProviders.
 - `*` → `<Navigate to="/" replace />`
 - All routes wrapped in `ErrorBoundary` (from `src/main.tsx`) and a top-level `<Suspense>` with `PageFallback`.
 
 ### Public → auth → dashboard boundary
 1. Unauthenticated user hits `/dashboard` → `ProtectedRoute` redirects to `/sign-in` with `state.from`.
-2. `SignInPage` renders the split-layout shell; `AuthFormPanel` mounts `OpenfortAuthProvider` + `PublicOnlyRoute` (keeps already-authenticated users out) + `EmailOtpForm`.
-3. `EmailOtpForm` calls `requestEmailOtp` → user enters code → `signInEmailOtp` → on success `navigate(getPostSignInPath(location.state), { replace: true })` back to the original dashboard path.
+2. PublicOnlyRoute restores SOFA state, then AuthFormPanel mounts the minimal Openfort provider for anonymous sign-in.
+3. EmailOtpForm requests/verifies OTP, obtains a provider token and awaits local session exchange before returning to the original dashboard path.
 4. Authenticated user re-visits `/sign-in` → `PublicOnlyRoute` redirects back to `/dashboard`.
 
 ### Dashboard subtree boundary
-The `dashboard/` directory is a self-contained authenticated subtree with its own routing, state, and API integration, fully documented in `dashboard/codemap.md`. Key boundary facts: `DashboardLayout` renders the `<Outlet />` for all nested dashboard routes; every page uses the token-accessor pattern (`getAccessToken` from `useUser`) against `@/lib/api` `*Auth` helpers; guarded mutations require a TOTP step-up proof (`step-up-session.ts`); `DashboardStepUpGate` (in `src/components/`) enforces MFA before the layout mounts.
+DashboardLayout renders Outlet; all non-wallet pages call cookie/CSRF API helpers without Openfort hooks. DashboardStepUpGate requires server-confirmed MFA before the layout mounts; sensitive mutations retain exact-session step-up.
 
 ## Integration
 - **Routing**: `App.tsx` lazy-imports `Landing`, `SignIn`, and all dashboard pages; `SignIn` lazy-imports `AuthFormPanel` from `src/components/`.
-- **Auth**: `@openfort/react` — `useEmailOtpAuth` (`requestEmailOtp`, `signInEmailOtp`, `isRequesting`, `isLoading`) in `EmailOtpForm`; `useOpenfort`/`useUser` used by the guards and dashboard pages.
+- **Auth**: useEmailOtpAuth/useUser are confined to explicit sign-in or wallet identity work; AppSessionProvider supplies route/dashboard authentication.
 - **Shared components**: `AuthFormPanel`, `ProtectedRoute`, `PublicOnlyRoute`, `AuthProviders`, `DashboardStepUpGate`, `ErrorBoundary` (all in `src/components/`).
 - **API layer**: pages themselves make no direct API calls; the dashboard subtree consumes `@/lib/api` `*Auth` helpers, and `DEFAULT_CHAIN_ID` is sourced from `src/lib/api` by `AuthProviders`.
-- **Env**: `VITE_OPENFORT_PUBLISHABLE_KEY` (required for sign-in), `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` (wallet recovery, dashboard).
+- **Env**: Openfort publishable key is required for sign-in; Shield is required only for wallet controls, not non-wallet dashboard access.
 - **Cross-cutting**: `EmailOtpForm` is the single shared auth form, referenced by `AuthFormPanel` and documented in `src/components/codemap.md`; the dashboard subtree's `step-up-session.ts` and `notification-events.ts` are consumed by `src/components/` guards.
 
 ## Security notes

@@ -5,22 +5,24 @@
 - Private keys must never be stored, logged, returned, exported, or derived by this application.
 - Openfort TEE-managed custody is the only signing boundary.
 - API-key secrets are stored only as Argon2id hashes; plaintext secrets exist only at generation time and in the caller's possession.
-- Public API-key endpoints and dashboard IAM endpoints are separate trust domains.
+- Public API-key endpoints and dashboard application-session endpoints are separate trust domains.
 - API keys must never manage API keys.
 - Public status responses must not disclose calldata, `requestHash`, `interactionsHash`, private Openfort identifiers, or raw request payloads.
 
 ## 2. Authentication surfaces
 
-### Dashboard/Openfort IAM
+### Dashboard application sessions
 
-Used for user-facing dashboard operations:
-
-- session sync and `GET /auth/me`
-- embedded wallet authorization and registration-result tracking
-- API-key lifecycle
-- balances, deposit info, and withdrawals
-
-Frontend-only endpoints must use Openfort IAM bearer auth plus `FrontendOnlyGuard` origin/referer checks.
+- Openfort IAM proves identity only at `POST /auth/session` and fresh embedded-wallet authorization.
+- Ordinary dashboard authentication resolves a local opaque HttpOnly cookie, stored only as a SHA-256 token hash. Neither IAM bearer tokens nor API keys substitute for it.
+- Every exchange starts pending MFA. Until TOTP/recovery verification, permit only session introspection/current logout and MFA status/setup/enable/verify; reject business routes with `MFA_REQUIRED`.
+- The pending deadline is 15 minutes; the absolute session lifetime is one hour without renewal. Upstream IAM revocation does not instantly revoke local sessions; application logout/revoke/freeze is checked locally.
+- MFA upgrade, recovery-code consumption and session-bound proof issuance commit atomically under user/session locks. Recovery codes are consumed with a compare-and-set.
+- Step-up proofs belong to one exact user/session, last at most 15 minutes and never outlive the session. Cookie replacement/current logout deletes that session's proofs; all-device logout and factor disable revoke every user session/proof.
+- Unsafe cookie requests require trusted Origin and a constant-time-checked CSRF token derived from the cookie. Safe reads may use a trusted Referer when Origin is absent. Origin checks never replace authentication.
+- Production cookie: `__Host-sofa_session`, Secure, HttpOnly, SameSite=Lax, Path=/, no Domain. Deploy SPA/API same-site over HTTPS; cross-site cookie deployment is not supported.
+- Fresh wallet identity must match the immutable local Openfort subject before wallet mutation. Reconnecting Openfort must not replace or upgrade the SOFA session.
+- An already-authorized in-flight business operation is not retroactively cancelled by logout; authentication/proof checks after committed revocation fail.
 
 ### Public API key
 
@@ -31,7 +33,7 @@ Used only for automation/client integrations:
 - `POST /v1/transactions`
 - `GET /v1/transactions/:id`
 
-These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
+These endpoints require `X-API-Key` and must reject IAM bearer and application-cookie substitutes.
 
 ## 3. API-key storage and verification
 
@@ -54,7 +56,7 @@ These endpoints require `X-API-Key` and must reject IAM-only dashboard auth.
 
 - `CORS_ORIGIN` is required in production.
 - Development defaults allow `http://localhost:3000` and `http://localhost:3100`.
-- Frontend-only guards are defense-in-depth for browser-facing operations, not a replacement for bearer-token auth.
+- Frontend-only guards and CSRF checks are defense-in-depth for browser-facing operations, not replacements for application-session authentication.
 - Do not add frontend-only guards to public API-key endpoints because public API clients may not have browser origin headers.
 
 ## 6. Validation and payload limits

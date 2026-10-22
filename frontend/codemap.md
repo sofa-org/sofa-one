@@ -50,12 +50,12 @@ Root-level files:
 ## Flow
 - **Dev**: `npm run dev` starts Vite on port 3000. Requests to `/api/*` are proxied to the backend (default `http://localhost:3100`, overridable via `VITE_API_PROXY_TARGET`) with the `/api` prefix stripped.
 - **Runtime base URL**: `src/lib/api.ts` resolves `API_BASE` = `VITE_API_URL` or `/api` (the Vite proxy). In production builds it throws at module load if `VITE_API_URL` is unset. `getApiBaseUrlForDisplay()`/`getApiBaseUrlModeLabel()` expose the resolved base for the Docs page.
-- **App routing** (`src/App.tsx`): `/` → Landing; `/sign-in/*` → SignIn; `/sign-up/*` → redirect to `/sign-in`; `/dashboard` → `AuthProviders → ProtectedRoute → DashboardStepUpGate → DashboardLayout` with nested children (index=Wallet, api-keys, transactions, notifications, billing, docs); `*` → redirect to `/`. All routes are `lazy()`-loaded under a top-level `<Suspense>`.
-- **Auth boundary**: public pages drive the Openfort email-OTP flow; authenticated users are redirected to `/dashboard`; unauthenticated dashboard access redirects to `/sign-in` with `state.from` for post-login return. The dashboard enforces a TOTP MFA step-up gate before mounting.
+- **App routing**: root AppSessionProvider; dashboard ProtectedRoute/MFA gate/layout; AuthProviders only around index Wallet. Sign-in mounts minimal Openfort only after the local public-only guard.
+- **Auth boundary**: explicit Openfort OTP exchange creates pending local MFA; server snapshot gates business content. Non-wallet pages do not require provider session or Shield.
 - **Build**: `npm run build` type-checks then emits the production bundle to `dist/` (served by `vite preview` or any static host).
 
 ## Integration
-- **Backend**: the SPA talks to the NestJS backend over HTTP. In dev it goes through the Vite `/api` proxy; in production it uses `VITE_API_URL` directly. The access-control split is respected: dashboard routes use Openfort IAM bearer tokens (`authFetch`), while the frontend's API-key helpers use explicit keys for signing, transaction submission, and transaction status. The public API also exposes read-only `/v1/wallets` metadata, which these helpers do not consume.
+- **Backend**: dashboard requests use application cookies and unsafe-request CSRF through authFetch. Public API examples retain explicit X-API-Key via apiFetch; IAM tokens do not authenticate ordinary dashboard requests.
 - **Openfort**: `@openfort/react` provides IAM auth (email OTP), the embedded EOA wallet, Shield recovery, and 7702 authorization; `@openfort/react/wagmi` + `wagmi` + `viem` provide the wallet/chain stack. `AuthProviders.tsx` builds a 13-chain wagmi config with public RPC defaults overridable via `VITE_*_RPC_URL`.
 - **Blockchain**: `src/lib/calibur.ts` builds EIP-7702-authorized Calibur smart accounts (EntryPoint v0.8) whose user operations are signed by the owner account and submitted through Openfort (or Pimlico on Monad). Constants, key types/hashing/settings, registry encoders and EntryPoint call encoding come directly from `../src/common/calibur/calibur-primitives.ts`; this leaf has only a viem dependency and does not import NestJS, Prisma, backend account factories or signing code.
 - **Dependencies** (`package.json`):
@@ -66,7 +66,7 @@ Root-level files:
 ## Configuration
 - **Env vars** (see `.env.example`; `.env` holds local values, gitignored):
   - `VITE_OPENFORT_PUBLISHABLE_KEY` — required; Openfort IAM publishable key (email OTP / sign-in).
-  - `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` — required for dashboard; Openfort Shield wallet recovery.
+  - VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY — required only for wallet controls/recovery, not non-wallet dashboard pages.
   - `VITE_OPENFORT_FEE_SPONSORSHIP_ID` — optional; Openfort sponsorship policy for 7702 UserOperations.
   - `VITE_PIMLICO_API_KEY` — Pimlico RPC/bundler for Monad UserOperations (Openfort RPC does not support Monad); optional `VITE_PIMLICO_RPC_URL_<chainId>` overrides.
   - `VITE_API_URL` — backend base URL; unset → `/api` (Vite proxy). Required in production builds.

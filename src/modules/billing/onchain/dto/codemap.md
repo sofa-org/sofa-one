@@ -47,7 +47,7 @@ Cancel accepts no hash, receipt, chain, or provider fields.
    - `body.paymentAttemptId` is forwarded to
      `UsdcPaymentService.cancel(userId, id, body.paymentAttemptId)`.
 
-All three routes are guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; claim
+All three routes use AppSessionGuard + FrontendOnlyGuard and mutation Origin/CSRF; claim
 carries a tight route-level `@Throttle` (5/60s, 20/3600s) for RPC amplification;
 cancel is throttled (10/60s, 60/3600s) as a write path.
 

@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../../common/guards/app-session.guard';
 import { StepUpGuard } from '../../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../../common/decorators/step-up.decorator';
@@ -40,7 +40,7 @@ export class UsdcWalletPaymentController {
   @HttpCode(HttpStatus.ACCEPTED)
   @FrontendOnly()
   @RequireStepUp()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard, StepUpGuard)
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async payFromWallet(
     @CurrentUser('id') userId: string,
@@ -56,7 +56,7 @@ export class UsdcWalletPaymentController {
    */
   @Get('payment-status')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 30, ttl: 60000 }, medium: { limit: 120, ttl: 3600000 } })
   async paymentStatus(
     @CurrentUser('id') userId: string,
