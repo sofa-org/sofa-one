@@ -341,3 +341,9 @@ Targeted verification: catalog diff reported only 22 additions, with no existing
 
 These automatic cycles retain independent permission, mode, pause and canonical-calldata controls. Evidence is not a fresh runtime/dependency or financial-safety attestation; DAU/MAU is unverified unless explicitly sourced. Policy smoke uses in-memory database state, not real locking, RPC, Openfort broadcast or on-chain settlement. Full `verify`, `verify:backend`, `verify:frontend` and E2E gates are not run by these scoped checks.
 
+## Automatic expansion cycle 2 — OpenEden and Ondo Finance (2026-10-22)
+
+- `sources/openeden-cusdo.json`: four Ethereum cUSDO USDO wrap/unwrap functions. Underlying is rebasing USDO, not USDC; proxy upgrades, bans, both token pause states and eligibility remain authoritative. Official-doc evidence came from indexed official excerpts after direct 403s, not a claimed complete direct retrieval.
+- `sources/ondo-ousg-instant-manager.json`: four current Ethereum OUSG InstantManager subscribe/redeem and rOUSG variants. The deprecated manager and administrative subscriptions are excluded. KYC, accredited-investor/qualified-purchaser status, OndoID, compliance, accepted tokens, minimum output, fees, limits and liquidity remain mandatory.
+- Verification: only eight additions; generation/check passed; 65 backend and one frontend tests passed. Real policy smoke covered all eight additions and 96 excluded selectors, including grant/value/canonical/final revocation/pause boundaries; browser searches and served ABI entries passed. The scoped verification limitations described above apply.
+

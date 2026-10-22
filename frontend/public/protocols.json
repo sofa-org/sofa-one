@@ -6960,6 +6960,112 @@
         ]
       },
       {
+        "address": "0x93358db73b6cd4b98d89c8f5f230e81a95c2643a",
+        "protocol": "Ondo Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "rwaAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "receivingToken",
+                "type": "address"
+              },
+              {
+                "name": "minimumTokenReceived",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "receiveTokenAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemRebasingOUSG",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "rousgAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "receivingToken",
+                "type": "address"
+              },
+              {
+                "name": "minimumTokenReceived",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "receiveTokenAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "subscribe",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositToken",
+                "type": "address"
+              },
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumRwaReceived",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "rwaAmountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "subscribeRebasingOUSG",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositToken",
+                "type": "address"
+              },
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumRousgReceived",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "rousgAmountOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
         "protocol": "dinero-apxeth",
         "abi": [
@@ -7952,6 +8058,104 @@
             "outputs": [
               {
                 "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xad55aebc9b8c03fc43cd9f62260391c13c23e7c0",
+        "protocol": "OpenEden",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
                 "type": "uint256"
               }
             ]

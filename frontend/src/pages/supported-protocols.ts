@@ -84,6 +84,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
   { name: 'Noon', website: 'https://noon.capital' },
+  { name: 'Ondo Finance', website: 'https://ondo.finance/' },
+  { name: 'OpenEden', website: 'https://openeden.com/' },
   { name: 'OpenOcean', website: 'https://openocean.finance' },
   { name: 'Origin', website: 'https://www.originprotocol.com' },
   { name: 'PancakeSwap', website: 'https://pancakeswap.finance' },
