@@ -403,3 +403,11 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 
 Twenty protocol additions, thirty exact chain/address targets and 126 function capabilities were integrated in ten independent commits. Per-cycle smoke also rejected 1,583 excluded chain/address selectors. These are bounded catalog admissions, not API-key grants, permissionless-access claims, complete-workflow guarantees, live runtime attestations, financial endorsements or verified TVL/activity measurements. Full verify/build/E2E gates were not run; targeted policy state used an in-memory database, not real database locking, Openfort broadcast or onchain settlement.
 
+## Repeated expansion round 2, cycle 1 — Falcon Finance and Theo (2026-10-22)
+
+- `sources/falcon-susdf.json`: seven Ethereum sUSDf user functions, including conditional instant exits, owner-booked cooldown initiation and full matured-escrow claims. Underlying is 18-decimal USDf, not USDC. Additional cooldown resets the entire owner timer. Ordinary staking is distinct from restricted collateral mint/redemption.
+- `sources/theo-sthusd.json`: five Ethereum sthUSD functions using 6-decimal thUSD. initiateRedeem burns shares and books custody to the initiating caller; mature withdraw/redeem claim that caller's request, not a synchronous vault exit. Repeated requests restart lockup; exit previews deliberately return zero.
+- `sources/avant-avusd-scope-skip.json` preserves rejected bridged-token inventory. Avant's ordinary vaults are on Avalanche outside current chain scope; no chain expansion or transfer-only substitute is added.
+- Verification: 12 additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all 12 functions and denied 133 excluded selectors, including final live-key grant removal, revocation and pause checks. Both public cards and both served entries were checked in the browser.
+- This round retains all independent controls. Static source admission is not runtime identity, financial safety, TVL/activity measurement or a full-workflow assurance. Policy smoke uses in-memory database state, not real locking, RPC or Openfort broadcast. Full verify/build/E2E gates are not run.
+

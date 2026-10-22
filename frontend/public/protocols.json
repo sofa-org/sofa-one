@@ -8711,6 +8711,120 @@
         ]
       },
       {
+        "address": "0xa808bc9775cb41c52c7842f8b50427fe7a770326",
+        "protocol": "Theo",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets_",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "initiateRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares_",
+                "type": "uint256"
+              },
+              {
+                "name": "owner_",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares_",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares_",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver_",
+                "type": "address"
+              },
+              {
+                "name": "owner_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets_",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver_",
+                "type": "address"
+              },
+              {
+                "name": "owner_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688",
         "protocol": "ambient",
         "abi": [
@@ -11314,6 +11428,158 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xc8cf6d7991f15525488b2a83df53468d682ba4b0",
+        "protocol": "Falcon Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cooldownAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "cooldownShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
