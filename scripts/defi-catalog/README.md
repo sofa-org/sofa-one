@@ -450,3 +450,9 @@ Twenty protocol additions, thirty exact chain/address targets and 126 function c
 - `sources/level-lvlusd-sunset.json` and `sources/cove-coveusd-withdraw-only.json` preserve explicit protocol sunset/withdraw-only evidence, without exit-only activation.
 - Verification: eight additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all eight functions and denied 149 excluded selectors; both public cards and Ethereum/Monad served entries passed browser checks. No reward distribution, unlock-batch submission or native redemption was executed.
 
+## Repeated expansion round 2, cycle 8 — Multipli and Aegis (2026-10-22)
+
+- `sources/multipli-xusdc-vault.json`: five Ethereum xUSDC functions, including price-bounded deposit/mint overloads and owner-only requestRedeem. Underlying is 6-decimal Ethereum USDC; pending assets aggregate under the receiver. Operator fulfillment, liquidity, mutable fees/minimums and jurisdiction restrictions apply. Direct withdraw/redeem always revert; no user cancel/instant exit is admitted.
+- `sources/aegis-syusd-staking.json`: seven Ethereum sYUSD functions using 18-decimal YUSD. Current implementation permits immediate exits even with cooldown enabled, with mutable instant fees: withdraw specifies gross assets, redeem returns net assets, inherited previews omit the net fee. Aggregate cooldown claims, uint152 limits, underlying blacklist and upgrades remain explicit. Signed-custodian issuance is excluded.
+- Verification: 12 additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all 12 functions and denied 108 excluded selectors; both browser cards and served Ethereum entries passed. No operator fulfillment, fee payment or actual cooldown claim was executed.
+
