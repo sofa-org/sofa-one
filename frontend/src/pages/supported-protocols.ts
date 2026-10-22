@@ -91,6 +91,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Puffer', website: 'https://puffer.fi' },
   { name: 'QuickSwap', website: 'https://quickswap.exchange' },
   { name: 'Renzo', website: 'https://renzoprotocol.com' },
+  { name: 'Reservoir', website: 'https://www.reservoir.xyz' },
   { name: 'Resolv', website: 'https://resolv.xyz' },
   { name: 'Rocket Pool', website: 'https://rocketpool.net' },
   { name: 'ShibaSwap', website: 'https://shibaswap.com' },
@@ -103,6 +104,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'StakeStone', website: 'https://stakestone.io' },
   { name: 'StakeWise', website: 'https://stakewise.io' },
   { name: 'Stader', website: 'https://staderlabs.com' },
+  { name: 'Strata', website: 'https://strata.markets/' },
   { name: 'SushiSwap', website: 'https://sushi.com' },
   { name: 'Swell', website: 'https://swellnetwork.io' },
   { name: 'Symbiotic', website: 'https://symbiotic.fi' },
@@ -118,4 +120,5 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
+  { name: 'Yuzu Money', website: 'https://yuzu.money/' },
 ];
