@@ -347,3 +347,10 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - `sources/ondo-ousg-instant-manager.json`: four current Ethereum OUSG InstantManager subscribe/redeem and rOUSG variants. The deprecated manager and administrative subscriptions are excluded. KYC, accredited-investor/qualified-purchaser status, OndoID, compliance, accepted tokens, minimum output, fees, limits and liquidity remain mandatory.
 - Verification: only eight additions; generation/check passed; 65 backend and one frontend tests passed. Real policy smoke covered all eight additions and 96 excluded selectors, including grant/value/canonical/final revocation/pause boundaries; browser searches and served ABI entries passed. The scoped verification limitations described above apply.
 
+## Automatic expansion cycle 3 — Inverse Finance and Auto Finance (2026-10-22)
+
+- `sources/inverse-sdola.json`: four Ethereum sDOLA/DOLA conversion functions on the direct deployment. Retired CCIP lanes are excluded. Exit must leave the documented minimum total assets/shares; max previews are not guaranteed executable limits. DOLA, DBR auction revenue and vesting risks remain.
+- `sources/auto-finance-autousd.json`: two Ethereum autoUSD USDC deposit/redeem functions; Auto Finance and former Tokemak are one protocol. Officially discouraged `mint`/`withdraw`, dynamic route payloads, multicall and rebalance administration remain unadmitted. Ordinary exits depend on protocol-configured routes, debt freshness and liquidity.
+- Abracadabra is skipped: the retrieved official wind-down proposal/voting evidence is preserved in the replacement source. Residual sSPELL exit functions do not override the no-exit-only lifecycle policy.
+- Verification: only six additions; generate/check, 65 scoped backend tests and one frontend test passed. Real policy smoke covered six functions and 125 excluded selectors; browser searches and the two served ABI entries passed. No full gates or live on-chain execution.
+

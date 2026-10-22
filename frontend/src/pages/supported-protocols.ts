@@ -20,6 +20,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Ankr', website: 'https://www.ankr.com' },
   { name: 'ApeSwap', website: 'https://apeswap.finance' },
   { name: 'Aura', website: 'https://aura.finance' },
+  { name: 'Auto Finance', website: 'https://auto.finance/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
   {
     name: 'BabySwap',
@@ -63,6 +64,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Idle', website: 'https://idle.finance' },
   { name: 'infiniFi', website: 'https://infinifi.xyz/' },
   { name: 'Integral', website: 'https://integral.link' },
+  { name: 'Inverse Finance', website: 'https://www.inverse.finance/' },
   { name: 'izumi', website: 'https://izumi.finance' },
   // Legacy JetSwap domain now serves unrelated content; retain official deployment documentation.
   {
