@@ -411,3 +411,10 @@ Twenty protocol additions, thirty exact chain/address targets and 126 function c
 - Verification: 12 additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all 12 functions and denied 133 excluded selectors, including final live-key grant removal, revocation and pause checks. Both public cards and both served entries were checked in the browser.
 - This round retains all independent controls. Static source admission is not runtime identity, financial safety, TVL/activity measurement or a full-workflow assurance. Policy smoke uses in-memory database state, not real locking, RPC or Openfort broadcast. Full verify/build/E2E gates are not run.
 
+## Repeated expansion round 2, cycle 2 — Nexus Mutual and Olympus (2026-10-22)
+
+- `sources/nexus-mutual-wnxm.json`: three Ethereum 1:1 NXM/wNXM wrap/unwrap functions. Current Nexus documentation integrates this independently developed wrapper but explicitly does not guarantee it. Native NXM membership, whitelist and voting-lock restrictions remain authoritative; this is not cover purchase or membership registration. Redundant legacy ABI flags are omitted only from catalog fragments after checking mutability equivalence; the complete original ABI is retained.
+- `sources/olympus-staking.json`: six current OHM/sOHM/gOHM wrapping/staking and warmup claim/forfeit functions. OHM/sOHM use 9 decimals, gOHM 18; no rebase-yield promise. Recipient authorization, configurable warmup, index rounding, token authority and distributor dependencies apply. V1 is excluded.
+- `sources/equilibria-ependle-excluded.json` preserves full implementation/proxy inventory and explicit official frontend wind-down evidence, with no exit-only admission.
+- Verification: nine additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all nine functions and rejected 35 excluded selectors; both public cards and served entries passed browser checks. No token wrapping or onchain staking was executed.
+
