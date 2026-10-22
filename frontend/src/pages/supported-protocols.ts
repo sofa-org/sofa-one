@@ -39,6 +39,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Camelot', website: 'https://camelot.exchange' },
   { name: 'Cap', website: 'https://cap.app/' },
   { name: 'Capricorn', website: 'https://app.capricorn.tech/' },
+  { name: 'Centrifuge', website: 'https://centrifuge.io' },
+  { name: 'Clearpool', website: 'https://clearpool.finance' },
   { name: 'Compound', website: 'https://www.compound.xyz' },
   { name: 'Concentrator', website: 'https://concentrator.aladdin.club/' },
   { name: 'Convex', website: 'https://www.convexfinance.com' },
