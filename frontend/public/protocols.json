@@ -2662,6 +2662,125 @@
         ]
       },
       {
+        "address": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+        "protocol": "Concentrator",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositWithCRV",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_recipient",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositWithWrapper",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_recipient",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x2db0afd0045f3518c77ec6591a542e326befd3d7",
         "protocol": "izumi",
         "abi": [
@@ -4818,6 +4937,103 @@
         ]
       },
       {
+        "address": "0x65c9a641afceb9c0e6034e558a319488fa0fa3be",
+        "protocol": "f(x) Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountTokenToDeposit",
+                "type": "uint256"
+              },
+              {
+                "name": "minSharesOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountSharesOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "instantRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "amountSharesToRedeem",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountYieldOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountStableOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "amountSharesToRedeem",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountYieldOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountStableOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x66017d22b0f8556afdd19fc67041899eb65a21bb",
         "protocol": "liquity-v1-stability-pool",
         "abi": [
@@ -5080,6 +5296,154 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x7743e50f534a7f9f1791dde7dcd89f7783eefc39",
+        "protocol": "f(x) Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositGauge",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
