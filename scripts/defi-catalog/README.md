@@ -367,3 +367,9 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - `sources/pooltogether-v5-prize-pool-base.json`: six ordinary/bounded Base POOL Prize Vault functions on one exact immutable deployment. Underlying is POOL, not USDC. No factory-wide admission, permissioned prize-claimer authority, custom hook or permit is added; underlying liquidity, TWAB limits and loss accounting remain authoritative.
 - Verification: only 16 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 16 calls and 164 excluded selectors; browser search/download checks passed for both chains. Full gates and on-chain execution remain unexercised.
 
+## Automatic expansion cycle 6 — Stake.link and Bedrock (2026-10-22)
+
+- `sources/stake-link-link-pool.json`: five Ethereum LINK/stLINK queue, distribution, unqueue and finalized withdrawal functions. reSDL priority, capacity, proofs and protocol finalization remain prerequisites. Downstream bytes interpretation was bound at block 26247421: configured staking strategies/controllers decode `uint64[]` vault indices and use fixed selectors, not caller-selected target/executor calldata. That configuration observation is not future upgrade or runtime identity proof.
+- `sources/bedrock-unieth.json`: six Ethereum functions across current staking V2, the app-designated original unstake pool and fixed Redeem claims. Original-pool mint is excluded. Validator redemption requires positive 32-ETH multiples and enabled configuration; settlement delays remain. Instant swap may partially fill without user minimum-out protection.
+- Verification: only 11 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 11 calls (including payable native input) and 228 excluded selectors; browser searches and all five served target entries passed. No transaction broadcast or real settlement was performed.
+
