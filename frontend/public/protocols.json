@@ -5309,6 +5309,104 @@
         ]
       },
       {
+        "address": "0x557ab1e003951a73c12d16f0fea8490e39c33c35",
+        "protocol": "Resupply",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf",
         "protocol": "liquity-v2",
         "abi": [
@@ -28444,6 +28542,87 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xa3227c5969757783154c60bf0bc1944180ed81b9",
+        "protocol": "Kintsu",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelUnlockRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "unlockIndex",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "minShares",
+                "type": "uint96"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint96"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "unlockIndex",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint96"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestUnlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint96"
+              },
+              {
+                "name": "minSpotValue",
+                "type": "uint96"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "spotValue",
+                "type": "uint96"
               }
             ]
           }

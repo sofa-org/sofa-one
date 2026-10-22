@@ -443,3 +443,10 @@ Twenty protocol additions, thirty exact chain/address targets and 126 function c
 - `sources/batch14-lifecycle-rejections-r2.json` preserves Goldfinch wind-down/recovery-only and closed Perennial Arbitrum deployment evidence. No exit-only exception or unsupported successor-chain expansion is made.
 - Verification: ten additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all ten functions and denied 140 excluded selectors; public searches and both Ethereum/Monad served entries passed. No borrower repayment, native staking or oracle-settled redemption was executed.
 
+## Repeated expansion round 2, cycle 7 — Resupply and Kintsu (2026-10-22)
+
+- `sources/resupply-sreusd.json`: four Ethereum savings vault functions using Resupply's own 18-decimal reUSD, not Re Protocol reUSD. Ordinary calls synchronize rewards and can invoke mutable registry/controller fee-distribution dependencies. Postincident savings deployment and subsequent primary development evidence support this product's lifecycle; no assertion that all incident losses were repaid or that Insurance Pool recovery paths are supported.
+- `sources/kintsu-smon.json`: four current Monad143 sMON methods: native deposit, bounded-output unlock request, cancellable current-batch request and matured redemption. The current StakedMonadV2 implementation supersedes stale timestamp/mint integration instructions. Epoch/batch submission, liquid funding, uint96 limits, pauses, mutable fees and swap-and-pop request indices apply.
+- `sources/level-lvlusd-sunset.json` and `sources/cove-coveusd-withdraw-only.json` preserve explicit protocol sunset/withdraw-only evidence, without exit-only activation.
+- Verification: eight additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all eight functions and denied 149 excluded selectors; both public cards and Ethereum/Monad served entries passed browser checks. No reward distribution, unlock-batch submission or native redemption was executed.
+
