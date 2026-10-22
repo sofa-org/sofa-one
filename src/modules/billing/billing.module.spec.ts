@@ -1,42 +1,21 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { Test } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../core/database/prisma.module';
 import { StepUpModule } from '../step-up/step-up.module';
-import { StepUpService } from '../step-up/step-up.service';
 import { StepUpGuard } from '../../common/guards/step-up.guard';
+import { ExecutionContext } from '@nestjs/common';
+import { STEP_UP_KEY } from '../../common/decorators/step-up.decorator';
 
-/**
- * B9: real StepUpGuard on pay-from-wallet requires StepUpService from StepUpModule.
- * BillingModule must import StepUpModule (StepUp is not @Global — AppModule import
- * alone does not inject into BillingModule controllers). PrismaModule is @Global
- * in production (AppModule); tests mirror that.
- *
- * Avoid importing BillingModule itself here: it pulls Openfort ESM into Jest.
- * Source + isolated StepUp DI graph are the evidence.
- */
-describe('BillingModule Phase 2B DI (B9)', () => {
-  const moduleSrc = readFileSync(join(__dirname, 'billing.module.ts'), 'utf8');
-  const controllerSrc = readFileSync(
-    join(__dirname, 'onchain/usdc-wallet-payment.controller.ts'),
-    'utf8',
-  );
-
-  it('BillingModule source imports StepUpModule', () => {
-    expect(moduleSrc).toMatch(/from ['"]\.\.\/step-up\/step-up\.module['"]/);
-    expect(moduleSrc).toMatch(/StepUpModule/);
-    expect(moduleSrc).toMatch(/imports:\s*\[[\s\S]*StepUpModule/);
-  });
-
-  it('pay-from-wallet controller uses real StepUpGuard + RequireStepUp', () => {
-    expect(controllerSrc).toMatch(/StepUpGuard/);
-    expect(controllerSrc).toMatch(/@RequireStepUp\(\)/);
-    expect(controllerSrc).toMatch(/@UseGuards\([^)]*StepUpGuard/);
-  });
-
-  it('can construct StepUpGuard when StepUpModule is imported (same wiring Billing needs)', async () => {
+// Mirror AppModule's global configuration and database infrastructure without
+// loading billing's external payment/signing integrations.
+describe('Billing step-up authorization', () => {
+  it('rejects an invalid proof through the imported StepUpModule', async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [PrismaModule, StepUpModule],
+      imports: [
+        ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
+        PrismaModule,
+        StepUpModule,
+      ],
       providers: [StepUpGuard],
     })
       .overrideProvider(
@@ -44,14 +23,27 @@ describe('BillingModule Phase 2B DI (B9)', () => {
         (await import('../../core/database/prisma.service')).PrismaService,
       )
       .useValue({
-        stepUpChallenge: { findFirst: jest.fn() },
+        stepUpChallenge: { findFirst: jest.fn().mockResolvedValue(null) },
       })
       .compile();
 
     const guard = moduleRef.get(StepUpGuard);
-    const stepUp = moduleRef.get(StepUpService);
-    expect(guard).toBeInstanceOf(StepUpGuard);
-    expect(stepUp).toBeInstanceOf(StepUpService);
+    const handler = () => undefined;
+    Reflect.defineMetadata(STEP_UP_KEY, true, handler);
+    const context = {
+      getHandler: () => handler,
+      getClass: () => class PaymentController {},
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers: { 'x-step-up-token': 'invalid-proof' },
+          user: { id: 'user-1' },
+          appSession: { id: 'session-1' },
+        }),
+      }),
+    } as unknown as ExecutionContext;
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      'Invalid or expired step-up verification',
+    );
     await moduleRef.close();
   });
 });

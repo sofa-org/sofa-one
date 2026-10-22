@@ -408,6 +408,7 @@ describe('production DeFi registry assembly', () => {
 
   it('resolves the wired catalog providers with mocked database dependencies', async () => {
     const module = await Test.createTestingModule({ imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), MockDatabaseModule, DefiModule] })
+      .overrideProvider(PrismaService).useValue(mockPrisma)
       .overrideProvider(BillingReconciliationService).useValue({})
       .overrideProvider(DefiGrantService).useValue({})
       .overrideProvider(DefiPauseService).useValue({})
