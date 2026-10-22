@@ -1,0 +1,2958 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "address": "0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd",
+  "protocol": "PoolTogether V5",
+  "protocolId": "pooltogether-v5-prize-pool-base",
+  "website": "https://pooltogether.com/",
+  "scope": "Exactly one current official Base POOL Prize Vault, with two ordinary deposit/mint calls and both canonical standard/bounded withdraw and redeem overloads. No factory-created address discovery/automatic authorization, external claimer, hook, permit, liquidation or administrative capability.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://dev.pooltogether.com/protocol/deployments/base",
+      "https://pooltogether.com/",
+      "https://dev.pooltogether.com/protocol/reference/prize-vault/prizevault/"
+    ],
+    "evidence": "Official current Base deployment table explicitly lists POOL Prize Vault at this exact address and separately lists deprecated factory/claimer addresses. The selected POOL vault is not in the deprecated table. Current official website describes saving/prize deposits and withdrawals and links developer documentation. Reviewed sources have no retirement/shutdown notice for this selected vault. No DAU, fresh execution or vault TVL is claimed; website user-count marketing is not treated as DAU."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://dev.pooltogether.com/protocol/deployments/base",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd",
+    "deployment": {
+      "transactionHash": "0xe2f0d86bb32520a59f42aacdc5e3d8bf00decb8d9829f8869821b3ef14f29b6c",
+      "blockNumber": "14506826",
+      "transactionIndex": "37",
+      "deployer": "0xDc9522Fc21cF9878781224C54221D4479Dd1a739"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": "0x00000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000160000000000000000000000000854f3d91e53d0fc9dba9822bc74f574c7380436d00000000000000000000000045b2010d8a4f08b53c9fa7544c51dfd9733732cb0000000000000000000000005ffeee76d1e2d2d1d18ba0bc77d8d047b85e1e87000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dc9522fc21cf9878781224c54221d4479dd1a739000000000000000000000000000000000000000000000000000000000000000a5072697a6520504f4f4c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000770727a504f4f4c00000000000000000000000000000000000000000000000000",
+    "runtimeImmutableBindings": {
+      "immutables": {
+        "2838": "0x3a3e889926088b09d80e8dd7441dea55ebbe4fe94330058789bae0eef8a4581f",
+        "2840": "0x0000000000000000000000000000000000000000000000000000000000002105",
+        "2842": "0x0000000000000000000000006b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+        "2844": "0x7a71c8fa3b0d72a9e01f5d55bacff5baddd37bf2a21f322d76ed30e58808895c",
+        "2846": "0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6",
+        "2849": "0x5072697a6520504f4f4c0000000000000000000000000000000000000000000a",
+        "2852": "0x3100000000000000000000000000000000000000000000000000000000000001",
+        "20910": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "20914": "0x000000000000000000000000854f3d91e53d0fc9dba9822bc74f574c7380436d",
+        "20930": "0x000000000000000000000000d652c5425aea2afd5fb142e120fecf79e18fafc3",
+        "20933": "0x0000000000000000000000000000000000000000000000000000000000000012",
+        "23044": "0x0000000000000000000000007e63601f7e28c758feccf8cdf02f6598694f44c6",
+        "23229": "0x00000000000000000000000045b2010d8a4f08b53c9fa7544c51dfd9733732cb"
+      }
+    },
+    "decodedIdentity": {
+      "name": "Prize POOL",
+      "asset": "0xd652c5425aea2afd5fb142e120fecf79e18fafc3",
+      "assetDecimals": 18,
+      "yieldVault": "0x854f3d91e53d0fc9dba9822bc74f574c7380436d",
+      "prizePool": "0x45b2010d8a4f08b53c9fa7544c51dfd9733732cb",
+      "twabController": "0x7e63601f7e28c758feccf8cdf02f6598694f44c6"
+    },
+    "evidence": "Official exact POOL Prize Vault address bound to full deployed PrizeVault ABI/source via Sourcify exact_match. Sourcify identifies no proxy. Published constructor and immutable values identify Prize POOL and underlying POOL asset, 18 decimals, staking yield vault, prize pool and TWAB controller. Constructor initial claimer was old address now separately deprecated in docs; current configured claimer is not inferred from initial constructor, and no claim function is admitted. Deprecation of a separate claimer/factory is not assumed to deprecate this currently listed vault. No fresh RPC state or runtime-code verification."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd",
+    "matchId": "100117",
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match",
+    "sourceVerifiedAt": "2025-07-19T21:12:51Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.24+commit.e11b9ed9",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "paris",
+        "remappings": [
+          ":@openzeppelin/contracts/=lib/pt-v5-staking-vault/lib/openzeppelin-contracts/contracts/",
+          ":@prb/test/=lib/pt-v5-claimer/lib/prb-math/node_modules/@prb/test/",
+          ":brokentoken/=lib/pt-v5-vault/lib/brokentoken/src/",
+          ":create3-factory/=lib/yield-daddy/lib/create3-factory/",
+          ":ds-test/=lib/forge-std/lib/ds-test/src/",
+          ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          ":forge-std/=lib/forge-std/src/",
+          ":openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+          ":openzeppelin/=lib/openzeppelin-contracts/contracts/",
+          ":owner-manager-contracts/=lib/pt-v5-prize-pool/lib/owner-manager-contracts/contracts/",
+          ":prb-math/=lib/pt-v5-prize-pool/lib/prb-math/src/",
+          ":prb-test/=lib/pt-v5-claimer/lib/prb-math/lib/prb-test/src/",
+          ":pt-v5-claimable-interface/=lib/pt-v5-claimer/lib/pt-v5-claimable-interface/src/",
+          ":pt-v5-claimer/=lib/pt-v5-claimer/src/",
+          ":pt-v5-draw-manager/=lib/pt-v5-draw-manager/src/",
+          ":pt-v5-liquidator-interfaces/=lib/pt-v5-tpda-liquidator/lib/pt-v5-liquidator-interfaces/src/interfaces/",
+          ":pt-v5-prize-pool/=lib/pt-v5-prize-pool/src/",
+          ":pt-v5-rng-witnet/=lib/pt-v5-rng-witnet/src/",
+          ":pt-v5-staking-vault/=lib/pt-v5-staking-vault/src/",
+          ":pt-v5-tpda-liquidator/=lib/pt-v5-tpda-liquidator/src/",
+          ":pt-v5-twab-controller/=lib/pt-v5-twab-controller/src/",
+          ":pt-v5-twab-rewards/=lib/pt-v5-twab-rewards/src/",
+          ":pt-v5-vault-boost/=lib/pt-v5-vault-boost/src/",
+          ":pt-v5-vault/=lib/pt-v5-vault/src/",
+          ":ring-buffer-lib/=lib/pt-v5-prize-pool/lib/ring-buffer-lib/src/",
+          ":solady/=lib/pt-v5-rng-witnet/lib/solady/src/",
+          ":solmate/=lib/yield-daddy/lib/solmate/src/",
+          ":uniform-random-number/=lib/pt-v5-prize-pool/lib/uniform-random-number/src/",
+          ":weird-erc20/=lib/pt-v5-vault/lib/brokentoken/lib/weird-erc20/src/",
+          ":witnet-solidity-bridge/=lib/pt-v5-rng-witnet/lib/witnet-solidity-bridge/contracts/",
+          ":witnet/=lib/pt-v5-rng-witnet/lib/witnet-solidity-bridge/contracts/",
+          ":yield-daddy/=lib/yield-daddy/src/"
+        ]
+      },
+      "name": "PrizeVault",
+      "fullyQualifiedName": "lib/pt-v5-vault/src/PrizeVault.sol:PrizeVault"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "evidence": "Published Sourcify verification response; match labels retained exactly. This review does not perform a fresh RPC code, storage, or implementation identity check."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "name_",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "symbol_",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "yieldVault_",
+          "type": "address",
+          "internalType": "contract IERC4626"
+        },
+        {
+          "name": "prizePool_",
+          "type": "address",
+          "internalType": "contract PrizePool"
+        },
+        {
+          "name": "claimer_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldFeeRecipient_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldFeePercentage_",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "yieldBuffer_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "owner_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "BurnZeroShares",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "CallerNotClaimer",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "claimer",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "CallerNotLP",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidationPair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "CallerNotYieldFeeRecipient",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldFeeRecipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ClaimRecipientZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ClaimerZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "DepositZeroAssets",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedToGetAssetDecimals",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InvalidShortString",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LPZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LiquidationAmountOutZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LiquidationExceedsAvailable",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "totalToWithdraw",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "availableYield",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "LiquidationTokenInNotPrizeToken",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "prizeToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "LiquidationTokenOutNotSupported",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "LossyDeposit",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MaxSharesExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MinAssetsNotReached",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MintLimitExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "excess",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MintZeroShares",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OwnerZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "PermitCallerNotOwner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "PrizePoolZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SharesExceedsYieldFeeBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "yieldFeeBalance",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "StringTooLong",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "str",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "TwabControllerZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "WithdrawZeroAssets",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "YieldFeePercentageExceedsMax",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "yieldFeePercentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxYieldFeePercentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "YieldVaultZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ZeroTotalAssets",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ClaimYieldFeeShares",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ClaimerSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "claimer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "EIP712DomainChanged",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "LiquidationPairSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "liquidationPair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipOffered",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pendingOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetHooks",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "hooks",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "useBeforeClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "useAfterClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "implementation",
+              "type": "address",
+              "internalType": "contract IPrizeHooks"
+            }
+          ],
+          "internalType": "struct PrizeHooks"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Sponsor",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TransferYieldOut",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "liquidationPair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "yieldFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "YieldFeePercentageSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldFeePercentage",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "YieldFeeRecipientSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldFeeRecipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "FEE_PRECISION",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "HOOK_GAS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_YIELD_FEE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "availableYieldBalance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "claimOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimPrize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_winner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tier",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "_prizeIndex",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_reward",
+          "type": "uint96",
+          "internalType": "uint96"
+        },
+        {
+          "name": "_rewardRecipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimYieldFeeShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "currentYieldBuffer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "subtractedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "_r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "eip712Domain",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "fields",
+          "type": "bytes1",
+          "internalType": "bytes1"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "extensions",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getHooks",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "useBeforeClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "useAfterClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "implementation",
+              "type": "address",
+              "internalType": "contract IPrizeHooks"
+            }
+          ],
+          "internalType": "struct PrizeHooks"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "increaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "addedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isLiquidationPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_liquidationPair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidatableBalanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidationPair",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingOwner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "prizePool",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract PrizePool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_minAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setClaimer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_claimer",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setHooks",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "hooks",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "useBeforeClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "useAfterClaimPrize",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "implementation",
+              "type": "address",
+              "internalType": "contract IPrizeHooks"
+            }
+          ],
+          "internalType": "struct PrizeHooks"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setLiquidationPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_liquidationPair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setYieldFeePercentage",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_yieldFeePercentage",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setYieldFeeRecipient",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_yieldFeeRecipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sponsor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "targetOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalDebt",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalPreciseAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalYieldBalance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferTokensOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "twabController",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract TwabController"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "verifyTokensIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "yieldBuffer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "yieldFeeBalance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "yieldFeePercentage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "yieldFeeRecipient",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "yieldVault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC4626"
+        }
+      ],
+      "stateMutability": "view"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "DOMAIN_SEPARATOR()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only DOMAIN_SEPARATOR() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "FEE_PRECISION()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only FEE_PRECISION() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "HOOK_GAS()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only HOOK_GAS() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "MAX_YIELD_FEE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only MAX_YIELD_FEE() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only allowance(address,address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 share allowance grant to arbitrary spender is outside ordinary prize vault deposit/withdraw admission."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only asset() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "availableYieldBalance()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only availableYieldBalance() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOf(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "claimOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Only nominated pending owner may claim administrative ownership; excluded."
+    },
+    {
+      "signature": "claimPrize(address,uint8,uint32,uint96,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyClaimer restriction: only configured claimer can call; ordinary prize winners cannot use this endpoint directly."
+    },
+    {
+      "signature": "claimYieldFeeShares(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyYieldFeeRecipient restriction: yield fee accounting withdrawal is not an ordinary depositor function."
+    },
+    {
+      "signature": "claimer()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only claimer() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "currentYieldBuffer()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only currentYieldBuffer() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimals() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "decreaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 share allowance management excluded from vault lifecycle scope."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Pulls caller POOL, deposits into immutable underlying staking yield vault, and mints prize shares to receiver; rejects zero or lossy deposits."
+    },
+    {
+      "signature": "depositWithPermit(uint256,address,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Combines underlying EIP-2612 signature authorization and deposit; permit routes explicitly excluded."
+    },
+    {
+      "signature": "eip712Domain()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only eip712Domain() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "getHooks(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getHooks(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "increaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 arbitrary spender share allowance increase excluded from vault lifecycle scope."
+    },
+    {
+      "signature": "isLiquidationPair(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only isLiquidationPair(address,address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "liquidatableBalanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only liquidatableBalanceOf(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "liquidationPair()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only liquidationPair() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxDeposit(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxMint(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxRedeem(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxWithdraw(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Computes required POOL, pulls from caller and mints exact prize shares to receiver; TWAB supply and solvency checks apply."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only name() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "nonces(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only nonces(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "owner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only owner() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "pendingOwner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only pendingOwner() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Signature-based ERC20 share permit is explicitly excluded; no signing capability is created."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only previewDeposit(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only previewMint(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewRedeem(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewWithdraw(uint256) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "prizePool()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only prizePool() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "redeem(uint256,address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary redeem overload additionally rejects POOL proceeds below _minAssets; same ownership/allowance and liquidity requirements."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Burns owner prize shares and returns calculated POOL; proportional losses possible; other callers require share allowance."
+    },
+    {
+      "signature": "renounceOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only administrative ownership renunciation excluded."
+    },
+    {
+      "signature": "setClaimer(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only change to privileged prize claimer excluded."
+    },
+    {
+      "signature": "setHooks((bool,bool,address))",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Installs user-supplied prize before/after callback implementation; custom callback authority is excluded."
+    },
+    {
+      "signature": "setLiquidationPair(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only change to privileged liquidation pair excluded."
+    },
+    {
+      "signature": "setYieldFeePercentage(uint32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only fee parameter administration excluded."
+    },
+    {
+      "signature": "setYieldFeeRecipient(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only fee recipient administration excluded."
+    },
+    {
+      "signature": "sponsor(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Optional deposits delegate to sponsorship address and give up prize eligibility; non-prize sponsorship flow outside this vault deposit/withdraw review."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only symbol() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "targetOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only targetOf(address) exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "totalDebt()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalDebt() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "totalPreciseAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalPreciseAssets() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalSupply() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "totalYieldBalance()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalYieldBalance() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 prize share transfer changes TWAB balances; not an underlying vault deposit/withdrawal, excluded."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Allowance-mediated ERC20 prize share transfer is not an underlying vault redemption, excluded."
+    },
+    {
+      "signature": "transferOwnership(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only nomination of administrative owner excluded."
+    },
+    {
+      "signature": "transferTokensOut(address,address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyLiquidationPair privileged yield-liquidation transfer callback, excluded."
+    },
+    {
+      "signature": "twabController()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only twabController() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "verifyTokensIn(address,uint256,bytes)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyLiquidationPair privileged liquidation verification/contribution callback with bytes data, excluded."
+    },
+    {
+      "signature": "withdraw(uint256,address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary withdraw overload additionally rejects share burn above _maxShares; same owner/share allowance and liquidity requirements."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Burns owner prize shares and withdraws POOL to receiver; other callers require share allowance and underlying redemption liquidity."
+    },
+    {
+      "signature": "yieldBuffer()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only yieldBuffer() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "yieldFeeBalance()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only yieldFeeBalance() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "yieldFeePercentage()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only yieldFeePercentage() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "yieldFeeRecipient()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only yieldFeeRecipient() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    },
+    {
+      "signature": "yieldVault()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only yieldVault() exposes metadata, accounting, limits or configuration; retained in full ABI inventory but not selected as a transaction capability."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "deposit",
+      "label": "Deposit POOL for prize shares",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:mint",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "mint",
+      "label": "Mint Prize POOL shares",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_minAssets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:redeem-min-assets",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "redeem-min-assets",
+      "label": "Redeem Prize POOL with minimum assets",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "redeem",
+      "label": "Redeem Prize POOL shares",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_maxShares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:withdraw-max-shares",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "withdraw-max-shares",
+      "label": "Withdraw POOL with maximum shares",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "pooltogether-v5-prize-pool-base:v1:8453:0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd:withdraw",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "PoolTogether V5",
+      "operation": "withdraw",
+      "label": "Withdraw POOL",
+      "warnings": [
+        "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+        "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+        "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+        "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+        "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+        "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+      ]
+    }
+  ],
+  "sourceReview": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x6B5a5c55E9dD4bb502Ce25bBfbaA49b69cf7E4dd?fields=all",
+    "files": {
+      "lib/pt-v5-vault/src/TwabERC20.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\nimport { ERC20 } from \"openzeppelin/token/ERC20/ERC20.sol\";\nimport { ERC20Permit } from \"openzeppelin/token/ERC20/extensions/ERC20Permit.sol\";\nimport { SafeCast } from \"openzeppelin/utils/math/SafeCast.sol\";\n\nimport { TwabController } from \"pt-v5-twab-controller/TwabController.sol\";\n\n/// @title  PoolTogether V5 TWAB ERC20 Token\n/// @author G9 Software Inc.\n/// @notice This contract creates an ERC20 token with balances stored in a TwabController,\n///         enabling time-weighted average balances for each depositor and token compatibility\n///         with the PoolTogether V5 Prize Pool.\n/// @dev    This contract is designed to be used as an accounting layer when building a vault\n///         for PoolTogether V5.\n/// @dev    The TwabController limits all balances including total token supply to uint96 for\n///         gas savings. Any mints that increase a balance past this limit will fail.\ncontract TwabERC20 is ERC20, ERC20Permit {\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Public Variables\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Address of the TwabController used to keep track of balances.\n    TwabController public immutable twabController;\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Errors\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Thrown if the TwabController address is the zero address.\n    error TwabControllerZeroAddress();\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Constructor\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice TwabERC20 Constructor\n    /// @param name_ The name of the token\n    /// @param symbol_ The token symbol\n    /// @param twabController_ The TWAB controller that will be used to store token balances\n    constructor(\n        string memory name_,\n        string memory symbol_,\n        TwabController twabController_\n    ) ERC20(name_, symbol_) ERC20Permit(name_) {\n        if (address(0) == address(twabController_)) revert TwabControllerZeroAddress();\n        twabController = twabController_;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Public ERC20 Overrides\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @inheritdoc ERC20\n    function balanceOf(\n        address _account\n    ) public view virtual override(ERC20) returns (uint256) {\n        return twabController.balanceOf(address(this), _account);\n    }\n\n    /// @inheritdoc ERC20\n    function totalSupply() public view virtual override(ERC20) returns (uint256) {\n        return twabController.totalSupply(address(this));\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Internal ERC20 Overrides\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Mints tokens to `_receiver` and increases the total supply.\n    /// @dev Emits a {Transfer} event with `from` set to the zero address.\n    /// @dev `_receiver` cannot be the zero address.\n    /// @param _receiver Address that will receive the minted tokens\n    /// @param _amount Tokens to mint\n    function _mint(address _receiver, uint256 _amount) internal virtual override {\n        twabController.mint(_receiver, SafeCast.toUint96(_amount));\n        emit Transfer(address(0), _receiver, _amount);\n    }\n\n    /// @notice Destroys tokens from `_owner` and reduces the total supply.\n    /// @dev Emits a {Transfer} event with `to` set to the zero address.\n    /// @dev `_owner` cannot be the zero address.\n    /// @dev `_owner` must have at least `_amount` tokens.\n    /// @param _owner The owner of the tokens\n    /// @param _amount The amount of tokens to burn\n    function _burn(address _owner, uint256 _amount) internal virtual override {\n        twabController.burn(_owner, SafeCast.toUint96(_amount));\n        emit Transfer(_owner, address(0), _amount);\n    }\n\n    /// @notice Transfers tokens from one account to another.\n    /// @dev Emits a {Transfer} event.\n    /// @dev `_from` cannot be the zero address.\n    /// @dev `_to` cannot be the zero address.\n    /// @dev `_from` must have a balance of at least `_amount`.\n    /// @param _from Address to transfer from\n    /// @param _to Address to transfer to\n    /// @param _amount The amount of tokens to transfer\n    function _transfer(address _from, address _to, uint256 _amount) internal virtual override {\n        twabController.transfer(_from, _to, SafeCast.toUint96(_amount));\n        emit Transfer(_from, _to, _amount);\n    }\n\n}"
+      },
+      "lib/pt-v5-vault/src/PrizeVault.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\nimport { IERC4626 } from \"openzeppelin/interfaces/IERC4626.sol\";\nimport { SafeERC20, IERC20Permit } from \"openzeppelin/token/ERC20/utils/SafeERC20.sol\";\nimport { ERC20, IERC20, IERC20Metadata } from \"openzeppelin/token/ERC20/ERC20.sol\";\nimport { Math } from \"openzeppelin/utils/math/Math.sol\";\nimport { Ownable } from \"owner-manager-contracts/Ownable.sol\";\n\nimport { Claimable } from \"./abstract/Claimable.sol\";\nimport { TwabERC20 } from \"./TwabERC20.sol\";\n\nimport { ILiquidationSource } from \"pt-v5-liquidator-interfaces/ILiquidationSource.sol\";\nimport { PrizePool } from \"pt-v5-prize-pool/PrizePool.sol\";\nimport { TwabController, SPONSORSHIP_ADDRESS } from \"pt-v5-twab-controller/TwabController.sol\";\n\n/// @dev The TWAB supply limit is the max number of shares that can be minted in the TWAB controller.\nuint256 constant TWAB_SUPPLY_LIMIT = type(uint96).max;\n\n/// @title  PoolTogether V5 Prize Vault\n/// @author G9 Software Inc.\n/// @notice The prize vault takes deposits of an asset and earns yield with the deposits through an underlying yield\n///         vault. The yield is then expected to be liquidated and contributed to the prize pool as prize tokens. The\n///         depositors of the prize vault will then be eligible to win prizes from the pool. If a prize is won, The \n///         permitted claimer contract for the prize vault will claim the prize on behalf of the winner. Depositors\n///         can also set custom hooks that are called directly before and after their prize is claimed.\n/// @dev    Share balances are stored in the TwabController contract.\n/// @dev    Depositors should always expect to be able to withdraw their full deposit amount and no more as long as\n///         global withdrawal limits meet or exceed their balance. However, if the underlying yield source loses\n///         assets, depositors will only be able to withdraw a proportional amount of remaining assets based on their\n///         share balance and the total debt balance.\n/// @dev    The prize vault is designed to embody the \"no loss\" spirit of PoolTogether, down to the last wei. Most \n///         ERC4626 yield vaults incur small, necessary rounding errors on deposit and withdrawal to ensure the\n///         internal accounting cannot be taken advantage of. The prize vault employs two strategies in an attempt\n///         to cover these rounding errors with yield to ensure that depositors can withdraw every last wei of their\n///         initial deposit:\n///\n///             1. The \"dust collection strategy\":\n///\n///                Rounding errors are directly related to the exchange rate of the underlying yield vault; the more\n///                assets a single yield vault share is worth, the more severe the rounding errors can become. For\n///                example, if the exchange rate is 100 assets for 1 yield vault share and we assume 0 decimal\n///                precision; if alice deposits 199 assets, the yield vault will round down on the conversion and mint\n///                alice 1 share, essentially donating the remaining 99 assets to the yield vault. This behavior can\n///                open pathways for exploits in the prize vault since a bad actor could repeatedly make deposits and\n///                withdrawals that result in large rounding errors and since the prize vault covers rounding errors\n///                with yield, the attacker could withdraw without loss while essentially donating the yield back to\n///                the yield vault.\n///\n///                To mitigate this issue, the prize vault calculates the amount of yield vault shares that would be\n///                minted during a deposit, but mints those shares directly instead, ensuring that only the exact\n///                amount of assets needed are sent to the yield vault while keeping the remainder as a latent balance\n///                in the prize vault until it can be used in the next deposit or withdraw. An inverse strategy is also\n///                used when withdrawing assets from the yield vault. This reduces the possible rounding errors to just\n///                1 wei per deposit or withdraw.\n///\n///             2. The \"yield buffer\":\n///\n///                Since the prize vault can still incur minimal rounding errors from the yield vault, a yield buffer\n///                is required to ensure that there is always enough yield reserved to cover the rounding errors on \n///                deposits and withdrawals. This buffer should never run dry during normal operating conditions and\n///                expected yield rates. If the yield buffer is ever depleted, new deposits will be prevented and the\n///                prize vault will enter a lossy withdrawal state where depositors will incur the rounding errors on\n///                withdraw.\n///\n/// @dev    The prize vault does not support underlying yield vaults that take a fee on deposit or withdraw.\n///\ncontract PrizeVault is TwabERC20, Claimable, IERC4626, ILiquidationSource, Ownable {\n    using Math for uint256;\n    using SafeERC20 for IERC20;\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Public Constants and Variables\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice The yield fee decimal precision.\n    uint32 public constant FEE_PRECISION = 1e9;\n    \n    /// @notice The max yield fee that can be set.\n    /// @dev Decimal precision is defined by `FEE_PRECISION`.\n    /// @dev If the yield fee is set too high, liquidations won't occur on a regular basis. If a use case requires\n    /// a yield fee higher than this max, a custom liquidation pair can be set to manipulate the yield as required.\n    uint32 public constant MAX_YIELD_FEE = 9e8;\n\n    /// @notice The yield buffer that is reserved for covering rounding errors on withdrawals and deposits.\n    /// @dev The buffer prevents the entire yield balance from being liquidated, which would leave the vault\n    /// in a state where a single rounding error could reduce the totalAssets to less than the totalSupply.\n    /// \n    /// The yield buffer is expected to be of insignificant value and is used to cover rounding\n    /// errors on deposits and withdrawals. Yield is expected to accrue faster than the yield buffer\n    /// can be reasonably depleted.\n    ///\n    /// IT IS RECOMMENDED TO DONATE ASSETS DIRECTLY TO THE PRIZE VAULT AFTER DEPLOYMENT TO FILL THE YIELD\n    /// BUFFER AND COVER ROUNDING ERRORS UNTIL THE DEPOSITS CAN GENERATE ENOUGH YIELD TO KEEP THE BUFFER \n    /// FULL WITHOUT ASSISTANCE.\n    ///\n    /// The yield buffer should be set as high as possible while still being considered insignificant\n    /// for the underlying asset. For example, a reasonable yield buffer for USDC with 6 decimals might be\n    /// 1e5 ($0.10), which will cover up to 100k rounding errors while still being an insignificant value.\n    /// Some assets may be considered incompatible with the prize vault if the yield vault incurs rounding\n    /// errors and the underlying asset has a low precision per dollar ratio.\n    /// \n    /// Precision per dollar (PPD) can be calculated by: (10 ^ DECIMALS) / ($ value of 1 asset).\n    /// For example, USDC has a PPD of (10 ^ 6) / ($1) = 10e6 p/$.\n    /// \n    /// As a rule of thumb, assets with lower PPD than USDC should not be assumed to be compatible since\n    /// the potential loss of a single unit rounding error is likely too high to be made up by yield at \n    /// a reasonable rate. Actual results may vary based on expected gas costs, asset fluctuation, and yield\n    /// accrual rates. If the underlying yield vault does not incur any rounding errors, then the yield buffer\n    /// can be set to zero.\n    ///\n    /// If the yield buffer is depleted on the prize vault, new deposits will be prevented if it would result in\n    /// a rounding error and any rounding errors incurred by withdrawals will not be covered by yield. The yield\n    /// buffer will be replenished automatically as yield accrues.\n    uint256 public immutable yieldBuffer;\n\n    /// @notice Address of the underlying ERC4626 vault generating yield.\n    IERC4626 public immutable yieldVault;\n\n    /// @notice Yield fee percentage represented in integer format with decimal precision defined by `FEE_PRECISION`.\n    /// @dev For example, if `FEE_PRECISION` were 1e9 a value of 1e7 = 0.01 = 1%.\n    uint32 public yieldFeePercentage;\n\n    /// @notice Address of the yield fee recipient.\n    address public yieldFeeRecipient;\n\n    /// @notice The accrued yield fee balance that the fee recipient can claim as vault shares.\n    uint256 public yieldFeeBalance;\n\n    /// @notice Address of the liquidation pair used to liquidate yield for prize token.\n    address public liquidationPair;\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Private Variables\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Address of the underlying asset used by the Vault.\n    IERC20 private immutable _asset;\n\n    /// @notice Underlying asset decimals.\n    uint8 private immutable _underlyingDecimals;\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Events\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Emitted when a new yield fee recipient has been set.\n    /// @param yieldFeeRecipient Address of the new yield fee recipient\n    event YieldFeeRecipientSet(address indexed yieldFeeRecipient);\n\n    /// @notice Emitted when a new yield fee percentage has been set.\n    /// @param yieldFeePercentage New yield fee percentage\n    event YieldFeePercentageSet(uint256 yieldFeePercentage);\n\n    /// @notice Emitted when a user sponsors the Vault.\n    /// @param caller Address that called the function\n    /// @param assets Amount of assets deposited into the Vault\n    /// @param shares Amount of shares minted to the caller address\n    event Sponsor(address indexed caller, uint256 assets, uint256 shares);\n\n    /// @notice Emitted when yield is transferred out by the liquidation pair address.\n    /// @param liquidationPair The liquidation pair address that initiated the transfer\n    /// @param tokenOut The token that was transferred out\n    /// @param recipient The recipient of the tokens\n    /// @param amountOut The amount of tokens sent to the recipient\n    /// @param yieldFee The amount of shares accrued on the yield fee balance\n    event TransferYieldOut(\n        address indexed liquidationPair,\n        address indexed tokenOut,\n        address indexed recipient,\n        uint256 amountOut,\n        uint256 yieldFee\n    );\n\n    /// @notice Emitted when yield fee shares are claimed by the yield fee recipient.\n    /// @param recipient Address receiving the fee shares\n    /// @param shares Amount of shares claimed\n    event ClaimYieldFeeShares(address indexed recipient, uint256 shares);\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Errors\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Thrown when the Yield Vault is set to the zero address.\n    error YieldVaultZeroAddress();\n\n    /// @notice Thrown when the Owner is set to the zero address.\n    error OwnerZeroAddress();\n\n    /// @notice Thrown when a withdrawal of zero assets on the yield vault is attempted\n    error WithdrawZeroAssets();\n\n    /// @notice Thrown when no shares are being burnt during a withdrawal of assets\n    error BurnZeroShares();\n\n    /// @notice Thrown when zero assets are being deposited\n    error DepositZeroAssets();\n\n    /// @notice Thrown when zero shares are being minted\n    error MintZeroShares();\n\n    /// @notice Thrown if `totalAssets` is zero during a withdraw\n    error ZeroTotalAssets();\n\n    /// @notice Thrown when the Liquidation Pair being set is the zero address.\n    error LPZeroAddress();\n\n    /// @notice Thrown during the liquidation process when the liquidation amount out is zero.\n    error LiquidationAmountOutZero();\n\n    /// @notice Thrown during the liquidation process when the caller is not the liquidation pair contract.\n    /// @param caller The caller address\n    /// @param liquidationPair The LP address\n    error CallerNotLP(address caller, address liquidationPair);\n\n    /// @notice Thrown if the caller is not the yield fee recipient when withdrawing yield fee shares.\n    /// @param caller The caller address\n    /// @param yieldFeeRecipient The yield fee recipient address\n    error CallerNotYieldFeeRecipient(address caller, address yieldFeeRecipient);\n\n    /// @notice Thrown when the caller of a permit function is not the owner of the assets being permitted.\n    /// @param caller The address of the caller\n    /// @param owner The address of the owner\n    error PermitCallerNotOwner(address caller, address owner);\n\n    /// @notice Thrown when the yield fee percentage being set exceeds the max yield fee allowed.\n    /// @param yieldFeePercentage The yield fee percentage in integer format\n    /// @param maxYieldFeePercentage The max yield fee percentage in integer format\n    error YieldFeePercentageExceedsMax(uint256 yieldFeePercentage, uint256 maxYieldFeePercentage);\n\n    /// @notice Thrown when the yield fee shares being withdrawn exceeds the available yieldFee Balance.\n    /// @param shares The shares being withdrawn\n    /// @param yieldFeeBalance The available yield fee shares\n    error SharesExceedsYieldFeeBalance(uint256 shares, uint256 yieldFeeBalance);\n\n    /// @notice Thrown during the liquidation process when the token in is not the prize token.\n    /// @param tokenIn The provided tokenIn address\n    /// @param prizeToken The prize token address\n    error LiquidationTokenInNotPrizeToken(address tokenIn, address prizeToken);\n\n    /// @notice Thrown during the liquidation process when the token out is not supported.\n    /// @param tokenOut The provided tokenOut address\n    error LiquidationTokenOutNotSupported(address tokenOut);\n\n    /// @notice Thrown during the liquidation process if the total to withdraw is greater than the available yield.\n    /// @param totalToWithdraw The total yield to withdraw\n    /// @param availableYield The available yield\n    error LiquidationExceedsAvailable(uint256 totalToWithdraw, uint256 availableYield);\n\n    /// @notice Thrown when a deposit results in a state where the total assets are less than the total share supply.\n    /// @param totalAssets The total assets controlled by the vault\n    /// @param totalSupply The total shares minted and internally accounted for by the vault\n    error LossyDeposit(uint256 totalAssets, uint256 totalSupply);\n\n    /// @notice Thrown when the mint limit is exceeded after increasing an external or internal share balance.\n    /// @param excess The amount in excess over the limit\n    error MintLimitExceeded(uint256 excess);\n\n    /// @notice Thrown when a withdraw call burns more shares than the max share limit provided.\n    /// @param shares The shares burned by the withdrawal\n    /// @param maxShares The max share limit provided\n    error MaxSharesExceeded(uint256 shares, uint256 maxShares);\n\n    /// @notice Thrown when a redeem call returns less assets than the min threshold provided.\n    /// @param assets The assets provided by the redemption\n    /// @param minAssets The min asset threshold requested\n    error MinAssetsNotReached(uint256 assets, uint256 minAssets);\n\n    /// @notice Thrown when the underlying asset does not specify it's number of decimals.\n    /// @param asset The underlying asset that was checked\n    error FailedToGetAssetDecimals(address asset);\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Modifiers\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Requires the caller to be the liquidation pair.\n    modifier onlyLiquidationPair() {\n        if (msg.sender != liquidationPair) {\n            revert CallerNotLP(msg.sender, liquidationPair);\n        }\n        _;\n    }\n\n    /// @notice Requires the caller to be the yield fee recipient.\n    modifier onlyYieldFeeRecipient() {\n        if (msg.sender != yieldFeeRecipient) {\n            revert CallerNotYieldFeeRecipient(msg.sender, yieldFeeRecipient);\n        }\n        _;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Constructor\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Vault constructor\n    /// @param name_ Name of the ERC20 share minted by the vault\n    /// @param symbol_ Symbol of the ERC20 share minted by the vault\n    /// @param yieldVault_ Address of the underlying ERC4626 vault in which assets are deposited to generate yield\n    /// @param prizePool_ Address of the PrizePool that computes prizes\n    /// @param claimer_ Address of the claimer\n    /// @param yieldFeeRecipient_ Address of the yield fee recipient\n    /// @param yieldFeePercentage_ Yield fee percentage\n    /// @param yieldBuffer_ Amount of yield to keep as a buffer\n    /// @param owner_ Address that will gain ownership of this contract\n    constructor(\n        string memory name_,\n        string memory symbol_,\n        IERC4626 yieldVault_,\n        PrizePool prizePool_,\n        address claimer_,\n        address yieldFeeRecipient_,\n        uint32 yieldFeePercentage_,\n        uint256 yieldBuffer_,\n        address owner_\n    ) TwabERC20(name_, symbol_, prizePool_.twabController()) Claimable(prizePool_, claimer_) Ownable(owner_) {\n        if (address(yieldVault_) == address(0)) revert YieldVaultZeroAddress();\n        if (owner_ == address(0)) revert OwnerZeroAddress();\n\n        IERC20 asset_ = IERC20(yieldVault_.asset());\n        (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);\n        if (success) {\n            _underlyingDecimals = assetDecimals;\n        } else {\n            revert FailedToGetAssetDecimals(address(asset_));\n        }\n        _asset = asset_;\n\n        yieldVault = yieldVault_;\n        yieldBuffer = yieldBuffer_;\n\n        _setYieldFeeRecipient(yieldFeeRecipient_);\n        _setYieldFeePercentage(yieldFeePercentage_);\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // ERC20 Overrides\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @inheritdoc IERC20Metadata\n    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {\n        return _underlyingDecimals;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // ERC4626 Implementation\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @inheritdoc IERC4626\n    function asset() external view returns (address) {\n        return address(_asset);\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev The latent asset balance is included in the total asset count to account for the \"dust collection\n    /// strategy\".\n    /// @dev This function uses `convertToAssets` to ensure it does not revert, but may result in some\n    /// approximation depending on the yield vault implementation.\n    function totalAssets() public view returns (uint256) {\n        return yieldVault.convertToAssets(yieldVault.balanceOf(address(this))) + _asset.balanceOf(address(this));\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev This function uses approximate total assets and should not be used for onchain conversions.\n    function convertToShares(uint256 _assets) external view returns (uint256) {\n        return _convertToShares(_assets, totalAssets(), totalDebt(), Math.Rounding.Down);\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev This function uses approximate total assets and should not be used for onchain conversions.\n    function convertToAssets(uint256 _shares) external view returns (uint256) {\n        return _convertToAssets(_shares, totalAssets(), totalDebt(), Math.Rounding.Down);\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev Considers the TWAB mint limit\n    /// @dev Returns zero if any deposit would result in a loss of assets\n    /// @dev Returns zero if total assets cannot be determined\n    /// @dev Any latent balance of assets in the prize vault will be swept in with the deposit as a part of\n    /// the \"dust collection strategy\". This means that the max deposit must account for the latent balance\n    /// by subtracting it from the max deposit available otherwise.\n    function maxDeposit(address /* receiver */) public view returns (uint256) {\n        uint256 _totalDebt = totalDebt();\n        (bool _success, uint256 _totalAssets) = _tryGetTotalPreciseAssets();\n        if (!_success || _totalAssets < _totalDebt) return 0;\n\n        uint256 _latentBalance = _asset.balanceOf(address(this));\n        uint256 _maxYieldVaultDeposit = yieldVault.maxDeposit(address(this));\n        if (_latentBalance >= _maxYieldVaultDeposit) {\n            return 0;\n        } else {\n            // the vault will never mint more than 1 share per asset, so no need to convert mint limit to assets\n            uint256 _depositLimit = _mintLimit(_totalDebt);\n            uint256 _maxDeposit;\n            unchecked {\n                _maxDeposit = _maxYieldVaultDeposit - _latentBalance;\n            }\n            return _depositLimit < _maxDeposit ? _depositLimit : _maxDeposit;\n        }\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev Returns the same value as `maxDeposit` since shares and assets are 1:1 on mint\n    /// @dev Returns zero if any deposit would result in a loss of assets\n    function maxMint(address _owner) external view returns (uint256) {\n        return maxDeposit(_owner);\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev The prize vault maintains a latent balance of assets as part of the \"dust collection strategy\".\n    /// This latent balance are accounted for in the max withdraw limits.\n    /// @dev Returns zero if total assets cannot be determined\n    function maxWithdraw(address _owner) external view returns (uint256) {\n        (bool _success, uint256 _totalAssets) = _tryGetTotalPreciseAssets();\n        if (!_success) return 0;\n        \n        uint256 _maxWithdraw = _maxYieldVaultWithdraw() + _asset.balanceOf(address(this));\n\n        // the owner may receive less than 1 asset per share, so we must convert their balance here\n        uint256 _ownerAssets = _convertToAssets(balanceOf(_owner), _totalAssets, totalDebt(), Math.Rounding.Down);\n        return _ownerAssets < _maxWithdraw ? _ownerAssets : _maxWithdraw;\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev The prize vault maintains a latent balance of assets as part of the \"dust collection strategy\".\n    /// This latent balance are accounted for in the max redeem limits.\n    /// @dev Returns zero if total assets cannot be determined\n    function maxRedeem(address _owner) external view returns (uint256) {\n        (bool _success, uint256 _totalAssets) = _tryGetTotalPreciseAssets();\n        if (!_success) return 0;\n\n        uint256 _maxWithdraw = _maxYieldVaultWithdraw() + _asset.balanceOf(address(this));\n        uint256 _ownerShares = balanceOf(_owner);\n\n        // The owner will never receive more than 1 asset per share, so there is no need to convert max\n        // withdraw to shares unless the owner has more shares than the max withdraw and is redeeming\n        // at a loss (when 1 share is worth less than 1 asset).\n        if (_ownerShares > _maxWithdraw) {\n\n            // Convert to shares while rounding up. Since 1 asset is guaranteed to be worth more than\n            // 1 share and any upwards rounding will not exceed 1 share, we can be sure that when the\n            // shares are converted back to assets (rounding down) the resulting asset value won't\n            // exceed `_maxWithdraw`.\n            uint256 _maxScaledRedeem = _convertToShares(_maxWithdraw, _totalAssets, totalDebt(), Math.Rounding.Up);\n            return _maxScaledRedeem >= _ownerShares ? _ownerShares : _maxScaledRedeem;\n        } else {\n            return _ownerShares;\n        }\n    }\n\n    /// @inheritdoc IERC4626\n    function previewDeposit(uint256 _assets) public pure returns (uint256) {\n        // shares represent how many assets an account has deposited, so they are 1:1 on deposit\n        return _assets;\n    }\n\n    /// @inheritdoc IERC4626\n    function previewMint(uint256 _shares) public pure returns (uint256) {\n        // shares represent how many assets an account has deposited, so they are 1:1 on mint\n        return _shares;\n    }\n\n    /// @inheritdoc IERC4626\n    /// @dev Reverts if `totalAssets` in the vault is zero\n    function previewWithdraw(uint256 _assets) public view returns (uint256) {\n        uint256 _totalAssets = totalPreciseAssets();\n\n        // No withdrawals can occur if the vault controls no assets.\n        if (_totalAssets == 0) revert ZeroTotalAssets();\n\n        return _convertToShares(_assets, _totalAssets, totalDebt(), Math.Rounding.Up);\n    }\n\n    /// @inheritdoc IERC4626\n    function previewRedeem(uint256 _shares) public view returns (uint256) {\n        return _convertToAssets(_shares, totalPreciseAssets(), totalDebt(), Math.Rounding.Down);\n    }\n\n    /// @inheritdoc IERC4626\n    function deposit(uint256 _assets, address _receiver) external returns (uint256) {\n        uint256 _shares = previewDeposit(_assets);\n        _depositAndMint(msg.sender, _receiver, _assets, _shares);\n        return _shares;\n    }\n\n    /// @inheritdoc IERC4626\n    function mint(uint256 _shares, address _receiver) external returns (uint256) {\n        uint256 _assets = previewMint(_shares);\n        _depositAndMint(msg.sender, _receiver, _assets, _shares);\n        return _assets;\n    }\n\n    /// @inheritdoc IERC4626\n    function withdraw(\n        uint256 _assets,\n        address _receiver,\n        address _owner\n    ) external returns (uint256) {\n        uint256 _shares = previewWithdraw(_assets);\n        _burnAndWithdraw(msg.sender, _receiver, _owner, _shares, _assets);\n        return _shares;\n    }\n\n    /// @inheritdoc IERC4626\n    function redeem(\n        uint256 _shares,\n        address _receiver,\n        address _owner\n    ) external returns (uint256) {\n        uint256 _assets = previewRedeem(_shares);\n        _burnAndWithdraw(msg.sender, _receiver, _owner, _shares, _assets);\n        return _assets;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Additional Deposit Flows\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Approve underlying asset with permit, deposit into the Vault and mint Vault shares to `_owner`.\n    /// @dev Can't be used to deposit on behalf of another user since `permit` does not accept a receiver parameter,\n    /// meaning that anyone could reuse the signature and pass an arbitrary receiver to this function.\n    /// @param _assets Amount of assets to approve and deposit\n    /// @param _owner Address of the owner depositing `_assets` and signing the permit\n    /// @param _deadline Timestamp after which the approval is no longer valid\n    /// @param _v V part of the secp256k1 signature\n    /// @param _r R part of the secp256k1 signature\n    /// @param _s S part of the secp256k1 signature\n    /// @return Amount of Vault shares minted to `_owner`.\n    function depositWithPermit(\n        uint256 _assets,\n        address _owner,\n        uint256 _deadline,\n        uint8 _v,\n        bytes32 _r,\n        bytes32 _s\n    ) external returns (uint256) {\n        if (_owner != msg.sender) {\n            revert PermitCallerNotOwner(msg.sender, _owner);\n        }\n\n        // Skip the permit call if the allowance has already been set to exactly what is needed. This prevents\n        // griefing attacks where the signature is used by another actor to complete the permit before this\n        // function is executed.\n        if (_asset.allowance(_owner, address(this)) != _assets) {\n            IERC20Permit(address(_asset)).permit(_owner, address(this), _assets, _deadline, _v, _r, _s);\n        }\n\n        uint256 _shares = previewDeposit(_assets);\n        _depositAndMint(_owner, _owner, _assets, _shares);\n        return _shares;\n    }\n\n    /// @notice Deposit assets into the Vault and delegate to the sponsorship address.\n    /// @dev Emits a `Sponsor` event\n    /// @param _assets Amount of assets to deposit\n    /// @return Amount of shares minted to caller.\n    function sponsor(uint256 _assets) external returns (uint256) {\n        address _owner = msg.sender;\n\n        uint256 _shares = previewDeposit(_assets);\n        _depositAndMint(_owner, _owner, _assets, _shares);\n\n        if (twabController.delegateOf(address(this), _owner) != SPONSORSHIP_ADDRESS) {\n            twabController.sponsor(_owner);\n        }\n\n        emit Sponsor(_owner, _assets, _shares);\n\n        return _shares;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Additional Withdrawal Flows\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Alternate flow for `IERC4626.withdraw` that reverts if the max share limit is exceeded.\n    /// @param _assets See `IERC4626.withdraw`\n    /// @param _receiver See `IERC4626.withdraw`\n    /// @param _owner See `IERC4626.withdraw`\n    /// @param _maxShares The max shares that can be burned for the withdrawal to succeed.\n    /// @return The amount of shares burned for the withdrawal\n    function withdraw(\n        uint256 _assets,\n        address _receiver,\n        address _owner,\n        uint256 _maxShares\n    ) external returns (uint256) {\n        uint256 _shares = previewWithdraw(_assets);\n        if (_shares > _maxShares) revert MaxSharesExceeded(_shares, _maxShares);\n        _burnAndWithdraw(msg.sender, _receiver, _owner, _shares, _assets);\n        return _shares;\n    }\n\n    /// @notice Alternate flow for `IERC4626.redeem` that reverts if the assets returned does not reach the\n    /// minimum asset threshold.\n    /// @param _shares See `IERC4626.redeem`\n    /// @param _receiver See `IERC4626.redeem`\n    /// @param _owner See `IERC4626.redeem`\n    /// @param _minAssets The minimum assets that can be returned for the redemption to succeed\n    /// @return The amount of assets returned for the redemption\n    function redeem(\n        uint256 _shares,\n        address _receiver,\n        address _owner,\n        uint256 _minAssets\n    ) external returns (uint256) {\n        uint256 _assets = previewRedeem(_shares);\n        if (_assets < _minAssets) revert MinAssetsNotReached(_assets, _minAssets);\n        _burnAndWithdraw(msg.sender, _receiver, _owner, _shares, _assets);\n        return _assets;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Additional Accounting\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Returns the total assets that are owed to share holders and any other internal balances.\n    /// @return The total asset debt of the vault\n    function totalDebt() public view returns (uint256) {\n        return totalSupply() + yieldFeeBalance;\n    }\n\n    /// @notice Calculates the amount of assets the vault controls based on current onchain conditions.\n    /// @dev The latent asset balance is included in the total asset count to account for the \"dust collection\n    /// strategy\".\n    /// @dev This function should be favored over `totalAssets` for state-changing functions since it uses\n    /// `previewRedeem` over `convertToAssets`.\n    /// @dev May revert for reasons that would cause `yieldVault.previewRedeem` to revert.\n    /// @return The total assets controlled by the vault based on current onchain conditions\n    function totalPreciseAssets() public view returns (uint256) {\n        return yieldVault.previewRedeem(yieldVault.balanceOf(address(this))) + _asset.balanceOf(address(this));\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Yield Functions\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Total yield balance of the vault\n    /// @dev Equal to total assets minus total debt\n    /// @return The total yield balance\n    function totalYieldBalance() external view returns (uint256) {\n        return _totalYieldBalance(totalPreciseAssets(), totalDebt());\n    }\n\n    /// @notice Total available yield on the vault\n    /// @dev Equal to total assets minus total allocation (total debt + yield buffer)\n    /// @return The available yield balance\n    function availableYieldBalance() external view returns (uint256) {\n        return _availableYieldBalance(totalPreciseAssets(), totalDebt());\n    }\n\n    /// @notice Current amount of assets available in the yield buffer\n    /// @return The available assets in the yield buffer\n    function currentYieldBuffer() external view returns (uint256) {\n        uint256 totalYieldBalance_ = _totalYieldBalance(totalPreciseAssets(), totalDebt());\n        uint256 _yieldBuffer = yieldBuffer;\n        if (totalYieldBalance_ >= _yieldBuffer) {\n            return _yieldBuffer;\n        } else {\n            return totalYieldBalance_;\n        }\n    }\n\n    /// @notice Transfers yield fee shares to the yield fee recipient\n    /// @param _shares The shares to mint to the yield fee recipient\n    /// @dev Emits a `ClaimYieldFeeShares` event\n    /// @dev Will revert if the caller is not the yield fee recipient or if zero shares are withdrawn\n    function claimYieldFeeShares(uint256 _shares) external onlyYieldFeeRecipient {\n        if (_shares == 0) revert MintZeroShares();\n        if (_shares > yieldFeeBalance) revert SharesExceedsYieldFeeBalance(_shares, yieldFeeBalance);\n\n        yieldFeeBalance -= _shares;\n\n        _mint(msg.sender, _shares);\n\n        emit ClaimYieldFeeShares(msg.sender, _shares);\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // LiquidationSource Functions\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @inheritdoc ILiquidationSource\n    /// @dev Returns the liquid amount of `_tokenOut` minus any yield fees.\n    /// @dev Supports the liquidation of either assets or prize vault shares.\n    function liquidatableBalanceOf(address _tokenOut) external view returns (uint256) {\n        uint256 _totalDebt = totalDebt();\n        uint256 _maxAmountOut;\n        if (_tokenOut == address(this)) {\n            // Liquidation of vault shares is capped to the mint limit.\n            _maxAmountOut = _mintLimit(_totalDebt);\n        } else if (_tokenOut == address(_asset)) {\n            // Liquidation of yield assets is capped at the max yield vault withdraw plus any latent balance.\n            _maxAmountOut = _maxYieldVaultWithdraw() + _asset.balanceOf(address(this));\n        } else {\n            return 0;\n        }\n\n        // The liquid yield is limited by the max that can be minted or withdrawn, depending on\n        // `_tokenOut`.\n        uint256 _availableYield = _availableYieldBalance(totalPreciseAssets(), _totalDebt);\n        uint256 _liquidYield = _availableYield >= _maxAmountOut ? _maxAmountOut : _availableYield;\n\n        // The final balance is computed by taking the liquid yield and multiplying it by\n        // (1 - yieldFeePercentage), rounding down, to ensure that enough yield is left for\n        // the yield fee.\n        return _liquidYield.mulDiv(FEE_PRECISION - yieldFeePercentage, FEE_PRECISION);\n    }\n\n    /// @inheritdoc ILiquidationSource\n    /// @dev Emits a `TransferYieldOut` event\n    /// @dev Supports the liquidation of either assets or prize vault shares.\n    function transferTokensOut(\n        address /* sender */,\n        address _receiver,\n        address _tokenOut,\n        uint256 _amountOut\n    ) external virtual onlyLiquidationPair returns (bytes memory) {\n        if (_amountOut == 0) revert LiquidationAmountOutZero();\n\n        uint256 _totalDebtBefore = totalDebt();\n        uint256 _availableYield = _availableYieldBalance(totalPreciseAssets(), _totalDebtBefore);\n        uint32 _yieldFeePercentage = yieldFeePercentage;\n\n        // Determine the proportional yield fee based on the amount being liquidated:\n        uint256 _yieldFee;\n        if (_yieldFeePercentage != 0) {\n            // The yield fee is calculated as a portion of the total yield being consumed, such that \n            // `total = amountOut + yieldFee` and `yieldFee / total = yieldFeePercentage`. \n            _yieldFee = (_amountOut * FEE_PRECISION) / (FEE_PRECISION - _yieldFeePercentage) - _amountOut;\n        }\n\n        // Ensure total liquidation amount does not exceed the available yield balance:\n        if (_amountOut + _yieldFee > _availableYield) {\n            revert LiquidationExceedsAvailable(_amountOut + _yieldFee, _availableYield);\n        }\n\n        // Increase yield fee balance:\n        if (_yieldFee > 0) {\n            yieldFeeBalance = yieldFeeBalance + _yieldFee;\n        }\n\n        // Mint or withdraw amountOut to `_receiver`:\n        if (_tokenOut == address(_asset)) {\n            _enforceMintLimit(_totalDebtBefore, _yieldFee);\n            _withdraw(_receiver, _amountOut);\n        } else if (_tokenOut == address(this)) {\n            _enforceMintLimit(_totalDebtBefore, _amountOut + _yieldFee);\n            _mint(_receiver, _amountOut);\n        } else {\n            revert LiquidationTokenOutNotSupported(_tokenOut);\n        }\n\n        emit TransferYieldOut(msg.sender, _tokenOut, _receiver, _amountOut, _yieldFee);\n\n        return \"\";\n    }\n\n    /// @inheritdoc ILiquidationSource\n    function verifyTokensIn(\n        address _tokenIn,\n        uint256 _amountIn,\n        bytes calldata /* transferTokensOutData */\n    ) external onlyLiquidationPair {\n        address _prizeToken = address(prizePool.prizeToken());\n        if (_tokenIn != _prizeToken) {\n            revert LiquidationTokenInNotPrizeToken(_tokenIn, _prizeToken);\n        }\n\n        prizePool.contributePrizeTokens(address(this), _amountIn);\n    }\n\n    /// @inheritdoc ILiquidationSource\n    function targetOf(address /* tokenIn */) external view returns (address) {\n        return address(prizePool);\n    }\n\n    /// @inheritdoc ILiquidationSource\n    function isLiquidationPair(\n        address _tokenOut,\n        address _liquidationPair\n    ) external view returns (bool) {\n        return (_tokenOut == address(_asset) || _tokenOut == address(this)) && _liquidationPair == liquidationPair;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Setter Functions\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Set claimer.\n    /// @param _claimer Address of the claimer\n    function setClaimer(address _claimer) external onlyOwner {\n        _setClaimer(_claimer);\n    }\n\n    /// @notice Set liquidationPair.\n    /// @dev Emits a `LiquidationPairSet` event\n    /// @param _liquidationPair New liquidationPair address\n    function setLiquidationPair(address _liquidationPair) external onlyOwner {\n        if (address(_liquidationPair) == address(0)) revert LPZeroAddress();\n\n        liquidationPair = _liquidationPair;\n\n        emit LiquidationPairSet(address(this), address(_liquidationPair));\n    }\n\n    /// @notice Set yield fee percentage.\n    /// @dev Yield fee is defined on a scale from `0` to `FEE_PRECISION`, inclusive.\n    /// @param _yieldFeePercentage The new yield fee percentage to set\n    function setYieldFeePercentage(uint32 _yieldFeePercentage) external onlyOwner {\n        _setYieldFeePercentage(_yieldFeePercentage);\n    }\n\n    /// @notice Set fee recipient.\n    /// @param _yieldFeeRecipient Address of the fee recipient\n    function setYieldFeeRecipient(address _yieldFeeRecipient) external onlyOwner {\n        _setYieldFeeRecipient(_yieldFeeRecipient);\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Internal Functions\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Fetch decimals of the underlying asset.\n    /// @dev A return value of false indicates that the attempt failed in some way.\n    /// @param asset_ Address of the underlying asset\n    /// @return True if the attempt was successful, false otherwise\n    /// @return Number of token decimals\n    function _tryGetAssetDecimals(IERC20 asset_) internal view returns (bool, uint8) {\n        (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(\n            abi.encodeWithSelector(IERC20Metadata.decimals.selector)\n        );\n        if (success && encodedDecimals.length >= 32) {\n            uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));\n            if (returnedDecimals <= type(uint8).max) {\n                return (true, uint8(returnedDecimals));\n            }\n        }\n        return (false, 0);\n    }\n\n    /// @notice Calculates the amount of assets the vault controls based on current onchain conditions.\n    /// @dev Calls `totalPreciseAssets` externally so it can catch `previewRedeem` failures and return\n    /// whether or not the call was successful.\n    /// @return _success Returns true if totalAssets was successfully calculated and false otherwise\n    /// @return _totalAssets The total assets controlled by the vault based on current onchain conditions\n    function _tryGetTotalPreciseAssets() internal view returns (bool _success, uint256 _totalAssets) {\n        try this.totalPreciseAssets() returns (uint256 _totalPreciseAssets) {\n            _success = true;\n            _totalAssets = _totalPreciseAssets;\n        } catch {\n            _success = false;\n            _totalAssets = 0;\n        }\n    }\n\n    /// @notice Converts assets to shares with the given vault state and rounding direction.\n    /// @param _assets The assets to convert\n    /// @param _totalAssets The total assets that the vault controls\n    /// @param _totalDebt The total debt the vault owes\n    /// @param _rounding The rounding direction for the conversion\n    /// @return The resulting share balance\n    function _convertToShares(\n        uint256 _assets,\n        uint256 _totalAssets,\n        uint256 _totalDebt,\n        Math.Rounding _rounding\n    ) internal pure returns (uint256) {\n        if (_totalAssets >= _totalDebt) {\n            return _assets;\n        } else {\n            // If the vault controls less assets than what has been deposited a share will be worth a\n            // proportional amount of the total assets. This can happen due to fees, slippage, or loss\n            // of funds in the underlying yield vault.\n            return _assets.mulDiv(_totalDebt, _totalAssets, _rounding);\n        }\n    }\n\n    /// @notice Converts shares to assets with the given vault state and rounding direction.\n    /// @param _shares The shares to convert\n    /// @param _totalAssets The total assets that the vault controls\n    /// @param _totalDebt The total debt the vault owes\n    /// @param _rounding The rounding direction for the conversion\n    /// @return The resulting asset balance\n    function _convertToAssets(\n        uint256 _shares,\n        uint256 _totalAssets,\n        uint256 _totalDebt,\n        Math.Rounding _rounding\n    ) internal pure returns (uint256) {\n        if (_totalAssets >= _totalDebt) {\n            return _shares;\n        } else {\n            // If the vault controls less assets than what has been deposited a share will be worth a\n            // proportional amount of the total assets. This can happen due to fees, slippage, or loss\n            // of funds in the underlying yield vault.\n            return _shares.mulDiv(_totalAssets, _totalDebt, _rounding);\n        }\n    }\n\n    /// @notice Returns the shares that can be minted without exceeding the TwabController supply limit.\n    /// @dev The TwabController limits the total supply for each vault.\n    /// @param _existingShares The current allocated prize vault shares (internal and external)\n    /// @return The remaining shares that can be minted without exceeding TWAB limits\n    function _mintLimit(uint256 _existingShares) internal pure returns (uint256) {\n        return TWAB_SUPPLY_LIMIT - _existingShares;\n    }\n\n    /// @notice Verifies that the mint limit can support the new share balance.\n    /// @dev Reverts if the mint limit is exceeded.\n    /// @dev This MUST be called anytime there is a positive increase in the net total shares.\n    /// @param _existingShares The total existing prize vault shares (internal and external)\n    /// @param _newShares The new shares\n    function _enforceMintLimit(uint256 _existingShares, uint256 _newShares) internal pure {\n        uint256 _limit = _mintLimit(_existingShares);\n        if (_newShares > _limit) {\n            unchecked {\n                revert MintLimitExceeded(_newShares - _limit);\n            }\n        }\n    }\n\n    /// @notice Total yield balance of the vault (including the yield buffer).\n    /// @param _totalAssets The total assets controlled by the vault\n    /// @param totalDebt_ The total asset debt owed\n    /// @return The total yield balance\n    function _totalYieldBalance(uint256 _totalAssets, uint256 totalDebt_) internal pure returns (uint256) {\n        if (totalDebt_ >= _totalAssets) {\n            return 0;\n        } else {\n            unchecked {\n                return _totalAssets - totalDebt_;\n            }\n        }\n    }\n\n    /// @notice Available yield balance given the total assets and total share supply.\n    /// @dev Subtracts the yield buffer from the total yield balance.\n    /// @param _totalAssets The total assets controlled by the vault\n    /// @param totalDebt_ The total asset debt owed\n    /// @return The available yield balance\n    function _availableYieldBalance(uint256 _totalAssets, uint256 totalDebt_) internal view returns (uint256) {\n        uint256 totalYieldBalance_ = _totalYieldBalance(_totalAssets, totalDebt_);\n        uint256 _yieldBuffer = yieldBuffer;\n        if (totalYieldBalance_ >= _yieldBuffer) {\n            unchecked {\n                return totalYieldBalance_ - _yieldBuffer;\n            }\n        } else {\n            return 0;\n        }\n    }\n\n    /// @notice Deposits assets to the yield vault and mints shares\n    /// @param _caller The caller of the deposit\n    /// @param _receiver The receiver of the deposit shares\n    /// @param _assets Amount of assets to deposit\n    /// @param _shares Amount of shares to mint\n    /// @dev Emits a `Deposit` event.\n    /// @dev Will revert if 0 shares are minted back to the receiver or if 0 assets are deposited.\n    /// @dev Will revert if the deposit may result in the loss of funds.\n    function _depositAndMint(address _caller, address _receiver, uint256 _assets, uint256 _shares) internal {\n        if (_shares == 0) revert MintZeroShares();\n        if (_assets == 0) revert DepositZeroAssets();\n\n        // If _asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the\n        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook that is triggered after the transfer\n        // calls the vault which is assumed to not be malicious.\n        //\n        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the\n        // assets are transferred and before the shares are minted, which is a valid state.\n\n        _asset.safeTransferFrom(\n            _caller,\n            address(this),\n            _assets\n        );\n\n        // Previously accumulated dust is swept into the yield vault along with the deposit.\n        uint256 _assetsWithDust = _asset.balanceOf(address(this));\n        _asset.forceApprove(address(yieldVault), _assetsWithDust);\n\n        // The shares are calculated and then minted directly to mitigate rounding error loss.\n        uint256 _yieldVaultShares = yieldVault.previewDeposit(_assetsWithDust);\n        yieldVault.mint(_yieldVaultShares, address(this));\n\n        // Enforce the mint limit and protect against lossy deposits.\n        uint256 _totalDebtBeforeMint = totalDebt();\n        _enforceMintLimit(_totalDebtBeforeMint, _shares);\n        if (totalPreciseAssets() < _totalDebtBeforeMint + _shares) {\n            revert LossyDeposit(totalPreciseAssets(), _totalDebtBeforeMint + _shares);\n        }\n\n        _mint(_receiver, _shares);\n\n        emit Deposit(_caller, _receiver, _assets, _shares);\n    }\n\n    /// @notice Burns shares and withdraws assets from the underlying yield vault.\n    /// @param _caller Address of the caller\n    /// @param _receiver Address of the receiver of the assets\n    /// @param _owner Owner of the shares\n    /// @param _shares Shares to burn\n    /// @param _assets Assets to withdraw\n    /// @dev Emits a `Withdraw` event.\n    /// @dev Will revert if 0 assets are withdrawn or if 0 shares are burned\n    function _burnAndWithdraw(\n        address _caller,\n        address _receiver,\n        address _owner,\n        uint256 _shares,\n        uint256 _assets\n    ) internal {\n        if (_assets == 0) revert WithdrawZeroAssets();\n        if (_shares == 0) revert BurnZeroShares();\n        if (_caller != _owner) {\n            _spendAllowance(_owner, _caller, _shares);\n        }\n\n        // If _asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the\n        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the\n        // shares are burned and after the assets are transferred, which is a valid state.\n        _burn(_owner, _shares);\n        _withdraw(_receiver, _assets);\n\n        emit Withdraw(_caller, _receiver, _owner, _assets, _shares);\n    }\n\n    /// @notice Returns the max assets that can be withdrawn from the yield vault through this vault's\n    /// `_withdraw` function.\n    /// @dev This should be used over `yieldVault.maxWithdraw` when considering withdrawal limits since\n    /// this function takes into account the yield vault redemption limits, which is necessary since the\n    /// `_withdraw` function uses `yieldVault.redeem` instead of `yieldVault.withdraw`. Since we convert\n    /// the max redeemable shares to assets rounding down, the `yieldVault.previewWithdraw` call in the\n    /// `_withdraw` function is guaranteed to return less than or equal shares to the max yield vault \n    /// redemption.\n    /// @dev Returns zero if `yieldVault.previewRedeem` reverts.\n    /// @return The max assets that can be withdrawn from the yield vault.\n    function _maxYieldVaultWithdraw() internal view returns (uint256) {\n        try yieldVault.previewRedeem(yieldVault.maxRedeem(address(this))) returns (uint256 _maxAssets) {\n            return _maxAssets;\n        } catch {\n            return 0;\n        }\n    }\n\n    /// @notice Withdraws assets to the receiver while accounting for rounding errors.\n    /// @param _receiver The receiver of the assets\n    /// @param _assets The assets to withdraw\n    function _withdraw(address _receiver, uint256 _assets) internal {\n        // The vault accumulates dust from rounding errors over time, so if we can fulfill the withdrawal from the\n        // latent balance, we don't need to redeem any yield vault shares.\n        uint256 _latentAssets = _asset.balanceOf(address(this));\n        if (_assets > _latentAssets) {\n            // The latent balance is subtracted from the withdrawal so we don't withdraw more than we need.\n            uint256 _yieldVaultShares = yieldVault.previewWithdraw(_assets - _latentAssets);\n            // Assets are sent to this contract so any leftover dust can be redeposited later.\n            yieldVault.redeem(_yieldVaultShares, address(this), address(this));\n        }\n        if (_receiver != address(this)) {\n            _asset.safeTransfer(_receiver, _assets);\n        }\n    }\n\n    /// @notice Set yield fee percentage.\n    /// @dev Yield fee is defined on a scale from `0` to `MAX_YIELD_FEE`, inclusive.\n    /// @dev Emits a `YieldFeePercentageSet` event\n    /// @param _yieldFeePercentage The new yield fee percentage to set\n    function _setYieldFeePercentage(uint32 _yieldFeePercentage) internal {\n        if (_yieldFeePercentage > MAX_YIELD_FEE) {\n            revert YieldFeePercentageExceedsMax(_yieldFeePercentage, MAX_YIELD_FEE);\n        }\n        yieldFeePercentage = _yieldFeePercentage;\n        emit YieldFeePercentageSet(_yieldFeePercentage);\n    }\n\n    /// @notice Set yield fee recipient address.\n    /// @dev Emits a `YieldFeeRecipientSet` event\n    /// @param _yieldFeeRecipient Address of the fee recipient\n    function _setYieldFeeRecipient(address _yieldFeeRecipient) internal {\n        yieldFeeRecipient = _yieldFeeRecipient;\n        emit YieldFeeRecipientSet(_yieldFeeRecipient);\n    }\n\n}"
+      },
+      "lib/pt-v5-vault/src/abstract/Claimable.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\nimport { IClaimable } from \"pt-v5-claimable-interface/interfaces/IClaimable.sol\";\nimport { PrizePool } from \"pt-v5-prize-pool/PrizePool.sol\";\n\nimport { HookManager } from \"./HookManager.sol\";\n\n/// @title  PoolTogether V5 Claimable Vault Extension\n/// @author G9 Software Inc.\n/// @notice Provides an interface for Claimer contracts to interact with a vault in PoolTogether\n/// V5 while allowing each account to set and manage prize hooks that are called when they win.\nabstract contract Claimable is HookManager, IClaimable {\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Public Constants and Variables\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice The gas to give to each of the before and after prize claim hooks.\n    /// @dev This should be enough gas to mint an NFT if needed.\n    uint24 public constant HOOK_GAS = 150_000;\n\n    /// @notice Address of the PrizePool that computes prizes.\n    PrizePool public immutable prizePool;\n\n    /// @notice Address of the claimer.\n    address public claimer;\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Errors\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Thrown when the Prize Pool is set to the zero address.\n    error PrizePoolZeroAddress();\n\n    /// @notice Thrown when the Claimer is set to the zero address.\n    error ClaimerZeroAddress();\n\n    /// @notice Thrown when a prize is claimed for the zero address.\n    error ClaimRecipientZeroAddress();\n\n    /// @notice Thrown when the caller is not the prize claimer.\n    /// @param caller The caller address\n    /// @param claimer The claimer address\n    error CallerNotClaimer(address caller, address claimer);\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Modifiers\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Requires the caller to be the claimer.\n    modifier onlyClaimer() {\n        if (msg.sender != claimer) revert CallerNotClaimer(msg.sender, claimer);\n        _;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Constructor\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Claimable constructor\n    /// @param prizePool_ The prize pool to claim prizes from\n    /// @param claimer_ The address allowed to claim prizes on behalf of winners\n    constructor(PrizePool prizePool_, address claimer_) {\n        if (address(prizePool_) == address(0)) revert PrizePoolZeroAddress();\n        prizePool = prizePool_;\n        _setClaimer(claimer_);\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // IClaimable Implementation\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @inheritdoc IClaimable\n    /// @dev Also calls the before and after claim hooks if set by the winner.\n    function claimPrize(\n        address _winner,\n        uint8 _tier,\n        uint32 _prizeIndex,\n        uint96 _reward,\n        address _rewardRecipient\n    ) external onlyClaimer returns (uint256) {\n        address _prizeRecipient;\n        bytes memory _hookData;\n\n        if (_hooks[_winner].useBeforeClaimPrize) {\n            (_prizeRecipient, _hookData) = _hooks[_winner].implementation.beforeClaimPrize{ gas: HOOK_GAS }(\n                _winner,\n                _tier,\n                _prizeIndex,\n                _reward,\n                _rewardRecipient\n            );\n        } else {\n            _prizeRecipient = _winner;\n        }\n\n        if (_prizeRecipient == address(0)) revert ClaimRecipientZeroAddress();\n\n        uint256 _prizeTotal = prizePool.claimPrize(\n            _winner,\n            _tier,\n            _prizeIndex,\n            _prizeRecipient,\n            _reward,\n            _rewardRecipient\n        );\n\n        if (_hooks[_winner].useAfterClaimPrize) {\n            _hooks[_winner].implementation.afterClaimPrize{ gas: HOOK_GAS }(\n                _winner,\n                _tier,\n                _prizeIndex,\n                _prizeTotal - _reward,\n                _prizeRecipient,\n                _hookData\n            );\n        }\n\n        return _prizeTotal;\n    }\n\n    ////////////////////////////////////////////////////////////////////////////////\n    // Internal Helpers\n    ////////////////////////////////////////////////////////////////////////////////\n\n    /// @notice Set claimer address.\n    /// @dev Will revert if `_claimer` is address zero.\n    /// @param _claimer Address of the claimer\n    function _setClaimer(address _claimer) internal {\n        if (_claimer == address(0)) revert ClaimerZeroAddress();\n        claimer = _claimer;\n        emit ClaimerSet(_claimer);\n    }\n    \n}\n"
+      },
+      "lib/pt-v5-vault/src/abstract/HookManager.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\nimport { PrizeHooks } from \"../interfaces/IPrizeHooks.sol\";\n\n/// @title  PoolTogether V5 HookManager\n/// @author G9 Software Inc.\n/// @notice Allows each account to set and manage prize hooks that can be called when they win.\nabstract contract HookManager {\n\n    /// @notice Emitted when an account sets new hooks\n    /// @param account The account whose hooks are being configured\n    /// @param hooks The hooks being set\n    event SetHooks(address indexed account, PrizeHooks hooks);\n\n    /// @notice Maps user addresses to hooks that they want to execute when prizes are won.\n    mapping(address => PrizeHooks) internal _hooks;\n\n    /// @notice Gets the hooks for the given account.\n    /// @param account The account to retrieve the hooks for\n    /// @return PrizeHooks The hooks for the given account\n    function getHooks(address account) external view returns (PrizeHooks memory) {\n        return _hooks[account];\n    }\n\n    /// @notice Sets the hooks for a winner.\n    /// @dev Emits a `SetHooks` event\n    /// @param hooks The hooks to set\n    function setHooks(PrizeHooks calldata hooks) external {\n        _hooks[msg.sender] = hooks;\n        emit SetHooks(msg.sender, hooks);\n    }\n    \n}"
+      },
+      "lib/pt-v5-prize-pool/lib/owner-manager-contracts/contracts/Ownable.sol": {
+        "content": "// SPDX-License-Identifier: GPL-3.0\n\npragma solidity ^0.8.0;\n\n/**\n * @title Abstract ownable contract that can be inherited by other contracts\n * @notice Contract module which provides a basic access control mechanism, where\n * there is an account (an owner) that can be granted exclusive access to\n * specific functions.\n *\n * The `owner` is first set by passing the address of the `initialOwner` to the Ownable constructor.\n *\n * The owner account can be transferred through a two steps process:\n *      1. The current `owner` calls {transferOwnership} to set a `pendingOwner`\n *      2. The `pendingOwner` calls {claimOwnership} to accept the ownership transfer\n *\n * This module is used through inheritance. It will make available the modifier\n * `onlyOwner`, which can be applied to your functions to restrict their use to the owner.\n */\nabstract contract Ownable {\n    address private _owner;\n    address private _pendingOwner;\n\n    /**\n     * @dev Emitted when `_pendingOwner` has been changed.\n     * @param pendingOwner new `_pendingOwner` address.\n     */\n    event OwnershipOffered(address indexed pendingOwner);\n\n    /**\n     * @dev Emitted when `_owner` has been changed.\n     * @param previousOwner previous `_owner` address.\n     * @param newOwner new `_owner` address.\n     */\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\n\n    /* ============ Deploy ============ */\n\n    /**\n     * @notice Initializes the contract setting `_initialOwner` as the initial owner.\n     * @param _initialOwner Initial owner of the contract.\n     */\n    constructor(address _initialOwner) {\n        _setOwner(_initialOwner);\n    }\n\n    /* ============ External Functions ============ */\n\n    /**\n     * @notice Returns the address of the current owner.\n     */\n    function owner() public view virtual returns (address) {\n        return _owner;\n    }\n\n    /**\n     * @notice Gets current `_pendingOwner`.\n     * @return Current `_pendingOwner` address.\n     */\n    function pendingOwner() external view virtual returns (address) {\n        return _pendingOwner;\n    }\n\n    /**\n     * @notice Renounce ownership of the contract.\n     * @dev Leaves the contract without owner. It will not be possible to call\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\n     *\n     * NOTE: Renouncing ownership will leave the contract without an owner,\n     * thereby removing any functionality that is only available to the owner.\n     */\n    function renounceOwnership() external virtual onlyOwner {\n        _setOwner(address(0));\n    }\n\n    /**\n    * @notice Allows current owner to set the `_pendingOwner` address.\n    * @param _newOwner Address to transfer ownership to.\n    */\n    function transferOwnership(address _newOwner) external onlyOwner {\n        require(_newOwner != address(0), \"Ownable/pendingOwner-not-zero-address\");\n\n        _pendingOwner = _newOwner;\n\n        emit OwnershipOffered(_newOwner);\n    }\n\n    /**\n    * @notice Allows the `_pendingOwner` address to finalize the transfer.\n    * @dev This function is only callable by the `_pendingOwner`.\n    */\n    function claimOwnership() external onlyPendingOwner {\n        _setOwner(_pendingOwner);\n        _pendingOwner = address(0);\n    }\n\n    /* ============ Internal Functions ============ */\n\n    /**\n     * @notice Internal function to set the `_owner` of the contract.\n     * @param _newOwner New `_owner` address.\n     */\n    function _setOwner(address _newOwner) private {\n        address _oldOwner = _owner;\n        _owner = _newOwner;\n        emit OwnershipTransferred(_oldOwner, _newOwner);\n    }\n\n    /* ============ Modifier Functions ============ */\n\n    /**\n     * @dev Throws if called by any account other than the owner.\n     */\n    modifier onlyOwner() {\n        require(owner() == msg.sender, \"Ownable/caller-not-owner\");\n        _;\n    }\n\n    /**\n    * @dev Throws if called by any account other than the `pendingOwner`.\n    */\n    modifier onlyPendingOwner() {\n        require(msg.sender == _pendingOwner, \"Ownable/caller-not-pendingOwner\");\n        _;\n    }\n}\n"
+      }
+    },
+    "semantics": [
+      "PrizeVault.sol 481-513: deposit/mint and ordinary withdraw/redeem go through internal asset-pull/share-mint and owner share-burn/payout paths.",
+      "PrizeVault.sol 583-611: canonical four-argument withdraw enforces _maxShares; four-argument redeem enforces _minAssets. Both retain owner allowance and normal withdrawal semantics.",
+      "PrizeVault.sol 963-1028: nonzero assets/shares, asset transferFrom caller, underlying immutable yieldVault mint, TWAB limit, loss check, and caller/owner share allowance on exit.",
+      "Claimable.sol claimPrize is onlyClaimer and may call registered user hooks; neither direct claimPrize nor arbitrary setHooks is admitted.",
+      "PrizeVault.sol transferTokensOut/verifyTokensIn are onlyLiquidationPair; claimYieldFeeShares onlyYieldFeeRecipient; privileged settlement excluded."
+    ]
+  },
+  "limitations": [
+    "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+    "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+    "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+    "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+    "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+    "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+  ],
+  "restrictions": {
+    "noRuntimeScopeChange": true,
+    "noFactoryAuthorization": true,
+    "admittedChainIds": [
+      8453
+    ],
+    "warnings": [
+      "Base Prize POOL vault only: 0x6b5a5c55e9dd4bb502ce25bbfbaa49b69cf7e4dd. Underlying asset is POOL 0xd652c5425aea2afd5fb142e120fecf79e18fafc3 (18 decimals), not USDC. Immutable underlying yield vault is StakingVault 0x854f3d91e53d0fc9dba9822bc74f574c7380436d. No other factory-created vault is admitted.",
+      "Prize shares are principal claims and prize eligibility records, not a fixed yield token. Yield supports prizes rather than guaranteed individual yield; winning and principal protection are not guaranteed. POOL price, underlying yield source, smart-contract, governance and liquidity risks remain.",
+      "Deposit/mint need separate underlying POOL allowance to this exact prize vault. Withdrawal/redeem burn owner shares and pay receiver; caller != owner needs share allowance. All values are raw token/share units. Standard flows provide no caller-specified slippage bound; the four-argument overloads enforce maxShares or minAssets respectively.",
+      "TWAB supply limits and lossy-deposit checks can reject deposits. Withdrawals depend on underlying redemption limits and funds; undercollateralization/rounding or depleted yield buffer can reduce proceeds. No fresh runtime balance or successful execution is established.",
+      "No prize claim endpoint is admitted: claimPrize is restricted to the configured claimer, not an ordinary winner function. Custom hooks, permit/depositWithPermit, liquidation callbacks, sponsorship, token approvals/transfers, ownership and fee administration are excluded.",
+      "Sourcify reports exact_match for this non-proxy deployment and retains immutable bindings/constructor evidence. Evidence is inventory only, not fresh RPC runtime availability or legal eligibility; independent authorization, pauses, canonical decoding and signing controls still apply. No DAU or vault-TVL claim is made."
+    ]
+  }
+}

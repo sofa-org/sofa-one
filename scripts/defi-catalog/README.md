@@ -361,3 +361,9 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - Mellow legacy/Lido Earn brand-boundary findings are recorded as skipped; choosing Lagoon does not claim shutdown of the whole Mellow ecosystem.
 - Verification: only 18 additions; generate/check, 65 backend and one frontend tests passed; real policy smoke covered all 18 calls and 114 excluded selectors. Browser searches and both served ABI entries passed; scoped in-memory/no-broadcast limitations apply.
 
+## Automatic expansion cycle 5 — Gains Network and PoolTogether (2026-10-22)
+
+- `sources/gains-network-gusdc.json`: ten Arbitrum gUSDC functions covering ordinary liquidity, epoch requests/cancellation, discount NFT locks/unlocks and a fixed epoch-progress request. Trader PnL, insolvency, collateral-dependent withdrawal epochs and missed-window re-requesting remain risks. The helper cannot guarantee epoch advancement. Officially sunset gDAI is entirely excluded.
+- `sources/pooltogether-v5-prize-pool-base.json`: six ordinary/bounded Base POOL Prize Vault functions on one exact immutable deployment. Underlying is POOL, not USDC. No factory-wide admission, permissioned prize-claimer authority, custom hook or permit is added; underlying liquidity, TWAB limits and loss accounting remain authoritative.
+- Verification: only 16 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 16 calls and 164 excluded selectors; browser search/download checks passed for both chains. Full gates and on-chain execution remain unexercised.
+
