@@ -1,0 +1,3277 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5",
+  "protocol": "infiniFi",
+  "protocolId": "infinifi-siusd",
+  "website": "https://infinifi.xyz/",
+  "scope": "Two explicit iUSD/siUSD staking functions on the documented Ethereum Gateway proxy. Direct siUSD vault reviewed first and excluded because official documentation requires the gateway after the YieldSharing upgrade. No opaque executor/zap, base funding/redemption, locked-position, governance or bridge capabilities.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "sourceRefs": [
+      "https://infinifi.xyz/",
+      "https://docs.infinifi.xyz/dev-docs/contracts",
+      "https://docs.infinifi.xyz/dev-docs/tokens",
+      "https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md",
+      "https://docs.infinifi.xyz/dev-docs/changelog.md"
+    ],
+    "decision": "eligible-active",
+    "evidence": "Official website currently offers Deposit Now and Stake/Lock products, and current docs list Ethereum gateway/iUSD/siUSD deployments. The changelog records active maintenance and the required 2025-06-14 compatibility change; the separate matured farm deprecation does not retire siUSD. No project shutdown, team disbanding, wind-down or siUSD retirement notice was found in these reviewed official sources. This is source-based lifecycle admission, not a fresh runtime-availability attestation."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.infinifi.xyz/dev-docs/contracts ; https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5",
+    "deployment": {
+      "transactionHash": "0x9bd3ae1c2c358da5ec5da7c6979748991061a5505d7c124d6497e59da38ffd25",
+      "blockNumber": "22540575",
+      "transactionIndex": "14",
+      "deployer": "0xdecaDAc8778D088A30eE811b8Cc4eE72cED9Bf22"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x750136aC021a7149F0EE38141d0bA920Cca1fC5D",
+          "name": "InfiniFiGatewayV4"
+        }
+      ]
+    },
+    "constructorArguments": "0x0000000000000000000000007954d563cbd9ee121a77805bce5fe3c44f296d330000000000000000000000003d18480cc32b6ab3b833dcabd80e76cfd41c48a90000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000002419ab453c000000000000000000000000f6d48735eccf12bdc1df2674b1ce3fcb3bd2549000000000000000000000000000000000000000000000000000000000",
+    "evidence": "Official Ethereum table labels this address Gateway V1 and separately lists siUSD. Sourcify resolves this proxy to InfiniFiGatewayV4, whose V4/V3/V2 inherited implementation exposes stake(address,uint256) and unstake(address,uint256). The documentation V1 example stake(uint256) is not substituted for the actual implementation ABI. Initial constructor implementation is not used as the applicable interface."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5?fields=all ; https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5",
+    "implementationAddress": "0x750136aC021a7149F0EE38141d0bA920Cca1fC5D",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.28+commit.7893614a",
+      "compilerSettings": {
+        "viaIR": false,
+        "metadata": {
+          "appendCBOR": true,
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "optimizer": {
+          "runs": 400,
+          "enabled": true
+        },
+        "evmVersion": "cancun",
+        "remappings": [
+          "@openzeppelin/=lib/openzeppelin-contracts/",
+          "@forge-std/=lib/forge-std/src/",
+          "@solmate/=lib/solmate/",
+          "@cowprotocol/=lib/cowprotocol/src/",
+          "@core/=src/core/",
+          "@tokens/=src/tokens/",
+          "@locking/=src/locking/",
+          "@funding/=src/funding/",
+          "@gateway/=src/gateway/",
+          "@finance/=src/finance/",
+          "@periphery/=src/periphery/",
+          "@libraries/=src/libraries/",
+          "@interfaces/=src/interfaces/",
+          "@governance/=src/governance/",
+          "@integrations/=src/integrations/",
+          "@test/=test/",
+          "@deployment/=deployment/",
+          "@pendle/=lib/pendle-core-v2-public/contracts/",
+          "@chainlink/=lib/chainlink-ccip/chains/evm/",
+          "@chainlink/local/=lib/chainlink-local/",
+          "@layerzerolabs/lz-evm-protocol-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/protocol/",
+          "@layerzerolabs/lz-evm-oapp-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/oapp/",
+          "@layerzerolabs/lz-evm-messagelib-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib/",
+          "solidity-bytes-utils/=lib/solidity-bytes-utils/",
+          "LayerZero-devtools/=lib/LayerZero-devtools/",
+          "LayerZero-v2/=lib/LayerZero-v2/",
+          "chainlink-ccip/=lib/chainlink-ccip/chains/evm/contracts/vendor/optimism/interop-lib/v0/src/",
+          "cowprotocol/=lib/cowprotocol/src/",
+          "ds-test/=lib/solmate/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+          "pendle-core-v2-public/=lib/pendle-core-v2-public/contracts/",
+          "solmate/=lib/solmate/src/"
+        ]
+      },
+      "name": "InfiniFiGatewayV4",
+      "fullyQualifiedName": "src/gateway/InfiniFiGatewayV4.sol:InfiniFiGatewayV4"
+    },
+    "implementationDeployment": {
+      "transactionHash": "0xbd1f373855a16ff42efb8b1925f9421ea615d8a8650fe7e7485157c907471f08",
+      "blockNumber": "25608637",
+      "transactionIndex": "168",
+      "deployer": "0xdecaDAc8778D088A30eE811b8Cc4eE72cED9Bf22"
+    },
+    "reportedProxyCreationMatch": "exact_match",
+    "reportedProxyRuntimeMatch": "exact_match",
+    "reportedImplementationCreationMatch": "match",
+    "reportedImplementationRuntimeMatch": "match",
+    "sourceServiceVerifiedAt": "2026-08-04T06:59:07Z",
+    "evidence": "Full 40-function applicable implementation ABI and separate complete proxy ABI retained. Service labels exact_match for proxy and match for implementation are recorded verbatim. Binding is via exact chain/address proxyResolution and exact reported implementation compilation, not a generic ERC4626 or repository ABI. No fresh RPC bytecode, storage, dependency registry or execution verification was performed."
+  },
+  "abi": [
+    {
+      "name": "EnforcedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExpectedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InsufficientBridgeFee",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "required",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "provided",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidZapFee",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidZapRouter",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MinAssetsOutError",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "min",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "actual",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "PendingLossesUnapplied",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "SwapFailed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnderlyingCallReverted",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "returnData",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "AddressSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "indexed": true,
+          "internalType": "string"
+        },
+        {
+          "name": "_address",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CoreUpdate",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldCore",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newCore",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetEnabledRouter",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "router",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ZapFeeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "zapFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ZapIn",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiptTokens",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "addresses",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "bridge",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_targetChainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_connector",
+          "type": "address",
+          "internalType": "address payable"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "cancelInfiWithdrawal",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_unwindingTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_newUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "cancelUnwinding",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_unwindingTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_newUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimRedemption",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "completeInfiWithdrawal",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_unwindingTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "core",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract InfiniFiCore"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "createPosition",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "emergencyAction",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "calls",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "target",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "callData",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct CoreControlled.Call[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "returnData",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "enabledRouters",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAddress",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_name",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "increaseInfiWithdrawalPeriod",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_oldUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_newUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "increaseUnwindingEpochs",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_oldUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_newUnwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "init",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_core",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "lockInfi",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "migrate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_farm",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_minIusdReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mintAndLock",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mintAndStake",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "multiVote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32[]",
+          "internalType": "uint32[]"
+        },
+        {
+          "name": "_liquidVotes",
+          "type": "tuple[][]",
+          "components": [
+            {
+              "name": "farm",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "weight",
+              "type": "uint96",
+              "internalType": "uint96"
+            }
+          ],
+          "internalType": "struct AllocationVoting.AllocationVote[][]"
+        },
+        {
+          "name": "_illiquidVotes",
+          "type": "tuple[][]",
+          "components": [
+            {
+              "name": "farm",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "weight",
+              "type": "uint96",
+              "internalType": "uint96"
+            }
+          ],
+          "internalType": "struct AllocationVoting.AllocationVote[][]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_minAssetsOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAddress",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "_address",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setCore",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newCore",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setEnabledRouter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_router",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_enabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setZapFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_zapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "stake",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_receiptTokens",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "startInfiWithdrawal",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "startUnwinding",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unstake",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_stakedTokens",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unstakeAndLock",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_liquidVotes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "farm",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "weight",
+              "type": "uint96",
+              "internalType": "uint96"
+            }
+          ],
+          "internalType": "struct AllocationVoting.AllocationVote[]"
+        },
+        {
+          "name": "_illiquidVotes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "farm",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "weight",
+              "type": "uint96",
+              "internalType": "uint96"
+            }
+          ],
+          "internalType": "struct AllocationVoting.AllocationVote[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_unwindingTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_unwindingTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "zapFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "zapIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_router",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_routerData",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "zapInAndLock",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_router",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_routerData",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "_unwindingEpochs",
+          "type": "uint32",
+          "internalType": "uint32"
+        },
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "zapInAndStake",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_router",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_routerData",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "_to",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "initialOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidAdmin",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidImplementation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967NonPayable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ProxyDeniedAdminAccess",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    }
+  ],
+  "proxyFunctionInventory": [],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "stake",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_receiptTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "infinifi-siusd:v1:1:0x3f04b65ddbd87f9ce0a2e7eb24d80e7fb87625b5:stake",
+      "chainId": 1,
+      "contract": "0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5",
+      "functionName": "stake",
+      "label": "infiniFi siUSD stake",
+      "operation": "stake",
+      "protocol": "infiniFi",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.infinifi.xyz/dev-docs/contracts ; https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md ; proxy resolution: https://sourcify.dev/server/v2/contract/1/0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5?fields=all ; implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "signature": "stake(address,uint256)",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Calls target the Ethereum infiniFi Gateway proxy, not the siUSD token directly. Official docs state the 2025-06-14 YieldSharing upgrade broke direct siUSD ERC4626 compatibility; the gateway distributes interpolated rewards and temporarily opens its privileged staking-entry flag.",
+        "stake consumes caller iUSD receipt-token units and mints siUSD shares to _to; unstake consumes caller siUSD shares and sends iUSD to _to, not USDC. Caller must approve the gateway for the input token. Choose the intended nonzero recipient and send zero native value.",
+        "No siUSD cooldown or locked-position unbonding step appears in these two explicit methods. They do not unlock liUSD-xw (separate 1-13 week unbonding positions), perform USDC redemption, bridge, zap, or guarantee an end-to-end cash exit.",
+        "Gateway pause/reentrancy guards, siUSD pause/max checks, pending negative unaccrued yield and YieldSharing dependencies may block calls. Pending-loss accrual is not performed by stake/unstake and no independent YieldSharing capability is admitted.",
+        "Amounts are not guaranteed 1:1: vault conversions use current totalAssets and floor rounding; small positive amounts can produce zero shares/assets. Neither admitted function has min-output or deadline parameters. Rewards interpolation, donations, losses and principal slashing can change exchange rates.",
+        "The gateway is upgradeable and governor-controlled registry entries select stakedToken, receiptToken and yieldSharing; roles, pauses, dependencies and arbitrary emergency administrative powers remain authoritative. Source-service proxy resolution is evidence, not a fresh bytecode/configuration attestation or promise that these dependencies persist.",
+        "Admission grants no API-key permission, bypasses no canonical calldata/value, grant or pause checks, and guarantees neither backing, liquidity, live balances, yield, financial safety nor successful execution."
+      ]
+    },
+    {
+      "abi": {
+        "name": "unstake",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_stakedTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "infinifi-siusd:v1:1:0x3f04b65ddbd87f9ce0a2e7eb24d80e7fb87625b5:unstake",
+      "chainId": 1,
+      "contract": "0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5",
+      "functionName": "unstake",
+      "label": "infiniFi siUSD unstake",
+      "operation": "unstake",
+      "protocol": "infiniFi",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.infinifi.xyz/dev-docs/contracts ; https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md ; proxy resolution: https://sourcify.dev/server/v2/contract/1/0x3f04b65Ddbd87f9CE0A2e7Eb24d80e7fb87625b5?fields=all ; implementation ABI/source: https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "signature": "unstake(address,uint256)",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Calls target the Ethereum infiniFi Gateway proxy, not the siUSD token directly. Official docs state the 2025-06-14 YieldSharing upgrade broke direct siUSD ERC4626 compatibility; the gateway distributes interpolated rewards and temporarily opens its privileged staking-entry flag.",
+        "stake consumes caller iUSD receipt-token units and mints siUSD shares to _to; unstake consumes caller siUSD shares and sends iUSD to _to, not USDC. Caller must approve the gateway for the input token. Choose the intended nonzero recipient and send zero native value.",
+        "No siUSD cooldown or locked-position unbonding step appears in these two explicit methods. They do not unlock liUSD-xw (separate 1-13 week unbonding positions), perform USDC redemption, bridge, zap, or guarantee an end-to-end cash exit.",
+        "Gateway pause/reentrancy guards, siUSD pause/max checks, pending negative unaccrued yield and YieldSharing dependencies may block calls. Pending-loss accrual is not performed by stake/unstake and no independent YieldSharing capability is admitted.",
+        "Amounts are not guaranteed 1:1: vault conversions use current totalAssets and floor rounding; small positive amounts can produce zero shares/assets. Neither admitted function has min-output or deadline parameters. Rewards interpolation, donations, losses and principal slashing can change exchange rates.",
+        "The gateway is upgradeable and governor-controlled registry entries select stakedToken, receiptToken and yieldSharing; roles, pauses, dependencies and arbitrary emergency administrative powers remain authoritative. Source-service proxy resolution is evidence, not a fresh bytecode/configuration attestation or promise that these dependencies persist.",
+        "Admission grants no API-key permission, bypasses no canonical calldata/value, grant or pause checks, and guarantees neither backing, liquidity, live balances, yield, financial safety nor successful execution."
+      ]
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "addresses",
+      "signature": "addresses(bytes32)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only addresses getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "bridge",
+      "signature": "bridge(uint256,address,uint256,address,address)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Cross-chain portal/connector execution is outside the Ethereum siUSD staking admission; no bridge or connector permissions are granted."
+    },
+    {
+      "functionName": "cancelInfiWithdrawal",
+      "signature": "cancelInfiWithdrawal(uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Governance-token locking/unbonding cancellation, not siUSD staking or unstaking."
+    },
+    {
+      "functionName": "cancelUnwinding",
+      "signature": "cancelUnwinding(uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Locked-iUSD unbonding cancellation, not instant siUSD unstaking."
+    },
+    {
+      "functionName": "claimRedemption",
+      "signature": "claimRedemption()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Claims a separate queued iUSD-to-backing-asset redemption; outside the iUSD/siUSD staking boundary."
+    },
+    {
+      "functionName": "completeInfiWithdrawal",
+      "signature": "completeInfiWithdrawal(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Completes a separate governance-token unbonding position, not siUSD unstaking."
+    },
+    {
+      "functionName": "core",
+      "signature": "core()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only core getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "createPosition",
+      "signature": "createPosition(uint256,uint32,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Creates locked-iUSD positions with separate unbonding restrictions; not liquid siUSD staking."
+    },
+    {
+      "functionName": "emergencyAction",
+      "signature": "emergencyAction((address,uint256,bytes)[])",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Governor-only arbitrary target/value/calldata executor; explicitly excluded, not authorized by outer ABI."
+    },
+    {
+      "functionName": "enabledRouters",
+      "signature": "enabledRouters(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only enabledRouters getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "getAddress",
+      "signature": "getAddress(string)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getAddress getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "increaseInfiWithdrawalPeriod",
+      "signature": "increaseInfiWithdrawalPeriod(uint32,uint32,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Changes governance-token lock duration; outside siUSD staking."
+    },
+    {
+      "functionName": "increaseUnwindingEpochs",
+      "signature": "increaseUnwindingEpochs(uint32,uint32,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Changes locked-iUSD lock duration; outside siUSD staking."
+    },
+    {
+      "functionName": "init",
+      "signature": "init(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Proxy storage initializer; not an ordinary user action."
+    },
+    {
+      "functionName": "lockInfi",
+      "signature": "lockInfi(uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Locks governance tokens; distinct token and lifecycle from siUSD."
+    },
+    {
+      "functionName": "migrate",
+      "signature": "migrate(address,address,uint256,uint32,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Calls a migration controller with caller-selected farm/token; separate migration workflow is not admitted."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "USDC-to-iUSD minting through mintController is outside the reviewed iUSD/siUSD staking boundary."
+    },
+    {
+      "functionName": "mintAndLock",
+      "signature": "mintAndLock(address,uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Combined USDC funding and locked-iUSD creation is outside liquid siUSD staking and introduces unbonding restrictions."
+    },
+    {
+      "functionName": "mintAndStake",
+      "signature": "mintAndStake(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Fixed-handler USDC mint-and-stake exists, but its additional mintController funding path is outside this iUSD-in/siUSD-in staking selection; no combined funding capability is admitted."
+    },
+    {
+      "functionName": "multiVote",
+      "signature": "multiVote(address[],uint32[],(address,uint96)[][],(address,uint96)[][])",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Allocation governance voting, not siUSD staking or unstaking; excluded independently of tuple-array encoding."
+    },
+    {
+      "functionName": "pause",
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Role-restricted protocol pause administration."
+    },
+    {
+      "functionName": "paused",
+      "signature": "paused()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only paused getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "redeem",
+      "signature": "redeem(address,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate iUSD-to-backing-asset redemption/queue workflow; not siUSD-to-iUSD unstaking."
+    },
+    {
+      "functionName": "setAddress",
+      "signature": "setAddress(string,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Governor-only mutable dependency registry administration."
+    },
+    {
+      "functionName": "setCore",
+      "signature": "setCore(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Governor-only role authority replacement."
+    },
+    {
+      "functionName": "setEnabledRouter",
+      "signature": "setEnabledRouter(address,bool)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Role-restricted zap router allowlist administration."
+    },
+    {
+      "functionName": "setZapFee",
+      "signature": "setZapFee(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Role-restricted zap fee administration."
+    },
+    {
+      "functionName": "stake",
+      "signature": "stake(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary fixed-handler iUSD-to-siUSD staking: pulls caller iUSD, approves configured siUSD, distributes interpolated rewards, opens ENTRY_POINT flag, deposits to explicit recipient and resets flag. No caller-selected execution target or opaque calldata."
+    },
+    {
+      "functionName": "startInfiWithdrawal",
+      "signature": "startInfiWithdrawal(uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Starts governance-token unbonding; distinct from liquid siUSD unstaking."
+    },
+    {
+      "functionName": "startUnwinding",
+      "signature": "startUnwinding(uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Starts locked-iUSD unbonding; distinct from liquid siUSD unstaking."
+    },
+    {
+      "functionName": "unpause",
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Role-restricted protocol unpause administration."
+    },
+    {
+      "functionName": "unstake",
+      "signature": "unstake(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary fixed-handler siUSD-to-iUSD unstaking: pulls caller siUSD shares, distributes interpolated rewards, opens ENTRY_POINT flag, redeems gateway-owned shares to explicit recipient and resets flag. No arbitrary executor, cooldown request or opaque calldata."
+    },
+    {
+      "functionName": "unstakeAndLock",
+      "signature": "unstakeAndLock(address,uint256,uint32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Combines siUSD exit with creation of separately locked liUSD positions; not a liquid unstake and excluded from this staking boundary."
+    },
+    {
+      "functionName": "vote",
+      "signature": "vote(address,uint32,(address,uint96)[],(address,uint96)[])",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Allocation governance voting; outside liquid siUSD staking."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Overloaded locked-iUSD unbonding completion; neither signature is a liquid siUSD unstake."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Overloaded locked-iUSD unbonding completion; neither signature is a liquid siUSD unstake."
+    },
+    {
+      "functionName": "zapFee",
+      "signature": "zapFee()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only zapFee getter; not activated as a transaction capability and does not create a read API."
+    },
+    {
+      "functionName": "zapIn",
+      "signature": "zapIn(address,uint256,address,bytes,address)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Caller-selected router and opaque routerData reach a low-level call; no nested-execution scope is admitted."
+    },
+    {
+      "functionName": "zapInAndLock",
+      "signature": "zapInAndLock(address,uint256,address,bytes,uint32,address)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Caller-selected router and opaque routerData reach a low-level call, followed by locked-position creation; explicitly excluded."
+    },
+    {
+      "functionName": "zapInAndStake",
+      "signature": "zapInAndStake(address,uint256,address,bytes,address)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Caller-selected router and opaque routerData reach a low-level call; a staking suffix does not authorize nested execution."
+    }
+  ],
+  "relatedDeploymentReview": {
+    "chainId": 1,
+    "address": "0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB",
+    "label": "infiniFi siUSD token",
+    "deploymentEvidence": {
+      "sourceRef": "https://docs.infinifi.xyz/dev-docs/contracts ; https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md",
+      "verifiedAt": "2026-10-22",
+      "chainId": 1,
+      "address": "0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB",
+      "deployment": {
+        "transactionHash": "0xd504fbdef3f518088c9ec6e69db47e58d7d2fd3975a2fe633345f18c0e8609ed",
+        "blockNumber": "22540416",
+        "transactionIndex": "71",
+        "deployer": "0xdecaDAc8778D088A30eE811b8Cc4eE72cED9Bf22"
+      },
+      "proxyResolution": {
+        "isProxy": false,
+        "proxyType": null,
+        "implementations": []
+      },
+      "constructorArguments": "0x000000000000000000000000f6d48735eccf12bdc1df2674b1ce3fcb3bd2549000000000000000000000000048f9e38f3070ad8945dfeae3fa70987722e3d89c",
+      "constructorCore": "0xF6d48735EcCf12bDC1DF2674b1ce3fcb3bD25490",
+      "constructorReceiptToken": "0x48f9e38f3070AD8945DFEae3FA70987722E3D89c"
+    },
+    "abiEvidence": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB?fields=all",
+      "verifiedAt": "2026-10-22",
+      "chainId": 1,
+      "address": "0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB",
+      "compilation": {
+        "language": "Solidity",
+        "compiler": "solc",
+        "compilerVersion": "0.8.28+commit.7893614a",
+        "compilerSettings": {
+          "viaIR": false,
+          "metadata": {
+            "appendCBOR": true,
+            "bytecodeHash": "ipfs",
+            "useLiteralContent": false
+          },
+          "libraries": {
+            "src/libraries/EpochLib.sol": {
+              "EpochLib": "0x4e7b4a37cB9d88e555DaEa7503dC942954FF742E"
+            }
+          },
+          "optimizer": {
+            "runs": 1000,
+            "enabled": true
+          },
+          "evmVersion": "cancun",
+          "remappings": [
+            "@openzeppelin/=lib/openzeppelin-contracts/",
+            "@forge-std/=lib/forge-std/src/",
+            "@solmate/=lib/solmate/",
+            "@cowprotocol/=lib/cowprotocol/src/",
+            "@core/=src/core/",
+            "@tokens/=src/tokens/",
+            "@locking/=src/locking/",
+            "@funding/=src/funding/",
+            "@gateway/=src/gateway/",
+            "@finance/=src/finance/",
+            "@libraries/=src/libraries/",
+            "@interfaces/=src/interfaces/",
+            "@governance/=src/governance/",
+            "@integrations/=src/integrations/",
+            "@test/=test/",
+            "@deployment/=deployment/",
+            "cowprotocol/=lib/cowprotocol/src/",
+            "ds-test/=lib/solmate/lib/ds-test/src/",
+            "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+            "forge-std/=lib/forge-std/src/",
+            "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+            "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+            "solmate/=lib/solmate/src/"
+          ]
+        },
+        "name": "StakedToken",
+        "fullyQualifiedName": "src/tokens/StakedToken.sol:StakedToken"
+      },
+      "reportedCreationMatch": "match",
+      "reportedRuntimeMatch": "match",
+      "evidence": "Exact-address StakedToken ABI/source, reported non-proxy by source service. Explorer labels source Exact Match but also emits a heuristic proxy suggestion; no implementation binding is invented from that heuristic. Source-service match labels are not relabeled exact_match. The direct contract hooks a mutable YieldSharing dependency, whose upgrade explains why unchanged ERC4626 selectors are not ordinary direct user paths."
+    },
+    "abi": [
+      {
+        "type": "constructor",
+        "inputs": [
+          {
+            "name": "_core",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_receiptToken",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "ERC20InsufficientAllowance",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "allowance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "needed",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "ERC20InsufficientBalance",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "sender",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "balance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "needed",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "ERC20InvalidApprover",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "approver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "ERC20InvalidReceiver",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "ERC20InvalidSender",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "sender",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "ERC20InvalidSpender",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "ERC4626ExceededMaxDeposit",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "max",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "ERC4626ExceededMaxMint",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "max",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "ERC4626ExceededMaxRedeem",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "max",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "ERC4626ExceededMaxWithdraw",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "max",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "EnforcedPause",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "ExpectedPause",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "PendingLossesUnapplied",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "SafeERC20FailedOperation",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "UnderlyingCallReverted",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "returnData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "Approval",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "CoreUpdate",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "oldCore",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "newCore",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Deposit",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "sender",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Paused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Transfer",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Unpaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "VaultLoss",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "indexed": true,
+            "internalType": "uint256"
+          },
+          {
+            "name": "epoch",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "VaultProfit",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "indexed": true,
+            "internalType": "uint256"
+          },
+          {
+            "name": "epoch",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Withdraw",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "sender",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "allowance",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "applyLosses",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "approve",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "asset",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "balanceOf",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "convertToAssets",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "convertToShares",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "core",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract InfiniFiCore"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "decimals",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint8",
+            "internalType": "uint8"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "depositRewards",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "emergencyAction",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "calls",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "target",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "callData",
+                "type": "bytes",
+                "internalType": "bytes"
+              }
+            ],
+            "internalType": "struct CoreControlled.Call[]"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "returnData",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      {
+        "name": "epochRewards",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "epoch",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "rewards",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxMint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxWithdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "name",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "string",
+            "internalType": "string"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "pause",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "paused",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewMint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewWithdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "setCore",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "newCore",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "setYieldSharing",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_yieldSharing",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "symbol",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "string",
+            "internalType": "string"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "totalAssets",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "totalSupply",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "transfer",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "transferFrom",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "unpause",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "yieldSharing",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    ],
+    "selectedFunctions": [],
+    "functionInventory": [
+      {
+        "functionName": "allowance",
+        "signature": "allowance(address,address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only allowance getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "applyLosses",
+        "signature": "applyLosses(uint256)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "FINANCE_MANAGER-only loss/slashing management, not an ordinary user exit."
+      },
+      {
+        "functionName": "approve",
+        "signature": "approve(address,uint256)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "siUSD share-token approval management is outside staking function admission."
+      },
+      {
+        "functionName": "asset",
+        "signature": "asset()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only asset getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "balanceOf",
+        "signature": "balanceOf(address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only balanceOf getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "convertToAssets",
+        "signature": "convertToAssets(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only convertToAssets getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "convertToShares",
+        "signature": "convertToShares(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only convertToShares getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "core",
+        "signature": "core()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only core getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "decimals",
+        "signature": "decimals()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only decimals getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "deposit",
+        "signature": "deposit(uint256,address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Direct ERC4626 deposits are not supported since the documented YieldSharing upgrade; getCachedStakedReceiptTokens hook requires an ENTRY_POINT-opened flag. Use admitted gateway stake instead."
+      },
+      {
+        "functionName": "depositRewards",
+        "signature": "depositRewards(uint256)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "FINANCE_MANAGER-only reward funding, not ordinary user staking."
+      },
+      {
+        "functionName": "emergencyAction",
+        "signature": "emergencyAction((address,uint256,bytes)[])",
+        "stateMutability": "payable",
+        "decision": "excluded",
+        "reason": "Governor-only arbitrary target/value/calldata executor; explicitly excluded."
+      },
+      {
+        "functionName": "epochRewards",
+        "signature": "epochRewards(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only epochRewards getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "maxDeposit",
+        "signature": "maxDeposit(address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only maxDeposit getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "maxMint",
+        "signature": "maxMint(address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only maxMint getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "maxRedeem",
+        "signature": "maxRedeem(address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only maxRedeem getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "maxWithdraw",
+        "signature": "maxWithdraw(address)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only maxWithdraw getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "mint",
+        "signature": "mint(uint256,address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Direct ERC4626 minting is not supported since the documented YieldSharing upgrade; privileged entry flag is required. No direct vault capability is admitted."
+      },
+      {
+        "functionName": "name",
+        "signature": "name()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only name getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "pause",
+        "signature": "pause()",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Role-restricted pause administration."
+      },
+      {
+        "functionName": "paused",
+        "signature": "paused()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only paused getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "previewDeposit",
+        "signature": "previewDeposit(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only previewDeposit getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "previewMint",
+        "signature": "previewMint(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only previewMint getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "previewRedeem",
+        "signature": "previewRedeem(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only previewRedeem getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "previewWithdraw",
+        "signature": "previewWithdraw(uint256)",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only previewWithdraw getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "redeem",
+        "signature": "redeem(uint256,address,address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Direct ERC4626 redemptions are not supported since the documented YieldSharing upgrade; use admitted gateway unstake to open the privileged entry/exit flag."
+      },
+      {
+        "functionName": "setCore",
+        "signature": "setCore(address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Governor-only role-authority replacement."
+      },
+      {
+        "functionName": "setYieldSharing",
+        "signature": "setYieldSharing(address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Governor-only YieldSharing dependency replacement."
+      },
+      {
+        "functionName": "symbol",
+        "signature": "symbol()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only symbol getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "totalAssets",
+        "signature": "totalAssets()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only totalAssets getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "totalSupply",
+        "signature": "totalSupply()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only totalSupply getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      },
+      {
+        "functionName": "transfer",
+        "signature": "transfer(address,uint256)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "siUSD share-token transfer is outside staking/unstaking admission."
+      },
+      {
+        "functionName": "transferFrom",
+        "signature": "transferFrom(address,address,uint256)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Delegated siUSD share-token transfer is outside staking/unstaking admission."
+      },
+      {
+        "functionName": "unpause",
+        "signature": "unpause()",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Role-restricted unpause administration."
+      },
+      {
+        "functionName": "withdraw",
+        "signature": "withdraw(uint256,address,address)",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Direct ERC4626 withdrawal is not supported since the documented YieldSharing upgrade; requires the gateway-controlled entry/exit flag and is not admitted."
+      },
+      {
+        "functionName": "yieldSharing",
+        "signature": "yieldSharing()",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "Read-only yieldSharing getter/quote; excluded from transaction capabilities and not a read API. Preview results do not establish direct ERC4626 usability."
+      }
+    ]
+  },
+  "restrictions": {
+    "compatibilitySourceRefs": [
+      "https://docs.infinifi.xyz/dev-docs/tokens/staked-token.md",
+      "https://docs.infinifi.xyz/dev-docs/changelog.md"
+    ],
+    "cooldown": "The selected gateway stake/unstake source has no cooldown initiation/completion or liUSD-unbonding operation. Instant unstaking describes iUSD receipt-token delivery only, and does not promise immediate USDC redemption. Separate liUSD tokens require initiation and 1-13 week unbonding, per https://docs.infinifi.xyz/dev-docs/tokens/locked-position-token.md.",
+    "dependencyScope": "Governor-set registry values are not caller-selected executor inputs. Official deployment mapping identifies intended receipt/staked tokens; current registry/roles, YieldSharing implementation and runtime state are not attested. Gateway source-library StakedToken differs from exact deployed vault source only by a lint comment; the exact deployed vault ERC4626 dependency, not the newer compilation dependency, is used for vault rounding/transfer review.",
+    "noOpaqueExecution": "emergencyAction and all routerData zaps are explicitly excluded; enabled-router allowlisting alone is not treated as nested execution authorization.",
+    "warnings": [
+      "Calls target the Ethereum infiniFi Gateway proxy, not the siUSD token directly. Official docs state the 2025-06-14 YieldSharing upgrade broke direct siUSD ERC4626 compatibility; the gateway distributes interpolated rewards and temporarily opens its privileged staking-entry flag.",
+      "stake consumes caller iUSD receipt-token units and mints siUSD shares to _to; unstake consumes caller siUSD shares and sends iUSD to _to, not USDC. Caller must approve the gateway for the input token. Choose the intended nonzero recipient and send zero native value.",
+      "No siUSD cooldown or locked-position unbonding step appears in these two explicit methods. They do not unlock liUSD-xw (separate 1-13 week unbonding positions), perform USDC redemption, bridge, zap, or guarantee an end-to-end cash exit.",
+      "Gateway pause/reentrancy guards, siUSD pause/max checks, pending negative unaccrued yield and YieldSharing dependencies may block calls. Pending-loss accrual is not performed by stake/unstake and no independent YieldSharing capability is admitted.",
+      "Amounts are not guaranteed 1:1: vault conversions use current totalAssets and floor rounding; small positive amounts can produce zero shares/assets. Neither admitted function has min-output or deadline parameters. Rewards interpolation, donations, losses and principal slashing can change exchange rates.",
+      "The gateway is upgradeable and governor-controlled registry entries select stakedToken, receiptToken and yieldSharing; roles, pauses, dependencies and arbitrary emergency administrative powers remain authoritative. Source-service proxy resolution is evidence, not a fresh bytecode/configuration attestation or promise that these dependencies persist.",
+      "Admission grants no API-key permission, bypasses no canonical calldata/value, grant or pause checks, and guarantees neither backing, liquidity, live balances, yield, financial safety nor successful execution."
+    ]
+  },
+  "sourcesReviewed": [
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+      "path": "src/gateway/InfiniFiGatewayV4.sol",
+      "sha256": "9c39708e5e11e19aeb97dcf6c777ef4749aa0714bf40491dcb1ec3d6da25d572",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.28;\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\n\nimport {PortalHub} from \"@integrations/outland/portals/PortalHub.sol\";\nimport {InfiniFiGatewayV3} from \"@gateway/InfiniFiGatewayV3.sol\";\n\n/// @notice Gateway to interact with the InfiniFi protocol\n/// This version implements L1 -> L2 bridging of iUSD or siUSD to supported L2 chains.\n/// @dev Requires BRIDGE_INITIATOR role to initiate bridging transactions.\ncontract InfiniFiGatewayV4 is InfiniFiGatewayV3 {\n    using SafeERC20 for ERC20;\n\n    error InsufficientBridgeFee(uint256 required, uint256 provided);\n\n    /// @notice Bridges iUSD or siUSD to a supported L2 chain\n    /// @dev Requires BRIDGE_INITIATOR on this contract and portalHub registered in the address registry\n    /// @param _targetChainId Destination outpost chain ID\n    /// @param _token iUSD or siUSD token address on L1\n    /// @param _amount Amount of tokens to bridge\n    /// @param _recipient Recipient on the destination chain\n    /// @param _connector Authorized connector that relays the cross-chain message\n    function bridge(\n        uint256 _targetChainId,\n        address _token,\n        uint256 _amount,\n        address _recipient,\n        address payable _connector\n    ) external payable whenNotPaused nonReentrant {\n        PortalHub portalHub = PortalHub(getAddress(\"portalHub\"));\n        uint256 messageFee = portalHub.getBridgeMessageFee(_targetChainId, _connector);\n        require(msg.value >= messageFee, InsufficientBridgeFee(messageFee, msg.value));\n\n        ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);\n        ERC20(_token).forceApprove(address(portalHub), _amount);\n        portalHub.bridge{value: msg.value}(_targetChainId, _token, _amount, _recipient, _connector);\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+      "path": "src/gateway/InfiniFiGatewayV3.sol",
+      "sha256": "6355d08e0ee464e1b457f855bbe8e433cae924dcc452361f386e99bca1992636",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.28;\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\n\nimport {GovernanceToken} from \"@tokens/GovernanceToken.sol\";\nimport {LockingController} from \"@locking/LockingController.sol\";\nimport {InfiniFiGatewayV2} from \"@gateway/InfiniFiGatewayV2.sol\";\nimport {MigrationController} from \"@funding/MigrationController.sol\";\n\n/// @notice Gateway to interact with the InfiniFi protocol\ncontract InfiniFiGatewayV3 is InfiniFiGatewayV2 {\n    using SafeERC20 for ERC20;\n\n    function migrate(address _farm, address _token, uint256 _amount, uint32 _unwindingEpochs, uint256 _minIusdReceived)\n        external\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        ERC20 token = ERC20(_token);\n        MigrationController migrationController = MigrationController(getAddress(\"migrationController\"));\n\n        token.safeTransferFrom(msg.sender, address(this), _amount);\n        token.approve(address(migrationController), _amount);\n        uint256 iusdReceived = migrationController.migrate(msg.sender, _farm, _token, _amount, _unwindingEpochs);\n        require(iusdReceived >= _minIusdReceived, MinAssetsOutError(_minIusdReceived, iusdReceived));\n        return iusdReceived;\n    }\n\n    function lockInfi(uint256 _amount, uint32 _unwindingEpochs) external whenNotPaused nonReentrant {\n        GovernanceToken infi = GovernanceToken(getAddress(\"governanceToken\"));\n        LockingController locker = LockingController(getAddress(\"governanceLockingController\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        infi.transferFrom(msg.sender, address(this), _amount);\n        infi.approve(address(locker), _amount);\n        locker.createPosition(_amount, _unwindingEpochs, msg.sender);\n    }\n\n    function startInfiWithdrawal(uint256 _shares, uint32 _unwindingEpochs) external whenNotPaused nonReentrant {\n        LockingController locker = LockingController(getAddress(\"governanceLockingController\"));\n        GovernanceToken linfi = GovernanceToken(locker.shareToken(_unwindingEpochs));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        linfi.transferFrom(msg.sender, address(this), _shares);\n        linfi.approve(address(locker), _shares);\n        locker.startUnwinding(_shares, _unwindingEpochs, msg.sender);\n    }\n\n    function increaseInfiWithdrawalPeriod(uint32 _oldUnwindingEpochs, uint32 _newUnwindingEpochs, uint256 _shares)\n        external\n        whenNotPaused\n        nonReentrant\n    {\n        LockingController locker = LockingController(getAddress(\"governanceLockingController\"));\n        GovernanceToken linfi = GovernanceToken(locker.shareToken(_oldUnwindingEpochs));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        linfi.transferFrom(msg.sender, address(this), _shares);\n        linfi.approve(address(locker), _shares);\n        locker.increaseUnwindingEpochs(_shares, _oldUnwindingEpochs, _newUnwindingEpochs, msg.sender);\n    }\n\n    function cancelInfiWithdrawal(uint256 _unwindingTimestamp, uint32 _newUnwindingEpochs)\n        external\n        whenNotPaused\n        nonReentrant\n    {\n        LockingController(getAddress(\"governanceLockingController\"))\n            .cancelUnwinding(msg.sender, _unwindingTimestamp, _newUnwindingEpochs);\n    }\n\n    function completeInfiWithdrawal(address _user, uint256 _unwindingTimestamp) external whenNotPaused nonReentrant {\n        LockingController(getAddress(\"governanceLockingController\")).withdraw(_user, _unwindingTimestamp);\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+      "path": "src/gateway/InfiniFiGatewayV2.sol",
+      "sha256": "6c314240a509526bb35c8af50968087736d9fe3867ba51905ad9a3a7b9a343ff",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.28;\n\nimport {FixedPointMathLib} from \"@solmate/src/utils/FixedPointMathLib.sol\";\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {ReentrancyGuardTransient} from \"@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol\";\n\nimport {CoreRoles} from \"@libraries/CoreRoles.sol\";\nimport {StakedToken} from \"@tokens/StakedToken.sol\";\nimport {ReceiptToken} from \"@tokens/ReceiptToken.sol\";\nimport {CoreControlled} from \"@core/CoreControlled.sol\";\nimport {MintController} from \"@funding/MintController.sol\";\nimport {YieldSharingV2} from \"@finance/YieldSharingV2.sol\";\nimport {RedeemController} from \"@funding/RedeemController.sol\";\nimport {AllocationVoting} from \"@governance/AllocationVoting.sol\";\nimport {LockingController} from \"@locking/LockingController.sol\";\nimport {LockedPositionToken} from \"@tokens/LockedPositionToken.sol\";\n\n/// @notice Gateway to interact with the InfiniFi protocol\ncontract InfiniFiGatewayV2 is CoreControlled, ReentrancyGuardTransient {\n    using SafeERC20 for ERC20;\n    using FixedPointMathLib for uint256;\n\n    /// @notice error thrown when there are pending losses unapplied\n    /// if you observe this error as a user, call YieldSharing.accrue() before\n    /// attempting a withdrawal from the vault.\n    error PendingLossesUnapplied();\n\n    /// @notice error thrown when a swap fails\n    error SwapFailed();\n    error InvalidZapFee();\n    error InvalidZapRouter();\n    error MinAssetsOutError(uint256 min, uint256 actual);\n\n    event AddressSet(uint256 timestamp, string indexed name, address _address);\n    event ZapFeeSet(uint256 timestamp, uint256 zapFee);\n    event ZapIn(uint256 timestamp, address indexed user, address indexed token, uint256 amount, uint256 receiptTokens);\n    event SetEnabledRouter(uint256 timestamp, address router, bool enabled);\n\n    /// @notice address registry of the gateway\n    mapping(bytes32 => address) public addresses;\n\n    /// @notice Mapping of routers that can be used to zap\n    mapping(address => bool) public enabledRouters;\n\n    /// @notice fee charged for zaps, as a percentage with 18 decimals\n    uint256 public zapFee;\n\n    constructor() CoreControlled(address(1)) {}\n\n    /// @notice initializer for the proxy storage\n    function init(address _core) external {\n        assert(address(core()) == address(0));\n        _setCore(_core);\n    }\n\n    /// -------------------------------------------------------------------------------------\n    /// Configuration\n    /// -------------------------------------------------------------------------------------\n\n    /// @notice set an address for a given name\n    function setAddress(string memory _name, address _address) external onlyCoreRole(CoreRoles.GOVERNOR) {\n        addresses[keccak256(abi.encode(_name))] = _address;\n        emit AddressSet(block.timestamp, _name, _address);\n    }\n\n    /// @notice get an address for a given name\n    function getAddress(string memory _name) public view returns (address) {\n        return addresses[keccak256(abi.encode(_name))];\n    }\n\n    /// @notice manage the whitelist of routers to be used by the zap functions\n    function setEnabledRouter(address _router, bool _enabled) external onlyCoreRole(CoreRoles.PROTOCOL_PARAMETERS) {\n        enabledRouters[_router] = _enabled;\n        emit SetEnabledRouter(block.timestamp, _router, _enabled);\n    }\n\n    /// @notice set the fee charged for zaps\n    function setZapFee(uint256 _zapFee) external onlyCoreRole(CoreRoles.PROTOCOL_PARAMETERS) {\n        require(_zapFee <= 0.01e18, InvalidZapFee()); // cannot set to more than 1%\n        zapFee = _zapFee;\n        emit ZapFeeSet(block.timestamp, _zapFee);\n    }\n\n    /// -------------------------------------------------------------------------------------\n    /// User interactions\n    /// -------------------------------------------------------------------------------------\n\n    function mint(address _to, uint256 _amount) external whenNotPaused nonReentrant returns (uint256) {\n        ERC20 usdc = ERC20(getAddress(\"USDC\"));\n        MintController mintController = MintController(getAddress(\"mintController\"));\n\n        usdc.safeTransferFrom(msg.sender, address(this), _amount);\n        usdc.approve(address(mintController), _amount);\n        return mintController.mint(_to, _amount);\n    }\n\n    function mintAndStake(address _to, uint256 _amount) external whenNotPaused nonReentrant returns (uint256) {\n        MintController mintController = MintController(getAddress(\"mintController\"));\n        StakedToken siusd = StakedToken(getAddress(\"stakedToken\"));\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        ERC20 usdc = ERC20(getAddress(\"USDC\"));\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n\n        usdc.safeTransferFrom(msg.sender, address(this), _amount);\n        usdc.approve(address(mintController), _amount);\n        uint256 receiptTokens = mintController.mint(address(this), _amount);\n\n        yieldSharing.distributeInterpolationRewards();\n        yieldSharing.setCanEnterOrExitStakedToken(true);\n        iusd.approve(address(siusd), receiptTokens);\n        siusd.deposit(receiptTokens, _to);\n        yieldSharing.setCanEnterOrExitStakedToken(false);\n\n        return receiptTokens;\n    }\n\n    function stake(address _to, uint256 _receiptTokens) external whenNotPaused nonReentrant returns (uint256) {\n        StakedToken siusd = StakedToken(getAddress(\"stakedToken\"));\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        iusd.transferFrom(msg.sender, address(this), _receiptTokens);\n        iusd.approve(address(siusd), _receiptTokens);\n        yieldSharing.distributeInterpolationRewards();\n        yieldSharing.setCanEnterOrExitStakedToken(true);\n        uint256 stakedTokens = siusd.deposit(_receiptTokens, _to);\n        yieldSharing.setCanEnterOrExitStakedToken(false);\n\n        return stakedTokens;\n    }\n\n    function unstake(address _to, uint256 _stakedTokens) external whenNotPaused nonReentrant returns (uint256) {\n        StakedToken siusd = StakedToken(getAddress(\"stakedToken\"));\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        siusd.transferFrom(msg.sender, address(this), _stakedTokens);\n        yieldSharing.distributeInterpolationRewards();\n        yieldSharing.setCanEnterOrExitStakedToken(true);\n        uint256 receiptTokens = siusd.redeem(_stakedTokens, _to, address(this));\n        yieldSharing.setCanEnterOrExitStakedToken(false);\n\n        return receiptTokens;\n    }\n\n    function _zapToReceiptTokens(address _token, uint256 _amount, address _router, bytes calldata _routerData)\n        internal\n        returns (uint256, ReceiptToken)\n    {\n        require(enabledRouters[_router], InvalidZapRouter());\n\n        // pull in the tokens and approve the router if not using native ETH\n        if (_token != address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE)) {\n            ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);\n            ERC20(_token).forceApprove(address(_router), _amount);\n        }\n\n        // perform swap to USDC\n        (bool swapSuccess,) = _router.call{value: msg.value}(_routerData);\n        require(swapSuccess, SwapFailed());\n\n        // read the protocol addresses from storage\n        MintController mintController = MintController(getAddress(\"mintController\"));\n        ERC20 usdc = ERC20(getAddress(\"USDC\"));\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n\n        // mint iUSD\n        uint256 usdcReceived = usdc.balanceOf(address(this));\n        usdc.approve(address(mintController), usdcReceived);\n        uint256 receiptTokens = mintController.mint(address(this), usdcReceived);\n\n        {\n            uint256 _zapFee = zapFee;\n            if (_zapFee != 0) {\n                uint256 fee = receiptTokens.mulWadDown(_zapFee);\n                receiptTokens -= fee;\n                // forge-lint: disable-next-line(erc20-unchecked-transfer)\n                iusd.transfer(getAddress(\"yieldSharing\"), fee);\n            }\n        }\n\n        emit ZapIn(block.timestamp, msg.sender, _token, _amount, receiptTokens);\n\n        return (receiptTokens, iusd);\n    }\n\n    function zapIn(address _token, uint256 _amount, address _router, bytes calldata _routerData, address _to)\n        external\n        payable\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        (uint256 receiptTokens, ReceiptToken iusd) = _zapToReceiptTokens(_token, _amount, _router, _routerData);\n\n        // send iUSD to receiver\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        iusd.transfer(_to, receiptTokens);\n        return receiptTokens;\n    }\n\n    function zapInAndStake(address _token, uint256 _amount, address _router, bytes calldata _routerData, address _to)\n        external\n        payable\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        (uint256 receiptTokens, ReceiptToken iusd) = _zapToReceiptTokens(_token, _amount, _router, _routerData);\n\n        // read the protocol addresses from storage\n        StakedToken siusd = StakedToken(getAddress(\"stakedToken\"));\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n\n        // mint iUSD and stake it to siUSD\n        yieldSharing.distributeInterpolationRewards();\n        yieldSharing.setCanEnterOrExitStakedToken(true);\n        iusd.approve(address(siusd), receiptTokens);\n        siusd.deposit(receiptTokens, _to);\n        yieldSharing.setCanEnterOrExitStakedToken(false);\n        return receiptTokens;\n    }\n\n    function zapInAndLock(\n        address _token,\n        uint256 _amount,\n        address _router,\n        bytes calldata _routerData,\n        uint32 _unwindingEpochs,\n        address _to\n    ) external payable whenNotPaused nonReentrant returns (uint256) {\n        (uint256 receiptTokens, ReceiptToken iusd) = _zapToReceiptTokens(_token, _amount, _router, _routerData);\n\n        // read the protocol addresses from storage\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n\n        // lock the iUSD\n        iusd.approve(address(lockingController), receiptTokens);\n        lockingController.createPosition(receiptTokens, _unwindingEpochs, _to);\n        return receiptTokens;\n    }\n\n    function mintAndLock(address _to, uint256 _amount, uint32 _unwindingEpochs)\n        external\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        MintController mintController = MintController(getAddress(\"mintController\"));\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n        ERC20 usdc = ERC20(getAddress(\"USDC\"));\n\n        usdc.safeTransferFrom(msg.sender, address(this), _amount);\n        usdc.approve(address(mintController), _amount);\n        uint256 receiptTokens = mintController.mint(address(this), _amount);\n\n        iusd.approve(address(lockingController), receiptTokens);\n        lockingController.createPosition(receiptTokens, _unwindingEpochs, _to);\n        return receiptTokens;\n    }\n\n    function unstakeAndLock(address _to, uint256 _amount, uint32 _unwindingEpochs)\n        external\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        StakedToken siusd = StakedToken(getAddress(\"stakedToken\"));\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        siusd.transferFrom(msg.sender, address(this), _amount);\n        yieldSharing.distributeInterpolationRewards();\n        yieldSharing.setCanEnterOrExitStakedToken(true);\n        uint256 receiptTokens = siusd.redeem(_amount, address(this), address(this));\n        yieldSharing.setCanEnterOrExitStakedToken(false);\n\n        iusd.approve(address(lockingController), receiptTokens);\n        lockingController.createPosition(receiptTokens, _unwindingEpochs, _to);\n        return receiptTokens;\n    }\n\n    function createPosition(uint256 _amount, uint32 _unwindingEpochs, address _recipient)\n        external\n        whenNotPaused\n        nonReentrant\n    {\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        iusd.transferFrom(msg.sender, address(this), _amount);\n        iusd.approve(address(lockingController), _amount);\n        lockingController.createPosition(_amount, _unwindingEpochs, _recipient);\n    }\n\n    function startUnwinding(uint256 _shares, uint32 _unwindingEpochs) external whenNotPaused nonReentrant {\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n        LockedPositionToken liusd = LockedPositionToken(lockingController.shareToken(_unwindingEpochs));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        liusd.transferFrom(msg.sender, address(this), _shares);\n        liusd.approve(address(lockingController), _shares);\n        lockingController.startUnwinding(_shares, _unwindingEpochs, msg.sender);\n    }\n\n    function increaseUnwindingEpochs(uint32 _oldUnwindingEpochs, uint32 _newUnwindingEpochs, uint256 _shares)\n        external\n        whenNotPaused\n        nonReentrant\n    {\n        LockingController lockingController = LockingController(getAddress(\"lockingController\"));\n        LockedPositionToken liusd = LockedPositionToken(lockingController.shareToken(_oldUnwindingEpochs));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        liusd.transferFrom(msg.sender, address(this), _shares);\n        liusd.approve(address(lockingController), _shares);\n        lockingController.increaseUnwindingEpochs(_shares, _oldUnwindingEpochs, _newUnwindingEpochs, msg.sender);\n    }\n\n    function cancelUnwinding(uint256 _unwindingTimestamp, uint32 _newUnwindingEpochs)\n        external\n        whenNotPaused\n        nonReentrant\n    {\n        LockingController(getAddress(\"lockingController\"))\n            .cancelUnwinding(msg.sender, _unwindingTimestamp, _newUnwindingEpochs);\n    }\n\n    function withdraw(uint256 _unwindingTimestamp) external whenNotPaused nonReentrant {\n        _revertIfThereAreUnaccruedLosses();\n        LockingController(getAddress(\"lockingController\")).withdraw(msg.sender, _unwindingTimestamp);\n    }\n\n    function withdraw(address _user, uint256 _unwindingTimestamp) external whenNotPaused nonReentrant {\n        _revertIfThereAreUnaccruedLosses();\n        LockingController(getAddress(\"lockingController\")).withdraw(_user, _unwindingTimestamp);\n    }\n\n    function redeem(address _to, uint256 _amount, uint256 _minAssetsOut)\n        external\n        whenNotPaused\n        nonReentrant\n        returns (uint256)\n    {\n        _revertIfThereAreUnaccruedLosses();\n        ReceiptToken iusd = ReceiptToken(getAddress(\"receiptToken\"));\n        RedeemController redeemController = RedeemController(getAddress(\"redeemController\"));\n\n        // forge-lint: disable-next-line(erc20-unchecked-transfer)\n        iusd.transferFrom(msg.sender, address(this), _amount);\n        iusd.approve(address(redeemController), _amount);\n        uint256 assetsOut = redeemController.redeem(_to, _amount);\n        require(assetsOut >= _minAssetsOut, MinAssetsOutError(_minAssetsOut, assetsOut));\n        return assetsOut;\n    }\n\n    function claimRedemption() external whenNotPaused nonReentrant {\n        RedeemController(getAddress(\"redeemController\")).claimRedemption(msg.sender);\n    }\n\n    function vote(\n        address _asset,\n        uint32 _unwindingEpochs,\n        AllocationVoting.AllocationVote[] calldata _liquidVotes,\n        AllocationVoting.AllocationVote[] calldata _illiquidVotes\n    ) external whenNotPaused nonReentrant {\n        AllocationVoting(getAddress(\"allocationVoting\"))\n            .vote(msg.sender, _asset, _unwindingEpochs, _liquidVotes, _illiquidVotes);\n    }\n\n    function multiVote(\n        address[] calldata _assets,\n        uint32[] calldata _unwindingEpochs,\n        AllocationVoting.AllocationVote[][] calldata _liquidVotes,\n        AllocationVoting.AllocationVote[][] calldata _illiquidVotes\n    ) external whenNotPaused nonReentrant {\n        AllocationVoting allocationVoting = AllocationVoting(getAddress(\"allocationVoting\"));\n\n        for (uint256 i = 0; i < _assets.length; i++) {\n            allocationVoting.vote(msg.sender, _assets[i], _unwindingEpochs[i], _liquidVotes[i], _illiquidVotes[i]);\n        }\n    }\n\n    function _revertIfThereAreUnaccruedLosses() internal view {\n        YieldSharingV2 yieldSharing = YieldSharingV2(getAddress(\"yieldSharing\"));\n        require(yieldSharing.unaccruedYield() >= 0, PendingLossesUnapplied());\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+      "path": "src/core/CoreControlled.sol",
+      "sha256": "d9a7cff36b83791ce16a6c070bd392c29d1d033a0617ad74d8c0e996868c9270",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.28;\n\nimport {Pausable} from \"@openzeppelin/contracts/utils/Pausable.sol\";\nimport {CoreRoles} from \"@libraries/CoreRoles.sol\";\nimport {InfiniFiCore} from \"@core/InfiniFiCore.sol\";\n\n/// @notice Defines some modifiers and utilities around interacting with Core\nabstract contract CoreControlled is Pausable {\n    error UnderlyingCallReverted(bytes returnData);\n\n    /// @notice emitted when the reference to core is updated\n    event CoreUpdate(address indexed oldCore, address indexed newCore);\n\n    /// @notice reference to Core\n    InfiniFiCore private _core;\n\n    constructor(address coreAddress) {\n        _core = InfiniFiCore(coreAddress);\n    }\n\n    /// @notice named onlyCoreRole to prevent collision with OZ onlyRole modifier\n    modifier onlyCoreRole(bytes32 role) {\n        require(_core.hasRole(role, msg.sender), \"UNAUTHORIZED\");\n        _;\n    }\n\n    /// @notice address of the Core contract referenced\n    function core() public view returns (InfiniFiCore) {\n        return _core;\n    }\n\n    /// @notice WARNING CALLING THIS FUNCTION CAN POTENTIALLY\n    /// BRICK A CONTRACT IF CORE IS SET INCORRECTLY\n    /// @notice set new reference to core\n    /// only callable by governor\n    /// @param newCore to reference\n    function setCore(address newCore) external onlyCoreRole(CoreRoles.GOVERNOR) {\n        _setCore(newCore);\n    }\n\n    /// @notice WARNING CALLING THIS FUNCTION CAN POTENTIALLY\n    /// BRICK A CONTRACT IF CORE IS SET INCORRECTLY\n    /// @notice set new reference to core\n    /// @param newCore to reference\n    function _setCore(address newCore) internal {\n        address oldCore = address(_core);\n        _core = InfiniFiCore(newCore);\n\n        emit CoreUpdate(oldCore, newCore);\n    }\n\n    /// @notice set pausable methods to paused\n    function pause() public onlyCoreRole(CoreRoles.PAUSE) {\n        _pause();\n    }\n\n    /// @notice set pausable methods to unpaused\n    function unpause() public onlyCoreRole(CoreRoles.UNPAUSE) {\n        _unpause();\n    }\n\n    /// ------------------------------------------\n    /// ------------ Emergency Action ------------\n    /// ------------------------------------------\n\n    /// inspired by MakerDAO Multicall:\n    /// https://github.com/makerdao/multicall/blob/master/src/Multicall.sol\n\n    /// @notice struct to pack calldata and targets for an emergency action\n    struct Call {\n        /// @notice target address to call\n        address target;\n        /// @notice amount of eth to send with the call\n        uint256 value;\n        /// @notice payload to send to target\n        bytes callData;\n    }\n\n    /// @notice due to inflexibility of current smart contracts,\n    /// add this ability to be able to execute arbitrary calldata\n    /// against arbitrary addresses.\n    /// callable only by governor\n    function emergencyAction(Call[] calldata calls)\n        external\n        payable\n        virtual\n        onlyCoreRole(CoreRoles.GOVERNOR)\n        returns (bytes[] memory returnData)\n    {\n        returnData = new bytes[](calls.length);\n        for (uint256 i = 0; i < calls.length; i++) {\n            address payable target = payable(calls[i].target);\n            uint256 value = calls[i].value;\n            bytes calldata callData = calls[i].callData;\n\n            (bool success, bytes memory returned) = target.call{value: value}(callData);\n            require(success, UnderlyingCallReverted(returned));\n            returnData[i] = returned;\n        }\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB?fields=all",
+      "path": "src/tokens/StakedToken.sol",
+      "sha256": "fcd7abf49f93506a813fe1a49ce748e5c5a8c5284bfd1a747b7ed22f0e737b97",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.28;\n\nimport {EpochLib} from \"@libraries/EpochLib.sol\";\nimport {CoreRoles} from \"@libraries/CoreRoles.sol\";\nimport {ReceiptToken} from \"@tokens/ReceiptToken.sol\";\nimport {YieldSharing} from \"@finance/YieldSharing.sol\";\nimport {CoreControlled} from \"@core/CoreControlled.sol\";\nimport {ERC20, IERC20, ERC4626} from \"@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol\";\n\n/// @notice InfiniFi Staked Token.\n/// @dev be carefull, as this contract is an ERC4626, the \"assets\" keyword is used to refer to the underlying token\n/// in this case, it's the ReceiptToken. It's a bit confusing because \"asset\" is the word we use to refer to the backing token (USDC)\n/// everywhere else in the code\ncontract StakedToken is ERC4626, CoreControlled {\n    using EpochLib for uint256;\n\n    /// @notice error thrown when there are pending losses unapplied\n    /// if you observe this error as a user, call YieldSharing.accrue() before\n    /// attempting a withdrawal from the vault.\n    error PendingLossesUnapplied();\n\n    /// @notice emitted when a loss is applied to the vault\n    /// @dev epoch could be 0 if the principal of the vault has to be slashed\n    event VaultLoss(uint256 indexed timestamp, uint256 epoch, uint256 assets);\n    /// @notice emitted when a profit is applied to the vault\n    event VaultProfit(uint256 indexed timestamp, uint256 epoch, uint256 assets);\n\n    /// @notice reference to the YieldSharing contract\n    address public yieldSharing;\n\n    /// @notice rewards to distribute per epoch\n    /// @dev epochRewards can only contain future rewards in the next epoch,\n    /// and not further in the future - see `depositRewards()`.\n    mapping(uint256 epoch => uint256 rewards) public epochRewards;\n\n    constructor(address _core, address _receiptToken)\n        CoreControlled(_core)\n        ERC20(string.concat(\"Staked \", ERC20(_receiptToken).name()), string.concat(\"s\", ERC20(_receiptToken).symbol()))\n        ERC4626(IERC20(_receiptToken))\n    {}\n\n    /// @notice allows governor to update the yieldSharing reference\n    function setYieldSharing(address _yieldSharing) external onlyCoreRole(CoreRoles.GOVERNOR) {\n        yieldSharing = _yieldSharing;\n    }\n\n    /// ---------------------------------------------------------------------------\n    /// Overrides\n    /// ---------------------------------------------------------------------------\n\n    function maxMint(address _receiver) public view override returns (uint256) {\n        if (paused()) {\n            return 0;\n        }\n        return super.maxMint(_receiver);\n    }\n\n    function maxDeposit(address _receiver) public view override returns (uint256) {\n        if (paused()) {\n            return 0;\n        }\n        return super.maxDeposit(_receiver);\n    }\n\n    function maxRedeem(address _receiver) public view override returns (uint256) {\n        if (paused() || YieldSharing(yieldSharing).unaccruedYield() < 0) {\n            return 0;\n        }\n        return super.maxRedeem(_receiver);\n    }\n\n    function maxWithdraw(address _receiver) public view override returns (uint256) {\n        if (paused() || YieldSharing(yieldSharing).unaccruedYield() < 0) {\n            return 0;\n        }\n        return super.maxWithdraw(_receiver);\n    }\n\n    // override vault deposits & withdrawals to hook into yieldSharing, so\n    // that yieldSharing can cache the number of receiptTokens staked in StakedToken\n    // and avoid intra-block manipulations during yield distribution.\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override {\n        YieldSharing(yieldSharing).getCachedStakedReceiptTokens();\n        super._deposit(caller, receiver, assets, shares);\n    }\n\n    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)\n        internal\n        override\n    {\n        YieldSharing(yieldSharing).getCachedStakedReceiptTokens();\n        super._withdraw(caller, receiver, owner, assets, shares);\n    }\n\n    /// ---------------------------------------------------------------------------\n    /// Loss Management\n    /// ---------------------------------------------------------------------------\n\n    /// @notice Slash losses in future epoch rewards, current epoch rewards, and principal.\n    /// @dev note that this function might behave slightly differently than expected, for the sake\n    /// of simplicity in the slashing logic.\n    /// Take the following example:\n    /// - 1500 assets in \"vault principal\"\n    /// - 300 in current epoch rewards (150 already available, 150 still vesting)\n    /// - 50 in next epoch rewards\n    /// -> totalAssets() = 1650.\n    /// If a loss of 250 occurs, you might expect the slashing to remove :\n    /// - 50 tokens in next epoch rewards (200 loss still remaining)\n    /// - 150 tokens in current epoch vesting rewards (50 loss still remaining)\n    /// - 50 tokens in principal (0 loss remaining)\n    /// -> resulting in a totalAssets() of 1500 - 50 (principal slash)\n    ///    + 150 (vested current epoch rewards) = 1600.\n    ///    and no remaining rewards towards the end of the epoch.\n    /// However, the actual behavior will be:\n    /// - 50 tokens in next epoch rewards (200 loss still remaining)\n    /// - 200 tokens in current epoch vesting rewards (0 loss remaining)\n    ///   current epoch rewards updated to 300 - 200 = 100\n    /// -> resulting in a totalAssets() of 1500 + 50 (vested current epoch rewards) = 1550.\n    ///    and a remaining rewards interpolation of 50 until the end of the epoch, resulting\n    ///    in a totalAssets() at the end of the epoch of 1600.\n    /// This is a slight inconsistency between how losses are applied and how rewards are\n    /// interpolated/reported in totalAssets(). Operationally, the interpolating rewards should be\n    /// small compared to the vault's TVL, and slashing events should be rare, so this simplified\n    /// logic is acceptable.\n    function applyLosses(uint256 _amount) external onlyCoreRole(CoreRoles.FINANCE_MANAGER) {\n        // any future rewards are slashed first\n        // first, slash next epoch rewards\n        _amount = _slashEpochRewards(block.timestamp.nextEpoch(), _amount);\n        if (_amount == 0) return;\n        // second, slash current epoch rewards\n        _amount = _slashEpochRewards(block.timestamp.epoch(), _amount);\n        if (_amount == 0) return;\n        // lastly, slash the principal of the vault\n        ReceiptToken(asset()).burn(_amount);\n        emit VaultLoss(block.timestamp, 0, _amount);\n    }\n\n    /// @notice Slash rewards for a given epoch\n    function _slashEpochRewards(uint256 _epoch, uint256 _amount) internal returns (uint256) {\n        uint256 _epochRewards = epochRewards[_epoch];\n        if (_epochRewards >= _amount) {\n            epochRewards[_epoch] = _epochRewards - _amount;\n            ReceiptToken(asset()).burn(_amount);\n            emit VaultLoss(block.timestamp, _epoch, _amount);\n            _amount = 0;\n        } else {\n            epochRewards[_epoch] = 0;\n            ReceiptToken(asset()).burn(_epochRewards);\n            emit VaultLoss(block.timestamp, _epoch, _epochRewards);\n            _amount -= _epochRewards;\n        }\n        return _amount;\n    }\n\n    /// ---------------------------------------------------------------------------\n    /// Profit Smoothing\n    /// ---------------------------------------------------------------------------\n\n    function depositRewards(uint256 _amount) external onlyCoreRole(CoreRoles.FINANCE_MANAGER) {\n        ERC20(asset()).transferFrom(msg.sender, address(this), _amount);\n        uint256 epoch = block.timestamp.nextEpoch();\n        epochRewards[epoch] += _amount;\n        emit VaultProfit(block.timestamp, epoch, _amount);\n    }\n\n    /// @notice returns the amount of rewards for the current epoch minus the rewards that are already available\n    function _unavailableCurrentEpochRewards() internal view returns (uint256) {\n        uint256 currentEpoch = block.timestamp.epoch();\n        uint256 currentEpochRewards = epochRewards[currentEpoch]; // safe upcast\n        uint256 elapsed = block.timestamp - currentEpoch.epochToTimestamp();\n        uint256 availableEpochRewards = (currentEpochRewards * elapsed) / EpochLib.EPOCH;\n        return currentEpochRewards - availableEpochRewards;\n    }\n\n    /// @notice returns the total assets, excluding the rewards that are not available yet\n    function totalAssets() public view override returns (uint256) {\n        return super.totalAssets() - epochRewards[block.timestamp.nextEpoch()] - _unavailableCurrentEpochRewards();\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xDBDC1Ef57537E34680B898E1FEBD3D68c7389bCB?fields=all",
+      "path": "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol",
+      "sha256": "de84919008f65947ef586ebbb9d4dd8d024304a1a08a9d9e408dbe46ef3d2871",
+      "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.1.0) (token/ERC20/extensions/ERC4626.sol)\n\npragma solidity ^0.8.20;\n\nimport {IERC20, IERC20Metadata, ERC20} from \"../ERC20.sol\";\nimport {SafeERC20} from \"../utils/SafeERC20.sol\";\nimport {IERC4626} from \"../../../interfaces/IERC4626.sol\";\nimport {Math} from \"../../../utils/math/Math.sol\";\n\n/**\n * @dev Implementation of the ERC-4626 \"Tokenized Vault Standard\" as defined in\n * https://eips.ethereum.org/EIPS/eip-4626[ERC-4626].\n *\n * This extension allows the minting and burning of \"shares\" (represented using the ERC-20 inheritance) in exchange for\n * underlying \"assets\" through standardized {deposit}, {mint}, {redeem} and {burn} workflows. This contract extends\n * the ERC-20 standard. Any additional extensions included along it would affect the \"shares\" token represented by this\n * contract and not the \"assets\" token which is an independent contract.\n *\n * [CAUTION]\n * ====\n * In empty (or nearly empty) ERC-4626 vaults, deposits are at high risk of being stolen through frontrunning\n * with a \"donation\" to the vault that inflates the price of a share. This is variously known as a donation or inflation\n * attack and is essentially a problem of slippage. Vault deployers can protect against this attack by making an initial\n * deposit of a non-trivial amount of the asset, such that price manipulation becomes infeasible. Withdrawals may\n * similarly be affected by slippage. Users can protect against this attack as well as unexpected slippage in general by\n * verifying the amount received is as expected, using a wrapper that performs these checks such as\n * https://github.com/fei-protocol/ERC4626#erc4626router-and-base[ERC4626Router].\n *\n * Since v4.9, this implementation introduces configurable virtual assets and shares to help developers mitigate that risk.\n * The `_decimalsOffset()` corresponds to an offset in the decimal representation between the underlying asset's decimals\n * and the vault decimals. This offset also determines the rate of virtual shares to virtual assets in the vault, which\n * itself determines the initial exchange rate. While not fully preventing the attack, analysis shows that the default\n * offset (0) makes it non-profitable even if an attacker is able to capture value from multiple user deposits, as a result\n * of the value being captured by the virtual shares (out of the attacker's donation) matching the attacker's expected gains.\n * With a larger offset, the attack becomes orders of magnitude more expensive than it is profitable. More details about the\n * underlying math can be found xref:ROOT:erc4626.adoc#inflation-attack[here].\n *\n * The drawback of this approach is that the virtual shares do capture (a very small) part of the value being accrued\n * to the vault. Also, if the vault experiences losses, the users try to exit the vault, the virtual shares and assets\n * will cause the first user to exit to experience reduced losses in detriment to the last users that will experience\n * bigger losses. Developers willing to revert back to the pre-v4.9 behavior just need to override the\n * `_convertToShares` and `_convertToAssets` functions.\n *\n * To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide].\n * ====\n */\nabstract contract ERC4626 is ERC20, IERC4626 {\n    using Math for uint256;\n\n    IERC20 private immutable _asset;\n    uint8 private immutable _underlyingDecimals;\n\n    /**\n     * @dev Attempted to deposit more assets than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);\n\n    /**\n     * @dev Attempted to mint more shares than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);\n\n    /**\n     * @dev Attempted to withdraw more assets than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);\n\n    /**\n     * @dev Attempted to redeem more shares than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);\n\n    /**\n     * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC-20 or ERC-777).\n     */\n    constructor(IERC20 asset_) {\n        (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);\n        _underlyingDecimals = success ? assetDecimals : 18;\n        _asset = asset_;\n    }\n\n    /**\n     * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.\n     */\n    function _tryGetAssetDecimals(IERC20 asset_) private view returns (bool ok, uint8 assetDecimals) {\n        (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(\n            abi.encodeCall(IERC20Metadata.decimals, ())\n        );\n        if (success && encodedDecimals.length >= 32) {\n            uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));\n            if (returnedDecimals <= type(uint8).max) {\n                return (true, uint8(returnedDecimals));\n            }\n        }\n        return (false, 0);\n    }\n\n    /**\n     * @dev Decimals are computed by adding the decimal offset on top of the underlying asset's decimals. This\n     * \"original\" value is cached during construction of the vault contract. If this read operation fails (e.g., the\n     * asset has not been created yet), a default of 18 is used to represent the underlying asset's decimals.\n     *\n     * See {IERC20Metadata-decimals}.\n     */\n    function decimals() public view virtual override(IERC20Metadata, ERC20) returns (uint8) {\n        return _underlyingDecimals + _decimalsOffset();\n    }\n\n    /** @dev See {IERC4626-asset}. */\n    function asset() public view virtual returns (address) {\n        return address(_asset);\n    }\n\n    /** @dev See {IERC4626-totalAssets}. */\n    function totalAssets() public view virtual returns (uint256) {\n        return IERC20(asset()).balanceOf(address(this));\n    }\n\n    /** @dev See {IERC4626-convertToShares}. */\n    function convertToShares(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-convertToAssets}. */\n    function convertToAssets(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-maxDeposit}. */\n    function maxDeposit(address) public view virtual returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxMint}. */\n    function maxMint(address) public view virtual returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxWithdraw}. */\n    function maxWithdraw(address owner) public view virtual returns (uint256) {\n        return _convertToAssets(balanceOf(owner), Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-maxRedeem}. */\n    function maxRedeem(address owner) public view virtual returns (uint256) {\n        return balanceOf(owner);\n    }\n\n    /** @dev See {IERC4626-previewDeposit}. */\n    function previewDeposit(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-previewMint}. */\n    function previewMint(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Ceil);\n    }\n\n    /** @dev See {IERC4626-previewWithdraw}. */\n    function previewWithdraw(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Ceil);\n    }\n\n    /** @dev See {IERC4626-previewRedeem}. */\n    function previewRedeem(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-deposit}. */\n    function deposit(uint256 assets, address receiver) public virtual returns (uint256) {\n        uint256 maxAssets = maxDeposit(receiver);\n        if (assets > maxAssets) {\n            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);\n        }\n\n        uint256 shares = previewDeposit(assets);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-mint}. */\n    function mint(uint256 shares, address receiver) public virtual returns (uint256) {\n        uint256 maxShares = maxMint(receiver);\n        if (shares > maxShares) {\n            revert ERC4626ExceededMaxMint(receiver, shares, maxShares);\n        }\n\n        uint256 assets = previewMint(shares);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return assets;\n    }\n\n    /** @dev See {IERC4626-withdraw}. */\n    function withdraw(uint256 assets, address receiver, address owner) public virtual returns (uint256) {\n        uint256 maxAssets = maxWithdraw(owner);\n        if (assets > maxAssets) {\n            revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);\n        }\n\n        uint256 shares = previewWithdraw(assets);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-redeem}. */\n    function redeem(uint256 shares, address receiver, address owner) public virtual returns (uint256) {\n        uint256 maxShares = maxRedeem(owner);\n        if (shares > maxShares) {\n            revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);\n        }\n\n        uint256 assets = previewRedeem(shares);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return assets;\n    }\n\n    /**\n     * @dev Internal conversion function (from assets to shares) with support for rounding direction.\n     */\n    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view virtual returns (uint256) {\n        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);\n    }\n\n    /**\n     * @dev Internal conversion function (from shares to assets) with support for rounding direction.\n     */\n    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {\n        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);\n    }\n\n    /**\n     * @dev Deposit/mint common workflow.\n     */\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {\n        // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the\n        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the\n        // assets are transferred and before the shares are minted, which is a valid state.\n        // slither-disable-next-line reentrancy-no-eth\n        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);\n        _mint(receiver, shares);\n\n        emit Deposit(caller, receiver, assets, shares);\n    }\n\n    /**\n     * @dev Withdraw/redeem common workflow.\n     */\n    function _withdraw(\n        address caller,\n        address receiver,\n        address owner,\n        uint256 assets,\n        uint256 shares\n    ) internal virtual {\n        if (caller != owner) {\n            _spendAllowance(owner, caller, shares);\n        }\n\n        // If asset() is ERC-777, `transfer` can trigger a reentrancy AFTER the transfer happens through the\n        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the\n        // shares are burned and after the assets are transferred, which is a valid state.\n        _burn(owner, shares);\n        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);\n\n        emit Withdraw(caller, receiver, owner, assets, shares);\n    }\n\n    function _decimalsOffset() internal view virtual returns (uint8) {\n        return 0;\n    }\n}\n"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x750136aC021a7149F0EE38141d0bA920Cca1fC5D?fields=all",
+      "path": "src/finance/YieldSharingV2.sol",
+      "sha256": "423dc5545e8bfdaebf94102bcfcad4a329b34cf19cd23dbec0bd24fda5ed70f3",
+      "reviewedLines": "207-261",
+      "excerpt": "    function _getCachedStakedReceiptTokens() internal returns (uint256) {\n        StakedReceiptTokenCache memory data = stakedReceiptTokenCache;\n        if (uint256(data.blockTimestamp) == block.timestamp) {\n            return uint256(data.amount);\n        }\n        uint256 amount = ReceiptToken(receiptToken).balanceOf(stakedToken);\n        assert(amount <= type(uint208).max);\n\n        // casting to 'uint48' is safe because type(uint48).max timestamp is very far in the future\n        // forge-lint: disable-next-line(unsafe-typecast)\n        stakedReceiptTokenCache.blockTimestamp = uint48(block.timestamp);\n        // casting to 'uint208' is safe because of the assert above\n        // forge-lint: disable-next-line(unsafe-typecast)\n        stakedReceiptTokenCache.amount = uint208(amount);\n\n        return amount;\n    }\n\n    // hook called by any deposits and withdrawals in siUSD vault, we revert if the\n    // flag is not set to true. this will break 4626 compatibility of the vault for\n    // deposits and withdrawals, but the gateway can set the flag and perform entry/\n    // exits on behalf of the users.\n    function getCachedStakedReceiptTokens() public returns (uint256) {\n        require(canEnterOrExitStakedToken, StakedTokenNotAvailable());\n        return _getCachedStakedReceiptTokens();\n    }\n\n    // gateway can set the flag to allow deposits and withdrawals in the siUSD vault\n    function setCanEnterOrExitStakedToken(bool _value) external onlyCoreRole(CoreRoles.ENTRY_POINT) {\n        canEnterOrExitStakedToken = _value;\n    }\n\n    /// @notice Number of rewards interpolating to staked users\n    function vesting() public view returns (uint256) {\n        return ReceiptToken(receiptToken).balanceOf(address(escrow));\n    }\n\n    /// @notice Number of rewards vested to staked users\n    function vested() public view returns (uint256) {\n        uint256 _vesting = vesting();\n        if (_vesting == 0) return 0;\n\n        uint256 maxTs = Math.max(point.lastAccrued, point.lastClaimed);\n        return Math.min(_vesting, uint256(point.rate) * (block.timestamp - maxTs));\n    }\n\n    // send the vested rewards to the siUSD vault\n    // called by the gateway before stake & unstake,\n    // and here in the yieldSharing before accrue()\n    function distributeInterpolationRewards() public {\n        uint256 _vested = vested();\n        point.lastClaimed = uint32(block.timestamp);\n        if (_vested != 0) {\n            escrow.send(receiptToken, stakedToken, _vested);\n        }",
+      "bindingLimitation": "Compiled gateway dependency source explains the flag protocol; no separate deployed YieldSharing address/ABI admission or current dependency runtime identity is claimed."
+    }
+  ],
+  "reviewCounts": {
+    "gatewayImplementationFunctions": 40,
+    "gatewaySelected": 2,
+    "gatewayExcluded": 38,
+    "proxyFunctions": 0,
+    "siusdFunctions": 36,
+    "siusdSelected": 0,
+    "siusdExcluded": 36
+  },
+  "nonFunctionEntries": "All constructors, events, errors and proxy payable fallback are retained only as ABI evidence and create no capabilities."
+}

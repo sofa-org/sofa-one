@@ -33,6 +33,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Beefy', website: 'https://beefy.com' },
   { name: 'Biswap', website: 'https://biswap.org' },
   { name: 'Camelot', website: 'https://camelot.exchange' },
+  { name: 'Cap', website: 'https://cap.app/' },
   { name: 'Compound', website: 'https://www.compound.xyz' },
   { name: 'Convex', website: 'https://www.convexfinance.com' },
   { name: 'Curve', website: 'https://www.curve.finance' },
@@ -58,6 +59,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Harvest', website: 'https://harvest.finance' },
   { name: 'Hashflow', website: 'https://hashflow.com' },
   { name: 'Idle', website: 'https://idle.finance' },
+  { name: 'infiniFi', website: 'https://infinifi.xyz/' },
   { name: 'Integral', website: 'https://integral.link' },
   { name: 'izumi', website: 'https://izumi.finance' },
   // Legacy JetSwap domain now serves unrelated content; retain official deployment documentation.
@@ -79,6 +81,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'MDEX', website: 'https://bsc.mdex.com/' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
+  { name: 'Noon', website: 'https://noon.capital' },
   { name: 'OpenOcean', website: 'https://openocean.finance' },
   { name: 'Origin', website: 'https://www.originprotocol.com' },
   { name: 'PancakeSwap', website: 'https://pancakeswap.finance' },
