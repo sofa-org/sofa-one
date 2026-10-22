@@ -386,3 +386,10 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - `sources/re-protocol-reusd.json`: eight Ethereum ICL and gateway entry/instant/window-redemption functions. KYC/legal agreements remain required. Approvals belong to the actual redemption modules, not necessarily the gateway. Quarterly requests require open windows; settled payouts have a 30-day claim limit and may be partial. Re Protocol reUSD is not Resupply reUSD/sreUSD; no unrelated wrapper is admitted.
 - Verification: only 13 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered all 13 functions and 147 excluded selectors; browser searches and all four served targets passed. No live deposits, NFT transfer or redemption settlement was executed.
 
+## Automatic expansion cycle 9 — Apyx and USDai (2026-10-22)
+
+- `sources/apyx-apyusd.json`: eleven Ethereum apyUSD and current UnlockReceipt functions. Underlying is apxUSD; exit burns shares into a nontransferable NFT receipt, not immediately liquid assets. Receiver/owner equality, maturity and both upfront/claim-time fees apply. Price-limited variants are included. Stale ERC7540/legacy UnlockToken descriptions do not determine the admitted ABI.
+- `sources/usdai-susdai.json`: eight real Arbitrum sUSDai hub vault functions, not bridged OFTs. FIFO requestRedeem burns shares; withdraw/redeem claim serviced requests only. Cash-constrained operator servicing, minimum request, 50-active-request limit and no cancellation remain explicit.
+- `sources/neutrl-snusd.json` preserves rejected inventory and reserve-recovery evidence. Old staking documentation or residual exits do not establish normal operations; no Neutrl capability/card is added.
+- Verification: only 19 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 19 calls and 163 excluded selectors; browser searches and all three served entries passed. No receipt claim, operator servicing or real settlement was executed.
+

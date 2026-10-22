@@ -19,6 +19,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Angle', website: 'https://angle.money' },
   { name: 'Ankr', website: 'https://www.ankr.com' },
   { name: 'ApeSwap', website: 'https://apeswap.finance' },
+  { name: 'Apyx', website: 'https://apyx.fi' },
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
@@ -125,6 +126,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'THENA', website: 'https://thena.fi/' },
   { name: 'Treehouse', website: 'https://www.treehouse.finance/' },
   { name: 'Uniswap', website: 'https://uniswap.org' },
+  { name: 'USDai', website: 'https://usd.ai' },
   { name: 'Usual', website: 'https://usual.money' },
   { name: 'Velora', website: 'https://velora.xyz' },
   { name: 'Velodrome', website: 'https://velodrome.finance' },
