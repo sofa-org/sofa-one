@@ -436,3 +436,10 @@ Twenty protocol additions, thirty exact chain/address targets and 126 function c
 - `sources/tharwa-sthusd.json`: seven Ethereum sThUSD functions using Tharwa's own 18-decimal thUSD, distinct from Theo's token. Configurable entry/exit fees, mutually exclusive exit modes, pause/blacklist checks, whole-claim cooldown reset, uint152 narrowing and unchecked silo transfer-return semantics remain explicit. No primary thUSD issuance or USDC redemption is admitted.
 - Verification: 14 additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all 14 functions and denied 109 excluded selectors; both browser cards and the Ethereum/Base served entries passed. No staking transfer, cooldown maturation or real claim payment was executed.
 
+## Repeated expansion round 2, cycle 6 — Wildcat and Capricorn (2026-10-22)
+
+- `sources/wildcat-v2-wmtwbtc-r2.json`: six Ethereum Wintermute WBTC V2 lender functions. Deposits/requests use 8-decimal WBTC/market accounting; queued withdrawals depend on borrower funding and can remain partial. Access credentials, sanctions and fixed hooks apply. The deployed hook format reads trailing calldata, so only canonical ABI with no appended hook proofs is admitted.
+- `sources/capricorn-aprmon-r2.json`: four Monad143 aprMON native staking/request/claim functions under the current Capricorn brand, formerly aPriori and counted once. Native MON value/refund rules, owner-operator/controller authority, oracle-processed request IDs, pause-gated exits and mutable claim-time fees are explicit. It is not the unrelated Capricorn exchange.
+- `sources/batch14-lifecycle-rejections-r2.json` preserves Goldfinch wind-down/recovery-only and closed Perennial Arbitrum deployment evidence. No exit-only exception or unsupported successor-chain expansion is made.
+- Verification: ten additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all ten functions and denied 140 excluded selectors; public searches and both Ethereum/Monad served entries passed. No borrower repayment, native staking or oracle-settled redemption was executed.
+

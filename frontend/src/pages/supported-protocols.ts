@@ -37,6 +37,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Biswap', website: 'https://biswap.org' },
   { name: 'Camelot', website: 'https://camelot.exchange' },
   { name: 'Cap', website: 'https://cap.app/' },
+  { name: 'Capricorn', website: 'https://app.capricorn.tech/' },
   { name: 'Compound', website: 'https://www.compound.xyz' },
   { name: 'Concentrator', website: 'https://concentrator.aladdin.club/' },
   { name: 'Convex', website: 'https://www.convexfinance.com' },
@@ -145,6 +146,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Vesper', website: 'https://vesper.finance' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
+  { name: 'Wildcat', website: 'https://app.wildcat.finance' },
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'YieldBasis', website: 'https://yieldbasis.com' },
