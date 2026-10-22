@@ -86,6 +86,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Maple', website: 'https://maple.finance' },
   { name: 'Maverick', website: 'https://mav.xyz' },
   { name: 'MDEX', website: 'https://bsc.mdex.com/' },
+  { name: 'Midas', website: 'https://midas.app/' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'Morpho', website: 'https://morpho.org' },
   { name: 'Noon', website: 'https://noon.capital' },
@@ -126,6 +127,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Velora', website: 'https://velora.xyz' },
   { name: 'Velodrome', website: 'https://velodrome.finance' },
   { name: 'Venus', website: 'https://venus.io' },
+  { name: 'Veranta', website: 'https://www.veranta.xyz/' },
   { name: 'Vesper', website: 'https://vesper.finance' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },

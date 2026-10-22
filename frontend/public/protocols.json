@@ -7153,6 +7153,118 @@
         ]
       },
       {
+        "address": "0x99361435420711723af805f08187c9e6bf796683",
+        "protocol": "Midas",
+        "abi": [
+          {
+            "type": "function",
+            "name": "depositInstant",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "minReceiveAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "referrerId",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositInstant",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "minReceiveAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "referrerId",
+                "type": "bytes32"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "referrerId",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "referrerId",
+                "type": "bytes32"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6",
         "protocol": "dinero-apxeth",
         "abi": [
@@ -13894,6 +14006,102 @@
               },
               {
                 "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xf6e51d24f4793ac5e71e0502213a9bbe3a6d4517",
+        "protocol": "Midas",
+        "abi": [
+          {
+            "type": "function",
+            "name": "redeemInstant",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "amountMTokenIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minReceiveAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemInstant",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "amountMTokenIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minReceiveAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "amountMTokenIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "amountMTokenIn",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
                 "type": "address"
               }
             ],
@@ -28825,6 +29033,104 @@
             "outputs": [
               {
                 "name": "shares_",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x944766f715b51967e56afde5f0aa76ceacc9e7f9",
+        "protocol": "Veranta",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
                 "type": "uint256"
               }
             ]

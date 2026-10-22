@@ -373,3 +373,10 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - `sources/bedrock-unieth.json`: six Ethereum functions across current staking V2, the app-designated original unstake pool and fixed Redeem claims. Original-pool mint is excluded. Validator redemption requires positive 32-ETH multiples and enabled configuration; settlement delays remain. Instant swap may partially fill without user minimum-out protection.
 - Verification: only 11 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 11 calls (including payable native input) and 228 excluded selectors; browser searches and all five served target entries passed. No transaction broadcast or real settlement was performed.
 
+## Automatic expansion cycle 7 — Veranta and Midas (2026-10-22)
+
+- `sources/veranta-avusdc.json`: four current Base unified avUSDC functions. Veranta is renamed Avantis, not a second protocol or a revived separate senior/junior product. The continuing former-junior proxy is bound to the current unified implementation; immediate exits remain liquidity/utilization/fee-dependent. LP capital bears trading losses.
+- `sources/midas-mtbill.json`: eight Ethereum mTBILL issuance/redemption functions on two exact vaults. Eligibility, sanctions/greenlist checks, fees, oracle and caps remain mandatory. Amounts use **base-18 normalized units**, including six-decimal payment tokens. Asynchronous requests require administrator settlement; rejection does not automatically refund assets and no ordinary user claim/cancel is promised.
+- Frozen/recovery Ostium OLP and paused compromised Wasabi EVM targets are skipped with evidence; no old separate Avantis tranches are admitted.
+- Verification: only 12 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 12 calls and 187 excluded selectors; both browser searches and three served targets passed. No real settlement or full gates.
+
