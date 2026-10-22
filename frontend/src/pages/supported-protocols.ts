@@ -43,6 +43,8 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Curve', website: 'https://www.curve.finance' },
   { name: 'dForce', website: 'https://dforce.network' },
   { name: 'Dfyn', website: 'https://docs.dfyn.network/technical/contracts' },
+  // Now Chamber; one continuing protocol, not two separate admissions.
+  { name: 'dHEDGE', website: 'https://chamberfi.com/' },
   { name: 'Dinero', website: 'https://dinero.xyz' },
   { name: 'DODO', website: 'https://dodoex.io' },
   { name: 'Dolomite', website: 'https://dolomite.io' },
@@ -120,6 +122,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'StakeWise', website: 'https://stakewise.io' },
   { name: 'Stader', website: 'https://staderlabs.com' },
   { name: 'Strata', website: 'https://strata.markets/' },
+  { name: 'Superstate', website: 'https://superstate.com/' },
   { name: 'SushiSwap', website: 'https://sushi.com' },
   { name: 'Swell', website: 'https://swellnetwork.io' },
   { name: 'Symbiotic', website: 'https://symbiotic.fi' },

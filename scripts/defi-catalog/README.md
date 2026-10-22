@@ -393,3 +393,13 @@ These automatic cycles retain independent permission, mode, pause and canonical-
 - `sources/neutrl-snusd.json` preserves rejected inventory and reserve-recovery evidence. Old staking documentation or residual exits do not establish normal operations; no Neutrl capability/card is added.
 - Verification: only 19 additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered 19 calls and 163 excluded selectors; browser searches and all three served entries passed. No receipt claim, operator servicing or real settlement was executed.
 
+## Automatic expansion cycle 10 — dHEDGE and Superstate (2026-10-22)
+
+- `sources/dhedge-managedpool.json`: one ordinary deposit function on the exact Optimism Ethereum Savings Account managed pool. dHEDGE is now Chamber and is counted once. Safe withdrawal overloads are excluded: exact current asset-to-guard bindings and the interpretation of their opaque bytes were not established. No complete entry/exit workflow or closed downstream execution boundary is asserted.
+- `sources/superstate-ustb-uscc.json`: six Ethereum functions across USTB, RedemptionIdle and USCC. Approved, allowlisted eligible investors only. USTB supports atomic USDC subscription/redemption subject to issuer configuration and idle liquidity; USTB/USCC offchainRedeem burns shares for offchain settlement, not immediate USDC payout. USCC inherited subscription selectors without operational configuration evidence remain excluded.
+- Verification: only seven additions; generate/check, 65 backend and one frontend tests passed. Real policy smoke covered all seven functions and 196 excluded selectors. Browser searches, all four served entries and a rendered full-page result were checked. No actual deposit, fund issuance or redemption was executed.
+
+### Ten-cycle result
+
+Twenty protocol additions, thirty exact chain/address targets and 126 function capabilities were integrated in ten independent commits. Per-cycle smoke also rejected 1,583 excluded chain/address selectors. These are bounded catalog admissions, not API-key grants, permissionless-access claims, complete-workflow guarantees, live runtime attestations, financial endorsements or verified TVL/activity measurements. Full verify/build/E2E gates were not run; targeted policy state used an in-memory database, not real database locking, Openfort broadcast or onchain settlement.
+
