@@ -125,6 +125,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'StakeWise', website: 'https://stakewise.io' },
   { name: 'Stader', website: 'https://staderlabs.com' },
   { name: 'Strata', website: 'https://strata.markets/' },
+  { name: 'Superform', website: 'https://superform.xyz' },
   { name: 'Superstate', website: 'https://superstate.com/' },
   { name: 'SushiSwap', website: 'https://sushi.com' },
   { name: 'Swell', website: 'https://swellnetwork.io' },
@@ -145,5 +146,6 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
+  { name: 'YO Protocol', website: 'https://yo.xyz' },
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
 ];

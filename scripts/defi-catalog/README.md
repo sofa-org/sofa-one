@@ -418,3 +418,9 @@ Twenty protocol additions, thirty exact chain/address targets and 126 function c
 - `sources/equilibria-ependle-excluded.json` preserves full implementation/proxy inventory and explicit official frontend wind-down evidence, with no exit-only admission.
 - Verification: nine additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all nine functions and rejected 35 excluded selectors; both public cards and served entries passed browser checks. No token wrapping or onchain staking was executed.
 
+## Repeated expansion round 2, cycle 3 — YO Protocol and Superform (2026-10-22)
+
+- `sources/yo-protocol-yousd-base.json`: four Base yoUSD functions using 6-decimal USDC/shares. Owner-only redeem/requestRedeem either pay immediately or escrow under the receiver for privileged fulfillment; no user claim/cancel exists. Exact-asset withdraw always reverts and is excluded.
+- `sources/superform-flagship-usdc-base.json`: seven direct Base Flagship USDC SuperVault V2 functions. Redemption requests escrow shares; keeper fulfillment precedes claims. Cancellation is separately manager-fulfilled before share return; ignored request IDs should be zero. Strategy/escrow bindings and dependency ABI decisions are preserved; arbitrary routing, hooks and execution gain no capabilities.
+- Verification: 11 additions only; generation/check, 65 backend and one frontend tests passed. Real production policy smoke exercised all 11 functions and denied 94 excluded selectors. Both public cards and both served Base entries passed browser checks. No keeper processing, cancellation settlement or actual USDC transfer was executed.
+
