@@ -15491,6 +15491,635 @@
         ]
       },
       {
+        "address": "0xb0095dced6d81d341e798f92e1ea84968842bdf2",
+        "protocol": "MYSO Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "bidOnAuction",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrow",
+                "type": "address"
+              },
+              {
+                "name": "optionReceiver",
+                "type": "address"
+              },
+              {
+                "name": "relBid",
+                "type": "uint256"
+              },
+              {
+                "name": "_refSpot",
+                "type": "uint256"
+              },
+              {
+                "name": "_oracleData",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "preview",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "status",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "settlementToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "underlyingToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "strike",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint48"
+                  },
+                  {
+                    "name": "earliestExercise",
+                    "type": "uint48"
+                  },
+                  {
+                    "name": "premium",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "premiumToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracleSpotPrice",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "currAsk",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "matchFeeProtocol",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "matchFeeDistPartner",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "distPartner",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrow",
+                "type": "address"
+              },
+              {
+                "name": "underlyingReceiver",
+                "type": "address"
+              },
+              {
+                "name": "borrowUnderlyingAmount",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createAuction",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrowOwner",
+                "type": "address"
+              },
+              {
+                "name": "auctionInitialization",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "underlyingToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "settlementToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "notional",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "auctionParams",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "relStrike",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "tenor",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "earliestExerciseTenor",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "decayStartTime",
+                        "type": "uint32"
+                      },
+                      {
+                        "name": "decayDuration",
+                        "type": "uint32"
+                      },
+                      {
+                        "name": "relPremiumStart",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "relPremiumFloor",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "minSpot",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "maxSpot",
+                        "type": "uint128"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "advancedSettings",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "borrowCap",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "oracle",
+                        "type": "address"
+                      },
+                      {
+                        "name": "premiumTokenIsUnderlying",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "votingDelegationAllowed",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "allowedDelegateRegistry",
+                        "type": "address"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "distPartner",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "exercise",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrow",
+                "type": "address"
+              },
+              {
+                "name": "underlyingReceiver",
+                "type": "address"
+              },
+              {
+                "name": "underlyingAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "payInSettlementToken",
+                "type": "bool"
+              },
+              {
+                "name": "oracleData",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintOption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "optionReceiver",
+                "type": "address"
+              },
+              {
+                "name": "escrowOwner",
+                "type": "address"
+              },
+              {
+                "name": "optionInfo",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "underlyingToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint48"
+                  },
+                  {
+                    "name": "settlementToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "earliestExercise",
+                    "type": "uint48"
+                  },
+                  {
+                    "name": "notional",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "strike",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "advancedSettings",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "borrowCap",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "oracle",
+                        "type": "address"
+                      },
+                      {
+                        "name": "premiumTokenIsUnderlying",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "votingDelegationAllowed",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "allowedDelegateRegistry",
+                        "type": "address"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "optionNaming",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "name": "symbol",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "distPartner",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrow",
+                "type": "address"
+              },
+              {
+                "name": "collateralReceiver",
+                "type": "address"
+              },
+              {
+                "name": "repayUnderlyingAmount",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "takeQuote",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrowOwner",
+                "type": "address"
+              },
+              {
+                "name": "rfqInitialization",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "optionInfo",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "underlyingToken",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "settlementToken",
+                        "type": "address"
+                      },
+                      {
+                        "name": "earliestExercise",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "notional",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "strike",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "advancedSettings",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "borrowCap",
+                            "type": "uint64"
+                          },
+                          {
+                            "name": "oracle",
+                            "type": "address"
+                          },
+                          {
+                            "name": "premiumTokenIsUnderlying",
+                            "type": "bool"
+                          },
+                          {
+                            "name": "votingDelegationAllowed",
+                            "type": "bool"
+                          },
+                          {
+                            "name": "allowedDelegateRegistry",
+                            "type": "address"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "rfqQuote",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "premium",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "validUntil",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "signature",
+                        "type": "bytes"
+                      },
+                      {
+                        "name": "eip1271Maker",
+                        "type": "address"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "distPartner",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "takeSwapQuote",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "swapQuote",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "takerGiveToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "takerGiveAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "makerGiveToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerGiveAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "eip1271Maker",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "escrow",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFromEscrowAndCreateAuction",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "oldEscrow",
+                "type": "address"
+              },
+              {
+                "name": "escrowOwner",
+                "type": "address"
+              },
+              {
+                "name": "auctionInitialization",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "underlyingToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "settlementToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "notional",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "auctionParams",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "relStrike",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "tenor",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "earliestExerciseTenor",
+                        "type": "uint48"
+                      },
+                      {
+                        "name": "decayStartTime",
+                        "type": "uint32"
+                      },
+                      {
+                        "name": "decayDuration",
+                        "type": "uint32"
+                      },
+                      {
+                        "name": "relPremiumStart",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "relPremiumFloor",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "minSpot",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "maxSpot",
+                        "type": "uint128"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "advancedSettings",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "borrowCap",
+                        "type": "uint64"
+                      },
+                      {
+                        "name": "oracle",
+                        "type": "address"
+                      },
+                      {
+                        "name": "premiumTokenIsUnderlying",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "votingDelegationAllowed",
+                        "type": "bool"
+                      },
+                      {
+                        "name": "allowedDelegateRegistry",
+                        "type": "address"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "distPartner",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xb098881c587f623fac85eae60809bee7a174cee7",
         "protocol": "bebop",
         "abi": [
@@ -19113,6 +19742,162 @@
             "outputs": [
               {
                 "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xd315a9c38ec871068fec378e4ce78af528c76293",
+        "protocol": "Swaap Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "batchSwap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "kind",
+                "type": "uint8"
+              },
+              {
+                "name": "swaps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "poolId",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "assetInIndex",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "assetOutIndex",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "userData",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "address[]"
+              },
+              {
+                "name": "funds",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fromInternalBalance",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "toInternalBalance",
+                    "type": "bool"
+                  }
+                ]
+              },
+              {
+                "name": "limits",
+                "type": "int256[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assetDeltas",
+                "type": "int256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "singleSwap",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "poolId",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "assetIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "assetOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "userData",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "funds",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fromInternalBalance",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "toInternalBalance",
+                    "type": "bool"
+                  }
+                ]
+              },
+              {
+                "name": "limit",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountCalculated",
                 "type": "uint256"
               }
             ]
