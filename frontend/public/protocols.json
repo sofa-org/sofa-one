@@ -2081,6 +2081,104 @@
         ]
       },
       {
+        "address": "0x07c5500359161b81eb0dfff83097d5025d3cf5a2",
+        "protocol": "Origami Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "sharesOwner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "sharesOwner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x08fb9833a5a84d5bcecdf5a4a635d33260c5f05c",
         "protocol": "YieldFi",
         "abi": [
@@ -40986,6 +41084,102 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x2536974545c28f7c7d17038c7623e8132fbd82bb",
+        "protocol": "Stryke",
+        "abi": [
+          {
+            "type": "function",
+            "name": "mintOption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "optionTicks",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "_handler",
+                        "type": "address"
+                      },
+                      {
+                        "name": "pool",
+                        "type": "address"
+                      },
+                      {
+                        "name": "hook",
+                        "type": "address"
+                      },
+                      {
+                        "name": "tickLower",
+                        "type": "int24"
+                      },
+                      {
+                        "name": "tickUpper",
+                        "type": "int24"
+                      },
+                      {
+                        "name": "liquidityToUse",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "ttl",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maxCostAllowance",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "isCall",
+                    "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "positionSplitter",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "optionId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "liquidityToSplit",
+                    "type": "uint256[]"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
           }
         ]
       },
