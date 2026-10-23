@@ -26817,6 +26817,211 @@
         ]
       },
       {
+        "address": "0xcb0620b181140e57d1c0d8b724cde623ca963c8c",
+        "protocol": "Kinza Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayWithATokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapBorrowRateMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xcde540d7eafe93ac5fe6233bee57e1270d3e330f",
         "protocol": "bakeryswap-v1",
         "abi": [
@@ -40350,6 +40555,118 @@
         ]
       },
       {
+        "address": "0x4de3741e1676ed14d661b1398196dc221ca4d37a",
+        "protocol": "Sumer",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrowAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "mintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemTokens",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemUnderlying",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrowBehalf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x5b73fb33c602351664d02ed199847b7a155297b5",
         "protocol": "silo-vault",
         "abi": [
@@ -43067,6 +43384,24 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xe649fd017356d314e79649fbe5e20a9ec827d286",
+        "protocol": "Sumer",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "agreementIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
