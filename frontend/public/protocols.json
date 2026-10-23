@@ -13122,6 +13122,87 @@
         ]
       },
       {
+        "address": "0xd4e2c720a760049cc4151bcf61e3a9348db9cd92",
+        "protocol": "Panoptic",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "executeDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "epoch",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "executeWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "epoch",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "optOutOfRedeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epoch",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd6dad17d025cddded27305aebab8b277996a6faf",
         "protocol": "Strata",
         "abi": [
@@ -19762,6 +19843,52 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x07bbc5a83b83a5c440d1caedbf1081426d0aa4ec",
+        "protocol": "River",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimCollateralGains",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "collateralIndexes",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "provideToSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFromSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
