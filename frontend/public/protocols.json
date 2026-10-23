@@ -2401,6 +2401,52 @@
         ]
       },
       {
+        "address": "0x0bc305e7e13113caed3f5486849e9518a1cc4173",
+        "protocol": "M0",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swapIn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "extensionOut",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapOut",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "extensionIn",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x0c129441c355535ca25da1f427346f78ce700ffa",
         "protocol": "ICHI",
         "abi": [
@@ -19979,6 +20025,86 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xf08943f817e1f902debc884c7b19ea5764594ac9",
+        "protocol": "Grove Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swapExactIn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetIn",
+                "type": "address"
+              },
+              {
+                "name": "assetOut",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactOut",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetIn",
+                "type": "address"
+              },
+              {
+                "name": "assetOut",
+                "type": "address"
+              },
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "maxAmountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

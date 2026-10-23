@@ -721,3 +721,10 @@ Admission is static metadata, not an API-key grant, verified TVL/active-user cla
 - `sources/yield-yak-supported-ingress-blocked-r6.json` retains current API/disabled-deposit observations for supported-chain vaults and an empty Base listing, without inferring protocol-wide shutdown.
 - Verification under Node.js 20.19.3: six additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all six calls and denied 69 excluded selectors. Both cards and served Ethereum/Base entries passed browser checks. No WETH funding, liquidity burn, loan allocation or USDC redemption was executed.
 
+## Repeated expansion round 6, cycle 5 — M0 and Grove Finance (2026-10-24)
+
+- `sources/m0-pyusdx-facility-r6.json`: two current Ethereum shared PYUSDx factory-approved extension wrap/unwrap swaps, counted once under M0 rather than mislabeled Saturn-only. Extension choice reaches all approved products; fixed interfaces do not attest every extension's code, compliance or financial safety. Caller funding, intentional recipient, platform/extension restrictions and no minimum-output/deadline remain explicit.
+- `sources/grove-basin-jtrsy-r6.json`: two current Ethereum own JTRSY Basin exact-in/out swaps with financial bounds and fixed credit/stablecoin assets. Current redemption directions are enabled while purchase directions are paused. Source-configured rates, staleness, pocket liquidity, eligibility and route state remain authoritative; this is not the Sky savings frontend or an Allocator executor.
+- `sources/saturn-shared-facility-deferral-r6.json` retains direct-token facility-only restrictions and shared-platform attribution. No duplicate Saturn protocol or privileged token wrapping is admitted.
+- Verification under Node.js 20.19.3: four additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all four calls and denied 102 excluded selectors. Both cards and served Ethereum entries passed browser checks. No extension conversion, regulated-token swap, pocket withdrawal or financial payout was executed.
+
