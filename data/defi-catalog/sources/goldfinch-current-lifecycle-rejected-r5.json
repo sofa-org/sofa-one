@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Goldfinch",
+  "reviewedAt": "2026-10-24",
+  "admissionStatus": "rejected",
+  "reason": "Current primary site explicitly announces Goldfinch Prime shutdown and no new deposits. Linked official governance announcement reports completed investor redemption and paused Prime contract. Legacy Goldfinch is retained solely for borrower recovery/collection; exit-only maintenance is excluded by catalog lifecycle policy.",
+  "evidence": [
+    {
+      "sourceRef": "https://www.goldfinch.finance/",
+      "kind": "current-primary-website",
+      "observations": [
+        "Homepage banner: Goldfinch Prime is shutting down. No new deposits will be taken.",
+        "Banner links GIP-87 maintenance-mode and wind-down announcement.",
+        "The old app is explicitly linked as Legacy App / Goldfinch V1 App."
+      ]
+    },
+    {
+      "sourceRef": "https://gov.goldfinch.finance/t/gip-87-maintenance-mode-of-goldfinch-operations-and-wind-down-goldfinch-prime/2202",
+      "kind": "official-governance-announcement",
+      "publishedAt": "2026-06-12",
+      "observations": [
+        "GIP-87 proposes orderly wind-down of Prime, stopping protocol development and growth, and maintenance solely supporting collection of remaining legacy borrower payments.",
+        "Co-founder Blake West's July 7, 2026 update reports redemption process successfully completed, no new deposits accepted, and contract paused.",
+        "Update attributes Prime contract 0xCBbd935861542d94a168cAC3B523f6450a69ECF4 and residual withdraw() claim handling to outstanding unclaimed redemptions; this is exit-only, not an eligible maintained product.",
+        "Same update separates legacy V1 deals, still waiting for payments or in recovery, from Prime redemption."
+      ]
+    }
+  ],
+  "consideredDeployments": [
+    {
+      "chainId": 1,
+      "address": "0xCBbd935861542d94a168cAC3B523f6450a69ECF4",
+      "product": "Goldfinch Prime",
+      "status": "shutdown-paused-exit-only",
+      "selectedFunctions": []
+    }
+  ],
+  "limits": [
+    "Lifecycle rejection occurs before ABI admission. No full ABI inventory or current proxy implementation identity is asserted for a rejected deployment.",
+    "Remaining onchain withdrawal functionality, legal recovery work, maintained legacy frontend or token existence do not override explicit product shutdown.",
+    "No balances, liquidity, financial safety, successful execution or recovery entitlement claims are made."
+  ]
+}
