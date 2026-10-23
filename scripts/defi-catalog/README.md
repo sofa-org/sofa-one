@@ -771,3 +771,10 @@ Policy state was in-memory; deployment research used read-only source/configurat
 
 Source match levels, partial verification and mutable dependencies are preserved without claiming persistent deployed identity. Current spETH and Ramses V3 do not restore compromised mpETH or retired Ramses V1; Royco winding-down managed vaults and currently disabled entry/exit variants remain excluded. 3Jane/Sturdy default redeem loss tolerance, epoch/queue semantics and regulated-product access requirements are explicit, not safety guarantees. Static catalog admission verifies neither TVL/active users nor financial backing, suitability or full workflows. All commits are local; no push.
 
+## Repeated expansion round 7, cycle 1 — iAero Protocol and TruStake (2026-10-24)
+
+- `sources/iaero-base-staking-r7.json`: seven maintained Base iAERO receipt staking, caller exit and reward methods. The October 22 migration notice explicitly preserves these operations; retired PermalockVault V5 and future sAERO are not admitted. Epoch snapshots, caller ledger versus transferable receipt ownership, owner pause/reward recovery and mutable receipt dependencies remain material.
+- `sources/trustake-ethereum-pol-r7.json`: seven current implementation-bound Ethereum POL funding, unbond/claim and pooled compounding methods. TruStake/TruFin/TruYields is counted once, not Veranta or ETH staking. Existing whitelist/KYC, validator availability, unbond delay, asset/share rounding, fee shares and legacy MATIC synchronization remain independent constraints.
+- `sources/iaero-permalock-v5-retired-r7.json` preserves the retired locking-vault exclusion without declaring maintained receipt staking retired.
+- Verification under Node.js 20.19.3: fourteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all fourteen calls and denied 81 excluded selectors. Both cards and served Ethereum/Base entries passed Chromium checks. No funded staking, validator exit, reward payout or onchain execution was performed.
+
