@@ -31518,6 +31518,695 @@
         ]
       },
       {
+        "address": "0x721ac9e688e6b86f48b08db2ba2d4b7bbbd12665",
+        "protocol": "Bean Exchange",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "liquidityParameters",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenX",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenY",
+                    "type": "address"
+                  },
+                  {
+                    "name": "binStep",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountX",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountY",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountXMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountYMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "activeIdDesired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "idSlippage",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deltaIds",
+                    "type": "int256[]"
+                  },
+                  {
+                    "name": "distributionX",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "distributionY",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "refundTo",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lockUntil",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountXAdded",
+                "type": "uint256"
+              },
+              {
+                "name": "amountYAdded",
+                "type": "uint256"
+              },
+              {
+                "name": "amountXLeft",
+                "type": "uint256"
+              },
+              {
+                "name": "amountYLeft",
+                "type": "uint256"
+              },
+              {
+                "name": "depositIds",
+                "type": "uint256[]"
+              },
+              {
+                "name": "liquidityMinted",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityNATIVE",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "liquidityParameters",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenX",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenY",
+                    "type": "address"
+                  },
+                  {
+                    "name": "binStep",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountX",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountY",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountXMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountYMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "activeIdDesired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "idSlippage",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deltaIds",
+                    "type": "int256[]"
+                  },
+                  {
+                    "name": "distributionX",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "distributionY",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "refundTo",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lockUntil",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountXAdded",
+                "type": "uint256"
+              },
+              {
+                "name": "amountYAdded",
+                "type": "uint256"
+              },
+              {
+                "name": "amountXLeft",
+                "type": "uint256"
+              },
+              {
+                "name": "amountYLeft",
+                "type": "uint256"
+              },
+              {
+                "name": "depositIds",
+                "type": "uint256[]"
+              },
+              {
+                "name": "liquidityMinted",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenX",
+                "type": "address"
+              },
+              {
+                "name": "tokenY",
+                "type": "address"
+              },
+              {
+                "name": "binStep",
+                "type": "uint16"
+              },
+              {
+                "name": "amountXMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountYMin",
+                "type": "uint256"
+              },
+              {
+                "name": "ids",
+                "type": "uint256[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountX",
+                "type": "uint256"
+              },
+              {
+                "name": "amountY",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityNATIVE",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "binStep",
+                "type": "uint16"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountNATIVEMin",
+                "type": "uint256"
+              },
+              {
+                "name": "ids",
+                "type": "uint256[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountNATIVE",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactNATIVEForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactNATIVEForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForNATIVE",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMinNATIVE",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForNATIVESupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMinNATIVE",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapNATIVEForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountsIn",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactNATIVE",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountNATIVEOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountsIn",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountsIn",
+                "type": "uint256[]"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x754704bc059f8c67012fed69bc8a327a5aafb603",
         "protocol": "ERC-20",
         "abi": [
@@ -38512,6 +39201,104 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x75288264fdfea8ce68e6d852696ab1ce2f3e5004",
+        "protocol": "D2 Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

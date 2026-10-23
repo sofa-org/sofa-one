@@ -35,6 +35,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'BakerySwap', website: 'https://github.com/BakeryProject/bakery-swap-periphery' },
   { name: 'Balancer', website: 'https://balancer.fi' },
   { name: 'Bancor', website: 'https://bancor.network' },
+  { name: 'Bean Exchange', website: 'https://bean.exchange/' },
   { name: 'Bebop', website: 'https://bebop.xyz' },
   { name: 'Bedrock', website: 'https://www.bedrock.technology/' },
   { name: 'Beefy', website: 'https://beefy.com' },
@@ -49,6 +50,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Convex', website: 'https://www.convexfinance.com' },
   { name: 'Curvance', website: 'https://www.curvance.com/' },
   { name: 'Curve', website: 'https://www.curve.finance' },
+  { name: 'D2 Finance', website: 'https://d2.finance/' },
   { name: 'dForce', website: 'https://dforce.network' },
   { name: 'Dfyn', website: 'https://docs.dfyn.network/technical/contracts' },
   // Now Chamber; one continuing protocol, not two separate admissions.
