@@ -33719,6 +33719,45 @@
         ]
       },
       {
+        "address": "0xa0f688905ef05ea853c35131b4899a613b4ba644",
+        "protocol": "Gamma Strategies",
+        "abi": [
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "minAmounts",
+                "type": "uint256[4]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xa238dd80c259a72e81d7e4664a9801593f98d1c5",
         "protocol": "Aave V3",
         "abi": [
@@ -36316,6 +36355,256 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x46a7cf257e00964c9cec06d9c2b243340d40cc54",
+        "protocol": "Nerite",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addColl",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_collAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "adjustTrove",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_collChange",
+                "type": "uint256"
+              },
+              {
+                "name": "_isCollIncrease",
+                "type": "bool"
+              },
+              {
+                "name": "_boldChange",
+                "type": "uint256"
+              },
+              {
+                "name": "_isDebtIncrease",
+                "type": "bool"
+              },
+              {
+                "name": "_maxUpfrontFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "adjustTroveInterestRate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_newAnnualInterestRate",
+                "type": "uint256"
+              },
+              {
+                "name": "_upperHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_lowerHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxUpfrontFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "adjustZombieTrove",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_collChange",
+                "type": "uint256"
+              },
+              {
+                "name": "_isCollIncrease",
+                "type": "bool"
+              },
+              {
+                "name": "_boldChange",
+                "type": "uint256"
+              },
+              {
+                "name": "_isDebtIncrease",
+                "type": "bool"
+              },
+              {
+                "name": "_upperHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_lowerHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxUpfrontFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "closeTrove",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "openTrove",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_owner",
+                "type": "address"
+              },
+              {
+                "name": "_ownerIndex",
+                "type": "uint256"
+              },
+              {
+                "name": "_collAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_boldAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_upperHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_lowerHint",
+                "type": "uint256"
+              },
+              {
+                "name": "_annualInterestRate",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxUpfrontFee",
+                "type": "uint256"
+              },
+              {
+                "name": "_addManager",
+                "type": "address"
+              },
+              {
+                "name": "_removeManager",
+                "type": "address"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBold",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_boldAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawBold",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_boldAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxUpfrontFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawColl",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_troveId",
+                "type": "uint256"
+              },
+              {
+                "name": "_collWithdrawal",
+                "type": "uint256"
               }
             ],
             "outputs": []
