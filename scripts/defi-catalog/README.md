@@ -500,3 +500,9 @@ This ten-cycle round adds twenty distinct protocols, twenty-two exact chain/addr
 - `sources/kuru-current-unverified-rejected-r3.json` records the current October 2026 stack's missing public implementation source/build evidence. No obsolete MarginAccount or generic interface is substituted.
 - Verification: 24 additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all 24 calls and denied 120 excluded selectors; both cards and Ethereum/Monad served entries passed browser checks. No borrowing, collateral adjustment, operator harvest or delayed claim was executed.
 
+## Repeated expansion round 3, cycle 5 — Peapods and MUX (2026-10-23)
+
+- `sources/peapods-ppeas-current-r3.json`: four Ethereum pPEAS wrap/unwrap and configured V2 liquidity methods. Paired asset is pfWETH-2, not WETH. Exact debond body ignores its trailing arrays and has no cooldown; they are not opaque routing. Beacon upgrades, fee conversion/rewards dependencies, per-token minimums and native-zero rules remain explicit. No generic zap or leveraged route.
+- `sources/mux-mlp-current-r3.json`: Arbitrum V1 atomically funded delayed liquidity order and owned pending-order cancellation. Broker fills, lock/cancel delays, native-WETH value handling, callback whitelist and absence of user minimum-output/deadline apply. Current docs still cover V1; contributor maintenance response is distinguished from an unadopted community wind-down proposal. V3 prefunding/opaque multicall remains rejected inside the same source.
+- Verification: six additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all six functions and denied 99 excluded selectors; both cards and Ethereum/Arbitrum served entries passed browser checks. No wrapping, AMM liquidity transfer or broker fill was executed.
+

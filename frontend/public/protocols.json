@@ -5842,6 +5842,105 @@
         ]
       },
       {
+        "address": "0x5a3fbc343516cf9afa35f2753259496de5eeeb45",
+        "protocol": "Peapods",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidityV2",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_pTKNLPTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "_pairedLPTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "_slippage",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "bond",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_token",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_amountMintMin",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "debond",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "address[]"
+              },
+              {
+                "name": "",
+                "type": "uint8[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityV2",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lpTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "_minIdxTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "_minPairedLpToken",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643",
         "protocol": "compound-v2",
         "abi": [
@@ -37377,6 +37476,44 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xa19fd5ab6c8dcffa2a295f78a5bb4ac543aaf5e3",
+        "protocol": "MUX",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "orderId",
+                "type": "uint64"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "placeLiquidityOrder",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "assetId",
+                "type": "uint8"
+              },
+              {
+                "name": "rawAmount",
+                "type": "uint96"
+              },
+              {
+                "name": "isAdding",
+                "type": "bool"
               }
             ],
             "outputs": []
