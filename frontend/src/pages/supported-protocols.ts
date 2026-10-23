@@ -17,6 +17,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Ajna', website: 'https://ajna.finance' },
   { name: 'Alchemix', website: 'https://alchemix.fi' },
   { name: 'Ambient', website: 'https://ambient.finance' },
+  { name: 'Ammalgam', website: 'https://ammalgam.xyz/' },
   { name: 'Angle', website: 'https://angle.money' },
   { name: 'Ankr', website: 'https://www.ankr.com' },
   { name: 'Anzen', website: 'https://anzen.finance/' },
@@ -59,6 +60,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dinero', website: 'https://dinero.xyz' },
   { name: 'DODO', website: 'https://dodoex.io' },
   { name: 'Dolomite', website: 'https://dolomite.io' },
+  { name: 'Drips', website: 'https://www.drips.network/' },
   // Deployment documentation only; no current legacy trading frontend is asserted.
   { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
   { name: 'EigenLayer', website: 'https://www.eigenlayer.xyz' },
