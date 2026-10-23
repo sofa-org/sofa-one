@@ -2543,6 +2543,128 @@
         ]
       },
       {
+        "address": "0x0e609b710da5e0aa476224b6c0e5445ccc21251e",
+        "protocol": "Concrete",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochIDs",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x106825b71cce77a70b69f57a0acf9c4a6acf292a",
         "protocol": "sofa",
         "abi": [
@@ -5277,6 +5399,155 @@
         ]
       },
       {
+        "address": "0x38fc1ba73b7ed289955a07d9f11a85b6e388064a",
+        "protocol": "Veda",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelOnChainWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "request",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonce",
+                    "type": "uint96"
+                  },
+                  {
+                    "name": "user",
+                    "type": "address"
+                  },
+                  {
+                    "name": "assetOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOfShares",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountOfAssets",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "creationTime",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "secondsToMaturity",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "secondsToDeadline",
+                    "type": "uint24"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "replaceOnChainWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "oldRequest",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonce",
+                    "type": "uint96"
+                  },
+                  {
+                    "name": "user",
+                    "type": "address"
+                  },
+                  {
+                    "name": "assetOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOfShares",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountOfAssets",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "creationTime",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "secondsToMaturity",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "secondsToDeadline",
+                    "type": "uint24"
+                  }
+                ]
+              },
+              {
+                "name": "discount",
+                "type": "uint16"
+              },
+              {
+                "name": "secondsToDeadline",
+                "type": "uint24"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "oldRequestId",
+                "type": "bytes32"
+              },
+              {
+                "name": "newRequestId",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestOnChainWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetOut",
+                "type": "address"
+              },
+              {
+                "name": "amountOfShares",
+                "type": "uint128"
+              },
+              {
+                "name": "discount",
+                "type": "uint16"
+              },
+              {
+                "name": "secondsToDeadline",
+                "type": "uint24"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "bytes32"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x39053d51b77dc0d36036fc1fcc8cb819df8ef37a",
         "protocol": "eigenlayer",
         "abi": [
@@ -6607,6 +6878,37 @@
             "stateMutability": "payable",
             "inputs": [],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x4de413a26fc24c3fc27cc983be70aa9c5c299387",
+        "protocol": "Veda",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "depositAsset",
+                "type": "address"
+              },
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumMint",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
