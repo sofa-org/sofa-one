@@ -8939,6 +8939,374 @@
         ]
       },
       {
+        "address": "0x72ed8921325b3a8e487bc93a3c8b3f14aac21514",
+        "protocol": "Zharta",
+        "abi": [
+          {
+            "type": "function",
+            "name": "add_collateral_to_loan",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_tracing_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "initial_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "apr",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "payment_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "accrual_start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "min_collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "origination_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_upfront_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_settlement_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "partial_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "full_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_eligibility",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_window",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "liquidation_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "oracle_addr",
+                    "type": "address"
+                  },
+                  {
+                    "name": "initial_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_time",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "collateral_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "remove_collateral_from_loan",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_tracing_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "initial_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "apr",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "payment_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "accrual_start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "min_collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "origination_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_upfront_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_settlement_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "partial_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "full_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_eligibility",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_window",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "liquidation_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "oracle_addr",
+                    "type": "address"
+                  },
+                  {
+                    "name": "initial_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_time",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "collateral_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "settle_loan",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "offer_tracing_id",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "initial_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "apr",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "payment_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "accrual_start_time",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "min_collateral_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "origination_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_upfront_fee_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "protocol_settlement_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "partial_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "full_liquidation_fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_eligibility",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_window",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "liquidation_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "oracle_addr",
+                    "type": "address"
+                  },
+                  {
+                    "name": "initial_ltv",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "call_time",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x735eddf50ca2371aa48466469c742e684c610f74",
         "protocol": "Strata",
         "abi": [
@@ -20183,6 +20551,641 @@
               {
                 "name": "shares",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xe365ff3cad44d19cb7aba81df8ffd6818a66ac0a",
+        "protocol": "Gondi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addNewTranche",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_renegotiationOffer",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "renegotiationId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "loanId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "trancheIndex",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "aprBps",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expirationTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "_loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
+              },
+              {
+                "name": "_renegotiationOfferSignature",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "refinanceFull",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_renegotiationOffer",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "renegotiationId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "loanId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "trancheIndex",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "aprBps",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expirationTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "_loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
+              },
+              {
+                "name": "_renegotiationOfferSignature",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "refinancePartial",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_renegotiationOffer",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "renegotiationId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "loanId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "trancheIndex",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "aprBps",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expirationTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "_loan",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "borrower",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nftCollateralTokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nftCollateralAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "principalAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "startTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tranche",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "loanId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "floor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "principalAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "lender",
+                        "type": "address"
+                      },
+                      {
+                        "name": "accruedInterest",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "startTime",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "aprBps",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "protocolFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lenderRefinanceDisabled",
+                    "type": "bool"
+                  }
+                ]
               }
             ]
           }

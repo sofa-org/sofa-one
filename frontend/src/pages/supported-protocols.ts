@@ -98,6 +98,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Gamma Strategies', website: 'https://www.gamma.xyz/' },
   { name: 'Gearbox', website: 'https://gearbox.fi' },
   { name: 'GMX', website: 'https://gmx.io' },
+  { name: 'Gondi', website: 'https://www.gondi.xyz/' },
   { name: 'Grove Finance', website: 'https://grove.finance/' },
   { name: 'Gyroscope', website: 'https://gyro.finance/' },
   { name: 'HAI', website: 'https://www.letsgethai.com/' },
@@ -244,4 +245,5 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
   { name: 'YO Protocol', website: 'https://yo.xyz' },
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
+  { name: 'Zharta', website: 'https://www.zharta.io/' },
 ];

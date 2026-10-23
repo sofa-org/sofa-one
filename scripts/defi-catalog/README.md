@@ -778,3 +778,10 @@ Source match levels, partial verification and mutable dependencies are preserved
 - `sources/iaero-permalock-v5-retired-r7.json` preserves the retired locking-vault exclusion without declaring maintained receipt staking retired.
 - Verification under Node.js 20.19.3: fourteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all fourteen calls and denied 81 excluded selectors. Both cards and served Ethereum/Base entries passed Chromium checks. No funded staking, validator exit, reward payout or onchain execution was performed.
 
+## Repeated expansion round 7, cycle 2 — Gondi and Zharta (2026-10-24)
+
+- `sources/gondi-v32-ethereum-r7.json`: three current V3.2 callback-free tranche/refinance methods. Full stored loan hashes, borrower/lender rights, stricter improvement rules and existing lender quote signatures bind fixed financial terms; no backend signing or wallet authority is added. Callback-enabled origination/repayment remains excluded; registered loan-manager notifications are an independent configured dependency.
+- `sources/zharta-lending-pro-weth-usdc-ethereum-r7.json`: three current Ethereum Lending PRO WETH-collateral/USDC-debt repayment and collateral methods, not legacy NFT Lending V2. Loan hash, borrower rights, maturity/LTV/oracle limits and separately source-bound immutable vaults apply. Failed transfers may become pending balances whose helpers are not admitted; no complete immediate-payout workflow is promised.
+- `sources/nftfi-sunset-rejection-r7.json` preserves the official June 2026 sunset evidence with indexed-versus-direct-fetch limits.
+- Verification under Node.js 20.19.3: six additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all six calls and denied 101 excluded selectors. Both cards and served Ethereum entries passed Chromium checks. No financial offer was signed, loan refinanced, debt repaid or collateral transferred.
+
