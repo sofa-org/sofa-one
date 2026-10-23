@@ -3848,6 +3848,62 @@
         ]
       },
       {
+        "address": "0x1a9551de6d56f7768398a82aa2186624a43d89e3",
+        "protocol": "Metronome Synth",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount_",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_deposited",
+                "type": "uint256"
+              },
+              {
+                "name": "_fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_withdrawn",
+                "type": "uint256"
+              },
+              {
+                "name": "_fee",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1bb74b5ddc1f4fc91d6f9e7906cf68bc93538e33",
         "protocol": "pickle-jar",
         "abi": [
@@ -6682,6 +6738,83 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x480e3178fa102df852643d47cabdb9adf5db0174",
+        "protocol": "Metronome Synth",
+        "abi": [
+          {
+            "type": "function",
+            "name": "issue",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_issued",
+                "type": "uint256"
+              },
+              {
+                "name": "_fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "onBehalfOf_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_repaid",
+                "type": "uint256"
+              },
+              {
+                "name": "_fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayAll",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "onBehalfOf_",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_repaid",
+                "type": "uint256"
+              },
+              {
+                "name": "_fee",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -11384,6 +11517,75 @@
                 "type": "uint128"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x96c68d861ada016ed98c30c810879f9df7c64154",
+        "protocol": "CLever",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_depositToFurnace",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "_clevCVXAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawUnlocked",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
           }
         ]
       },
