@@ -3496,6 +3496,169 @@
         ]
       },
       {
+        "address": "0x27d9ad987bde08a0d083ef7e0e4043c857a17b38",
+        "protocol": "Frankencoin",
+        "abi": [
+          {
+            "type": "function",
+            "name": "adjust",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "targetAmount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "adjust",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "targetAmount",
+                "type": "uint192"
+              },
+              {
+                "name": "referrer",
+                "type": "address"
+              },
+              {
+                "name": "referralFeePPM",
+                "type": "uint24"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "dropReferrer",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refreshBalance",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint192"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "refreshMyBalance",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint192"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint192"
+              },
+              {
+                "name": "referrer",
+                "type": "address"
+              },
+              {
+                "name": "referralFeePPM",
+                "type": "uint24"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint192"
+              },
+              {
+                "name": "referrer",
+                "type": "address"
+              },
+              {
+                "name": "referralFeePPM",
+                "type": "uint24"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d",
         "protocol": "spark-vault-v2",
         "abi": [
@@ -18452,6 +18615,82 @@
   },
   "10": {
     "contracts": [
+      {
+        "address": "0x1250f2326f04ac61ee5aed92fef74bcac6e6bc90",
+        "protocol": "HAI",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "getReward",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "getRewardAndForward",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_forwardTo",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "initiateWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          }
+        ]
+      },
       {
         "address": "0x2abf469074dc0b54d793850807e6eb5faf2625b1",
         "protocol": "SushiSwap V2",
