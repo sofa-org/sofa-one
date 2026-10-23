@@ -493,3 +493,10 @@ This ten-cycle round adds twenty distinct protocols, twenty-two exact chain/addr
 - `sources/premia-v3-halted-development-rejected-r3.json` preserves the official halted-development/rebrand notice; no legacy V3 or merely planned successor is admitted.
 - Verification: nine additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all nine calls and denied 109 excluded selectors; both cards and Ethereum/BNB served entries passed browser checks. No queue settlement, liquidation offset or collateral payout was executed.
 
+## Repeated expansion round 3, cycle 4 — Curvance and Asymmetry Finance (2026-10-23)
+
+- `sources/curvance-cusdc-monad-current-r3.json`: eighteen ordinary Monad cUSDC lending/collateral functions. USDC and shares use 6 decimals; allowance, existing delegate/PositionManager authority, collateral health and 20-minute cooldown rules differ by method. Same-token collateral/debt restrictions, actual cash and mutable IRM/registry controls apply. Similar-match source is labeled honestly and actual creation input binds the chosen asset/market.
+- `sources/asymmetry-afcvx-current-r3.json`: six current Ethereum afCVX methods using 18-decimal CVX. Instant exits depend on cash and an operator-refreshed weekly budget; delayed requests burn shares and claims pay the recorded receiver. Current vault/strategy implementation bindings supersede stale documentation. Fees, maintenance, epochs, pauses and jurisdiction restrictions remain explicit.
+- `sources/kuru-current-unverified-rejected-r3.json` records the current October 2026 stack's missing public implementation source/build evidence. No obsolete MarginAccount or generic interface is substituted.
+- Verification: 24 additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all 24 calls and denied 120 excluded selectors; both cards and Ethereum/Monad served entries passed browser checks. No borrowing, collateral adjustment, operator harvest or delayed claim was executed.
+

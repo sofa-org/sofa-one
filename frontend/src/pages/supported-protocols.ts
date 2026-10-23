@@ -22,6 +22,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Anzen', website: 'https://anzen.finance/' },
   { name: 'ApeSwap', website: 'https://apeswap.finance' },
   { name: 'Apyx', website: 'https://apyx.fi' },
+  { name: 'Asymmetry Finance', website: 'https://www.asymmetry.finance/' },
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
@@ -45,6 +46,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Compound', website: 'https://www.compound.xyz' },
   { name: 'Concentrator', website: 'https://concentrator.aladdin.club/' },
   { name: 'Convex', website: 'https://www.convexfinance.com' },
+  { name: 'Curvance', website: 'https://www.curvance.com/' },
   { name: 'Curve', website: 'https://www.curve.finance' },
   { name: 'dForce', website: 'https://dforce.network' },
   { name: 'Dfyn', website: 'https://docs.dfyn.network/technical/contracts' },
