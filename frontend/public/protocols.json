@@ -5612,6 +5612,199 @@
         ]
       },
       {
+        "address": "0x3e67cc2c7fff86d9870db9d02c43e789b52fb296",
+        "protocol": "LlamaPay",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelStream",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createStream",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createStreamWithReason",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              },
+              {
+                "name": "reason",
+                "type": "string"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndCreate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountToDeposit",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndCreateWithReason",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountToDeposit",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              },
+              {
+                "name": "reason",
+                "type": "string"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "modifyStream",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "oldTo",
+                "type": "address"
+              },
+              {
+                "name": "oldAmountPerSec",
+                "type": "uint216"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "pauseStream",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountPerSec",
+                "type": "uint216"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawPayer",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawPayerAll",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x3f04b65ddbd87f9ce0a2e7eb24d80e7fb87625b5",
         "protocol": "infiniFi",
         "abi": [
@@ -8766,6 +8959,116 @@
             "outputs": [
               {
                 "name": "escrowedShares_",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x80e1048ede66ec4c364b4f22c8768fc657ff6a42",
+        "protocol": "Upshift",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "year",
+                "type": "uint256"
+              },
+              {
+                "name": "month",
+                "type": "uint256"
+              },
+              {
+                "name": "day",
+                "type": "uint256"
+              },
+              {
+                "name": "receiverAddr",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiverAddr",
+                "type": "address"
+              },
+              {
+                "name": "holderAddr",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "claimableEpoch",
                 "type": "uint256"
               }
             ]
