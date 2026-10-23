@@ -527,3 +527,10 @@ This ten-cycle round adds twenty distinct protocols, twenty-two exact chain/addr
 - `sources/monday-trade-mainnet-blocked-r3.json` records missing deployment-bound current implementation ABI/source; compatible-interface prose and old proxy interfaces do not replace that prerequisite.
 - Verification: 16 additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all 16 calls and denied 31 excluded selectors; both cards and Ethereum/Monad served entries passed browser checks. No swap, issuance, connector conversion or liquidity movement was executed.
 
+## Repeated expansion round 3, cycle 9 — Tranchess and Term Finance (2026-10-23)
+
+- `sources/tranchess-wsteth-current-r3.json`: nine maintained Ethereum wstETH Fund router/primary-market functions, not retiring qETH/eQUEEN. Atomic stETH/wstETH creation avoids unreserved prefunding paths; tranche burns are caller-owned and version-bound. Queued account-bound claims require earlier queue liquidity. Mutable fees, NAV, rebalances and professional-investor terms apply.
+- `sources/term-finance-usdc-core-current-r3.json`: six methods on the explicitly live continuous Ethereum USDC Core vault, not an expired auction. Immutable TokenizedStrategy delegation, loan maturity/reinvestment, upstream Yearn cash limits and management controls remain explicit. Three-argument withdraw defaults to zero loss; three-argument redeem permits 100% loss. Four-argument overloads let callers choose maxLoss.
+- `sources/stafi-rtoken-lifecycle-rejected-r3.json` distinguishes explicit offline notices, tentative sunset proposals and unresolved maintained rUSDT-entry evidence; no proposal date is falsely asserted completed and no exit-only fallback is admitted.
+- Verification: 15 additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all 15 functions and denied 140 excluded selectors; both cards and all three served Ethereum entries passed browser checks. No tranche creation, queue settlement, repo maturity servicing or loss-bearing exit was executed.
+
