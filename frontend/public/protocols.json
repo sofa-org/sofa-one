@@ -17899,6 +17899,100 @@
         ]
       },
       {
+        "address": "0xda06ee2dacf9245aa80072a4407debdea0d7e341",
+        "protocol": "Avant",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cooldownAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "cooldownShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
         "protocol": "ERC-20",
         "abi": [
@@ -37739,6 +37833,282 @@
             "name": "withdrawAll",
             "stateMutability": "nonpayable",
             "inputs": [],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x0306aceb4c20ff33480d90038f8b375cc6a6b66e",
+        "protocol": "SoSoValue Indexes (SSI)",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addMintRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetID",
+                "type": "uint256"
+              },
+              {
+                "name": "orderInfo",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "chain",
+                        "type": "string"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "inTokenset",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "chain",
+                            "type": "string"
+                          },
+                          {
+                            "name": "symbol",
+                            "type": "string"
+                          },
+                          {
+                            "name": "addr",
+                            "type": "string"
+                          },
+                          {
+                            "name": "decimals",
+                            "type": "uint8"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "outTokenset",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "chain",
+                            "type": "string"
+                          },
+                          {
+                            "name": "symbol",
+                            "type": "string"
+                          },
+                          {
+                            "name": "addr",
+                            "type": "string"
+                          },
+                          {
+                            "name": "decimals",
+                            "type": "uint8"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "inAddressList",
+                        "type": "string[]"
+                      },
+                      {
+                        "name": "outAddressList",
+                        "type": "string[]"
+                      },
+                      {
+                        "name": "inAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "outAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "deadline",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "requester",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "orderHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "orderSign",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "maxIssueFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addRedeemRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetID",
+                "type": "uint256"
+              },
+              {
+                "name": "orderInfo",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "chain",
+                        "type": "string"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "inTokenset",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "chain",
+                            "type": "string"
+                          },
+                          {
+                            "name": "symbol",
+                            "type": "string"
+                          },
+                          {
+                            "name": "addr",
+                            "type": "string"
+                          },
+                          {
+                            "name": "decimals",
+                            "type": "uint8"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "outTokenset",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "chain",
+                            "type": "string"
+                          },
+                          {
+                            "name": "symbol",
+                            "type": "string"
+                          },
+                          {
+                            "name": "addr",
+                            "type": "string"
+                          },
+                          {
+                            "name": "decimals",
+                            "type": "uint8"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "inAddressList",
+                        "type": "string[]"
+                      },
+                      {
+                        "name": "outAddressList",
+                        "type": "string[]"
+                      },
+                      {
+                        "name": "inAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "outAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "deadline",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "requester",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "orderHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "orderSign",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "maxIssueFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              }
+            ],
             "outputs": []
           }
         ]

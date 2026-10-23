@@ -33,6 +33,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
   { name: 'Avalon Finance', website: 'https://www.avalonfinance.xyz/' },
+  { name: 'Avant', website: 'https://avantprotocol.com/' },
   { name: 'Axis', website: 'https://axis.to/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
   {
@@ -183,6 +184,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Silo', website: 'https://silo.finance' },
   { name: 'SmarDex', website: 'https://smardex.io' },
   { name: 'Solv', website: 'https://solv.finance' },
+  { name: 'SoSoValue Indexes (SSI)', website: 'https://ssi.sosovalue.com/' },
   { name: 'Spark', website: 'https://spark.fi' },
   { name: 'Spectra', website: 'https://spectra.finance/' },
   { name: 'Stake DAO', website: 'https://stakedao.org' },
