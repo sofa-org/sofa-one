@@ -13596,6 +13596,296 @@
         ]
       },
       {
+        "address": "0xaa48ecbc843cf7e9a29155d112b8cb27902bd23c",
+        "protocol": "Flying Tulip",
+        "abi": [
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "minFtUSDOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mintExact",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "bytes32"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxCollateralIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mintExactTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "bytes32"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxCollateralIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mintTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "bytes32"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "minFtUSDOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "minCollateralOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "queueId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemExact",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxFtUSDIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "queueId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemExactTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "bytes32"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxFtUSDIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "queueId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralToken",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "ftUSDAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "bytes32"
+              },
+              {
+                "name": "txDeadline",
+                "type": "uint256"
+              },
+              {
+                "name": "minCollateralOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "queueId",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688",
         "protocol": "ambient",
         "abi": [
@@ -44438,6 +44728,116 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x20d419a8e12c45f88fda7c5760bb6923cee27f98",
+        "protocol": "Ostium",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRequestDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelRequestWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "reclaimDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "reclaimWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "settlementId",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
