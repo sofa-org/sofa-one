@@ -25714,6 +25714,57 @@
         ]
       },
       {
+        "address": "0x4f2760b32720f013e900dc92f65480137391199b",
+        "protocol": "Lorenzo Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "underlyingToken",
+                "type": "address"
+              },
+              {
+                "name": "underlyingAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shareAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint128"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x55d398326f99059ff775485246999027b3197955",
         "protocol": "ERC-20",
         "abi": [
@@ -44854,6 +44905,82 @@
         ]
       },
       {
+        "address": "0xd47ef934e301e0ee3b1ce0e3eebcb64de8b231be",
+        "protocol": "Hegic",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "positionId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "provide",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "positionId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "positionId",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "positionId",
+                "type": "uint256"
+              },
+              {
+                "name": "outFrom",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd5c92e97dd1cdb1bdc5fde5d2ef53a3935724fdc",
         "protocol": "Steer Protocol",
         "abi": [
@@ -45349,6 +45476,40 @@
               {
                 "name": "agreementIds",
                 "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xec096ea6eb9aa5ea689b0cf00882366e92377371",
+        "protocol": "Hegic",
+        "abi": [
+          {
+            "type": "function",
+            "name": "payOff",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "positionID",
+                "type": "uint256"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lockedLiquidityID",
+                "type": "uint256"
               }
             ],
             "outputs": []

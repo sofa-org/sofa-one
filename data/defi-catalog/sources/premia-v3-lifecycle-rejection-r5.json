@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Premia",
+  "reviewedAt": "2026-10-24",
+  "decision": "rejected",
+  "reason": "Premia Blue / Premia V3 development is explicitly halted; explicitly unmaintained deployments cannot be admitted, including vaults or exit-only calls.",
+  "evidence": [
+    {
+      "sourceRef": "https://blog.premia.blue/p/premia-is-now-kyan-rebrand-faqs",
+      "publisher": "Premia Labs official blog",
+      "publishedAt": "2025-08-15",
+      "title": "Premia Is Now Kyan | Rebrand FAQs",
+      "observedText": "At this point in time, there are no more OLM emissions, and development on Premia Blue (Premia V3) has been halted. While Premia Blue was a milestone for decentralized options trading, our focus is now fully on Kyan.",
+      "vaultObservation": "Official FAQ describes a planned new passive yield strategy within Kyan, not continued maintenance of Premia Blue vaults."
+    },
+    {
+      "sourceRef": "https://www.premia.finance/",
+      "publisher": "Premia Labs current official website",
+      "observedText": "Premia Labs: Tools for All Traders; current products linked are Kyan and Archetype. Kyan Beta is Live.",
+      "observation": "Current collective and successor products are maintained; this does not override explicit Premia V3 maintenance cessation."
+    },
+    {
+      "sourceRef": "https://docs.premia.blue/developer-center/contracts",
+      "observation": "Legacy documentation still lists Ethereum, Arbitrum, Fantom and Optimism deployments. Existence of deployment documentation does not establish current maintenance."
+    }
+  ],
+  "limits": [
+    "This rejection concerns explicitly halted Premia Blue / Premia V3 pools and vaults; it does not assert that Premia Labs has disbanded or that Kyan and Archetype have shut down.",
+    "No successor has been silently substituted or counted as a separate eligible protocol.",
+    "No capabilities or deployment ABI inventories are activated by this rejection record."
+  ]
+}
