@@ -29694,6 +29694,48 @@
         ]
       },
       {
+        "address": "0xdb57a53c428a9fafcbfeffb6dd80d0f427543695",
+        "protocol": "Aster",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestWithdrawNos",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xeca88125a5adbe82614ffc12d0db554e2e2867c8",
         "protocol": "Venus",
         "abi": [
@@ -44098,6 +44140,187 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xe1ee45db12ac98d16f1342a03c93673d74527b55",
+        "protocol": "Avalon Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayWithATokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapBorrowRateMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "interestRateMode",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

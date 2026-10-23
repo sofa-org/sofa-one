@@ -24,10 +24,12 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'ApeSwap', website: 'https://apeswap.finance' },
   { name: 'Apyx', website: 'https://apyx.fi' },
   { name: 'Arcadia Finance', website: 'https://arcadia.finance/' },
+  { name: 'Aster', website: 'https://www.asterdex.com/' },
   { name: 'Asymmetry Finance', website: 'https://www.asymmetry.finance/' },
   { name: 'Atlantis', website: 'https://atlantisdex.xyz/' },
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
+  { name: 'Avalon Finance', website: 'https://www.avalonfinance.xyz/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
   {
     name: 'BabySwap',
