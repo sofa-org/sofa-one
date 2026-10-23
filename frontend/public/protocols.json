@@ -3375,6 +3375,54 @@
         ]
       },
       {
+        "address": "0x1303c26cfe06bac5bfee29907f37919643def75c",
+        "protocol": "Makina",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "minAssets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x133229e0adff22c6f1ad287d199ea09d35e4427b",
         "protocol": "Multipli",
         "abi": [
@@ -11515,6 +11563,41 @@
               {
                 "name": "withdrawnAmount",
                 "type": "uint128"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x94b1828f91c150c5e6776198e170aca4304903d7",
+        "protocol": "Makina",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "minShares",
+                "type": "uint256"
+              },
+              {
+                "name": "referralKey",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
               }
             ]
           }
@@ -38043,6 +38126,144 @@
               {
                 "name": "shares",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x128afda4351dece9d51eb9d7e9c687c58cfff731",
+        "protocol": "Aera Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "refundRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "request",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "requestType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "user",
+                    "type": "address"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address"
+                  },
+                  {
+                    "name": "units",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tokens",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "solverTip",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maxPriceAge",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "tokensIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minUnitsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "solverTip",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxPriceAge",
+                "type": "uint256"
+              },
+              {
+                "name": "isFixedPrice",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "depositHash",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "unitsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minTokensOut",
+                "type": "uint256"
+              },
+              {
+                "name": "solverTip",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxPriceAge",
+                "type": "uint256"
+              },
+              {
+                "name": "isFixedPrice",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "redeemHash",
+                "type": "bytes32"
               }
             ]
           }
