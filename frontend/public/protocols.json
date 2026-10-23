@@ -1879,6 +1879,52 @@
         ]
       },
       {
+        "address": "0x04b59f9f09750c044d7cfbc177561e409085f0f3",
+        "protocol": "Index Coop",
+        "abi": [
+          {
+            "type": "function",
+            "name": "issue",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_setToken",
+                "type": "address"
+              },
+              {
+                "name": "_quantity",
+                "type": "uint256"
+              },
+              {
+                "name": "_to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_setToken",
+                "type": "address"
+              },
+              {
+                "name": "_quantity",
+                "type": "uint256"
+              },
+              {
+                "name": "_to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x074134a2784f4f66b6ced6f68849382990ff3215",
         "protocol": "yearn-tokenized-strategy",
         "abi": [
@@ -11572,6 +11618,45 @@
         ]
       },
       {
+        "address": "0x9e36a74fe278906a76e7615263e46a83fc40c47f",
+        "protocol": "Mellow Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "timestamps",
+                "type": "uint32[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         "protocol": "ERC-20",
         "abi": [
@@ -15099,6 +15184,56 @@
               {
                 "name": "amount",
                 "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xc75e7e73b25fea8bb23eb55cc48ba55067b5be76",
+        "protocol": "Mellow Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelDepositRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint224"
+              },
+              {
+                "name": "referral",
+                "type": "address"
+              },
+              {
+                "name": "merkleProof",
+                "type": "bytes32[]"
               }
             ],
             "outputs": []
