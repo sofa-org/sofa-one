@@ -15,18 +15,18 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
   - `database`: `{ url }`
   - `stripe`: `{ secretKey, webhookSecret, successUrl, cancelUrl }`
   - `billing.usdc`: `{ enabled, treasuryAddresses: { 1, 11155111, 8453, 84532 }, rpcUrls: { 1, 11155111, 8453, 84532 }, requiredConfirmations (default 5), quoteTtlSeconds (default 86400) }`
-  - `rpc.urls`: shared supported-chain HTTPS URLs loaded from `RPC_URLS__<chainId>` for simulation and Polymarket on-chain verification; no compatibility alias or public fallback.
+  - `rpc.urls`: shared supported-chain HTTPS URLs; defaults to each registry chain's first HTTPS RPC, overridden by `RPC_URLS__<chainId>`. No runtime failover.
   - `security`: `{ trustProxy }`
   - `chain`: `{ defaultChainId }` (default `84532`)
   - `redis`: `{ url }`
-- **Dependencies**: none (pure `process.env` reads). Note: `pimlico.rpcUrls` keys are Monad chain IDs (143, 10143); `billing.usdc` keys are USDC billing chain IDs (1, 11155111, 8453, 84532).
+- **Dependencies**: `SUPPORTED_CHAINS` provides default HTTPS RPCs; environment variables provide overrides.
 
 ### `env.validation.ts`
 - **Symbols**:
   - `enum Environment` — `Development | Production | Test`.
   - `class EnvironmentVariables` — class-validator schema; every field is a decorated env var (see below).
   - `validate(config: Record<string, unknown>)` — exported entry point; transforms raw env into `EnvironmentVariables`, runs `validateSync`, then calls the private validators; returns the validated instance.
-  - `validateRpcUrls(config: Record<string, unknown>)` — validates shared `RPC_URLS__<chainId>` supported-chain keys and non-empty HTTPS values; absent keys are allowed at boot, consumers fail closed when required.
+  - `validateRpcUrls(config: Record<string, unknown>)` — validates declared supported-chain keys and non-empty HTTPS overrides; absent overrides use registry defaults.
   - Private helpers: `validateProductionConfig`, `validateOptionalHttpsUrl`, `validateDefaultChain`, `validateMfaSecretEncryptionKey`, `validateStripeConfig`, `validateUsdcConfig`, `validateEthereumAddress`, `validateRpcUrl`.
   - Private constants: `USDC_BILLING_CHAINS` (1 + 11155111 + 8453 + 84532 with their treasury/RPC keys), `EVM_ADDRESS_REGEX` (`/^0x[0-9a-fA-F]{40}$/`), `ZERO_ADDRESS`.
 - **Input**: raw `process.env` record (passed by `ConfigModule.forRoot({ validate })`).

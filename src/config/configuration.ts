@@ -1,3 +1,5 @@
+import { SUPPORTED_CHAINS } from '../common/chains/supported-chains';
+
 /**
  * Load shared per-chain RPC URLs from `RPC_URLS__<chainId>` env vars
  * (Nest-style double-underscore nested keys). Keys are numeric chain id strings.
@@ -6,10 +8,15 @@
  */
 function loadRpcUrls(): Record<string, string> {
   const urls: Record<string, string> = {};
+  for (const { chainId, chain } of Object.values(SUPPORTED_CHAINS)) {
+    const url = chain.rpcUrls.default.http.find((candidate) => candidate.startsWith('https://'));
+    if (!url) throw new Error(`No default HTTPS RPC for supported chain ${chainId}`);
+    urls[String(chainId)] = url;
+  }
   for (const [key, value] of Object.entries(process.env)) {
     const match = /^RPC_URLS__(\d+)$/.exec(key);
     if (!match) continue;
-    urls[match[1]] = typeof value === 'string' ? value : '';
+    urls[match[1]] = typeof value === 'string' ? value.trim() : '';
   }
   return urls;
 }
@@ -62,9 +69,9 @@ export default () => ({
     },
   },
   /**
-   * Explicit per-chain HTTPS RPCs shared by simulation and on-chain verification.
-   * Consumers retain their own timeouts and fail-closed policies; no public fallback.
-   * Configure via RPC_URLS__<chainId>.
+   * Per-chain HTTPS RPCs shared by simulation and on-chain verification.
+   * Registry defaults apply only when no explicit RPC_URLS__<chainId> is set.
+   * Provider failures remain fail-closed; explicit overrides never fail over.
    */
   rpc: {
     urls: loadRpcUrls(),
