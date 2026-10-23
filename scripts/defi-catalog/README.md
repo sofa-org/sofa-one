@@ -824,3 +824,10 @@ Source match levels, partial verification and mutable dependencies are preserved
 - `sources/kuma-current-category-deferred-r7.json` distinguishes deprecated risk categories, years-stale mandatory Polygon USK oracle and matured/defaulted EGK asset ambiguity. It does not assert whole-protocol shutdown.
 - Verification under Node.js 20.19.3: eight additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all eight calls and denied 75 excluded selectors. Both cards and served Ethereum/Arbitrum entries passed Chromium checks. No funded loan, interest accrual, option position or maturity settlement was executed.
 
+## Repeated expansion round 7, cycle 9 — Factor and Sandclock (2026-10-24)
+
+- `sources/factor-current-usdc-investor-vault-r7.json`: five own Arbitrum investor funding/direct-exit methods with current StudioProV1 and immutable financial-module bindings. No strategy executor or opaque adapter calls are admitted. Invested strategies are not automatically unwound; idle liquidity, valuation, fees, whitelist and cooldown remain independent. Explicitly unimplemented ERC4626 `mint` is excluded.
+- `sources/sandclock-current-quartz-staking-r7.json`: eight current own Ethereum QUARTZ funding, exit, debt-tax, multiplier and WETH reward methods, not hidden legacy wealth vaults. Initially 10% principal tax decays over 30 days; principal, bonus multipliers and rewards are different units. Public reward distribution accounts only existing surplus and can reset timing; it promises neither revenue nor funded rewards.
+- Neutral Trade own supported-chain versus third-party Accountable Ethereum architecture, and Zoo current implementation/full-source gaps, are separately preserved without shutdown claims.
+- Verification under Node.js 20.19.3: thirteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all thirteen calls and denied 199 excluded selectors. Both cards and served Ethereum/Arbitrum entries passed Chromium checks. No strategy was funded, staking tax paid, multiplier compounded or reward distributed.
+
