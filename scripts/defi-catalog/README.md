@@ -804,3 +804,9 @@ Source match levels, partial verification and mutable dependencies are preserved
 - `sources/streamflow-allowed-chain-gap-r7.json` records the missing supported-EVM deployment binding, not a shutdown.
 - Verification under Node.js 20.19.3: eleven additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all eleven calls and denied 141 excluded selectors. Both cards and all four served Ethereum entries passed Chromium checks. No escrow was funded, schedule deployed, allocation minted or vested claim executed.
 
+## Repeated expansion round 7, cycle 6 — NaraUSD and NUVA (2026-10-24)
+
+- `sources/narausd-ethereum-r7.json`: eleven current implementation-bound collateral mint/redemption-request and NaraUSD+ staking/cooldown/claim methods. Existing Authorized User/Keyring eligibility is not granted. Redemption is not FIFO; fees, opportunistic completion, uint152 ledger narrowing, loss-bearing shares and reset-on-addition cooldown remain material. Disabled synchronous staking exits are excluded.
+- `sources/nuva-nvprime-ethereum-r7.json`: four own current nvPRIME direct receipt-vault methods, using PRIME rather than USDC. Pinned receipt conversions do not prove actual backing or PRIME value. Separate USDC router, bridging and offchain settlement are not admitted; institutional legal rights and jurisdiction screening remain distinct from plain contract methods.
+- Verification under Node.js 20.19.3: fifteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all fifteen calls and denied 209 excluded selectors. Both cards and all three served Ethereum entries passed Chromium checks. No credential was issued, collateral funded, credit valued, cooldown claimed or RWA redeemed.
+

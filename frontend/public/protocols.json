@@ -4210,6 +4210,107 @@
         ]
       },
       {
+        "address": "0x1aa23cdfc941f6b54251c72012a9bfa4bf5394d6",
+        "protocol": "NaraUSD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelCooldown",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cooldownAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "cooldownShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x1bb74b5ddc1f4fc91d6f9e7906cf68bc93538e33",
         "protocol": "pickle-jar",
         "abi": [
@@ -8314,6 +8415,93 @@
               },
               {
                 "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x5c6263904ccfd3bcf1aaa6e7063ddd29743b3bb7",
+        "protocol": "NaraUSD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintWithCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "naraUsdAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "naraUsdAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "allowQueue",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "wasQueued",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "tryCompleteRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "collateralAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "updateRedemptionRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "newAmount",
                 "type": "uint256"
               }
             ],
@@ -17225,6 +17413,104 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xc360e625f19a7ea47e47810b13e386221d5187d1",
+        "protocol": "NUVA",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
