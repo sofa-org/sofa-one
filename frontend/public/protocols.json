@@ -9815,6 +9815,512 @@
         ]
       },
       {
+        "address": "0x93b37bd5b6b278373217333ac30d7e74c85fbdcb",
+        "protocol": "Sablier",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancel",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "refundedAmount",
+                "type": "uint128"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithDurationsLD",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "segmentsWithDuration",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "exponent",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint40"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithDurationsLL",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "unlockAmounts",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "start",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "cliff",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "granularity",
+                "type": "uint40"
+              },
+              {
+                "name": "durations",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "cliff",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "total",
+                    "type": "uint40"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithDurationsLT",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "tranchesWithDuration",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint40"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithTimestampsLD",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "timestamps",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "start",
+                        "type": "uint40"
+                      },
+                      {
+                        "name": "end",
+                        "type": "uint40"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "segments",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "exponent",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "timestamp",
+                    "type": "uint40"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithTimestampsLL",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "timestamps",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "start",
+                        "type": "uint40"
+                      },
+                      {
+                        "name": "end",
+                        "type": "uint40"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "unlockAmounts",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "start",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "cliff",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "granularity",
+                "type": "uint40"
+              },
+              {
+                "name": "cliffTime",
+                "type": "uint40"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createWithTimestampsLT",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "depositAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "cancelable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "transferable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "timestamps",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "start",
+                        "type": "uint40"
+                      },
+                      {
+                        "name": "end",
+                        "type": "uint40"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "shape",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "tranches",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "timestamp",
+                    "type": "uint40"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawMax",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "streamId",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "withdrawnAmount",
+                "type": "uint128"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x98169228cb99ed26c1043ed8ca53a5cb371d3b8d",
         "protocol": "Bedrock",
         "abi": [
@@ -19924,6 +20430,52 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x7d342726b69c28d942ad8bfe6ac81b972349d524",
+        "protocol": "Superfluid",
+        "abi": [
+          {
+            "type": "function",
+            "name": "downgrade",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "downgradeTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "upgrade",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
