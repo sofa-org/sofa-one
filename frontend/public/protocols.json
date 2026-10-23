@@ -19205,6 +19205,79 @@
         ]
       },
       {
+        "address": "0x4ac8af23f3ef7ededb3dc45c091406aeee8de471",
+        "protocol": "Tarot",
+        "abi": [
+          {
+            "type": "function",
+            "name": "enter",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "share",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "enterWithToken",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_tokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "share",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "leave",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_share",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "underlyingAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "leaveInKind",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_share",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -36619,6 +36692,128 @@
               {
                 "name": "deadline",
                 "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xbb505c54d71e9e599cb8435b4f0ceec05fc71cbd",
+        "protocol": "Extra Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "reserveId",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "eTokenAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositAndStake",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "reserveId",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "eTokenAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "reserveId",
+                "type": "uint256"
+              },
+              {
+                "name": "eTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "receiveNativeETH",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unStakeAndWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "reserveId",
+                "type": "uint256"
+              },
+              {
+                "name": "eTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "receiveNativeETH",
+                "type": "bool"
               }
             ],
             "outputs": [
