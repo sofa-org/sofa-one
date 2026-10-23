@@ -31,6 +31,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
   { name: 'Avalon Finance', website: 'https://www.avalonfinance.xyz/' },
+  { name: 'Axis', website: 'https://axis.to/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
   {
     name: 'BabySwap',
@@ -45,6 +46,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Bedrock', website: 'https://www.bedrock.technology/' },
   { name: 'Beefy', website: 'https://beefy.com' },
   { name: 'Biswap', website: 'https://biswap.org' },
+  { name: 'BitFi', website: 'https://www.bitfi.one/' },
   { name: 'BitU', website: 'https://www.bitu.io/' },
   { name: 'Brila', website: 'https://brila.finance/' },
   { name: 'Camelot', website: 'https://camelot.exchange' },

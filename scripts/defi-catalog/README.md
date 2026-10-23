@@ -696,3 +696,9 @@ Policy state was in-memory: no real database locking, funded contract execution,
 
 Admission is static metadata, not an API-key grant, verified TVL/active-user claim, guarantee of backing/safety or complete workflow. Rejection records distinguish explicit cessation from current-source/deployment gaps and temporary pause observations. Commits are local; no push.
 
+## Repeated expansion round 6, cycle 1 — BitFi and Axis (2026-10-24)
+
+- `sources/bitfi-horizon-vault-r6.json`: five current Ethereum bfUSD Horizon staking/request/claim methods with current implementation binding. Withdraw/redeem burn shares and create receiver-owned delayed records, not immediate cash; claims depend on manager epochs, fees and custody. Unvested yield goes to the fee receiver rather than the claimant. No primary bfUSD issuance, Pulsar or bridge capability is admitted.
+- `sources/axis-ethereum-staked-usdx-r6.json`: six current Ethereum V2 sUSDx funding/request/cancel/serviced-claim methods. Existing owner/controller operator relationships are checked, not granted. Servicer processing must precede claims; restrictions, mutable cooldowns and offchain venue exposure remain. Proxy Similar Match and implementation exact-match labels are preserved accurately.
+- Verification under Node.js 20.19.3: eleven additions only; catalog diff/generate/check, four backend suites (65 tests), frontend directory suite (one test) and production policy smoke passed. Smoke exercised all eleven calls and denied 155 excluded selectors. Both cards and served Ethereum entries were observed in Chromium. Policy state was in-memory; no real database locking, funded epoch/service processing, financial onchain execution or Openfort broadcast. Full verification/build/E2E gates were not run.
+
