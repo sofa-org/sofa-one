@@ -18894,6 +18894,59 @@
         ]
       },
       {
+        "address": "0xf3c79408164abfb6fd5ddfe33b084e4ad2c07c18",
+        "protocol": "NodeDAO",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimWithdrawals",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_requestIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestWithdrawals",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_unstakeAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stakeETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_unstakeAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xf403c135812408bfbe8713b5a23a04b3d48aae31",
         "protocol": "convex",
         "abi": [
@@ -25684,6 +25737,108 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x61183a27ab5fdacc4d46f5af9eb9e6a93afd76d4",
+        "protocol": "BitU",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cooldownAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "cooldownShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
