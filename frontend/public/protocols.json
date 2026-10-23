@@ -7357,6 +7357,118 @@
         ]
       },
       {
+        "address": "0x465a5a630482f3abd6d3b84b39b29b07214d19e5",
+        "protocol": "Flux Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrowAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "mintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemTokens",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemUnderlying",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrowBehalf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4691c475be804fa85f91c2d6d0adf03114de3093",
         "protocol": "Re Protocol",
         "abi": [
@@ -51699,6 +51811,132 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xecebd8fb1d3e0a4acaa6decf5db90b99f0587451",
+        "protocol": "Timeswap",
+        "abi": [
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "param",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "strike",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "positionAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minToken0Amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minToken1Amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "token0Amount",
+                "type": "uint256"
+              },
+              {
+                "name": "token1Amount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xf253ecea8aafead83e2e76b8db75f0dcb9ba90f0",
+        "protocol": "Timeswap",
+        "abi": [
+          {
+            "type": "function",
+            "name": "lendGivenPrincipal",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "param",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "strike",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "isToken0",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "tokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minReturnAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "positionAmount",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

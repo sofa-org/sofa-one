@@ -817,3 +817,10 @@ Source match levels, partial verification and mutable dependencies are preserved
 - Deri current implementation-source gaps and Synthetix retired/unsupported or current-source/permission gaps are separately preserved; no historical ABI or generic executor fallback was admitted.
 - Verification under Node.js 20.19.3: ten additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all ten calls and denied 79 excluded selectors. Both cards and served BSC/Arbitrum entries passed Chromium checks. No proof was signed, collateral funded, AMLP request settled or rebate paid.
 
+## Repeated expansion round 7, cycle 8 — Flux Finance and Timeswap (2026-10-24)
+
+- `sources/flux-finance-fusdc-ethereum-r7.json`: six current fUSDC lending/repayment methods, a distinct peer-to-pool product from Ondo issuer mint/redemption while sharing founding/governance risks. Custom delegator implementation was read directly despite a false nonproxy heuristic. Existing KYC/sanctions, Comptroller collateral limits, cash, oracle and variable interest remain independent; no eligibility or collateral enrollment is granted.
+- `sources/timeswap-current-nodex-arbitrum-r7.json`: two current app-bound Arbitrum no-dex lending and matured position-withdrawal methods. Fixed verified callbacks are internally constructed; no user-programmable callback or executor is admitted. Strike/units, caller minima/deadlines, exact native funding, unrefunded residuals and possible alternate-collateral maturity payout are explicit; principal is not protected.
+- `sources/kuma-current-category-deferred-r7.json` distinguishes deprecated risk categories, years-stale mandatory Polygon USK oracle and matured/defaulted EGK asset ambiguity. It does not assert whole-protocol shutdown.
+- Verification under Node.js 20.19.3: eight additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all eight calls and denied 75 excluded selectors. Both cards and served Ethereum/Arbitrum entries passed Chromium checks. No funded loan, interest accrual, option position or maturity settlement was executed.
+
