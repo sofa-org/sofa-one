@@ -27163,6 +27163,132 @@
   "56": {
     "contracts": [
       {
+        "address": "0x02c48173a260fa22e99c27bec530e2052be5a528",
+        "protocol": "MYX Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimUserRebate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "rebateOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimUserRebates",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolIds",
+                "type": "bytes32[]"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "rebateOut",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "rebateOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x05e61e0cdcd2170a76f9568a110cee3afdd6c46f",
         "protocol": "knightswap-v1",
         "abi": [
@@ -46636,6 +46762,44 @@
         ]
       },
       {
+        "address": "0x07f169d388c56cf8517b249e845502a14ddf043f",
+        "protocol": "Antarctic Exchange",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x0b2b2b2076d95dda7817e785989fe353fe955ef9",
         "protocol": "USDai",
         "abi": [
@@ -49674,6 +49838,84 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x98a6aee58699e4f4e13d8d8d0800e4e9cbbcf8dd",
+        "protocol": "Antarctic Exchange",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityFromVault",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityToVault",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amlpAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "signature",
+                "type": "bytes"
+              },
+              {
+                "name": "timestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityToWallet",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amlpAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "signature",
+                "type": "bytes"
+              },
+              {
+                "name": "timestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "uint256"
               }
             ],
             "outputs": []
