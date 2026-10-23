@@ -5,21 +5,23 @@ const ORDER_TYPES = ['bytes32','uint256','address','address','uint256','uint256'
 const DOMAIN_FIELDS = [{name:'name',type:'string'},{name:'version',type:'string'},{name:'chainId',type:'uint256'},{name:'verifyingContract',type:'address'}] as const;
 const ORDER_TYPE_HASH = keccak256(toHex(POLYMARKET_ORDER_TYPE));
 
-function assertSignature(signature: string): void {
+function normalizeSignature(signature: `0x${string}`): `0x${string}` {
   if (!isHex(signature) || signature.length !== 132) throw new Error('Expected a 65-byte signature');
   const v = Number.parseInt(signature.slice(-2), 16);
   if (v !== 0 && v !== 1 && v !== 27 && v !== 28) throw new Error('Invalid signature recovery value');
+  // DepositWallet's 65-byte ECDSA verifier requires v=27/28, not yParity=0/1.
+  return v < 27 ? `0x${signature.slice(2, -2)}${(v + 27).toString(16)}` : signature;
 }
 
 /** Build the Poly1271 signature envelope; the supplied signature is over TypedDataSign. */
 export function buildPolymarketPoly1271Envelope(payload: ValidatedPolymarketOrder, signature: `0x${string}`): `0x${string}` {
-  assertSignature(signature);
+  const normalizedSignature = normalizeSignature(signature);
   const contentsHash = contentsHashFor(payload);
   const appDomain = hashDomain({ domain:payload.domain, types:{EIP712Domain:DOMAIN_FIELDS} } as any);
   const typeBytes = toBytes(POLYMARKET_ORDER_TYPE);
   if (typeBytes.length > 65535) throw new Error('Order type is too long');
   const length = new Uint8Array([typeBytes.length >> 8, typeBytes.length & 255]);
-  return concat([signature, appDomain, contentsHash, toHex(typeBytes), toHex(length)]) as `0x${string}`;
+  return concat([normalizedSignature, appDomain, contentsHash, toHex(typeBytes), toHex(length)]) as `0x${string}`;
 }
 
 export function polymarketOrderContentsHash(payload: ValidatedPolymarketOrder): `0x${string}` {
