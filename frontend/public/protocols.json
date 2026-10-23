@@ -4786,6 +4786,47 @@
         ]
       },
       {
+        "address": "0x2cde9919e81b20b4b33dd562a48a84b54c48f00c",
+        "protocol": "Hedgey Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "partialRedeemPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "planIds",
+                "type": "uint256[]"
+              },
+              {
+                "name": "redemptionTime",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemAllPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "planIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x2db0afd0045f3518c77ec6591a542e326befd3d7",
         "protocol": "izumi",
         "abi": [
@@ -7161,6 +7202,55 @@
                 "type": "uint96"
               }
             ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x45cd2e9bd07167cc31ff17584e325c0e562a24f7",
+        "protocol": "Unvest",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addRecipient",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "addRecipients",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "recipients",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "totalAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "payable",
+            "inputs": [],
             "outputs": []
           }
         ]
@@ -11869,6 +11959,55 @@
         ]
       },
       {
+        "address": "0x934f1d13adc07ea112dabef4fa21d7639895b3e4",
+        "protocol": "Unvest",
+        "abi": [
+          {
+            "type": "function",
+            "name": "createVestingToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "symbol",
+                "type": "string"
+              },
+              {
+                "name": "underlyingTokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "milestonesArray",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "timestamp",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "ramp",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "percentage",
+                    "type": "uint64"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "vestingToken",
+                "type": "address"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x93b37bd5b6b278373217333ac30d7e74c85fbdcb",
         "protocol": "Sablier",
         "abi": [
@@ -13647,6 +13786,88 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xa600ec7db69dfcd21f19face5b209a55eab7a7c0",
+        "protocol": "Hedgey Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "createPlan",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "start",
+                "type": "uint256"
+              },
+              {
+                "name": "cliff",
+                "type": "uint256"
+              },
+              {
+                "name": "rate",
+                "type": "uint256"
+              },
+              {
+                "name": "period",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "newPlanId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "partialRedeemPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "planIds",
+                "type": "uint256[]"
+              },
+              {
+                "name": "redemptionTime",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemAllPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemPlans",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "planIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
