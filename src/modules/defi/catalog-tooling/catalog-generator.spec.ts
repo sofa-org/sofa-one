@@ -54,6 +54,7 @@ describe('current DeFi catalog pipeline', () => {
   });
 
   it('reports metadata changes without mutating the source', () => {
+    const sourceBefore = structuredClone(document);
     const original = validateCatalogDocument(document);
     const changed = structuredClone(document);
     const fn = changed.chains[0].contracts[0].functions[0];
@@ -63,7 +64,7 @@ describe('current DeFi catalog pipeline', () => {
     expect(result.removed).toEqual([]);
     expect(result.metadataChanged).toContain(fn.capabilityId);
     expect(result.abiChanged).toEqual([]);
-    expect(document.chains[0].contracts[0].functions[0].description).not.toContain('Updated copy');
+    expect(document).toEqual(sourceBefore);
   });
 
   it('flags grant-relevant status changes as authority changes', () => {

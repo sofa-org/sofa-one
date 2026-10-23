@@ -2,6 +2,233 @@
   "1": {
     "contracts": [
       {
+        "address": "0x00182fdb0b880ee24d428e3cc39383717677c37e",
+        "protocol": "Teller",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelBid",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimLoanNFT",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lenderAcceptBid",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToProtocol",
+                "type": "uint256"
+              },
+              {
+                "name": "amountToMarketplace",
+                "type": "uint256"
+              },
+              {
+                "name": "amountToBorrower",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayLoan",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayLoanFull",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayLoanFullWithoutCollateralWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayLoanMinimum",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayLoanWithoutCollateralWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_bidId",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "submitBid",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lendingToken",
+                "type": "address"
+              },
+              {
+                "name": "_marketplaceId",
+                "type": "uint256"
+              },
+              {
+                "name": "_principal",
+                "type": "uint256"
+              },
+              {
+                "name": "_duration",
+                "type": "uint32"
+              },
+              {
+                "name": "_APR",
+                "type": "uint16"
+              },
+              {
+                "name": "_metadataURI",
+                "type": "string"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "bidId_",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "submitBid",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lendingToken",
+                "type": "address"
+              },
+              {
+                "name": "_marketplaceId",
+                "type": "uint256"
+              },
+              {
+                "name": "_principal",
+                "type": "uint256"
+              },
+              {
+                "name": "_duration",
+                "type": "uint32"
+              },
+              {
+                "name": "_APR",
+                "type": "uint16"
+              },
+              {
+                "name": "_metadataURI",
+                "type": "string"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_collateralInfo",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "_collateralType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "_tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "_collateralAddress",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "bidId_",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x004626a008b1acdc4c74ab51644093b155e59a23",
         "protocol": "angle",
         "abi": [
@@ -6087,6 +6314,82 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x615989f57f6da73c3a1f96a347536941d88e7e0a",
+        "protocol": "Yelay",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "migratePosition",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "fromProjectId",
+                "type": "uint256"
+              },
+              {
+                "name": "toProjectId",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
