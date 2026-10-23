@@ -11,6 +11,7 @@ export interface SupportedProtocol {
 export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: '0x', website: 'https://0x.org' },
   { name: '1inch', website: 'https://1inch.com' },
+  { name: '3Jane Lending', website: 'https://www.3jane.xyz/' },
   { name: '40 Acres', website: 'https://www.40acres.finance/' },
   { name: 'Aave V3', website: 'https://aave.com' },
   { name: 'Aegis', website: 'https://aegis.im' },
@@ -177,6 +178,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Revert Finance', website: 'https://revert.finance/' },
   { name: 'River', website: 'https://riverai.inc/' },
   { name: 'Rocket Pool', website: 'https://rocketpool.net' },
+  { name: 'Royco', website: 'https://www.royco.org/' },
   { name: 'Sablier', website: 'https://sablier.com/' },
   { name: 'ShibaSwap', website: 'https://shibaswap.com' },
   { name: 'Sierra Protocol', website: 'https://www.sierra.money/' },
