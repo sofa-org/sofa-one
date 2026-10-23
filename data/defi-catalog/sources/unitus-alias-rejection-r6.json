@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Unitus Finance",
+  "observedAt": "2026-10-24",
+  "decision": "rejected-duplicate-alias",
+  "reason": "Official Unitus overview explicitly identifies Unitus as formerly dForce Lending and inheriting all lending smart contracts; dForce is already admitted. New token/rebrand is not a new protocol.",
+  "sourceRefs": [
+    "https://unitus.gitbook.io/unitus/overview.md",
+    "https://docs.dforce.network/ecosystem/unitus-finance"
+  ],
+  "primaryStatement": "Unitus Finance, formerly known as dForce Lending, has undergone rebranding and evolved from dForce Lending, inheriting all of dForce's lending features and smart contracts",
+  "sourceSnapshots": {
+    "officialOverview": {
+      "sourceRef": "https://unitus.gitbook.io/unitus/overview.md",
+      "sha256": "1f43363eb5802f4df5666a0e256437c16087777b3ae497a2ef94615911bb8ed1",
+      "content": "> For the complete documentation index, see [llms.txt](https://unitus.gitbook.io/unitus/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://unitus.gitbook.io/unitus/overview.md).\n\n# Overview\n\nUnitus Finance: A Next-Generation Multi-Chain Money Market\n\nWelcome to Unitus documents, you can find all the essential information about Unitus right here.\n\n## What Is Unitus?\n\nAs you can read [in this post](https://forum.dforce.network/t/the-dforce-x-plan/1407), Unitus Finance, formerly known as dForce Lending, has undergone rebranding and evolved from dForce Lending, inheriting all of dForce's lending features and smart contracts, and marking a significant milestone as the first platform to provide native dForce USX liquidity across multiple L1/L2s.\n\nUnitus, initially governed by dForce, will introduce its own token and tokenomics to drive farming initiatives and enable governance decisions via voting.\n\n## Unitus\u2019 Ongoing Venture\n\nUnitus aims to become a cross-chain and omni money market, connecting liquidity across the globe, encompassing both crypto and real-world assets, and spanning the realms of on-chain and off-chain ecosystems.\n\nThe Unitus core team remains committed to advancing Unitus Lending by eliminating entry obstacles, enhancing the user experience, and striving to push DeFi into the mainstream.\n\nUnitus will be launched in 2 stages:\n\n* Guided Launch (Stage 1)\n* Cruise Launch (Stage 2)\n\nUnitus is currently in the Guided Launch stage, which is the first stage of its development, featuring the existing funtionalities inherited from dForce Lending, such as the global pool and dynamic interest rate, etc). Meanwhile, the Cruise Launch, which is on the horizon, will introduce more robust and thrilling features. It will provide users with access to a comprehensive suite of DeFi functionalities, all while optimizing capital efficiency.\n\n## Features\n\nUnitus Finance offers a range of advantages that distinguish it from existing protocols:\n\n* Multi-chain: Unitus extends DeFi lending & borrowing capabilities to multiple blockchain.\n* Cross-chain: Through the integration of dForce\u2019s native USX stablecoin, users can secure omni USX liquidity by using collaterals assets from various blockchain networks.\n* Tokenomics: Unitus\u2019 tokenomics and liquidity mining mechanism incentivize long-term liquidity and align interests effectively.\n* Capital efficiency: Unitus achieves maximum capital efficiency by enabling higher loan-to-value (LTV) ratios for pegged assets, including LSD assets like wstETH, rETH, cbETH, among others, as well as Real World Asset (RWA) yield assets like sDAI and sUSX. LTV ratios can reach as high as 99%.\n* Customized money market for long-tail assets: Unitus introduces an isolated market for long-tail assets with flexible risk parameters.\n"
+    }
+  },
+  "existingAdmission": {
+    "protocol": "dforce-itoken",
+    "chainId": 1,
+    "addresses": [
+      "0x1180c114f7fadcb6957670432a3cf8ef08ab5354",
+      "0x298f243ad592b6027d4717fbe9decda668e3c3a8",
+      "0x2f956b2f801c6dad74e87e7f45c94f6283bf0f45"
+    ]
+  },
+  "selectedFunctions": []
+}
