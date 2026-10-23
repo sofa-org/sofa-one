@@ -23,6 +23,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'ApeSwap', website: 'https://apeswap.finance' },
   { name: 'Apyx', website: 'https://apyx.fi' },
   { name: 'Asymmetry Finance', website: 'https://www.asymmetry.finance/' },
+  { name: 'Atlantis', website: 'https://atlantisdex.xyz/' },
   { name: 'Aura', website: 'https://aura.finance' },
   { name: 'Auto Finance', website: 'https://auto.finance/' },
   // The former live BabySwap site now serves a lander; retain its official deployment reference.
@@ -108,6 +109,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Morpho', website: 'https://morpho.org' },
   { name: 'Multipli', website: 'https://multipli.fi' },
   { name: 'MUX', website: 'https://mux.network/' },
+  { name: 'Napier', website: 'https://napier.finance/' },
   { name: 'Nerite', website: 'https://www.nerite.org/' },
   { name: 'Neverland', website: 'https://neverland.money/' },
   { name: 'Nexus Mutual', website: 'https://nexusmutual.io' },
