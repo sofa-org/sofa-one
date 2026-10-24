@@ -51885,6 +51885,71 @@
         ]
       },
       {
+        "address": "0x4b7339e599a599dbd7829a8eca0d233ed4f7ea09",
+        "protocol": "Tenderize",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "unlockID",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "unlockID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4de3741e1676ed14d661b1398196dc221ca4d37a",
         "protocol": "Sumer",
         "abi": [
@@ -53237,6 +53302,116 @@
         ]
       },
       {
+        "address": "0x8646cbd915eaad1a4e2ba5e2b67acec4957d5f1a",
+        "protocol": "Open Dollar",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifySAFECollateralization",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_safe",
+                "type": "uint256"
+              },
+              {
+                "name": "_deltaCollateral",
+                "type": "int256"
+              },
+              {
+                "name": "_deltaDebt",
+                "type": "int256"
+              },
+              {
+                "name": "_nonSafeHandlerAddress",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "moveSAFE",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_safeSrc",
+                "type": "uint256"
+              },
+              {
+                "name": "_safeDst",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_cType",
+                "type": "bytes32"
+              },
+              {
+                "name": "_safe",
+                "type": "uint256"
+              },
+              {
+                "name": "_dst",
+                "type": "address"
+              },
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_safe",
+                "type": "uint256"
+              },
+              {
+                "name": "_dst",
+                "type": "address"
+              },
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferInternalCoins",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_safe",
+                "type": "uint256"
+              },
+              {
+                "name": "_dst",
+                "type": "address"
+              },
+              {
+                "name": "_rad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x9377f17abde96887943e5fcc92db034c76820529",
         "protocol": "sofa",
         "abi": [
@@ -53692,6 +53867,44 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xae7df58bb63b2db798f85ab7bcace340d55f6f39",
+        "protocol": "Open Dollar",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_wei",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "join",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_wei",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -55399,6 +55612,44 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xee4393c6165a416c83756198a56395f48bbf480f",
+        "protocol": "Open Dollar",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "join",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
