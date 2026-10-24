@@ -80,9 +80,11 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Drips', website: 'https://www.drips.network/' },
   // Deployment documentation only; no current legacy trading frontend is asserted.
   { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
+  { name: 'Ease', website: 'https://www.easedefi.org/' },
   { name: 'EigenLayer', website: 'https://www.eigenlayer.xyz' },
   { name: 'Ekubo', website: 'https://ekubo.org' },
   { name: 'Enso', website: 'https://enso.build' },
+  { name: 'Ensuro', website: 'https://ensuro.co/' },
   { name: 'Enzyme', website: 'https://enzyme.finance' },
   { name: 'ETH Strategy', website: 'https://www.ethstrat.xyz/' },
   { name: 'Ethena', website: 'https://ethena.fi' },
