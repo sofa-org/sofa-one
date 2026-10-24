@@ -1080,3 +1080,9 @@ All twenty rendered cards were verified through actual entered search values and
 
 These are finite function admissions, not complete product workflows, new signing rights, new chains or a new execution language. RWA requests can depend on issuer NAV/compliance/settlement; FlokiFi creation has no admitted dynamic-vault unlock; DxSale requires existing owner/maturity; Rank's normal matured epochs do not allow new investment; HertzFlow covers existing requests/ledgers only. Current deployment/source evidence is not persistent runtime attestation, TVL/active-user evidence, legal eligibility, backing, liquidity, yield, financial safety or guaranteed execution. All commits are local; no push.
 
+## Repeated expansion round 11, cycle 1 — GoPlus Locker and MorpheusAI (2026-10-24)
+
+- `sources/goplus-locker-tokenlocker-ethereum-r11.json`: four exact-source direct Ethereum financial term/vesting lock methods. Initial beneficiary, exact received-token checks, mutable token/native/LP fees, future timestamps, vesting-cycle requirements and integer rounding constrain custody and release; no ownership transfer or permit is admitted.
+- `sources/morpheusai-capital-steth-ethereum-r11.json`: three current Ethereum own stETH capital-ledger methods, with current implementation slot and match-grade full sources retained. Current Distributor pulls caller stETH directly, not through the guide's implied allowance target. Principal withdrawal and reward-term extension are finite; MOR claims remain excluded because they send cross-chain mint messages.
+- Node.js 20.19.3 diff contained seven additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all seven calls and denied 63 excluded selectors. Chromium verified both exact filters and served Ethereum ABI counts. No custody, stETH stake, principal withdrawal or cross-chain reward was executed; full verify/build/E2E gates were not run.
+

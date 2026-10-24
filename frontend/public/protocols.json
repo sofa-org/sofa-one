@@ -9408,6 +9408,68 @@
         ]
       },
       {
+        "address": "0x47176b2af9885dc6c4575d4efd63895f7aaa4790",
+        "protocol": "MorpheusAI",
+        "abi": [
+          {
+            "type": "function",
+            "name": "lockClaim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "rewardPoolIndex_",
+                "type": "uint256"
+              },
+              {
+                "name": "claimLockEnd_",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "rewardPoolIndex_",
+                "type": "uint256"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              },
+              {
+                "name": "claimLockEnd_",
+                "type": "uint128"
+              },
+              {
+                "name": "referrer_",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "rewardPoolIndex_",
+                "type": "uint256"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4742a56668fbacbc11087f516c4b01ebc48f716f",
         "protocol": "Tangent Finance",
         "abi": [
@@ -28394,6 +28456,128 @@
             "outputs": [
               {
                 "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xf17a08a7d41f53b24ad07eb322cbbda2ebdec04b",
+        "protocol": "GoPlus Locker",
+        "abi": [
+          {
+            "type": "function",
+            "name": "lock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token_",
+                "type": "address"
+              },
+              {
+                "name": "feeName_",
+                "type": "string"
+              },
+              {
+                "name": "owner_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              },
+              {
+                "name": "endTime_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "lockId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lockId_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "updateLock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "lockId_",
+                "type": "uint256"
+              },
+              {
+                "name": "moreAmount_",
+                "type": "uint256"
+              },
+              {
+                "name": "newEndTime_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "vestingLock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tgeBps",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "cycleBps",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "owner",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "tgeTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "cycle",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "feeName_",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "lockId",
                 "type": "uint256"
               }
             ]
