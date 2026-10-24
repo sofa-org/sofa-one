@@ -1014,3 +1014,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - `sources/vault-street-primeusd-ethereum-r10.json`: four direct primeUSD investor request/cancel methods. Separate Valiant Digital Assets issuer accounting and Resolv Labs affiliation are explicit; wstUSR and CARRY are not counted. Existing allowlisting, minimum output, issuer completion, treasury cash and mutable NAV remain necessary; no completion authority is admitted.
 - Node.js 20.19.3 diff contained eight additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all eight calls and denied 161 excluded selectors. Chromium verified exact filtered cards and all three served Ethereum entries. No actual issuer requests, queue settlement or financial payout was executed.
 
+## Repeated expansion round 10, cycle 3 — DackieSwap and Surge Credit (2026-10-24)
+
+- `sources/dackieswap-base-v2-r10.json`: fourteen exact-source Base direct V2 swap/LP methods, not Meta Aggregator execution. Deployed fee arithmetic is 0.25%, not a generic 0.3% example. Pair paths, asset/LP units, native refunds, deadlines and whole-router-balance fee-token caveats remain explicit.
+- `sources/surge-credit-base-variable-r10.json`: three current Base variable-USDC internal share-ledger methods. Similar-match proxy and exact-match current implementation are separately recorded; variable `withdrawAll` requires market zero and full idle liquidity. Fixed allocation/settlement methods are not admitted; losses, linked library and mutable provider/upgrades remain caveated.
+- LeverUp's unresolved current facet sources and Blueshift's current-app/stale-doc deployment split are retained as source-binding deferrals, not shutdown claims.
+- Node.js 20.19.3 diff contained seventeen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all seventeen calls and denied 80 excluded selectors. Chromium verified both exact search filters and served Base entries. No actual LP, swap, deposit or withdrawal was executed.
+
