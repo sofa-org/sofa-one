@@ -10315,6 +10315,217 @@
         ]
       },
       {
+        "address": "0x66a0f676479cee1d7373f3dc2e2952778bff5bd6",
+        "protocol": "Wise Token",
+        "abi": [
+          {
+            "type": "function",
+            "name": "createStake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_stakedAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_lockDays",
+                "type": "uint64"
+              },
+              {
+                "name": "_referrer",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes16"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "referralID",
+                "type": "bytes16"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createStakeBulk",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_stakedAmount",
+                "type": "uint256[]"
+              },
+              {
+                "name": "_lockDays",
+                "type": "uint64[]"
+              },
+              {
+                "name": "_referrer",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createStakeWithETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_lockDays",
+                "type": "uint64"
+              },
+              {
+                "name": "_referrer",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes16"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "referralID",
+                "type": "bytes16"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "createStakeWithToken",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_tokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_lockDays",
+                "type": "uint64"
+              },
+              {
+                "name": "_referrer",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes16"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "referralID",
+                "type": "bytes16"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "endStake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_stakeID",
+                "type": "bytes16"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "referrerInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_referralID",
+                "type": "bytes16"
+              },
+              {
+                "name": "_scrapeDays",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "referrerInterestBulk",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_referralIDs",
+                "type": "bytes16[]"
+              },
+              {
+                "name": "_scrapeDays",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "scrapeInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_stakeID",
+                "type": "bytes16"
+              },
+              {
+                "name": "_scrapeDays",
+                "type": "uint64"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "scrapeDay",
+                "type": "uint256"
+              },
+              {
+                "name": "scrapeAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "remainingDays",
+                "type": "uint256"
+              },
+              {
+                "name": "stakersPenalty",
+                "type": "uint256"
+              },
+              {
+                "name": "referrerPenalty",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -10596,6 +10807,132 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x719a69d0dc67bd3aa7648d4694081b3c87952797",
+        "protocol": "PWN",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimLOAN",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "loanId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "extendLOAN",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "extension",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "compensationAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "compensationAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "expiration",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "proposer",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nonceSpace",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "makeExtensionProposal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "extension",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "compensationAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "compensationAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "expiration",
+                    "type": "uint40"
+                  },
+                  {
+                    "name": "proposer",
+                    "type": "address"
+                  },
+                  {
+                    "name": "nonceSpace",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayLOAN",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "loanId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

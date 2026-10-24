@@ -188,6 +188,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Polymarket', website: 'https://polymarket.com' },
   { name: 'PoolTogether', website: 'https://pooltogether.com/' },
   { name: 'Puffer', website: 'https://puffer.fi' },
+  { name: 'PWN', website: 'https://pwn.xyz/' },
   { name: 'QiDao', website: 'https://www.mai.finance/' },
   { name: 'QuickSwap', website: 'https://quickswap.exchange' },
   { name: 'Ramses', website: 'https://www.ramses.xyz/' },
@@ -261,6 +262,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
   { name: 'Wildcat', website: 'https://app.wildcat.finance' },
+  { name: 'Wise Token', website: 'https://app.wisetoken.com/' },
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'Yelay', website: 'https://yelay.io/' },
