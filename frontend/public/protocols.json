@@ -997,6 +997,232 @@
         ]
       },
       {
+        "address": "0x02201e6f13c41506c7bb635d7543f98826229ab7",
+        "protocol": "Metric",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "pools",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "extensionDatas",
+                    "type": "bytes[]"
+                  },
+                  {
+                    "name": "zeroForOneBitMap",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "zeroForOne",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "priceLimitX64",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "extensionData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "pools",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "extensionDatas",
+                    "type": "bytes[]"
+                  },
+                  {
+                    "name": "zeroForOneBitMap",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "zeroForOne",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "priceLimitX64",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "extensionData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x02d9876a21af7545f8632c3af76ec90b5ad4b66d",
         "protocol": "ekubo",
         "abi": [
@@ -55248,6 +55474,76 @@
         ]
       },
       {
+        "address": "0xd48f1d3eec18d8b71ddf1575bae160030878d705",
+        "protocol": "8lends",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimAndSellTokensForProjectBatch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectIds",
+                "type": "uint256[]"
+              },
+              {
+                "name": "_minUsdcAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimTokensForProject",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimTokensForProjectBatch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimUSDCForProject",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimUSDCForProjectBatch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectIds",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd68647555e5da198d50866334eed647cbe3d1556",
         "protocol": "OpenCover",
         "abi": [
@@ -56076,6 +56372,116 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xf435a133d6cdcb81061f18a4763560f9931db57d",
+        "protocol": "8lends",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "_investor",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "investUpdateV2",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_pid",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_nonce",
+                "type": "uint256"
+              },
+              {
+                "name": "_sig",
+                "type": "bytes"
+              },
+              {
+                "name": "_inviter",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "makeRepayment",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFundsToBorrower",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFundsToBorrower",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxUSDForReward",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawInvestment",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "_investor",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
