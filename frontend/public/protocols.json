@@ -20356,6 +20356,97 @@
         ]
       },
       {
+        "address": "0xc3ad34de18b59a24bd0877e454fb924181f09c8f",
+        "protocol": "Capyfi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrowAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "mintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemTokens",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemUnderlying",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xc3d688b66703497daa19211eedff47f25384cdc3",
         "protocol": "Compound III",
         "abi": [
@@ -45598,6 +45689,97 @@
         ]
       },
       {
+        "address": "0x5adb71adb317ce975a405e90335068f0af9f26c7",
+        "protocol": "Capyfi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrowAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "mintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemTokens",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemUnderlying",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "redeemAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repayBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x5eded0d7e76c563ff081ca01d9d12d6b404df527",
         "protocol": "maverick-v2",
         "abi": [
@@ -50766,6 +50948,226 @@
             "inputs": [
               {
                 "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x21a1de432ca1107c3a0f308aeb024abc487575d1",
+        "protocol": "Rain",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelBuyOrders",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8[]"
+              },
+              {
+                "name": "price",
+                "type": "uint256[]"
+              },
+              {
+                "name": "orderID",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelSellOrders",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8[]"
+              },
+              {
+                "name": "price",
+                "type": "uint256[]"
+              },
+              {
+                "name": "orderID",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "enterOption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "merge",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "placeBuyOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8"
+              },
+              {
+                "name": "price",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "postOnly",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "orderID",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "placeSellOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8"
+              },
+              {
+                "name": "price",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "postOnly",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "orderID",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellOption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "optionSide",
+                "type": "uint8"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "split",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "option",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
                 "type": "uint256"
               }
             ],
