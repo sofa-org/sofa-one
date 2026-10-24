@@ -963,3 +963,10 @@ Actual match/partial/null grades and unverified dependencies remain explicit, in
 - Combined rejection evidence preserves Chamber=dHEDGE duplication and Fluid Assets cessation without declaring maintained FLY retired.
 - Verification under Node.js 20.19.3: sixteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all sixteen calls and denied 91 excluded selectors. Exact filtered cards and served Ethereum/Arbitrum entries passed Chromium checks. No FLY stake, pool underwriting, exercise, fee payment or mixed-asset settlement was executed.
 
+## Repeated expansion round 9, cycle 7 — Belt Finance and DOOAR (2026-10-24)
+
+- `sources/belt-finance-beltusdt-bsc-r9.json`: two current BSC beltUSDT strategy-vault deposit/withdraw methods with caller minima. Current source/implementation and pause/active-strategy observations do not refresh the frontend's explicitly stale 2024 API fee/yield data. Withdraw selects one sufficiently funded strategy rather than aggregating; strategy valuation, loss and liquidity remain material.
+- `sources/dooar-router02-bsc-r9.json`: fourteen exact-source-bound direct BSC swap/LP methods, no permit or callback grant. Source prices each hop with a 1% input fee, not generic Uniswap 0.3%. Liquidity branch minima, taxed-token receiver amounts, whole residual router balances and fixed empty-data BNB payouts have source-specific limits; do not prefund or infer guaranteed net delivery.
+- Three rejection records distinguish Wing current-source gaps, Bella's explicit Flex Savings sunset and Strike's current-primary-product gap; only Bella is established sunset evidence here.
+- Verification under Node.js 20.19.3: sixteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all sixteen calls and denied 81 excluded selectors. Exact filtered cards and served BNB entries passed Chromium checks. No strategy investment/exit, swap, LP mint/burn or BNB payout was executed.
+

@@ -50,6 +50,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Bebop', website: 'https://bebop.xyz' },
   { name: 'Bedrock', website: 'https://www.bedrock.technology/' },
   { name: 'Beefy', website: 'https://beefy.com' },
+  { name: 'Belt Finance', website: 'https://belt.fi/' },
   { name: 'Biswap', website: 'https://biswap.org' },
   { name: 'BitFi', website: 'https://www.bitfi.one/' },
   { name: 'BitU', website: 'https://www.bitu.io/' },
@@ -81,6 +82,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dinero', website: 'https://dinero.xyz' },
   { name: 'DODO', website: 'https://dodoex.io' },
   { name: 'Dolomite', website: 'https://dolomite.io' },
+  { name: 'DOOAR', website: 'https://beta.dooar.com/swap' },
   { name: 'Drips', website: 'https://www.drips.network/' },
   // Deployment documentation only; no current legacy trading frontend is asserted.
   { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
