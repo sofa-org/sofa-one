@@ -9371,6 +9371,85 @@
         ]
       },
       {
+        "address": "0x4e013ca8ff612a58f53c822904cdd0ec538a4a4f",
+        "protocol": "3F",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4e033931ad43597d96d6bcc25c280717730b58b1",
         "protocol": "Aave V3",
         "abi": [
@@ -12249,6 +12328,66 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x735a80510536a9a18c8824f40dbc92824640c95a",
+        "protocol": "Hakka Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exit",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "getReward",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stakeFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -18990,6 +19129,87 @@
             "outputs": [
               {
                 "name": "gBalance_",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xb925863a15ebdeae1a638bf2b6fd00d4db897a62",
+        "protocol": "Hakka Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "restake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "index",
+                "type": "uint256"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "time",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "wAmountAdded",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "time",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "wAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "index",
+                "type": "uint256"
+              },
+              {
+                "name": "wAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount",
                 "type": "uint256"
               }
             ]

@@ -11,6 +11,7 @@ export interface SupportedProtocol {
 export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: '0x', website: 'https://0x.org' },
   { name: '1inch', website: 'https://1inch.com' },
+  { name: '3F', website: 'https://www.3f.xyz/' },
   { name: '3Jane Lending', website: 'https://www.3jane.xyz/' },
   { name: '40 Acres', website: 'https://www.40acres.finance/' },
   { name: 'Aave V3', website: 'https://aave.com' },
@@ -122,6 +123,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Grove Finance', website: 'https://grove.finance/' },
   { name: 'Gyroscope', website: 'https://gyro.finance/' },
   { name: 'HAI', website: 'https://www.letsgethai.com/' },
+  { name: 'Hakka Finance', website: 'https://hakka.finance/' },
   { name: 'Harvest', website: 'https://harvest.finance' },
   { name: 'Hashflow', website: 'https://hashflow.com' },
   { name: 'Hedgey Finance', website: 'https://hedgey.finance/' },
