@@ -12300,6 +12300,274 @@
         ]
       },
       {
+        "address": "0x655edce464cc797526600a462a8154650eee4b77",
+        "protocol": "Clipper",
+        "abi": [
+          {
+            "type": "function",
+            "name": "burnToWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transmitAndDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositAmounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "nDays",
+                "type": "uint256"
+              },
+              {
+                "name": "poolTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "goodUntil",
+                "type": "uint256"
+              },
+              {
+                "name": "theSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transmitAndDepositSingleAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "inputToken",
+                "type": "address"
+              },
+              {
+                "name": "inputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "nDays",
+                "type": "uint256"
+              },
+              {
+                "name": "poolTokens",
+                "type": "uint256"
+              },
+              {
+                "name": "goodUntil",
+                "type": "uint256"
+              },
+              {
+                "name": "theSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transmitAndSellTokenForEth",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "inputToken",
+                "type": "address"
+              },
+              {
+                "name": "inputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "outputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "goodUntil",
+                "type": "uint256"
+              },
+              {
+                "name": "destinationAddress",
+                "type": "address"
+              },
+              {
+                "name": "theSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "auxiliaryData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transmitAndSwap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "inputToken",
+                "type": "address"
+              },
+              {
+                "name": "outputToken",
+                "type": "address"
+              },
+              {
+                "name": "inputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "outputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "goodUntil",
+                "type": "uint256"
+              },
+              {
+                "name": "destinationAddress",
+                "type": "address"
+              },
+              {
+                "name": "theSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "auxiliaryData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unlockDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "poolTokens",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawSingleAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenHolder",
+                "type": "address"
+              },
+              {
+                "name": "poolTokenAmountToBurn",
+                "type": "uint256"
+              },
+              {
+                "name": "assetAddress",
+                "type": "address"
+              },
+              {
+                "name": "assetAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "goodUntil",
+                "type": "uint256"
+              },
+              {
+                "name": "theSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x65c9a641afceb9c0e6034e558a319488fa0fa3be",
         "protocol": "f(x) Protocol",
         "abi": [
@@ -52614,6 +52882,204 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x27d47664e034f3f2414d647de7cd1c1e8e72a89c",
+        "protocol": "VaultCraft",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRedeemRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "controller",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelRedeemRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
                 "type": "uint256"
               }
             ]
