@@ -1021,3 +1021,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - LeverUp's unresolved current facet sources and Blueshift's current-app/stale-doc deployment split are retained as source-binding deferrals, not shutdown claims.
 - Node.js 20.19.3 diff contained seventeen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all seventeen calls and denied 80 excluded selectors. Chromium verified both exact search filters and served Base entries. No actual LP, swap, deposit or withdrawal was executed.
 
+## Repeated expansion round 10, cycle 4 — BiFi and eva Markets (2026-10-24)
+
+- `sources/bifi-usdc-ethereum-r10.json`: four current Ethereum USDC internal lending-ledger methods with exact custom-handler resolution and full match-grade sources. Explorer attribution, primary SDK handler identity and current UI corroborate deployment; no invented primary literal address or dynamic resolver read is claimed. Ethereum ingress is not retired by the current UI predicate for other legacy networks. Input scaling is mutable unified accounting, not assumed raw USDC units; requests can be clipped.
+- `sources/eva-markets-usdc-ethereum-r10.json`: seven own evaUSDC entry/request/cancel/claim methods, distinct from Wildcat. Current implementation match grade remains match. Virtual accounting, minimum sizes, authorized batching, borrower repayment and fixed receivers constrain settlement; direct exits and sunsetting evaETH are excluded.
+- Syntropia's Lagoon curator-only scope is retained as a duplicate-platform deferral, not a new protocol.
+- Node.js 20.19.3 diff contained eleven additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all eleven calls and denied 79 excluded selectors. Chromium verified both exact filters and served Ethereum ABIs. No actual loan, vault deposit, queued exit or repayment was executed.
+

@@ -4112,6 +4112,96 @@
         ]
       },
       {
+        "address": "0x128647690c7733593aa3dd149eebc5e256e79217",
+        "protocol": "BiFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "unifiedTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "flag",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unifiedTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "flag",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unifiedTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "flag",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "unifiedTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "flag",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x12d0351f68035a41d13fc8324562e2d51b7a3b93",
         "protocol": "USDD",
         "abi": [
@@ -12557,6 +12647,127 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x741bd193b6b40f8703d2e116fd1965421f290f58",
+        "protocol": "eva Markets",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_requestId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_requestId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositFromMarket",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amountOfShares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestRedeemTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amountOfShares",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
