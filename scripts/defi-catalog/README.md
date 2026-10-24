@@ -1193,3 +1193,9 @@ No new chain, execution language, backend signing scope or authorization model w
 - Alternate SOFA Permit2/native-only DNT scope is retained as excluded evidence, without an invented argument guard or wallet authorization grant.
 - Node.js 20.19.3 diff contained eight additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all eight calls and denied 97 excluded selectors. Chromium verified exact filters and both served Ethereum entries. No structured product, strategy position, swap or settlement was executed.
 
+## Repeated expansion round 12, cycle 7 — WePiggy and Mint Club (2026-10-24)
+
+- `sources/wepiggy-pusdc-ethereum-r12.json`: six current Ethereum pUSDC ordinary lending methods with current proxy-resolved match-grade implementation. Cached primary market snapshots are not live liquidity/pause proof. Financial failure can return a uint error code despite EVM success; share/asset rounding, allowances, collateral configuration and available cash remain independent. Explicitly retired Polygon/BNB markets are excluded without a global shutdown claim.
+- `sources/mint-club-bond-base-r12.json`: three current direct exact-source Base bonding-curve buy/sell/royalty-ledger methods, counted once as Mint Club. Existing registered bonds, creator-selected reserve assets, per-step ceiling/floor calculations, user payment/refund limits and royalties are explicit; arbitrary periphery, permits and authorizations remain excluded.
+- Node.js 20.19.3 diff contained nine additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised ABI-policy admission for all nine calls and denied 83 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No actual lending, debt repayment, bond buy/sell or royalty claim was executed.
+

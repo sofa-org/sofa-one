@@ -200,6 +200,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Metric', website: 'https://www.metric.xyz/' },
   { name: 'Metronome Synth', website: 'https://metronome.io/' },
   { name: 'Midas', website: 'https://midas.app/' },
+  { name: 'Mint Club', website: 'https://mint.club/' },
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'MorpheusAI', website: 'https://mor.org/' },
   { name: 'Morpho', website: 'https://morpho.org' },
@@ -337,6 +338,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'vfat.io', website: 'https://vfat.io/yield' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
+  { name: 'WePiggy', website: 'https://www.wepiggy.com/' },
   { name: 'Wildcat', website: 'https://app.wildcat.finance' },
   { name: 'Wise Token', website: 'https://app.wisetoken.com/' },
   { name: 'Wombat Exchange', website: 'https://www.wombat.exchange' },
