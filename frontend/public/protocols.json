@@ -2,6 +2,84 @@
   "1": {
     "contracts": [
       {
+        "address": "0x0000000aa232009084bd71a5797d089aa4edfad4",
+        "protocol": "Angstrom",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x0000001d41857cb60f6be0c9fe74b9e69e1e5234",
         "protocol": "Napier",
         "abi": [
@@ -4356,6 +4434,28 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x1324d9ca99b5afff6e8ceb4083ef744b3b6f4161",
+        "protocol": "Legion",
+        "abi": [
+          {
+            "type": "function",
+            "name": "withdrawExcessInvestedCapital",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "proof",
+                "type": "bytes32[]"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
