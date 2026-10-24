@@ -13725,6 +13725,135 @@
         ]
       },
       {
+        "address": "0x760233b90e45d186a9a98e911b115f7f4b90d3d9",
+        "protocol": "Decentralized Euro",
+        "abi": [
+          {
+            "type": "function",
+            "name": "adjust",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "targetAmount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "target",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint192"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "refreshBalance",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint192"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "refreshMyBalance",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint192"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "save",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint192"
+              },
+              {
+                "name": "compound",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint192"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x7743e50f534a7f9f1791dde7dcd89f7783eefc39",
         "protocol": "f(x) Protocol",
         "abi": [
@@ -59022,6 +59151,52 @@
               {
                 "name": "_signature",
                 "type": "bytes"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x018afbf49356138d7ccf465f3f3420e233925e82",
+        "protocol": "LOCKON",
+        "abi": [
+          {
+            "type": "function",
+            "name": "issue",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_setToken",
+                "type": "address"
+              },
+              {
+                "name": "_quantity",
+                "type": "uint256"
+              },
+              {
+                "name": "_to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_setToken",
+                "type": "address"
+              },
+              {
+                "name": "_quantity",
+                "type": "uint256"
+              },
+              {
+                "name": "_to",
+                "type": "address"
               }
             ],
             "outputs": []

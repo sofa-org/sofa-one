@@ -1172,3 +1172,10 @@ No new chain, execution language, backend signing scope or authorization model w
 - `sources/defi-swap-router02-ethereum-r12.json`: fourteen direct Ethereum swap/LP methods. Current primary frontend address, explorer Exact Match and Sourcify match grades are retained separately. Permit variants are excluded; native refunds, initial liquidity minima, token taxes and whole-router residual-balance behavior are explicit.
 - Node.js 20.19.3 diff contained twenty additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all twenty calls and denied 17 excluded selectors. Chromium verified exact filters and served BSC/Ethereum entries. No swap, native payment or LP position was executed.
 
+## Repeated expansion round 12, cycle 4 — LOCKON and Decentralized Euro (2026-10-24)
+
+- `sources/lockon-index-arbitrum-r12.json`: two current own Arbitrum index component issue/redeem methods, not ZeroEx execution. Complete direct-module source has fully-verified Blockscout attribution with match grade null, not invented exact-match. Component rounding, preexisting allowances, enabled indexes, protocol fees and fixed issuance hooks remain explicit.
+- `sources/decentralized-euro-savings-ethereum-r12.json`: eight direct exact-source own Ethereum savings methods. Independent dEURO issuer/reserve/governance establishes a distinct protocol despite disclosed Frankencoin ancestry. Deployed interest/withdrawal behavior, available equity, mutable ppm rates and separate claimable interest override misleading introductory lock-delay comments.
+- LOCKON Polygon mapping is deferred because the repeated configured address is not the Arbitrum module on Polygon; no wrong-chain admission or shutdown claim.
+- Node.js 20.19.3 diff contained ten additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all ten calls and denied 27 excluded selectors. Chromium verified exact filters and served Arbitrum/Ethereum entries. No index component, savings principal or interest was transferred.
+
