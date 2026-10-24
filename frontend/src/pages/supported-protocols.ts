@@ -156,6 +156,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
     website: 'https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts',
   },
   { name: 'Jones DAO', website: 'https://www.jonesdao.io/' },
+  { name: 'Juicebox', website: 'https://juicebox.money/' },
   { name: 'KAIO', website: 'https://www.kaio.xyz/' },
   { name: 'Kaito', website: 'https://kaito.ai' },
   { name: 'Kelp', website: 'https://kerneldao.com/kelp/' },
@@ -328,4 +329,5 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
   { name: 'ZEROBASE', website: 'https://app.zerobase.pro/' },
   { name: 'Zharta', website: 'https://www.zharta.io/' },
+  { name: 'ZyFAI', website: 'https://zyf.ai/' },
 ];

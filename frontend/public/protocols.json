@@ -49445,6 +49445,98 @@
         ]
       },
       {
+        "address": "0x130f5dd2bd8805443cf41755253d778a75a67f53",
+        "protocol": "Juicebox",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cashOutTokensOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "holder",
+                "type": "address"
+              },
+              {
+                "name": "projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "cashOutCount",
+                "type": "uint256"
+              },
+              {
+                "name": "tokenToReclaim",
+                "type": "address"
+              },
+              {
+                "name": "minTokensReclaimed",
+                "type": "uint256"
+              },
+              {
+                "name": "beneficiary",
+                "type": "address"
+              },
+              {
+                "name": "metadata",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "reclaimAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "useAllowanceOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "projectId",
+                "type": "uint256"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "currency",
+                "type": "uint256"
+              },
+              {
+                "name": "minTokensPaidOut",
+                "type": "uint256"
+              },
+              {
+                "name": "beneficiary",
+                "type": "address"
+              },
+              {
+                "name": "feeBeneficiary",
+                "type": "address"
+              },
+              {
+                "name": "memo",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "netAmountPaidOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x2626664c2603336e57b271c5c0b26f421741e481",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -49491,6 +49583,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x29d6fbe61ea5b41697a285e8ef5de6f2f9e6bd94",
+        "protocol": "ZyFAI",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "withdrawKey",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
                 "type": "uint256"
               }
             ]
