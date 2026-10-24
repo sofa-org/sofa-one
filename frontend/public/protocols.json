@@ -19350,6 +19350,155 @@
         ]
       },
       {
+        "address": "0xb2102b4d8802648ec6a9e89acd46b4b799833469",
+        "protocol": "RAAC",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelExit",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "savingsAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "sharesOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "minAssetsOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "moduleTokenOut",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAssetOut",
+                "type": "uint256"
+              },
+              {
+                "name": "savingsTokenOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestExit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "maxSharesBurned",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "moduleTokenOut",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAssetOut",
+                "type": "uint256"
+              },
+              {
+                "name": "savingsTokenOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xb3b36220fa7d12f7055dab5c9fd18e860e9a6bf8",
         "protocol": "euler-vault",
         "abi": [
@@ -26075,6 +26224,163 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xe2fe530c047f2d85298b07d9333c05737f1435fb",
+        "protocol": "Team Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "collectUniswapV3LPFees",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "extendLockDuration",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              },
+              {
+                "name": "_unlockTime",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lockNFT",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_withdrawalAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unlockTime",
+                "type": "uint256"
+              },
+              {
+                "name": "_tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "_mintNFT",
+                "type": "bool"
+              },
+              {
+                "name": "referrer",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "lockToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_withdrawalAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unlockTime",
+                "type": "uint256"
+              },
+              {
+                "name": "_mintNFT",
+                "type": "bool"
+              },
+              {
+                "name": "referrer",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "splitLock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              },
+              {
+                "name": "_splitAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_splitUnlockTime",
+                "type": "uint256"
+              },
+              {
+                "name": "_mintNFT",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_splitLockId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

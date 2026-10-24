@@ -1049,3 +1049,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - Paimon's unavailable current implementation sources and T-RIZE's Base governance-only/no-bound-financial scope are retained as precise gaps, not shutdown claims.
 - Node.js 20.19.3 diff contained three additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all three calls and denied 91 excluded selectors. Chromium verified both exact filters and served Ethereum ABIs. No ULTRA request, asset custody creation or fee payment was executed.
 
+## Repeated expansion round 10, cycle 8 — RAAC and Team Finance (2026-10-24)
+
+- `sources/raac-susds-psm-ethereum-r10.json`: six current Ethereum own PSM methods with match-grade current implementation and observed slot identity. Entry asset is sUSDS despite `asset()` naming pmUSD; exits deliver a proportional reserve basket, potentially module shares, not guaranteed sUSDS. Cooldown/window, rounding, accounting-value minima and one-way pmUSD swap are explicit.
+- `sources/team-finance-locks-ethereum-r10.json`: six current Ethereum own term-lock custody methods with exact-match implementation. Existing claim/receipt ownership, future maturity, fee payments, partial token withdrawal and fixed locked-LP fee collection constrain execution. Owner-only claim reassignment power is explicitly retained; historical migration execution is absent and not admitted.
+- thUSD's ended active development/funding is distinguished from functioning autonomous contracts; Binaryx's current implementation-source gap is distinguished from shutdown. Both precise evidence records are retained.
+- Node.js 20.19.3 diff contained twelve additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all twelve calls and denied 131 excluded selectors. Chromium verified both exact filters and served Ethereum entries. No savings swap, reserve basket exit, lock, fee collection or custody withdrawal was executed.
+
