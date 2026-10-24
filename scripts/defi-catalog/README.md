@@ -1002,3 +1002,9 @@ Policy state was in-memory; deployment research used read-only source/configurat
 
 Match/partial/null grades and unverified dependencies remain explicit. StableHodl has supported-chain ingress only and unsupported HeLa-only returns, not a complete exit; Hakka rewards are vesting-only here; current finite offering/dividend settlement is not retired-product recovery. Custody, mutable NAV/fees, gates, timers, market phases, financial losses and counterparties remain independent. Static catalog admission proves neither TVL/active users nor backing, liquidity, financial safety, legal rights or complete workflows. All commits are local; no push.
 
+## Repeated expansion round 10, cycle 1 — Tangent Finance and GoldFinger (2026-10-24)
+
+- `sources/tangent-finance-ethereum-lending-r10.json`: six current Ethereum PYUSD/USDC market collateral/USG debt methods. Captured minimal-clone runtime binds the exact-match implementation; collateral units are Curve LP/gauge receipts, not constituent stablecoins. Borrowing, repayment rounding, LTV, rewards hooks and mutable pauses remain independent.
+- `sources/goldfinger-bsc-art-vault-r10.json`: four current direct BSC ART subscription/redemption-request methods with exact-match full source. Inputs use six-decimal USD/ART units despite 18-decimal BSC payment tokens. Existing KYC, mutable NAV/fees and direct issuer custody apply; redemption burns now and requires separate admin settlement, which is not admitted.
+- Node.js 20.19.3 catalog diff contained ten additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all ten additions and denied 103 excluded selectors. Chromium verified both exact search filters and served Ethereum/BSC ABI entries. No funded lending/subscription, real DB locking or Openfort broadcast was exercised; full verification/build/E2E gates were not run.
+

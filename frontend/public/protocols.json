@@ -9067,6 +9067,120 @@
         ]
       },
       {
+        "address": "0x4742a56668fbacbc11087f516c4b01ebc48f716f",
+        "protocol": "Tangent Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "USGToBorrow",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_for",
+                "type": "address"
+              },
+              {
+                "name": "depositedAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "isReceiptIn",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositedAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "debtBorrow",
+                "type": "uint256"
+              },
+              {
+                "name": "isReceiptIn",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "USGToRepay",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayAndWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "withdrawAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "usgToRepay",
+                "type": "uint256"
+              },
+              {
+                "name": "isReceiptOut",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "withdrawAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "isReceiptOut",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x480e3178fa102df852643d47cabdb9adf5db0174",
         "protocol": "Metronome Synth",
         "abi": [
@@ -35676,6 +35790,60 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x79d28c0b71dd6b0d58d50810a8da2aedefaff6ef",
+        "protocol": "GoldFinger",
+        "abi": [
+          {
+            "type": "function",
+            "name": "mintWithUSDC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usdAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintWithUSDT",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usdAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemToUSDC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "artAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemToUSDT",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "artAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
