@@ -673,7 +673,8 @@ components:
       properties:
         signature:
           type: string
-          description: Raw EOA signature for an eligible ClobAuth bootstrap, separately granted V2 single order, or verifier-gated DepositWallet Batch.
+          pattern: '^0x[a-fA-F0-9]{128}1[bBcC]$'
+          description: Canonical 65-byte EOA ECDSA signature encoded as r || s || v, with v=27/28. Provider v=0/1 is normalized before internal verification and API output; other recovery values are rejected. No protocol envelope is returned. Applies to eligible ClobAuth bootstrap, V2 single order, and DepositWallet Batch signing.
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'

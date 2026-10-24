@@ -46,6 +46,7 @@ import { PolymarketDepositWalletVerifierService, type DepositWalletEvidence } fr
 import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
 import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batch-verifier.service';
 import type { PolymarketDepositBatchEvidence } from './polymarket-deposit-batch-verifier.types';
+import { normalizeEoaSignature } from './eoa-signature';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -401,27 +402,27 @@ export class WalletService {
     let signature: string;
     try {
       const accountId = activeWallet.agentOpenfortAccountId!;
-      const rawSignature = await this.openfort.signData(accountId, data);
+      const eoaSignature = normalizeEoaSignature(await this.openfort.signData(accountId, data));
       if (isPolymarketOrder) {
         if (!orderPayload || !depositEvidence) throw new Error('order evidence unavailable');
-        const recovered = await recoverAddress({ hash: polymarketWrapperDigest(orderPayload), signature: rawSignature as Hex });
+        const recovered = await recoverAddress({ hash: polymarketWrapperDigest(orderPayload), signature: eoaSignature });
         if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
-        const envelope = buildPolymarketPoly1271Envelope(orderPayload, rawSignature as Hex);
+        const envelope = buildPolymarketPoly1271Envelope(orderPayload, eoaSignature);
         this.polymarketVerifier.assertFresh(depositEvidence, activeWallet.signerAddress!, orderPayload);
         const finalEvidence = await this.polymarketVerifier.verify(activeWallet.signerAddress!, orderPayload);
         if (finalEvidence.codeHash.toLowerCase() !== depositEvidence.codeHash.toLowerCase()) throw new Error('deposit wallet code changed');
         await this.polymarketVerifier.verify1271(orderPayload, polymarketOrderDigest(orderPayload), envelope);
-        signature = rawSignature;
+        signature = eoaSignature;
       } else if (isPolymarketDepositBatch) {
         if (!batchPayload || !batchEvidence) throw new Error('batch evidence unavailable');
-        const recovered = await recoverAddress({ hash: polymarketDepositBatchDigest(batchPayload), signature: rawSignature as Hex });
+        const recovered = await recoverAddress({ hash: polymarketDepositBatchDigest(batchPayload), signature: eoaSignature });
         if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
         await this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
-        await this.polymarketBatchVerifier.verifySignature(batchPayload, activeWallet.signerAddress!, rawSignature as Hex, batchEvidence);
+        await this.polymarketBatchVerifier.verifySignature(batchPayload, activeWallet.signerAddress!, eoaSignature, batchEvidence);
         this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
-        signature = rawSignature;
+        signature = eoaSignature;
       } else {
-        signature = rawSignature;
+        signature = eoaSignature;
       }
     } catch (err) {
       this.logger.error(

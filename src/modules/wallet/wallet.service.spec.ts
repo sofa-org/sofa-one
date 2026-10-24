@@ -1024,6 +1024,7 @@ describe('WalletService.sign()', () => {
     mockWalletFindMany.mockResolvedValue([WALLET, { ...WALLET, id: 'wallet-2', walletAddress: '0x4444444444444444444444444444444444444444' }]);
     // The frozen canonical fixture is immutable at runtime; DTO typing uses mutable arrays.
     const dto = { type: 'typed_data', typedData: payload } as unknown as SignDto;
+    mockSignData.mockResolvedValueOnce(`${RAW_SIGNATURE.slice(0,-2)}00`);
     const result = await service.sign('user-1', dto, { ...API_KEY_CONTEXT, canUseEoaExecution: true });
     expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ walletId: 'wallet-1', walletAddress: WALLET.walletAddress }));
     expect(mockDefiAssertSigningStillAuthorized).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ typedDataDigest: digest }), expect.objectContaining({ digest, agentOpenfortAccountId: WALLET.agentOpenfortAccountId }));
@@ -1053,6 +1054,7 @@ describe('WalletService.sign()', () => {
       walletAddress: WALLET.walletAddress.toLowerCase(), signerAddress: signer, agentOpenfortAccountId: WALLET.agentOpenfortAccountId, executionWalletAddress: WALLET.walletAddress.toLowerCase(),
     }));
     mockRecoverAddress.mockResolvedValue(WALLET.signerAddress);
+    mockSignData.mockResolvedValueOnce(`${RAW_SIGNATURE.slice(0,-2)}00`);
     const result = await service.sign('user-1', { type: 'typed_data', chainId: 137, executionMode: 'eoa', typedData: input } as any, { ...API_KEY_CONTEXT, capabilityMode: capabilityMode as 'all' | 'custom', allowedCapabilityIds, canUseEoaExecution: true });
     expect(mockDefiAuthorizeSigning).toHaveBeenCalledWith(payload, expect.objectContaining({ capabilityMode, allowedCapabilityIds }));
     expect(mockBatchVerify).toHaveBeenCalledWith(payload, signer);

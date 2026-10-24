@@ -150,6 +150,15 @@ The request contract accepts only `type: typed_data` and requires `typedData`.
 `executionMode` may be omitted and defaults to `eoa`; an explicit `session_key`
 or `type: message` is rejected during request validation. Top-level `chainId` is
 optional when supplied by `typedData.domain.chainId`, and both must agree if present.
+
+EOA signing returns a 65-byte hexadecimal ECDSA signature encoded as `r || s || v`,
+with `v=27/28`. Provider recovery values `0/1` are converted to `27/28`; already
+canonical values are preserved and other values or malformed signatures fail closed.
+Recovery, protocol verification and the API response use the same normalized signature.
+This makes the output canonical where older responses could end in `00/01`; clients
+must not depend on the former byte representation. Protocol envelopes are constructed
+separately. This is Sofa's EOA output contract, not an ERC-1271-wide signature restriction.
+
 This signing-only cleanup does not remove transaction session keys:
 `POST /v1/transactions` still defaults to `session_key`, checks the registered,
 unexpired chain authorization and live on-chain key, then submits an Openfort

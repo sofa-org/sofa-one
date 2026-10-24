@@ -32,15 +32,6 @@ describe('Polymarket CLOB order signing',()=>{
     expect(polymarketOrderDigest(p)).not.toBe(polymarketWrapperDigest(p));
     expect(envelope.length).toBe(132+64+64+POLY_TYPE_LENGTH*2+4);
   });
-  it.each([[0,27],[1,28],[27,27],[28,28]])('canonicalizes recovery byte %i to %i before enveloping', (input, expected) => {
-    const p=validatePolymarketClobOrder(sample(),now);
-    const rs=SDK_GOLDEN.signature.slice(0,130);
-    const signature=`${rs}${input.toString(16).padStart(2,'0')}` as `0x${string}`;
-    const canonical=`${rs}${expected.toString(16)}` as `0x${string}`;
-    const envelope=buildPolymarketPoly1271Envelope(p,signature);
-    expect(envelope.slice(0,132)).toBe(canonical);
-    expect(envelope).toBe(buildPolymarketPoly1271Envelope(p,canonical));
-  });
   it('deep-freezes the complete canonical payload used by digest and caller validation',()=>{
     const p=validatePolymarketClobOrder(sample(),now);
     const digest=polymarketOrderDigest(p);
@@ -78,7 +69,7 @@ describe('Polymarket CLOB order signing',()=>{
   ])('rejects %s',(_label,mutate)=>{
     expect(()=>validatePolymarketClobOrder((mutate as any)(sample()),now)).toThrow();
   });
-  it.each(['0x1234', `0x${'11'.repeat(64)}02`])('rejects malformed signature %s', (signature) => {
+  it.each(['0x1234', ...['00','01','02'].map(v => `0x${'11'.repeat(64)}${v}`)])('rejects malformed or noncanonical signature %s', (signature) => {
     const p=validatePolymarketClobOrder(sample(),now);
     expect(()=>buildPolymarketPoly1271Envelope(p,signature as `0x${string}`)).toThrow();
   });
