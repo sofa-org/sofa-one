@@ -207,6 +207,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Noon', website: 'https://noon.capital' },
   { name: 'NUVA', website: 'https://nuva.finance/' },
   { name: 'OctoSwap', website: 'https://octo.exchange/' },
+  { name: 'Odyssey Finance', website: 'https://app.odyssey.finance/en' },
   { name: 'Olympus', website: 'https://olympusdao.finance' },
   { name: 'Ondo Finance', website: 'https://ondo.finance/' },
   { name: 'Open Dollar', website: 'https://www.opendollar.com/' },
@@ -331,5 +332,6 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
   { name: 'ZEROBASE', website: 'https://app.zerobase.pro/' },
   { name: 'Zharta', website: 'https://www.zharta.io/' },
+  { name: 'Zircuit Finance', website: 'https://finance.zircuit.com/' },
   { name: 'ZyFAI', website: 'https://zyf.ai/' },
 ];

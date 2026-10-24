@@ -1111,3 +1111,9 @@ These are finite function admissions, not complete product workflows, new signin
 - DexFinance's unavailable current supported-chain implementation sources are retained as a binding-gap deferral, not shutdown or permission to substitute an old interface.
 - Node.js 20.19.3 diff contained thirteen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all thirteen calls and denied 86 excluded selectors. Chromium verified exact filters and both served Base entries. No farm, mortgage, repayment, yield claim or queue payout was executed.
 
+## Repeated expansion round 11, cycle 6 — Odyssey Finance and Zircuit Finance (2026-10-24)
+
+- `sources/odyssey-finance-r11.json`: eight existing-owner fixed financial methods on one current isolated Ethereum strategy, not arbitrary execution or a curator label. Similar-match proxy/current exact-match implementation, internal shares/fees and fixed market bindings are retained. Bytes decode only fixed amount tuples; assets stay in the isolated position, and neither wallet funding nor a complete exit is admitted.
+- `sources/zircuit-finance-r11.json`: one current Base initiator-owned pending-withdrawal cancellation, refunding recorded shares/native fees to that initiator. Similar-match proxy/current exact-match implementation and current own-accounting product binding are retained. Bridge-capable public ingress/exit selectors are excluded entirely, including same-chain branches; cancellation is not a USDC redemption or bridge grant.
+- Node.js 20.19.3 diff contained nine additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all nine calls and denied 165 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No strategy debt/collateral or queued withdrawal was changed.
+

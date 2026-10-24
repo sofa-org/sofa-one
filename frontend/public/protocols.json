@@ -16874,6 +16874,108 @@
         ]
       },
       {
+        "address": "0x9bf68491d527155219153b7a57a6cd1069fa4ab9",
+        "protocol": "Odyssey Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "push",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayAndWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params_",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x9c5d3c3abd633b8ea68c5a51325f8630dc620ad9",
         "protocol": "sofa",
         "abi": [
@@ -53391,6 +53493,24 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xbb801ed781df31f660cc743bef7bb9d04b030923",
+        "protocol": "Zircuit Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
