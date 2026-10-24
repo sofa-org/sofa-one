@@ -35961,6 +35961,108 @@
         ]
       },
       {
+        "address": "0x7314af7d05e054e96c44d7923e68d66475ffaab8",
+        "protocol": "Kromatika",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addFunding",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelLimitOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount1",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "placeLimitOrder",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "_token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "_token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "_fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "_sqrtPriceX96",
+                    "type": "uint160"
+                  },
+                  {
+                    "name": "_amount0",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "_amount1",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "_amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "_amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_tokenId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawFunding",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
         "protocol": "Aave V3",
         "abi": [
@@ -48411,6 +48513,196 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x7907ed8917542b79c7788ee49eb07d25a4310c63",
+        "protocol": "GT3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA_",
+                "type": "address"
+              },
+              {
+                "name": "tokenB_",
+                "type": "address"
+              },
+              {
+                "name": "amountADesired_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBDesired_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              },
+              {
+                "name": "deadline_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token_",
+                "type": "address"
+              },
+              {
+                "name": "amountTokenDesired_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              },
+              {
+                "name": "deadline_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA_",
+                "type": "address"
+              },
+              {
+                "name": "tokenB_",
+                "type": "address"
+              },
+              {
+                "name": "liquidity_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              },
+              {
+                "name": "deadline_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token_",
+                "type": "address"
+              },
+              {
+                "name": "liquidity_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin_",
+                "type": "uint256"
+              },
+              {
+                "name": "to_",
+                "type": "address"
+              },
+              {
+                "name": "deadline_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
                 "type": "uint256"
               }
             ]
