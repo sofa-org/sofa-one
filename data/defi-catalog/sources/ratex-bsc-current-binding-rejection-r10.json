@@ -1,0 +1,50 @@
+{
+  "protocol": "RateX DEX",
+  "website": "https://app.rate-x.io",
+  "reviewedAt": "2026-10-24",
+  "status": "deferred",
+  "chainId": 56,
+  "reason": "Current own BSC financial deployment and its full matching source/ABI not established. Primary app/docs hostnames fail DNS here; indexed BSC app and multi-chain docs establish investigation relevance, not deployed contract identity. No Solana deployment or RTX token address is substituted. Not a shutdown or Solana-only determination.",
+  "sourceRefs": [
+    "https://app.rate-x.io/",
+    "https://app-bsc.rate-x.io/",
+    "https://rate-x.io/",
+    "https://docs.rate-x.io/ratex/getting-started/contracts-addresses",
+    "https://docs.rate-x.io/ratex/resources/rtx-tokenomics"
+  ],
+  "fetchAttempts": [
+    {
+      "url": "https://app.rate-x.io/",
+      "error": "HTTPSConnectionPool(host='app.rate-x.io', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='app.rate-x.io', port=443): Failed to resolve 'app.rate-x.io' ([Errno 8] nodename nor servname provided, or not known)\"))"
+    },
+    {
+      "url": "https://app-bsc.rate-x.io/",
+      "error": "HTTPSConnectionPool(host='app-bsc.rate-x.io', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='app-bsc.rate-x.io', port=443): Failed to resolve 'app-bsc.rate-x.io' ([Errno 8] nodename nor servname provided, or not known)\"))"
+    },
+    {
+      "url": "https://docs.rate-x.io/ratex/getting-started/contracts-addresses",
+      "error": "HTTPSConnectionPool(host='docs.rate-x.io', port=443): Max retries exceeded with url: /ratex/getting-started/contracts-addresses (Caused by NameResolutionError(\"HTTPSConnection(host='docs.rate-x.io', port=443): Failed to resolve 'docs.rate-x.io' ([Errno 8] nodename nor servname provided, or not known)\"))"
+    }
+  ],
+  "indexedDiscoveryOnly": [
+    {
+      "url": "https://app-bsc.rate-x.io/",
+      "description": "Search returned current indexed RateX leveraged-yield-exchange page; fetch failed. No BSC financial address returned."
+    },
+    {
+      "url": "https://docs.rate-x.io/ratex/getting-started/contracts-addresses",
+      "description": "Search indexed Solana program address RAtEwzA1rerjeWip6uMuheQtzykxYCrEQRaSFCCrf2D and SOL market; insufficient for BSC deployment."
+    },
+    {
+      "url": "https://docs.rate-x.io/ratex/resources/rtx-tokenomics",
+      "description": "Search indexed BSC RTX token0x4829a1d1fb6ded1f81d26868ab8976648baf9893; token transfer/authorization is not the requested own financial product."
+    }
+  ],
+  "targets": [],
+  "fullAbi": [],
+  "selectedFunctions": [],
+  "functionDecisions": [],
+  "limitations": [
+    "No target financial root discovered, therefore no current implementation or callable ABI functions are claimed inventoried. No lifecycle shutdown inference from fetch failures. Replacement KiloEx, then Kokonut Swap, expressly parent approved."
+  ]
+}

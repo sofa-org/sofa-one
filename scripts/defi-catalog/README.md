@@ -1028,3 +1028,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - Syntropia's Lagoon curator-only scope is retained as a duplicate-platform deferral, not a new protocol.
 - Node.js 20.19.3 diff contained eleven additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all eleven calls and denied 79 excluded selectors. Chromium verified both exact filters and served Ethereum ABIs. No actual loan, vault deposit, queued exit or repayment was executed.
 
+## Repeated expansion round 10, cycle 5 — Rank Trading and Kokonut Swap (2026-10-24)
+
+- `sources/rank-trading-bsc-matured-strategies-r10.json`: four ordinary owned unlock/withdraw methods on two BSC immutable clones. April 2026 financial epoch maturity disables new investment but is not itself product retirement; only normal matured settlement is admitted. Unlock after expiry selects all remaining shares, and backend NAV processing/funding still controls payout.
+- `sources/kokonut-swap-base-router-r10.json`: two exact-source direct Base typed pool-path swaps/LP additions, not opaque execution. Persistent pool approvals, whole-router-balance accounting, zero intermediate minima, no deadline and native handling are explicit; supplied pools and their outcomes are not endorsed.
+- RateX current BSC binding gaps, KiloEx unavailable current implementation source and Yodeswap unsupported Dogechain deployment are retained as precise deferrals/rejections, not blanket shutdown claims.
+- Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six calls and denied 95 excluded selectors. Chromium verified exact cards and all three served BSC/Base entries. No managed withdrawal, pool funding or swap was executed.
+

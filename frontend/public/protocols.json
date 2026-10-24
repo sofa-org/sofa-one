@@ -32088,6 +32088,31 @@
         ]
       },
       {
+        "address": "0x05a184f6d3b52321601668e22fbcf6cb81502e7c",
+        "protocol": "Rank Trading",
+        "abi": [
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x05e61e0cdcd2170a76f9568a110cee3afdd6c46f",
         "protocol": "knightswap-v1",
         "abi": [
@@ -33007,6 +33032,31 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x13a8cd00b7ba4ac512c4e550cfd8e398b38fbe75",
+        "protocol": "Rank Trading",
+        "abi": [
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
           }
         ]
       },
@@ -50870,6 +50920,70 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x9d6328733daa5b4c7fee596ec7e73a935d799179",
+        "protocol": "Kokonut Swap",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              },
+              {
+                "name": "poolType",
+                "type": "uint256"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "minMintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "mintAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapWithPath",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "swapParams",
+                "type": "uint256[3][]"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "outputs",
+                "type": "uint256[]"
               }
             ]
           }
