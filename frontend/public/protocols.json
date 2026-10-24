@@ -47394,6 +47394,140 @@
         ]
       },
       {
+        "address": "0x2a645d27efe5c8f5afc63856d2509ea20f81a0b2",
+        "protocol": "Stabull Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_deposit",
+                "type": "uint256"
+              },
+              {
+                "name": "_minQuoteAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_minBaseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxQuoteAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_maxBaseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "originSwap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_origin",
+                "type": "address"
+              },
+              {
+                "name": "_target",
+                "type": "address"
+              },
+              {
+                "name": "_originAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_minTargetAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "targetAmount_",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "targetSwap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_origin",
+                "type": "address"
+              },
+              {
+                "name": "_target",
+                "type": "address"
+              },
+              {
+                "name": "_maxOriginAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_targetAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "originAmount_",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_curvesToBurn",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "withdrawals_",
+                "type": "uint256[]"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4200000000000000000000000000000000000006",
         "protocol": "ERC-20",
         "abi": [
@@ -47949,6 +48083,197 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x67aefc812ec0a83a327c05d6e7913c35b48bfb94",
+        "protocol": "Jarvis Network",
+        "abi": [
+          {
+            "type": "function",
+            "name": "activateLP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateralAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_overCollateralization",
+                "type": "uint128"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralDeposited",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateralAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralDeposited",
+                "type": "uint256"
+              },
+              {
+                "name": "newLpCollateralAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lp",
+                "type": "address"
+              },
+              {
+                "name": "_numSynthTokens",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_mintParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "minNumTokens",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "collateralAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_redeemParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "numTokens",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minCollateral",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiration",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateralAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralRemoved",
+                "type": "uint256"
+              },
+              {
+                "name": "collateralReceived",
+                "type": "uint256"
+              },
+              {
+                "name": "newLpCollateralAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "setOvercollateralization",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_overCollateralization",
+                "type": "uint128"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "updatePositions",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
           }
         ]
       },

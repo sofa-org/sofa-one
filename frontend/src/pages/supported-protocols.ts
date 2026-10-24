@@ -135,6 +135,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Integral', website: 'https://integral.link' },
   { name: 'Inverse Finance', website: 'https://www.inverse.finance/' },
   { name: 'izumi', website: 'https://izumi.finance' },
+  { name: 'Jarvis Network', website: 'https://www.jarvis.network/' },
   // Legacy JetSwap domain now serves unrelated content; retain official deployment documentation.
   {
     name: 'JetSwap',
@@ -235,6 +236,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Spark', website: 'https://spark.fi' },
   { name: 'Spectra', website: 'https://spectra.finance/' },
   { name: 'StableHodl', website: 'https://stablehodl.com/' },
+  { name: 'Stabull Finance', website: 'https://stabull.finance/' },
   { name: 'Stake DAO', website: 'https://stakedao.org' },
   { name: 'Stake.link', website: 'https://stake.link/' },
   { name: 'StakeStone', website: 'https://stakestone.io' },
