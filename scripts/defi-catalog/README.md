@@ -1186,3 +1186,10 @@ No new chain, execution language, backend signing scope or authorization model w
 - Superseded Ethervista/BCT scope evidence is retained separately; no old router or former-product alias was admitted.
 - Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six calls and denied 91 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No swap, LP, carbon deposit/redemption or retirement was executed.
 
+## Repeated expansion round 12, cycle 6 — SOFA.org and Carbon DeFi (2026-10-24)
+
+- `sources/sofa-org-aave-rangebound-ethereum-r12.json`: three current exact-source Ethereum own Aave-backed structured-product mint/settlement methods, unrelated to SOFA ONE. Existing maker proof binds fixed financial terms/caller/domain, not new backend signing or Permit2 authority. Normal finite settlement can burn positions for zero payoff; oracle, fee and Aave liquidity dependencies remain explicit.
+- `sources/carbon-defi-ethereum-r12.json`: five own strategy/order-accounting methods, distinct from Bancor despite common organization. Exact-match proxy/current match-grade implementation are separated. Typed actions contain only IDs/amounts, not arbitrary execution; numerical curve encoding, owner NFT, rounding, deadlines, PPM fees and native refunds remain material.
+- Alternate SOFA Permit2/native-only DNT scope is retained as excluded evidence, without an invented argument guard or wallet authorization grant.
+- Node.js 20.19.3 diff contained eight additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all eight calls and denied 97 excluded selectors. Chromium verified exact filters and both served Ethereum entries. No structured product, strategy position, swap or settlement was executed.
+

@@ -5586,6 +5586,124 @@
         ]
       },
       {
+        "address": "0x20a82619fcd300f3e0028db6353d38e3cc3b9e14",
+        "protocol": "SOFA.org",
+        "abi": [
+          {
+            "type": "function",
+            "name": "burn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "term",
+                "type": "uint256"
+              },
+              {
+                "name": "expiry",
+                "type": "uint256"
+              },
+              {
+                "name": "anchorPrices",
+                "type": "uint256[2]"
+              },
+              {
+                "name": "collateralAtRiskPercentage",
+                "type": "uint256"
+              },
+              {
+                "name": "isMaker",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "burnBatch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "products",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "term",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "anchorPrices",
+                    "type": "uint256[2]"
+                  },
+                  {
+                    "name": "collateralAtRiskPercentage",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "isMaker",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "totalCollateral",
+                "type": "uint256"
+              },
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "anchorPrices",
+                    "type": "uint256[2]"
+                  },
+                  {
+                    "name": "collateralAtRisk",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "makerCollateral",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerSignature",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "referral",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x24ae2da0f361aa4be46b48eb19c91e02c5e4f27e",
         "protocol": "Manifold Finance",
         "abi": [
@@ -24111,6 +24229,209 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xc537e898cd774e2dcba3b14ea6f34c93d5ea45e1",
+        "protocol": "Carbon DeFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "createStrategy",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "orders",
+                "type": "tuple[2]",
+                "components": [
+                  {
+                    "name": "y",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "z",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "A",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "B",
+                    "type": "uint64"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deleteStrategy",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "strategyId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "tradeBySourceAmount",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sourceToken",
+                "type": "address"
+              },
+              {
+                "name": "targetToken",
+                "type": "address"
+              },
+              {
+                "name": "tradeActions",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "strategyId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "minReturn",
+                "type": "uint128"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint128"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "tradeByTargetAmount",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sourceToken",
+                "type": "address"
+              },
+              {
+                "name": "targetToken",
+                "type": "address"
+              },
+              {
+                "name": "tradeActions",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "strategyId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "maxInput",
+                "type": "uint128"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint128"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "updateStrategy",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "strategyId",
+                "type": "uint256"
+              },
+              {
+                "name": "currentOrders",
+                "type": "tuple[2]",
+                "components": [
+                  {
+                    "name": "y",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "z",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "A",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "B",
+                    "type": "uint64"
+                  }
+                ]
+              },
+              {
+                "name": "newOrders",
+                "type": "tuple[2]",
+                "components": [
+                  {
+                    "name": "y",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "z",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "A",
+                    "type": "uint64"
+                  },
+                  {
+                    "name": "B",
+                    "type": "uint64"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
           }
         ]
       },
