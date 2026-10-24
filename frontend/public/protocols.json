@@ -3774,6 +3774,29 @@
         ]
       },
       {
+        "address": "0x1240e05dd7a14037c88b0ac4b17812e105bb7a93",
+        "protocol": "KAIO",
+        "abi": [
+          {
+            "type": "function",
+            "name": "investorCreateOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "orderId",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1303c26cfe06bac5bfee29907f37919643def75c",
         "protocol": "Makina",
         "abi": [
@@ -8808,6 +8831,104 @@
         ]
       },
       {
+        "address": "0x50791a5ca041b9d6dd03e64e3fa0e34a376759ac",
+        "protocol": "Fira",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x50bd66d59911f5e086ec87ae43c811e0d059dd11",
         "protocol": "k3-sbold",
         "abi": [
@@ -10149,6 +10270,29 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x7112a4bce72869dba83265bea3e4d3d7e8802945",
+        "protocol": "KAIO",
+        "abi": [
+          {
+            "type": "function",
+            "name": "investorCreateOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "orderId",
+                "type": "uint256"
               }
             ]
           }
