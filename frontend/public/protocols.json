@@ -19379,6 +19379,56 @@
         ]
       },
       {
+        "address": "0x98f24c8ebb41e248f42d1b18ba450e588280c4e0",
+        "protocol": "Bitbond TokenTool",
+        "abi": [
+          {
+            "type": "function",
+            "name": "lock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "tokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "unlockTimeToSet",
+                "type": "uint40"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "relock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "newUnlockTime",
+                "type": "uint40"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x99361435420711723af805f08187c9e6bf796683",
         "protocol": "Midas",
         "abi": [
@@ -68267,6 +68317,123 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x6bbc476ee35cba9e9c3a59fc5b10d7a0bc6f74ca",
+        "protocol": "Sperax",
+        "abi": [
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_collateralAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_minUSDSAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintBySpecifyingCollateralAmt",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_collateralAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_minUSDSAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "rebase",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_usdsAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_minCollAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_usdsAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_minCollAmt",
+                "type": "uint256"
+              },
+              {
+                "name": "_deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "_strategy",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
