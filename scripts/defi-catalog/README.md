@@ -1124,3 +1124,10 @@ These are finite function admissions, not complete product workflows, new signin
 - T3tris current implementation-source unavailability is retained as a binding-gap deferral, not a shutdown claim or stale implementation substitution.
 - Node.js 20.19.3 diff contained fifteen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all fifteen calls and denied 119 excluded selectors. Chromium verified exact filters and all three served Ethereum/Base entries. No swap, loan contribution/drawdown/repayment or reward sale was executed.
 
+## Repeated expansion round 11, cycle 8 — Snuggle and dTRINITY (2026-10-24)
+
+- `sources/snuggle-current-vaults-base-arbitrum-r11.json`: twelve own Base/Arbitrum LP methods with current storage-bound match-grade implementations, not stale app implementation constants. Owner positions, fixed LP adapters, range/rebalance IDs, reward fees, mutable keepers and missing withdrawal minima are explicit; no new arbitrary execution or keeper authority is granted.
+- `sources/dtrinity-current-sdusd-ethereum-r11.json`: four own Ethereum savings methods with exact-match current implementation and separately preserved similar/null proxy grades. dUSD/sdUSD accounting subtracts shortfall; entry/exit use fixed routers and a single eligible liquidity vault. Fee scale is 1,000,000, not 10,000; zero-value redemption can burn shares without proceeds. No standard-ABI substitution or principal guarantee.
+- BIMA's current CDP maintenance/deployment tie remains a precise deferral, not a shutdown claim or permission to reimport historical roots.
+- Node.js 20.19.3 diff contained sixteen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all sixteen calls and denied 166 excluded selectors. Chromium verified exact filters and all three served Base/Arbitrum/Ethereum entries. No LP was created/rebalanced or savings funded/redeemed.
+

@@ -14413,6 +14413,104 @@
         ]
       },
       {
+        "address": "0x7cb20517776636ed76b68edb3d99dcce356abf02",
+        "protocol": "dTRINITY",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x7d5706f6ef3f89b3951e23e557cdfbc3239d4e2c",
         "protocol": "etherfi",
         "abi": [
@@ -55474,6 +55572,167 @@
         ]
       },
       {
+        "address": "0xd3923beccb6e1ddb048ed00a0a9bd602d16b7470",
+        "protocol": "Snuggle",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimStakingRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "earned",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amount0Desired",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1Desired",
+                "type": "uint256"
+              },
+              {
+                "name": "rangeWidthBps",
+                "type": "uint24"
+              },
+              {
+                "name": "rebalanceDelay",
+                "type": "uint256"
+              },
+              {
+                "name": "autoSnuggleEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "autoCompoundEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositSingleSided",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "rangeWidthBps",
+                "type": "uint24"
+              },
+              {
+                "name": "rebalanceDelay",
+                "type": "uint256"
+              },
+              {
+                "name": "autoSnuggleEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "autoCompoundEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "harvest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manualSnuggle",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "returnNFT",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd48f1d3eec18d8b71ddf1575bae160030878d705",
         "protocol": "8lends",
         "abi": [
@@ -58337,6 +58596,167 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x413ca90d38d964546c2fe03cb103df57372630f6",
+        "protocol": "Snuggle",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimStakingRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "earned",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amount0Desired",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1Desired",
+                "type": "uint256"
+              },
+              {
+                "name": "rangeWidthBps",
+                "type": "uint24"
+              },
+              {
+                "name": "rebalanceDelay",
+                "type": "uint256"
+              },
+              {
+                "name": "autoSnuggleEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "autoCompoundEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositSingleSided",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "rangeWidthBps",
+                "type": "uint24"
+              },
+              {
+                "name": "rebalanceDelay",
+                "type": "uint256"
+              },
+              {
+                "name": "autoSnuggleEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "autoCompoundEnabled",
+                "type": "bool"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "harvest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manualSnuggle",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "returnNFT",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

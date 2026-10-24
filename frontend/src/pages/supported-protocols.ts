@@ -92,6 +92,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dolomite', website: 'https://dolomite.io' },
   { name: 'DOOAR', website: 'https://beta.dooar.com/swap' },
   { name: 'Drips', website: 'https://www.drips.network/' },
+  { name: 'dTRINITY', website: 'https://www.dtrinity.org/' },
   { name: 'DxSale', website: 'https://www.dx.app/' },
   // Deployment documentation only; no current legacy trading frontend is asserted.
   { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
@@ -258,6 +259,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Sky', website: 'https://sky.money' },
   { name: 'Silo', website: 'https://silo.finance' },
   { name: 'SmarDex', website: 'https://smardex.io' },
+  { name: 'Snuggle', website: 'https://www.snuggle.fi/' },
   { name: 'Solv', website: 'https://solv.finance' },
   { name: 'SoSoValue Indexes (SSI)', website: 'https://ssi.sosovalue.com/' },
   { name: 'Spark', website: 'https://spark.fi' },
