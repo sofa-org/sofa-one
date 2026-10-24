@@ -4094,6 +4094,124 @@
         ]
       },
       {
+        "address": "0x1327c85ce6f3c83fabc4f5c294f57ac05bcb51eb",
+        "protocol": "Trevee",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "questID",
+                "type": "uint256"
+              },
+              {
+                "name": "period",
+                "type": "uint256"
+              },
+              {
+                "name": "index",
+                "type": "uint256"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "merkleProof",
+                "type": "bytes32[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimQuest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "questID",
+                "type": "uint256"
+              },
+              {
+                "name": "claims",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "questID",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "period",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "index",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "merkleProof",
+                    "type": "bytes32[]"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "multiClaim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "claims",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "questID",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "period",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "index",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "merkleProof",
+                    "type": "bytes32[]"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x133229e0adff22c6f1ad287d199ea09d35e4427b",
         "protocol": "Multipli",
         "abi": [
@@ -10295,6 +10413,186 @@
             "outputs": [
               {
                 "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x5ef72b12ff9df27a68f0b736b3617f907d74036d",
+        "protocol": "Tenor Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "depositAndAddCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "market",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "midnight",
+                    "type": "address"
+                  },
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralParams",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "lltv",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "liquidationCursor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "oracle",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "rcfThreshold",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "enterGate",
+                    "type": "address"
+                  },
+                  {
+                    "name": "liquidatorGate",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "collateralIndex",
+                "type": "uint256"
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "depositedShares",
+                "type": "uint256"
+              },
+              {
+                "name": "usedAssets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateralAndRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "market",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "midnight",
+                    "type": "address"
+                  },
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralParams",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "lltv",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "liquidationCursor",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "oracle",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "rcfThreshold",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "enterGate",
+                    "type": "address"
+                  },
+                  {
+                    "name": "liquidatorGate",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "collateralIndex",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
                 "type": "uint256"
               }
             ]
