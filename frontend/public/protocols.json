@@ -26909,6 +26909,44 @@
         ]
       },
       {
+        "address": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+        "protocol": "Flexa",
+        "abi": [
+          {
+            "type": "function",
+            "name": "releaseEligibleTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_account",
+                "type": "address"
+              },
+              {
+                "name": "_tokens",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_token",
+                "type": "address"
+              },
+              {
+                "name": "_poolUnits",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd6dad17d025cddded27305aebab8b277996a6faf",
         "protocol": "Strata",
         "abi": [
@@ -55145,6 +55183,234 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x76923cdde21928ddbec4b8bfdc8143bb6d0841a8",
+        "protocol": "Overtime",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exerciseTicketOffRamp",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_ticket",
+                "type": "address"
+              },
+              {
+                "name": "_exerciseCollateral",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "trade",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_tradeData",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "gameId",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "sportId",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "typeId",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "status",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "line",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "playerId",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "odds",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "merkleProof",
+                    "type": "bytes32[]"
+                  },
+                  {
+                    "name": "position",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "combinedPositions",
+                    "type": "tuple[][]",
+                    "components": [
+                      {
+                        "name": "typeId",
+                        "type": "uint16"
+                      },
+                      {
+                        "name": "position",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "line",
+                        "type": "int24"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "_buyInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_expectedQuote",
+                "type": "uint256"
+              },
+              {
+                "name": "_additionalSlippage",
+                "type": "uint256"
+              },
+              {
+                "name": "_referrer",
+                "type": "address"
+              },
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_isEth",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_createdTicket",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "tradeSystemBet",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_tradeData",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "gameId",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "sportId",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "typeId",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "maturity",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "status",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "line",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "playerId",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "odds",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "merkleProof",
+                    "type": "bytes32[]"
+                  },
+                  {
+                    "name": "position",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "combinedPositions",
+                    "type": "tuple[][]",
+                    "components": [
+                      {
+                        "name": "typeId",
+                        "type": "uint16"
+                      },
+                      {
+                        "name": "position",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "line",
+                        "type": "int24"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "_buyInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_expectedQuote",
+                "type": "uint256"
+              },
+              {
+                "name": "_additionalSlippage",
+                "type": "uint256"
+              },
+              {
+                "name": "_referrer",
+                "type": "address"
+              },
+              {
+                "name": "_collateral",
+                "type": "address"
+              },
+              {
+                "name": "_isEth",
+                "type": "bool"
+              },
+              {
+                "name": "_systemBetDenominator",
+                "type": "uint8"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_createdTicket",
+                "type": "address"
               }
             ]
           }

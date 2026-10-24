@@ -1206,3 +1206,10 @@ No new chain, execution language, backend signing scope or authorization model w
 - Cozy current implementation-source gap and paused/other VaultCraft deployment evidence are retained separately; no paused candidate or unavailable historical source was substituted.
 - Node.js 20.19.3 diff contained seventeen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all seventeen ABI-policy paths and denied 99 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No quote trade, LP movement, Safe deposit or fulfilled claim was executed.
 
+## Repeated expansion round 12, cycle 9 — Flexa and Overtime (2026-10-24)
+
+- `sources/flexa-capacity-v3-ethereum-r12.json`: two maintained own Ethereum Capacity-v3 unstake/release methods on Anvil infrastructure, not retired v2 or a new allowance/signature ingress grant. Current beacon implementation has full exact verified source; root shell grade remains null, with captured immutable-beacon runtime and partial/manual wrapper binding explicitly disclosed. Release credits the same account inside the collateral vault, not wallet cash.
+- `sources/overtime-sports-base-r12.json`: three current Base own sports-ticket methods with exact current proxy/implementation source. Structured proofs are financial inputs, not execution or backend signing. Buy-in/odds units, separate collateral conversion, API/legal access, loss, native overpayment and treasury-funded settlement remain material. Closed public LP participation is excluded without retiring the maintained sports product.
+- Excluded Flexa signature-bearing/legacy and Overtime public-LP/processor/admin surfaces are retained separately; no new permissions are granted.
+- Node.js 20.19.3 diff contained five additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all five ABI-policy paths and denied 89 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No capacity release, ticket purchase/exercise or collateral conversion was executed.
+
