@@ -1131,3 +1131,9 @@ These are finite function admissions, not complete product workflows, new signin
 - BIMA's current CDP maintenance/deployment tie remains a precise deferral, not a shutdown claim or permission to reimport historical roots.
 - Node.js 20.19.3 diff contained sixteen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all sixteen calls and denied 166 excluded selectors. Chromium verified exact filters and all three served Base/Arbitrum/Ethereum entries. No LP was created/rebalanced or savings funded/redeemed.
 
+## Repeated expansion round 11, cycle 9 — Textile FX and LandX Finance (2026-10-24)
+
+- `sources/textile-fx-operator-vault-polygon-r11.json`: fourteen current own Polygon FX LP/epoch methods. Full explorer source, exact/similar/constructor warning and Sourcify absence are accurately separated; no invented exact-match grade. Existing controllers/operators, fixed EIP712 valuation proofs, fee dilution, timeout in-kind settlement and fixed settlement adapter constrain financial flows. Proofs are not new backend signing authority; RFQ reactors and arbitrary execution remain excluded.
+- `sources/landx-lndx-ethereum-r11.json`: three current direct exact-source Ethereum own LNDX staking/vesting methods. LNDX has six decimals; fixed term enums, daily reward rounding, existing grants, nontransferable receipts and unchecked USDC transfer-return behavior are explicit. No grant creation, governance/delegation, token approval or bridge method is admitted.
+- Node.js 20.19.3 diff contained seventeen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all seventeen calls and denied 142 excluded selectors. Chromium verified exact filters and served Polygon/Ethereum entries. No epoch, FX capital, stake or vesting claim was executed.
+

@@ -3004,6 +3004,47 @@
         ]
       },
       {
+        "address": "0x08a1c30bbb26425c1031ee9e43fa0b9960742539",
+        "protocol": "LandX Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimVestedTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stakeLNDX",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "period",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "stakeID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x08fb9833a5a84d5bcecdf5a4a635d33260c5f05c",
         "protocol": "YieldFi",
         "abi": [
@@ -41974,6 +42015,321 @@
   },
   "137": {
     "contracts": [
+      {
+        "address": "0x0c58b39bec89c20e19e5085e1e7a6ac193a2eec6",
+        "protocol": "Textile FX",
+        "abi": [
+          {
+            "type": "function",
+            "name": "allocateIdle",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "closeDepositEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "closeRedeemEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "prepareSettlement",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "needed",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "processDepositEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              },
+              {
+                "name": "attestation",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "vault",
+                    "type": "address"
+                  },
+                  {
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "epochId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "corridorAssetPrice",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lastSettledNav",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "freeSettlement",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "freeCorridor",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validAfter",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "strategySignature",
+                "type": "bytes"
+              },
+              {
+                "name": "riskSignature",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "recallAll",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestDepositCorridor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "controller",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "settleRedeemEmergencyInKind",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "settleRedeemEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              },
+              {
+                "name": "attestation",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "vault",
+                    "type": "address"
+                  },
+                  {
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "epochId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "corridorAssetPrice",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "lastSettledNav",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "freeSettlement",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "freeCorridor",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validAfter",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "strategySignature",
+                "type": "bytes"
+              },
+              {
+                "name": "riskSignature",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "voidDepositEpoch",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
       {
         "address": "0x0d397f4515007ae4822703b74b9922508837a04e",
         "protocol": "Tetu",
