@@ -1056,3 +1056,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - thUSD's ended active development/funding is distinguished from functioning autonomous contracts; Binaryx's current implementation-source gap is distinguished from shutdown. Both precise evidence records are retained.
 - Node.js 20.19.3 diff contained twelve additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all twelve calls and denied 131 excluded selectors. Chromium verified both exact filters and served Ethereum entries. No savings swap, reserve basket exit, lock, fee collection or custody withdrawal was executed.
 
+## Repeated expansion round 10, cycle 9 — HertzFlow and Twyne (2026-10-24)
+
+- `sources/hertzflow-current-bsc-r10.json`: nine current BSC own pending-request cancellation/update and financial-ledger claim methods. Newer official mainnet SDK supersedes stale testnet-only address text. No new order creation, prefunding, multicall or callback registration is admitted; existing stored callbacks, keeper fees and multichain on-chain credit effects remain caveated. Payable ABI does not mean native input funds these operations.
+- `sources/twyne-eweth-credit-ethereum-r10.json`: four own specialized reserved-credit creditor methods, not a generic Euler curator label. Underlying is eWETH shares, not WETH. Current beacon resolution, partial root records, implementation match, fully verified module with Sourcify null and exact-match Twyne hook are kept distinct; existing EVC rights and liquidity/health constraints remain independent.
+- Satori's primary wind-down/July shutdown and D8X's unavailable current module source are retained separately; D8X is not described as shut down.
+- Node.js 20.19.3 diff contained thirteen additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all thirteen calls and denied 121 excluded selectors. Chromium verified both exact filters and served BSC/Ethereum ABIs. No order was amended/cancelled, rewards claimed or credit position funded.
+

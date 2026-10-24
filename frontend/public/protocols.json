@@ -14794,6 +14794,104 @@
         ]
       },
       {
+        "address": "0x87b8081a3ace680f35125f469526ac10f5418ca7",
+        "protocol": "Twyne",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x88887be419578051ff9f4eb6c858a951921d8888",
         "protocol": "Cap",
         "abi": [
@@ -36064,6 +36162,200 @@
               {
                 "name": "receiver",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x61e1116a943b27d21094599c2c5bd75e980170a5",
+        "protocol": "HertzFlow",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelDeposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelOrder",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelShift",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelWithdrawal",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimAffiliateRewards",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "markets",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimCollateral",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "markets",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "timeKeys",
+                "type": "uint256[]"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimFundingFees",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "markets",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimUiFees",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "markets",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "updateOrder",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "bytes32"
+              },
+              {
+                "name": "sizeDeltaUsd",
+                "type": "uint256"
+              },
+              {
+                "name": "acceptablePrice",
+                "type": "uint256"
+              },
+              {
+                "name": "triggerPrice",
+                "type": "uint256"
+              },
+              {
+                "name": "minOutputAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "validFromTime",
+                "type": "uint256"
+              },
+              {
+                "name": "autoCancel",
+                "type": "bool"
               }
             ],
             "outputs": []
