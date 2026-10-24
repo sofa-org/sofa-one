@@ -1259,6 +1259,78 @@
         ]
       },
       {
+        "address": "0x02fe72b2e9ff717ebf3049333b184e9cd984f257",
+        "protocol": "Yamato Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrowAmountInCurrency",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "maxRedemptionCurrencyAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "isCoreRedemption",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "currencyAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweep",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "ethAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x036676389e48133b63a802f8635ad39e752d375d",
         "protocol": "kelp",
         "abi": [
@@ -53421,6 +53493,257 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xd68647555e5da198d50866334eed647cbe3d1556",
+        "protocol": "OpenCover",
+        "abi": [
+          {
+            "type": "function",
+            "name": "refundUnfulfilledQuote",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "quoteId",
+                "type": "uint256"
+              },
+              {
+                "name": "withdrawTo",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "submitQuote",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "quote",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "providerId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "productId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "paymentAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "premiumAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "feeAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "coverExpiry",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "v",
+                "type": "uint8"
+              },
+              {
+                "name": "r",
+                "type": "bytes32"
+              },
+              {
+                "name": "s",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "submitQuoteV15",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "quote",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "providerId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "productId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "paymentAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "premiumAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "feeAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "coverExpiry",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "coveredAddresses",
+                "type": "address[]"
+              },
+              {
+                "name": "integratorId",
+                "type": "uint256"
+              },
+              {
+                "name": "mintTo",
+                "type": "address"
+              },
+              {
+                "name": "v",
+                "type": "uint8"
+              },
+              {
+                "name": "r",
+                "type": "bytes32"
+              },
+              {
+                "name": "s",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "submitQuoteV16",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "quote",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "providerId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "productId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "coverAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "paymentAssetId",
+                    "type": "uint32"
+                  },
+                  {
+                    "name": "premiumAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "feeAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "coverExpiry",
+                    "type": "uint16"
+                  },
+                  {
+                    "name": "validUntil",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "coveredAddresses",
+                "type": "address[]"
+              },
+              {
+                "name": "coveredNonEvmAddresses",
+                "type": "string[]"
+              },
+              {
+                "name": "integratorId",
+                "type": "uint256"
+              },
+              {
+                "name": "mintTo",
+                "type": "address"
+              },
+              {
+                "name": "v",
+                "type": "uint8"
+              },
+              {
+                "name": "r",
+                "type": "bytes32"
+              },
+              {
+                "name": "s",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "quoteId",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },

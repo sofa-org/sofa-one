@@ -1035,3 +1035,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - RateX current BSC binding gaps, KiloEx unavailable current implementation source and Yodeswap unsupported Dogechain deployment are retained as precise deferrals/rejections, not blanket shutdown claims.
 - Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six calls and denied 95 excluded selectors. Chromium verified exact cards and all three served BSC/Base entries. No managed withdrawal, pool funding or swap was executed.
 
+## Repeated expansion round 10, cycle 6 — OpenCover and Yamato Protocol (2026-10-24)
+
+- `sources/opencover-base-current-quote-r10.json`: four current Base insurance quote purchase/expired-unfulfilled refund methods. Counterparty signatures bind fixed financial terms, not wallet authority; source lacks domain/nonce replay separation and signatures do not bind payer. Proof NFT issuance still requires separate operator fulfillment for coverage; no claim-payment/capital-provider workflow is admitted.
+- `sources/yamato-current-ethereum-cdps-r10.json`: six current Ethereum ETH/CJPY collateral/debt, ranked redemption and fixed reserve bad-debt methods. Current proxy and all six action implementations are retained; fees, same-block locks, collateral floor, partial redemption and reserve-mode effects remain explicit. Public reserve redemption ignores supplied amount and has fixed protocol/caller payouts, not arbitrary sweeping.
+- BTCFi's supported-chain crosschain ingress versus unsupported CDP location and Shoebill's unsupported published lending chains are retained without shutdown claims.
+- Node.js 20.19.3 diff contained ten additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all ten calls and denied 103 excluded selectors. Chromium verified both exact filters and served Base/Ethereum ABIs. No cover purchase/refund, ETH collateral, CJPY issuance or bad-debt settlement was executed.
+
