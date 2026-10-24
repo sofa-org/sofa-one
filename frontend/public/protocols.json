@@ -3797,6 +3797,44 @@
         ]
       },
       {
+        "address": "0x12d0351f68035a41d13fc8324562e2d51b7a3b93",
+        "protocol": "USDD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "buyGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sellGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x1303c26cfe06bac5bfee29907f37919643def75c",
         "protocol": "Makina",
         "abi": [
@@ -21033,6 +21071,44 @@
         ]
       },
       {
+        "address": "0xce355440c00014a229bbec030a2b8f8eb45a2897",
+        "protocol": "USDD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "buyGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sellGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xcf5ea1b38380f6af39068375516daf40ed70d299",
         "protocol": "stader-ethx-manager",
         "abi": [
@@ -34066,6 +34142,44 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x939d3fb56cd12d68caa1125cc57a8d2391f7ee29",
+        "protocol": "USDD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "buyGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sellGem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "usr",
+                "type": "address"
+              },
+              {
+                "name": "gemAmt",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -49460,6 +49574,229 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xd1a0d188e861ed9d15773a2f3574a2e94134ba8f",
+        "protocol": "Pinto",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimAllPlenty",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "toMode",
+                "type": "uint8"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "allPlenty",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "plenty",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimPlenty",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "well",
+                "type": "address"
+              },
+              {
+                "name": "toMode",
+                "type": "uint8"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "mode",
+                "type": "uint8"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_bdv",
+                "type": "uint256"
+              },
+              {
+                "name": "stem",
+                "type": "int96"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mow",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mowAll",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mowAllMultipleAccounts",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mowMultiple",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mowMultipleAccounts",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "accounts",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[][]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "plant",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "beans",
+                "type": "uint256"
+              },
+              {
+                "name": "stem",
+                "type": "int96"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawDeposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stem",
+                "type": "int96"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "mode",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawDeposits",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stems",
+                "type": "int96[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "mode",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
