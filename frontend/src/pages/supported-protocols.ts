@@ -303,6 +303,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Timeswap', website: 'https://timeswap.io/' },
   { name: 'Tori Finance', website: 'https://tori.finance/' },
   { name: 'Tranchess', website: 'https://tranchess.com/' },
+  { name: 'Travessia Credit', website: 'https://www.travessiacredit.com/' },
   { name: 'Treehouse', website: 'https://www.treehouse.finance/' },
   { name: 'Trevee', website: 'https://docs.trevee.xyz/' },
   { name: 'TruStake', website: 'https://truyields.com/products/trustake/' },
@@ -325,6 +326,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Venus', website: 'https://venus.io' },
   { name: 'Veranta', website: 'https://www.veranta.xyz/' },
   { name: 'Vesper', website: 'https://vesper.finance' },
+  { name: 'VETRO', website: 'https://vetro.org/' },
   { name: 'vfat.io', website: 'https://vfat.io/yield' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
