@@ -4332,6 +4332,199 @@
         ]
       },
       {
+        "address": "0x11b1c87983f881b3686f8b1171628357faa30038",
+        "protocol": "88mph",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "maturationTimestamp",
+                "type": "uint64"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "maturationTimestamp",
+                "type": "uint64"
+              },
+              {
+                "name": "minimumInterestAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "uri",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "rolloverDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "maturationTimestamp",
+                "type": "uint64"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "newDepositID",
+                "type": "uint256"
+              },
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "rolloverDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "maturationTimestamp",
+                "type": "uint64"
+              },
+              {
+                "name": "minimumInterestAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "uri",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "newDepositID",
+                "type": "uint256"
+              },
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "topupDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "topupDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumInterestAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "virtualTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "early",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "withdrawnStablecoinAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1202f5c7b4b9e47a1a484e8b270be34dbbc75055",
         "protocol": "resolv-wstusr",
         "abi": [
@@ -15257,6 +15450,549 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x7202b7ca846fc93467e95fa279bc6085f2d5b6fe",
+        "protocol": "Abracadabra",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "baseInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumShares",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "baseAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "refundTo",
+                "type": "address"
+              },
+              {
+                "name": "tokenInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumShares",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "baseAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityImbalanced",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "lp",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "baseInAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "quoteInAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "remainingAmountToSwapIsBase",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "remainingAmountToSwap",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minimumShares",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "baseAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "swapOutAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseRefundAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteRefundAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityOneSide",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "lp",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "inAmountIsBase",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "inAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "inAmountToSwap",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minimumShares",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "baseAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteAdjustedInAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "swapOutAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseRefundAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteRefundAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "sharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumBaseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumQuoteAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "baseAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "quoteAmountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "sharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumETHAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ethAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "tokenAmountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityOneSide",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "withdrawBase",
+                "type": "bool"
+              },
+              {
+                "name": "sharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellBaseETHForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellBaseTokensForETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellBaseTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellQuoteETHForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellQuoteTokensForETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellQuoteTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lp",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minimumOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
